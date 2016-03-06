@@ -1,0 +1,41 @@
+[user]
+  name  = Hayato KAWAI
+  email = g@fohte.net
+
+[color]
+  ui = auto
+
+[push]
+  default = current
+
+[alias]
+  a  = add
+  aa = add .
+
+  br = branch
+
+  ch = checkout
+
+  c   = commit
+  ca  = commit -a
+  cm  = commit -m
+  cam = commit -am
+  cc  = commit --amend --allow-empty-message -m ''
+
+  d = diff
+
+  f = fetch -p
+
+  l  = log --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --graph --abbrev-commit --date=relative -n 30
+  la = log --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --graph --abbrev-commit --date=relative --all
+
+  s = status
+
+  p = push
+
+  pl = pull
+
+  rb = rebase
+
+  rs = reset --soft
+  rh = reset --hard

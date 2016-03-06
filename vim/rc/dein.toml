@@ -1,0 +1,67 @@
+[[plugins]]
+repo = 'Shougo/dein.vim'
+
+[[plugins]]
+repo = 'Shougo/vimproc'
+
+  [plugins.build]
+  windows = 'tools\\update-dll-mingw'
+  cygwin  = 'make -f make_cygwin.mak'
+  mac     = 'make -f make_mac.mak'
+  linux   = 'make'
+  unix    = 'gmake'
+
+[[plugins]]
+repo = 'Shougo/unite.vim'
+
+# [[plugins]]
+# repo = 'bling/vim-airline'
+# depends = ['vim-airline-themes']
+
+# [[plugins]]
+# repo = 'vim-airline/vim-airline-themes'
+
+[[plugins]]
+repo = 'kana/vim-textobj-user'
+
+[[plugins]]
+repo = 'tomtom/tcomment_vim'
+
+[[plugins]]
+repo = 'itchyny/lightline.vim'
+
+[[plugins]]
+repo = 'itchyny/landscape.vim'
+
+[[plugins]]
+repo = 'tpope/vim-surround'
+
+[[plugins]]
+repo = 'cohama/lexima.vim'
+
+[[plugins]]
+repo = 'Lokaltog/vim-easymotion'
+
+[[plugins]]
+repo = 'vim-scripts/spinner.vim'
+
+# --------------------------------------
+#   Syntax
+# --------------------------------------
+[[plugins]]
+repo = 'cespare/vim-toml'
+
+[[plugins]]
+repo = 'kchmck/vim-coffee-script'
+
+[[plugins]]
+repo = 'digitaltoad/vim-jade'
+
+[[plugins]]
+repo = 'derekwyatt/vim-scala'
+
+[[plugins]]
+repo = 'toyamarinyon/vim-swift'
+
+[[plugins]]
+repo = 'evanmiller/nginx-vim-syntax'
