@@ -1,7 +1,5 @@
 nnoremap Q <Nop>
 nnoremap s <Nop>
-nnoremap , <Nop>
-nnoremap <Space> <Nop>
 nnoremap # <Nop>
 
 noremap j gj
@@ -9,8 +7,8 @@ noremap k gk
 noremap <S-h> ^
 noremap <S-l> $
 nnoremap ; :
-vnoremap > >v
-vnoremap < <v
+vnoremap > >gv
+vnoremap < <gv
 
 noremap G Gzz
 noremap <C-f> <C-f>zz

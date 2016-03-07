@@ -24,6 +24,13 @@ endif
 if has('lua') && dein#tap('neocomplete.vim')
 endif
 
+if dein#tap('unite.vim')
+  nnoremap [unite] <Nop>
+  nmap <Space> [unite]
+  map <silent> [unite] :<C-u>Unite
+  map <silent> [unite]f :<C-u>Unite file_rec/async:!<CR>
+endif
+
 if dein#tap('vim-easymotion')
   let g:EasyMotion_keys='hjklasdfgyuiopqwertnmzxcvbHJKLASDFGYUIOPQWERTNMZXCVB'
   let g:EasyMotion_leader_key="'"
