@@ -9,5 +9,5 @@ on_i = 1
 
 [[plugins]]
 repo = 'rhysd/vim-textobj-ruby'
-depends = 'vim-operator-user'
+depends = 'vim-textobj-user'
 on_ft = 'ruby'
