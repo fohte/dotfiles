@@ -31,43 +31,20 @@ autoload -Uz add-zsh-hook
 autoload -Uz vcs_info
 setopt prompt_subst
 
-_fg_color() { echo "%{[38;5;$1m%}" }
-_bg_color() { echo "%{[48;5;$1m%}" }
-_reset_color() { echo "%{[0m%}" }
-_reset_fg_color() { echo "%{[39m%}" }
-_reset_bg_color() { echo "%{[49m%}" }
-
-typeset -a prompt_bg_colors
-prompt_bg_colors=(235 240)
-
-typeset -a prompt_fg_colors
-prompt_fg_colors=(178 007)
-
-typeset -a prompt_texts
-prompt_texts=("%n@%m" "%~")
-
-PROMPT=""
-RPROMPT=""
-
 zstyle ':vcs_info:git:*' check-for-changes true
-zstyle ':vcs_info:git:*' stagedstr "`_fg_color 011`⮂`_bg_color 011``_fg_color 233` ! "
-zstyle ':vcs_info:git:*' unstagedstr "`_fg_color 088`⮂`_bg_color 088``_reset_fg_color` + "
-zstyle ':vcs_info:*' formats "`_fg_color 240`⮂`_bg_color 240``_reset_fg_color` %b %c%u"
+zstyle ':vcs_info:git:*' stagedstr "%F{yellow}*%f"
+zstyle ':vcs_info:git:*' unstagedstr "%F{red}*%f"
+zstyle ':vcs_info:*' formats " %c%u%b"
 add-zsh-hook precmd vcs_info
 
-RPROMPT='${vcs_info_msg_0_}'`_reset_color`
+PROMPT='%F{black}[%*]%f %# '
+RPROMPT='%F{black}|%f %F{green}%~%f %F{black}|%f${vcs_info_msg_0_}'
 
-for i in {1..$#prompt_texts}; do
-  PROMPT+="`_bg_color $prompt_bg_colors[i]``_fg_color $prompt_fg_colors[i]` ${prompt_texts[i]} "
-  if [[ i -eq $#prompt_texts ]]; then
-    PROMPT+=`_reset_bg_color`
-  else
-    PROMPT+="`_bg_color $prompt_bg_colors[i+1]`"
-  fi
-  PROMPT+="`_fg_color $prompt_bg_colors[i]`⮀"
-done
-
-PROMPT+="`_reset_color` "
+reprompt() {
+  zle .reset-prompt
+  zle .accept-line
+}
+zle -N accept-line reprompt
 
 
 # ----------------------------------------------------------
