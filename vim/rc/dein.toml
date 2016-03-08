@@ -42,9 +42,6 @@ repo = 'cohama/lexima.vim'
 [[plugins]]
 repo = 'Lokaltog/vim-easymotion'
 
-[[plugins]]
-repo = 'vim-scripts/spinner.vim'
-
 # --------------------------------------
 #   Syntax
 # --------------------------------------
