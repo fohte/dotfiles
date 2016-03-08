@@ -21,9 +21,6 @@ eval "$(rbenv init -)"
 export PATH="$HOME/.pyenv/shims:$PATH"
 eval "$(pyenv init -)"
 
-# neovim
-export XDG_CONFIG_HOME=~/.config
-
 fpath=($(brew --prefix)/share/zsh/site-functions $fpath)
 
 autoload -Uz add-zsh-hook
