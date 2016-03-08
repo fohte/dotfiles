@@ -54,9 +54,7 @@ if dein#tap('vim-easymotion')
 endif
 
 if dein#tap('lexima.vim')
-  call lexima#add_rule({'char': '$', 'input_after': '$', 'filetype': 'latex'})
-  call lexima#add_rule({'char': '$', 'at': '\%#\$', 'leave': 1, 'filetype': 'latex'})
-  call lexima#add_rule({'char': '<BS>', 'at': '\$\%#\$', 'delete': 1, 'filetype': 'latex'})
+  let g:lexima_enable_basic_rules = 0
 endif
 
 if dein#tap('lightline.vim')
