@@ -2,23 +2,19 @@ if has('nvim') && dein#tap('deoplete.nvim')
   let g:deoplete#enable_at_startup = 1
   let g:deoplete#enable_ignore_case = 1
   let g:deoplete#enable_smart_case = 1
-  let g:deoplete#enable_auto_select = 1
-  let g:deoplete#enable_camel_case_completion = 0
-  let g:deoplete#max_list = 5
-  let g:deoplete#auto_completion_start_length = 2
+  let g:deoplete#enable_camel_case = 0
+  let g:deoplete#max_list = 10
+  let g:deoplete#enable_refresh_always = 1
 
-  if !exists('g:deoplete#keyword_patterns')
-    let g:deoplete#keyword_patterns = {}
-  endif
-  let g:deoplete#keyword_patterns._ = '\h\w*'
+  let g:deoplete#keyword_patterns = {}
+  let g:deoplete#keyword_patterns._ = '[a-zA-Z_]\k*\(?'
 
-  if !exists('g:deoplete#force_omni_input_patterns')
-    let g:deoplete#force_omni_input_patterns = {}
-  endif
-  let g:deoplete#force_omni_input_patterns.ruby = '[^. *\t]\.\w*\|\h\w*::'
+  let g:deoplete#omni#input_patterns = {}
+  let g:deoplete#omni#input_patterns.ruby = '[^. *\t]\.\w*\|\h\w*::'
 
-  inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
-  inoremap <expr><CR>  pumvisible() ? neocomplete#close_popup() : "<CR>"
+  inoremap <expr> <TAB>   pumvisible() ? "\<C-n>" : "\<TAB>"
+  inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
+  inoremap <expr> <CR>    pumvisible() ? deoplete#mappings#smart_close_popup() : "<CR>"
 endif
 
 if has('lua') && dein#tap('neocomplete.vim')
