@@ -80,3 +80,10 @@ if dein#tap('lightline.vim')
   \   'subseparator': { 'left': '⮁', 'right': '⮃' },
   \ }
 endif
+
+if dein#tap('vim-over')
+  nnoremap [over] <Nop>
+  nmap , [over]
+  nnoremap [over]s :OverCommandLine<CR>%s/\v
+  nnoremap [over]w :OverCommandLine<CR>%s/<C-r><C-w>//g<Left><Left>
+endif

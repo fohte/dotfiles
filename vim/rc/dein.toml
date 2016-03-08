@@ -14,13 +14,6 @@ repo = 'Shougo/vimproc'
 [[plugins]]
 repo = 'Shougo/unite.vim'
 
-# [[plugins]]
-# repo = 'bling/vim-airline'
-# depends = ['vim-airline-themes']
-
-# [[plugins]]
-# repo = 'vim-airline/vim-airline-themes'
-
 [[plugins]]
 repo = 'kana/vim-textobj-user'
 
@@ -41,6 +34,12 @@ repo = 'cohama/lexima.vim'
 
 [[plugins]]
 repo = 'Lokaltog/vim-easymotion'
+
+[[plugins]]
+repo = 'machakann/vim-swap'
+
+[[plugins]]
+repo = 'osyo-manga/vim-over'
 
 # --------------------------------------
 #   Syntax
