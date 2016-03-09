@@ -4,7 +4,7 @@ if has('nvim') && dein#tap('deoplete.nvim')
   let g:deoplete#enable_smart_case = 1
   let g:deoplete#enable_camel_case = 0
   let g:deoplete#max_list = 10
-  let g:deoplete#enable_refresh_always = 1
+  let g:deoplete#enable_refresh_always = 0
 
   let g:deoplete#keyword_patterns = {}
   let g:deoplete#keyword_patterns._ = '[a-zA-Z_]\k*\(?'
@@ -14,7 +14,7 @@ if has('nvim') && dein#tap('deoplete.nvim')
 
   inoremap <expr> <TAB>   pumvisible() ? "\<C-n>" : "\<TAB>"
   inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
-  inoremap <expr> <CR>    pumvisible() ? deoplete#mappings#smart_close_popup() : "<CR>"
+  inoremap <expr> <CR>    pumvisible() ? deoplete#mappings#close_popup() : "<CR>"
 endif
 
 if has('lua') && dein#tap('neocomplete.vim')
