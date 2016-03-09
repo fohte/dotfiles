@@ -61,3 +61,6 @@ repo = 'toyamarinyon/vim-swift'
 
 [[plugins]]
 repo = 'evanmiller/nginx-vim-syntax'
+
+[[plugins]]
+repo = 'slim-template/vim-slim'
