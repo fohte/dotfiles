@@ -81,3 +81,14 @@ if dein#tap('vim-over')
   nnoremap [over]s :OverCommandLine<CR>%s/\v
   nnoremap [over]w :OverCommandLine<CR>%s/<C-r><C-w>//g<Left><Left>
 endif
+
+if dein#tap('vim-submode')
+  call submode#enter_with('winsize', 'n', '', '<C-w>>', '<C-w>>')
+  call submode#enter_with('winsize', 'n', '', '<C-w><', '<C-w><')
+  call submode#enter_with('winsize', 'n', '', '<C-w>+', '<C-w>-')
+  call submode#enter_with('winsize', 'n', '', '<C-w>-', '<C-w>+')
+  call submode#map('winsize', 'n', '', '>', '<C-w>>')
+  call submode#map('winsize', 'n', '', '<', '<C-w><')
+  call submode#map('winsize', 'n', '', '+', '<C-w>-')
+  call submode#map('winsize', 'n', '', '-', '<C-w>+')
+endif

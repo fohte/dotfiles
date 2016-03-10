@@ -41,6 +41,10 @@ repo = 'machakann/vim-swap'
 [[plugins]]
 repo = 'osyo-manga/vim-over'
 
+[[plugins]]
+repo = 'kana/vim-submode'
+
+
 # --------------------------------------
 #   Syntax
 # --------------------------------------
