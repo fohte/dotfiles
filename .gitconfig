@@ -11,10 +11,12 @@
 [alias]
   a  = add
   aa = add .
+  ap = add -p
 
   br = branch
 
   ch = checkout
+  cb = checkout -b
 
   c   = commit
   ca  = commit -a
@@ -22,14 +24,19 @@
   cam = commit -am
   cc  = commit --amend --allow-empty-message -m ''
 
-  d = diff
+  d  = diff
+  ds = diff --staged
 
   f = fetch -p
 
-  l  = log --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --graph --abbrev-commit --date=relative -n 30
-  la = log --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --graph --abbrev-commit --date=relative --all
+  l  = log --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --graph --abbrev-commit --date=relative -n 15 --branches
+
+  m  = merge
 
   s = status
+
+  ss = stash save
+  sp = stash pop
 
   p = push
 
