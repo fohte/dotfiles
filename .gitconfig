@@ -46,3 +46,6 @@
 
   rs = reset --soft
   rh = reset --hard
+
+[merge]
+  ff = false
