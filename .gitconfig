@@ -29,7 +29,7 @@
 
   f = fetch -p
 
-  l  = log --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --graph --abbrev-commit --date=relative -n 15 --branches
+  l  = log --pretty=format:'%Cred%h%Creset - %s%C(yellow)%d%Creset' --graph --abbrev-commit --date=relative -n 15 --branches
 
   m  = merge
 
