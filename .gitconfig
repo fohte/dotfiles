@@ -10,7 +10,7 @@
 
 [alias]
   a  = add
-  aa = add .
+  aa = add -A .
   ap = add -p
 
   br = branch
