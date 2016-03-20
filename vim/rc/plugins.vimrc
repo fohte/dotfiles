@@ -68,7 +68,6 @@ if dein#tap('lightline.vim')
   \   },
   \   'component': {
   \     'readonly': '%{&readonly ? "×" : ""}',
-  \     'filename': '%{expand("%") != "" ? expand("%:~:.") : ""}',
   \   },
   \   'separator': { 'left': '⮀', 'right': '⮂' },
   \   'subseparator': { 'left': '⮁', 'right': '⮃' },
