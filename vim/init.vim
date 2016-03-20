@@ -44,7 +44,7 @@ if dein#load_cache([expand('<sfile>'), s:toml, s:toml_lazy])
   call dein#save_cache()
 endif
 
-call s:source_rc('plugins.vimrc')
+call s:source_rc('plugins.rc.vim')
 
 call dein#end()
 
@@ -57,19 +57,20 @@ endif
 "   Editor Settings
 " ----------------------------------------------------------
 filetype plugin indent on
-call s:source_rc('edit.vimrc')
+call s:source_rc('edit.rc.vim')
 
 " ----------------------------------------------------------
 "   View
 " ----------------------------------------------------------
-call s:source_rc('view.vimrc')
+call s:source_rc('view.rc.vim')
 
 " ----------------------------------------------------------
 "   Key Mappings
 " ----------------------------------------------------------
-call s:source_rc('mappings.vimrc')
+call s:source_rc('mappings.rc.vim')
 
 " ----------------------------------------------------------
 "   Utils
 " ----------------------------------------------------------
-call s:source_rc('utils.vimrc')
+call s:source_rc('utils.rc.vim')
+
