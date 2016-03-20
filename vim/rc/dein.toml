@@ -68,3 +68,6 @@ repo = 'evanmiller/nginx-vim-syntax'
 
 [[plugins]]
 repo = 'slim-template/vim-slim'
+
+[[plugins]]
+repo = 'keith/tmux.vim'
