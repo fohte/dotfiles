@@ -33,7 +33,7 @@
 
   m  = merge
 
-  s = status
+  s  = status --short --branch
 
   ss = stash save
   sp = stash pop
