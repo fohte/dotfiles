@@ -30,11 +30,19 @@ if dein#tap('unite.vim')
   nmap <Space> [unite]
   map <silent> [unite] :<C-u>Unite
   map <silent> [unite]f :<C-u>UniteWithBufferDir -buffer-name=files file<CR>
-  map <silent> [unite]p :<C-u>Unite file_rec/async:!<CR>
+  map <silent> [unite]p :<C-u>call <SID>unite_file_rec()<CR>
   map <silent> [unite]b :<C-u>Unite buffer -auto-preview<CR>
 
   autocmd FileType unite call s:unite_settings()
 endif
+
+function! s:unite_file_rec()
+  if isdirectory(getcwd().'/.git')
+    execute 'Unite file_rec/git:--others:--cached:--exclude-standard'
+  else
+    execute 'Unite file_rec/async'
+  endif
+endfunction
 
 function! s:unite_settings()
   nnoremap <silent><buffer><expr> <C-s> unite#do_action('split')
