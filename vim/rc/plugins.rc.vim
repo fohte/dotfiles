@@ -21,7 +21,7 @@ if has('lua') && dein#tap('neocomplete.vim')
 endif
 
 if dein#tap('unite.vim')
-  let g:unite_enable_start_insert = 0
+  let g:unite_enable_start_insert = 1
   let g:unite_enable_auto_select = 0
 
   call unite#custom_source('buffer', 'sorters', 'sorter_word')
