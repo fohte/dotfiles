@@ -43,7 +43,7 @@ zle -N accept-line reprompt
 # ----------------------------------------------------------
 #   Alias
 # ----------------------------------------------------------
-alias ls='ls -aCFG'
+alias ls='ls -ACFG'
 alias be='bundle exec'
 alias g='git'
 alias v='nvim'
