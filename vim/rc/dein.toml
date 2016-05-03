@@ -71,3 +71,6 @@ repo = 'slim-template/vim-slim'
 
 [[plugins]]
 repo = 'keith/tmux.vim'
+
+[[plugins]]
+repo = 'othree/html5.vim'
