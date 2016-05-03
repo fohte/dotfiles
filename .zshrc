@@ -70,6 +70,9 @@ function mkcd() {
   mkdir -p $@ && $@;
 }
 
+alias -s py=python
+alias -s rb=ruby
+
 
 # ----------------------------------------------------------
 #   Utils
