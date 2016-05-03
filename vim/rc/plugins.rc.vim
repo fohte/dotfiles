@@ -5,6 +5,7 @@ if has('nvim') && dein#tap('deoplete.nvim')
   let g:deoplete#enable_camel_case = 0
   let g:deoplete#max_list = 10
   let g:deoplete#enable_refresh_always = 0
+  let g:deoplete#auto_complete_start_length = 2
 
   let g:deoplete#keyword_patterns = {}
   let g:deoplete#keyword_patterns._ = '[a-zA-Z_]\k*\(?'
@@ -98,4 +99,8 @@ if dein#tap('vim-submode')
   call submode#map('winsize', 'n', '', '<', '<C-w><')
   call submode#map('winsize', 'n', '', '+', '<C-w>-')
   call submode#map('winsize', 'n', '', '-', '<C-w>+')
+endif
+
+if dein#tap('deoplete-jedi')
+  autocmd FileType python setlocal completeopt-=preview
 endif
