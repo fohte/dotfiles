@@ -101,6 +101,14 @@ if dein#tap('vim-submode')
   call submode#map('winsize', 'n', '', '-', '<C-w>+')
 endif
 
+if dein#tap('vim-pandoc-syntax')
+  augroup pandoc_syntax
+    au! BufNewFile,BufFilePRe,BufRead *.md set filetype=markdown.pandoc
+  augroup END
+
+  let g:pandoc#syntax#conceal#use = 0
+endif
+
 if dein#tap('deoplete-jedi')
   autocmd FileType python setlocal completeopt-=preview
 endif
