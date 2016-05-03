@@ -15,7 +15,7 @@ if has('nvim') && dein#tap('deoplete.nvim')
 
   inoremap <expr> <TAB>   pumvisible() ? "\<C-n>" : "\<TAB>"
   inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
-  inoremap <expr> <BS>    deoplete#mappings#smart_close_popup() . "\<C-h>"
+  inoremap <expr> <BS>    deoplete#mappings#close_popup()."\<C-h>"
 endif
 
 if has('lua') && dein#tap('neocomplete.vim')
