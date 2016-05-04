@@ -11,14 +11,7 @@ if [ ! -f ~/.zshrc.zwc ] || [ ~/.zshrc -nt ~/.zshrc.zwc ]; then
     zcompile ~/.zshrc
 fi
 
-export PATH="usr/local/bin:$PATH"
-
-# rbenv
-export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
-
-# pyenv
-export PATH="$HOME/.pyenv/shims:$PATH"
 eval "$(pyenv init -)"
 
 fpath=($(brew --prefix)/share/zsh/site-functions $fpath)
