@@ -22,15 +22,18 @@ if has('lua') && dein#tap('neocomplete.vim')
 endif
 
 if dein#tap('unite.vim')
-  let g:unite_enable_start_insert = 1
-  let g:unite_enable_auto_select = 0
+  call unite#custom#profile('default', 'context', {
+    \ 'prompt': '> ',
+    \ 'prompt_focus': 1,
+    \ 'prompt_direction': 'top',
+    \ 'split' : 0,
+  \ })
 
-  call unite#custom_source('buffer', 'sorters', 'sorter_word')
+  call unite#custom#source('buffer', 'sorters', 'sorter_word')
 
   nnoremap [unite] <Nop>
   nmap <Space> [unite]
-  map <silent> [unite] :<C-u>Unite
-  map <silent> [unite]f :<C-u>UniteWithBufferDir -buffer-name=files file<CR>
+  map <silent> [unite]f :<C-u>UniteWithBufferDir -buffer-name=files -start-insert file file/new<CR>
   map <silent> [unite]p :<C-u>call <SID>unite_file_rec()<CR>
   map <silent> [unite]b :<C-u>Unite buffer -auto-preview<CR>
 
@@ -39,9 +42,9 @@ endif
 
 function! s:unite_file_rec()
   if isdirectory(getcwd().'/.git')
-    execute 'Unite file_rec/git:--others:--cached:--exclude-standard'
+    execute 'Unite -start-insert file_rec/git:--others:--cached:--exclude-standard'
   else
-    execute 'Unite file_rec/async'
+    execute 'Unite -start-insert file_rec/async'
   endif
 endfunction
 
