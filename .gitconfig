@@ -2,6 +2,9 @@
   name  = Hayato KAWAI
   email = g@fohte.net
 
+[core]
+  pager = less -R
+
 [color]
   ui = auto
 
