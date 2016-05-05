@@ -31,7 +31,7 @@ zstyle ':vcs_info:*' formats " %c%u%b"
 add-zsh-hook precmd vcs_info
 
 PROMPT='%F{black}%n@%m%f %# '
-RPROMPT='%F{black}|%f %F{green}%~%f %F{black}|%f${vcs_info_msg_0_}'
+RPROMPT='${vcs_info_msg_0_}'
 
 reprompt() {
   zle .reset-prompt
@@ -76,6 +76,9 @@ do_enter() {
     zle accept-line
     return 0
   fi
+
+  echo
+  pwd
 
   echo
   ls
