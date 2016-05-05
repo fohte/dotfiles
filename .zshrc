@@ -71,12 +71,6 @@ add-zsh-hook precmd vcs_info
 PROMPT='%F{black}%n@%m%f %# '
 RPROMPT='${vcs_info_msg_0_}'
 
-reprompt() {
-  zle .reset-prompt
-  zle .accept-line
-}
-zle -N accept-line reprompt
-
 
 # ----------------------------------------------------------
 #   Alias
