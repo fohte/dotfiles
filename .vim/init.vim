@@ -48,9 +48,6 @@ call s:source_rc('plugins.rc.vim')
 
 call dein#end()
 
-if dein#check_install()
-  call dein#install()
-endif
 
 
 " ----------------------------------------------------------
