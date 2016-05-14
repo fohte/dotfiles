@@ -19,9 +19,6 @@ hook_source = 'source ~/.vim/rc/plugins/unite.rc.vim'
 repo = 'kana/vim-textobj-user'
 
 [[plugins]]
-repo = 'tomtom/tcomment_vim'
-
-[[plugins]]
 repo = 'itchyny/lightline.vim'
 hook_source = 'source ~/.vim/rc/plugins/lightline.rc.vim'
 
