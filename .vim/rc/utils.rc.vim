@@ -5,7 +5,7 @@ function! s:replace_chars()
   %s/\s\+$//ge
 
   " Remove last empty lines
-  while getline('$') == ''
+  while line('$') > 1 && getline('$') == ''
     $delete _
   endwhile
 
