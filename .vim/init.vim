@@ -33,21 +33,17 @@ if &runtimepath !~# '/dein.vim'
 endif
 
 
-call dein#begin(s:dein_dir)
+if dein#load_state(s:dein_dir)
+  call dein#begin(s:dein_dir, [expand('<sfile>')] + split(glob(s:rc_dir . '/*.toml'), '\n'))
 
-let s:toml      = '~/.vim/rc/dein.toml'
-let s:toml_lazy = '~/.vim/rc/dein.lazy.toml'
+  call dein#load_toml(s:rc_dir . '/dein.toml', {'lazy': 0})
+  call dein#load_toml(s:rc_dir . '/dein.lazy.toml', {'lazy': 1})
 
-if dein#load_cache([expand('<sfile>'), s:toml, s:toml_lazy])
-  call dein#load_toml(s:toml,      {'lazy': 0})
-  call dein#load_toml(s:toml_lazy, {'lazy': 1})
-  call dein#save_cache()
+  call s:source_rc('plugins.rc.vim')
+
+  call dein#end()
+  call dein#save_state()
 endif
-
-call s:source_rc('plugins.rc.vim')
-
-call dein#end()
-
 
 
 " ----------------------------------------------------------
