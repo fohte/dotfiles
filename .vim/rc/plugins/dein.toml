@@ -26,9 +26,6 @@ hook_source = 'source ~/.vim/rc/plugins/lightline.rc.vim'
 repo = 'itchyny/landscape.vim'
 
 [[plugins]]
-repo = 'tpope/vim-surround'
-
-[[plugins]]
 repo = 'cohama/lexima.vim'
 hook_source = 'source ~/.vim/rc/plugins/lexima.rc.vim'
 
