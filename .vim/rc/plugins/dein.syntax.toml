@@ -1,39 +1,49 @@
+# adds TOML support
 [[plugins]]
 repo = 'cespare/vim-toml'
 on_ft = 'toml'
 
+# adds CoffeeScript support
 [[plugins]]
 repo = 'kchmck/vim-coffee-script'
 on_ft = 'coffee'
 
-[[plugins]]
-repo = 'digitaltoad/vim-jade'
-on_ft = 'jade'
-
-[[plugins]]
-repo = 'derekwyatt/vim-scala'
-on_ft = 'scala'
-
-[[plugins]]
-repo = 'toyamarinyon/vim-swift'
-on_ft = 'swift'
-
-[[plugins]]
-repo = 'evanmiller/nginx-vim-syntax'
-on_ft = 'nginx'
-
-[[plugins]]
-repo = 'slim-template/vim-slim'
-on_ft = 'slim'
-
-[[plugins]]
-repo = 'keith/tmux.vim'
-on_ft = 'tmux'
-
+# adds HTML5 and inline SVG support
 [[plugins]]
 repo = 'othree/html5.vim'
 on_ft = 'html'
 
+# adds Pug (formerly Jade) support
+[[plugins]]
+repo = 'digitaltoad/vim-pug'
+on_ft = ['jade', 'pug']
+
+# adds Slim support
+[[plugins]]
+repo = 'slim-template/vim-slim'
+on_ft = 'slim'
+
+# adds Scala support
+[[plugins]]
+repo = 'derekwyatt/vim-scala'
+on_ft = 'scala'
+
+# adds Swift support
+[[plugins]]
+repo = 'toyamarinyon/vim-swift'
+on_ft = 'swift'
+
+# adds Nginx support
+[[plugins]]
+repo = 'evanmiller/nginx-vim-syntax'
+on_ft = 'nginx'
+
+# adds tmux.conf support
+[[plugins]]
+repo = 'keith/tmux.vim'
+on_ft = 'tmux'
+
+# adds Pandoc Markdown support
 [[plugins]]
 repo = 'vim-pandoc/vim-pandoc-syntax'
 on_ft = 'markdown'
@@ -44,3 +54,9 @@ hook_add = '''
 
   let g:pandoc#syntax#conceal#use = 0
 '''
+
+# Python indentation behavior to comply with PEP8
+[[plugins]]
+repo = 'hynek/vim-python-pep8-indent'
+on_ft = 'python'
+on_event = 'InsertEnter'

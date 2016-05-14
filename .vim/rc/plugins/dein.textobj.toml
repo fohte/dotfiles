@@ -1,0 +1,9 @@
+# support writing user-defined text objects
+[[plugins]]
+repo = 'kana/vim-textobj-user'
+
+# various ruby block structures
+#   Map: r
+[[plugins]]
+repo = 'rhysd/vim-textobj-ruby'
+on_ft = 'ruby'
