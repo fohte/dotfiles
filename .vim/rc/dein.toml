@@ -33,7 +33,7 @@ repo = 'tpope/vim-surround'
 repo = 'cohama/lexima.vim'
 
 [[plugins]]
-repo = 'Lokaltog/vim-easymotion'
+repo = 'easymotion/vim-easymotion'
 
 [[plugins]]
 repo = 'machakann/vim-swap'
