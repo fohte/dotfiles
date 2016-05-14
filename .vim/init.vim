@@ -38,6 +38,7 @@ if dein#load_state(s:dein_dir)
   call dein#load_toml(s:toml_dir . '/dein.lazy.toml', {'lazy': 1})
   call dein#load_toml(s:toml_dir . '/dein.syntax.toml', {'lazy': 1})
   call dein#load_toml(s:toml_dir . '/dein.textobj.toml', {'lazy': 0})
+  call dein#load_toml(s:toml_dir . '/dein.operator.toml', {'lazy': 0})
 
   call dein#end()
   call dein#save_state()

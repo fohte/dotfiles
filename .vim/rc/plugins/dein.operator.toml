@@ -1,0 +1,3 @@
+# support writing user-defined operators
+[[plugins]]
+repo = 'kana/vim-operator-user'
