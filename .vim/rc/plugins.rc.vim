@@ -22,6 +22,8 @@ if has('lua') && dein#tap('neocomplete.vim')
 endif
 
 if dein#tap('unite.vim')
+  let g:unite_force_overwrite_statusline = 0
+
   call unite#custom#profile('default', 'context', {
     \ 'prompt': '> ',
     \ 'prompt_focus': 1,
@@ -73,17 +75,51 @@ if dein#tap('lightline.vim')
   let g:lightline = {
   \   'colorscheme': 'landscape',
   \   'active': {
+  \     'left': [['mode', 'paste'], ['readonly', 'filename', 'modified']],
   \     'right': [['lineinfo'], ['filetype'], ['fileencoding', 'fileformat']]
   \   },
   \   'inactive': {
+  \     'left': [['readonly', 'filename', 'modified']],
   \     'right': [['lineinfo'], ['filetype']]
   \   },
-  \   'component': {
-  \     'readonly': '%{&readonly ? "×" : ""}',
+  \   'component_function': {
+  \     'filename': 'LightLineFilename',
+  \     'readonly': 'LightLineReadonly',
+  \     'modified': 'LightLineModified',
   \   },
   \   'separator': { 'left': '⮀', 'right': '⮂' },
   \   'subseparator': { 'left': '⮁', 'right': '⮃' },
   \ }
+
+  function! LightLineFilename()
+    if &filetype =~ 'unite'
+      return fnamemodify(matchstr(unite#get_status_string(), 'directory:\s\zs.\+'), ':~')
+    else
+      return expand('%:t')
+    endif
+  endfunction
+
+  function! LightLineReadonly()
+    if &filetype =~ 'help'
+      return '?'
+    elseif &readonly
+      return '×'
+    else
+      return ''
+    endif
+  endfunction
+
+  function! LightLineModified()
+    if &filetype =~ 'help'
+      return ''
+    elseif &modified
+      return '+'
+    elseif !&modifiable
+      return '-'
+    else
+      return ''
+    endif
+  endfunction
 endif
 
 if dein#tap('vim-over')
