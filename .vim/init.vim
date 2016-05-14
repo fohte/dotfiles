@@ -19,6 +19,10 @@ function! s:source_rc(path) abort
   execute 'source' fnameescape(abspath)
 endfunction
 
+augroup MyAutoCmd
+  autocmd!
+augroup END
+
 let s:dein_dir = expand($CACHE . '/dein')
 let s:dein_repo_dir = s:dein_dir . '/repos/github.com/Shougo/dein.vim'
 

@@ -15,4 +15,4 @@ function! s:replace_chars()
 
   call setpos('.', cursor)
 endfunction
-autocmd BufWritePre * call s:replace_chars()
+autocmd MyAutoCmd BufWritePre * call s:replace_chars()
