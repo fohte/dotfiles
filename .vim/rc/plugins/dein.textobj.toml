@@ -15,3 +15,13 @@ repo = 'kana/vim-textobj-indent'
 # comments
 [[plugins]]
 repo = 'glts/vim-textobj-comment'
+
+# brackets and quotations
+[[plugins]]
+repo = 'osyo-manga/vim-textobj-multiblock'
+hook_add = '''
+  omap ab <Plug>(textobj-multiblock-a)
+  vmap ab <Plug>(textobj-multiblock-a)
+  omap ib <Plug>(textobj-multiblock-i)
+  vmap ib <Plug>(textobj-multiblock-i)
+'''
