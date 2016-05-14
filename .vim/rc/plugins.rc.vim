@@ -60,11 +60,16 @@ function! s:unite_settings()
 endfunction
 
 if dein#tap('vim-easymotion')
-  let g:EasyMotion_keys='hjklasdfgyuiopqwertnmzxcvbHJKLASDFGYUIOPQWERTNMZXCVB'
-  let g:EasyMotion_leader_key="'"
+  let g:EasyMotion_do_mapping = 0
+  let g:EasyMotion_smartcase = 1
+  let g:EasyMotion_enter_jump_first = 1
+  let g:EasyMotion_space_jump_first = 1
+  let g:EasyMotion_show_prompt = 0
+  let g:EasyMotion_keys = 'hjklasdfgyuiopqwertnmzxcvbHJKLASDFGYUIOPQWERTNMZXCVB'
+
   nmap g/ <Plug>(easymotion-sn)
-  xmap g/ <Plug>(easymotion-sn)
-  omap g/ <Plug>(easymotion-tn)
+  nmap l/ <Plug>(easymotion-overwin-line)
+  nmap f/ <Plug>(easymotion-bd-f2)
 endif
 
 if dein#tap('lexima.vim')
