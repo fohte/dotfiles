@@ -13,15 +13,12 @@ if !isdirectory($CACHE)
 endif
 
 let s:rc_dir = resolve(expand('~/.vim/rc'))
+
 function! s:source_rc(path) abort
   let abspath = resolve(expand(s:rc_dir . '/' . a:path))
   execute 'source' fnameescape(abspath)
 endfunction
 
-
-" ----------------------------------------------------------
-"   Plugins
-" ----------------------------------------------------------
 let s:dein_dir = expand($CACHE . '/dein')
 let s:dein_repo_dir = s:dein_dir . '/repos/github.com/Shougo/dein.vim'
 
@@ -49,25 +46,12 @@ if has('vim_starting')
   call dein#call_hook('source')
 endif
 
-
-" ----------------------------------------------------------
-"   Editor Settings
-" ----------------------------------------------------------
 filetype plugin indent on
+
 call s:source_rc('edit.rc.vim')
 
-" ----------------------------------------------------------
-"   View
-" ----------------------------------------------------------
 call s:source_rc('view.rc.vim')
 
-" ----------------------------------------------------------
-"   Key Mappings
-" ----------------------------------------------------------
 call s:source_rc('mappings.rc.vim')
 
-" ----------------------------------------------------------
-"   Utils
-" ----------------------------------------------------------
 call s:source_rc('utils.rc.vim')
-
