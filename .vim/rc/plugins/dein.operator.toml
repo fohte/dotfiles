@@ -17,3 +17,12 @@ hook_add = '''
   nmap <silent> sd <Plug>(operator-surround-delete)
   nmap <silent> sr <Plug>(operator-surround-replace)
 '''
+
+# comments
+[[plugins]]
+repo = 'tyru/caw.vim'
+hook_add = '''
+  let g:caw_operator_keymappings = 1
+  nmap <silent> - <Plug>(caw:hatpos:toggle:operator)
+  xmap <silent> - <Plug>(caw:hatpos:toggle:operator)
+'''
