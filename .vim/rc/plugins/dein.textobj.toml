@@ -7,3 +7,7 @@ repo = 'kana/vim-textobj-user'
 [[plugins]]
 repo = 'rhysd/vim-textobj-ruby'
 on_ft = 'ruby'
+
+# indented blocks of lines
+[[plugins]]
+repo = 'kana/vim-textobj-indent'
