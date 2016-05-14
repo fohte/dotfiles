@@ -1,4 +1,8 @@
 function! s:replace_chars()
+  if &filetype ==# 'diff'
+    return
+  endif
+
   let cursor = getpos('.')
 
   " Remove spaces at the end of each line
