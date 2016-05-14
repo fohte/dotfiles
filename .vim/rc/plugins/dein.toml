@@ -25,7 +25,11 @@ repo = 'itchyny/landscape.vim'
 # auto close parentheses
 [[plugins]]
 repo = 'cohama/lexima.vim'
-hook_source = 'source ~/.vim/rc/plugins/lexima.rc.vim'
+hook_add = '''
+  call lexima#add_rule({'char': '$', 'input_after': '$', 'filetype': 'latex'})
+  call lexima#add_rule({'char': '$', 'at': '\%#\$', 'leave': 1, 'filetype': 'latex'})
+  call lexima#add_rule({'char': '<BS>', 'at': '\$\%#\$', 'delete': 1, 'filetype': 'latex'})
+'''
 
 # provide flawless, smooth and fast motions with minimal keystrokes
 [[plugins]]
