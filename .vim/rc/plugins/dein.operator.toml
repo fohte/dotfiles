@@ -8,3 +8,12 @@ repo = 'kana/vim-operator-replace'
 hook_add = '''
   xmap <silent> p <Plug>(operator-replace)
 '''
+
+# deal with surrounds like () , '', "" and so on
+[[plugins]]
+repo = 'rhysd/vim-operator-surround'
+hook_add = '''
+  nmap <silent> sa <Plug>(operator-surround-append)
+  nmap <silent> sd <Plug>(operator-surround-delete)
+  nmap <silent> sr <Plug>(operator-surround-replace)
+'''
