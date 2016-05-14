@@ -34,9 +34,6 @@ repo = 'easymotion/vim-easymotion'
 hook_source = 'source ~/.vim/rc/plugins/easymotion.rc.vim'
 
 [[plugins]]
-repo = 'machakann/vim-swap'
-
-[[plugins]]
 repo = 'osyo-manga/vim-over'
 hook_add = '''
   nnoremap [over] <Nop>
