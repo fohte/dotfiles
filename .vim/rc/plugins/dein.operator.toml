@@ -1,3 +1,10 @@
 # support writing user-defined operators
 [[plugins]]
 repo = 'kana/vim-operator-user'
+
+# replace a specified text with register content
+[[plugins]]
+repo = 'kana/vim-operator-replace'
+hook_add = '''
+  xmap <silent> p <Plug>(operator-replace)
+'''
