@@ -29,3 +29,5 @@ set nohlsearch
 set incsearch
 set smartcase
 set wrapscan
+
+set showcmd
