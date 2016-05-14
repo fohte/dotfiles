@@ -32,13 +32,14 @@ if &runtimepath !~# '/dein.vim'
   execute 'set runtimepath^=' . fnamemodify(s:dein_repo_dir, ':p')
 endif
 
+let s:toml_dir = expand(s:rc_dir . '/plugins')
 
 if dein#load_state(s:dein_dir)
   call dein#begin(s:dein_dir, [expand('<sfile>')] + split(glob(s:rc_dir . '/*.toml'), '\n'))
 
-  call dein#load_toml(s:rc_dir . '/dein.toml', {'lazy': 0})
-  call dein#load_toml(s:rc_dir . '/dein.lazy.toml', {'lazy': 1})
-  call dein#load_toml(s:rc_dir . '/dein.syntax.toml', {'lazy': 1})
+  call dein#load_toml(s:toml_dir . '/dein.toml', {'lazy': 0})
+  call dein#load_toml(s:toml_dir . '/dein.lazy.toml', {'lazy': 1})
+  call dein#load_toml(s:toml_dir . '/dein.syntax.toml', {'lazy': 1})
 
   call dein#end()
   call dein#save_state()
