@@ -13,6 +13,7 @@ repo = 'Shougo/vimproc'
 
 [[plugins]]
 repo = 'Shougo/unite.vim'
+hook_source = 'source ~/.vim/rc/plugins/unite.rc.vim'
 
 [[plugins]]
 repo = 'kana/vim-textobj-user'
@@ -22,6 +23,7 @@ repo = 'tomtom/tcomment_vim'
 
 [[plugins]]
 repo = 'itchyny/lightline.vim'
+hook_source = 'source ~/.vim/rc/plugins/lightline.rc.vim'
 
 [[plugins]]
 repo = 'itchyny/landscape.vim'
@@ -31,49 +33,33 @@ repo = 'tpope/vim-surround'
 
 [[plugins]]
 repo = 'cohama/lexima.vim'
+hook_source = 'source ~/.vim/rc/plugins/lexima.rc.vim'
 
 [[plugins]]
 repo = 'easymotion/vim-easymotion'
+hook_source = 'source ~/.vim/rc/plugins/easymotion.rc.vim'
 
 [[plugins]]
 repo = 'machakann/vim-swap'
 
 [[plugins]]
 repo = 'osyo-manga/vim-over'
+hook_add = '''
+  nnoremap [over] <Nop>
+  nmap , [over]
+  nnoremap [over]s :OverCommandLine<CR>%s/\v
+  nnoremap [over]w :OverCommandLine<CR>%s/<C-r><C-w>//g<Left><Left>
+'''
 
 [[plugins]]
 repo = 'kana/vim-submode'
-
-
-# --------------------------------------
-#   Syntax
-# --------------------------------------
-[[plugins]]
-repo = 'cespare/vim-toml'
-
-[[plugins]]
-repo = 'kchmck/vim-coffee-script'
-
-[[plugins]]
-repo = 'digitaltoad/vim-jade'
-
-[[plugins]]
-repo = 'derekwyatt/vim-scala'
-
-[[plugins]]
-repo = 'toyamarinyon/vim-swift'
-
-[[plugins]]
-repo = 'evanmiller/nginx-vim-syntax'
-
-[[plugins]]
-repo = 'slim-template/vim-slim'
-
-[[plugins]]
-repo = 'keith/tmux.vim'
-
-[[plugins]]
-repo = 'othree/html5.vim'
-
-[[plugins]]
-repo = 'vim-pandoc/vim-pandoc-syntax'
+hook_add = '''
+  call submode#enter_with('winsize', 'n', '', '<C-w>>', '<C-w>>')
+  call submode#enter_with('winsize', 'n', '', '<C-w><', '<C-w><')
+  call submode#enter_with('winsize', 'n', '', '<C-w>+', '<C-w>-')
+  call submode#enter_with('winsize', 'n', '', '<C-w>-', '<C-w>+')
+  call submode#map('winsize', 'n', '', '>', '<C-w>>')
+  call submode#map('winsize', 'n', '', '<', '<C-w><')
+  call submode#map('winsize', 'n', '', '+', '<C-w>-')
+  call submode#map('winsize', 'n', '', '-', '<C-w>+')
+'''
