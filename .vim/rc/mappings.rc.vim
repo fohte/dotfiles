@@ -1,7 +1,3 @@
-nnoremap Q <Nop>
-nnoremap s <Nop>
-nnoremap # <Nop>
-
 noremap j gj
 noremap k gk
 noremap <S-h> ^
