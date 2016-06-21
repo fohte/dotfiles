@@ -1,7 +1,8 @@
 add-zsh-hook precmd vcs_info
 
-PROMPT='%F{black}%n@%m%f %# '
-RPROMPT='${vcs_info_msg_0_}'
+PROMPT='%F{black}%n@%m%f %~ ${vcs_info_msg_0_}
+%# '
+RPROMPT=''
 
 zstyle ':vcs_info:git:*' max-exports 1
 zstyle ':vcs_info:git:*' check-for-changes true
