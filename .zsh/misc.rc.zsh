@@ -7,9 +7,6 @@ do_enter() {
   fi
 
   echo
-  pwd
-
-  echo
   ls
 
   if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" = 'true' ]; then
