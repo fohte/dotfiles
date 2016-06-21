@@ -18,6 +18,21 @@ hook_source = 'source ~/.vim/rc/plugins/unite.rc.vim'
 repo = 'itchyny/lightline.vim'
 hook_source = 'source ~/.vim/rc/plugins/lightline.rc.vim'
 
+# adds snippet support
+[[plugins]]
+repo = 'Shougo/neosnippet.vim'
+depends = ['neosnippet-snippets']
+hook_add = '''
+  imap <C-k> <Plug>(neosnippet_expand_or_jump)
+  smap <C-k> <Plug>(neosnippet_expand_or_jump)
+  imap <C-s> <Plug>(neosnippet_start_unite_snippet)
+  smap <C-s> <Plug>(neosnippet_start_unite_snippet)
+'''
+
+# The standard snippets repository for Shougo/neosnippet.vim
+[[plugins]]
+repo = 'Shougo/neosnippet-snippets'
+
 # colorscheme for lightline.vim
 [[plugins]]
 repo = 'itchyny/landscape.vim'
