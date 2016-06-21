@@ -4,8 +4,8 @@ if [ -z "${DOTPATH:-}" ]; then
   readonly DOTPATH="${HOME}/dotfiles"
 fi
 
-if [ -z "${DOTFILES_REPO:-}" ]; then
-  readonly DOTFILES_REPO="Fohte/dotfiles"
+if [ -z "${DOTFILES_GITHUB:-}" ]; then
+  readonly DOTFILES_GITHUB="https://github.com/Fohte/dotfiles"
 fi
 
 readonly HEADER='
@@ -40,12 +40,13 @@ if [ -d "${DOTPATH}" ]; then
 fi
 
 echo "${HEADER}"
+echo "Downloading ${DOTFILES_GITHUB}.git into ${DOTPATH} ..."
 
 if has "git"; then
-  git clone --recursive "git@github.com:${DOTFILES_REPO}.git" "${DOTPATH}"
+  git clone --recursive "${DOTFILES_GITHUB}" "${DOTPATH}"
 
 elif has "curl" || has "wget"; then
-  tarball="https://github.com/${DOTFILES_REPO}/archive/master.tar.gz"
+  tarball="${DOTFILES_GITHUB}/archive/master.tar.gz"
 
   if has "curl"; then
     curl -L "${tarball}"
