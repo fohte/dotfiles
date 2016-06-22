@@ -11,6 +11,9 @@
 [push]
   default = current
 
+[url "git@github.com:"]
+  pushInsteadOf = https://github.com/
+
 [alias]
   a  = add
   aa = add -A .
