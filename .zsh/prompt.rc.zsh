@@ -1,7 +1,6 @@
 add-zsh-hook precmd vcs_info
 
-PROMPT='%F{black}%n@%m%f %~ ${vcs_info_msg_0_}
-%# '
+PROMPT="${fg_bold[blue]}%(5~,.../%3~,%~)${reset_color} ${fg[red]}%#${reset_color} "
 RPROMPT=''
 
 zstyle ':vcs_info:git:*' max-exports 1
