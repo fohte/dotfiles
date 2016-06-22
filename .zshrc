@@ -14,6 +14,8 @@ fi
 eval "$(rbenv init -)"
 eval "$(pyenv init -)"
 
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
 ZSHDIR="${HOME}/.zsh"
 function source_rc() {
   local source_file="${ZSHDIR}/${1}"
