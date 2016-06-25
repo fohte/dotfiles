@@ -11,8 +11,26 @@ if [ ! -f ~/.zshrc.zwc ] || [ ~/.zshrc -nt ~/.zshrc.zwc ]; then
     zcompile ~/.zshrc
 fi
 
-eval "$(rbenv init -)"
-eval "$(pyenv init -)"
+has() {
+  which "$1" > /dev/null 2>&1
+  return $?
+}
+
+is_osx() {
+  [[ $OSTYPE == darwin* ]]
+}
+
+if has 'rbenv'; then
+  eval "$(rbenv init -)"
+fi
+
+if has 'pyenv'; then
+  eval "$(pyenv init -)"
+fi
+
+if is_osx && has 'brew'; then
+  fpath=($(brew --prefix)/share/zsh/site-functions $fpath)
+fi
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
@@ -24,8 +42,6 @@ function source_rc() {
     source $source_file
   fi
 }
-
-fpath=($(brew --prefix)/share/zsh/site-functions $fpath)
 
 source_rc 'autoload.rc.zsh'
 source_rc 'setopt.rc.zsh'
