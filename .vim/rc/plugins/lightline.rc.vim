@@ -1,5 +1,5 @@
 let g:lightline = {
-\   'colorscheme': 'landscape',
+\   'colorscheme': 'hybrid',
 \   'active': {
 \     'left': [['mode', 'paste'], ['readonly', 'filename', 'modified']],
 \     'right': [['lineinfo'], ['filetype'], ['fileencoding', 'fileformat']]
