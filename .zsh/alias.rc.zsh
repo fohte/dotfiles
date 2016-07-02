@@ -1,4 +1,5 @@
 alias ls='ls -ACFG'
+alias l='ls -l'
 alias g='git'
 alias v='nvim'
 alias be='bundle exec'
