@@ -24,3 +24,13 @@ function mkcd() {
 ghqcd() {
   cd $(ghq root)/$(ghq list | fzf-tmux --reverse)
 }
+
+gaf() {
+  local addfiles
+  addfiles=($(git status --short | grep -v '##' | awk '{ print $2 }' | fzf-tmux --multi))
+  if [[ -n $addfiles ]]; then
+    git add ${@:2} $addfiles && echo "added: $addfiles"
+  else
+    echo "nothing added."
+  fi
+}
