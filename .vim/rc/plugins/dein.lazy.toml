@@ -33,3 +33,18 @@ on_ft = 'python'
 hook_add = '''
   setlocal completeopt-=preview
 '''
+
+# keyword completion system for Go
+#   Note: require nsf/gocode
+[[plugins]]
+repo = 'zchee/deoplete-go'
+on_ft = 'go'
+build = 'make'
+
+# Go doc, fmt and import utilities
+[[plugins]]
+repo = 'vim-jp/vim-go-extra'
+on_ft = 'go'
+hook_add = '''
+  autocmd MyAutoCmd FileType go autocmd MyAutoCmd BufWritePre <buffer> Fmt
+'''
