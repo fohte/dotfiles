@@ -15,10 +15,11 @@ fpath=( \
 
 export GOPATH=$HOME/.go
 
-export ZSHDIR="$HOME/.zsh"
+export ZSHDIR=$HOME/.zsh
 
-export TERM=xterm-256color
-export EDITOR=vim
+export LANG='en_US.UTF-8'
+export EDITOR='vim'
+export PAGER='less'
 
 export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>+'
 
