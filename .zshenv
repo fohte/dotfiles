@@ -5,6 +5,7 @@ path=( \
   $HOME/.cabal/bin(N-/) \
   $HOME/.rbenv/bin(N-/) \
   $HOME/.pyenv/shims(N-/) \
+  $GOPATH/bin(N-/) \
   $path \
 )
 
