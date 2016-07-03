@@ -1,8 +1,13 @@
 alias ls='ls -ACFG'
 alias l='ls -l'
+
 alias g='git'
-alias v='nvim'
+
+has 'nvim' && alias vim='nvim'
+alias v='vim'
+
 alias be='bundle exec'
+
 alias d='docker'
 alias dc='docker-compose'
 alias dcr='docker-compose run'

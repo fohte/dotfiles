@@ -18,7 +18,7 @@ export GOPATH=$HOME/.go
 export ZSHDIR="$HOME/.zsh"
 
 export TERM=xterm-256color
-export EDITOR='nvim'
+export EDITOR=vim
 
 export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>+'
 
