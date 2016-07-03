@@ -7,10 +7,6 @@
 #             \/     \/     \/            \/   @Fohte
 # ----------------------------------------------------------
 
-if [ ! -f ~/.zshrc.zwc ] || [ ~/.zshrc -nt ~/.zshrc.zwc ]; then
-    zcompile ~/.zshrc
-fi
-
 has() {
   which "$1" > /dev/null 2>&1
   return $?
