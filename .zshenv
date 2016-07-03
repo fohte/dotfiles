@@ -3,6 +3,8 @@ export PATH=$HOME/.cabal/bin:$PATH
 export PATH=$HOME/.rbenv/bin:$PATH
 export PATH=$HOME/.pyenv/shims:$PATH
 
+export GOPATH=$HOME/.go
+
 export TERM=xterm-256color
 export EDITOR='nvim'
 
