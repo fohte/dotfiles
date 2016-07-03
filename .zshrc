@@ -7,37 +7,21 @@
 #             \/     \/     \/            \/   @Fohte
 # ----------------------------------------------------------
 
-has() {
-  which "$1" > /dev/null 2>&1
-  return $?
-}
-
-is_osx() {
-  [[ $OSTYPE == darwin* ]]
-}
-
-if has 'rbenv'; then
-  eval "$(rbenv init -)"
-fi
-
-if has 'pyenv'; then
-  eval "$(pyenv init -)"
-fi
-
-if is_osx && has 'brew'; then
-  fpath=($(brew --prefix)/share/zsh/site-functions $fpath)
-fi
-
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-ZSHDIR="${HOME}/.zsh"
-function source_rc() {
-  local source_file="${ZSHDIR}/${1}"
+source_rc() {
+  local source_file="$ZSHDIR/$1"
 
   if [ -f $source_file ]; then
     source $source_file
   fi
 }
+
+source_rc 'functions.rc.zsh'
+
+has 'rbenv' && eval "$(rbenv init -)"
+has 'pyenv' && eval "$(pyenv init -)"
+
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 source_rc 'autoload.rc.zsh'
 source_rc 'setopt.rc.zsh'

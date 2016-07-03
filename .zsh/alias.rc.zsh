@@ -17,8 +17,8 @@ alias -g L='| less'
 alias -s py=python
 alias -s rb=ruby
 
-function mkcd() {
-  mkdir -p $@ && $@;
+mkcd() {
+  mkdir -p $@ && cd $@;
 }
 
 ghqcd() {
