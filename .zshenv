@@ -1,3 +1,5 @@
+typeset -U path PATH fpath FPATH
+
 path=( \
   $HOME/.nodebrew/current/bin(N-/) \
   $HOME/.cabal/bin(N-/) \
