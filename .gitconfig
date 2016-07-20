@@ -1,57 +1,57 @@
 [user]
-  name  = Hayato KAWAI
-  email = g@fohte.net
+	name  = Hayato KAWAI
+	email = g@fohte.net
 
 [core]
-  pager = less -R
+	pager = less -R
 
 [color]
-  ui = auto
+	ui = auto
 
 [push]
-  default = current
+	default = current
 
 [url "git@github.com:"]
-  pushInsteadOf = https://github.com/
+	pushInsteadOf = https://github.com/
 
 [alias]
-  a  = add
-  aa = add -A .
-  ap = add -p
+	a  = add
+	aa = add -A .
+	ap = add -p
 
-  br = branch
+	br = branch
 
-  ch = checkout
-  cb = checkout -b
+	ch = checkout
+	cb = checkout -b
 
-  c   = commit
-  ca  = commit -a
-  cm  = commit -m
-  cam = commit -am
-  cc  = commit --amend --allow-empty-message -m ''
+	c   = commit
+	ca  = commit -a
+	cm  = commit -m
+	cam = commit -am
+	cc  = commit --amend --allow-empty-message -m ''
 
-  d  = diff
-  ds = diff --staged
+	d  = diff
+	ds = diff --staged
 
-  f = fetch -p
+	f = fetch -p
 
-  l  = log --pretty=format:'%Cred%h%Creset - %s%C(yellow)%d%Creset' --graph --abbrev-commit --date=relative -n 15 --branches
+	l  = log --pretty=format:'%Cred%h%Creset - %s%C(yellow)%d%Creset' --graph --abbrev-commit --date=relative -n 15 --branches
 
-  m  = merge
+	m  = merge
 
-  s  = status --short --branch
+	s  = status --short --branch
 
-  ss = stash save
-  sp = stash pop
+	ss = stash save
+	sp = stash pop
 
-  p = push
+	p = push
 
-  pl = pull
+	pl = pull
 
-  rb = rebase
+	rb = rebase
 
-  rs = reset --soft
-  rh = reset --hard
+	rs = reset --soft
+	rh = reset --hard
 
 [merge]
-  ff = false
+	ff = false
