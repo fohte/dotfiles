@@ -1,6 +1,6 @@
 DOTPATH := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 DEPLOYFILES := $(wildcard .??*)
-IGNOREFILES := .DS_Store .git
+IGNOREFILES := .DS_Store .git .gitignore
 DOTFILES := $(filter-out $(IGNOREFILES), $(DEPLOYFILES))
 
 list:
