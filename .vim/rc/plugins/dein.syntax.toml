@@ -63,5 +63,5 @@ on_event = 'InsertEnter'
 
 # adds JavaScript support
 [[plugins]]
-repo = 'othree/yajs.vim'
+repo = 'pangloss/vim-javascript'
 on_ft = 'javascript'
