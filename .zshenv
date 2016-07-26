@@ -4,8 +4,9 @@ path=( \
   $HOME/.nodebrew/current/bin(N-/) \
   $HOME/.cabal/bin(N-/) \
   $HOME/.rbenv/bin(N-/) \
-  $HOME/.pyenv/shims(N-/) \
+  $HOME/.pyenv/bin(N-/) \
   $GOPATH/bin(N-/) \
+  $HOME/bin(N-/) \
   $path \
 )
 
