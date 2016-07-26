@@ -14,45 +14,55 @@
 
 [url "git@github.com:"]
 	pushInsteadOf = https://github.com/
+	pushInsteadOf = git://github.com/
+	insteadOf = https://github.com/
+	insteadOf = git://github.com/
+	insteadOf = gh:
 
 [alias]
-	a  = add
-	aa = add -A .
-	ap = add -p
+	amend = commit --amend
 
-	br = branch
+	a   = add
+	aa  = add -A .
+	ap  = add -p
 
-	ch = checkout
-	cb = checkout -b
+	br  = branch
+
+	ch  = checkout
+	cb  = checkout -b
 
 	c   = commit
 	ca  = commit -a
 	cm  = commit -m
 	cam = commit -am
-	cc  = commit --amend --allow-empty-message -m ''
+	co  = commit --amend --no-edit
 
-	d  = diff
-	ds = diff --staged
+	d   = diff
+	ds  = diff --staged
 
-	f = fetch -p
+	f   = fetch -p
 
-	l  = log --pretty=format:'%Cred%h%Creset - %s%C(yellow)%d%Creset' --graph --abbrev-commit --date=relative -n 15 --branches
+	l   = log --pretty=format:'%Cred%h%Creset - %s%C(yellow)%d%Creset' --graph --abbrev-commit -n 15 --branches
 
-	m  = merge
+	m   = merge
 
-	s  = status --short --branch
+	s   = status
 
-	ss = stash save
-	sp = stash pop
+	ss  = stash save
+	sp  = stash pop
 
-	p = push
+	p   = push
 
-	pl = pull
+	pl  = pull
 
-	rb = rebase
+	rb  = rebase
+	rbi = rebase -i
 
-	rs = reset --soft
-	rh = reset --hard
+	r   = reset
+	rs  = reset --soft
+	rh  = reset --hard
 
 [merge]
 	ff = false
+[pull]
+	rebase = preserve

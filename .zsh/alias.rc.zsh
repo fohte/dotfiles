@@ -14,6 +14,7 @@ alias dcr='docker-compose run'
 alias dm='docker-machine'
 
 alias -g G='| grep'
+alias -g GV='| grep -v'
 alias -g N='> /dev/null 2>&1'
 alias -g Y='| pbcopy'
 alias -g M='| more'

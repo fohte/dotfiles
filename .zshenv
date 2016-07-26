@@ -4,8 +4,9 @@ path=( \
   $HOME/.nodebrew/current/bin(N-/) \
   $HOME/.cabal/bin(N-/) \
   $HOME/.rbenv/bin(N-/) \
-  $HOME/.pyenv/shims(N-/) \
+  $HOME/.pyenv/bin(N-/) \
   $GOPATH/bin(N-/) \
+  $HOME/bin(N-/) \
   $path \
 )
 
@@ -24,6 +25,11 @@ export PAGER='less'
 
 export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>+'
 
+export TIMEFMT=$'\nreal\t%E\nuser\t%U\nsys\t%S'
+
 export HISTFILE=$HOME/.zsh_history
 export HISTSIZE=1000
 export SAVEHIST=100000
+
+# For vi mode in zsh
+export KEYTIMEOUT=1

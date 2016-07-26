@@ -1,0 +1,11 @@
+#!/bin/bash
+
+pushd `pwd` > /dev/null 2>&1
+
+cd `dirname $0`
+binpath=`pwd -P`
+dotpath="$binpath/.."
+
+popd > /dev/null 2>&1
+
+echo "$dotpath/lib/$1.sh"
