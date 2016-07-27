@@ -9,3 +9,7 @@ setopt ignore_eof
 setopt rm_star_wait
 
 setopt prompt_subst
+
+# vi mode settings
+bindkey -v
+bindkey '^?' backward-delete-char
