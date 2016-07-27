@@ -7,6 +7,8 @@
 #             \/     \/     \/            \/   @Fohte
 # ----------------------------------------------------------
 
+source `lib util`
+
 source_rc() {
   local source_file="$ZSHDIR/$1"
 
@@ -14,8 +16,6 @@ source_rc() {
     source $source_file
   fi
 }
-
-source_rc 'functions.rc.zsh'
 
 has 'rbenv' && eval "$(rbenv init -)"
 has 'pyenv' && eval "$(pyenv init -)"
