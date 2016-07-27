@@ -8,4 +8,4 @@ dotpath="$binpath/.."
 
 popd > /dev/null 2>&1
 
-source "$dotpath/lib/$1.sh"
+echo "$dotpath/lib/$1.sh"
