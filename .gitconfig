@@ -35,6 +35,7 @@
 	ca  = commit -a
 	cm  = commit -m
 	cam = commit -am
+	co  = commit --amend --no-edit
 
 	d   = diff
 	ds  = diff --staged
