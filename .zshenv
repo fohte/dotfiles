@@ -7,6 +7,7 @@ path=( \
   $HOME/.pyenv/bin(N-/) \
   $GOPATH/bin(N-/) \
   $HOME/bin(N-/) \
+  $HOME/.local/bin(N-/) \
   $path \
 )
 
