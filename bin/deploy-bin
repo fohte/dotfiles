@@ -1,0 +1,9 @@
+#!/bin/bash
+
+binpath=("$HOME/bin" "$HOME/.local/bin")
+
+for bin in $binpath; do
+  if [ ! -f $bin ]; then
+    chmod +x $bin/*
+  fi
+done
