@@ -1,6 +1,7 @@
 [user]
 	name  = Hayato Kawai
 	email = fohte.hk@gmail.com
+	signingkey = Fohte
 
 [core]
 	pager = less -R
@@ -66,3 +67,5 @@
 	ff = false
 [pull]
 	rebase = preserve
+[commit]
+	gpgsign = true
