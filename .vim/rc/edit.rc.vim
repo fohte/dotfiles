@@ -31,3 +31,5 @@ set smartcase
 set wrapscan
 
 set showcmd
+
+set iskeyword+=-
