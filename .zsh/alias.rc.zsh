@@ -1,6 +1,7 @@
 alias ls='ls -ACFG'
 alias l='ls -l'
 
+has 'hub' && alias git='hub'
 alias g='git'
 
 has 'nvim' && alias vim='nvim'
