@@ -15,3 +15,5 @@ let g:deoplete#omni#input_patterns.ruby = '[^. *\t]\.\w*\|\h\w*::'
 inoremap <expr> <TAB>   pumvisible() ? "\<C-n>" : "\<TAB>"
 inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
 inoremap <expr> <BS>    deoplete#mappings#close_popup()."\<C-h>"
+
+call deoplete#custom#set('_', 'matchers', ['matcher_full_fuzzy', 'matcher_length'])
