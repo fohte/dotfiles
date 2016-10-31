@@ -18,3 +18,10 @@ inoremap <expr> <BS>    deoplete#mappings#close_popup()."\<C-h>"
 
 call deoplete#custom#set('_', 'matchers', ['matcher_full_fuzzy', 'matcher_length'])
 call deoplete#custom#set('_', 'disabled_syntaxes', ['Comment', 'String'])
+call deoplete#custom#set('_', 'converters', [
+  \ 'converter_auto_paren',
+  \ 'converter_auto_delimiter',
+  \ 'converter_remove_overlap',
+  \ 'converter_truncate_abbr',
+  \ 'converter_truncate_menu',
+  \ ])
