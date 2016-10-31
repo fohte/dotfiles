@@ -46,5 +46,7 @@ build = 'make'
 repo = 'vim-jp/vim-go-extra'
 on_ft = 'go'
 hook_add = '''
-  autocmd MyAutoCmd FileType go autocmd MyAutoCmd BufWritePre <buffer> Fmt
+  augroup go_extra
+    au! FileType go au! go_extra BufWritePre <buffer> Fmt
+  augroup END
 '''
