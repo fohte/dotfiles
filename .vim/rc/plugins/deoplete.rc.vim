@@ -6,7 +6,7 @@ let g:deoplete#enable_refresh_always = 0
 let g:deoplete#auto_complete_start_length = 2
 
 let g:deoplete#keyword_patterns = {}
-let g:deoplete#keyword_patterns._ = '[a-zA-Z_]\k*\(?'
+let g:deoplete#keyword_patterns._ = '[a-zA-Z_]\k*'
 
 let g:deoplete#omni#input_patterns = {}
 let g:deoplete#omni#input_patterns.ruby = '[^. *\t]\.\w*\|\h\w*::'
