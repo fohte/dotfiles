@@ -1,0 +1,5 @@
+#!/bin/bash
+
+files=${@}
+isort $files
+autopep8 $files --in-place
