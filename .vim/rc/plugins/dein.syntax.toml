@@ -61,6 +61,18 @@ repo = 'hynek/vim-python-pep8-indent'
 on_ft = 'python'
 on_event = 'InsertEnter'
 
+# autopep8 for Vim
+[[plugins]]
+repo = 'tell-k/vim-autopep8'
+on_ft = 'python'
+hook_add = '''
+  augroup python_autopep8
+    au! BufWritePre *.py call Autopep8()
+  augroup END
+
+  let g:autopep8_disable_show_diff = 1
+'''
+
 # adds JavaScript support
 [[plugins]]
 repo = 'pangloss/vim-javascript'
