@@ -17,3 +17,4 @@ inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
 inoremap <expr> <BS>    deoplete#mappings#close_popup()."\<C-h>"
 
 call deoplete#custom#set('_', 'matchers', ['matcher_full_fuzzy', 'matcher_length'])
+call deoplete#custom#set('_', 'disabled_syntaxes', ['Comment', 'String'])
