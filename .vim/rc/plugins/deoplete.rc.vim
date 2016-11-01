@@ -20,7 +20,7 @@ inoremap <expr> <C-g> deoplete#mappings#undo_completion()
 call deoplete#custom#set('_', 'matchers', ['matcher_full_fuzzy', 'matcher_length'])
 call deoplete#custom#set('_', 'disabled_syntaxes', ['Comment', 'String'])
 call deoplete#custom#set('_', 'converters', [
-  \ 'converter_auto_paren',
+  \ 'converter_remove_paren',
   \ 'converter_auto_delimiter',
   \ 'converter_remove_overlap',
   \ 'converter_truncate_abbr',
