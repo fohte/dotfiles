@@ -66,10 +66,6 @@ on_event = 'InsertEnter'
 repo = 'tell-k/vim-autopep8'
 on_ft = 'python'
 hook_add = '''
-  augroup python_autopep8
-    au! BufWritePre *.py call Autopep8()
-  augroup END
-
   let g:autopep8_disable_show_diff = 1
 '''
 
@@ -78,10 +74,6 @@ hook_add = '''
 repo = 'Photonios/vim-isort'
 on_ft = 'python'
 hook_add = '''
-  augroup python_isort
-    au! FileType python au! python_isort BufWritePre <buffer> Isort
-  augroup END
-
   let g:isort_options = {}
 '''
 

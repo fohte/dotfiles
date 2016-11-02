@@ -45,8 +45,3 @@ build = 'make'
 [[plugins]]
 repo = 'vim-jp/vim-go-extra'
 on_ft = 'go'
-hook_add = '''
-  augroup go_extra
-    au! FileType go au! go_extra BufWritePre <buffer> Fmt
-  augroup END
-'''
