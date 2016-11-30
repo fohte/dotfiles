@@ -13,6 +13,10 @@ build = 'make'
 repo = 'Shougo/unite.vim'
 hook_source = 'source ~/.vim/rc/plugins/unite.rc.vim'
 
+[[plugins]]
+repo = 'Shougo/unite-outline'
+on_source = 'unite.vim'
+
 # light and configurable statusline/tabline
 [[plugins]]
 repo = 'itchyny/lightline.vim'

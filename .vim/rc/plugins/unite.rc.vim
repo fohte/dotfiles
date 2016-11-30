@@ -13,6 +13,7 @@ nmap <Space> [unite]
 map <silent> [unite]f :<C-u>UniteWithBufferDir -buffer-name=files -start-insert file file/new<CR>
 map <silent> [unite]p :<C-u>call  <SID>unite_file_rec()<CR>
 map <silent> [unite]b :<C-u>Unite -buffer-name=buffers buffer<CR>
+map <silent> [unite]o :<C-u>Unite -buffer-name=outlines -vertical -no-quit -resume -winwidth=40 outline<CR>
 
 autocmd FileType unite call s:unite_settings()
 
