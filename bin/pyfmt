@@ -1,5 +1,5 @@
 #!/bin/bash
 
-files=${@}
-isort $files
-autopep8 $files --in-place
+autoflake --remove-all-unused-imports --remove-unused-variables -i -r .
+isort -rc -y -q .
+autopep8 -i -r .
