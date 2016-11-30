@@ -13,9 +13,9 @@ hook_add = '''
 [[plugins]]
 repo = 'rhysd/vim-operator-surround'
 hook_add = '''
-  nmap <silent> sa <Plug>(operator-surround-append)
-  nmap <silent> sd <Plug>(operator-surround-delete)
-  nmap <silent> sr <Plug>(operator-surround-replace)
+  map <silent> sa <Plug>(operator-surround-append)
+  map <silent> sd <Plug>(operator-surround-delete)
+  map <silent> sr <Plug>(operator-surround-replace)
 '''
 
 # comments
