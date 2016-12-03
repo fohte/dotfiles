@@ -14,6 +14,13 @@ map <silent> [unite]f :<C-u>UniteWithBufferDir -buffer-name=files -start-insert 
 map <silent> [unite]p :<C-u>call  <SID>unite_file_rec()<CR>
 map <silent> [unite]b :<C-u>Unite -buffer-name=buffers buffer<CR>
 map <silent> [unite]o :<C-u>Unite -buffer-name=outlines -vertical -no-quit -resume -winwidth=40 outline<CR>
+map <silent> [unite]g :<C-u>Unite grep:.<CR>
+
+if executable('ag')
+  let g:unite_source_grep_command = 'ag'
+  let g:unite_source_grep_default_opts = '--ignore-case --nogroup --nocolor --hidden --ignore .git'
+  let g:unite_source_grep_recursive_opt = ''
+endif
 
 autocmd FileType unite call s:unite_settings()
 
