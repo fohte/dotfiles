@@ -21,7 +21,11 @@ export GOPATH=$HOME/.go
 export ZSHDIR=$HOME/.zsh
 
 export LANG='en_US.UTF-8'
-export EDITOR='vim'
+if [ type -a 'nvim' 2>&1 > /dev/null ]; then
+  export EDITOR='nvim'
+else
+  export EDITOR='vim'
+fi
 export PAGER='less'
 
 export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>+'
