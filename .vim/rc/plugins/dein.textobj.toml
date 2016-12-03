@@ -24,3 +24,6 @@ hook_add = '''
   omap ib <Plug>(textobj-multiblock-i)
   vmap ib <Plug>(textobj-multiblock-i)
 '''
+
+[[plugins]]
+repo = 'osyo-manga/vim-textobj-blockwise'
