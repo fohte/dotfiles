@@ -9,3 +9,5 @@ set number
 set title
 set noshowmode
 set laststatus=2
+
+set list
