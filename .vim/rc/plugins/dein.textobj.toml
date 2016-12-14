@@ -27,3 +27,7 @@ hook_add = '''
 
 [[plugins]]
 repo = 'osyo-manga/vim-textobj-blockwise'
+
+# function's parameters
+[[plugins]]
+repo = 'sgur/vim-textobj-parameter'
