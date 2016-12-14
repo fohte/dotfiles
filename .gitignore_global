@@ -40,3 +40,7 @@ Session.vim
 tags
 
 
+*.jpg
+*.jpeg
+*.png
+*.gif
