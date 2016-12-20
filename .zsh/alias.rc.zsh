@@ -19,7 +19,7 @@ alias -g GV='| grep -v'
 alias -g N='> /dev/null 2>&1'
 alias -g Y='| pbcopy'
 alias -g M='| more'
-alias -g L='| less'
+alias -g L='| less -R'
 
 alias -s py=python
 alias -s rb=ruby
