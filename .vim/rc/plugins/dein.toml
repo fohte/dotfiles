@@ -79,3 +79,17 @@ hook_add = '''
   call submode#map('winsize', 'n', '', '+', '<C-w>-')
   call submode#map('winsize', 'n', '', '-', '<C-w>+')
 '''
+
+# improve git commit buffer
+[[plugins]]
+repo = 'rhysd/committia.vim'
+on_ft = 'gitcommit'
+hook_add = '''
+  let g:committia_hooks = {}
+  function! g:committia_hooks.edit_open(info)
+    " If no commit message, start with insert mode
+    if a:info.vcs ==# 'git' && getline(1) ==# ''
+      startinsert
+    end
+  endfunction
+'''
