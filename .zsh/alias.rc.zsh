@@ -29,7 +29,8 @@ mkcd() {
 }
 
 ghqcd() {
-  cd $(ghq root)/$(ghq list | fzf-tmux --reverse)
+  local dir
+  dir="$(ghq root)/$(ghq list | fzf-tmux --reverse)" && cd $dir
 }
 
 gaf() {
