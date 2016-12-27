@@ -38,3 +38,5 @@ export SAVEHIST=100000
 
 # For vi mode in zsh
 export KEYTIMEOUT=1
+
+export FZF_CTRL_T_COMMAND='ag --hidden -g ""'
