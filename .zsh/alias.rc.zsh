@@ -35,7 +35,7 @@ ghqcd() {
 
 gaf() {
   local addfiles
-  addfiles=($(git status --short | grep -v '##' | awk '{ print $2 }' | fzf-tmux --multi))
+  addfiles=($(git status -s | fzf-tmux -m --ansi --preview "git diff --color \$(echo {} | awk '{ print \$2 }')" | awk '{ print $2 }'))
   if [[ -n $addfiles ]]; then
     git add ${@:1} $addfiles && echo "added: $addfiles"
   else
