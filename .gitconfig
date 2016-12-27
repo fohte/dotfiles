@@ -8,7 +8,7 @@
 	excludesfile = ~/.gitignore_global
 
 [color]
-	ui = auto
+	ui = always
 
 [push]
 	default = current
