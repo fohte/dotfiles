@@ -40,3 +40,4 @@ export SAVEHIST=100000
 export KEYTIMEOUT=1
 
 export FZF_CTRL_T_COMMAND='ag --hidden -g ""'
+export FZF_DEFAULT_OPTS='--cycle'
