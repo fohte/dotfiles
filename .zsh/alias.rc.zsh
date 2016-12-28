@@ -43,6 +43,14 @@ fzf-git-nocommit-file() {
 zle -N fzf-git-nocommit-file
 bindkey '^G^T' fzf-git-nocommit-file
 
+fzf-git-log() {
+  local selected
+  selected=($(git log --pretty=format:'%C(yellow)%h%C(reset) %s %C(green)%an%C(reset)' | fzf-tmux --ansi --preview "git diff --color \$(echo {} | awk '{ print \$1 \"^ \" \$1 }')" | awk '{ print $1 }'))
+  LBUFFER="${LBUFFER}${selected}"
+}
+zle -N fzf-git-log
+bindkey '^G^L' fzf-git-log
+
 # search and execute command from history with fzf
 fh() {
   eval $( ([ -n "$ZSH_NAME" ] && fc -l 1 || history) | fzf-tmux +s --tac | sed 's/ *[0-9]* *//')
