@@ -51,11 +51,6 @@ fzf-git-log() {
 zle -N fzf-git-log
 bindkey '^G^L' fzf-git-log
 
-# search and execute command from history with fzf
-fh() {
-  eval $( ([ -n "$ZSH_NAME" ] && fc -l 1 || history) | fzf-tmux +s --tac | sed 's/ *[0-9]* *//')
-}
-
 # switch the tmux session with fzf
 fs() {
   local session
