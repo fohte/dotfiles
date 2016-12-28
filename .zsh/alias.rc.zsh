@@ -33,15 +33,15 @@ ghqcd() {
   dir="$(ghq root)/$(ghq list | fzf-tmux --reverse)" && cd $dir
 }
 
-gaf() {
-  local addfiles
-  addfiles=($(git status -s | fzf-tmux -m --ansi --preview "git diff --color \$(echo {} | awk '{ print \$2 }')" | awk '{ print $2 }'))
-  if [[ -n $addfiles ]]; then
-    git add ${@:1} $addfiles && echo "added: $addfiles"
-  else
-    echo "nothing added."
-  fi
+bindkey -r '^G'
+
+fzf-git-nocommit-file() {
+  local selected
+  selected=($(git status -s | fzf-tmux -m --ansi --preview "git diff --color \$(echo {} | awk '{ print \$2 }')" | awk '{ print $2 }'))
+  LBUFFER="${LBUFFER}${selected}"
 }
+zle -N fzf-git-nocommit-file
+bindkey '^G^T' fzf-git-nocommit-file
 
 # search and execute command from history with fzf
 fh() {
