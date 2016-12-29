@@ -31,7 +31,9 @@ export GPG_TTY=`tty`
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-source_rc 'autoload.rc.zsh'
+autoload -Uz compinit && compinit -u
+autoload -Uz colors; colors
+
 source_rc 'setopt.rc.zsh'
 source_rc 'alias.rc.zsh'
 source_rc 'prompt.rc.zsh'
