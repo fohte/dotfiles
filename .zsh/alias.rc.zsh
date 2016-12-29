@@ -1,5 +1,6 @@
 alias ls='ls -ACFG'
 alias l='ls -l'
+alias c='cat'
 
 has 'hub' && alias git='hub'
 alias g='git'
