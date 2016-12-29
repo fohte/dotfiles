@@ -36,5 +36,6 @@ autoload -Uz colors; colors
 
 source_rc 'setopt.rc.zsh'
 source_rc 'alias.rc.zsh'
+source_rc 'bindkey.rc.zsh'
 source_rc 'prompt.rc.zsh'
 source_rc 'misc.rc.zsh'
