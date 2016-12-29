@@ -34,6 +34,14 @@ export GPG_TTY=`tty`
 autoload -Uz compinit && compinit -u
 autoload -Uz colors; colors
 
+if [ ! -d ~/.zplug ]; then
+  printf 'Install zplug? [y/N]: '
+  if read -q; then
+    echo; curl -sL zplug.sh/installer | zsh
+  fi
+fi
+[ -d ~/.zplug ] && source_rc 'zplug.rc.zsh'
+
 source_rc 'setopt.rc.zsh'
 source_rc 'alias.rc.zsh'
 source_rc 'bindkey.rc.zsh'
