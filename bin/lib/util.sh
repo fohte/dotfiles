@@ -10,3 +10,7 @@ is_macos() {
 is_tmux_running() {
   [ ! -z "$TMUX" ]
 }
+
+is_ssh_running() {
+  [ ! -z "$SSH_CONNECTION" ] || [ ! -z "$SSH_CLIENT" ]
+}
