@@ -7,7 +7,7 @@
 #             \/     \/     \/            \/   @Fohte
 # ----------------------------------------------------------
 
-source `lib util`
+. "$DOTPATH"/bin/lib/util.sh
 
 source_rc() {
   local source_file="$ZSHDIR/$1"
