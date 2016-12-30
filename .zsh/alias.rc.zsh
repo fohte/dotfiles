@@ -86,3 +86,5 @@ ghq-init() {
   cd $repo
   touch README.md
 }
+
+has 'tmux-attach' && alias t='tmux-attach'
