@@ -12,7 +12,11 @@ git_current_branch() {
 
 dynamic_privilege() {
   local status_color
-  status_color='blue'
+  if is_ssh_running; then
+    status_color='red'
+  else
+    status_color='blue'
+  fi
   echo -n "%{$fg[$status_color]%}>%{$reset_color%}>"
 }
 
