@@ -6,3 +6,7 @@ has() {
 is_macos() {
   [[ $OSTYPE == darwin* ]]
 }
+
+is_tmux_running() {
+  [ ! -z "$TMUX" ]
+}

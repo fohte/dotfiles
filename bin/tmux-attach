@@ -1,6 +1,8 @@
 #!/bin/bash
 
-if [ -z "$TMUX" ] && ! tmux has-session >/dev/null 2>&1; then
+. "$DOTPATH"/bin/lib/util.sh
+
+if ! is_tmux_running && ! tmux has-session >/dev/null 2>&1; then
   tmux new-session
 else
   selected=$(tmux ls -F '#{session_name} (#{t:session_activity}) #{session_windows} windows' | fzf-tmux | awk '{ print $1 }')
