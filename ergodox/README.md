@@ -2,7 +2,7 @@
 This directory includes a ErgoDox keymap for me.
 
 ## Installation
-Run a shellscript, it will build the keymap and create hex file:
+Run the shellscript, it will build the keymap and create hex file:
 ```
 ./build_keymap.sh
 ```
