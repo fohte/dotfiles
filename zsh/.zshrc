@@ -10,7 +10,7 @@
 . "$DOTPATH"/bin/lib/util.sh
 
 source_rc() {
-  local source_file="$ZSHDIR/$1"
+  local source_file="$DOTPATH/zsh/rc/$1"
 
   if [ -f $source_file ]; then
     source $source_file

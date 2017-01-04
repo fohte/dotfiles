@@ -1,0 +1,17 @@
+./vim ~/.vim
+./vim ~/.config/nvim
+./vim/init.vim ~/.vimrc
+
+./git/.gitconfig ~/.gitconfig
+./git/.gitignore_global ~/.gitignore_global
+
+./zsh/.zshrc ~/.zshrc
+./zsh/.zshenv ~/.zshenv
+
+./tmux/.tmux.conf ~/.tmux.conf
+
+./ag/.agignore ~/.agignore
+
+./tex/.latexmkrc ~/.latexmkrc
+
+./bin ~/bin
