@@ -16,5 +16,5 @@ OR
 
 ```console
 git clone https://github.com/Fohte/dotfiles.git ~/.dotfiles
-cd ~/.dotfiles && make deploy
+cd ~/.dotfiles && ./install.sh
 ```

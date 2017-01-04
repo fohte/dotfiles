@@ -22,7 +22,7 @@ Installation
   1. Change directory to ${DOTPATH}
         $ cd ${DOTPATH}
   2. Symlinking dotfiles to your home directory using make
-        $ make deploy
+        $ ./install.sh
 "
 
 has() {
