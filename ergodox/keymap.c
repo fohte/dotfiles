@@ -3,9 +3,8 @@
 #include "action_layer.h"
 
 #define DVORAK 0
-#define SOFTWARE_DVORAK 1
-#define MOVE 2
-#define NUM_HOME 3
+#define MOVE 1
+#define NUM_HOME 2
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
@@ -15,7 +14,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_LCTL, KC_A, KC_O, KC_E, KC_U, KC_I,
     KC_LSFT, KC_SCLN, KC_Q, KC_J, KC_K, KC_X, KC_BSLS,
     KC_NO, KC_NO, KC_LALT, MO(NUM_HOME), KC_LGUI,
-    TG(SOFTWARE_DVORAK), KC_NO,
+    KC_NO, KC_NO,
     KC_NO,
     KC_SPC, KC_BSPC, MO(MOVE),
 
@@ -24,29 +23,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_D, KC_H, KC_T, KC_N, KC_S, KC_MINS,
     KC_EQL, KC_B, KC_M, KC_W, KC_V, KC_Z, KC_RSFT,
     KC_RGUI, KC_RCTL, KC_RALT, KC_NO, KC_NO,
-    KC_NO, TG(SOFTWARE_DVORAK),
+    KC_NO, KC_NO,
     KC_NO,
     MO(MOVE), KC_ESC, KC_ENT
-),
-
-[SOFTWARE_DVORAK] = KEYMAP(
-    KC_GRV, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-    KC_TRNS, KC_Q, KC_W, KC_E, KC_R, KC_T, KC_MINS,
-    KC_TRNS, KC_A, KC_S, KC_D, KC_F, KC_G,
-    KC_TRNS, KC_Z, KC_X, KC_C, KC_V, KC_B, KC_BSLS,
-    KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-    KC_TRNS, KC_TRNS,
-    KC_TRNS,
-    KC_TRNS, KC_TRNS, KC_TRNS,
-
-    KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-    KC_EQL, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_LBRC,
-    KC_H, KC_J, KC_K, KC_L, KC_SCLN, KC_QUOT,
-    KC_RBRC, KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_TRNS,
-    KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-    KC_TRNS, KC_TRNS,
-    KC_TRNS,
-    KC_TRNS, KC_TRNS, KC_TRNS
 ),
 
 [MOVE] = KEYMAP(
