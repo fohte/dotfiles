@@ -17,8 +17,8 @@ source_rc() {
   fi
 }
 
-has 'rbenv' && eval "$(rbenv init -)"
-has 'pyenv' && eval "$(pyenv init -)"
+has 'rbenv' && eval "$(rbenv init - --no-rehash)"
+has 'pyenv' && eval "$(pyenv init - --no-rehash)"
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
