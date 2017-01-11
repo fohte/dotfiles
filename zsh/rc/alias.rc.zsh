@@ -49,6 +49,7 @@ alias -g N='> /dev/null 2>&1'
 alias -g Y='| pbcopy'
 alias -g M='| more'
 alias -g L='| less -R'
+alias -g S='| sed'
 
 alias -s py=python
 alias -s rb=ruby
