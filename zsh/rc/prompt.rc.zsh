@@ -35,7 +35,7 @@ dynamic_privilege() {
       ;;
   esac
 
-  echo -n "${fg[$status_color]}>${reset_color}${fg[$vimode_color]}>${reset_color}"
+  echo -n "%{$fg[$status_color]%}>%{$reset_color%}%{$fg[$vimode_color]%}>%{$reset_color%}"
 }
 
 dir='%{$fg[magenta]%}%~%{$reset_color%}'
