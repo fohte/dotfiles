@@ -6,6 +6,8 @@ let g:deoplete#enable_refresh_always = 1
 let g:deoplete#auto_complete_start_length = 2
 let g:deoplete#auto_complete_delay = 0
 
+set completeopt+=noinsert,noselect
+
 let g:deoplete#keyword_patterns = {}
 let g:deoplete#keyword_patterns._ = '[a-zA-Z_]\k*'
 
