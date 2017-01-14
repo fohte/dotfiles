@@ -9,8 +9,8 @@ let g:deoplete#auto_complete_delay = 0
 let g:deoplete#keyword_patterns = {}
 let g:deoplete#keyword_patterns._ = '[a-zA-Z_]\k*'
 
-let g:deoplete#omni#input_patterns = {}
-let g:deoplete#omni#input_patterns.ruby = '[^. *\t]\.\w*\|\h\w*::'
+let g:deoplete#sources#omni#input_patterns = {}
+let g:deoplete#sources#omni#input_patterns.ruby = '[^. *\t]\.\w*\|\h\w*::'
 
 inoremap <expr> <TAB>   pumvisible() ? "\<C-n>" : "\<TAB>"
 inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
