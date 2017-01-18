@@ -1,5 +1,13 @@
 #!/bin/bash
 
-autoflake --remove-all-unused-imports -i -r .
-isort -rc -y -q .
-autopep8 -i -r .
+dir=${1:-.}
+files=$(find $dir -name '*.py')
+for file in $files; do
+  if [ "$(basename $file)" = '__init__.py' ]; then
+    continue
+  fi
+  autoflake --remove-all-unused-imports -i $file
+done
+
+isort -y -q $files
+autopep8 -i $files
