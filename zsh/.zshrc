@@ -30,3 +30,5 @@ source_rc 'alias.rc.zsh'
 source_rc 'bindkey.rc.zsh'
 source_rc 'prompt.rc.zsh'
 source_rc 'misc.rc.zsh'
+
+[ -f ~/.local/.zshrc ] && source ~/.local/.zshrc

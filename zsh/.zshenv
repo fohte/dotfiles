@@ -44,3 +44,5 @@ export FZF_DEFAULT_OPTS='--cycle'
 
 # gpg-agent
 export GPG_TTY=$(tty)
+
+[ -f ~/.local/.zshenv ] && source ~/.local/.zshenv
