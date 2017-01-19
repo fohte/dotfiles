@@ -18,7 +18,7 @@ fpath=( \
 
 export GOPATH=$HOME/.go
 
-export DOTPATH="$(cd "$(dirname "$(readlink "$HOME/.zshenv")")" && cd .. && pwd)"
+export DOTPATH="$(dotpath)"
 
 export LANG='en_US.UTF-8'
 if [ type -a 'nvim' 2>&1 > /dev/null ]; then
