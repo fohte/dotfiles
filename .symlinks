@@ -12,5 +12,6 @@
 
 ./etc/.agignore ~/.agignore
 ./etc/.latexmkrc ~/.latexmkrc
+./etc/.isort.cfg ~/.isort.cfg
 
 ./bin ~/bin
