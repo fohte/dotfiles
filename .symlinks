@@ -10,8 +10,7 @@
 
 ./tmux/.tmux.conf ~/.tmux.conf
 
-./ag/.agignore ~/.agignore
-
-./tex/.latexmkrc ~/.latexmkrc
+./etc/.agignore ~/.agignore
+./etc/.latexmkrc ~/.latexmkrc
 
 ./bin ~/bin
