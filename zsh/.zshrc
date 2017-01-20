@@ -25,10 +25,10 @@ has 'pyenv' && eval "$(pyenv init - --no-rehash)"
 autoload -Uz compinit && compinit -u
 autoload -Uz colors; colors
 
-source_rc 'setopt.rc.zsh'
 source_rc 'alias.rc.zsh'
 source_rc 'bindkey.rc.zsh'
 source_rc 'prompt.rc.zsh'
+source_rc 'history.rc.zsh'
 source_rc 'misc.rc.zsh'
 
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
