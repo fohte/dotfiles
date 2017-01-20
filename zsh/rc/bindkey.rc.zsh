@@ -19,3 +19,15 @@ fzf-git-log() {
 }
 zle -N fzf-git-log
 bindkey '^G^L' fzf-git-log
+
+fzf-git-branch() {
+  selected=$(
+    git branch -a | \
+    fzf-tmux --ansi | \
+    sed -e 's/^* //g' | \
+    awk '{ print $1 }'
+  )
+  LBUFFER="${LBUFFER}${selected}"
+}
+zle -N fzf-git-branch
+bindkey '^G^B' fzf-git-branch
