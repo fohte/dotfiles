@@ -43,6 +43,8 @@ alias dc='docker-compose'
 alias dcr='docker-compose run'
 alias dm='docker-machine'
 
+alias reload='exec $SHELL -l'
+
 alias -g G='| grep'
 alias -g GV='| grep -v'
 alias -g N='> /dev/null 2>&1'
