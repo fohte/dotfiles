@@ -25,7 +25,7 @@ set shiftround
 
 set backspace=indent,eol,start
 
-set nohlsearch
+set hlsearch
 set incsearch
 set smartcase
 set wrapscan

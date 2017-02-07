@@ -6,6 +6,7 @@ noremap ; :
 nnoremap x "_x
 vnoremap > >gv
 vnoremap < <gv
+nnoremap <silent> <ESC> :nohlsearch<CR>
 
 noremap G Gzz
 noremap <C-f> <C-f>zz
