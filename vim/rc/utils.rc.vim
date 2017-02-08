@@ -18,6 +18,11 @@ function! s:replace_chars()
 
   endif
 
+  " Remove first empty lines
+  while line('$') > 1 && getline(1) == ''
+    1delete _
+  endwhile
+
   " Remove last empty lines
   while line('$') > 1 && getline('$') == ''
     $delete _
