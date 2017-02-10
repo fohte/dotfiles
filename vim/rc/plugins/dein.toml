@@ -12,10 +12,16 @@ build = 'make'
 [[plugins]]
 repo = 'Shougo/unite.vim'
 hook_source = 'source ~/.vim/rc/plugins/unite.rc.vim'
+on_if = '!has("nvim")'
 
 [[plugins]]
 repo = 'Shougo/unite-outline'
 on_source = 'unite.vim'
+
+[[plugins]]
+repo = 'Shougo/denite.nvim'
+hook_source = 'source ~/.vim/rc/plugins/denite.rc.vim'
+on_if = 'has("nvim")'
 
 # light and configurable statusline/tabline
 [[plugins]]
@@ -29,8 +35,6 @@ depends = ['neosnippet-snippets']
 hook_add = '''
   imap <C-k> <Plug>(neosnippet_expand_or_jump)
   smap <C-k> <Plug>(neosnippet_expand_or_jump)
-  imap <C-s> <Plug>(neosnippet_start_unite_snippet)
-  smap <C-s> <Plug>(neosnippet_start_unite_snippet)
 '''
 
 # The standard snippets repository for Shougo/neosnippet.vim
