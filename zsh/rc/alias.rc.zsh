@@ -41,6 +41,7 @@ alias be='bundle exec'
 alias d='docker'
 alias dc='docker-compose'
 alias dcr='docker-compose run'
+alias dcrm='docker-compose run --rm'
 alias dm='docker-machine'
 
 alias reload='exec $SHELL -l'
