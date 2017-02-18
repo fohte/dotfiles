@@ -7,8 +7,15 @@ colorscheme hybrid
 
 augroup MyColorSettings
   autocmd!
-  autocmd ColorScheme * highlight Search ctermfg=None guifg=None ctermbg=None guibg=None cterm=reverse gui=reverse
+  autocmd ColorScheme * call <SID>my_color_settings()
 augroup END
+
+function! s:my_color_settings()
+  hi clear Search
+  hi link Search IncSearch
+  hi clear MatchParen
+  hi link MatchParen Type
+endfunction
 
 set number
 set title
