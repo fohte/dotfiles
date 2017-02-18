@@ -31,11 +31,13 @@ hook_source = 'source ~/.vim/rc/plugins/lightline.rc.vim'
 # adds snippet support
 [[plugins]]
 repo = 'Shougo/neosnippet.vim'
-depends = ['neosnippet-snippets']
 hook_add = '''
   imap <C-k> <Plug>(neosnippet_expand_or_jump)
   smap <C-k> <Plug>(neosnippet_expand_or_jump)
   let g:neosnippet#snippets_directory = '~/.vim/snippets'
+  let g:neosnippet#disable_runtime_snippets = {
+  \   '_' : 1,
+  \ }
 '''
 
 # colorscheme for lightline.vim
