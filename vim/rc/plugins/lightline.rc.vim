@@ -21,7 +21,7 @@ function! LightLineFilename()
   if &filetype =~ 'unite'
     return fnamemodify(matchstr(unite#get_status_string(), 'directory:\s\zs.\+'), ':~')
   else
-    return expand('%:t')
+    return expand('%')
   endif
 endfunction
 
