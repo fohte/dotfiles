@@ -2,6 +2,9 @@ call denite#custom#alias('source', 'file_rec/git', 'file_rec')
 call denite#custom#var('file_rec/git', 'command',
       \ ['git', 'ls-files', '-co', '--exclude-standard'])
 
+call denite#custom#option('default', 'highlight_matched_char', 'Underlined')
+call denite#custom#option('default', 'highlight_matched_range', 'cleared')
+
 if executable('ag')
   " call denite#custom#var('grep', 'command',
   "       \ ['ag', '--ignore-case', '--hidden', '--nocolor', '--nogroup', '--ignore', '.git'])
