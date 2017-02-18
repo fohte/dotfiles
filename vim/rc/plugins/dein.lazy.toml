@@ -22,11 +22,8 @@ hook_source = '''
 # keyword completion system for Ruby
 #   Note: require rcodetools
 [[plugins]]
-repo = 'osyo-manga/vim-monster'
+repo = 'Shougo/deoplete-rct'
 on_ft = 'ruby'
-hook_source = '''
-  let g:monster#completion#rcodetools#backend = "async_rct_complete"
-'''
 
 # keyword completion system for Python
 #   Note: require davidhalter/jedi
