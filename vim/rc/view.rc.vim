@@ -15,11 +15,14 @@ function! s:my_color_settings()
   hi link Search IncSearch
   hi clear MatchParen
   hi link MatchParen Type
+  hi clear CursorLineNr
+  hi link CursorLineNr Comment
 endfunction
 
 set number
 set title
 set noshowmode
 set laststatus=2
+set cursorline
 
 set list
