@@ -81,3 +81,8 @@ hook_add = '''
 [[plugins]]
 repo = 'pangloss/vim-javascript'
 on_ft = 'javascript'
+
+[[plugins]]
+repo = 'MaxMEllon/vim-jsx-pretty'
+on_ft = 'javascript'
+depends = 'vim-javascript'
