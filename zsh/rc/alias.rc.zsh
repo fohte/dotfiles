@@ -44,6 +44,10 @@ alias dcr='docker-compose run'
 alias dcrm='docker-compose run --rm'
 alias dm='docker-machine'
 
+alias y='yarn'
+alias yr='yarn run'
+alias ya='yarn add'
+
 alias reload='exec $SHELL -l'
 
 alias -g G='| grep'
