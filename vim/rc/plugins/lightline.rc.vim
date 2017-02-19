@@ -1,7 +1,7 @@
 let g:lightline = {
 \   'colorscheme': 'hybrid',
 \   'active': {
-\     'left': [['mode', 'paste'], ['readonly', 'filename', 'modified']],
+\     'left': [['mode', 'paste'], ['anzu', 'readonly', 'filename', 'modified']],
 \     'right': [['lineinfo'], ['filetype'], ['fileencoding', 'fileformat']]
 \   },
 \   'inactive': {
@@ -12,6 +12,7 @@ let g:lightline = {
 \     'filename': 'LightLineFilename',
 \     'readonly': 'LightLineReadonly',
 \     'modified': 'LightLineModified',
+\     'anzu': 'anzu#search_status',
 \   },
 \   'separator': { 'left': '⮀', 'right': '⮂' },
 \   'subseparator': { 'left': '⮁', 'right': '⮃' },

@@ -28,6 +28,21 @@ on_if = 'has("nvim")'
 repo = 'itchyny/lightline.vim'
 hook_source = 'source ~/.vim/rc/plugins/lightline.rc.vim'
 
+# echo the search status
+[[plugins]]
+repo = 'osyo-manga/vim-anzu'
+hook_add = '''
+  nmap n <Plug>(anzu-n)
+  nmap N <Plug>(anzu-N)
+  nmap * <Plug>(anzu-star)
+  nmap # <Plug>(anzu-sharp)
+
+  augroup vim_anzu
+    autocmd!
+    autocmd CursorHold,CursorHoldI,WinLeave,TabLeave * call anzu#clear_search_status()
+  augroup END
+'''
+
 # adds snippet support
 [[plugins]]
 repo = 'Shougo/neosnippet.vim'

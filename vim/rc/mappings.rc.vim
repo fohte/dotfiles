@@ -13,4 +13,3 @@ noremap <C-f> <C-f>zz
 noremap <C-b> <C-b>zz
 noremap <C-u> <C-u>zz
 noremap <C-d> <C-d>zz
-noremap n nzz
