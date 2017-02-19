@@ -66,20 +66,6 @@ hook_add = '''
   nnoremap [over]w :OverCommandLine<CR>%s/<C-r><C-w>//g<Left><Left>
 '''
 
-# create my own submodes
-[[plugins]]
-repo = 'kana/vim-submode'
-hook_add = '''
-  call submode#enter_with('winsize', 'n', '', '<C-w>>', '<C-w>>')
-  call submode#enter_with('winsize', 'n', '', '<C-w><', '<C-w><')
-  call submode#enter_with('winsize', 'n', '', '<C-w>+', '<C-w>-')
-  call submode#enter_with('winsize', 'n', '', '<C-w>-', '<C-w>+')
-  call submode#map('winsize', 'n', '', '>', '<C-w>>')
-  call submode#map('winsize', 'n', '', '<', '<C-w><')
-  call submode#map('winsize', 'n', '', '+', '<C-w>-')
-  call submode#map('winsize', 'n', '', '-', '<C-w>+')
-'''
-
 # improve git commit buffer
 [[plugins]]
 repo = 'rhysd/committia.vim'
