@@ -1,0 +1,18 @@
+set hintchars=uhetonas
+highlight Hint font-family: Monaco; font-size: 16px; color: white; background-color: rgba(0, 0, 255, 0.5);
+highlight HintElem color: gray; background-color: #a1e4e6;
+highlight HintActive color: black; background-color: #ff8700;
+
+nnoremap h <C-p>
+nnoremap l <C-n>
+
+nnoremap j 5<C-e>
+nnoremap k 5<C-y>
+
+set statuslinevisibility=visible
+
+nmap << :tabmove! -1 <CR>
+nmap >> :tabmove! +1 <CR>
+
+set defsearch=google
+set complete=S

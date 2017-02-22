@@ -13,5 +13,6 @@
 ./etc/.agignore ~/.agignore
 ./etc/.latexmkrc ~/.latexmkrc
 ./etc/.isort.cfg ~/.isort.cfg
+./etc/.vimperatorrc ~/.vimperatorrc
 
 ./bin ~/bin
