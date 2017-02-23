@@ -1,7 +1,21 @@
 set hintchars=uhetonas
-highlight Hint font-family: Monaco; font-size: 16px; color: white; background-color: rgba(0, 0, 255, 0.5);
-highlight HintElem color: gray; background-color: #a1e4e6;
-highlight HintActive color: black; background-color: #ff8700;
+
+highlight Hint<<EOM
+  font-family: Monaco;
+  font-size: 16px;
+  color: white;
+  background-color: rgba(0, 0, 255, 0.5);
+EOM
+
+highlight HintElem<<EOM
+  color: gray;
+  background-color: #a1e4e6;
+EOM
+
+highlight HintActive<<EOM
+  color: black;
+  background-color: #ff8700;
+EOM
 
 nnoremap h <C-p>
 nnoremap l <C-n>
