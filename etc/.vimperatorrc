@@ -1,3 +1,5 @@
+set visualbell
+
 set hintchars=uhetonas
 
 highlight Hint<<EOM
