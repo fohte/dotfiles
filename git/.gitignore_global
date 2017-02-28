@@ -40,3 +40,5 @@ Session.vim
 tags
 
 
+# pyenv
+.python-version
