@@ -1,6 +1,7 @@
 alias ls='ls -ACFG'
 alias l='ls -l'
 alias c='cat'
+alias p='pbpaste'
 
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -63,6 +64,7 @@ alias -g Y='| pbcopy'
 alias -g M='| more'
 alias -g L='| less -R'
 alias -g S='| sed'
+alias -g J='| jq'
 
 alias -s py=python
 alias -s rb=ruby
