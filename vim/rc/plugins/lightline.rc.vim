@@ -1,7 +1,7 @@
 let g:lightline = {
 \   'colorscheme': 'hybrid',
 \   'active': {
-\     'left': [['mode', 'paste'], ['anzu', 'readonly', 'filename', 'modified']],
+\     'left': [['mode', 'paste'], ['readonly', 'git_branch', 'filename', 'modified'], ['anzu']],
 \     'right': [['lineinfo'], ['filetype'], ['fileencoding', 'fileformat']]
 \   },
 \   'inactive': {
@@ -13,6 +13,7 @@ let g:lightline = {
 \     'readonly': 'LightLineReadonly',
 \     'modified': 'LightLineModified',
 \     'anzu': 'anzu#search_status',
+\     'git_branch': 'LightLineGitBranch',
 \   },
 \   'separator': { 'left': '⮀', 'right': '⮂' },
 \   'subseparator': { 'left': '⮁', 'right': '⮃' },
@@ -43,6 +44,14 @@ function! LightLineModified()
     return '+'
   elseif !&modifiable
     return '-'
+  else
+    return ''
+  endif
+endfunction
+
+function! LightLineGitBranch()
+  if exists('*fugitive#head')
+    return '⭠ ' . fugitive#head()
   else
     return ''
   endif
