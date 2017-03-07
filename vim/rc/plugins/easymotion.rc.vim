@@ -6,7 +6,7 @@ let g:EasyMotion_prompt = '> '
 let g:EasyMotion_verbose = 0
 let g:EasyMotion_keys = "hutenosamkwjvqz;gpc.r,l'dibxfy"
 
-nmap <CR> <Plug>(easymotion-s2)
+nmap <CR> <Plug>(easymotion-overwin-f2)
 nmap <C-j> <Plug>(easymotion-j)
 nmap <C-k> <Plug>(easymotion-k)
 map f <Plug>(easymotion-fl)
