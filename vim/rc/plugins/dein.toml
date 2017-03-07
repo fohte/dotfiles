@@ -94,3 +94,6 @@ hook_add = '''
     end
   endfunction
 '''
+
+[[plugins]]
+repo = 'tpope/vim-fugitive'
