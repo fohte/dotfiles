@@ -2,6 +2,12 @@ alias ls='ls -ACFG'
 alias l='ls -l'
 alias c='cat'
 
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias ~='cd ~'
+alias u='cd -'
+
 has 'hub' && alias git='hub'
 alias g='git'
 alias ga='git add'
