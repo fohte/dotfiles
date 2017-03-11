@@ -2,6 +2,7 @@ alias ls='ls -ACFG'
 alias l='ls -l'
 alias c='cat'
 alias p='pbpaste'
+alias x='chmod +x'
 
 alias ..='cd ..'
 alias ...='cd ../..'
