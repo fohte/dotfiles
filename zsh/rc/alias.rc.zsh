@@ -70,6 +70,13 @@ alias -g J='| jq'
 alias -s py=python
 alias -s rb=ruby
 
+# make directories and a file
+mkdf() {
+  dirname=$(dirname $1)
+  mkdir -p $dirname
+  touch $1
+}
+
 mkcd() {
   mkdir -p $@ && cd $@;
 }
