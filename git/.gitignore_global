@@ -42,3 +42,7 @@ tags
 
 # pyenv
 .python-version
+
+# ternjs
+.tern-project
+.tern-port
