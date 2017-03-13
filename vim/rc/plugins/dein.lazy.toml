@@ -41,6 +41,13 @@ repo = 'zchee/deoplete-go'
 on_ft = 'go'
 build = 'make'
 
+# deoplete source for JavaScript
+# Require: ternjs (http://ternjs.net/)
+[[plugins]]
+repo = 'carlitux/deoplete-ternjs'
+build = 'yarn global add tern'
+on_ft = 'javascript'
+
 # Go doc, fmt and import utilities
 [[plugins]]
 repo = 'vim-jp/vim-go-extra'
