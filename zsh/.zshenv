@@ -1,13 +1,18 @@
+# Resolve not intended PATH on Mac OS (El Capitan or newer)
+# (en) https://mattprice.me/2015/zsh-path-issues-osx-el-capitan/
+# (ja) http://qiita.com/t-takaai/items/8574ff312f2caa5177c2
+setopt no_global_rcs
+
 typeset -U path PATH fpath FPATH
 
 path=( \
+  $HOME/.local/bin(N-/) \
+  $HOME/bin(N-/) \
   $HOME/.nodebrew/current/bin(N-/) \
   $HOME/.cabal/bin(N-/) \
   $HOME/.rbenv/bin(N-/) \
   $HOME/.pyenv/bin(N-/) \
   $GOPATH/bin(N-/) \
-  $HOME/bin(N-/) \
-  $HOME/.local/bin(N-/) \
   $path \
 )
 
