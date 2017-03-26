@@ -46,6 +46,7 @@ alias v='vim'
 
 alias be='bundle exec'
 
+has 'compose' && alias docker-compose='compose'
 alias d='docker'
 alias dc='docker-compose'
 alias dcr='docker-compose run'

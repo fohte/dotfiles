@@ -46,3 +46,6 @@ tags
 # ternjs
 .tern-project
 .tern-port
+
+# bin/compose
+.compose-file
