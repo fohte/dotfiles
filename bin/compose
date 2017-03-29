@@ -17,7 +17,7 @@ if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
   if [ -f "$setting_file_path" ]; then
     compose_files=""
     for compose_file in $(cat $setting_file_path); do
-      compose_files="$compose_files:$compose_file"
+      compose_files="$compose_files:$git_root_dir/$compose_file"
     done
     compose_files="${compose_files#:}"
   else
