@@ -15,7 +15,7 @@ let g:lightline = {
 \     'modified': 'LightLineModified',
 \     'fileformat': 'LightLineFileformat',
 \     'filetype': 'LightLineFiletype',
-\     'fileencoding': 'LightLineEncoding',
+\     'fileencoding': 'LightLineFileencoding',
 \     'anzu': 'LightLineAnzu',
 \     'git_branch': 'LightLineGitBranch',
 \   },
