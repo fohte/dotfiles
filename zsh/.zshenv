@@ -13,6 +13,11 @@ path=( \
   $HOME/.rbenv/bin(N-/) \
   $HOME/.pyenv/bin(N-/) \
   $GOPATH/bin(N-/) \
+  /usr/local/bin(N-/) \
+  /usr/bin(N-/) \
+  /bin(N-/) \
+  /usr/sbin(N-/) \
+  /sbin(N-/) \
   $path \
 )
 
