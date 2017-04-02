@@ -1,0 +1,59 @@
+brew 'docker'
+brew 'gnu-sed'
+brew 'gnu-awk'
+brew 'tree'
+brew 'wget'
+brew 'readline'
+brew 'git'
+brew 'gibo'
+brew 'gist'
+brew 'ghq'
+brew 'gpg-agent'
+brew 'gnupg2'
+brew 'hub'
+brew 'jq'
+brew 'fzf'
+brew 'tig'
+brew 'tmux'
+brew 'zsh'
+brew 'vim', args: ['with-lua']
+brew 'pyenv'
+brew 'rbenv'
+brew 'ruby'
+brew 'ruby-build'
+
+tap 'neovim/neovim'
+brew 'neovim/neovim/neovim'
+
+tap 'sanemat/font'
+brew 'sanemat/font/ricty', args: ['with-powerline']
+
+# cask
+tap 'caskroom/cask'
+
+cask 'dropbox'
+cask 'evernote'
+cask 'iterm2'
+cask 'alfred'
+
+cask 'karabiner-elements'
+cask 'google-japanese-ime'
+
+cask 'firefox'
+cask 'google-chrome'
+cask 'vivaldi'
+
+cask 'qlcolorcode'
+cask 'qlimagesize'
+cask 'quicklook-json'
+
+# Mac App Store Apps
+mas 'Keynote', id: 409183694
+mas 'Todoist', id: 585829637
+mas '1Password', id: 443987910
+mas 'Xcode', id: 497799835
+mas 'Noizio', id: 928871589
+mas 'Monit', id: 1014850245
+mas 'Slack', id: 803453959
+mas 'Affinity Designer', id: 824171161
+mas 'HazeOver', id: 430798174
