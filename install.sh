@@ -8,7 +8,9 @@ abspath() {
 
 cat .symlinks | grep -v '^$' | while read link; do
   read from to <<< $link
+  to=$(eval echo $to)
+  [ ! -d $to ] && mkdir -p "$(dirname "$to")"
   from=$(abspath $from)
-  to=$(eval abspath $to)
+  to=$(abspath $to)
   ln -sfnv $from $to
 done

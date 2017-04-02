@@ -8,6 +8,7 @@ has() {
 }
 
 setup_homebrew() {
+  cd "$(dirname $0)"
   if ! has brew; then
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
   fi
