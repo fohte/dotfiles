@@ -4,6 +4,9 @@ alias c='cat'
 alias p='pbpaste'
 alias x='chmod +x'
 
+has 'gsed' && alias sed='gsed'
+has 'gawk' && alias awk='gawk'
+
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
