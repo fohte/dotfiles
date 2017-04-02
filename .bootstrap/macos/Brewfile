@@ -1,4 +1,5 @@
 brew 'docker'
+brew 'ag'
 brew 'gnu-sed'
 brew 'gnu-awk'
 brew 'tree'
