@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 abspath() {
   echo "$(cd $(dirname $1) && pwd)/$(basename $1)"
 }
@@ -18,7 +16,7 @@ cat .symlinks | grep -v '^$' | while read link; do
   [ ! -d $to ] && mkdir -p "$(dirname "$to")"
   from=$(abspath $from)
   to=$(abspath $to)
-  ln -sfnv $from $to
+  ln -snv $from $to
 done
 
 if is_macos; then
