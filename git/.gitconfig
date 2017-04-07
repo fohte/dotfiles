@@ -37,3 +37,5 @@
 	user = fohte
 [status]
 	showUntrackedFiles = all
+[include]
+	path = ~/.local/.gitconfig
