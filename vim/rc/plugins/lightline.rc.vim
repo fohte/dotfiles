@@ -19,8 +19,6 @@ let g:lightline = {
 \     'anzu': 'LightLineAnzu',
 \     'git_branch': 'LightLineGitBranch',
 \   },
-\   'separator': { 'left': '⮀', 'right': '⮂' },
-\   'subseparator': { 'left': '⮁', 'right': '⮃' },
 \ }
 let g:lightline#compactize_width = 80
 function! s:should_compactize()
@@ -76,7 +74,7 @@ endfunction
 
 function! LightLineGitBranch()
   if exists('*fugitive#head')
-    return s:should_compactize() ? '' : '⭠ ' . fugitive#head()
+    return s:should_compactize() ? '' : fugitive#head()
   else
     return ''
   endif
