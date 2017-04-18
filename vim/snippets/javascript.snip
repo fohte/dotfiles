@@ -2,10 +2,10 @@ snippet reactc
 options head
 	import React from 'react'
 
-	export default class ${1} extends React.Component {
+	export default class `expand('%:t:r')` extends React.Component {
 		render() {
 			return (
-				${2}
+				${1}
 			)
 		}
 	}
