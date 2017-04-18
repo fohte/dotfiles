@@ -29,4 +29,4 @@ nmap <Space> [denite]
 map <silent> [denite]p :<C-u>Denite file_rec/git<CR>
 map <silent> [denite]f :<C-u>Denite file_rec<CR>
 map <silent> [denite]b :<C-u>Denite buffer<CR>
-map <silent> [denite]g :<C-u>Denite grep<CR>
+map <silent> [denite]g :<C-u>Denite -no-empty grep<CR>
