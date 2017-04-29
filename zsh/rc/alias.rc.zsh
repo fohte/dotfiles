@@ -11,6 +11,7 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias ~='cd ~'
+alias /='echo $(git-root || echo $HOME)'
 alias u='cd -'
 
 has 'hub' && alias git='hub'
