@@ -1,4 +1,16 @@
-snippet reactc
+snippet import
+alias im
+abbr import ... from 'module-name'
+options head
+	import ${1} from '${2}'
+
+snippet import-immutable
+alias imi
+options head
+	import I from 'immutable'
+
+snippet react-component
+alias rc
 options head
 	import React from 'react'
 
@@ -9,3 +21,73 @@ options head
 			)
 		}
 	}
+
+snippet react-define-propTypes
+alias dpt
+	static propTypes = {
+		${1}
+	}
+
+snippet react-define-contextTypes
+alias dct
+	static contextTypes = {
+		${1}
+	}
+
+snippet react-React.PropTypes
+alias rpt
+	${1}: React.PropTypes.${2}${3:.isRequired},
+	${0}
+
+snippet react-propTypes
+alias pt
+	${1}: PropTypes.${2}${3:.isRequired},
+	${0}
+
+snippet react-constructor-with-state
+alias cos
+	constructor(...args) {
+		super(...args)
+		this.state = {
+			${1}
+		}
+	}
+
+snippet react-componentWillMount
+alias cwm
+	componentWillMount() {
+		${1}
+	}
+
+snippet react-componentDidMount
+alias cdm
+	componentDidMount() {
+		${1}
+	}
+
+snippet react-componentWillReceiveProps
+alias cwrp
+	componentWillReceiveProps(nextProps) {
+		${1}
+	}
+
+snippet react-shouldComponentUpdate
+alias scu
+	shouldComponentUpdate(nextProps, nextState) {
+
+	}
+
+snippet jsx-ternary-render
+alias x?
+	{${1} ? (
+		${2}
+	)
+	: (
+		${3}
+	)}
+
+snippet jsx-condition-render
+alias x&
+	{${1} && (
+		${2}
+	)}
