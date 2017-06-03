@@ -90,3 +90,7 @@ depends = 'vim-javascript'
 [[plugins]]
 repo = 'rust-lang/rust.vim'
 on_ft = 'rust'
+
+[[plugins]]
+repo = 'hail2u/vim-css3-syntax'
+on_ft = 'css'
