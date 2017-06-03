@@ -49,3 +49,5 @@ tags
 
 # bin/compose
 .compose-file
+
+node_modules
