@@ -86,3 +86,7 @@ on_ft = 'javascript'
 repo = 'MaxMEllon/vim-jsx-pretty'
 on_ft = 'javascript'
 depends = 'vim-javascript'
+
+[[plugins]]
+repo = 'rust-lang/rust.vim'
+on_ft = 'rust'
