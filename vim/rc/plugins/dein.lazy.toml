@@ -71,3 +71,13 @@ hook_source = '''
   let g:EclimCompletionMethod = 'omnifunc'
 '''
 on_ft = 'java'
+
+[[plugins]]
+repo = 'artur-shaik/vim-javacomplete2'
+on_ft = 'java'
+hook_add = '''
+  augroup java-comp
+    autocmd!
+    autocmd FileType java setlocal omnifunc=javacomplete#Complete
+  augroup END
+'''
