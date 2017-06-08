@@ -64,3 +64,10 @@ hook_add = '''
   \ },
   \}
 '''
+
+[[plugins]]
+repo = 'dansomething/vim-eclim'
+hook_source = '''
+  let g:EclimCompletionMethod = 'omnifunc'
+'''
+on_ft = 'java'
