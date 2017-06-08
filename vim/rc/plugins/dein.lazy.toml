@@ -81,3 +81,7 @@ hook_add = '''
     autocmd FileType java setlocal omnifunc=javacomplete#Complete
   augroup END
 '''
+
+[[plugins]]
+repo = 'racer-rust/vim-racer'
+on_ft = 'rust'
