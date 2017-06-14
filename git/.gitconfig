@@ -39,3 +39,5 @@
 	showUntrackedFiles = all
 [include]
 	path = ~/.local/.gitconfig
+[init]
+	templatedir = ~/.git_templates

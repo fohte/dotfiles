@@ -4,6 +4,7 @@
 
 ./git/.gitconfig ~/.gitconfig
 ./git/.gitignore_global ~/.gitignore_global
+./git/templates ~/.git_templates
 
 ./zsh/.zshrc ~/.zshrc
 ./zsh/.zshenv ~/.zshenv
