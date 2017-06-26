@@ -50,8 +50,13 @@ on_ft = 'javascript'
 
 # Go doc, fmt and import utilities
 [[plugins]]
-repo = 'vim-jp/vim-go-extra'
+repo = 'fatih/vim-go'
 on_ft = 'go'
+hook_source = '''
+  let g:go_fmt_fail_silently = 1
+  let g:go_fmt_command = 'goimports'
+  let g:go_metalinter_enabled = 0
+'''
 
 [[plugins]]
 repo = 'mattn/emmet-vim'
@@ -69,6 +74,8 @@ hook_add = '''
 repo = 'dansomething/vim-eclim'
 hook_source = '''
   let g:EclimCompletionMethod = 'omnifunc'
+  nnoremap <silent> <buffer> <Leader>i :JavaSearchContext<CR>
+  nnoremap <silent> <buffer> <CR> :JavaDocPreview<CR>
 '''
 on_ft = 'java'
 
