@@ -24,9 +24,7 @@ call denite#custom#map('insert', '<C-s>', '<denite:do_action:split>')
 call denite#custom#map('normal', '<C-v>', '<denite:do_action:vsplit>')
 call denite#custom#map('insert', '<C-v>', '<denite:do_action:vsplit>')
 
-nnoremap [denite] <Nop>
-nmap <Space> [denite]
-map <silent> [denite]p :<C-u>Denite file_rec/git<CR>
-map <silent> [denite]f :<C-u>Denite file_rec<CR>
-map <silent> [denite]b :<C-u>Denite buffer<CR>
-map <silent> [denite]g :<C-u>Denite -no-empty grep<CR>
+map <silent> <Leader>p :<C-u>Denite file_rec/git<CR>
+map <silent> <Leader>f :<C-u>Denite file_rec<CR>
+map <silent> <Leader>b :<C-u>Denite buffer<CR>
+map <silent> <Leader>g :<C-u>Denite -no-empty grep<CR>
