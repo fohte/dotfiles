@@ -16,6 +16,12 @@ git_current_branch() {
   fi
 }
 
+git_author_email() {
+  local email
+  email=$(git config --get user.email 2> /dev/null)
+  echo -n "$email"
+}
+
 dynamic_privilege() {
   local status_color
   local vimode_color
@@ -39,7 +45,7 @@ dynamic_privilege() {
 }
 
 dir='%{$fg[magenta]%}%~%{$reset_color%}'
-branch='$(git_current_branch)'
+branch='$(git_current_branch) %{$fg[blue]%}$(git_author_email)%{$reset_color%}'
 privileges='$(dynamic_privilege)'
 
 PROMPT="
