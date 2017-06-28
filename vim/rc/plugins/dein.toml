@@ -107,3 +107,15 @@ hook_source = '''
   let g:ale_linters = {'go': ['gometalinter', 'gofmt']}
   let g:ale_go_gometalinter_options = '--disable-all --enable=vet --enable=gotype'
 '''
+
+[[plugins]]
+repo = 'AndrewRadev/switch.vim'
+hook_source = '''
+  let g:switch_mapping = '_'
+
+  let g:switch_custom_definitions =
+  \ [
+  \   { '\v^( *- *)\[x\](.*)$': '\1[ ]\2' },
+  \   { '\v^( *- *)\[ \](.*)$': '\1[x]\2' },
+  \ ]
+'''
