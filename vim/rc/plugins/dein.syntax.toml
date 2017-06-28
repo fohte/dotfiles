@@ -43,16 +43,11 @@ on_ft = 'nginx'
 repo = 'keith/tmux.vim'
 on_ft = 'tmux'
 
-# adds Pandoc Markdown support
+# adds GitHub Flavored Markdown support
 [[plugins]]
-repo = 'vim-pandoc/vim-pandoc-syntax'
+repo = 'rhysd/vim-gfm-syntax'
 on_ft = 'markdown'
 hook_add = '''
-  augroup pandoc_syntax
-    au! BufNewFile,BufFilePRe,BufRead *.md set filetype=markdown.pandoc
-  augroup END
-
-  let g:pandoc#syntax#conceal#use = 0
 '''
 
 # Python indentation behavior to comply with PEP8
