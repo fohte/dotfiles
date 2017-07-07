@@ -15,5 +15,6 @@
 ./etc/.latexmkrc ~/.latexmkrc
 ./etc/.isort.cfg ~/.isort.cfg
 ./etc/.vimperatorrc ~/.vimperatorrc
+./etc/.editorconfig ~/.editorconfig
 
 ./bin ~/bin
