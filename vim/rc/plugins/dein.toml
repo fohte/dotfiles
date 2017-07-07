@@ -119,3 +119,6 @@ hook_source = '''
   \   { '\v^( *- *)\[ \](.*)$': '\1[x]\2' },
   \ ]
 '''
+
+[[plugins]]
+repo = 'editorconfig/editorconfig-vim'
