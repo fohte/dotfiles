@@ -11,6 +11,8 @@ if has('clipboard')
   endif
 endif
 
+set mouse=a
+
 set autoread
 
 set noswapfile
