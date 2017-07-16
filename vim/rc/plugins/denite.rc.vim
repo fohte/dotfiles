@@ -6,8 +6,6 @@ call denite#custom#option('default', 'highlight_matched_char', 'Underlined')
 call denite#custom#option('default', 'highlight_matched_range', 'cleared')
 
 if executable('ag')
-  " call denite#custom#var('grep', 'command',
-  "       \ ['ag', '--ignore-case', '--hidden', '--nocolor', '--nogroup', '--ignore', '.git'])
   call denite#custom#var('grep', 'command', ['ag'])
   call denite#custom#var('grep', 'default_opts',
         \ ['-i', '--vimgrep', '--hidden'])
