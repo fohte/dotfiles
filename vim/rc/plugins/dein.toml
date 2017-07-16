@@ -122,3 +122,6 @@ hook_source = '''
 
 [[plugins]]
 repo = 'editorconfig/editorconfig-vim'
+
+[[plugins]]
+repo = 'terryma/vim-multiple-cursors'
