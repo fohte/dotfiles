@@ -51,3 +51,6 @@ tags
 .compose-file
 
 node_modules
+
+# Remote config cache of RuboCop
+.rubocop-*--rubocop-yml
