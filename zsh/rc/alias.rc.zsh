@@ -48,6 +48,7 @@ alias grh='git reset --hard'
 has 'nvim' && alias vim='nvim'
 alias v='vim'
 
+alias b='bundle'
 alias be='bundle exec'
 
 has 'compose' && alias docker-compose='compose'
