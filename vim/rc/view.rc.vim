@@ -14,6 +14,11 @@ augroup MyColorSettings
   autocmd ColorScheme * call s:my_color_settings()
 augroup END
 
+augroup RestoreGuiCursor
+  autocmd!
+  autocmd VimLeave * set guicursor=a:block-blinkon0
+augroup END
+
 set background=dark
 let g:hybrid_custom_term_colors = 1
 let g:hybrid_reduced_contrast = 1
