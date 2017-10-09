@@ -28,7 +28,9 @@ autoload -Uz colors; colors
 if [ ! -d ~/.zplug ]; then
   printf 'Install zplug? [y/N]: '
   if read -q; then
-    echo; curl -sL zplug.sh/installer | zsh
+    echo
+    curl -sL --proto-redir -all,https \
+      https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
   fi
 fi
 [ -d ~/.zplug ] && source_rc 'zplug.rc.zsh'
