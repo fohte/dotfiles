@@ -13,7 +13,6 @@ path=( \
   $HOME/.rbenv/bin(N-/) \
   $HOME/.pyenv/bin(N-/) \
   $GOPATH/bin(N-/) \
-  $(yarn global bin)(N-/) \
   $HOME/.cargo/bin(N-/) \
   /usr/local/bin(N-/) \
   /usr/bin(N-/) \
@@ -22,6 +21,8 @@ path=( \
   /sbin(N-/) \
   $path \
 )
+
+path=($(yarn global bin)(N-/) $path)
 
 fpath=( \
   /usr/local/share/zsh/site-functions(N-/) \
