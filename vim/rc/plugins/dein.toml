@@ -2,6 +2,9 @@
 [[plugins]]
 repo = 'Shougo/dein.vim'
 
+[[plugins]]
+repo = 'w0ng/vim-hybrid'
+
 # a great asynchronous execution library for Vim
 [[plugins]]
 repo = 'Shougo/vimproc'

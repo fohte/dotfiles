@@ -40,7 +40,6 @@ let s:toml_dir = expand(s:rc_dir . '/plugins')
 if dein#load_state(s:dein_dir)
   call dein#begin(s:dein_dir, [expand('<sfile>')] + split(glob(s:toml_dir . '/*.toml'), '\n'))
 
-  call dein#direct_install('w0ng/vim-hybrid')
   call dein#load_toml(s:toml_dir . '/dein.toml', {'lazy': 0})
   call dein#load_toml(s:toml_dir . '/dein.lazy.toml', {'lazy': 1})
   call dein#load_toml(s:toml_dir . '/dein.syntax.toml', {'lazy': 1})
