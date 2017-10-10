@@ -93,3 +93,8 @@ hook_add = '''
 [[plugins]]
 repo = 'racer-rust/vim-racer'
 on_ft = 'rust'
+
+[[plugins]]
+repo = 'alexlafroscia/deoplete-flow'
+rev = 'pass-filename-to-autocomplete'
+on_ft = 'javascript'
