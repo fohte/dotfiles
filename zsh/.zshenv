@@ -3,6 +3,8 @@
 # (ja) http://qiita.com/t-takaai/items/8574ff312f2caa5177c2
 setopt no_global_rcs
 
+export GOPATH=$HOME/.go
+
 typeset -U path PATH fpath FPATH
 
 path=( \
@@ -28,8 +30,6 @@ fpath=( \
   /usr/local/share/zsh/site-functions(N-/) \
   $fpath
 )
-
-export GOPATH=$HOME/.go
 
 export DOTPATH="$(dotpath)"
 
