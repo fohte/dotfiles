@@ -22,6 +22,17 @@ options head
 		}
 	}
 
+snippet react-stateless-component
+alias rsc
+options head
+	import React from 'react'
+
+	const `expand('%:t:r')` = (${1:props}) => (
+		${2}
+	)
+
+	export default `expand('%:t:r')`
+
 snippet react-define-propTypes
 alias dpt
 	static propTypes = {
@@ -91,3 +102,14 @@ alias x&
 	{${1} && (
 		${2}
 	)}
+
+snippet @flow
+alias f
+options head
+	/* @flow */
+
+snippet named-import-from
+alias import
+alias im
+	import { ${2} } from '${1}'
+	${0}
