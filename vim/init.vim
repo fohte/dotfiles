@@ -61,9 +61,6 @@ endif
 filetype plugin indent on
 
 call s:source_rc('edit.rc.vim')
-
 call s:source_rc('view.rc.vim')
-
 call s:source_rc('mappings.rc.vim')
-
 call s:source_rc('utils.rc.vim')
