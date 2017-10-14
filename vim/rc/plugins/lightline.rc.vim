@@ -1,7 +1,7 @@
 let g:lightline = {
 \   'colorscheme': 'hybrid',
 \   'active': {
-\     'left': [['mode', 'paste'], ['readonly', 'git_branch', 'filename', 'modified'], ['anzu']],
+\     'left': [['mode', 'paste'], ['readonly', 'git_branch', 'filename', 'modified']],
 \     'right': [['lineinfo'], ['filetype'], ['fileencoding', 'fileformat']]
 \   },
 \   'inactive': {
@@ -16,7 +16,6 @@ let g:lightline = {
 \     'fileformat': 'LightLineFileformat',
 \     'filetype': 'LightLineFiletype',
 \     'fileencoding': 'LightLineFileencoding',
-\     'anzu': 'LightLineAnzu',
 \     'git_branch': 'LightLineGitBranch',
 \   },
 \ }
@@ -78,8 +77,4 @@ function! LightLineGitBranch()
   else
     return ''
   endif
-endfunction
-
-function! LightLineAnzu()
-  return s:should_compactize() ? '' : anzu#search_status()
 endfunction
