@@ -1,3 +1,5 @@
+scriptencoding utf-8
+
 function! s:replace_punctuation() abort
   %s/、/，/ge
   %s/。/．/ge

@@ -22,7 +22,9 @@ if executable('ag')
   let g:unite_source_grep_recursive_opt = ''
 endif
 
-autocmd FileType unite call s:unite_settings()
+augroup MyUniteSettings
+  autocmd FileType unite call s:unite_settings()
+augroup END
 
 function! s:unite_file_rec()
   if isdirectory(getcwd().'/.git')

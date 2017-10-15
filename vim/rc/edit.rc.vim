@@ -1,7 +1,3 @@
-if has('vim_starting') && &encoding !=# 'utf-8'
-   set encoding=utf-8
-endif
-
 if has('clipboard')
   set clipboard&
   if has('unnamedplus')

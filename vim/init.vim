@@ -7,6 +7,10 @@
 "                         \/            \/    @Fohte
 " ----------------------------------------------------------
 
+if has('vim_starting') && &encoding !=# 'utf-8'
+   set encoding=utf-8
+endif
+
 let $CACHE = expand('~/.cache')
 if !isdirectory($CACHE)
   call mkdir($CACHE, 'p')
@@ -15,8 +19,8 @@ endif
 let s:rc_dir = resolve(expand('~/.vim/rc'))
 
 function! s:source_rc(path) abort
-  let abspath = resolve(expand(s:rc_dir . '/' . a:path))
-  execute 'source' fnameescape(abspath)
+  let l:abspath = resolve(expand(s:rc_dir . '/' . a:path))
+  execute 'source' fnameescape(l:abspath)
 endfunction
 
 augroup MyAutoCmd

@@ -1,3 +1,5 @@
+scriptencoding utf-8
+
 let g:lightline = {
 \   'colorscheme': 'hybrid',
 \   'active': {
@@ -25,12 +27,12 @@ function! s:should_compactize()
 endfunction
 
 function! LightLineMode()
-  let modename = lightline#mode()
-  return s:should_compactize() ? modename[0] : modename
+  let l:modename = lightline#mode()
+  return s:should_compactize() ? l:modename[0] : l:modename
 endfunction
 
 function! LightLineFilename()
-  if &filetype =~ 'unite'
+  if &filetype =~# 'unite'
     return fnamemodify(matchstr(unite#get_status_string(), 'directory:\s\zs.\+'), ':~')
   else
     return s:should_compactize() ? expand('%:t') : expand('%')
@@ -38,7 +40,7 @@ function! LightLineFilename()
 endfunction
 
 function! LightLineReadonly()
-  if &filetype =~ 'help'
+  if &filetype =~# 'help'
     return '?'
   elseif &readonly
     return '×'
@@ -48,7 +50,7 @@ function! LightLineReadonly()
 endfunction
 
 function! LightLineModified()
-  if &filetype =~ 'help'
+  if &filetype =~# 'help'
     return ''
   elseif &modified
     return '+'
@@ -68,7 +70,7 @@ function! LightLineFiletype()
 endfunction
 
 function! LightLineFileencoding()
-  return s:should_compactize() ? '' : (&fenc !=# '' ? &fenc : &enc)
+  return s:should_compactize() ? '' : (&fileencoding !=# '' ? &fileencoding : &encoding)
 endfunction
 
 function! LightLineGitBranch()
