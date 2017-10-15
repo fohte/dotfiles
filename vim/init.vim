@@ -11,6 +11,8 @@ if has('vim_starting') && &encoding !=# 'utf-8'
    set encoding=utf-8
 endif
 
+filetype plugin indent on
+
 let $CACHE = expand('~/.cache')
 if !isdirectory($CACHE)
   call mkdir($CACHE, 'p')
@@ -61,8 +63,6 @@ endif
 if has('vim_starting')
   call dein#call_hook('source')
 endif
-
-filetype plugin indent on
 
 call s:source_rc('edit.rc.vim')
 call s:source_rc('view.rc.vim')
