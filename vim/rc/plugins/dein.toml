@@ -14,7 +14,7 @@ build = 'make'
 # like files, buffers, recently used files or registers
 [[plugins]]
 repo = 'Shougo/unite.vim'
-hook_source = 'source ~/.vim/rc/plugins/unite.rc.vim'
+hook_source = 'source ~/.vim/rc/plugins/configs/unite.rc.vim'
 if = '!has("nvim")'
 
 [[plugins]]
@@ -23,13 +23,13 @@ on_source = 'unite.vim'
 
 [[plugins]]
 repo = 'Shougo/denite.nvim'
-hook_source = 'source ~/.vim/rc/plugins/denite.rc.vim'
+hook_source = 'source ~/.vim/rc/plugins/configs/denite.rc.vim'
 if = 'has("nvim")'
 
 # light and configurable statusline/tabline
 [[plugins]]
 repo = 'itchyny/lightline.vim'
-hook_source = 'source ~/.vim/rc/plugins/lightline.rc.vim'
+hook_source = 'source ~/.vim/rc/plugins/configs/lightline.rc.vim'
 
 # adds snippet support
 [[plugins]]
@@ -57,7 +57,7 @@ hook_source = '''
 # provide flawless, smooth and fast motions with minimal keystrokes
 [[plugins]]
 repo = 'easymotion/vim-easymotion'
-hook_source = 'source ~/.vim/rc/plugins/easymotion.rc.vim'
+hook_source = 'source ~/.vim/rc/plugins/configs/easymotion.rc.vim'
 
 # graphical substitute
 [[plugins]]
