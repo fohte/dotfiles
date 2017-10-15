@@ -27,6 +27,20 @@ function! s:should_compactize()
   return winwidth(0) < g:lightline#compactize_width
 endfunction
 
+function! s:truncate_string(str, width)
+  let l:width = a:width - 1
+
+  if l:width <= 0
+    return ''
+  endif
+
+  if len(a:str) <= l:width
+    return a:str
+  endif
+
+  return '#' . a:str[-(l:width):]
+endfunction
+
 function! LightLineMode()
   let l:modename = lightline#mode()
   return s:should_compactize() ? l:modename[0] : l:modename
@@ -38,7 +52,7 @@ function! LightLineFilename()
   end
 
   if s:should_compactize()
-    return expand('%:t')
+    return s:truncate_string(expand('%'), winwidth(0) - 35)
   endif
 
   return expand('%')
