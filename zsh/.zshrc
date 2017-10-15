@@ -9,8 +9,8 @@
 
 . "$DOTPATH"/bin/lib/util.sh
 
-source_rc() {
-  local source_file="$DOTPATH/zsh/rc/$1"
+import_rc() {
+  local source_file="$DOTPATH/zsh/rc/$1.rc.zsh"
 
   if [ -f $source_file ]; then
     source $source_file
@@ -33,12 +33,12 @@ if [ ! -d ~/.zplug ]; then
       https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
   fi
 fi
-[ -d ~/.zplug ] && source_rc 'zplug.rc.zsh'
+[ -d ~/.zplug ] && import_rc 'zplug'
 
-source_rc 'alias.rc.zsh'
-source_rc 'bindkey.rc.zsh'
-source_rc 'prompt.rc.zsh'
-source_rc 'history.rc.zsh'
-source_rc 'misc.rc.zsh'
+import_rc 'alias'
+import_rc 'bindkey'
+import_rc 'prompt'
+import_rc 'history'
+import_rc 'misc'
 
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
