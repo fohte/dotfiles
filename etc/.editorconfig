@@ -8,12 +8,24 @@ indent_size = 2
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+# Markdown
 [*.md]
 trim_trailing_whitespace = false
 
+# Go
 [*.go]
 indent_style = tab
 indent_size = 4
 
+# Python
 [*.py]
+indent_size = 4
+
+# Haskell
+[*.hs]
+indent_size = 4
+
+# Neosnippet
+[*.snip]
+indent_style = tab
 indent_size = 4
