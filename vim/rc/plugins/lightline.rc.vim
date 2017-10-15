@@ -21,6 +21,7 @@ let g:lightline = {
 \     'git_branch': 'LightLineGitBranch',
 \   },
 \ }
+
 let g:lightline#compactize_width = 80
 function! s:should_compactize()
   return winwidth(0) < g:lightline#compactize_width
@@ -34,49 +35,75 @@ endfunction
 function! LightLineFilename()
   if &filetype =~# 'unite'
     return fnamemodify(matchstr(unite#get_status_string(), 'directory:\s\zs.\+'), ':~')
-  else
-    return s:should_compactize() ? expand('%:t') : expand('%')
+  end
+
+  if s:should_compactize()
+    return expand('%:t')
   endif
+
+  return expand('%')
 endfunction
 
 function! LightLineReadonly()
   if &filetype =~# 'help'
     return '?'
-  elseif &readonly
+  end
+
+  if &readonly
     return '×'
-  else
-    return ''
-  endif
+  end
+
+  return ''
 endfunction
 
 function! LightLineModified()
   if &filetype =~# 'help'
     return ''
-  elseif &modified
+  end
+
+  if &modified
     return '+'
-  elseif !&modifiable
+  end
+
+  if !&modifiable
     return '-'
-  else
-    return ''
-  endif
+  end
+
+  return ''
 endfunction
 
 function! LightLineFileformat()
-  return s:should_compactize() ? '' : &fileformat
+  if s:should_compactize()
+    ''
+  endif
+
+  return &fileformat
 endfunction
 
 function! LightLineFiletype()
-  return &filetype !=# '' ? &filetype : 'no ft'
+  if &filetype ==# ''
+    return 'no ft'
+  endif
+
+  return &filetype
 endfunction
 
 function! LightLineFileencoding()
-  return s:should_compactize() ? '' : (&fileencoding !=# '' ? &fileencoding : &encoding)
+  if s:should_compactize()
+    ''
+  endif
+
+  if &fileencoding ==# ''
+    return &encoding
+  endif
+
+  return &fileencoding
 endfunction
 
 function! LightLineGitBranch()
-  if exists('*fugitive#head')
-    return s:should_compactize() ? '' : fugitive#head()
-  else
+  if s:should_compactize() || !exists('*fugitive#head')
     return ''
   endif
+
+  return fugitive#head()
 endfunction
