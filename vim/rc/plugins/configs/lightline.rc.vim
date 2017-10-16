@@ -88,7 +88,7 @@ endfunction
 
 function! LightLineFileformat()
   if s:should_compactize()
-    ''
+    return ''
   endif
 
   return &fileformat
@@ -104,7 +104,7 @@ endfunction
 
 function! LightLineFileencoding()
   if s:should_compactize()
-    ''
+    return ''
   endif
 
   if &fileencoding ==# ''
