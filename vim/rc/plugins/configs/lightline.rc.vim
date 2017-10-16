@@ -51,11 +51,7 @@ function! LightLineFilename()
     return fnamemodify(matchstr(unite#get_status_string(), 'directory:\s\zs.\+'), ':~')
   end
 
-  if s:should_compactize()
-    return s:truncate_string(expand('%'), winwidth(0) - 35)
-  endif
-
-  return expand('%')
+  return s:truncate_string(expand('%'), winwidth(0) - 35)
 endfunction
 
 function! LightLineReadonly()
