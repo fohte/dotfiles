@@ -116,3 +116,7 @@ repo = 'editorconfig/editorconfig-vim'
 
 [[plugins]]
 repo = 'terryma/vim-multiple-cursors'
+
+[[plugins]]
+repo = 'nixprime/cpsm'
+build = 'PY3=ON sh install.sh'
