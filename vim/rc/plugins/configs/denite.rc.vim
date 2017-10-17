@@ -22,7 +22,18 @@ call denite#custom#map('insert', '<C-s>', '<denite:do_action:split>')
 call denite#custom#map('normal', '<C-v>', '<denite:do_action:vsplit>')
 call denite#custom#map('insert', '<C-v>', '<denite:do_action:vsplit>')
 
+call denite#custom#source('_', 'matchers', ['matcher_cpsm'])
+call denite#custom#source('_', 'sorters', ['sorter_rank'])
+
+call denite#custom#source('file_old', 'converters', ['converter_relative_word'])
+call denite#custom#source('file_old', 'matchers', ['matcher_project_files', 'matcher_cpsm'])
+
+call denite#custom#option('default', 'vertical_preview', 1)
+
 map <silent> <Leader>p :<C-u>Denite file_rec/git<CR>
 map <silent> <Leader>f :<C-u>Denite file_rec<CR>
-map <silent> <Leader>b :<C-u>Denite buffer<CR>
+map <silent> <Leader>o :<C-u>Denite -auto-preview file_old<CR>
 map <silent> <Leader>g :<C-u>Denite -no-empty grep<CR>
+map <silent> <Leader>r :<C-u>Denite -resume<CR>
+map <silent> <C-h> :<C-u>Denite -resume -immediately -cursor-pos=-1<CR>
+map <silent> <C-l> :<C-u>Denite -resume -immediately -cursor-pos=+1<CR>
