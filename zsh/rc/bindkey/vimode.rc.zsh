@@ -26,3 +26,9 @@ for m in visual viopp; do
     bindkey -M $m $c select-quoted
   done
 done
+
+bindkey -M vivis 'sa ' vi-visual-surround-space
+bindkey -M vivis 'sa"' vi-visual-surround-dquote
+bindkey -M vivis "sa'" vi-visual-surround-squote
+bindkey -M vivis 'sa(' vi-visual-surround-parenthesis
+bindkey -M vivis 'sa)' vi-visual-surround-parenthesis
