@@ -1,5 +1,10 @@
 .git
 node_modules
+
+yarn.lock
+package-lock.json
+Gemfile.lock
+
 *.jpg
 *.jpeg
 *.png
