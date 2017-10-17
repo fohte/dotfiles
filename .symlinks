@@ -16,5 +16,6 @@
 ./etc/.isort.cfg ~/.isort.cfg
 ./etc/.vimperatorrc ~/.vimperatorrc
 ./etc/.editorconfig ~/.editorconfig
+./etc/.tigrc ~/.tigrc
 
 ./bin ~/bin
