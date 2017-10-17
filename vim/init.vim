@@ -13,6 +13,10 @@ endif
 
 filetype plugin indent on
 
+if executable('pyenv')
+  let g:python3_host_prog = $PYENV_ROOT . '/shims/python3'
+endif
+
 let $CACHE = expand('~/.cache')
 if !isdirectory($CACHE)
   call mkdir($CACHE, 'p')
