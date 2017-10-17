@@ -113,3 +113,19 @@ alias import
 alias im
 	import { ${2} } from '${1}'
 	${0}
+
+snippet redux-container
+alias rdc
+	/* @flow */
+
+	import { connect } from 'react-redux'
+
+	const mapStateToProps = state => ({
+		${2}
+	})
+
+	const mapDispatchToProps = dispatch => ({
+		${3}
+	})
+
+	export default connect(mapStateToProps, mapDispatchToProps)(${1})
