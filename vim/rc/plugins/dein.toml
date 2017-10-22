@@ -120,3 +120,6 @@ repo = 'terryma/vim-multiple-cursors'
 [[plugins]]
 repo = 'nixprime/cpsm'
 build = 'PY3=ON sh install.sh'
+
+[[plugins]]
+repo = 'thinca/vim-themis'
