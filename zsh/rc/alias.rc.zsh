@@ -79,9 +79,13 @@ alias -s rb=ruby
 
 # make directories and a file
 mkdf() {
-  dirname=$(dirname $1)
-  mkdir -p $dirname
-  touch $1
+  local filepath
+  local dir
+  for filepath in $@; do
+    dir="$(dirname "$filepath")"
+    mkdir -p "$dir"
+    touch "$filepath"
+  done
 }
 
 mkcd() {
