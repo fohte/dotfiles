@@ -77,14 +77,31 @@ alias -g J='| jq'
 alias -s py=python
 alias -s rb=ruby
 
-# make directories and a file
-mkdf() {
-  local filepath
-  local dir
+mk() {
+  local -A opthash
+  zparseopts -D -A opthash -- d f
+
+  # set default options (-df)
+  if [[ ${#opthash} == 0 ]]; then
+    opthash[-d]=
+    opthash[-f]=
+  fi
+
+  [ -n "${opthash[(i)-d]}" ] && is_dir=true || is_dir=false
+  [ -n "${opthash[(i)-f]}" ] && is_file=true || is_file=false
+
   for filepath in $@; do
-    dir="$(dirname "$filepath")"
-    mkdir -p "$dir"
-    touch "$filepath"
+    if $is_dir; then
+      if $is_file; then
+        mkdir -p "$(dirname "$filepath")"
+      else
+        mkdir -p "$filepath"
+      fi
+    fi
+
+    if $is_file; then
+      touch "$filepath"
+    fi
   done
 }
 
