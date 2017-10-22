@@ -26,3 +26,12 @@ hook_add = '''
   nmap <silent> - <Plug>(caw:hatpos:toggle:operator)
   xmap <silent> - <Plug>(caw:hatpos:toggle:operator)
 '''
+
+[[plugins]]
+repo = 'fohte/vim-operator-case'
+hook_add = '''
+  map gcc <Plug>(operator-case-camelize)
+  map gcp <Plug>(operator-case-pascalize)
+  map gcs <Plug>(operator-case-snakenize)
+  map gcC <Plug>(operator-case-constantize)
+'''
