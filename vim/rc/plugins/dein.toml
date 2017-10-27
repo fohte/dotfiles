@@ -146,3 +146,12 @@ hook_add = '''
   \   },
   \ }
 '''
+
+[[plugins]]
+repo = 'szw/vim-tags'
+hook_add = '''
+  augroup MyVimTagsSettings
+    autocmd!
+    autocmd BufWritePre,BufRead * TagsGenerate
+  augroup END
+'''
