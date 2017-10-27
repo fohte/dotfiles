@@ -98,3 +98,7 @@ on_ft = 'rust'
 repo = 'alexlafroscia/deoplete-flow'
 rev = 'pass-filename-to-autocomplete'
 on_ft = 'javascript'
+
+[[plugins]]
+repo = 'tpope/vim-rails'
+on_ft = 'ruby'
