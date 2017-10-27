@@ -9,6 +9,8 @@ endif
 
 set mouse=a
 
+set foldmethod=manual
+
 set autoread
 
 set noswapfile
