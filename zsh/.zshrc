@@ -19,6 +19,7 @@ import_rc() {
 
 has 'rbenv' && eval "$(rbenv init - --no-rehash)"
 has 'pyenv' && eval "$(pyenv init - --no-rehash)"
+has 'direnv' && eval "$(direnv hook zsh)"
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
