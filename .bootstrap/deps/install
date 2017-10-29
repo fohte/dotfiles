@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require 'yaml'
+require 'pathname'
+
+target_groups = ARGV
+targets = target_groups.empty ? '*' : "{#{target_groups.join(',')}}"
+
+Pathname.glob(File.join(__dir__, "#{targets}.yml")).each do |yaml_path|
+  group_name = yaml_path.basename.to_s.sub('.yml', '')
+
+  config = YAML.safe_load(yaml_path.read)
+  command = config['command'].to_s
+  packages = Array(config['packages'])
+
+  puts "[#{group_name}] Install #{packages.length} package(s):"
+  system(([command] + packages).join(' '))
+end

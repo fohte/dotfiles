@@ -1,0 +1,3 @@
+command: pip install
+packages:
+  - neovim
