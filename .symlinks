@@ -17,5 +17,6 @@
 ./etc/.vimperatorrc ~/.vimperatorrc
 ./etc/.editorconfig ~/.editorconfig
 ./etc/.tigrc ~/.tigrc
+./etc/.rufo ~/.rufo
 
 ./bin ~/bin
