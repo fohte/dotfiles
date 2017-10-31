@@ -4,7 +4,7 @@ require 'yaml'
 require 'pathname'
 
 target_groups = ARGV
-targets = target_groups.empty ? '*' : "{#{target_groups.join(',')}}"
+targets = target_groups.empty? ? '*' : "{#{target_groups.join(',')}}"
 
 Pathname.glob(File.join(__dir__, "#{targets}.yml")).each do |yaml_path|
   group_name = yaml_path.basename.to_s.sub('.yml', '')
@@ -13,6 +13,8 @@ Pathname.glob(File.join(__dir__, "#{targets}.yml")).each do |yaml_path|
   command = config['command'].to_s
   packages = Array(config['packages'])
 
-  puts "[#{group_name}] Install #{packages.length} package(s):"
-  system(([command] + packages).join(' '))
+  puts "[#{group_name}] Installing #{packages.length} package(s)..."
+  Process.spawn("#{([command] + packages).join(' ')} > /dev/null 2>&1")
 end
+
+Process.waitall
