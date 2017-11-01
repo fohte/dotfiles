@@ -152,3 +152,6 @@ hook_add = '''
     autocmd BufWritePre,BufRead * TagsGenerate
   augroup END
 '''
+
+[[plugins]]
+repo = 'https://github.com/brooth/far.vim'
