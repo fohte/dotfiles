@@ -93,7 +93,7 @@ hook_source = 'source ~/.vim/rc/plugins/configs/ale.rc.vim'
 [[plugins]]
 repo = 'ruby-formatter/rufo-vim'
 hook_source = '''
-  let g:rufo_auto_formatting = 1
+  let g:rufo_auto_formatting = 0
 '''
 
 [[plugins]]
