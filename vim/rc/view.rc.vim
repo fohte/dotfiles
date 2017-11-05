@@ -26,3 +26,5 @@ set laststatus=2
 set cursorline
 
 set list
+
+set synmaxcol=200
