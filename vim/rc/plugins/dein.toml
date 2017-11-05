@@ -158,3 +158,6 @@ hook_add = '''
 
 [[plugins]]
 repo = 'https://github.com/brooth/far.vim'
+
+[[plugins]]
+repo = 'haya14busa/vim-edgemotion'
