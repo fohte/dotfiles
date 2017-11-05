@@ -161,3 +161,6 @@ repo = 'https://github.com/brooth/far.vim'
 
 [[plugins]]
 repo = 'haya14busa/vim-edgemotion'
+
+[[plugins]]
+repo = 'itchyny/vim-cursorword'
