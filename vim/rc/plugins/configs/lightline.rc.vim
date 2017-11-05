@@ -43,7 +43,7 @@ endfunction
 
 function! LightLineMode()
   let l:modename = lightline#mode()
-  return s:should_compactize() ? l:modename[0] : l:modename
+  return l:modename[0]
 endfunction
 
 function! LightLineFilename()
