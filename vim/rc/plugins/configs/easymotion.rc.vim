@@ -6,8 +6,13 @@ let g:EasyMotion_prompt = '> '
 let g:EasyMotion_verbose = 0
 let g:EasyMotion_keys = 'uhetonasid'
 
-nmap <Leader>f <Plug>(easymotion-bd-f)
-nmap <Leader>l <Plug>(easymotion-bd-fl)
-nmap <Leader>w <Plug>(easymotion-overwin-w)
-nmap <C-j> <Plug>(easymotion-j)
-nmap <C-k> <Plug>(easymotion-k)
+noremap ' <Nop>
+map 'f <Plug>(easymotion-bd-f)
+map 's <Plug>(easymotion-s)
+map 'c <Plug>(easymotion-bd-fl)
+map 'l <Plug>(easymotion-bd-jk)
+map 'j <Plug>(easymotion-j)
+map 'k <Plug>(easymotion-k)
+map 'w <Plug>(easymotion-w)
+nmap ',w <Plug>(easymotion-overwin-w)
+nmap ',c <Plug>(easymotion-overwin-k)
