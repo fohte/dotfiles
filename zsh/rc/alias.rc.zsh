@@ -79,10 +79,10 @@ alias -s rb=ruby
 
 mk() {
   local -A opthash
-  zparseopts -D -A opthash -- d f
+  zparseopts -D -A opthash -- d f x
 
   # set default options (-df)
-  if [[ ${#opthash} == 0 ]]; then
+  if [ -z "${opthash[(i)-d]}" ] && [ -z "${opthash[(i)-f]}" ]; then
     opthash[-d]=
     opthash[-f]=
   fi
@@ -101,6 +101,10 @@ mk() {
 
     if $is_file; then
       touch "$filepath"
+
+      if [ -n "${opthash[(i)-x]}" ]; then
+        chmod +x "$filepath"
+      fi
     fi
   done
 }
