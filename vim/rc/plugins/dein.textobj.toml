@@ -38,3 +38,13 @@ repo = 'osyo-manga/vim-textobj-blockwise'
 # function's parameters
 [[plugins]]
 repo = 'sgur/vim-textobj-parameter'
+
+[[plugins]]
+repo = 'thinca/vim-textobj-between'
+hook_add = '''
+  let g:textobj_between_no_default_key_mappings = 1
+  omap if <Plug>(textobj-between-i)
+  xmap if <Plug>(textobj-between-i)
+  omap af <Plug>(textobj-between-a)
+  xmap af <Plug>(textobj-between-a)
+'''
