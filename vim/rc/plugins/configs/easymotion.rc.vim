@@ -7,12 +7,9 @@ let g:EasyMotion_verbose = 0
 let g:EasyMotion_keys = 'uhetonasid'
 
 noremap ' <Nop>
-map 'f <Plug>(easymotion-bd-f)
-map 's <Plug>(easymotion-s)
-map 'c <Plug>(easymotion-bd-fl)
+map 't <Plug>(easymotion-overwin-f)
+map 'f <Plug>(easymotion-bd-fl)
 map 'l <Plug>(easymotion-bd-jk)
 map 'j <Plug>(easymotion-j)
 map 'k <Plug>(easymotion-k)
-map 'w <Plug>(easymotion-w)
-nmap ',w <Plug>(easymotion-overwin-w)
-nmap ',c <Plug>(easymotion-overwin-k)
+map 'w <Plug>(easymotion-overwin-w)
