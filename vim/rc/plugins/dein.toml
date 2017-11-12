@@ -174,3 +174,7 @@ hook_add = '''
   map g# <Plug>(asterisk-gz#)
   let g:asterisk#keeppos = 1
 '''
+
+[[plugins]]
+repo = 'sbdchd/neoformat'
+hook_source = 'source ~/.vim/rc/plugins/configs/neoformat.rc.vim'
