@@ -14,6 +14,13 @@ repo = 'kana/vim-textobj-indent'
 # comments
 [[plugins]]
 repo = 'glts/vim-textobj-comment'
+hook_add = '''
+  let g:textobj_comment_no_default_key_mappings = 1
+  omap a- <Plug>(textobj-comment-a)
+  xmap a- <Plug>(textobj-comment-a)
+  omap i- <Plug>(textobj-comment-i)
+  xmap i- <Plug>(textobj-comment-i)
+'''
 
 # brackets and quotations
 [[plugins]]
