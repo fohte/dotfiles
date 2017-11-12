@@ -48,3 +48,13 @@ hook_add = '''
   omap af <Plug>(textobj-between-a)
   xmap af <Plug>(textobj-between-a)
 '''
+
+[[plugins]]
+repo = 'kana/vim-textobj-syntax'
+hook_add = '''
+  let g:textobj_syntax_no_default_key_mappings = 1
+  omap ic <Plug>(textobj-syntax-i)
+  xmap ic <Plug>(textobj-syntax-i)
+  omap ac <Plug>(textobj-syntax-a)
+  xmap ac <Plug>(textobj-syntax-a)
+'''
