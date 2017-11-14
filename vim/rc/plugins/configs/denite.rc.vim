@@ -36,5 +36,5 @@ map <silent> <Leader>o :<C-u>Denite -auto-preview file_old<CR>
 map <silent> <Leader>g :<C-u>Denite -no-empty grep<CR>
 map <silent> <Leader>r :<C-u>Denite -resume<CR>
 map <silent> <Leader>t :<C-u>Denite -split=vertical -buffer-name=tags outline<CR>
-map <silent> <S-CR> :<C-u>Denite -resume -immediately -cursor-pos=-1<CR>
-map <silent> <CR> :<C-u>Denite -resume -immediately -cursor-pos=+1<CR>
+map <silent> <Leader>h :<C-u>Denite -resume -immediately -cursor-pos=-1<CR>
+map <silent> <Leader>l :<C-u>Denite -resume -immediately -cursor-pos=+1<CR>
