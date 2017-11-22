@@ -24,7 +24,6 @@ set title
 set noshowmode
 set laststatus=2
 set cursorline
-set cursorcolumn
 
 set list
 
