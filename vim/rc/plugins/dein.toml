@@ -3,6 +3,12 @@
 repo = 'Shougo/dein.vim'
 
 [[plugins]]
+repo = 'scrooloose/nerdtree'
+
+[[plugins]]
+repo = 'Xuyuanp/nerdtree-git-plugin'
+
+[[plugins]]
 repo = 'w0ng/vim-hybrid'
 
 [[plugins]]
