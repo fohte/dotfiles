@@ -31,7 +31,7 @@ call denite#custom#option('default', 'vertical_preview', 1)
 
 map <silent> <Leader>p :<C-u>Denite file_rec/git<CR>
 map <silent> <Leader>f :<C-u>Denite file_rec<CR>
-map <silent> <Leader>. :<C-u>DeniteBufferDir file_rec<CR>
+map <silent> <Leader>. :<C-u>DeniteBufferDir file_rec/git<CR>
 map <silent> <Leader>o :<C-u>Denite -auto-preview file_old<CR>
 map <silent> <Leader>g :<C-u>Denite -no-empty grep<CR>
 map <silent> <Leader>r :<C-u>Denite -resume<CR>
