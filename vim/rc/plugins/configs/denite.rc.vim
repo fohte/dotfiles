@@ -16,7 +16,9 @@ if executable('ag')
 endif
 
 call denite#custom#map('insert', '<C-j>', '<denite:move_to_next_line>')
+call denite#custom#map('insert', '<C-n>', '<denite:move_to_next_line>')
 call denite#custom#map('insert', '<C-k>', '<denite:move_to_previous_line>')
+call denite#custom#map('insert', '<C-p>', '<denite:move_to_previous_line>')
 call denite#custom#map('normal', '<C-s>', '<denite:do_action:split>')
 call denite#custom#map('insert', '<C-s>', '<denite:do_action:split>')
 call denite#custom#map('normal', '<C-v>', '<denite:do_action:vsplit>')

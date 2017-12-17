@@ -7,3 +7,6 @@ nnoremap x "_x
 vnoremap > >gv
 vnoremap < <gv
 nnoremap <silent> <ESC> :nohlsearch<CR>
+
+cnoremap <C-p> <Up>
+cnoremap <C-n> <Down>
