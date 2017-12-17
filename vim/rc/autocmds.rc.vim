@@ -21,4 +21,6 @@ command! RemoveDupLines call <SID>remove_dup_lines()
 augroup MyAutoCmd
   autocmd!
   autocmd! BufWritePre * RemoveDupLines
+  autocmd! InsertLeave,WinEnter * set cursorline cursorcolumn
+  autocmd! InsertEnter,WinLeave * set nocursorline nocursorcolumn
 augroup END
