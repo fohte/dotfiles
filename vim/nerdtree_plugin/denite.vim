@@ -1,4 +1,5 @@
-nnoremap <Leader>n :NERDTreeToggle<CR>
+nnoremap <Leader>nt :NERDTreeToggle<CR>
+nnoremap <Leader>nf :NERDTreeFind<CR>
 
 let g:NERDTreeShowHidden = 1
 
