@@ -29,10 +29,6 @@ function! s:source_rc(path) abort
   execute 'source' fnameescape(l:abspath)
 endfunction
 
-augroup MyAutoCmd
-  autocmd!
-augroup END
-
 let g:mapleader = "\<Space>"
 
 let s:dein_dir = expand($CACHE . '/dein')
@@ -71,4 +67,4 @@ endif
 call s:source_rc('edit.rc.vim')
 call s:source_rc('view.rc.vim')
 call s:source_rc('mappings.rc.vim')
-call s:source_rc('utils.rc.vim')
+call s:source_rc('autocmds.rc.vim')

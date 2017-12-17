@@ -18,6 +18,7 @@ endfunction
 
 command! RemoveDupLines call <SID>remove_dup_lines()
 
-augroup UtilFunctions
+augroup MyAutoCmd
+  autocmd!
   autocmd! BufWritePre * RemoveDupLines
 augroup END
