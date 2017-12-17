@@ -10,3 +10,6 @@ nnoremap <silent> <ESC> :nohlsearch<CR>
 
 cnoremap <C-p> <Up>
 cnoremap <C-n> <Down>
+
+inoremap <C-j> <Nop>
+inoremap <C-k> <Nop>
