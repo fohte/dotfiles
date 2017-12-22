@@ -57,16 +57,6 @@ hook_source = '''
 repo = 'easymotion/vim-easymotion'
 hook_source = 'source ~/.vim/rc/plugins/configs/easymotion.rc.vim'
 
-# graphical substitute
-[[plugins]]
-repo = 'osyo-manga/vim-over'
-hook_add = '''
-  nnoremap [over] <Nop>
-  nmap , [over]
-  nnoremap [over]s :OverCommandLine<CR>%s/\v
-  nnoremap [over]w :OverCommandLine<CR>%s/<C-r><C-w>//g<Left><Left>
-'''
-
 # improve git commit buffer
 [[plugins]]
 repo = 'rhysd/committia.vim'
