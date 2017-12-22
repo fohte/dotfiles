@@ -9,3 +9,14 @@ snippet doc "yard docs"
 # @param ${2:param_name} [${3:type}] ${4:param_description}
 # @return [${5:type}] ${6:return_value_description}
 endsnippet
+
+snippet frozen
+# frozen_string_literal: true
+
+endsnippet
+
+snippet defnode
+def_node_matcher :${1:name}, <<-PATTERN
+	(${2})
+PATTERN
+endsnippet
