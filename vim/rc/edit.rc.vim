@@ -7,6 +7,10 @@ if has('clipboard')
   endif
 endif
 
+if !exists('loaded_matchit')
+  runtime macros/matchit.vim
+endif
+
 set mouse=a
 
 set foldmethod=manual
