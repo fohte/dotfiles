@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# switch the tmux session with fzf
+session=$(tmux list-sessions -F "#{session_name}" | fzf --reverse --query="$1" --select-1 --exit-0) &&
+tmux switch-client -t "$session"

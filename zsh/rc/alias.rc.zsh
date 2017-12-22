@@ -123,14 +123,6 @@ gocd() {
   dir="$(echo $GOPATH/src/*/*/* | perl -pe 's/ /\n/g' | fzf-tmux --reverse)" && cd $dir
 }
 
-# switch the tmux session with fzf
-fs() {
-  local session
-  session=$(tmux list-sessions -F "#{session_name}" | \
-    fzf --query="$1" --select-1 --exit-0) &&
-  tmux switch-client -t "$session"
-}
-
 ghq-init() {
   root=$(ghq root)
   user=$(git config --get github.user)
