@@ -19,17 +19,6 @@ repo = 'cocopon/iceberg.vim'
 repo = 'Shougo/vimproc'
 build = 'make'
 
-# search and display information from arbitrary sources
-# like files, buffers, recently used files or registers
-[[plugins]]
-repo = 'Shougo/unite.vim'
-hook_source = 'source ~/.vim/rc/plugins/configs/unite.rc.vim'
-if = '!has("nvim")'
-
-[[plugins]]
-repo = 'Shougo/unite-outline'
-on_source = 'unite.vim'
-
 [[plugins]]
 repo = 'Shougo/denite.nvim'
 hook_source = 'source ~/.vim/rc/plugins/configs/denite.rc.vim'
