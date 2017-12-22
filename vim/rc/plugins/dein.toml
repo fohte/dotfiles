@@ -41,10 +41,6 @@ hook_source = '''
   let g:UltiSnipsEditSplit = 'vertical'
 '''
 
-# colorscheme for lightline.vim
-[[plugins]]
-repo = 'cocopon/lightline-hybrid.vim'
-
 # auto close parentheses
 [[plugins]]
 repo = 'cohama/lexima.vim'
