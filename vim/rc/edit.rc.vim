@@ -19,7 +19,7 @@ set autoread
 
 set noswapfile
 set nobackup
-set noundofile
+set undofile
 
 set smartindent
 set expandtab
