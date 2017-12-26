@@ -37,3 +37,7 @@ set wrapscan
 set showcmd
 
 set iskeyword+=-
+
+if has('nvim')
+  set inccommand=split
+endif
