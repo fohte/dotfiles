@@ -155,3 +155,11 @@ hook_add = '''
   map g# <Plug>(asterisk-gz#)
   let g:asterisk#keeppos = 1
 '''
+
+[[plugins]]
+repo = 'prabirshrestha/async.vim'
+
+[[plugins]]
+repo = 'prabirshrestha/vim-lsp'
+hook_add = 'source ~/.vim/rc/plugins/configs/lsp.rc.vim'
+depends = 'async.vim'

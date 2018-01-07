@@ -19,35 +19,6 @@ hook_source = '''
   source ~/.vim/rc/plugins/configs/deoplete.rc.vim
 '''
 
-# keyword completion system for Ruby
-#   Note: require rcodetools
-[[plugins]]
-repo = 'Shougo/deoplete-rct'
-on_ft = 'ruby'
-
-# keyword completion system for Python
-#   Note: require davidhalter/jedi
-[[plugins]]
-repo = 'zchee/deoplete-jedi'
-on_ft = 'python'
-hook_add = '''
-  setlocal completeopt-=preview
-'''
-
-# keyword completion system for Go
-#   Note: require nsf/gocode
-[[plugins]]
-repo = 'zchee/deoplete-go'
-on_ft = 'go'
-build = 'make'
-
-# deoplete source for JavaScript
-# Require: ternjs (http://ternjs.net/)
-[[plugins]]
-repo = 'carlitux/deoplete-ternjs'
-build = 'yarn global add tern'
-on_ft = 'javascript'
-
 # Go doc, fmt and import utilities
 [[plugins]]
 repo = 'fatih/vim-go'

@@ -2,3 +2,4 @@ command: yarn global add
 packages:
   - prettier
   - tern
+  - flow-language-server
