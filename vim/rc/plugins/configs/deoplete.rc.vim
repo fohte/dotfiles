@@ -2,7 +2,7 @@ let g:deoplete#enable_ignore_case = 1
 let g:deoplete#enable_smart_case = 1
 let g:deoplete#enable_camel_case = 0
 let g:deoplete#max_list = 20
-let g:deoplete#enable_refresh_always = 1
+let g:deoplete#enable_refresh_always = 0
 let g:deoplete#auto_complete_start_length = 1
 let g:deoplete#auto_complete_delay = 0
 let g:deoplete#file#enable_buffer_path = 1
@@ -18,8 +18,6 @@ let g:deoplete#omni#input_patterns.java = '[^. *\t]\.\w*'
 
 inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
 inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
-inoremap <expr> <BS> deoplete#mappings#close_popup()."\<C-h>"
-inoremap <expr> <C-g> deoplete#mappings#undo_completion()
 
 call deoplete#custom#set('_', 'matchers', ['matcher_full_fuzzy', 'matcher_length'])
 call deoplete#custom#set('_', 'converters', [
@@ -29,3 +27,5 @@ call deoplete#custom#set('_', 'converters', [
   \ 'converter_truncate_abbr',
   \ 'converter_truncate_menu',
   \ ])
+call deoplete#custom#set('_', 'sorters', ['sorter_word'])
+call deoplete#custom#source('omni', 'rank', 1000)
