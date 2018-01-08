@@ -4,7 +4,7 @@ if executable('flow-language-server')
   autocmd User lsp_setup call lsp#register_server({
   \   'name': 'flow-language-server',
   \   'cmd': { server_info ->
-  \     [&shell, &shellcmdflag, 'flow-language-server', '--stdio']
+  \     [&shell, &shellcmdflag, 'flow-language-server', '--stdio', '--try-flow-bin']
   \   },
   \   'root_uri': { server_info ->
   \     lsp#utils#path_to_uri(
