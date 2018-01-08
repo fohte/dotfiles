@@ -14,7 +14,9 @@ let g:deoplete#keyword_patterns._ = '[a-zA-Z_]\k*'
 
 let g:deoplete#omni#input_patterns = {}
 let g:deoplete#omni#input_patterns.ruby = ['[^. *\t]\.\w*', '[a-zA-Z_]\w*::']
-let g:deoplete#omni#input_patterns.java = '[^. *\t]\.\w*'
+let g:deoplete#omni#input_patterns.javascript = '[^. *\t]\.\w*'
+
+let g:deoplete#omni#functions = {'_': 'lsp#complete'}
 
 inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
 inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
