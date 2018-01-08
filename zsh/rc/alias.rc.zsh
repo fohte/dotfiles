@@ -57,6 +57,7 @@ alias d='docker'
 alias dc='docker-compose'
 alias dcr='docker-compose run'
 alias dcrm='docker-compose run --rm'
+alias dce='docker-compose exec'
 alias dm='docker-machine'
 
 alias y='yarn'
