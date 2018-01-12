@@ -29,3 +29,5 @@ set laststatus=2
 set list
 
 set synmaxcol=200
+
+set completeopt-=preview
