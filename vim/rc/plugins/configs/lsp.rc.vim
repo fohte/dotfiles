@@ -26,3 +26,6 @@ if executable('language_server-ruby')
   \   'whitelist': ['ruby'],
   \ })
 endif
+
+nnoremap <silent> <CR> :<C-u>LspHover<CR>
+nnoremap <silent> <C-p> :<C-u>pclose!<CR>
