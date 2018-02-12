@@ -64,6 +64,11 @@ alias y='yarn'
 alias yr='yarn run'
 alias ya='yarn add'
 
+alias n='npm'
+alias ni='npm install'
+alias nid='npm install -D'
+alias nr='npm run'
+
 alias reload='exec $SHELL -l'
 
 alias -g G='| grep'
