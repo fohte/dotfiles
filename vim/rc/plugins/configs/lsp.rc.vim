@@ -1,18 +1,21 @@
 let g:lsp_async_completion = 0
 
+function! s:find_root_uri(filename) abort
+  let l:buffer_filename = lsp#utils#find_nearest_parent_file_directory(
+  \   lsp#utils#get_buffer_path(),
+  \   a:filename,
+  \ )
+
+  return lsp#utils#path_to_uri(l:buffer_filename)
+endfunction
+
 if executable('flow-language-server')
   autocmd User lsp_setup call lsp#register_server({
   \   'name': 'flow-language-server',
   \   'cmd': { server_info ->
   \     [&shell, &shellcmdflag, 'flow-language-server --stdio --try-flow-bin']
   \   },
-  \   'root_uri': { server_info ->
-  \     lsp#utils#path_to_uri(
-  \       lsp#utils#find_nearest_parent_file_directory(
-  \         lsp#utils#get_buffer_path(), '.flowconfig'
-  \       )
-  \     )
-  \   },
+  \   'root_uri': { server_info -> s:find_root_uri('.flowconfig') },
   \   'whitelist': ['javascript'],
   \ })
 endif
@@ -24,6 +27,17 @@ if executable('language_server-ruby')
   \     [&shell, &shellcmdflag, 'language_server-ruby']
   \   },
   \   'whitelist': ['ruby'],
+  \ })
+endif
+
+if executable('typescript-language-server')
+  autocmd User lsp_setup call lsp#register_server({
+  \   'name': 'typescript-language-server',
+  \   'cmd': { server_info ->
+  \     [&shell, &shellcmdflag, 'typescript-language-server --stdio']
+  \   },
+  \   'root_uri': { server_info -> s:find_root_uri('tsconfig.json') },
+  \   'whitelist': ['typescript'],
   \ })
 endif
 

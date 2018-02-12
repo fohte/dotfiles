@@ -12,9 +12,11 @@ set completeopt+=noinsert,noselect
 let g:deoplete#keyword_patterns = {}
 let g:deoplete#keyword_patterns._ = '[a-zA-Z_]\k*'
 
-let g:deoplete#omni#input_patterns = {}
-let g:deoplete#omni#input_patterns.ruby = ['[^. *\t]\.\w*', '[a-zA-Z_]\w*::']
-let g:deoplete#omni#input_patterns.javascript = '[^. *\t]\.\w*'
+let g:deoplete#omni#input_patterns = {
+\   'ruby': ['\w+', '[^. *\t]\.\w*', '[a-zA-Z_]\w*::'],
+\   'javascript': ['\w+', '[^. *\t]\.\w*'],
+\   'typescript': ['\w+', '[^. *\t]\.\w*'],
+\ }
 
 let g:deoplete#omni#functions = {'_': 'lsp#complete'}
 
