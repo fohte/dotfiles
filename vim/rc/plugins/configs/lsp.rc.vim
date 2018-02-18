@@ -1,4 +1,5 @@
 let g:lsp_async_completion = 0
+let g:lsp_preview_keep_focus = 1
 
 function! s:find_root_uri(filename) abort
   let l:buffer_filename = lsp#utils#find_nearest_parent_file_directory(
