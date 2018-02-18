@@ -43,12 +43,8 @@ on_ft = 'nginx'
 repo = 'keith/tmux.vim'
 on_ft = 'tmux'
 
-# adds GitHub Flavored Markdown support
 [[plugins]]
-repo = 'rhysd/vim-gfm-syntax'
-on_ft = 'markdown'
-hook_add = '''
-'''
+repo = 'plasticboy/vim-markdown'
 
 # Python indentation behavior to comply with PEP8
 [[plugins]]
