@@ -31,3 +31,5 @@ set list
 set synmaxcol=200
 
 set completeopt-=preview
+
+set previewheight=7
