@@ -160,7 +160,6 @@ hook_add = '''
 repo = 'prabirshrestha/async.vim'
 
 [[plugins]]
-repo = 'fohte/vim-lsp'
-rev = 'hover-keep-focus'
+repo = 'prabirshrestha/vim-lsp'
 hook_add = 'source ~/.vim/rc/plugins/configs/lsp.rc.vim'
 depends = 'async.vim'
