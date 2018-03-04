@@ -33,11 +33,6 @@ on_ft = 'scala'
 repo = 'toyamarinyon/vim-swift'
 on_ft = 'swift'
 
-# adds Nginx support
-[[plugins]]
-repo = 'evanmiller/nginx-vim-syntax'
-on_ft = 'nginx'
-
 # adds tmux.conf support
 [[plugins]]
 repo = 'keith/tmux.vim'
