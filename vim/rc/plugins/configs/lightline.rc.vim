@@ -1,7 +1,7 @@
 scriptencoding utf-8
 
 let g:lightline = {
-\   'colorscheme': 'iceberg',
+\   'colorscheme': 'tender',
 \   'active': {
 \     'left': [['mode', 'paste'], ['readonly', 'git_branch', 'filename', 'modified']],
 \     'right': [['lineinfo'], ['filetype'], ['fileencoding', 'fileformat']]
