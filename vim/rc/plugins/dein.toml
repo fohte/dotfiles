@@ -19,7 +19,7 @@ hook_source = 'source ~/.vim/rc/plugins/configs/denite.rc.vim'
 if = 'has("nvim")'
 
 [[plugins]]
-repo = 'jacoborus/tender.vim'
+repo = 'fohte/tender.vim'
 
 # light and configurable statusline/tabline
 [[plugins]]
