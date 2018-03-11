@@ -19,5 +19,6 @@
 ./etc/.tigrc ~/.tigrc
 ./etc/.rufo ~/.rufo
 ./etc/.prettierrc ~/.prettierrc
+./etc/kitty.conf ~/Library/Preferences/kitty/kitty.conf
 
 ./bin ~/bin
