@@ -1,1 +1,1 @@
-trailing_commas :always
+trailing_commas true
