@@ -8,8 +8,6 @@ export GOPATH=$HOME/.go
 typeset -U path PATH fpath FPATH
 
 path=( \
-  $HOME/.local/bin(N-/) \
-  $HOME/bin(N-/) \
   $HOME/.nodebrew/current/bin(N-/) \
   $HOME/.cabal/bin(N-/) \
   $HOME/.rbenv/bin(N-/) \

@@ -43,3 +43,9 @@ import_rc 'history'
 import_rc 'misc'
 
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
+
+path=(
+  $HOME/.local/bin(N-/) \
+  $HOME/bin(N-/) \
+  $path \
+)
