@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+
+make_request() {
+  echo "$(cat ~/.cache/rubocop-daemon/token) $PWD exec $*"
+  [ -t 0 ] || cat -
+}
+
+exec_daemon() {
+  make_request $* | nc localhost $(cat ~/.cache/rubocop-daemon/port)
+}
+
+if [ -e ~/.cache/rubocop-daemon ]; then
+  exec_daemon $*
+else
+  rubocop-daemon start
+  exec_daemon $*
+fi
