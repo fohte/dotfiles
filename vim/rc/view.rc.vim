@@ -28,6 +28,7 @@ set noshowmode
 set laststatus=2
 
 set list
+set nowrap
 
 set synmaxcol=200
 
