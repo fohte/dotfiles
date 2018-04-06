@@ -15,4 +15,5 @@ let g:ale_fixers = {
 \   'json': ['prettier'],
 \   'css': ['prettier'],
 \   'scss': ['prettier'],
+\   'ruby': ['rubocop'],
 \ }
