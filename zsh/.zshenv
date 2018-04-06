@@ -1,3 +1,5 @@
+. "$DOTPATH"/bin/lib/util.sh
+
 # Resolve not intended PATH on Mac OS (El Capitan or newer)
 # (en) https://mattprice.me/2015/zsh-path-issues-osx-el-capitan/
 # (ja) http://qiita.com/t-takaai/items/8574ff312f2caa5177c2
@@ -10,8 +12,6 @@ typeset -U path PATH fpath FPATH
 path=( \
   $HOME/.nodebrew/current/bin(N-/) \
   $HOME/.cabal/bin(N-/) \
-  $HOME/.rbenv/bin(N-/) \
-  $HOME/.pyenv/bin(N-/) \
   $GOPATH/bin(N-/) \
   $HOME/.cargo/bin(N-/) \
   /usr/local/bin(N-/) \
@@ -22,7 +22,20 @@ path=( \
   $path \
 )
 
-path=($(yarn global bin)(N-/) $path)
+path=(
+  $(yarn global bin)(N-/) \
+  $path \
+)
+
+has 'rbenv' && eval "$(rbenv init - --no-rehash)"
+has 'pyenv' && eval "$(pyenv init - --no-rehash)"
+has 'direnv' && eval "$(direnv hook zsh)"
+
+path=(
+  $HOME/.local/bin(N-/) \
+  $HOME/bin(N-/) \
+  $path \
+)
 
 fpath=( \
   /usr/local/share/zsh/site-functions(N-/) \

@@ -7,8 +7,6 @@
 #             \/     \/     \/            \/   @Fohte
 # ----------------------------------------------------------
 
-. "$DOTPATH"/bin/lib/util.sh
-
 import_rc() {
   local source_file="$DOTPATH/zsh/rc/$1.rc.zsh"
 
@@ -16,10 +14,6 @@ import_rc() {
     source $source_file
   fi
 }
-
-has 'rbenv' && eval "$(rbenv init - --no-rehash)"
-has 'pyenv' && eval "$(pyenv init - --no-rehash)"
-has 'direnv' && eval "$(direnv hook zsh)"
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
@@ -43,9 +37,3 @@ import_rc 'history'
 import_rc 'misc'
 
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
-
-path=(
-  $HOME/.local/bin(N-/) \
-  $HOME/bin(N-/) \
-  $path \
-)
