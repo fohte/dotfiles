@@ -29,6 +29,7 @@ set laststatus=2
 
 set list
 set nowrap
+set listchars+=precedes:<,extends:>
 
 set synmaxcol=200
 
