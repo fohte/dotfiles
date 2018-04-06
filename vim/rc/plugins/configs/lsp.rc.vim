@@ -42,5 +42,15 @@ if executable('typescript-language-server')
   \ })
 endif
 
+if executable('docker-langserver')
+  autocmd User lsp_setup call lsp#register_server({
+  \   'name': 'docker-langserver',
+  \   'cmd': { server_info ->
+  \     [&shell, &shellcmdflag, 'docker-langserver --stdio']
+  \   },
+  \   'whitelist': ['dockerfile'],
+  \ })
+endif
+
 nnoremap <silent> <CR> :<C-u>LspHover<CR>
 nnoremap <silent> <C-p> :<C-u>pclose!<CR>
