@@ -9,6 +9,12 @@ hook_add = '''
   xmap <silent> p <Plug>(operator-replace)
 '''
 
+[[plugins]]
+repo = 'emonkak/vim-operator-sort'
+hook_add = '''
+  map <silent> so <Plug>(operator-sort)
+'''
+
 # deal with surrounds like () , '', "" and so on
 [[plugins]]
 repo = 'rhysd/vim-operator-surround'
