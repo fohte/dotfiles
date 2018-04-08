@@ -1,4 +1,4 @@
-. "$DOTPATH"/bin/lib/util.sh
+. ~/bin/lib/util.sh
 
 # Resolve not intended PATH on Mac OS (El Capitan or newer)
 # (en) https://mattprice.me/2015/zsh-path-issues-osx-el-capitan/
