@@ -24,13 +24,13 @@ let g:deoplete#omni#functions = {'_': 'lsp#complete'}
 inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
 inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
 
-call deoplete#custom#set('_', 'matchers', ['matcher_full_fuzzy', 'matcher_length'])
-call deoplete#custom#set('_', 'converters', [
+call deoplete#custom#source('_', 'matchers', ['matcher_full_fuzzy', 'matcher_length'])
+call deoplete#custom#source('_', 'converters', [
   \ 'converter_remove_paren',
   \ 'converter_auto_delimiter',
   \ 'converter_remove_overlap',
   \ 'converter_truncate_abbr',
   \ 'converter_truncate_menu',
   \ ])
-call deoplete#custom#set('_', 'sorters', ['sorter_word'])
+call deoplete#custom#source('_', 'sorters', ['sorter_word'])
 call deoplete#custom#source('omni', 'rank', 1000)
