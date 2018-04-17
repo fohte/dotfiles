@@ -69,6 +69,8 @@ alias ni='npm install'
 alias nid='npm install -D'
 alias nr='npm run'
 
+alias tf='terraform'
+
 alias reload='exec $SHELL -l'
 
 alias -g G='| grep'
