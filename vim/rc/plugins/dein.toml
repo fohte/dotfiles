@@ -19,6 +19,16 @@ hook_source = 'source ~/.vim/rc/plugins/configs/denite.rc.vim'
 if = 'has("nvim")'
 
 [[plugins]]
+repo = 'junegunn/fzf.vim'
+depends = '/usr/local/opt/fzf'
+hook_source = '''
+  source ~/.vim/rc/plugins/configs/fzf.rc.vim
+'''
+
+[[plugins]]
+repo = '/usr/local/opt/fzf'
+
+[[plugins]]
 repo = 'fohte/tender.vim'
 
 # light and configurable statusline/tabline

@@ -28,13 +28,3 @@ call denite#custom#source('file_old', 'converters', ['converter_relative_word'])
 call denite#custom#source('file_old', 'matchers', ['matcher_project_files'])
 
 call denite#custom#option('default', 'vertical_preview', 1)
-
-map <silent> <Leader>p :<C-u>Denite file_rec/git<CR>
-map <silent> <Leader>f :<C-u>Denite file_rec<CR>
-map <silent> <Leader>. :<C-u>DeniteBufferDir file_rec/git<CR>
-map <silent> <Leader>o :<C-u>Denite -auto-preview file_old<CR>
-map <silent> <Leader>g :<C-u>Denite -no-empty grep<CR>
-map <silent> <Leader>r :<C-u>Denite -resume<CR>
-map <silent> <Leader>t :<C-u>Denite -split=vertical -buffer-name=tags outline<CR>
-map <silent> <Leader>h :<C-u>Denite -resume -immediately -cursor-pos=-1<CR>
-map <silent> <Leader>l :<C-u>Denite -resume -immediately -cursor-pos=+1<CR>
