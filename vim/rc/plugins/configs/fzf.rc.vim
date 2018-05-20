@@ -33,7 +33,7 @@ function! s:run_fzf_ag()
   execute 'FzfAg' l:input_value
 endfunction
 
-map <silent> <Leader>p :<C-u>FzfGFiles<CR>
+map <silent> <Leader>p :<C-u>FzfGFiles -co --exclude-standard<CR>
 map <silent> <Leader>f :<C-u>FzfFiles<CR>
 map <silent> <Leader>g :<C-u>call <SID>run_fzf_ag()<CR>
 map <silent> <Leader>s :<C-u>FzfGFiles?<CR>
