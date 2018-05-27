@@ -52,9 +52,5 @@ hook_add = '''
 '''
 
 [[plugins]]
-repo = 'racer-rust/vim-racer'
-on_ft = 'rust'
-
-[[plugins]]
 repo = 'tpope/vim-rails'
 on_ft = 'ruby'

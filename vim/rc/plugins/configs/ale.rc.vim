@@ -16,4 +16,5 @@ let g:ale_fixers = {
 \   'css': ['prettier'],
 \   'scss': ['prettier'],
 \   'ruby': ['rubocop'],
+\   'rust': ['rustfmt'],
 \ }
