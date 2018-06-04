@@ -71,4 +71,6 @@ export FZF_DEFAULT_OPTS='--cycle'
 # gpg-agent
 export GPG_TTY=$(tty)
 
+export FZF_DEFAULT_OPTS='--bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all'
+
 [ -f ~/.local/.zshenv ] && source ~/.local/.zshenv
