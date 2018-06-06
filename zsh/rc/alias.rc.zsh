@@ -81,6 +81,7 @@ alias -g M='| more'
 alias -g L='| less -R'
 alias -g S='| sed'
 alias -g J='| jq'
+alias -g X='| xargs -I%'
 
 alias -s py=python
 alias -s rb=ruby
