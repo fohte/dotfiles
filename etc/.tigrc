@@ -1,1 +1,6 @@
 set mouse = true
+
+bind main R !git rebase -i %(commit)
+bind diff R !git rebase -i %(commit)
+
+bind generic Y !@bash -c "echo -n '%(commit)' | pbcopy"
