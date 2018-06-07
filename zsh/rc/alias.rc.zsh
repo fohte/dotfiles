@@ -127,6 +127,11 @@ ghqcd() {
   dir="$(ghq root)/$(ghq list | fzf-tmux --reverse)" && cd $dir
 }
 
+gwcd() {
+  local dir
+  dir="$(git worktree list | awk '{ print $1 }' | fzf-tmux --reverse)" && cd $dir
+}
+
 gocd() {
   local dir
   dir="$(echo $GOPATH/src/*/*/* | perl -pe 's/ /\n/g' | fzf-tmux --reverse)" && cd $dir
