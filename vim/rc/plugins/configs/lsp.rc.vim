@@ -38,7 +38,7 @@ if executable('typescript-language-server')
   \     [&shell, &shellcmdflag, 'typescript-language-server --stdio']
   \   },
   \   'root_uri': { server_info -> s:find_root_uri('tsconfig.json') },
-  \   'whitelist': ['typescript'],
+  \   'whitelist': ['typescript', 'typescript.tsx'],
   \ })
 endif
 
