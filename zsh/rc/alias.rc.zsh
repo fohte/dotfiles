@@ -82,6 +82,7 @@ alias -g L='| less -R'
 alias -g S='| sed'
 alias -g J='| jq'
 alias -g X='| xargs -I%'
+alias -g XP='X -P "$(ncpu)"'
 
 alias -s py=python
 alias -s rb=ruby
