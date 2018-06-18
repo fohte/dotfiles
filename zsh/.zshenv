@@ -66,11 +66,9 @@ export SAVEHIST=100000
 export KEYTIMEOUT=1
 
 export FZF_CTRL_T_COMMAND='ag --hidden -g ""'
-export FZF_DEFAULT_OPTS='--cycle'
+export FZF_DEFAULT_OPTS='--cycle --bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all'
 
 # gpg-agent
 export GPG_TTY=$(tty)
-
-export FZF_DEFAULT_OPTS='--bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all'
 
 [ -f ~/.local/.zshenv ] && source ~/.local/.zshenv
