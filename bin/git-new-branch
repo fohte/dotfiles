@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+if [ $# -ne 1 ]; then
+  echo 'usage: git new-branch <branch>'
+  exit 1
+fi
+
+git fetch -p
+git checkout -b "$1" origin/master

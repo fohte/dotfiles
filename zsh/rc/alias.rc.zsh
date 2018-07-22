@@ -45,6 +45,7 @@ alias grbi='git rebase -i'
 alias gr='git reset'
 alias grs='git reset --soft'
 alias grh='git reset --hard'
+alias gnb='git new-branch'
 
 has 'nvim' && alias vim='nvim'
 alias v='vim'
