@@ -37,6 +37,7 @@ alias gl='git log --pretty=format:"%Cred%h%Creset - %s%C(yellow)%d%Creset" --gra
 alias gm='git merge'
 alias gms='git merge --ff --squash'
 alias gnb='git new-branch'
+alias gnw='git-new-worktree'
 alias gp='git push'
 alias gpl='git pull'
 alias gr='git reset'
@@ -47,6 +48,12 @@ alias grs='git reset --soft'
 alias gs='git status'
 alias gsp='git stash pop'
 alias gss='git stash save'
+alias gw='git worktree'
+
+git-new-worktree() {
+  set -x
+  git worktree add "$(git root)/.worktrees/$1" "$1"
+}
 
 has 'nvim' && alias vim='nvim'
 
