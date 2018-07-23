@@ -20,6 +20,10 @@ let g:deoplete#omni#input_patterns = {
 \   'dockerfile': ['\w+'],
 \ }
 
+let g:deoplete#omni_patterns = {
+\   'terraform': ['[^ *\t"{=$][\w\.]*'],
+\ }
+
 let g:deoplete#omni#functions = {'_': 'lsp#complete'}
 
 inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"

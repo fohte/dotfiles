@@ -53,3 +53,18 @@ hook_add = '''
 [[plugins]]
 repo = 'tpope/vim-rails'
 on_ft = 'ruby'
+
+[[plugins]]
+repo = 'hashivim/vim-terraform'
+on_ft = 'terraform'
+hook_source = '''
+  let g:terraform_fmt_on_save = 1
+'''
+
+[[plugins]]
+repo = 'juliosueiras/vim-terraform-completion'
+on_ft = 'terraform'
+depends = 'deoplete.nvim'
+hook_source = '''
+  g:terraform_registry_module_completion = 0
+'''
