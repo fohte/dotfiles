@@ -66,5 +66,5 @@ repo = 'juliosueiras/vim-terraform-completion'
 on_ft = 'terraform'
 depends = 'deoplete.nvim'
 hook_source = '''
-  g:terraform_registry_module_completion = 0
+  let g:terraform_registry_module_completion = 0
 '''
