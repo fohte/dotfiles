@@ -103,27 +103,13 @@ alias -s rb=ruby
 
 mk() {
   local -A opthash
-  zparseopts -D -A opthash -- d f x
-
-  # set default options (-df)
-  if [ -z "${opthash[(i)-d]}" ] && [ -z "${opthash[(i)-f]}" ]; then
-    opthash[-d]=
-    opthash[-f]=
-  fi
-
-  [ -n "${opthash[(i)-d]}" ] && is_dir=true || is_dir=false
-  [ -n "${opthash[(i)-f]}" ] && is_file=true || is_file=false
+  zparseopts -D -A opthash -- x
 
   for filepath in $@; do
-    if $is_dir; then
-      if $is_file; then
-        mkdir -p "$(dirname "$filepath")"
-      else
-        mkdir -p "$filepath"
-      fi
-    fi
-
-    if $is_file; then
+    if [ "$(echo "$filepath" | rev | cut -c 1)" = '/' ]; then
+      mkdir -p "$filepath"
+    else
+      mkdir -p "$(dirname "$filepath")"
       touch "$filepath"
 
       if [ -n "${opthash[(i)-x]}" ]; then
