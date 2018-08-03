@@ -10,6 +10,7 @@
 if has('vim_starting') && &encoding !=# 'utf-8'
    set encoding=utf-8
 endif
+set imd
 
 filetype plugin indent on
 

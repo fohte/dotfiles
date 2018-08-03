@@ -21,15 +21,15 @@ if executable('flow-language-server')
   \ })
 endif
 
-if executable('language_server-ruby')
-  autocmd User lsp_setup call lsp#register_server({
-  \   'name': 'language_server-ruby',
-  \   'cmd': { server_info ->
-  \     [&shell, &shellcmdflag, 'language_server-ruby']
-  \   },
-  \   'whitelist': ['ruby'],
-  \ })
-endif
+" if executable('language_server-ruby')
+"   autocmd User lsp_setup call lsp#register_server({
+"   \   'name': 'language_server-ruby',
+"   \   'cmd': { server_info ->
+"   \     [&shell, &shellcmdflag, 'language_server-ruby']
+"   \   },
+"   \   'whitelist': ['ruby'],
+"   \ })
+" endif
 
 if executable('typescript-language-server')
   autocmd User lsp_setup call lsp#register_server({
