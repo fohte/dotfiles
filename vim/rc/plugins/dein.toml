@@ -141,6 +141,18 @@ hook_add = '''
 repo = 'prabirshrestha/async.vim'
 
 [[plugins]]
+repo = 'xolox/vim-session'
+depends = 'xolox/vim-misc'
+hook_source = '''
+  let g:session_autosave = 'yes'
+  let g:session_autoload = 'yes'
+  let g:session_directory = xolox#misc#path#merge(getcwd(), '.vimsessions')
+'''
+
+[[plugins]]
+repo = 'xolox/vim-misc'
+
+[[plugins]]
 repo = 'prabirshrestha/vim-lsp'
 hook_add = 'source ~/.vim/rc/plugins/configs/lsp.rc.vim'
 depends = 'async.vim'

@@ -56,3 +56,5 @@ node_modules
 .rubocop-*--rubocop-yml
 .envrc
 .worktrees/
+
+.vimsessions
