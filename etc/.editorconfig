@@ -32,3 +32,7 @@ indent_size = 2
 [*.snip]
 indent_style = tab
 indent_size = 4
+
+[.gitconfig]
+indent_style = tab
+indent_size = 4
