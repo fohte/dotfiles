@@ -42,3 +42,7 @@
 	path = ~/.local/.gitconfig
 [init]
 	templatedir = ~/.git_templates
+
+[ghq]
+	root = ~/.ghq
+	root = ~/.go
