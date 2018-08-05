@@ -87,6 +87,7 @@ alias tf='terraform'
 
 alias reload='exec $SHELL -l'
 
+alias -g F='| fzf-tmux --multi'
 alias -g G='| grep'
 alias -g GV='| grep -v'
 alias -g J='| jq'
