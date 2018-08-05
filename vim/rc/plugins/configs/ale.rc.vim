@@ -20,3 +20,6 @@ let g:ale_fixers = {
 \   'ruby': ['rubocop'],
 \   'rust': ['rustfmt'],
 \ }
+
+nnoremap <silent> <F10> :ALEFix<CR>
+inoremap <silent> <F10> <C-o>:ALEFix<CR>
