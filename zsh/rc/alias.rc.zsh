@@ -102,24 +102,6 @@ alias -g Y='| pbcopy'
 alias -s py=python
 alias -s rb=ruby
 
-mk() {
-  local -A opthash
-  zparseopts -D -A opthash -- x
-
-  for filepath in $@; do
-    if [ "$(echo "$filepath" | rev | cut -c 1)" = '/' ]; then
-      mkdir -p "$filepath"
-    else
-      mkdir -p "$(dirname "$filepath")"
-      touch "$filepath"
-
-      if [ -n "${opthash[(i)-x]}" ]; then
-        chmod +x "$filepath"
-      fi
-    fi
-  done
-}
-
 mkcd() {
   mkdir -p $@ && cd $@;
 }
