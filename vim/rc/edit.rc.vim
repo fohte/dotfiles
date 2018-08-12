@@ -35,6 +35,7 @@ set smartcase
 set wrapscan
 
 set showcmd
+set switchbuf=useopen,vsplit
 
 set iskeyword+=-
 
