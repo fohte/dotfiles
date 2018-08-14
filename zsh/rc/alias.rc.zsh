@@ -108,7 +108,7 @@ mkcd() {
 
 ghqcd() {
   local dir
-  dir="$(ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf-tmux --reverse)" && cd $dir
+  dir="$(ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf-tmux --reverse)" && cd "$(eval echo "$dir")"
 }
 
 gwcd() {
