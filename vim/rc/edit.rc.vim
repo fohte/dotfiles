@@ -42,3 +42,5 @@ set iskeyword+=-
 if has('nvim')
   set inccommand=split
 endif
+
+set sessionoptions=blank,curdir,folds,tabpages,winsize
