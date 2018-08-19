@@ -9,6 +9,7 @@ let g:ale_go_gometalinter_options = '--disable-all --enable=vet --enable=gotype'
 let g:ale_linters = {
 \   'go': ['gometalinter', 'gofmt'],
 \   'typescript': ['tsserver', 'tslint', 'stylelint'],
+\   'javascript': ['eslint', 'tslint'],
 \ }
 
 let g:ale_fixers = {
