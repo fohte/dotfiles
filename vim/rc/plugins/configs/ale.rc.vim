@@ -14,7 +14,7 @@ let g:ale_linters = {
 
 let g:ale_fixers = {
 \   'javascript': ['prettier'],
-\   'typescript': ['prettier'],
+\   'typescript': ['prettier', 'tslint'],
 \   'json': ['prettier'],
 \   'css': ['prettier'],
 \   'scss': ['prettier'],
