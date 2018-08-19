@@ -19,6 +19,7 @@ let g:ale_fixers = {
 \   'json5': ['prettier'],
 \   'css': ['prettier'],
 \   'scss': ['prettier'],
+\   'graphql': ['prettier'],
 \   'ruby': ['rubocop'],
 \   'rust': ['rustfmt'],
 \ }
