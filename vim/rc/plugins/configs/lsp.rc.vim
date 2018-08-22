@@ -60,5 +60,6 @@ if executable('rls')
   \ })
 endif
 
-nnoremap <silent> <CR> :<C-u>LspHover<CR>
-nnoremap <silent> <C-p> :<C-u>pclose!<CR>
+nnoremap <silent> K :<C-u>LspHover<CR>
+nnoremap <silent> gd :<C-u>LspDefinition<CR>
+nnoremap <silent> <F2> :<C-u>LspRename<CR>
