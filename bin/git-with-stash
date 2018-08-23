@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+if [ $# -eq 0 ]; then
+  echo 'usage: git with-stash <git-commands>'
+  exit 1
+fi
+
+git stash save -u -k > /dev/null
+git "$@"
+git stash pop > /dev/null
