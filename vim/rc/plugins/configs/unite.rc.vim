@@ -8,13 +8,11 @@ call unite#custom#profile('default', 'context', {
 
 call unite#custom#source('buffer', 'sorters', 'sorter_word')
 
-nnoremap [unite] <Nop>
-nmap <Space> [unite]
-map <silent> [unite]f :<C-u>UniteWithBufferDir -buffer-name=files -start-insert file file/new<CR>
-map <silent> [unite]p :<C-u>call  <SID>unite_file_rec()<CR>
-map <silent> [unite]b :<C-u>Unite -buffer-name=buffers buffer<CR>
-map <silent> [unite]o :<C-u>Unite -buffer-name=outlines -vertical -no-quit -resume -winwidth=40 outline<CR>
-map <silent> [unite]g :<C-u>Unite grep:.<CR>
+nnoremap <silent> <Space>f ;<C-u>UniteWithBufferDir -buffer-name=files -start-insert file file/new<CR>
+nnoremap <silent> <Space>p ;<C-u>call  <SID>unite_file_rec()<CR>
+nnoremap <silent> <Space>b ;<C-u>Unite -buffer-name=buffers buffer<CR>
+nnoremap <silent> <Space>o ;<C-u>Unite -buffer-name=outlines -vertical -no-quit -resume -winwidth=40 outline<CR>
+nnoremap <silent> <Space>g ;<C-u>Unite grep:.<CR>
 
 if executable('ag')
   let g:unite_source_grep_command = 'ag'
