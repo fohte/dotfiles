@@ -1,7 +1,9 @@
 alias c='cat'
+alias cp='cp -i'
 alias l='ls -l'
 alias ls='ls -ACFG'
 alias p='pbpaste'
+alias rm='rm -i'
 alias x='chmod +x'
 
 has 'gsed' && alias sed='gsed'
