@@ -4,7 +4,7 @@
 	signingkey = Fohte
 
 [core]
-	pager = less -R
+	pager = diff-so-fancy | less --tabs=4 -RFX
 	excludesfile = ~/.gitignore_global
 
 [color]
@@ -46,3 +46,8 @@
 [ghq]
 	root = ~/.ghq
 	root = ~/.go
+[color "diff-highlight"]
+	oldNormal = red
+	oldHighlight = red bold 239
+	newNormal = green
+	newHighlight = green bold 239
