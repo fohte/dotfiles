@@ -22,6 +22,7 @@ let g:ale_fixers = {
 \   'graphql': ['prettier'],
 \   'ruby': ['rubocop'],
 \   'rust': ['rustfmt'],
+\   'markdown': ['prettier'],
 \ }
 
 nnoremap <silent> <F10> :ALEFix<CR>
