@@ -1,3 +1,10 @@
 #!/bin/sh
 
-echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+filename=$1
+parentdir=$(dirname "${filename}")
+
+if [ -d "${filename}" ]; then
+  echo "$(cd "${filename}" && pwd)"
+elif [ -d "${parentdir}" ]; then
+  echo "$(cd "${parentdir}" && pwd)/$(basename "${filename}")"
+fi
