@@ -26,9 +26,6 @@ let g:deoplete#omni_patterns = {
 
 let g:deoplete#omni#functions = {'_': 'lsp#complete'}
 
-inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
-inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
-
 call deoplete#custom#source('_', 'matchers', ['matcher_full_fuzzy', 'matcher_length'])
 call deoplete#custom#source('_', 'converters', [
   \ 'converter_remove_paren',

@@ -42,8 +42,8 @@ hook_source = '''
   let g:UltiSnipsSnippetsDir = '~/.vim/ultisnips'
 
   let g:UltiSnipsExpandTrigger = '<C-t>'
-  let g:UltiSnipsJumpForwardTrigger = '<C-j>'
-  let g:UltiSnipsJumpBackwardTrigger = '<C-k>'
+  let g:UltiSnipsJumpForwardTrigger = '<TAB>'
+  let g:UltiSnipsJumpBackwardTrigger = '<S-TAB>'
 
   let g:UltiSnipsEditSplit = 'vertical'
 '''
