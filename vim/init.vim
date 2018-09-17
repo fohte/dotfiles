@@ -68,4 +68,4 @@ endif
 call s:source_rc('edit.rc.vim')
 call s:source_rc('view.rc.vim')
 call s:source_rc('mappings.rc.vim')
-call s:source_rc('autocmds.rc.vim')
+call s:source_rc('commands.rc.vim')
