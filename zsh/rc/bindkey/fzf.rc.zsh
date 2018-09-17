@@ -36,7 +36,7 @@ bindkey '^G^L' fzf-git-log
 fzf-git-branch() {
   selected=$(
     git branch -a | \
-    fzf-tmux --ansi | \
+    fzf-tmux -m --ansi | \
     sed -e 's/^* //g' | \
     awk '{ print $1 }'
   )
