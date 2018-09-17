@@ -24,3 +24,5 @@ augroup MyAutoCmd
   autocmd InsertLeave,WinEnter * set cursorline cursorcolumn
   autocmd InsertEnter,WinLeave * set nocursorline nocursorcolumn
 augroup END
+
+command! VimShowHlGroup echo synIDattr(synIDtrans(synID(line('.'), col('.'), 1)), 'name')
