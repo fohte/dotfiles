@@ -28,8 +28,8 @@ indent_size = 4
 [*.rs]
 indent_size = 2
 
-# Neosnippet
-[*.snip]
+# snippets
+[*.{snip,snippets}]
 indent_style = tab
 indent_size = 4
 
