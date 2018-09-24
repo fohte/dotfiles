@@ -21,6 +21,14 @@ if executable('flow-language-server')
   \ })
 endif
 
+if executable('pyls')
+  autocmd User lsp_setup call lsp#register_server({
+  \   'name': 'pyls',
+  \   'cmd': { server_info -> ['pyls'] },
+  \   'whitelist': ['python'],
+  \ })
+endif
+
 " if executable('language_server-ruby')
 "   autocmd User lsp_setup call lsp#register_server({
 "   \   'name': 'language_server-ruby',

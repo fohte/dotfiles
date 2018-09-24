@@ -16,6 +16,7 @@ let g:deoplete#omni#input_patterns = {
 \   'ruby': ['\w+', '[^. *\t]\.\w*', '[a-zA-Z_]\w*::'],
 \   'rust': ['\w+', '[^. *\t]\.\w*', '[a-zA-Z_]\w*::'],
 \   'javascript': ['\w+', '[^. *\t]\.\w*'],
+\   'python': ['\w+', '[^. *\t]\.\w*'],
 \   'typescript': ['\w+', '[^. *\t]\.\w*'],
 \   'dockerfile': ['\w+'],
 \ }
