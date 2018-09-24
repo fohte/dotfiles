@@ -12,13 +12,14 @@
 ./tmux/.tmux.conf ~/.tmux.conf
 
 ./etc/.agignore ~/.agignore
-./etc/.latexmkrc ~/.latexmkrc
-./etc/.isort.cfg ~/.isort.cfg
-./etc/.vimperatorrc ~/.vimperatorrc
 ./etc/.editorconfig ~/.editorconfig
-./etc/.tigrc ~/.tigrc
-./etc/.rufo ~/.rufo
+./etc/.imwheelrc ~/.imwheelrc
+./etc/.isort.cfg ~/.isort.cfg
+./etc/.latexmkrc ~/.latexmkrc
 ./etc/.prettierrc ~/.prettierrc
+./etc/.rufo ~/.rufo
+./etc/.tigrc ~/.tigrc
+./etc/.vimperatorrc ~/.vimperatorrc
 ./etc/kitty.conf ~/Library/Preferences/kitty/kitty.conf
 
 ./bin ~/bin
