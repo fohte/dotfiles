@@ -7,6 +7,10 @@ is_macos() {
   [[ $OSTYPE == darwin* ]]
 }
 
+is_linux() {
+  [[ $OSTYPE == linux* ]]
+}
+
 is_tmux_running() {
   [ ! -z "$TMUX" ]
 }
