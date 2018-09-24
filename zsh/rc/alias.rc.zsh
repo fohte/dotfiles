@@ -2,7 +2,8 @@ alias c='cat'
 alias cp='cp -i'
 alias l='ls -l'
 alias ls='ls -ACFG'
-alias p='pbpaste'
+is_macos && alias p='pbpaste'
+is_linux && alias p='xsel --clipboard --output'
 alias rm='rm -i'
 alias x='chmod +x'
 
@@ -102,7 +103,8 @@ alias -g N='> /dev/null 2>&1'
 alias -g S='| sed'
 alias -g X='| xargs -I%'
 alias -g XP='X -P "$(ncpu)"'
-alias -g Y='| pbcopy'
+is_macos && alias -g Y='| pbcopy'
+is_linux && alias -g Y='| xsel --clipboard --input'
 
 alias -s py=python
 alias -s rb=ruby
