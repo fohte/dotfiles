@@ -14,6 +14,9 @@ set imd
 
 filetype plugin indent on
 
+" disable python2
+let g:python_host_prog = ''
+
 if executable('pyenv')
   let g:python3_host_prog = $PYENV_ROOT . '/shims/python3'
 endif
