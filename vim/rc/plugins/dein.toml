@@ -27,6 +27,11 @@ hook_source = '''
 
 [[plugins]]
 repo = '/usr/local/opt/fzf'
+if = 'isdirectory("/usr/local/opt/fzf")'
+
+[[plugins]]
+repo = '~/.fzf'
+if = 'isdirectory(expand("~/.fzf"))'
 
 [[plugins]]
 repo = 'fohte/tender.vim'
