@@ -41,28 +41,6 @@ on_ft = 'tmux'
 [[plugins]]
 repo = 'plasticboy/vim-markdown'
 
-# Python indentation behavior to comply with PEP8
-[[plugins]]
-repo = 'hynek/vim-python-pep8-indent'
-on_ft = 'python'
-on_event = 'InsertEnter'
-
-# autopep8 for Vim
-[[plugins]]
-repo = 'tell-k/vim-autopep8'
-on_ft = 'python'
-hook_add = '''
-  let g:autopep8_disable_show_diff = 1
-'''
-
-# isort for Vim
-[[plugins]]
-repo = 'Photonios/vim-isort'
-on_ft = 'python'
-hook_add = '''
-  let g:isort_options = {}
-'''
-
 # adds JavaScript support
 [[plugins]]
 repo = 'pangloss/vim-javascript'
