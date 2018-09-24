@@ -23,6 +23,7 @@ let g:ale_fixers = {
 \   'ruby': ['rubocop'],
 \   'rust': ['rustfmt'],
 \   'markdown': ['prettier'],
+\   'python': ['isort', 'yapf'],
 \ }
 
 nnoremap <silent> <F10> :ALEFix<CR>
