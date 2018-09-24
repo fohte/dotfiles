@@ -11,6 +11,7 @@ typeset -U path PATH fpath FPATH
 
 path=( \
   $HOME/.nodebrew/current/bin(N-/) \
+  $HOME/.pyenv/bin(N-/) \
   $HOME/.cabal/bin(N-/) \
   $GOPATH/bin(N-/) \
   $HOME/.cargo/bin(N-/) \
