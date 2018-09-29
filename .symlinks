@@ -1,5 +1,4 @@
 ./vim ~/.vim
-./vim ~/.config/nvim
 ./vim/init.vim ~/.vimrc
 
 ./git/.gitconfig ~/.gitconfig
@@ -10,6 +9,8 @@
 ./zsh/.zshenv ~/.zshenv
 
 ./tmux/.tmux.conf ~/.tmux.conf
+
+./config ~/.config
 
 ./etc/.agignore ~/.agignore
 ./etc/.editorconfig ~/.editorconfig
