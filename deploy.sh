@@ -15,5 +15,5 @@ cat .symlinks | grep -v '^$' | while read link; do
   [ ! -d "$to_dir" ] && mkdir -p "$to_dir"
   from="$(abspath "$from")"
   to="$(abspath "$to")"
-  ln -snv "$from" "$to"
+  ln -snfv "$from" "$to"
 done
