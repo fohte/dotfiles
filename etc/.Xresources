@@ -1,0 +1,31 @@
+URxvt.scrollBar: false
+URxvt.fading: 40
+URxvt.font: xft:monospace
+
+! Tender color palettes
+URxvt.background: #282828
+URxvt.foreground: #eeeeee
+! black dark/light
+URxvt.color0: #282828
+URxvt.color8: #282828
+! red dark/light
+URxvt.color1: #f43753
+URxvt.color9: #f43753
+! green dark/light
+URxvt.color2: #c9d05c
+URxvt.color10: #c9d05c
+! yellow dark/light
+URxvt.color3: #ffc24b
+URxvt.color11: #ffc24b
+! blue dark/light
+URxvt.color4: #b3deef
+URxvt.color12: #b3deef
+! magenta dark/light
+URxvt.color5: #d3b987
+URxvt.color13: #d3b987
+! cyan dark/light
+URxvt.color6: #73cef4
+URxvt.color14: #73cef4
+! white dark/light
+URxvt.color7: #eeeeee
+URxvt.color15: #eeeeee

@@ -22,5 +22,6 @@
 ./etc/.tigrc ~/.tigrc
 ./etc/.vimperatorrc ~/.vimperatorrc
 ./etc/kitty.conf ~/Library/Preferences/kitty/kitty.conf
+./etc/.Xresources ~/.Xresources
 
 ./bin ~/bin
