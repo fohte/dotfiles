@@ -2,6 +2,9 @@ URxvt.scrollBar: false
 URxvt.fading: 40
 URxvt.font: xft:monospace
 
+URxvt.keysym.Shift-Control-V: eval:paste_clipboard
+URxvt.keysym.Shift-Control-C: eval:selection_to_clipboard
+
 ! Tender color palettes
 URxvt.background: #282828
 URxvt.foreground: #eeeeee
