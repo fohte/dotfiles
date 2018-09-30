@@ -10,7 +10,7 @@
 
 ./tmux/.tmux.conf ~/.tmux.conf
 
-./config ~/.config
+./config/nvim ~/.config/nvim
 
 ./etc/.agignore ~/.agignore
 ./etc/.editorconfig ~/.editorconfig
