@@ -23,5 +23,6 @@
 ./etc/.vimperatorrc ~/.vimperatorrc
 ./etc/kitty.conf ~/Library/Preferences/kitty/kitty.conf
 ./etc/.Xresources ~/.Xresources
+./etc/.xinitrc ~/.xinitrc
 
 ./bin ~/bin
