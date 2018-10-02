@@ -9,6 +9,8 @@
 ./zsh/.zshenv ~/.zshenv
 
 ./tmux/.tmux.conf ~/.tmux.conf
+./tmux/.tmux.macos.conf ~/.tmux.macos.conf
+./tmux/.tmux.ubuntu.conf ~/.tmux.ubuntu.conf
 
 ./config/i3 ~/.config/i3
 ./config/nvim ~/.config/nvim
