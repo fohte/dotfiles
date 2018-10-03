@@ -12,6 +12,7 @@
 ./tmux/.tmux.macos.conf ~/.tmux.macos.conf
 ./tmux/.tmux.ubuntu.conf ~/.tmux.ubuntu.conf
 
+./config/fcitx/config ~/.config/fcitx/config
 ./config/i3 ~/.config/i3
 ./config/nvim ~/.config/nvim
 
@@ -27,5 +28,6 @@
 ./etc/kitty.conf ~/Library/Preferences/kitty/kitty.conf
 ./etc/.Xresources ~/.Xresources
 ./etc/.xinitrc ~/.xinitrc
+./etc/.xprofile ~/.xprofile
 
 ./bin ~/bin
