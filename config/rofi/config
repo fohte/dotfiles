@@ -1,0 +1,3 @@
+rofi.modi: window,drun
+rofi.kb-cancel: Escape,Control+g,Control+bracketleft,Alt+space
+rofi.theme: /usr/share/rofi/themes/glue_pro_blue.rasi

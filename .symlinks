@@ -15,6 +15,7 @@
 ./config/fcitx/config ~/.config/fcitx/config
 ./config/i3 ~/.config/i3
 ./config/nvim ~/.config/nvim
+./config/rofi ~/.config/rofi
 
 ./etc/.agignore ~/.agignore
 ./etc/.editorconfig ~/.editorconfig
