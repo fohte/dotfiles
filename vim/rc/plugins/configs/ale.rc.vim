@@ -17,6 +17,7 @@ let g:ale_fixers = {
 \   'typescript': ['prettier', 'tslint'],
 \   'json': ['prettier'],
 \   'json5': ['prettier'],
+\   'yaml': ['prettier'],
 \   'css': ['prettier'],
 \   'scss': ['prettier'],
 \   'graphql': ['prettier'],
