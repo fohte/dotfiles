@@ -1,9 +1,12 @@
 alias c='cat'
 alias cp='cp -i'
+
 alias l='ls -l'
-alias ls='ls -ACFG'
+has exa && alias ls='exa -aF' || alias ls='ls -ACFG'
+
 is_macos && alias p='pbpaste'
 is_linux && alias p='xsel --clipboard --output'
+
 alias rm='rm -i'
 alias x='chmod +x'
 
