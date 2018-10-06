@@ -61,13 +61,6 @@ bindsym $mod+Shift+0 move container to workspace 10
 bindsym $mod+u mode "command"
 
 mode "command" {
-  # start dmenu (a program launcher)
-  bindsym d exec dmenu_run; mode "default"
-  # There also is the (new) i3-dmenu-desktop which only displays applications
-  # shipping a .desktop file. It is a wrapper around dmenu, so you need that
-  # installed.
-  # bindsym d exec --no-startup-id i3-dmenu-desktop
-
   # change focus
   bindsym h focus left; mode "default"
   bindsym j focus down; mode "default"
