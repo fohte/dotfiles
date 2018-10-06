@@ -32,7 +32,6 @@ floating_modifier $mod
 
 bindsym $mod+q kill
 
-bindsym $alt+Tab exec "rofi -show window"
 bindsym $alt+space exec "rofi -show drun"
 
 # switch to workspace
