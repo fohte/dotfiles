@@ -70,10 +70,10 @@ mode "command" {
   # bindsym d exec --no-startup-id i3-dmenu-desktop
 
   # change focus
-  bindsym j focus left; mode "default"
-  bindsym k focus down; mode "default"
-  bindsym l focus up; mode "default"
-  bindsym semicolon focus right; mode "default"
+  bindsym h focus left; mode "default"
+  bindsym j focus down; mode "default"
+  bindsym k focus up; mode "default"
+  bindsym l focus right; mode "default"
 
   # alternatively, you can use the cursor keys:
   bindsym Left focus left; mode "default"
@@ -82,10 +82,10 @@ mode "command" {
   bindsym Right focus right; mode "default"
 
   # move focused window
-  bindsym Shift+j move left; mode "default"
-  bindsym Shift+k move down; mode "default"
-  bindsym Shift+l move up; mode "default"
-  bindsym Shift+semicolon move right; mode "default"
+  bindsym Shift+h move left; mode "default"
+  bindsym Shift+j move down; mode "default"
+  bindsym Shift+k move up; mode "default"
+  bindsym Shift+l move right; mode "default"
 
   # alternatively, you can use the cursor keys:
   bindsym Shift+Left move left; mode "default"
@@ -141,10 +141,10 @@ mode "resize" {
         # Pressing right will grow the window’s width.
         # Pressing up will shrink the window’s height.
         # Pressing down will grow the window’s height.
-        bindsym j resize shrink width 10 px or 10 ppt
-        bindsym k resize grow height 10 px or 10 ppt
-        bindsym l resize shrink height 10 px or 10 ppt
-        bindsym semicolon resize grow width 10 px or 10 ppt
+        bindsym h resize shrink width 10 px or 10 ppt
+        bindsym j resize grow height 10 px or 10 ppt
+        bindsym k resize shrink height 10 px or 10 ppt
+        bindsym l resize grow width 10 px or 10 ppt
 
         # same bindings, but for the arrow keys
         bindsym Left resize shrink width 10 px or 10 ppt
