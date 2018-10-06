@@ -35,12 +35,13 @@ define_keymap(
         K("C-e"): with_mark(K("end")),
         # Page up/down
         K("M-v"): with_mark(K("page_up")),
+        K("C-u"): with_mark(K("page_up")),
         K("C-v"): with_mark(K("page_down")),
+        K("C-d"): with_mark(K("page_down")),
         # Beginning/End of file
         K("M-Shift-comma"): with_mark(K("C-home")),
         K("M-Shift-dot"): with_mark(K("C-end")),
         # Delete
-        K("C-d"): [K("delete"), set_mark(False)],
         K("M-d"): [K("C-delete"), set_mark(False)],
         # Kill line
         K("C-k"): [K("Shift-end"), K("C-x"),
