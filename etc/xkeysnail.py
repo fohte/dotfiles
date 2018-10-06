@@ -45,7 +45,19 @@ define_keymap(
         # Kill line
         K("C-k"): [K("Shift-end"), K("C-x"),
                    set_mark(False)],
-        **super_to_ctrl(['a', 'z', 'x', 'c', 'v', 'w', 't', 'l', 'e', 'f']),
+        **super_to_ctrl([
+            'a',
+            'c',
+            'e',
+            'f',
+            'l',
+            'r',
+            't',
+            'v',
+            'w',
+            'x',
+            'z',
+        ]),
     })
 
 define_keymap(lambda wm_class: wm_class in ('URxvt'), {
