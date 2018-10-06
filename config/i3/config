@@ -156,3 +156,4 @@ bar {
 }
 
 exec --no-startup-id fcitx
+exec --no-startup-id unclutter -idle 0.3
