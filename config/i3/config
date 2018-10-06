@@ -157,3 +157,4 @@ bar {
 
 exec --no-startup-id fcitx
 exec --no-startup-id unclutter -idle 0.3
+exec --no-startup-id compton -cbm 0.75
