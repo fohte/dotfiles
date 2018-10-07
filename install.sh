@@ -1,9 +1,9 @@
 #!/bin/bash
 
-is_macos() {
-  [[ $OSTYPE == darwin* ]]
-}
+set -e
 
-if is_macos; then
-  ./.bootstrap/macos/setup.sh
-fi
+cd "$(dirname "$0")"
+
+.bootstrap/install_ansible.sh
+
+ansible-playbook -i ./hosts ./local_env.yml --ask-become-pass
