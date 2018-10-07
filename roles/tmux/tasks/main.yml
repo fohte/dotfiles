@@ -1,0 +1,22 @@
+- include_tasks: macos.yml
+  when: is_macos
+
+- include_tasks: debian.yml
+  when: is_debian
+
+- name: Symlink tmux files
+  file:
+    src: '{{ dotfiles_home }}/roles/tmux/files/{{ item }}'
+    dest: '{{ user_home }}/{{ item }}'
+    state: link
+  with_items:
+    - .tmux.conf
+    - .tmux.macos.conf
+    - .tmux.ubuntu.conf
+
+- name: Clone tpm
+  git:
+    repo: https://github.com/tmux-plugins/tpm.git
+    dest: '{{ tpm_root }}'
+  register: git_result
+  changed_when: "git_result.after|default('after') != git_result.before|default('before')"

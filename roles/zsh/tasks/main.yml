@@ -1,0 +1,27 @@
+- include_tasks: macos.yml
+  when: is_macos
+
+- include_tasks: debian.yml
+  when: is_debian
+
+- name: Symlink zsh files
+  file:
+    src: '{{ dotfiles_home }}/roles/zsh/files/{{ item }}'
+    dest: '{{ user_home }}/{{ item }}'
+    state: link
+  with_items:
+    - .zsh
+    - .zshenv
+    - .zshrc
+
+- name: Set zsh as default shell
+  become: true
+  shell: chsh -s /bin/zsh
+  changed_when: ansible_env.SHELL != "/bin/zsh"
+
+- name: Clone zplug
+  git:
+    repo: https://github.com/zplug/zplug.git
+    dest: '{{ zplug_root }}'
+  register: git_result
+  changed_when: "git_result.after|default('after') != git_result.before|default('before')"

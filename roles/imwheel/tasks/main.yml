@@ -1,0 +1,13 @@
+- name: Install imwheel with apt
+  become: true
+  apt:
+    name: imwheel
+    state: latest
+
+- name: Symlink imwheel files
+  file:
+    src: '{{ dotfiles_home }}/roles/imwheel/files/{{ item }}'
+    dest: '{{ user_home }}/{{ item }}'
+    state: link
+  with_items:
+    - .imwheelrc

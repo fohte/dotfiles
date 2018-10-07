@@ -1,0 +1,4 @@
+- name: Install ag with Homebrew
+  homebrew:
+    name: ag
+    state: latest

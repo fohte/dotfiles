@@ -1,0 +1,7 @@
+- name: Install Node.js and npm with apt
+  become: true
+  apt:
+    name:
+      - nodejs
+      - npm
+    state: latest

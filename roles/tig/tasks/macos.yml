@@ -1,0 +1,4 @@
+- name: Install tig with Homebrew
+  homebrew:
+    name: tig
+    state: latest

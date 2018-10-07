@@ -1,0 +1,20 @@
+- include_tasks: macos.yml
+  when: is_macos
+
+- include_tasks: debian.yml
+  when: is_debian
+
+- name: Symlink node files
+  file:
+    src: '{{ dotfiles_home }}/roles/node/files/{{ item }}'
+    dest: '{{ user_home }}/{{ item }}'
+    state: link
+  with_items:
+    - .prettierrc
+
+- name: Install npm packages
+  npm:
+    name: '{{ item }}'
+    state: latest
+    global: true
+  with_items: '{{ node.global_packages }}'

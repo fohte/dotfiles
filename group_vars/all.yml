@@ -1,0 +1,40 @@
+user_home: "{{ '~' | expanduser }}"
+dotfiles_home: '{{ user_home }}/.ghq/github.com/fohte/dotfiles'
+
+fzf_root: '{{ user_home }}/.fzf'
+pyenv_root: '{{ user_home }}/.pyenv'
+rbenv_root: '{{ user_home }}/.rbenv'
+tmux_root: '{{ user_home }}/.tmux'
+tpm_root: '{{ tmux_root }}/plugins/tpm'
+zplug_root: '{{ user_home }}/.zplug'
+
+is_debian: '{{ ansible_os_family == "Debian" }}'
+is_macos: '{{ ansible_os_family == "Darwin" }}'
+
+vim:
+  install_plugins: false
+
+python:
+  install_versions:
+    - 3.7.0
+  global_versions:
+    - 3.7.0
+  global_packages:
+    - isort
+    - pip
+    - python-language-server
+    - yapf
+
+ruby:
+  install_versions:
+    - 2.5.1
+  global_versions:
+    - 2.5.1
+  global_gems:
+    - bundler
+    - rubocop
+    - rufo
+
+node:
+  global_packages:
+    - prettier

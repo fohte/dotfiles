@@ -1,7 +1,0 @@
-command: gem install
-packages:
-  - neovim
-  - rcodetools
-  - rubocop
-  - rufo
-  - language_server

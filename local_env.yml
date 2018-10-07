@@ -1,0 +1,35 @@
+- name: Setup local development environment
+  hosts: local
+  roles:
+    - { role: ag, tags: [ag] }
+    - { role: bin, tags: [bin] }
+    - { role: direnv, tags: [direnv] }
+    - { role: docker, tags: [docker] }
+    - { role: fzf, tags: [fzf] }
+    - { role: ghq, tags: [ghq] }
+    - { role: git, tags: [git] }
+    - { role: go, tags: [go] }
+    - { role: hub, tags: [hub] }
+    - { role: jq, tags: [jq] }
+    - { role: latex, tags: [latex] }
+    - { role: node, tags: [node] }
+    - { role: python, tags: [python] }
+    - { role: ruby, tags: [ruby] }
+    - { role: tig, tags: [tig] }
+    - { role: tmux, tags: [tmux] }
+    - { role: vim, tags: [vim] }
+    - { role: zsh, tags: [zsh] }
+
+    # for macos
+    - { role: kitty, tags: [kitty], when: is_macos }
+
+    # for debian
+    - { role: fcitx, tags: [fcitx], when: is_debian }
+    - { role: i3, tags: [i3], when: is_debian }
+    - { role: imwheel, tags: [imwheel], when: is_debian }
+    - { role: rofi, tags: [rofi], when: is_debian }
+    - { role: x, tags: [x], when: is_debian }
+    - { role: xkeysnail, tags: [xkeysnail], when: is_debian }
+
+    # misc
+    - { role: misc, tags: [misc] }

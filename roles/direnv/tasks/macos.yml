@@ -1,0 +1,4 @@
+- name: Install direnv with Homebrew
+  homebrew:
+    name: direnv
+    state: latest

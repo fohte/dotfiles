@@ -1,0 +1,5 @@
+- name: Install jq with apt
+  become: true
+  apt:
+    name: jq
+    state: latest

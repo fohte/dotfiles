@@ -1,0 +1,9 @@
+# TODO: install latex environment
+
+- name: Symlink latex files
+  file:
+    src: '{{ dotfiles_home }}/roles/latex/files/{{ item }}'
+    dest: '{{ user_home }}/{{ item }}'
+    state: link
+  with_items:
+    - .latexmkrc

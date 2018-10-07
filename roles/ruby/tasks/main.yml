@@ -1,0 +1,32 @@
+- include_tasks: macos.yml
+  when: is_macos
+
+- include_tasks: debian.yml
+  when: is_debian
+
+- name: Install Ruby with rbenv
+  command: zsh -lc 'rbenv install {{ item }}'
+  args:
+    creates: '{{ rbenv_root }}/versions/{{ item }}'
+  with_items: '{{ ruby.install_versions }}'
+
+- name: Set global Ruby version
+  template:
+    src: ../templates/versions.j2
+    dest: '{{ rbenv_root }}/version'
+
+- name: Symlink ruby files
+  file:
+    src: '{{ dotfiles_home }}/roles/ruby/files/{{ item }}'
+    dest: '{{ user_home }}/{{ item }}'
+    state: link
+  with_items:
+    - .rufo
+
+- name: Install Ruby packages
+  gem:
+    name: '{{ item }}'
+    state: latest
+    executable: '{{ rbenv_root }}/shims/gem'
+    user_install: false
+  with_items: '{{ ruby.global_gems }}'

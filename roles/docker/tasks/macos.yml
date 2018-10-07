@@ -1,0 +1,9 @@
+- name: Install Docker with Homebrew
+  homebrew:
+    name: docker
+    state: latest
+
+- name: Install Docker for Mac with Homebrew Cask
+  homebrew_cask:
+    name: docker
+    state: present

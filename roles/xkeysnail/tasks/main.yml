@@ -1,0 +1,5 @@
+- name: Install xkeysnail with pip
+  pip:
+    name: xkeysnail
+    state: latest
+    executable: '{{ pyenv_root }}/shims/pip'

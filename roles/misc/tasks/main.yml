@@ -1,0 +1,8 @@
+- name: Symlink files
+  file:
+    src: '{{ dotfiles_home }}/roles/misc/files/{{ item }}'
+    dest: '{{ user_home }}/{{ item }}'
+    state: link
+  with_items:
+    - .editorconfig
+    - .vimperatorrc

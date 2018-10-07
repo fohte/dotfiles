@@ -1,0 +1,5 @@
+- include_tasks: macos.yml
+  when: is_macos
+
+- include_tasks: debian.yml
+  when: is_debian
