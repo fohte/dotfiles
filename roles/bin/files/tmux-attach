@@ -1,6 +1,8 @@
 #!/bin/bash
 
-. "$DOTPATH"/bin/lib/util.sh
+set -e
+
+. ~/bin/lib/util.sh
 
 if ! is_tmux_running && ! tmux has-session >/dev/null 2>&1; then
   tmux new-session
