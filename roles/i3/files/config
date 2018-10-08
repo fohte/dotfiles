@@ -149,6 +149,8 @@ mode "resize" {
         bindsym Escape mode "default"
 }
 
+for_window [class="^.*"] border none
+
 exec --no-startup-id fcitx
 exec --no-startup-id unclutter -idle 0.3
 exec_always --no-startup-id ~/.config/polybar/launch.sh
