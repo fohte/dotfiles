@@ -153,6 +153,7 @@ for_window [class="^.*"] border none
 
 exec --no-startup-id fcitx
 exec --no-startup-id unclutter -idle 0.3
+exec --no-startup-id imwheel
 exec_always --no-startup-id ~/.config/polybar/launch.sh
 
 exec --no-startup-id i3-msg 'workspace 1; exec urxvt'
