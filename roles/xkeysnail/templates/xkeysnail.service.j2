@@ -1,0 +1,14 @@
+[Unit]
+Description=xkeysnail
+
+[Service]
+KillMode=process
+Environment=DISPLAY={{ ansible_env.DISPLAY }}
+ExecStart={{ pyenv_root }}/shims/xkeysnail {{ user_home }}/.config/xkeysnail/config.py
+Type=simple
+User={{ ansible_env.USER }}
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=graphical.target
