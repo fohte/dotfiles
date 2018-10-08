@@ -1,0 +1,70 @@
+- name: Check polybar is installed
+  command: which polybar
+  register: polybar_installed
+  failed_when: false
+  changed_when: false
+
+- name: Install packages for polybar
+  become: true
+  apt:
+    name:
+      # cmake
+      - cmake
+      - cmake-data
+      - pkg-config
+      # cairo
+      - libcairo2-dev
+      # libxcb
+      - libxcb1-dev
+      - libxcb-util0-dev
+      - libxcb-randr0-dev
+      - libxcb-composite0-dev
+      # xcb-proto
+      - python-xcbgen
+      - xcb-proto
+      # xcb-util-image
+      - libxcb-image0-dev
+      # xcb-util-wm
+      - libxcb-ewmh-dev
+      - libxcb-icccm4-dev
+    state: present
+  when: polybar_installed.rc != 0
+
+- name: Clone polybar repository
+  git:
+    repo: https://github.com/jaagr/polybar.git
+    dest: /tmp/polybar
+  when: polybar_installed.rc != 0
+
+- name: Create polybar build folder
+  file:
+    path: /tmp/polybar/build
+    state: directory
+  when: polybar_installed.rc != 0
+
+- name: cmake polybar
+  command: cmake ..
+  args:
+    chdir: /tmp/polybar/build
+  when: polybar_installed.rc != 0
+
+- name: make install polybar
+  become: true
+  command: make install
+  args:
+    chdir: /tmp/polybar/build
+  when: polybar_installed.rc != 0
+
+- name: Create polybar config directory
+  file:
+    path: '{{ user_home }}/.config/polybar'
+    state: directory
+
+- name: Symlink polybar files
+  file:
+    src: '{{ dotfiles_home }}/roles/polybar/files/{{ item }}'
+    dest: '{{ user_home }}/.config/polybar/{{ item }}'
+    state: link
+  with_items:
+    - config
+    - launch.sh

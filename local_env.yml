@@ -27,6 +27,7 @@
     - { role: fcitx, tags: [fcitx], when: is_debian }
     - { role: i3, tags: [i3], when: is_debian }
     - { role: imwheel, tags: [imwheel], when: is_debian }
+    - { role: polybar, tags: [polybar], when: is_debian }
     - { role: rofi, tags: [rofi], when: is_debian }
     - { role: x, tags: [x], when: is_debian }
     - { role: xkeysnail, tags: [xkeysnail], when: is_debian }
