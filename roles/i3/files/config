@@ -157,7 +157,6 @@ bar {
 
 exec --no-startup-id fcitx
 exec --no-startup-id unclutter -idle 0.3
-exec --no-startup-id compton -cbm 0.75
 
 exec --no-startup-id i3-msg 'workspace 1; exec urxvt'
 exec --no-startup-id i3-msg 'workspace 2; exec google-chrome-stable'
