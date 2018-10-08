@@ -19,6 +19,8 @@ def super_to_ctrl(keys):
 define_keymap(
     lambda wm_class: wm_class not in ('URxvt'),
     {
+        K("M-backspace"): with_mark(K("C-backspace")),
+
         # Cursor
         K("C-b"): with_mark(K("left")),
         K("C-f"): with_mark(K("right")),
