@@ -11,6 +11,7 @@
     - { role: go, tags: [go] }
     - { role: hub, tags: [hub] }
     - { role: jq, tags: [jq] }
+    - { role: kitty, tags: [kitty] }
     - { role: latex, tags: [latex] }
     - { role: node, tags: [node] }
     - { role: python, tags: [python] }
@@ -19,9 +20,6 @@
     - { role: tmux, tags: [tmux] }
     - { role: vim, tags: [vim] }
     - { role: zsh, tags: [zsh] }
-
-    # for macos
-    - { role: kitty, tags: [kitty], when: is_macos }
 
     # for debian
     - { role: fcitx, tags: [fcitx], when: is_debian }

@@ -1,12 +1,5 @@
-- name: Install kitty with Homebrew Cask
-  homebrew_cask:
-    name: kitty
-    state: latest
+- include_tasks: macos.yml
+  when: is_macos
 
-- name: Symlink kitty files
-  file:
-    src: '{{ dotfiles_home }}/roles/kitty/files/{{ item }}'
-    dest: '{{ user_home }}/Library/Preferences/kitty/{{ item }}'
-    state: link
-  with_items:
-    - kitty.conf
+- include_tasks: debian.yml
+  when: is_debian

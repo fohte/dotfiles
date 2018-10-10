@@ -17,7 +17,7 @@ def super_to_ctrl(keys):
 
 
 define_keymap(
-    lambda wm_class: wm_class not in ('URxvt'),
+    lambda wm_class: wm_class not in ('URxvt', 'kitty'),
     {
         K("M-backspace"): with_mark(K("C-backspace")),
 
@@ -63,6 +63,6 @@ define_keymap(
         ]),
     })
 
-define_keymap(lambda wm_class: wm_class in ('URxvt'), {
+define_keymap(lambda wm_class: wm_class in ('URxvt', 'kitty'), {
     **super_to('C-Shift', ['c', 'v']),
 })
