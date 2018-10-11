@@ -37,4 +37,6 @@ ruby:
 
 node:
   global_packages:
+    - flow-language-server
     - prettier
+    - typescript-language-server
