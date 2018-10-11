@@ -1,11 +1,19 @@
-.git
-node_modules
+# vi: set ft=gitignore
 
-yarn.lock
-package-lock.json
-Gemfile.lock
+.git
 
 *.jpg
 *.jpeg
 *.png
 *.gif
+
+# Node
+
+node_modules
+
+yarn.lock
+package-lock.json
+
+# Ruby
+
+Gemfile.lock
