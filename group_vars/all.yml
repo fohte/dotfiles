@@ -32,6 +32,7 @@ ruby:
     - 2.5.1
   global_gems:
     - bundler
+    - pry
     - rubocop
     - rufo
 
