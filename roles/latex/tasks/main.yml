@@ -1,4 +1,7 @@
-# TODO: install latex environment
+# TODO: install latex environment for macOS
+
+- include_tasks: debian.yml
+  when: is_debian
 
 - name: Symlink latex files
   file:

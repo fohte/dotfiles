@@ -1,0 +1,8 @@
+- name: Install latex environment with apt
+  become: true
+  apt:
+    name:
+      - latexmk
+      - texlive
+      - texlive-lang-japanese
+    state: latest
