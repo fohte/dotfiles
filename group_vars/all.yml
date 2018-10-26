@@ -27,9 +27,9 @@ python:
 
 ruby:
   install_versions:
-    - 2.5.2
+    - 2.5.3
   global_versions:
-    - 2.5.2
+    - 2.5.3
   global_gems:
     - bundler
     - pry
