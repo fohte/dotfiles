@@ -41,6 +41,7 @@ path=(
 
 fpath=( \
   /usr/local/share/zsh/site-functions(N-/) \
+  $HOME/.zsh/completions(N-/) \
   $fpath
 )
 
