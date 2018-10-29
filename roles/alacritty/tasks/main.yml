@@ -1,0 +1,7 @@
+# TODO: install alacritty
+
+- name: Symlink kitty files
+  file:
+    src: '{{ dotfiles_home }}/roles/alacritty/files'
+    dest: '{{ user_home }}/.config/alacritty'
+    state: link

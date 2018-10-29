@@ -2,6 +2,7 @@
   hosts: local
   roles:
     - { role: ag, tags: [ag] }
+    - { role: alacritty, tags: [alacritty] }
     - { role: bin, tags: [bin] }
     - { role: direnv, tags: [direnv] }
     - { role: docker, tags: [docker] }
