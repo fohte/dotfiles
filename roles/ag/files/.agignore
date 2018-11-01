@@ -18,6 +18,8 @@ package-lock.json
 
 .next
 
+__snapshots__
+
 # Ruby
 
 Gemfile.lock
