@@ -3,7 +3,6 @@ dpi = 144
 [bar/main]
 width = 100%
 height = 34
-bottom = true
 
 background = #bb000000
 foreground = #ffffffff
