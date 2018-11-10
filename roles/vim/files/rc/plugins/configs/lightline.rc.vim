@@ -47,10 +47,6 @@ function! LightLineMode()
 endfunction
 
 function! LightLineFilename()
-  if &filetype =~# 'unite'
-    return fnamemodify(matchstr(unite#get_status_string(), 'directory:\s\zs.\+'), ':~')
-  end
-
   return s:truncate_string(fnamemodify(expand('%'), ':~:.'), winwidth(0) - 35)
 endfunction
 
