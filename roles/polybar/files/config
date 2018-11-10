@@ -5,10 +5,10 @@ width = 100%
 height = 34
 bottom = true
 
-background = #00000000
-foreground = #ccffffff
+background = #bb000000
+foreground = #ffffffff
 
-line-color = #00000000
+line-color = #ff000000
 line-size = 16
 
 spacing = 2
@@ -91,23 +91,23 @@ ws-icon-default = 
 
 label-mode = %mode%
 label-mode-padding = 2
-label-mode-background = #222
+label-mode-background = #cc222222
 
 label-focused = %icon%  %name%
-label-focused-foreground = #ffffff
-label-focused-background = #222
+label-focused-foreground = #ffffffff
+label-focused-background = #cc222222
 label-focused-padding = 2
 
 label-unfocused = %icon%  %name%
 label-unfocused-padding = 2
 
 label-visible = %icon%  %name%
-label-visible-background = #555555
+label-visible-background = #cc555555
 label-visible-padding = 2
 
 ; label-urgent = %icon% %name%
-label-urgent-foreground = #000000
-label-urgent-background = #bd2c40
+label-urgent-foreground = #ff000000
+label-urgent-background = #ccbd2c40
 label-urgent-padding = 2
 
 ; vim:ft=dosini
