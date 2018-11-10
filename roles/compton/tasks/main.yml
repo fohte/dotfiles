@@ -1,0 +1,7 @@
+# TODO: install compton
+
+- name: Symlink compton settings
+  file:
+    src: '{{ dotfiles_home }}/roles/compton/files'
+    dest: '{{ user_home }}/.config/compton'
+    state: link

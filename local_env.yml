@@ -23,6 +23,7 @@
     - { role: zsh, tags: [zsh] }
 
     # for debian
+    - { role: compton, tags: [compton], when: is_debian }
     - { role: fcitx, tags: [fcitx], when: is_debian }
     - { role: i3, tags: [i3], when: is_debian }
     - { role: imwheel, tags: [imwheel], when: is_debian }
