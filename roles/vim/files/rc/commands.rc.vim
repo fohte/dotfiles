@@ -22,8 +22,6 @@ augroup MyAutoCmd
   autocmd!
 
   autocmd BufWritePre * RemoveDupLines
-  autocmd InsertLeave,WinEnter * set cursorline cursorcolumn
-  autocmd InsertEnter,WinLeave * set nocursorline nocursorcolumn
 
   autocmd VimResized * wincmd =
 augroup END
