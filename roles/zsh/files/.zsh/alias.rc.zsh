@@ -4,8 +4,12 @@ alias cp='cp -i'
 alias l='ls -l'
 has exa && alias ls='exa -aF' || alias ls='ls -ACFG'
 
-is_macos && alias p='pbpaste'
-is_linux && alias p='xsel --clipboard --output'
+if is_linux; then
+  alias pbcopy='xsel --clipboard --input'
+  alias pbpaste='xsel --clipboard --output'
+fi
+
+alias p='pbpaste'
 
 alias rm='rm -i'
 alias x='chmod +x'
@@ -106,8 +110,7 @@ alias -g N='> /dev/null 2>&1'
 alias -g S='| sed'
 alias -g X='| xargs -I%'
 alias -g XP='X -P "$(ncpu)"'
-is_macos && alias -g Y='| pbcopy'
-is_linux && alias -g Y='| xsel --clipboard --input'
+alias -g Y='| pbcopy'
 
 alias -s py=python
 alias -s rb=ruby
