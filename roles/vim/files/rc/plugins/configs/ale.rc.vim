@@ -1,4 +1,5 @@
-let g:ale_set_signs = 0
+let g:ale_set_signs = 1
+let g:ale_sign_column_always = 1
 let g:ale_lint_on_text_changed = 'always'
 let g:ale_lint_on_enter = 1
 let g:ale_lint_on_save = 1
