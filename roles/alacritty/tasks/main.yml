@@ -1,7 +1,7 @@
 # TODO: install alacritty
 
-- name: Symlink alacritty files
-  file:
-    src: '{{ dotfiles_home }}/roles/alacritty/files'
-    dest: '{{ user_home }}/.config/alacritty'
-    state: link
+- include_tasks: macos.yml
+  when: is_macos
+
+- include_tasks: debian.yml
+  when: is_debian

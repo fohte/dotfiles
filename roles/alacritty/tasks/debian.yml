@@ -1,0 +1,8 @@
+- name: Symlink alacritty files
+  file:
+    src: '{{ dotfiles_home }}/roles/alacritty/files/{{ item.src }}'
+    dest: '{{ user_home }}/.config/alacritty/{{ item.dest }}'
+    state: link
+  with_items:
+    - src: debian.yml
+      dest: alacritty.yml
