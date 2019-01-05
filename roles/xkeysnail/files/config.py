@@ -8,12 +8,24 @@ define_multipurpose_modmap({
 })
 
 
+def change_modifier_keys(before_mod, after_mod, keys):
+    return {K(f'{before_mod}-{key}'): K(f'{after_mod}-{key}') for key in keys}
+
+
 def super_to(modifier, keys):
-    return {K(f'Super-{key}'): K(f'{modifier}-{key}') for key in keys}
+    return change_modifier_keys('Super', modifier, keys)
+
+
+def super_shift_to(modifier, keys):
+    return change_modifier_keys('Super-Shift', modifier, keys)
 
 
 def super_to_ctrl(keys):
     return super_to('C', keys)
+
+
+def super_shift_to_ctrl_shift(keys):
+    return super_shift_to('C-Shift', keys)
 
 
 terminals = ('URxvt', 'kitty', 'Alacritty')
@@ -56,6 +68,7 @@ define_keymap(
             'e',
             'f',
             'l',
+            'n',
             'r',
             't',
             'v',
@@ -63,6 +76,7 @@ define_keymap(
             'x',
             'z',
         ]),
+        **super_shift_to_ctrl_shift(['n']),
     })
 
 define_keymap(lambda wm_class: wm_class in terminals, {
