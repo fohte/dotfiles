@@ -76,7 +76,10 @@ define_keymap(
             'x',
             'z',
         ]),
-        **super_shift_to_ctrl_shift(['n']),
+        **super_shift_to_ctrl_shift([
+            'n',
+            't',
+        ]),
     })
 
 define_keymap(lambda wm_class: wm_class in terminals, {
