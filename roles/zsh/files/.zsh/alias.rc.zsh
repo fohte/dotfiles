@@ -21,7 +21,6 @@ alias ....='cd ../../..'
 alias ...='cd ../..'
 alias ..='cd ..'
 alias /='cd $(git-root || echo $HOME)'
-alias q='exit'
 alias u='cd -'
 alias ~='cd ~'
 
