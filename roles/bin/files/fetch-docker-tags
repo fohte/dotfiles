@@ -1,0 +1,11 @@
+#!/bin/bash
+
+image="$1"
+
+if [[ "$1" == */* ]]; then
+  repo="$image"
+else
+  repo="library/$1"
+fi
+
+curl -sL "https://registry.hub.docker.com/v2/repositories/$repo/tags?page_size=1024" | jq -r '.results[].name'
