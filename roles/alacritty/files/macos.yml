@@ -131,46 +131,46 @@ custom_cursor_colors: true
 colors:
   # Default colors
   primary:
-    background: '0x282828'
-    foreground: '0xeeeeee'
+    background: '0x212121'
+    foreground: '0xb7bdc0'
 
     # Bright and dim foreground colors
     #
     # The dimmed foreground color is calculated automatically if it is not present.
     # If the bright foreground color is not set, or `draw_bold_text_with_bright_colors`
     # is `false`, the normal foreground color will be used.
+    #
     #dim_foreground: '0x9a9a9a'
     #bright_foreground: '0xffffff'
 
   # Cursor colors
   #
-  # Colors which should be used to draw the terminal cursor. If these are unset,
-  # the cursor color will be the inverse of the cell color.
+  # These will only be used when the `custom_cursor_colors` field is set to `true`.
   cursor:
     text: '0x000000'
     cursor: '0xcccccc'
 
   # Normal colors
   normal:
-    black: '0x404040'
-    red: '0xf43753'
-    green: '0xc9d05c'
-    yellow: '0xffc24b'
-    blue: '0xb3deef'
-    magenta: '0xd3b987'
-    cyan: '0x73cef4'
-    white: '0xeeeeee'
+    black: '0x212121'
+    red: '0xff5370'
+    green: '0xc3e88d'
+    yellow: '0xffcb6b'
+    blue: '0x82aaff'
+    magenta: '0xc792ea'
+    cyan: '0x89ddff'
+    white: '0xb7bdc0'
 
   # Bright colors
   bright:
-    black: '0x404040'
-    red: '0xf43753'
-    green: '0xc9d05c'
-    yellow: '0xffc24b'
-    blue: '0xb3deef'
-    magenta: '0xd3b987'
-    cyan: '0x73cef4'
-    white: '0xeeeeee'
+    black: '0x474646'
+    red: '0xff5370'
+    green: '0xc3e88d'
+    yellow: '0xffcb6b'
+    blue: '0x82aaff'
+    magenta: '0xc792ea'
+    cyan: '0x89ddff'
+    white: '0x6a6c6c'
 
   # Indexed Colors
   #
@@ -208,7 +208,7 @@ visual_bell:
 #
 # Window opacity as a floating point number from `0.0` to `1.0`.
 # The value `0.0` is completely transparent and `1.0` is opaque.
-background_opacity: 0.91
+background_opacity: 1.0
 
 # Mouse bindings
 #
