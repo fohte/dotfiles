@@ -153,3 +153,5 @@ ghq-init() {
 }
 
 has 'tmux-attach' && alias t='tmux-attach'
+
+has 'assume-role' && source "$(which assume-role)"
