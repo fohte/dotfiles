@@ -69,6 +69,7 @@ export SAVEHIST=100000
 export KEYTIMEOUT=1
 
 export FZF_CTRL_T_COMMAND='ag --hidden -g ""'
+has fd && export FZF_ALT_C_COMMAND='fd . -t d'
 export FZF_DEFAULT_OPTS='--cycle --bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all'
 
 # gpg-agent
