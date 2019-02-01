@@ -50,7 +50,7 @@ let g:lightline = {
 \   },
 \   'inactive': {
 \     'left': [['readonly', 'filename', 'modified']],
-\     'right': [['lineinfo'], ['filetype']]
+\     'right': [[], ['filetype']]
 \   },
 \   'component_function': {
 \     'mode': 'LightLineMode',
