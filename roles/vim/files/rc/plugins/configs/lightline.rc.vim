@@ -45,7 +45,7 @@ let g:lightline#colorscheme#MaterialDark#palette = lightline#colorscheme#fill(s:
 let g:lightline = {
 \   'colorscheme': 'MaterialDark',
 \   'active': {
-\     'left': [['mode', 'paste'], ['readonly', 'git_branch', 'filename', 'modified']],
+\     'left': [['mode', 'paste'], ['readonly', 'filename', 'modified']],
 \     'right': [['lineinfo'], ['filetype'], ['fileencoding', 'fileformat']]
 \   },
 \   'inactive': {
@@ -60,7 +60,6 @@ let g:lightline = {
 \     'fileformat': 'LightLineFileformat',
 \     'filetype': 'LightLineFiletype',
 \     'fileencoding': 'LightLineFileencoding',
-\     'git_branch': 'LightLineGitBranch',
 \   },
 \ }
 
@@ -146,12 +145,4 @@ function! LightLineFileencoding()
   endif
 
   return &fileencoding
-endfunction
-
-function! LightLineGitBranch()
-  if s:should_compactize() || !exists('*fugitive#head')
-    return ''
-  endif
-
-  return fugitive#head()
 endfunction
