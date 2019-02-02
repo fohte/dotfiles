@@ -32,3 +32,7 @@ let g:ale_fixers = {
 
 nnoremap <silent> <F10> :ALEFix<CR>
 inoremap <silent> <F10> <C-o>:ALEFix<CR>
+
+let g:ale_pattern_options = {
+\   '.*/node_modules/.*': { 'ale_enabled': 0 },
+\ }
