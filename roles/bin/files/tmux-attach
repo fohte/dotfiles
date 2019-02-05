@@ -4,12 +4,9 @@ set -e
 
 . ~/bin/lib/util.sh
 
-if ! is_tmux_running && ! tmux has-session >/dev/null 2>&1; then
+if ! is_tmux_running && ! tmux has-session > /dev/null 2>&1; then
   tmux new-session
 else
-  selected=$(tmux ls -F '#{session_name} (#{t:session_activity}) #{session_windows} windows' | fzf-tmux | awk '{ print $1 }')
-  if [ -z "$selected" ]; then
-    exit 1
-  fi
+  selected="$(tmux ls -F '#{session_last_attached} #{session_name}' | sort -k 1 | tail -1 | cut -f2 -d' ')"
   tmux attach-session -t "$selected"
 fi
