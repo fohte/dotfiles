@@ -111,6 +111,9 @@ hook_source = '''
 
 [[plugins]]
 repo = 'editorconfig/editorconfig-vim'
+hook_source = '''
+  let g:EditorConfig_exclude_patterns = ['\.git/.*\.diff']
+'''
 
 [[plugins]]
 repo = 'nixprime/cpsm'
