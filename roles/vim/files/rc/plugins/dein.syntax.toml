@@ -51,8 +51,10 @@ hook_source = '''
 
 [[plugins]]
 repo = 'MaxMEllon/vim-jsx-pretty'
-on_ft = 'javascript'
-depends = 'vim-javascript'
+on_ft = ['javascript', 'typescript']
+hook_source = '''
+  let g:vim_jsx_pretty_colorful_config = 1
+'''
 
 [[plugins]]
 repo = 'rust-lang/rust.vim'
@@ -69,10 +71,6 @@ on_ft = 'openscad'
 [[plugins]]
 repo = 'leafgarland/typescript-vim'
 on_ft = 'typescript'
-
-[[plugins]]
-repo = 'ianks/vim-tsx'
-on_ft = ['typescript']
 
 [[plugins]]
 repo = 'gutenye/json5.vim'
