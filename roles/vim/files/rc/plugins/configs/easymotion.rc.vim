@@ -7,9 +7,15 @@ let g:EasyMotion_verbose = 0
 let g:EasyMotion_keys = 'uhetonasid'
 
 noremap ' <Nop>
-map 't <Plug>(easymotion-overwin-f2)
-map 'f <Plug>(easymotion-bd-fl)
+map 'f <Plug>(easymotion-f)
+map 'F <Plug>(easymotion-F)
 map 'l <Plug>(easymotion-bd-jk)
 map 'j <Plug>(easymotion-j)
 map 'k <Plug>(easymotion-k)
-map 'w <Plug>(easymotion-overwin-w)
+map 'b <Plug>(easymotion-b)
+map 'B <Plug>(easymotion-B)
+map 'w <Plug>(easymotion-w)
+map 'W <Plug>(easymotion-W)
+
+noremap <C-w><C-w> <Nop>
+map <C-w><C-w> <Plug>(easymotion-overwin-line)
