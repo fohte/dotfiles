@@ -21,6 +21,7 @@
     dest: '{{ user_home }}/{{ item }}'
     state: link
   with_items:
+    - .gemrc
     - .pryrc
     - .rufo
 
