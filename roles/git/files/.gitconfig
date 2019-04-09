@@ -54,3 +54,5 @@
 	oldHighlight = red bold 239
 	newNormal = green
 	newHighlight = green bold 239
+[rebase]
+	autosquash = true
