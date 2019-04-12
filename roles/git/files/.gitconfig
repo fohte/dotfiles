@@ -8,9 +8,6 @@
 	excludesfile = ~/.gitignore_global
 	commentchar = ";"
 
-[color]
-	ui = always
-
 [push]
 	default = current
 	followTags = true
