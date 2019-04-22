@@ -12,20 +12,21 @@ set completeopt+=noinsert,noselect
 let g:deoplete#keyword_patterns = {}
 let g:deoplete#keyword_patterns._ = '[a-zA-Z_]\k*'
 
-let g:deoplete#omni#input_patterns = {
+call deoplete#custom#source('omni', 'input_patterns', {
 \   'ruby': ['\w+', '[^. *\t]\.\w*', '[a-zA-Z_]\w*::'],
 \   'rust': ['\w+', '[^. *\t]\.\w*', '[a-zA-Z_]\w*::'],
 \   'javascript': ['\w+', '[^. *\t]\.\w*'],
 \   'python': ['\w+', '[^. *\t]\.\w*'],
 \   'typescript': ['\w+', '[^. *\t]\.\w*'],
 \   'dockerfile': ['\w+'],
-\ }
+\ })
 
-let g:deoplete#omni_patterns = {
-\   'terraform': ['[^ *\t"{=$][\w\.]*'],
-\ }
+call deoplete#custom#source('omni', 'functions', { '_': 'lsp#complete' })
 
-let g:deoplete#omni#functions = {'_': 'lsp#complete'}
+call deoplete#custom#option('omni_patterns', {
+\  'complete_method': 'omnifunc',
+\  'terraform': '[^ *\t"{=$]\w*',
+\ })
 
 call deoplete#custom#source('_', 'matchers', ['matcher_full_fuzzy', 'matcher_length'])
 call deoplete#custom#source('_', 'converters', [
