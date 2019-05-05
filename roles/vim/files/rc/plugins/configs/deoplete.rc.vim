@@ -9,9 +9,6 @@ let g:deoplete#file#enable_buffer_path = 1
 
 set completeopt+=noinsert,noselect
 
-let g:deoplete#keyword_patterns = {}
-let g:deoplete#keyword_patterns._ = '[a-zA-Z_]\k*'
-
 call deoplete#custom#source('omni', 'input_patterns', {
 \   'ruby': ['\w+', '[^. *\t]\.\w*', '[a-zA-Z_]\w*::'],
 \   'rust': ['\w+', '[^. *\t]\.\w*', '[a-zA-Z_]\w*::'],
