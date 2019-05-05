@@ -21,7 +21,7 @@ call deoplete#custom#source('omni', 'input_patterns', {
 \   'dockerfile': ['\w+'],
 \ })
 
-call deoplete#custom#source('omni', 'functions', { '_': 'lsp#complete' })
+set omnifunc=lsp#complete
 
 call deoplete#custom#option('omni_patterns', {
 \  'complete_method': 'omnifunc',
