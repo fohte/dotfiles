@@ -100,7 +100,7 @@ alias tf='terraform'
 
 alias reload='exec $SHELL -l'
 
-alias -g F='| fzf-tmux --multi'
+alias -g F='| fzf --multi'
 alias -g G='| grep'
 alias -g GV='| grep -v'
 alias -g J='| jq'
@@ -121,17 +121,17 @@ mkcd() {
 
 ghqcd() {
   local dir
-  dir="$(ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf-tmux --reverse)" && cd "$(eval echo "$dir")"
+  dir="$(ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf --reverse)" && cd "$(eval echo "$dir")"
 }
 
 gwcd() {
   local dir
-  dir="$(git worktree list | awk '{ print $1 }' | fzf-tmux --reverse)" && cd $dir
+  dir="$(git worktree list | awk '{ print $1 }' | fzf --reverse)" && cd $dir
 }
 
 gocd() {
   local dir
-  dir="$(echo $GOPATH/src/*/*/* | perl -pe 's/ /\n/g' | fzf-tmux --reverse)" && cd $dir
+  dir="$(echo $GOPATH/src/*/*/* | perl -pe 's/ /\n/g' | fzf --reverse)" && cd $dir
 }
 
 ghq-init() {
