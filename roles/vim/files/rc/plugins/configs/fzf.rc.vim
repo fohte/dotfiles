@@ -1,3 +1,28 @@
+if g:float_window_available
+  " https://github.com/junegunn/fzf.vim/issues/664#issuecomment-476438294
+  let $FZF_DEFAULT_OPTS = $FZF_DEFAULT_OPTS . ' --layout=reverse'
+  let g:fzf_layout = { 'window': 'call g:FloatingFZF()' }
+
+  function! g:FloatingFZF()
+    let buf = nvim_create_buf(v:false, v:true)
+    call setbufvar(buf, '&signcolumn', 'no')
+
+    let height = &lines - 3
+    let width = float2nr(&columns - (&columns * 2 / 10))
+    let col = float2nr((&columns - width) / 2)
+
+    let opts = {
+          \ 'relative': 'editor',
+          \ 'row': 1,
+          \ 'col': col,
+          \ 'width': width,
+          \ 'height': height,
+          \ }
+
+    call nvim_open_win(buf, v:true, opts)
+  endfunction
+endif
+
 let g:fzf_command_prefix = 'Fzf'
 
 let g:fzf_ag_options = '--hidden'

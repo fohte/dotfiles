@@ -33,6 +33,8 @@ function! s:source_rc(path) abort
   execute 'source' fnameescape(l:abspath)
 endfunction
 
+call s:source_rc('utils.rc.vim')
+
 let g:mapleader = "\<Space>"
 
 let s:dein_dir = expand($CACHE . '/dein')
