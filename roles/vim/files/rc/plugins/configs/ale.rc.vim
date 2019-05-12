@@ -10,6 +10,7 @@ let g:ale_sh_shfmt_options = '-sr -i 2'
 
 let g:ale_linters = {
 \   'go': ['gometalinter', 'gofmt'],
+\   'python': ['flake8'],
 \   'typescript': ['tsserver', 'tslint', 'stylelint'],
 \   'javascript': ['eslint', 'tslint'],
 \ }
@@ -26,7 +27,7 @@ let g:ale_fixers = {
 \   'ruby': ['rubocop'],
 \   'rust': ['rustfmt'],
 \   'markdown': ['prettier'],
-\   'python': ['isort', 'yapf'],
+\   'python': ['isort', 'black'],
 \   'sh': ['shfmt'],
 \ }
 
