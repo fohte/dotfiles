@@ -1,0 +1,23 @@
+{
+  "python.jediEnabled": false,
+  "diagnostic.displayByAle": true,
+  "languageserver": {
+    "bash": {
+      "command": "bash-language-server",
+      "args": ["start"],
+      "filetypes": ["sh"],
+      "ignoredRootPaths": ["~"]
+    },
+    "dockerfile": {
+      "command": "docker-langserver",
+      "filetypes": ["dockerfile"],
+      "args": ["--stdio"]
+    },
+    "flow": {
+      "command": "flow-language-server",
+      "args": ["--stdio"],
+      "filetypes": ["javascript"],
+      "rootPatterns": [".flowconfig"]
+    }
+  }
+}
