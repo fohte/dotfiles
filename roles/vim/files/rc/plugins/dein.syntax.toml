@@ -79,3 +79,10 @@ on_ft = 'json5'
 [[plugins]]
 repo = 'jparise/vim-graphql'
 on_ft = 'graphql'
+
+[[plugins]]
+repo = 'google/vim-jsonnet'
+on_ft = 'jsonnet'
+hook_source = '''
+  let g:jsonnet_fmt_on_save = 1
+'''

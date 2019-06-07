@@ -17,4 +17,4 @@ inoremap <C-j> <Nop>
 inoremap <C-k> <Nop>
 
 " assign `<C-q>` to the macro to use `q` for quickfix shortcuts
-nnoremap <C-q> q
+noremap Q q
