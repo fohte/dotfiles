@@ -31,7 +31,7 @@ set list
 set nowrap
 set listchars+=precedes:<,extends:>
 
-set synmaxcol=200
+set synmaxcol=1000
 
 set completeopt-=preview
 
