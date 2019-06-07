@@ -1,0 +1,5 @@
+#!/bin/sh
+
+set -e
+
+union "$1" "$2" | sort | uniq -d
