@@ -62,3 +62,6 @@ node_modules
 .vimsessions
 
 .local
+
+yarn-error.log
+tf-lsp.log
