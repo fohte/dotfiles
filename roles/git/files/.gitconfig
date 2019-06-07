@@ -21,6 +21,7 @@
 
 [alias]
 	amend = commit --amend
+	fixup = commit -n --fixup
 
 [merge]
 	ff = false
