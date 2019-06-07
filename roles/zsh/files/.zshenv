@@ -11,6 +11,7 @@ typeset -U path PATH fpath FPATH
 
 path=( \
   $HOME/.nodebrew/current/bin(N-/) \
+  $HOME/.nodenv/current/bin(N-/) \
   $HOME/.pyenv/bin(N-/) \
   $HOME/.rbenv/bin(N-/) \
   $HOME/.cabal/bin(N-/) \
@@ -31,6 +32,7 @@ path=(
 
 has 'rbenv' && eval "$(rbenv init - --no-rehash)"
 has 'pyenv' && eval "$(pyenv init - --no-rehash)"
+has 'nodenv' && eval "$(nodenv init - --no-rehash)"
 has 'direnv' && eval "$(direnv hook zsh)"
 
 path=(
