@@ -164,3 +164,6 @@ repo = 'neoclide/coc.nvim'
 hook_add = 'source ~/.vim/rc/plugins/configs/lsp.rc.vim'
 build = './install.sh nightly'
 merged = 0
+
+[[plugins]]
+repo = 'k0kubun/vim-open-github'
