@@ -1,3 +1,15 @@
+- name: Add alacritty repository
+  become: true
+  apt_repository:
+    repo: ppa:mmstick76/alacritty
+    state: present
+
+- name: Installe Alacritty with apt
+  become: true
+  apt:
+    name: alacritty
+    state: latest
+
 - name: Symlink alacritty files
   file:
     src: '{{ dotfiles_home }}/roles/alacritty/files/{{ item.src }}'
