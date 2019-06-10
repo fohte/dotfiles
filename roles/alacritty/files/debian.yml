@@ -110,11 +110,6 @@ font:
 # Display the time it takes to redraw each frame.
 render_timer: false
 
-# Use custom cursor colors. If `true`, the `colors.cursor.foreground` and
-# `colors.cursor.background` colors will be used to display the cursor.
-# Otherwise the cell colors are inverted for the cursor.
-custom_cursor_colors: true
-
 # If `true`, bold text is drawn using the bright color variants.
 draw_bold_text_with_bright_colors: true
 
@@ -140,6 +135,19 @@ colors:
   cursor:
     text: '0x000000'
     cursor: '0xcccccc'
+
+    # Cursor style
+    #
+    # Values for 'cursor_style':
+    #   - Block
+    #   - Underline
+    #   - Beam
+    cursor_style: Block
+
+    # If this is `true`, the cursor will be rendered as a hollow box when the
+    # window is not focused.
+    unfocused_hollow: true
+
 
   # Normal colors
   normal:
@@ -229,6 +237,8 @@ mouse:
   double_click: { threshold: 300 }
   triple_click: { threshold: 300 }
 
+  hide_cursor_when_typing: false
+
   url:
     # URL launcher
     #
@@ -252,20 +262,6 @@ selection:
   save_to_clipboard: false
 
 dynamic_title: true
-
-hide_cursor_when_typing: false
-
-# Cursor style
-#
-# Values for 'cursor_style':
-#   - Block
-#   - Underline
-#   - Beam
-cursor_style: Block
-
-# If this is `true`, the cursor will be rendered as a hollow box when the
-# window is not focused.
-unfocused_hollow_cursor: true
 
 # Live config reload (changes require restart)
 live_config_reload: true
