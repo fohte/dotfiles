@@ -1,0 +1,4 @@
+- name: Install font-awesome with apt
+  become: true
+  apt:
+    name: fonts-font-awesome
