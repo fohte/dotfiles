@@ -12,7 +12,6 @@
     - { role: go, tags: [go] }
     - { role: hub, tags: [hub] }
     - { role: jq, tags: [jq] }
-    - { role: kitty, tags: [kitty] }
     - { role: latex, tags: [latex] }
     - { role: node, tags: [node] }
     - { role: python, tags: [python] }
