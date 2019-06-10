@@ -38,6 +38,7 @@ ruby:
 
 node:
   global_packages:
+    - diff-so-fancy
     - flow-language-server
     - prettier
     - typescript-language-server
