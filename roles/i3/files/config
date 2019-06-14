@@ -182,6 +182,9 @@ client.placeholder      #000000 #0c0c0c #ffffff #000000   #0c0c0c
 
 for_window [class="^.*"] border pixel 3
 
+focus_follows_mouse no
+focus_on_window_activation focus
+
 exec --no-startup-id fcitx
 exec --no-startup-id unclutter -idle 0.3
 exec --no-startup-id imwheel
