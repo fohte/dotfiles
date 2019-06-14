@@ -32,7 +32,7 @@ floating_modifier $mod
 
 bindsym $mod+q kill
 
-bindsym $alt+space exec "rofi -show drun"
+bindsym $alt+space exec "rofi -modi run,drun -show drun -sidebar-mode"
 
 # switch to workspace
 bindsym $mod+1 workspace 1
