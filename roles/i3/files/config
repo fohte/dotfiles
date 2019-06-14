@@ -86,10 +86,10 @@ mode "command" {
   bindsym Shift+Right move right; mode "default"
 
   # split in horizontal orientation
-  bindsym h split h; mode "default"
+  bindsym Control+Shift+s split h; mode "default"
 
   # split in vertical orientation
-  bindsym v split v; mode "default"
+  bindsym Control+Shift+v split v; mode "default"
 
   # enter fullscreen mode for the focused container
   bindsym f fullscreen toggle; mode "default"
@@ -106,10 +106,10 @@ mode "command" {
   bindsym space focus mode_toggle; mode "default"
 
   # focus the parent container
-  bindsym a focus parent; mode "default"
+  bindsym p focus parent; mode "default"
 
   # focus the child container
-  #bindsym d focus child
+  bindsym c focus child; mode "default"
 
   # reload the configuration file
   bindsym r reload; mode "default"
