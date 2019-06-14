@@ -120,7 +120,26 @@ mode "command" {
 
   bindsym Control+r mode "resize"
 
+  bindsym $mod+u mode "move"
+
   # back to normal: Enter or Escape
+  bindsym Return mode "default"
+  bindsym Escape mode "default"
+}
+
+mode "move" {
+  # move focused window
+  bindsym h move left
+  bindsym j move down
+  bindsym k move up
+  bindsym l move right
+
+  # alternatively, you can use the cursor keys:
+  bindsym Left move left
+  bindsym Down move down
+  bindsym Up move up
+  bindsym Right move right
+
   bindsym Return mode "default"
   bindsym Escape mode "default"
 }
