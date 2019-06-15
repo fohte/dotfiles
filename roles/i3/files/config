@@ -182,6 +182,9 @@ client.placeholder      #000000 #0c0c0c #ffffff #000000   #0c0c0c
 
 for_window [class="^.*"] border pixel 3
 
+# Authy
+for_window [instance="crx_gaedmjdfmmahhbjefcbgaolhhanlaolb"] floating enable
+
 focus_follows_mouse no
 focus_on_window_activation focus
 
@@ -191,8 +194,7 @@ exec --no-startup-id imwheel
 exec --no-startup-id feh --bg-fill $(find ~/wallpapers/ -type f | shuf | head -1)
 exec_always --no-startup-id ~/.config/polybar/launch.sh
 
-exec --no-startup-id i3-msg 'workspace 1; exec alacritty'
-exec --no-startup-id i3-msg 'workspace 2; exec google-chrome-stable'
+exec --no-startup-id i3-msg 'workspace 1; exec alacritty; workspace 2; workspace 3; exec google-chrome-stable; workspace 4; exec slack; workspace 6; exec discord; workspace 7; exec spotify;'
 
 gaps inner 10
 smart_borders on
