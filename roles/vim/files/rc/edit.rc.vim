@@ -31,6 +31,7 @@ set backspace=indent,eol,start
 
 set hlsearch
 set incsearch
+set ignorecase
 set smartcase
 set wrapscan
 
