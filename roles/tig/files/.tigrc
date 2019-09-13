@@ -1,6 +1,40 @@
 set mouse = true
+set main-view = id date:relative-compact author:email-user commit-title:graph=yes,refs=yes
+
+set split-view-height = 80%
+
+set diff-highlight = true
+
+bind generic <Ctrl-R> refresh
+
+bind generic g      move-first-line
+bind generic E      view-grep
+
+bind generic G      move-last-line
+bind main    G      move-last-line
 
 bind main R !git rebase -i %(commit)
 bind diff R !git rebase -i %(commit)
 
-bind generic Y !@bash -c "echo -n '%(commit)' | pbcopy"
+bind generic Y !@bash -c "echo -n '%(commit)' | xsel --clipboard --input"
+
+bind diff    n      :/^@@
+bind diff    p      :?^@@
+bind diff    <Esc>n :/^diff --(git|cc)
+bind diff    <Esc>p :?^diff --(git|cc)
+bind stage   n      :/^@@
+bind stage   p      :?^@@
+bind stage   <Esc>n :/^diff --(git|cc)
+bind stage   <Esc>p :?^diff --(git|cc)
+bind pager   n      :/^@@
+bind pager   p      :?^@@
+bind pager   <Esc>n :/^diff --(git|cc)
+bind pager   <Esc>p :?^diff --(git|cc)
+bind log     n      :/^commit
+bind log     p      :?^commit
+
+color cursor default 237
+color title-focus default 238
+color title-blur 241 default
+color diff-header default 236
+color diff-chunk 238 default
