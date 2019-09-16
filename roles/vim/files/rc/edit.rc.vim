@@ -45,3 +45,5 @@ endif
 set sessionoptions=blank,curdir,folds,tabpages,winsize
 
 set sh=bash
+
+set wildoptions=pum
