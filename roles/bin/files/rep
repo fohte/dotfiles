@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -eu
+
+regex="$1"
+shift
+
+for file in "$@"; do
+  if [ -d "$file" ]; then
+    echo "$file is a directory"
+    exit 1
+  fi
+
+  perl -pe "$regex" -i "$file"
+done
