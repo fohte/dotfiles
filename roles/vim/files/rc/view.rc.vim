@@ -1,7 +1,11 @@
 syntax on
 
 function! s:my_color_settings()
+  hi! IncSearch gui=none guibg=#444444 guifg=none
   hi! link Search IncSearch
+
+  hi! Visual guifg=none
+
   hi! link MatchParen Function
   hi! link CursorLineNr Comment
 endfunction
