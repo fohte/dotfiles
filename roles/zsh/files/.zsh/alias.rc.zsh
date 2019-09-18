@@ -26,6 +26,8 @@ alias ~='cd ~'
 
 has 'hub' && alias git='hub'
 
+alias t='tig'
+
 alias g='git'
 alias ga='git add'
 alias gaa='git add -A $(git root)'
@@ -151,7 +153,5 @@ ghq-init() {
   git init $repo
   cd $repo
 }
-
-has 'tmux-attach' && alias t='tmux-attach'
 
 has 'assume-role' && source "$(which assume-role)"
