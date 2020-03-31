@@ -1,9 +1,9 @@
 - name: Check go modules status
-  command: go list github.com/motemen/ghq
+  command: go list github.com/x-motemen/ghq
   register: go_module
   failed_when: go_module.rc not in [0, 1]
   changed_when: go_module.rc not in [0, 1]
 
 - name: Install ghq with go get
-  command: go get -u github.com/motemen/ghq
+  command: go get -u github.com/x-motemen/ghq
   when: go_module.rc == 1
