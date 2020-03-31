@@ -10,6 +10,11 @@
     name: alacritty
     state: latest
 
+- name: Create a directory for the alacritty config
+  file:
+    path: '{{ user_home }}/.config/alacritty'
+    state: directory
+
 - name: Symlink alacritty files
   file:
     src: '{{ dotfiles_home }}/roles/alacritty/files/{{ item.src }}'
