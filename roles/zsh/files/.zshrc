@@ -22,6 +22,7 @@ autoload -Uz colors; colors
 
 [ -d ~/.zinit ] && import_rc 'zinit'
 
+import_rc 'lazy'
 import_rc 'alias'
 import_rc 'bindkey'
 import_rc 'prompt'

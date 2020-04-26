@@ -26,9 +26,6 @@ path=( \
   $path \
 )
 
-has 'rbenv' && eval "$(rbenv init - --no-rehash)"
-has 'pyenv' && eval "$(pyenv init - --no-rehash)"
-has 'nodenv' && eval "$(nodenv init - --no-rehash)"
 has 'direnv' && eval "$(direnv hook zsh)"
 
 path=(
