@@ -20,7 +20,7 @@ import_rc() {
 autoload -Uz compinit && compinit -u
 autoload -Uz colors; colors
 
-[ -d ~/.zplug ] && import_rc 'zplug'
+[ -d ~/.zinit ] && import_rc 'zinit'
 
 import_rc 'alias'
 import_rc 'bindkey'
