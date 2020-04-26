@@ -13,7 +13,9 @@ path=( \
   $HOME/.nodebrew/current/bin(N-/) \
   $HOME/.nodenv/current/bin(N-/) \
   $HOME/.pyenv/bin(N-/) \
+  $HOME/.pyenv/shims(N-/) \
   $HOME/.rbenv/bin(N-/) \
+  $HOME/.rbenv/shims(N-/) \
   $HOME/.cabal/bin(N-/) \
   $GOPATH/bin(N-/) \
   $HOME/.cargo/bin(N-/) \
