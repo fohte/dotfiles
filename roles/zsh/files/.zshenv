@@ -42,8 +42,6 @@ fpath=( \
   $fpath
 )
 
-export PYENV_ROOT=$(pyenv root)
-
 export DOTPATH="$(dotpath)"
 
 export LANG='en_US.UTF-8'
