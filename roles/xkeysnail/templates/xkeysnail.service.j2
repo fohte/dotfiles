@@ -4,7 +4,7 @@ Description=xkeysnail
 [Service]
 KillMode=process
 Environment=DISPLAY={{ ansible_env.DISPLAY }}
-ExecStart={{ pyenv_root }}/shims/xkeysnail {{ user_home }}/.config/xkeysnail/config.py
+ExecStart={{ pyenv_root }}/shims/xkeysnail {{ user_home }}/.config/xkeysnail/config.py --watch --quiet
 Type=simple
 User={{ ansible_env.USER }}
 Restart=always
