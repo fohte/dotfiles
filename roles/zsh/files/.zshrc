@@ -8,7 +8,7 @@
 # ----------------------------------------------------------
 
 import_rc() {
-  local source_file="$HOME/.zsh/$1.rc.zsh"
+  local source_file="$ZSHRC_ROOT/$1"
 
   if [ -f $source_file ]; then
     source $source_file
@@ -20,13 +20,13 @@ import_rc() {
 autoload -Uz compinit && compinit -u
 autoload -Uz colors; colors
 
-[ -d ~/.zinit ] && import_rc 'zinit'
+[ -d ~/.zinit ] && import_rc 'zinit.rc.zsh'
 
-import_rc 'lazy'
-import_rc 'alias'
-import_rc 'bindkey'
-import_rc 'prompt'
-import_rc 'history'
-import_rc 'misc'
+import_rc 'lazy.rc.zsh'
+import_rc 'alias.rc.zsh'
+import_rc 'bindkey.rc.zsh'
+import_rc 'prompt.rc.zsh'
+import_rc 'history.rc.zsh'
+import_rc 'misc.rc.zsh'
 
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc

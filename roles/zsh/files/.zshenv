@@ -1,5 +1,7 @@
 . ~/bin/lib/util.sh
 
+export ZSHRC_ROOT="$HOME/.zsh"
+
 # Resolve not intended PATH on Mac OS (El Capitan or newer)
 # (en) https://mattprice.me/2015/zsh-path-issues-osx-el-capitan/
 # (ja) http://qiita.com/t-takaai/items/8574ff312f2caa5177c2
