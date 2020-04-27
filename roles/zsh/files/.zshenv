@@ -12,7 +12,6 @@ export GOPATH=$HOME/.go
 typeset -U path PATH fpath FPATH
 
 path=( \
-  $HOME/.nodebrew/current/bin(N-/) \
   $HOME/.nodenv/bin(N-/) \
   $HOME/.nodenv/shims(N-/) \
   $HOME/.pyenv/bin(N-/) \
