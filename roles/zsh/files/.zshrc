@@ -20,7 +20,11 @@ import_rc() {
 autoload -Uz compinit && compinit -u
 autoload -Uz colors; colors
 
-[ -d ~/.zinit ] && import_rc 'zinit.rc.zsh'
+if ! [ -d ~/.zinit ]; then
+  import_rc 'install/zinit.zsh'
+fi
+
+import_rc 'zinit.rc.zsh'
 
 import_rc 'lazy.rc.zsh'
 import_rc 'alias.rc.zsh'
