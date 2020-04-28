@@ -28,7 +28,7 @@
 	ff = false
 	conflictStyle = diff3
 [pull]
-	rebase = preserve
+	rebase = true
 [commit]
 	gpgsign = true
 [gpg]
