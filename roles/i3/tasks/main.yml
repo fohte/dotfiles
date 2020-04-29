@@ -15,4 +15,4 @@
     dest: '{{ user_home }}/.config/i3/{{ item }}'
     state: link
   with_items:
-    - config
+    - config.d
