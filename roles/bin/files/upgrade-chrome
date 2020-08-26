@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -euxo pipefail
+
+deb_path="$(mktemp)"
+
+curl -L https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o "$deb_path"
+sudo dpkg -i "$deb_path"
+rm -f "$deb_path"
