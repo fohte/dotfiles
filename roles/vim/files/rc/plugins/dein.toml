@@ -161,7 +161,7 @@ repo = 'xolox/vim-misc'
 
 [[plugins]]
 repo = 'neoclide/coc.nvim'
-hook_add = 'source ~/.vim/rc/plugins/configs/lsp.rc.vim'
+hook_add = 'source ~/.vim/rc/plugins/configs/coc.rc.vim'
 build = './install.sh nightly'
 merged = 0
 
