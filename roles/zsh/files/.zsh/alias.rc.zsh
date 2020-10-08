@@ -115,6 +115,7 @@ alias -g S='| sed'
 alias -g X='| xargs -I%'
 alias -g XP='X -P "$(ncpu)"'
 alias -g Y='| pbcopy'
+alias -g TY='| tee >(pbcopy)'
 
 alias -s py=python
 alias -s rb=ruby
