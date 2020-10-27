@@ -46,6 +46,8 @@ fpath=( \
 
 export DOTPATH="$(dotpath)"
 
+export LESS='-R'
+
 export LANG='en_US.UTF-8'
 if [ type -a 'nvim' 2>&1 > /dev/null ]; then
   export EDITOR='nvim'
