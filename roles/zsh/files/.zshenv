@@ -46,7 +46,9 @@ fpath=( \
 
 export DOTPATH="$(dotpath)"
 
-export LESS='-R'
+# -R: display ANSI color escape sequences in "raw" form
+# -S: disable line wrapping (Side-scroll to see long lines)
+export LESS='-RS'
 
 export LANG='en_US.UTF-8'
 if [ type -a 'nvim' 2>&1 > /dev/null ]; then
