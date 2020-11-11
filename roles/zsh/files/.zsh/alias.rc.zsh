@@ -91,7 +91,6 @@ alias dr='docker run'
 alias drm='docker run --rm'
 alias drmit='docker run --rm -it'
 
-alias y='yarn'
 alias ya='yarn add'
 alias yr='yarn run'
 
