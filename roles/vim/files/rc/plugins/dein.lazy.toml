@@ -14,7 +14,10 @@ on_i = 1
 hook_add = '''
   let g:user_emmet_leader_key = '<C-e>'
   let g:user_emmet_settings = {
-  \ 'javascript': {
+  \ 'javascript.jsx': {
+  \   'extends': 'jsx',
+  \ },
+  \ 'typescript.tsx': {
   \   'extends': 'jsx',
   \ },
   \}
@@ -24,7 +27,7 @@ hook_add = '''
 repo = 'dansomething/vim-eclim'
 hook_source = '''
   let g:EclimCompletionMethod = 'omnifunc'
-  nnoremap <silent> <buffer> <Leader>i :JavaSearchContext<CR>
+  nnoremap <silent> <buffer> <Space>i :JavaSearchContext<CR>
   nnoremap <silent> <buffer> <CR> :JavaDocPreview<CR>
 '''
 on_ft = 'java'

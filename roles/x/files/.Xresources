@@ -2,7 +2,7 @@ Xft.dpi: 144
 
 URxvt.scrollBar: false
 URxvt.fading: 40
-URxvt.font: xft:monospace-11
+URxvt.font: xft:monospace-11, xft:Noto Sans CJK JP:pixelsize=30
 URxvt.letterSpace: -1
 
 URxvt.keysym.Shift-Control-V: eval:paste_clipboard

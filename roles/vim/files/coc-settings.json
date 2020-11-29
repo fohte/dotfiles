@@ -1,6 +1,5 @@
 {
   "python.jediEnabled": false,
-  "diagnostic.displayByAle": true,
   "languageserver": {
     "bash": {
       "command": "bash-language-server",
@@ -13,11 +12,30 @@
       "filetypes": ["dockerfile"],
       "args": ["--stdio"]
     },
-    "flow": {
-      "command": "flow-language-server",
-      "args": ["--stdio"],
-      "filetypes": ["javascript"],
-      "rootPatterns": [".flowconfig"]
+    "golang": {
+      "command": "gopls",
+      "rootPatterns": ["go.mod", ".vim/", ".git/", ".hg/"],
+      "filetypes": ["go"]
     }
-  }
+    // "sorbet": {
+    //   "command": "sorbet",
+    //   "args": [
+    //     "--disable-watchman",
+    //     "--no-config",
+    //     "--enable-all-experimental-lsp-features",
+    //     "--lsp",
+    //     "--dir",
+    //     "."
+    //   ],
+    //   "rootPatterns": ["Gemfile"],
+    //   "filetypes": ["ruby"],
+    //   "cwd": "backend"
+    // }
+    // "terraform": {
+    //   "command": "terraform-lsp",
+    //   "filetypes": ["terraform"],
+    //   "rootPatterns": [".terraform"]
+    // }
+  },
+  "coc.preferences.formatOnSaveFiletypes": ["prisma"]
 }

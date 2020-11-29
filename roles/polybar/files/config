@@ -19,7 +19,7 @@ font-1 = FontAwesome:size=10
 font-2 = Termsynu:size=8:antialias=false;-2
 
 modules-left = i3
-modules-right = cpu memory date
+modules-right = spotify cpu memory date
 
 [module/cpu]
 type = internal/cpu
@@ -57,6 +57,7 @@ type = internal/date
 date = %%{F#99}%Y-%m-%d%%{F-}  %%{F#fff}%H:%M%%{F-}
 date-alt = %%{F#fff}%A, %d %B %Y  %%{F#fff}%H:%M%%{F#666}:%%{F#fba922}%S%%{F-}
 
+
 [module/memory]
 type = internal/memory
 format = <label> <bar-used>
@@ -83,8 +84,18 @@ format = <label-state> <label-mode>
 
 ; terminal
 ws-icon-0 = 1;
+; vscode
+ws-icon-1 = 2;
 ; chrome
-ws-icon-1 = 2;
+ws-icon-2 = 3;
+; slack
+ws-icon-3 = 4;
+;
+ws-icon-4 = 5;
+; discord
+ws-icon-5 = 6;
+; spotify
+ws-icon-6 = 7;
 
 ws-icon-default = 
 
@@ -93,8 +104,8 @@ label-mode-padding = 2
 label-mode-background = #cc222222
 
 label-focused = %icon%  %name%
-label-focused-foreground = #ffffffff
-label-focused-background = #cc222222
+label-focused-foreground = #ff282828
+label-focused-background = #ffc9d05c
 label-focused-padding = 2
 
 label-unfocused = %icon%  %name%
@@ -108,5 +119,12 @@ label-visible-padding = 2
 label-urgent-foreground = #ff000000
 label-urgent-background = #ccbd2c40
 label-urgent-padding = 2
+
+[module/spotify]
+type = custom/script
+interval = 1
+format-prefix = " "
+format = <label>
+exec = ~/.pyenv/shims/python ~/.ghq/github.com/Jvanrhijn/polybar-spotify/spotify_status.py -f '{artist} - {song}'
 
 ; vim:ft=dosini

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+git remote add "$1" git@github.com:"$1"/"$(basename "$(git root)")".git
+git fetch "$1"

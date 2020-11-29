@@ -35,8 +35,6 @@ endfunction
 
 call s:source_rc('utils.rc.vim')
 
-let g:mapleader = "\<Space>"
-
 let s:dein_dir = expand($CACHE . '/dein')
 let s:dein_repo_dir = s:dein_dir . '/repos/github.com/Shougo/dein.vim'
 

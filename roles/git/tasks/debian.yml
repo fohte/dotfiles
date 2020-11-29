@@ -3,3 +3,6 @@
   apt:
     name: git
     state: latest
+# cd /usr/share/doc/git/contrib/diff-highlight/
+# sudo chmod +x diff-highlight
+# sudo ln -s /usr/share/doc/git/contrib/diff-highlight/diff-highlight /usr/local/bin/diff-highlight

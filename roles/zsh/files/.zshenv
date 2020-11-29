@@ -21,7 +21,7 @@ path=( \
   $HOME/.cabal/bin(N-/) \
   $GOPATH/bin(N-/) \
   $HOME/.cargo/bin(N-/) \
-  $HOME/.npm-global/bin(N-/) \
+  $HOME/.lib/node/bin(N-/) \
   /usr/local/bin(N-/) \
   /usr/bin(N-/) \
   /bin(N-/) \

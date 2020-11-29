@@ -5,7 +5,7 @@ if g:float_window_available
 
   function! g:FloatingFZF()
     let buf = nvim_create_buf(v:false, v:true)
-    call setbufvar(buf, '&signcolumn', 'no')
+    " call setbufvar(buf, '&signcolumn', 'no')
 
     let height = &lines - 3
     let width = float2nr(&columns - (&columns * 2 / 10))
@@ -17,9 +17,11 @@ if g:float_window_available
           \ 'col': col,
           \ 'width': width,
           \ 'height': height,
+          \ 'style': 'minimal',
           \ }
 
-    call nvim_open_win(buf, v:true, opts)
+    let win = nvim_open_win(buf, v:true, opts)
+    call setwinvar(win, '&number', 0)
   endfunction
 endif
 
@@ -62,10 +64,10 @@ function! s:run_fzf_files_in_current_dir()
   execute 'FzfFiles' expand('%:h')
 endfunction
 
-nnoremap <silent> <Leader>p :<C-u>FzfGFiles -co --exclude-standard<CR>
-nnoremap <silent> <Leader>f :<C-u>FzfFiles<CR>
-nnoremap <silent> <Leader>. :<C-u>call <SID>run_fzf_files_in_current_dir()<CR>
-nnoremap <silent> <Leader>g :<C-u>call <SID>run_fzf_ag()<CR>
-nnoremap <silent> <Leader>s :<C-u>FzfGFiles?<CR>
-nnoremap <silent> <Leader>b :<C-u>FzfBuffers<CR>
-nnoremap <silent> <Leader>l :<C-u>FzfLines<CR>
+nnoremap <silent> <Space>p :<C-u>FzfGFiles -co --exclude-standard<CR>
+nnoremap <silent> <Space>f :<C-u>FzfFiles<CR>
+nnoremap <silent> <Space>. :<C-u>call <SID>run_fzf_files_in_current_dir()<CR>
+nnoremap <silent> <Space>g :<C-u>call <SID>run_fzf_ag()<CR>
+nnoremap <silent> <Space>s :<C-u>FzfGFiles?<CR>
+nnoremap <silent> <Space>b :<C-u>FzfBuffers<CR>
+nnoremap <silent> <Space>l :<C-u>FzfLines<CR>

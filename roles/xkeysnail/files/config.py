@@ -2,39 +2,40 @@ import re
 
 from xkeysnail.transform import *
 
-define_multipurpose_modmap({
-    Key.LEFT_META: [Key.MUHENKAN, Key.LEFT_META],
-    Key.RIGHT_META: [Key.HIRAGANA, Key.RIGHT_META],
-})
+define_multipurpose_modmap(
+    {
+        Key.LEFT_META: [Key.MUHENKAN, Key.LEFT_META],
+        Key.RIGHT_META: [Key.HIRAGANA, Key.RIGHT_META],
+    }
+)
 
 
 def change_modifier_keys(before_mod, after_mod, keys):
-    return {K(f'{before_mod}-{key}'): K(f'{after_mod}-{key}') for key in keys}
+    return {K(f"{before_mod}-{key}"): K(f"{after_mod}-{key}") for key in keys}
 
 
 def super_to(modifier, keys):
-    return change_modifier_keys('Super', modifier, keys)
+    return change_modifier_keys("Super", modifier, keys)
 
 
 def super_shift_to(modifier, keys):
-    return change_modifier_keys('Super-Shift', modifier, keys)
+    return change_modifier_keys("Super-Shift", modifier, keys)
 
 
 def super_to_ctrl(keys):
-    return super_to('C', keys)
+    return super_to("C", keys)
 
 
 def super_shift_to_ctrl_shift(keys):
-    return super_shift_to('C-Shift', keys)
+    return super_shift_to("C-Shift", keys)
 
 
-terminals = ('URxvt', 'kitty', 'Alacritty')
+terminals = ("URxvt", "kitty", "Alacritty")
 
 define_keymap(
     lambda wm_class: wm_class not in terminals,
     {
         K("M-backspace"): with_mark(K("C-backspace")),
-
         # Cursor
         K("C-b"): with_mark(K("left")),
         K("C-f"): with_mark(K("right")),
@@ -60,28 +61,13 @@ define_keymap(
         # Delete
         K("M-d"): [K("C-delete"), set_mark(False)],
         # Kill line
-        K("C-k"): [K("Shift-end"), K("C-x"),
-                   set_mark(False)],
-        **super_to_ctrl([
-            'a',
-            'c',
-            'e',
-            'f',
-            'l',
-            'n',
-            'r',
-            't',
-            'v',
-            'w',
-            'x',
-            'z',
-        ]),
-        **super_shift_to_ctrl_shift([
-            'n',
-            't',
-        ]),
-    })
+        K("C-k"): [K("Shift-end"), K("C-x"), set_mark(False)],
+        **super_to_ctrl(["a", "c", "e", "f", "l", "n", "r", "t", "v", "w", "x", "z"]),
+        **super_shift_to_ctrl_shift(["n", "t"]),
+        # K("c"): {K("n"): {K("o"): [K("k"), K("y"), K("o")]}},
+    },
+)
 
-define_keymap(lambda wm_class: wm_class in terminals, {
-    **super_to('C-Shift', ['c', 'v']),
-})
+define_keymap(
+    lambda wm_class: wm_class in terminals, {**super_to("C-Shift", ["c", "v"])}
+)

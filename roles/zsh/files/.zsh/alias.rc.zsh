@@ -79,8 +79,6 @@ alias v='vim'
 alias b='bundle'
 alias be='bundle exec'
 
-has 'compose' && alias docker-compose='compose'
-
 alias d='docker'
 alias dc='docker-compose'
 alias dce='docker-compose exec'
@@ -136,6 +134,20 @@ gwcd() {
 gocd() {
   local dir
   dir="$(echo $GOPATH/src/*/*/* | perl -pe 's/ /\n/g' | fzf --reverse)" && cd $dir
+}
+
+fkill() {
+  local pid
+  if [ "$UID" != "0" ]; then
+    pid=$(ps -f -u $UID | fzf -m --header-lines=1 | awk '{print $2}')
+  else
+    pid=$(ps -ef | fzf -m --header-lines=1 | awk '{print $2}')
+  fi
+
+  if [ "x$pid" != "x" ]
+  then
+    echo $pid | xargs kill -${1:-9}
+  fi
 }
 
 has 'assume-role' && source "$(which assume-role)"

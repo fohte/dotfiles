@@ -34,3 +34,6 @@ import_rc 'history.rc.zsh'
 import_rc 'misc.rc.zsh'
 
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
+
+# The next line updates PATH for Netlify's Git Credential Helper.
+if [ -f '/home/fohte/.netlify/helper/path.zsh.inc' ]; then source '/home/fohte/.netlify/helper/path.zsh.inc'; fi

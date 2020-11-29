@@ -14,11 +14,6 @@ repo = 'Shougo/vimproc'
 build = 'make'
 
 [[plugins]]
-repo = 'Shougo/denite.nvim'
-hook_source = 'source ~/.vim/rc/plugins/configs/denite.rc.vim'
-if = 'has("nvim")'
-
-[[plugins]]
 repo = 'junegunn/fzf.vim'
 depends = '/usr/local/opt/fzf'
 hook_source = '''
@@ -62,7 +57,6 @@ hook_source = '''
 [[plugins]]
 repo = 'cohama/lexima.vim'
 hook_source = '''
-  let g:lexima_enable_basic_rules = 1
 '''
 
 # improve git commit buffer
@@ -136,7 +130,7 @@ hook_add = '''
   map # <Plug>(asterisk-z#)
   map g* <Plug>(asterisk-gz*)
   map g# <Plug>(asterisk-gz#)
-  let g:asterisk#keeppos = 1
+  let g:asterisk#keeppos = 0
 '''
 
 [[plugins]]
@@ -162,3 +156,14 @@ merged = 0
 
 [[plugins]]
 repo = 'k0kubun/vim-open-github'
+
+[[plugins]]
+repo = 'ap/vim-css-color'
+
+[[plugins]]
+repo = 'iamcco/markdown-preview.nvim'
+on_ft = ['markdown', 'pandoc.markdown', 'rmd']
+build = 'sh -c "cd app && yarn install"'
+hook_source = '''
+  let g:mkdp_auto_close = 0
+'''

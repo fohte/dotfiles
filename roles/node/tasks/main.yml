@@ -11,8 +11,10 @@
     state: link
   with_items:
     - .prettierrc
+    - .npmrc
 
 - name: Install npm packages
+  become: true
   npm:
     name: '{{ item }}'
     state: latest
