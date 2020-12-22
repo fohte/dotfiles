@@ -125,17 +125,17 @@ mkcd() {
 
 ghqcd() {
   local dir
-  dir="$(ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf --reverse)" && cd "$(eval echo "$dir")"
+  dir="$(ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf)" && cd "$(eval echo "$dir")"
 }
 
 gwcd() {
   local dir
-  dir="$(git worktree list | awk '{ print $1 }' | fzf --reverse)" && cd $dir
+  dir="$(git worktree list | awk '{ print $1 }' | fzf)" && cd $dir
 }
 
 gocd() {
   local dir
-  dir="$(echo $GOPATH/src/*/*/* | perl -pe 's/ /\n/g' | fzf --reverse)" && cd $dir
+  dir="$(echo $GOPATH/src/*/*/* | perl -pe 's/ /\n/g' | fzf)" && cd $dir
 }
 
 has 'assume-role' && source "$(which assume-role)"
