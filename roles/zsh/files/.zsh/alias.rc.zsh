@@ -126,6 +126,11 @@ ghqcd() {
   dir="$(ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf)" && cd "$(eval echo "$dir")"
 }
 
+deincd() {
+  local dir
+  dir="$(GHQ_ROOT=~/.cache/dein/repos ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf)" && cd "$(eval echo "$dir")"
+}
+
 gwcd() {
   local dir
   dir="$(git worktree list | awk '{ print $1 }' | fzf)" && cd $dir
