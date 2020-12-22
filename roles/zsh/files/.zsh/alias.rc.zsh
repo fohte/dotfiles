@@ -79,8 +79,6 @@ alias v='vim'
 alias b='bundle'
 alias be='bundle exec'
 
-has 'compose' && alias docker-compose='compose'
-
 alias d='docker'
 alias dc='docker-compose'
 alias dce='docker-compose exec'
@@ -137,5 +135,3 @@ gocd() {
   local dir
   dir="$(echo $GOPATH/src/*/*/* | perl -pe 's/ /\n/g' | fzf)" && cd $dir
 }
-
-has 'assume-role' && source "$(which assume-role)"
