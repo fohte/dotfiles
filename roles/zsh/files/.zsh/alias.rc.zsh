@@ -48,7 +48,6 @@ alias gl='git log --pretty=format:"%Cred%h%Creset - %s%C(yellow)%d%Creset" --gra
 alias gm='git merge'
 alias gms='git merge --ff --squash'
 alias gnb='git new-branch'
-alias gnw='git-new-worktree'
 alias gp='git push -u'
 alias gpl='git pull'
 alias gr='git reset'
@@ -65,12 +64,6 @@ alias gscm='git with-stash commit -m'
 alias gsco='git with-stash commit --amend --no-edit'
 alias gsp='git stash pop'
 alias gss='git stash save'
-alias gw='git worktree'
-
-git-new-worktree() {
-  set -x
-  git worktree add "$(git root)/.worktrees/$1" "$1"
-}
 
 alias ghr='gh repo view --web'
 alias ghpr='gh pr view --web'
@@ -132,11 +125,6 @@ ghqcd() {
 deincd() {
   local dir
   dir="$(GHQ_ROOT=~/.cache/dein/repos ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf)" && cd "$(eval echo "$dir")"
-}
-
-gwcd() {
-  local dir
-  dir="$(git worktree list | awk '{ print $1 }' | fzf)" && cd $dir
 }
 
 gocd() {
