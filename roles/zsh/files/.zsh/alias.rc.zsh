@@ -72,6 +72,9 @@ git-new-worktree() {
   git worktree add "$(git root)/.worktrees/$1" "$1"
 }
 
+alias ghr='gh repo view --web'
+alias ghpr='gh pr view --web'
+
 has 'nvim' && alias vim='nvim'
 
 alias v='vim'
