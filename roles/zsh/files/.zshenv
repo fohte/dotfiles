@@ -13,6 +13,7 @@ typeset -U path PATH fpath FPATH
 
 path=( \
   $HOME/.nodenv/bin(N-/) \
+  $HOME/.npm-global/bin(N-/) \
   $HOME/.nodenv/shims(N-/) \
   $HOME/.pyenv/bin(N-/) \
   $HOME/.pyenv/shims(N-/) \
@@ -21,7 +22,6 @@ path=( \
   $HOME/.cabal/bin(N-/) \
   $GOPATH/bin(N-/) \
   $HOME/.cargo/bin(N-/) \
-  $HOME/.npm-global/bin(N-/) \
   /usr/local/bin(N-/) \
   /usr/bin(N-/) \
   /bin(N-/) \
