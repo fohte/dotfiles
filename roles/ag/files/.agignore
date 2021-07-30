@@ -23,3 +23,7 @@ __snapshots__
 # Ruby
 
 Gemfile.lock
+
+.terraform
+
+dist
