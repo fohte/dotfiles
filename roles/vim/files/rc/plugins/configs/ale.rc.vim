@@ -10,25 +10,25 @@ let g:ale_sh_shfmt_options = '-sr -i 2'
 
 let g:ale_linters = {
 \   'go': ['gometalinter', 'gofmt'],
+\   'javascript': ['eslint', 'tslint'],
 \   'python': ['flake8'],
 \   'typescript': ['tsserver', 'tslint', 'stylelint'],
-\   'javascript': ['eslint', 'tslint'],
 \ }
 
 let g:ale_fixers = {
+\   'css': ['prettier'],
+\   'graphql': ['prettier'],
 \   'javascript': ['prettier'],
-\   'typescript': ['prettier', 'tslint'],
 \   'json': ['prettier'],
 \   'json5': ['prettier'],
-\   'yaml': ['prettier'],
-\   'css': ['prettier'],
-\   'scss': ['prettier'],
-\   'graphql': ['prettier'],
-\   'ruby': ['rubocop'],
-\   'rust': ['rustfmt'],
 \   'markdown': ['prettier'],
 \   'python': ['isort', 'black'],
+\   'ruby': ['rubocop'],
+\   'rust': ['rustfmt'],
+\   'scss': ['prettier'],
 \   'sh': ['shfmt'],
+\   'typescript': ['prettier', 'tslint'],
+\   'yaml': ['prettier'],
 \ }
 
 nnoremap <silent> <F10> :ALEFix<CR>
