@@ -26,6 +26,7 @@ let g:ale_fixers = {
 \   'ruby': ['rubocop'],
 \   'rust': ['rustfmt'],
 \   'scss': ['prettier'],
+\   'jsonnet': ['jsonnetfmt'],
 \   'sh': ['shfmt'],
 \   'typescript': ['prettier', 'tslint'],
 \   'yaml': ['prettier'],
