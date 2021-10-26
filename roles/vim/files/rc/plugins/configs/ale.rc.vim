@@ -11,6 +11,7 @@ let g:ale_sh_shfmt_options = '-sr -i 2'
 let g:ale_linters = {
 \   'go': ['gometalinter', 'gofmt'],
 \   'javascript': ['eslint', 'tslint'],
+\   'jsonnet': ['jsonnet-lint'],
 \   'python': ['flake8'],
 \   'typescript': ['tsserver', 'tslint', 'stylelint'],
 \ }
