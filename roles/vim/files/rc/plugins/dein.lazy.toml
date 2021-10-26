@@ -47,5 +47,5 @@ on_ft = 'ruby'
 repo = 'hashivim/vim-terraform'
 on_ft = 'terraform'
 hook_source = '''
-  let g:terraform_fmt_on_save = 1
+  let g:terraform_fmt_on_save = 0
 '''

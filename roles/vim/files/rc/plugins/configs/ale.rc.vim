@@ -13,6 +13,7 @@ let g:ale_linters = {
 \   'javascript': ['eslint', 'tslint'],
 \   'jsonnet': ['jsonnet-lint'],
 \   'python': ['flake8'],
+\   'terraform': ['tflint'],
 \   'typescript': ['tsserver', 'tslint', 'stylelint'],
 \ }
 
@@ -29,6 +30,7 @@ let g:ale_fixers = {
 \   'rust': ['rustfmt'],
 \   'scss': ['prettier'],
 \   'sh': ['shfmt'],
+\   'terraform': ['terraform'],
 \   'typescript': ['prettier', 'tslint'],
 \   'yaml': ['prettier'],
 \ }
