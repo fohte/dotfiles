@@ -59,7 +59,8 @@ export DOTPATH="$(dotpath)"
 
 # -R: display ANSI color escape sequences in "raw" form
 # -S: disable line wrapping (Side-scroll to see long lines)
-export LESS='-RS'
+# -X: leave file contents on the screen when less exits
+export LESS='-RSX'
 
 export LANG='en_US.UTF-8'
 if [ type -a 'nvim' 2>&1 > /dev/null ]; then
