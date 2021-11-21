@@ -5,7 +5,6 @@
 
 [core]
 	pager = less --tabs=4 -RFX
-	excludesfile = ~/.gitignore_global
 	commentchar = ";"
 
 [pager]
