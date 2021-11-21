@@ -69,7 +69,7 @@
 	templatedir = ~/.git_templates
 
 [ghq]
-	root = ~/.ghq
+	root = ~/ghq
 	root = ~/.go
 	root = ~/.cache/dein/repos
 [color "diff-highlight"]
