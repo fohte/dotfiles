@@ -70,8 +70,7 @@
 
 [ghq]
 	root = ~/ghq
-	root = ~/.go
-	root = ~/.cache/dein/repos
+
 [color "diff-highlight"]
 	oldNormal = red
 	oldHighlight = red bold 239
