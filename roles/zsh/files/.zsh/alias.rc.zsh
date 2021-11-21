@@ -123,8 +123,7 @@ ghqcd() {
 }
 
 deincd() {
-  local dir
-  dir="$(GHQ_ROOT=~/.cache/dein/repos ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf)" && cd "$(eval echo "$dir")"
+  GHO_ROOT=~/.cache/dein/repos ghqcd
 }
 
 gocd() {
