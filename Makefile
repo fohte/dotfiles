@@ -1,4 +1,4 @@
-~/.git/config/ignore:
+~/.config/git/ignore: ~/.config/git
 	ln -sf $(CURDIR)/roles/git/files/.gitignore_global $@
 
-symlink: ~/.git/config/ignore
+symlink: ~/.config/git/ignore
