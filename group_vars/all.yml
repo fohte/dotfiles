@@ -11,9 +11,6 @@ zplug_root: '{{ user_home }}/.zplug'
 is_debian: 'ansible_os_family == "Debian"'
 is_macos: 'ansible_os_family == "Darwin"'
 
-vim:
-  install_plugins: false
-
 python:
   install_versions:
     - 3.7.0

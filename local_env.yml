@@ -18,7 +18,6 @@
     - { role: ruby, tags: [ruby] }
     - { role: tig, tags: [tig] }
     - { role: tmux, tags: [tmux] }
-    - { role: vim, tags: [vim] }
     - { role: zsh, tags: [zsh] }
 
     # for debian

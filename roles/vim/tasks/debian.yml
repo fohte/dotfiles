@@ -1,5 +1,0 @@
-- name: Install Neovim with apt
-  become: true
-  apt:
-    name: neovim
-    state: latest
