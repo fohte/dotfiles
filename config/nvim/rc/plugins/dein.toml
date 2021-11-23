@@ -10,6 +10,7 @@ hook_post_update = '''
 
 [[plugins]]
 repo = 'scrooloose/nerdtree'
+hook_source = 'source ~/.config/nvim/rc/plugins/configs/nerdtree.rc.vim'
 
 [[plugins]]
 repo = 'Xuyuanp/nerdtree-git-plugin'
@@ -18,11 +19,6 @@ repo = 'Xuyuanp/nerdtree-git-plugin'
 [[plugins]]
 repo = 'Shougo/vimproc'
 build = 'make'
-
-[[plugins]]
-repo = 'Shougo/denite.nvim'
-hook_source = 'source ~/.config/nvim/rc/plugins/configs/denite.rc.vim'
-if = 'has("nvim")'
 
 [[plugins]]
 repo = 'junegunn/fzf.vim'
