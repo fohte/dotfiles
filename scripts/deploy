@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+cd "$(dirname "$0")/.."
+
+log-exec() {
+  echo "$@"
+
+  if [ -z "$DRYRUN" ]; then
+    exec "$@"
+  fi
+}
+
+cat symlinks.txt | grep -vE '(^$|^#)' | while read -r src dst; do
+  src="$PWD/$src"
+  dst="${dst/\~/$HOME}"
+  dst_dir="$(dirname "$dst")"
+
+  if [ ! -d "$dst_dir" ]; then
+    log-exec mkdir -p "$dst_dir"
+  fi
+
+  if [ ! -e "$dst" ]; then
+    log-exec ln -sfnv "$src" "$dst"
+  fi
+done
