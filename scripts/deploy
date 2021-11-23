@@ -17,6 +17,8 @@ EOS
 log-exec() {
   if is_dryrun; then
     printf '[dryrun] '
+  else
+    printf '[run] '
   fi
   echo "$@"
 
