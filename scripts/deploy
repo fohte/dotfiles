@@ -2,24 +2,75 @@
 
 cd "$(dirname "$0")/.."
 
+usage() {
+  cat << EOS
+USAGE: $0 [options...]
+
+OPTIONS
+    --help, -h       print help
+    --debug, -d      set -x
+    --dry-run, -n    show the commands to create symlinks
+    --force, -f      even if symlink files already exist, re-deploy symlinks
+EOS
+}
+
 log-exec() {
+  if is_dryrun; then
+    printf '[dryrun] '
+  fi
   echo "$@"
 
-  if [ -z "$DRYRUN" ]; then
+  if ! is_dryrun; then
     exec "$@"
   fi
 }
+
+is_dryrun() {
+  test -n "$DRYRUN"
+}
+
+is_force() {
+  test -n "$FORCE"
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --help | -h)
+      usage
+      exit
+      ;;
+
+    --debug | -d)
+      set -x
+      ;;
+
+    --dry-run | -n)
+      DRYRUN=1
+      ;;
+
+    --force | -f)
+      FORCE=1
+      ;;
+
+    -*)
+      echo "[ERROR] Invalid option '$1'"
+      usage
+      exit 1
+      ;;
+  esac
+  shift
+done
 
 cat symlinks.txt | grep -vE '(^$|^#)' | while read -r src dst; do
   src="$PWD/$src"
   dst="${dst/\~/$HOME}"
   dst_dir="$(dirname "$dst")"
 
-  if [ ! -d "$dst_dir" ]; then
+  if is_force || [ ! -d "$dst_dir" ]; then
     log-exec mkdir -p "$dst_dir"
   fi
 
-  if [ ! -e "$dst" ]; then
+  if is_force || [ ! -e "$dst" ]; then
     log-exec ln -sfnv "$src" "$dst"
   fi
 done
