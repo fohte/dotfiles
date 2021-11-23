@@ -5,4 +5,3 @@
     state: link
   with_items:
     - .editorconfig
-    - .vimperatorrc
