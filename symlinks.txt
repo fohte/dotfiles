@@ -1,4 +1,4 @@
 roles/git/files/.gitconfig ~/.config/git/config
 roles/git/files/.gitignore_global ~/.config/git/ignore
 
-roles/vim/files ~/.vim
+roles/vim/files ~/.config/nvim

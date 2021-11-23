@@ -26,7 +26,7 @@ if !isdirectory($CACHE)
   call mkdir($CACHE, 'p')
 endif
 
-let s:rc_dir = resolve(expand('~/.vim/rc'))
+let s:rc_dir = resolve(expand('~/.config/nvim/rc'))
 
 function! s:source_rc(path) abort
   let l:abspath = resolve(expand(s:rc_dir . '/' . a:path))
