@@ -2,3 +2,5 @@ roles/git/files/.gitconfig ~/.config/git/config
 roles/git/files/.gitignore_global ~/.config/git/ignore
 
 config/nvim ~/.config/nvim
+
+config/.editorconfig ~/.editorconfig

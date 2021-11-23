@@ -31,6 +31,3 @@
     - { role: unclutter, tags: [unclutter], when: is_debian }
     - { role: x, tags: [x], when: is_debian }
     - { role: xkeysnail, tags: [xkeysnail], when: is_debian }
-
-    # misc
-    - { role: misc, tags: [misc] }
