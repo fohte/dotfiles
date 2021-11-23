@@ -4,3 +4,7 @@ roles/git/files/.gitignore_global ~/.config/git/ignore
 config/nvim ~/.config/nvim
 
 config/.editorconfig ~/.editorconfig
+
+config/zsh/.zshrc ~/.zshrc
+config/zsh/.zshenv ~/.zshenv
+config/zsh/rc ~/.config/zsh/rc
