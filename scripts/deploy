@@ -23,7 +23,7 @@ log-exec() {
   echo "$@"
 
   if ! is_dryrun; then
-    exec "$@"
+    "$@"
   fi
 }
 
