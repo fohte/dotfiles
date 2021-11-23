@@ -70,6 +70,16 @@ if has('vim_starting')
   call dein#call_hook('source')
 endif
 
+lua <<EOF
+require'nvim-treesitter.configs'.setup {
+  ensure_installed = "maintained",
+  highlight = {
+    enable = true,
+    disable = {},
+  },
+}
+EOF
+
 call s:source_rc('edit.rc.vim')
 call s:source_rc('view.rc.vim')
 call s:source_rc('mappings.rc.vim')

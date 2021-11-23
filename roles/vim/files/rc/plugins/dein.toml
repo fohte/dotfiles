@@ -3,6 +3,12 @@
 repo = 'Shougo/dein.vim'
 
 [[plugins]]
+repo = 'nvim-treesitter/nvim-treesitter'
+hook_post_update = '''
+  TSUpdate
+'''
+
+[[plugins]]
 repo = 'scrooloose/nerdtree'
 
 [[plugins]]
