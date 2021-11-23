@@ -68,7 +68,7 @@ cat symlinks.txt | grep -vE '(^$|^#)' | while read -r src dst; do
   dst="${dst/\~/$HOME}"
   dst_dir="$(dirname "$dst")"
 
-  if is_force || [ ! -d "$dst_dir" ]; then
+  if [ ! -d "$dst_dir" ]; then
     log-exec mkdir -p "$dst_dir"
   fi
 
