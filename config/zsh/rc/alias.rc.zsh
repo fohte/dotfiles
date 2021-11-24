@@ -123,7 +123,7 @@ ghqcd() {
 }
 
 deincd() {
-  GHO_ROOT=~/.cache/dein/repos ghqcd
+  GHQ_ROOT=~/.cache/dein/repos ghqcd
 }
 
 gocd() {
