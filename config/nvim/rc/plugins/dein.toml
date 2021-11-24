@@ -151,9 +151,8 @@ repo = 'xolox/vim-misc'
 
 [[plugins]]
 repo = 'neoclide/coc.nvim'
+rev = 'release'
 hook_add = 'source ~/.config/nvim/rc/plugins/configs/coc.rc.vim'
-build = './install.sh nightly'
-merged = 0
 
 [[plugins]]
 repo = 'k0kubun/vim-open-github'
