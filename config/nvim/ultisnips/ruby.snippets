@@ -1,24 +1,15 @@
 snippet def
 def ${1:method_name}(${2})
-	${0:# TODO}
+	${0:raise NotImplementedError}
 end
 endsnippet
 
-snippet doc "yard docs"
-# ${1:method_description}
-# @param ${2:param_name} [${3:type}] ${4:param_description}
-# @return [${5:type}] ${6:return_value_description}
+snippet @p
+@param ${1:param_name} [${2:type}] ${0:param_description}
 endsnippet
 
-snippet frozen
-# frozen_string_literal: true
-
-endsnippet
-
-snippet defnode
-def_node_matcher :${1:name}, <<-PATTERN
-	(${2})
-PATTERN
+snippet @r
+@return [${1:type}] ${0:param_description}
 endsnippet
 
 snippet itis "it { is_expected.to ... }"
@@ -35,13 +26,13 @@ it '${1}' do
 end
 endsnippet
 
-snippet context "context ..."
+snippet cont "context ..."
 context '${1}' do
 	${0}
 end
 endsnippet
 
-snippet describe "describe ..."
+snippet desc "describe ..."
 describe '${1}' do
 	${0}
 end
@@ -51,23 +42,11 @@ snippet let "let { ... }"
 let(:${1}) { ${0} }
 endsnippet
 
-snippet letdo "let do ..."
-let(:${1}) do
-	${0}
-end
+snippet sbj "subject { ... }"
+subject(${1}) { ${0} }
 endsnippet
 
-snippet subject "subject { ... }"
-subject${1:(:${2})} { ${0} }
-endsnippet
-
-snippet subjectdo "subject do ..."
-subject${1:(:${2})} do
-	${0}
-end
-endsnippet
-
-snippet before "before do ..."
+snippet bef "before do ..."
 before do
 	${0}
 end
