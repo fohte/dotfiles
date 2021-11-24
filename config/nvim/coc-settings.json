@@ -6,6 +6,12 @@
       "command": "docker-langserver",
       "filetypes": ["dockerfile"],
       "args": ["--stdio"]
+    },
+    "terraform": {
+      "command": "terraform-lsp",
+      "args": [],
+      "filetypes": ["terraform"],
+      "rootPatterns": [".terraform"]
     }
   }
 }
