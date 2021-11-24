@@ -21,13 +21,6 @@ repo = 'Shougo/vimproc'
 build = 'make'
 
 [[plugins]]
-repo = 'junegunn/fzf.vim'
-depends = '/usr/local/opt/fzf'
-hook_source = '''
-  source ~/.config/nvim/rc/plugins/configs/fzf.rc.vim
-'''
-
-[[plugins]]
 repo = '/usr/local/opt/fzf'
 if = 'isdirectory("/usr/local/opt/fzf")'
 
