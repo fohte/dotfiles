@@ -51,7 +51,7 @@ repo = 'SirVer/ultisnips'
 hook_source = '''
   let g:UltiSnipsUsePythonVersion = 3
 
-  let g:UltiSnipsSnippetDirectories = [$HOME . '/.vim/ultisnips']
+  let g:UltiSnipsSnippetDirectories = [$HOME . '/.config/nvim/ultisnips']
 
   let g:UltiSnipsExpandTrigger = '<C-t>'
   let g:UltiSnipsJumpForwardTrigger = '<TAB>'
