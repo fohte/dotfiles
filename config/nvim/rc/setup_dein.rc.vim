@@ -1,3 +1,5 @@
+let g:dein#install_github_api_token = $GITHUB_TOKEN
+
 let s:dein_dir = expand($CACHE . '/dein')
 let s:dein_repo_dir = s:dein_dir . '/repos/github.com/Shougo/dein.vim'
 
