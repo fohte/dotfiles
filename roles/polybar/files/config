@@ -1,6 +1,6 @@
-dpi = 144
-
 [bar/main]
+monitor = ${env:MONITOR:}
+
 width = 100%
 height = 34
 
@@ -80,6 +80,8 @@ bar-used-empty-foreground = #444444
 type = internal/i3
 
 format = <label-state> <label-mode>
+
+pin-workspaces = true
 
 ; terminal
 ws-icon-0 = 1;
