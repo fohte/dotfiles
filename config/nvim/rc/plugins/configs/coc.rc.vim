@@ -38,7 +38,7 @@ endfunction
 nmap <Leader>e [fzf-p]
 xmap <Leader>e [fzf-p]
 
-nnoremap <silent> [fzf-p]p     :<C-u>CocCommand fzf-preview.FromResources prjject_mru git<CR>
+nnoremap <silent> [fzf-p]p     :<C-u>CocCommand fzf-preview.FromResources project_mru git<CR>
 nnoremap <silent> [fzf-p]f     :<C-u>CocCommand fzf-preview.DirectoryFiles<CR>
 nnoremap <silent> [fzf-p].     :<C-u>call <SID>run_fzf_files_in_current_dir()<CR>
 nnoremap <silent> [fzf-p]s     :<C-u>CocCommand fzf-preview.GitStatus<CR>
