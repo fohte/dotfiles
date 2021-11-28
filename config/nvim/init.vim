@@ -26,8 +26,6 @@ if !isdirectory($CACHE)
   call mkdir($CACHE, 'p')
 endif
 
-call util#source_rc('utils.rc.vim')
-
 let g:mapleader = "\<Space>"
 
 call util#source_rc('setup_dein.rc.vim')
