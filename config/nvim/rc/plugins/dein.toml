@@ -10,7 +10,7 @@ hook_post_update = '''
 
 [[plugins]]
 repo = 'scrooloose/nerdtree'
-hook_source = 'source ~/.config/nvim/rc/plugins/configs/nerdtree.rc.vim'
+hook_source = 'call util#source_plugin_config("nerdtree.rc.vim")'
 
 [[plugins]]
 repo = 'Xuyuanp/nerdtree-git-plugin'
@@ -37,7 +37,7 @@ hook_source = '''
 # light and configurable statusline/tabline
 [[plugins]]
 repo = 'itchyny/lightline.vim'
-hook_source = 'source ~/.config/nvim/rc/plugins/configs/lightline.rc.vim'
+hook_source = 'call util#source_plugin_config("lightline.rc.vim")'
 
 [[plugins]]
 repo = 'SirVer/ultisnips'
@@ -79,7 +79,7 @@ repo = 'tpope/vim-fugitive'
 
 [[plugins]]
 repo = 'w0rp/ale'
-hook_source = 'source ~/.config/nvim/rc/plugins/configs/ale.rc.vim'
+hook_source = 'call util#source_plugin_config("ale.rc.vim")'
 
 [[plugins]]
 repo = 'AndrewRadev/switch.vim'
@@ -152,7 +152,7 @@ repo = 'xolox/vim-misc'
 [[plugins]]
 repo = 'neoclide/coc.nvim'
 rev = 'release'
-hook_add = 'source ~/.config/nvim/rc/plugins/configs/coc.rc.vim'
+hook_add = 'call util#source_plugin_config("coc.rc.vim")'
 
 [[plugins]]
 repo = 'k0kubun/vim-open-github'

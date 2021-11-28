@@ -23,4 +23,4 @@ function! s:show_documentation()
   endif
 endfunction
 
-call util#source_rc('plugins/configs/fzf-preview.rc.vim')
+call util#source_plugin_config('fzf-preview.rc.vim')
