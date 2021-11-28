@@ -8,3 +8,5 @@ config/.editorconfig ~/.editorconfig
 config/zsh/.zshrc ~/.zshrc
 config/zsh/.zshenv ~/.zshenv
 config/zsh/rc ~/.config/zsh/rc
+
+config/rg/.rgignore ~/.rgignore
