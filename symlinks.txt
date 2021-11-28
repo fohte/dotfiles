@@ -10,3 +10,5 @@ config/zsh/.zshenv ~/.zshenv
 config/zsh/rc ~/.config/zsh/rc
 
 config/rg/.rgignore ~/.rgignore
+
+config/karabiner/assets/complex_modifications ~/.config/karabiner/assets/complex_modifications
