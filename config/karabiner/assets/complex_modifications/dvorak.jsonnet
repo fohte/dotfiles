@@ -21,6 +21,16 @@ local convert(from, to, mandatory=null) = {
       [if mandatory != null then 'mandatory']: [mandatory],
     },
   ],
+  conditions: [{
+    type: 'device_if',
+    identifiers: [
+      {
+        vendor_id: 1452,
+        product_id: 641,
+        description: 'Apple Internal Keyboard',
+      },
+    ],
+  }],
 };
 
 
