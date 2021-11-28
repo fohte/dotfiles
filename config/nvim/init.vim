@@ -26,18 +26,11 @@ if !isdirectory($CACHE)
   call mkdir($CACHE, 'p')
 endif
 
-let g:nvim_rc_dir = resolve(expand('~/.config/nvim/rc'))
-
-function! s:source_rc(path) abort
-  let l:abspath = resolve(expand(g:nvim_rc_dir . '/' . a:path))
-  execute 'source' fnameescape(l:abspath)
-endfunction
-
-call s:source_rc('utils.rc.vim')
+call util#source_rc('utils.rc.vim')
 
 let g:mapleader = "\<Space>"
 
-call s:source_rc('setup_dein.rc.vim')
+call util#source_rc('setup_dein.rc.vim')
 
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
@@ -49,8 +42,8 @@ require'nvim-treesitter.configs'.setup {
 }
 EOF
 
-call s:source_rc('edit.rc.vim')
-call s:source_rc('view.rc.vim')
-call s:source_rc('mappings.rc.vim')
-call s:source_rc('commands.rc.vim')
-call s:source_rc('quickfix.rc.vim')
+call util#source_rc('edit.rc.vim')
+call util#source_rc('view.rc.vim')
+call util#source_rc('mappings.rc.vim')
+call util#source_rc('commands.rc.vim')
+call util#source_rc('quickfix.rc.vim')
