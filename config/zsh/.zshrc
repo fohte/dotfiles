@@ -8,11 +8,7 @@
 # ----------------------------------------------------------
 
 import_rc() {
-  local source_file="$ZSHRC_ROOT/$1"
-
-  if [ -f $source_file ]; then
-    source $source_file
-  fi
+  import_zsh_config "$ZSH_CONFIG_HOME/rc/$1"
 }
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
