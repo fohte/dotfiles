@@ -12,3 +12,7 @@ on_ft = 'jsonnet'
 hook_source = '''
   let g:jsonnet_fmt_on_save = 1
 '''
+
+[[plugins]]
+repo = 'pantharshit00/vim-prisma'
+on_ft = 'prisma'
