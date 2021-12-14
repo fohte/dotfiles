@@ -74,6 +74,8 @@ export KEYTIMEOUT=1
 # gpg-agent
 export GPG_TTY=$(tty)
 
+import_env 'homebrew.zsh'
+
 import_env 'fzf.zsh'
 import_env 'go.zsh'
 import_env 'linuxbrew.zsh'
