@@ -13,3 +13,5 @@ config/zsh/env ~/.config/zsh/env
 config/rg/.rgignore ~/.rgignore
 
 config/karabiner/assets/complex_modifications ~/.config/karabiner/assets/complex_modifications
+
+config/gnupg/gpg-agent.conf ~/.gnupg/gpg-agent.conf
