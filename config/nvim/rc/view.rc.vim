@@ -44,3 +44,5 @@ set previewheight=7
 " always show the sign column even if no sign have been appeared
 " for example diagnostics of coc.nvim
 set signcolumn=yes
+
+set nofoldenable
