@@ -155,4 +155,4 @@ rev = 'release'
 hook_add = 'call util#source_plugin_config("coc.rc.vim")'
 
 [[plugins]]
-repo = 'k0kubun/vim-open-github'
+repo = 'knsh14/vim-github-link'
