@@ -24,8 +24,6 @@ alias /='cd $(git-root || echo $HOME)'
 alias u='cd -'
 alias ~='cd ~'
 
-has 'hub' && alias git='hub'
-
 alias t='tig'
 
 alias g='git'
