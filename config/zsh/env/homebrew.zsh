@@ -7,3 +7,8 @@ fi
 if [ -f /opt/homebrew/bin/brew ]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
+
+fpath=( \
+  $(brew --prefix)/share/zsh/site-functions(N-/) \
+  $fpath
+)
