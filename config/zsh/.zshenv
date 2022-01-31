@@ -77,7 +77,6 @@ import_env 'homebrew.zsh'
 
 import_env 'fzf.zsh'
 import_env 'go.zsh'
-import_env 'linuxbrew.zsh'
 import_env 'node.zsh'
 import_env 'python.zsh'
 import_env 'ruby.zsh'
