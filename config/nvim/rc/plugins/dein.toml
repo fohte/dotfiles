@@ -156,3 +156,14 @@ hook_add = 'call util#source_plugin_config("coc.rc.vim")'
 
 [[plugins]]
 repo = 'knsh14/vim-github-link'
+
+[[plugins]]
+repo = 'mattn/emmet-vim'
+hook_source = '''
+  let g:user_emmet_leader_key = '<C-e>'
+  let g:user_emmet_settings = {
+  \ 'javascript': {
+  \   'extends': 'jsx',
+  \ },
+  \}
+'''
