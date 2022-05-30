@@ -2,8 +2,17 @@
 
 set -euxo pipefail
 
-deb_path="$(mktemp)"
+deb_name='google-chrome-stable_current_amd64.deb'
+url="https://dl.google.com/linux/direct/$deb_name"
 
-curl -L https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o "$deb_path"
-sudo dpkg -i "$deb_path"
-rm -f "$deb_path"
+dest_dir="$HOME/Downloads/chrome-deb"
+mkdir -p "$dest_dir"
+
+tmp_deb_path="$dest_dir/$deb_name"
+
+curl -L "$url" -o "$tmp_deb_path"
+sudo dpkg -i "$tmp_deb_path"
+
+latest_version="$(dpkg-deb -f "$tmp_deb_path" Version)"
+
+mv "$tmp_deb_path" "$dest_dir/google-chrome-stable_${latest_version}_amd64.deb"
