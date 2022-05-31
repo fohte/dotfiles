@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+notice() {
+  urgency="$1"
+  message="$2"
+
+  notify-send \
+    --urgency="$urgency" \
+    --expire-time=60000 \
+    "$message"
+}
+
+if "$@"; then
+  notice normal "Success: $*"
+else
+  notice critical "Failure: $*"
+fi
