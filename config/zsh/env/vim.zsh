@@ -3,3 +3,5 @@ if [ type -a 'nvim' 2>&1 > /dev/null ]; then
 else
   export EDITOR="$(which vim)"
 fi
+
+export SUDO_EDITOR="$EDITOR"
