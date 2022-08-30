@@ -1,5 +1,5 @@
 if [ type -a 'nvim' 2>&1 > /dev/null ]; then
-  export EDITOR='nvim'
+  export EDITOR="$(which nvim)"
 else
-  export EDITOR='vim'
+  export EDITOR="$(which vim)"
 fi
