@@ -45,7 +45,7 @@
 [alias]
 	amend = commit --amend
 	fixup = commit -n --fixup
-	wip = commit -n -m 'WIP [CI SKIP]'
+	wip = commit -n -m 'WIP [ci skip]'
 
 [merge]
 	ff = false
