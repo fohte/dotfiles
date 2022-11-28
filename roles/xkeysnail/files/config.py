@@ -3,8 +3,8 @@ import re
 from xkeysnail.transform import *
 
 define_multipurpose_modmap({
-    Key.LEFT_META: [Key.MUHENKAN, Key.LEFT_META],
-    Key.RIGHT_META: [Key.HIRAGANA, Key.RIGHT_META],
+    Key.LEFT_ALT: [Key.MUHENKAN, Key.LEFT_ALT],
+    Key.RIGHT_ALT: [Key.HIRAGANA, Key.RIGHT_ALT],
 })
 
 
