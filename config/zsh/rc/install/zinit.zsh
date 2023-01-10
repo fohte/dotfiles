@@ -1,4 +1,4 @@
 echo 'Installing zinit...'
 
 mkdir ~/.zinit
-git clone https://github.com/zdharma/zinit.git ~/.zinit/bin
+git clone https://github.com/zdharma-continuum/zinit ~/.zinit/bin
