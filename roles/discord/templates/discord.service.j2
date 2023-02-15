@@ -1,0 +1,14 @@
+[Unit]
+Description=discord
+
+[Service]
+KillMode=process
+Environment=DISPLAY={{ ansible_env.DISPLAY }}
+ExecStart=/snap/bin/discord
+Type=simple
+User={{ ansible_env.USER }}
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
