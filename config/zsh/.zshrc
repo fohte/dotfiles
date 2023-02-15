@@ -15,6 +15,8 @@ import_rc() {
 
 autoload -Uz compinit && compinit -u
 autoload -Uz colors; colors
+autoload -U +X bashcompinit && bashcompinit
+complete -C "$(which aws_completer)" aws
 
 if ! [ -d ~/.zinit ]; then
   import_rc 'install/zinit.zsh'
