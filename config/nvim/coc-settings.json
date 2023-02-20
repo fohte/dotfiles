@@ -8,10 +8,11 @@
       "args": ["--stdio"]
     },
     "terraform": {
-      "command": "terraform-lsp",
-      "args": [],
-      "filetypes": ["terraform"],
-      "rootPatterns": [".terraform"]
+      "command": "terraform-ls",
+      "args": ["serve"],
+      "filetypes": ["terraform", "tf"],
+      "initializationOptions": {},
+      "settings": {}
     }
   }
 }
