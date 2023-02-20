@@ -1,3 +1,4 @@
+tap "hashicorp/tap"
 tap "homebrew/bundle"
 tap "homebrew/cask"
 tap "homebrew/cask-fonts"
@@ -50,6 +51,7 @@ brew "tmux"
 brew "volta"
 brew "youtubeuploader"
 brew "zbar"
+brew "hashicorp/tap/terraform-ls"
 brew "koekeishiya/formulae/skhd"
 brew "rhysd/hgrep/hgrep"
 brew "xorpse/formulae/yabai", args: ["HEAD"]
