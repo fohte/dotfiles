@@ -1,4 +1,4 @@
-Xft.dpi: 144
+Xft.dpi: 96
 
 URxvt.scrollBar: false
 URxvt.fading: 40
