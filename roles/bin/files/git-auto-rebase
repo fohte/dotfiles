@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+GIT_SEQUENCE_EDITOR=true git rebase -i --autosquash "$@"
