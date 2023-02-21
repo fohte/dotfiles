@@ -83,6 +83,8 @@ alias dr='docker run'
 alias drm='docker run --rm'
 alias drmit='docker run --rm -it'
 
+has aws-vault && alias ave='aws-vault exec'
+
 alias ya='yarn add'
 alias yr='yarn run'
 
