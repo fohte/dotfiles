@@ -67,6 +67,7 @@ define_keymap(
             'c',
             'e',
             'f',
+            'k',
             'l',
             'n',
             'r',
