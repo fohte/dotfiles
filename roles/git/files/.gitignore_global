@@ -66,3 +66,12 @@ node_modules
 
 yarn-error.log
 tf-lsp.log
+.solargraph.yml
+
+# Terraform
+plan.txt
+tf.plan
+
+tmp/
+
+*.log
