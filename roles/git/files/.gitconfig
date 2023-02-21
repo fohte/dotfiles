@@ -78,3 +78,7 @@
 	newHighlight = green bold 239
 [rebase]
 	autosquash = true
+
+[diff "ansible-vault"]
+	textconv = ansible-vault view
+	cachetextconv = true
