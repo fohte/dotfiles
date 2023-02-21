@@ -24,6 +24,8 @@ alias /='cd $(git-root || echo $HOME)'
 alias u='cd -'
 alias ~='cd ~'
 
+has assh && alias ssh="assh wrapper ssh --"
+
 alias t='tig'
 
 alias g='git'
