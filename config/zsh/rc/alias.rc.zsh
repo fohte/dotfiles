@@ -11,7 +11,7 @@ fi
 
 alias p='pbpaste'
 
-alias rm='rm -i'
+alias rm='rm -I'
 alias x='chmod +x'
 
 has 'gsed' && alias sed='gsed'
