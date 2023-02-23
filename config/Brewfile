@@ -1,3 +1,4 @@
+tap "1password/tap"
 tap "hashicorp/tap"
 tap "homebrew/bundle"
 tap "homebrew/cask"
@@ -55,6 +56,7 @@ brew "hashicorp/tap/terraform-ls"
 brew "koekeishiya/formulae/skhd"
 brew "rhysd/hgrep/hgrep"
 brew "xorpse/formulae/yabai", args: ["HEAD"]
+cask "1password-cli"
 cask "docker"
 cask "font-inconsolata"
 cask "iterm2"
