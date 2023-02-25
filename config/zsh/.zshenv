@@ -18,7 +18,7 @@ import_env() {
   import_zsh_config "$ZSH_CONFIG_HOME/env/$1"
 }
 
-typeset -U path PATH fpath FPATH
+typeset -U path PATH fpath FPATH manpath MANPATH
 
 add_path() {
   path=($@ $path)
@@ -29,22 +29,17 @@ add_path() {
 # (ja) http://qiita.com/t-takaai/items/8574ff312f2caa5177c2
 setopt no_global_rcs
 
-path=( \
-  $HOME/.cabal/bin(N-/) \
-  $HOME/.cargo/bin(N-/) \
-  /usr/local/bin(N-/) \
-  /usr/bin(N-/) \
-  /bin(N-/) \
-  /usr/sbin(N-/) \
-  /sbin(N-/) \
-  $HOME/.local/bin(N-/) \
-  $HOME/bin(N-/) \
-  $path \
-)
-
-fpath=( \
-  /usr/local/share/zsh/site-functions(N-/) \
-  $fpath
+path=(
+  $HOME/.cabal/bin(N-/)
+  $HOME/.cargo/bin(N-/)
+  /usr/local/bin(N-/)
+  /usr/bin(N-/)
+  /bin(N-/)
+  /usr/sbin(N-/)
+  /sbin(N-/)
+  $HOME/.local/bin(N-/)
+  $HOME/bin(N-/)
+  $path
 )
 
 has 'direnv' && eval "$(direnv hook zsh)"
