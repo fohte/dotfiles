@@ -5,6 +5,10 @@ if match_tag git; then
   sym roles/git/files/.gitignore_global ~/.config/git/ignore
 fi
 
+if match_tag tig; then
+  sym roles/tig/files/.tigrc ~/.tigrc
+fi
+
 if match_tag nvim; then
   sym config/nvim ~/.config/nvim
 fi
