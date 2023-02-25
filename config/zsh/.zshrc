@@ -31,4 +31,6 @@ import_rc 'prompt.rc.zsh'
 import_rc 'history.rc.zsh'
 import_rc 'misc.rc.zsh'
 
+import_rc 'plugins/op.rc.zsh'
+
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
