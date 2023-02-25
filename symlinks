@@ -33,6 +33,15 @@ if match_tag karabiner && is_macos; then
     ~/.config/karabiner/assets/complex_modifications
 fi
 
+if match_tag espanso; then
+  # these paths can be referenced from `espanso path config`
+  # See: https://espanso.org/docs/configuration/basics/
+  is_linux && espanso_config_path="$HOME/.config/espanso"
+  is_macos && espanso_config_path="$HOME/Library/Application Support/espanso"
+
+  sym config/espanso "$espanso_config_path"
+fi
+
 if match_tag gpg; then
   sym config/gnupg/gpg-agent.conf ~/.gnupg/gpg-agent.conf
 fi
