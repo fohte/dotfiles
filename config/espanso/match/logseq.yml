@@ -1,0 +1,9 @@
+filter_exec: Logseq
+
+matches:
+  - trigger: ';web'
+    replace: '🌐 '
+  - trigger: ';book'
+    replace: '📖 '
+  - trigger: ';idea'
+    replace: '💡 '
