@@ -1,4 +1,5 @@
 tap "1password/tap"
+tap "espanso/espanso"
 tap "hashicorp/tap"
 tap "homebrew/bundle"
 tap "homebrew/cask"
@@ -60,6 +61,7 @@ brew "rhysd/hgrep/hgrep"
 brew "xorpse/formulae/yabai", args: ["HEAD"]
 cask "1password-cli"
 cask "docker"
+cask "espanso"
 cask "font-inconsolata"
 cask "iterm2"
 cask "stats"
