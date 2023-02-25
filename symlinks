@@ -14,6 +14,8 @@ sym config/zsh/env ~/.config/zsh/env
 
 sym config/rg/.rgignore ~/.rgignore
 
-sym config/karabiner/assets/complex_modifications ~/.config/karabiner/assets/complex_modifications
+is_macos &&
+  sym config/karabiner/assets/complex_modifications \
+    ~/.config/karabiner/assets/complex_modifications
 
 sym config/gnupg/gpg-agent.conf ~/.gnupg/gpg-agent.conf
