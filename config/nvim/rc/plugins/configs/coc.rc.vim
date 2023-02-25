@@ -2,6 +2,7 @@ let g:coc_global_extensions = [
       \ 'coc-css',
       \ 'coc-fzf-preview',
       \ 'coc-json',
+      \ 'coc-prettier',
       \ 'coc-prisma',
       \ 'coc-python',
       \ 'coc-solargraph',
