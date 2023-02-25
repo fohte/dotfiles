@@ -17,6 +17,9 @@ nmap <silent> <F9> <Plug>(coc-rename)
 
 nnoremap <silent> K :call <SID>show_documentation()<CR>
 
+nnoremap <silent> <F10> :Format<CR>
+inoremap <silent> <F10> <C-o>:Format<CR>
+
 function! s:show_documentation()
   if (index(['vim','help'], &filetype) >= 0)
     execute 'h '.expand('<cword>')
@@ -24,5 +27,8 @@ function! s:show_documentation()
     call CocAction('doHover')
   endif
 endfunction
+
+" Add `:Format` command to format current buffer.
+command! -nargs=0 Format :call CocAction('format')
 
 call util#source_plugin_config('fzf-preview.rc.vim')
