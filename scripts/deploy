@@ -13,6 +13,7 @@ OPTIONS
     --debug, -d      set -x
     --dry-run, -n    show the commands to create symlinks
     --force, -f      even if symlink files already exist, re-deploy symlinks
+    --tags, -t       deploy only the specified comma-separated tags (e.g. nvim,git)
 EOS
 }
 
@@ -46,14 +47,22 @@ while [ $# -gt 0 ]; do
 
     --debug | -d)
       set -x
+      shift
       ;;
 
     --dry-run | -n)
       DRYRUN=1
+      shift
       ;;
 
     --force | -f)
       FORCE=1
+      shift
+      ;;
+
+    --tags | -t)
+      tags="$(tr ',' '\n' <<< "$2")"
+      shift 2
       ;;
 
     -*)
@@ -62,10 +71,10 @@ while [ $# -gt 0 ]; do
       exit 1
       ;;
   esac
-  shift
 done
 
-# sym <src> <dest>
+# define a symbolink link
+# usage: sym <src> <dest>
 sym() {
   src="$PWD/$1"
   dst="$2"
@@ -78,6 +87,19 @@ sym() {
   if is_force || [ ! -e "$dst" ]; then
     log-exec ln -sfnv "$src" "$dst"
   fi
+}
+
+# check tag matching
+# usage: match_tag <tag>
+match_tag() {
+  tag="$1"
+
+  # if the --tags option is not set, all tags are assumed to be specified
+  if [ -z "${tags:-}" ]; then
+    return 0
+  fi
+
+  grep -q -F "$tag" <<< "$tags"
 }
 
 source symlinks

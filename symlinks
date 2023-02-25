@@ -1,21 +1,34 @@
 #!/bin/bash
 
-sym roles/git/files/.gitconfig ~/.config/git/config
-sym roles/git/files/.gitignore_global ~/.config/git/ignore
+if match_tag git; then
+  sym roles/git/files/.gitconfig ~/.config/git/config
+  sym roles/git/files/.gitignore_global ~/.config/git/ignore
+fi
 
-sym config/nvim ~/.config/nvim
+if match_tag nvim; then
+  sym config/nvim ~/.config/nvim
+fi
 
-sym config/.editorconfig ~/.editorconfig
+if match_tag editorconfig; then
+  sym config/.editorconfig ~/.editorconfig
+fi
 
-sym config/zsh/.zshrc ~/.zshrc
-sym config/zsh/.zshenv ~/.zshenv
-sym config/zsh/rc ~/.config/zsh/rc
-sym config/zsh/env ~/.config/zsh/env
+if match_tag zsh; then
+  sym config/zsh/.zshrc ~/.zshrc
+  sym config/zsh/.zshenv ~/.zshenv
+  sym config/zsh/rc ~/.config/zsh/rc
+  sym config/zsh/env ~/.config/zsh/env
+fi
 
-sym config/rg/.rgignore ~/.rgignore
+if match_tag rg; then
+  sym config/rg/.rgignore ~/.rgignore
+fi
 
-is_macos &&
+if match_tag karabiner && is_macos; then
   sym config/karabiner/assets/complex_modifications \
     ~/.config/karabiner/assets/complex_modifications
+fi
 
-sym config/gnupg/gpg-agent.conf ~/.gnupg/gpg-agent.conf
+if match_tag gpg; then
+  sym config/gnupg/gpg-agent.conf ~/.gnupg/gpg-agent.conf
+fi
