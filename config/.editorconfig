@@ -13,7 +13,7 @@ space_redirects = true
 switch_case_indent = true
 
 # Markdown
-[*.md]
+[*.md{,x}]
 trim_trailing_whitespace = false
 
 # Go
