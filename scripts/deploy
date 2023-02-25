@@ -63,9 +63,10 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-cat symlinks.txt | grep -vE '(^$|^#)' | while read -r src dst; do
-  src="$PWD/$src"
-  dst="${dst/\~/$HOME}"
+# sym <src> <dest>
+sym() {
+  src="$PWD/$1"
+  dst="$2"
   dst_dir="$(dirname "$dst")"
 
   if [ ! -d "$dst_dir" ]; then
@@ -75,4 +76,6 @@ cat symlinks.txt | grep -vE '(^$|^#)' | while read -r src dst; do
   if is_force || [ ! -e "$dst" ]; then
     log-exec ln -sfnv "$src" "$dst"
   fi
-done
+}
+
+source symlinks

@@ -1,0 +1,19 @@
+#!/bin/bash
+
+sym roles/git/files/.gitconfig ~/.config/git/config
+sym roles/git/files/.gitignore_global ~/.config/git/ignore
+
+sym config/nvim ~/.config/nvim
+
+sym config/.editorconfig ~/.editorconfig
+
+sym config/zsh/.zshrc ~/.zshrc
+sym config/zsh/.zshenv ~/.zshenv
+sym config/zsh/rc ~/.config/zsh/rc
+sym config/zsh/env ~/.config/zsh/env
+
+sym config/rg/.rgignore ~/.rgignore
+
+sym config/karabiner/assets/complex_modifications ~/.config/karabiner/assets/complex_modifications
+
+sym config/gnupg/gpg-agent.conf ~/.gnupg/gpg-agent.conf
