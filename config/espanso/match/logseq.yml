@@ -3,7 +3,24 @@ filter_exec: Logseq
 matches:
   - trigger: ';web'
     replace: '🌐 '
+
   - trigger: ';book'
     replace: '📖 '
+
   - trigger: ';idea'
     replace: '💡 '
+
+  - trigger: ';memo'
+    replace: '📝 '
+
+  - trigger: ';flow'
+    replace: '🌀 '
+
+  - trigger: ';x'
+    replace: '❌ '
+
+  - trigger: ';check'
+    replace: '✅ '
+
+  - trigger: ';log'
+    replace: '📜 '
