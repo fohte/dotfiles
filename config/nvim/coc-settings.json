@@ -1,6 +1,11 @@
 {
+  "coc.preferences.formatOnSaveFiletypes": ["*"],
+
+  "diagnostic.displayByAle": false,
+  "diagnostic.enableHighlightLineNumber": true,
+
   "python.jediEnabled": false,
-  "diagnostic.displayByAle": true,
+
   "languageserver": {
     "dockerfile": {
       "command": "docker-langserver",
