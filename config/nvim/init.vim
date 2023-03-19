@@ -32,7 +32,13 @@ call util#source_rc('setup_dein.rc.vim')
 
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = "maintained",
+  ensure_installed = {
+    "javascript",
+    "lua",
+    "tsx",
+    "typescript",
+    "vim",
+  },
   highlight = {
     enable = true,
     disable = {},
