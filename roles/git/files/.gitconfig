@@ -1,7 +1,7 @@
 [user]
 	name  = Hayato Kawai
 	email = fohte.hk@gmail.com
-	signingkey = Fohte
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJNk1O4IyU8rCLV3BWnADslCvZC//Jgt0rdO89f1r1Cb
 
 [core]
 	pager = less --tabs=4 -RFX
@@ -56,7 +56,9 @@
 [commit]
 	gpgsign = true
 [gpg]
-	program = gpg
+	format = ssh
+[gpg "ssh"]
+	program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
 [diff]
 	algorithm = histogram
 [github]
