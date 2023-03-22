@@ -1,7 +1,7 @@
 {
   "rules": [
     {
-      "description": "Remap keys to use Dvorak keyboard layout (rev: c43bf159aabe1f294696ee9911aed7c6)",
+      "description": "Remap keys to use Dvorak keyboard layout (rev: 8d2042086fc706da61e715117e631d19)",
       "manipulators": [
         {
           "conditions": [
@@ -10,6 +10,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -45,6 +50,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -78,6 +88,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -113,6 +128,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -146,6 +166,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -181,6 +206,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -214,6 +244,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -249,6 +284,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -282,6 +322,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -317,6 +362,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -350,6 +400,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -385,6 +440,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -418,6 +478,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -453,6 +518,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -486,6 +556,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -521,6 +596,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -554,6 +634,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -589,6 +674,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -622,6 +712,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -657,6 +752,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -690,6 +790,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -725,6 +830,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -758,6 +868,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -793,6 +908,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -826,6 +946,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -861,6 +986,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -894,6 +1024,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -929,6 +1064,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -962,6 +1102,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -997,6 +1142,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1030,6 +1180,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1065,6 +1220,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1098,6 +1258,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1133,6 +1298,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1166,6 +1336,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1201,6 +1376,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1234,6 +1414,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1269,6 +1454,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1302,6 +1492,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1337,6 +1532,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1370,6 +1570,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1405,6 +1610,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1438,6 +1648,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1473,6 +1688,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1506,6 +1726,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1541,6 +1766,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1574,6 +1804,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1611,6 +1846,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1646,6 +1886,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1683,6 +1928,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1718,6 +1968,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1755,6 +2010,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1790,6 +2050,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1827,6 +2092,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1862,6 +2132,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1899,6 +2174,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -1934,6 +2214,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -1971,6 +2256,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2006,6 +2296,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2043,6 +2338,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2078,6 +2378,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2115,6 +2420,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2150,6 +2460,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2187,6 +2502,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2222,6 +2542,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2259,6 +2584,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2294,6 +2624,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2331,6 +2666,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2366,6 +2706,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2403,6 +2748,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2438,6 +2788,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2475,6 +2830,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2510,6 +2870,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2547,6 +2912,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2582,6 +2952,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2619,6 +2994,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2654,6 +3034,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2691,6 +3076,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2726,6 +3116,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2763,6 +3158,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2798,6 +3198,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2835,6 +3240,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2870,6 +3280,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2907,6 +3322,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -2942,6 +3362,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -2979,6 +3404,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3014,6 +3444,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3051,6 +3486,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3086,6 +3526,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3123,6 +3568,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3159,6 +3609,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3194,6 +3649,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3231,6 +3691,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3266,6 +3731,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3303,6 +3773,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3338,6 +3813,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3375,6 +3855,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3410,6 +3895,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3447,6 +3937,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3482,6 +3977,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3519,6 +4019,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3554,6 +4059,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3591,6 +4101,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3626,6 +4141,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3663,6 +4183,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3698,6 +4223,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3735,6 +4265,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3770,6 +4305,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3807,6 +4347,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3842,6 +4387,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3879,6 +4429,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3914,6 +4469,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -3951,6 +4511,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -3986,6 +4551,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -4023,6 +4593,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -4058,6 +4633,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -4095,6 +4675,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -4130,6 +4715,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -4167,6 +4757,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -4202,6 +4797,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -4239,6 +4839,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -4274,6 +4879,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -4311,6 +4921,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -4346,6 +4961,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -4383,6 +5003,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -4418,6 +5043,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -4455,6 +5085,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -4490,6 +5125,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -4527,6 +5167,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -4562,6 +5207,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -4599,6 +5249,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -4634,6 +5289,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -4671,6 +5331,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -4706,6 +5371,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -4743,6 +5413,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -4778,6 +5453,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],
@@ -4815,6 +5495,11 @@
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
                   "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
+                  "vendor_id": 1452
                 }
               ],
               "type": "device_if"
@@ -4850,6 +5535,11 @@
                 {
                   "description": "Apple Internal Keyboard",
                   "product_id": 641,
+                  "vendor_id": 1452
+                },
+                {
+                  "description": "Apple Internal Keyboard",
+                  "product_id": 834,
                   "vendor_id": 1452
                 }
               ],

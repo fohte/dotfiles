@@ -29,6 +29,11 @@ local convert(from, to, mandatory=null) = {
         product_id: 641,
         description: 'Apple Internal Keyboard',
       },
+      {
+        vendor_id: 1452,
+        product_id: 834,
+        description: 'Apple Internal Keyboard',
+      },
     ],
   }],
 };
