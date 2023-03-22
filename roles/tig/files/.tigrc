@@ -16,7 +16,7 @@ bind main    G      move-last-line
 bind main R !git rebase -i %(commit)
 bind diff R !git rebase -i %(commit)
 
-bind generic Y !@bash -c "echo -n '%(commit)' | xsel --clipboard --input"
+bind generic Y !@bash -c "echo -n '%(commit)' | pbcopy"
 
 bind diff    n      :/^@@
 bind diff    p      :?^@@
