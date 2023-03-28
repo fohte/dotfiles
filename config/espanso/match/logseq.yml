@@ -16,6 +16,9 @@ matches:
   - trigger: ';flow'
     replace: '🌀 '
 
+  - trigger: ';stock'
+    replace: '📓 '
+
   - trigger: ';x'
     replace: '❌ '
 
@@ -24,3 +27,15 @@ matches:
 
   - trigger: ';log'
     replace: '📜 '
+
+  - trigger: ';folder'
+    replace: '📁 '
+
+  - trigger: ';task'
+    replace: '⏳ '
+
+  - trigger: ';think'
+    replace: '🤔 '
+
+  - trigger: ';write'
+    replace: '✍️  '
