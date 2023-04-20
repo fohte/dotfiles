@@ -73,10 +73,22 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+function is_absolute_path {
+  if [[ $1 == /* ]]; then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
+
 # define a symbolink link
 # usage: sym <src> <dest>
 sym() {
-  src="$PWD/$1"
+  src="$1"
+  if [[ "$src" != /* ]]; then
+    src="$PWD/$src"
+  fi
+
   dst="$2"
   dst_dir="$(dirname "$dst")"
 
