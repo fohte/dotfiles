@@ -5,3 +5,6 @@ matches:
       <summary>$|$</summary>
 
       </details>
+
+  - trigger: ';lgtm'
+    replace: 'LGTM 👍'
