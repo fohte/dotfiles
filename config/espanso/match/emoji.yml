@@ -1,0 +1,14 @@
+matches:
+  - { trigger: ';book', replace: '📖' }
+  - { trigger: ';check', replace: '✅' }
+  - { trigger: ';flow', replace: '🌀' }
+  - { trigger: ';folder', replace: '📁' }
+  - { trigger: ';idea', replace: '💡' }
+  - { trigger: ';log', replace: '📜' }
+  - { trigger: ';memo', replace: '📝' }
+  - { trigger: ';stock', replace: '📓' }
+  - { trigger: ';task', replace: '⏳' }
+  - { trigger: ';think', replace: '🤔' }
+  - { trigger: ';web', replace: '🌐' }
+  - { trigger: ';write', replace: '✍️ ' }
+  - { trigger: ';x', replace: '❌' }
