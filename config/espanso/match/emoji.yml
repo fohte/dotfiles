@@ -1,12 +1,17 @@
 matches:
+  - { trigger: ';+1', replace: '👍' }
   - { trigger: ';book', replace: '📖' }
+  - { trigger: ';bow', replace: '🙇' }
   - { trigger: ';check', replace: '✅' }
   - { trigger: ';flow', replace: '🌀' }
   - { trigger: ';folder', replace: '📁' }
   - { trigger: ';idea', replace: '💡' }
   - { trigger: ';log', replace: '📜' }
   - { trigger: ';memo', replace: '📝' }
+  - { trigger: ';ok', replace: '🙆' }
+  - { trigger: ';pray', replace: '🙏' }
   - { trigger: ';stock', replace: '📓' }
+  - { trigger: ';tada', replace: '🎉' }
   - { trigger: ';task', replace: '⏳' }
   - { trigger: ';think', replace: '🤔' }
   - { trigger: ';web', replace: '🌐' }
