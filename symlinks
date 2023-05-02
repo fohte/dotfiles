@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if match_tag bin; then
+  sym roles/bin/files ~/bin
+fi
+
 if match_tag fzf; then
   sym "$(brew --prefix)/opt/fzf" ~/.fzf
 fi
@@ -32,6 +36,11 @@ if match_tag zsh; then
   sym config/zsh/env ~/.config/zsh/env
 fi
 
+if match_tag tmux; then
+  sym roles/tmux/files/.tmux.conf ~/.tmux.conf
+  sym roles/tmux/files/.tmux.macos.conf ~/.tmux.macos.conf
+fi
+
 if match_tag rg; then
   sym config/rg/.rgignore ~/.rgignore
 fi
@@ -52,4 +61,8 @@ fi
 
 if match_tag gpg; then
   sym config/gnupg/gpg-agent.conf ~/.gnupg/gpg-agent.conf
+fi
+
+if match_tag prettier; then
+  sym roles/node/files/.prettierrc ~/.prettierrc
 fi
