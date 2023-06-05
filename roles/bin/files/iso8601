@@ -2,4 +2,8 @@
 
 set -euo pipefail
 
-date --date="$*" --iso-8601=s
+if [ $# -eq 0 ]; then
+  date --iso-8601=s
+else
+  date --date="$*" --iso-8601=s
+fi
