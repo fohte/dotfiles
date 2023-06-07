@@ -1,5 +1,5 @@
 matches:
-  - { trigger: ';+1', replace: '👍' }
+  - { trigger: ';bb', replace: '👍' }
   - { trigger: ';book', replace: '📖' }
   - { trigger: ';bow', replace: '🙇' }
   - { trigger: ';check', replace: '✅' }
@@ -9,6 +9,7 @@ matches:
   - { trigger: ';log', replace: '📜' }
   - { trigger: ';memo', replace: '📝' }
   - { trigger: ';ok', replace: '🙆' }
+  - { trigger: ';play', replace: '▶️' }
   - { trigger: ';pray', replace: '🙏' }
   - { trigger: ';stock', replace: '📓' }
   - { trigger: ';tada', replace: '🎉' }
