@@ -31,7 +31,6 @@ import_rc 'prompt.rc.zsh'
 import_rc 'history.rc.zsh'
 import_rc 'misc.rc.zsh'
 
-has 'op' && import_rc 'plugins/op.rc.zsh'
 has 'fzf' && import_rc 'plugins/fzf.rc.zsh'
 
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
