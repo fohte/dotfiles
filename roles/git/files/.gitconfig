@@ -36,13 +36,6 @@
 	default = current
 	followTags = true
 
-[url "git@github.com:"]
-	pushInsteadOf = https://github.com/
-	pushInsteadOf = git://github.com/
-	insteadOf = https://github.com/
-	insteadOf = git://github.com/
-	insteadOf = gh:
-
 [alias]
 	amend = commit --amend
 	fixup = commit -n --fixup
