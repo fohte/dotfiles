@@ -8,3 +8,13 @@ matches:
 
   - trigger: ';lgtm'
     replace: 'LGTM 👍'
+
+  - trigger: ';mdimg'
+    replace: '<img src="{{output}}" width="50%">'
+    vars:
+      - name: clipboard
+        type: clipboard
+      - name: output
+        type: shell
+        params:
+          cmd: echo "$ESPANSO_CLIPBOARD" | sed -E 's/!\[.*\]\((.*)\)/\1/'
