@@ -132,3 +132,22 @@ gocd() {
   local dir
   dir="$(echo $GOPATH/src/*/*/* | perl -pe 's/ /\n/g' | fzf)" && cd $dir
 }
+
+# usage: gh-review <pr-url>
+gh-review() {
+  pr_url="$1"
+
+  # https://github.com/foo/bar/pull/123 -> github.com/foo/bar
+  repo="$(echo "$pr_url" | cut -d/ -f3-5)"
+  repo_dir="$(ghq root)/$repo"
+  if [ ! -d "$repo_dir" ]; then
+    ghq get "$repo"
+    echo "[gh-review] cloned $repo"
+  fi
+  cd "$repo_dir"
+  echo "[gh-review] cd to $repo_dir"
+
+  pr_number="$(echo "$pr_url" | sed -E 's|.*pull/([0-9]+).*|\1|')"
+  gh pr checkout "$pr_number"
+  echo "[gh-review] checkout #$pr_number"
+}
