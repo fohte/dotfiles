@@ -112,6 +112,8 @@ alias -g XP='X -P "$(ncpu)"'
 alias -g Y='| pbcopy'
 alias -g TY='| tee >(pbcopy)'
 
+alias -g intsall='install'
+
 alias -s py=python
 alias -s rb=ruby
 
