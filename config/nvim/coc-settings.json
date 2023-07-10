@@ -6,6 +6,9 @@
 
   "python.jediEnabled": false,
 
+  "eslint.autoFixOnSave": true,
+  "eslint.format.enable": true,
+
   "languageserver": {
     "dockerfile": {
       "command": "docker-langserver",

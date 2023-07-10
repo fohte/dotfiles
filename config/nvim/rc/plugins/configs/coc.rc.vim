@@ -1,5 +1,6 @@
 let g:coc_global_extensions = [
       \ 'coc-css',
+      \ 'coc-eslint',
       \ 'coc-fzf-preview',
       \ 'coc-json',
       \ 'coc-prettier',
