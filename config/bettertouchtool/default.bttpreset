@@ -170,6 +170,60 @@
           "BTTEnabled2" : 1
         }
       ]
+    },
+    {
+      "BTTAppBundleIdentifier" : "company.thebrowser.Browser",
+      "BTTAppName" : "Arc",
+      "BTTAppAutoInvertIcon" : 1,
+      "BTTAppProcessMatchMode" : 2,
+      "BTTAppProcessName" : "Arc",
+      "BTTTriggers" : [
+        {
+          "BTTLastUpdatedAt" : 1690165327.710582,
+          "BTTTriggerType" : 103,
+          "BTTTriggerTypeDescription" : "3本指でスワイプダウン",
+          "BTTTriggerClass" : "BTTTriggerTypeTouchpadAll",
+          "BTTPredefinedActionType" : 124,
+          "BTTPredefinedActionName" : "メニューバーのメニューアイテムをトリガー",
+          "BTTGenericActionConfig" : "File;Archive Tab;",
+          "BTTMenubarPath" : "File;Archive Tab;",
+          "BTTUUID" : "A23B615E-D9A3-40AD-A437-12831F800A88",
+          "BTTEnabled" : 1,
+          "BTTEnabled2" : 1,
+          "BTTOrder" : 1,
+          "BTTGestureNotes" : "3本指でスワイプダウン"
+        },
+        {
+          "BTTLastUpdatedAt" : 1690165170.572639,
+          "BTTTriggerType" : 101,
+          "BTTTriggerTypeDescription" : "3本指で右にスワイプ",
+          "BTTTriggerClass" : "BTTTriggerTypeTouchpadAll",
+          "BTTPredefinedActionType" : 124,
+          "BTTPredefinedActionName" : "メニューバーのメニューアイテムをトリガー",
+          "BTTGenericActionConfig" : "Archive;Go Back;",
+          "BTTMenubarPath" : "Archive;Go Back;",
+          "BTTUUID" : "AA35AC1B-E6D1-494F-83D2-05645DBD3002",
+          "BTTEnabled" : 1,
+          "BTTEnabled2" : 1,
+          "BTTOrder" : 3,
+          "BTTGestureNotes" : "戻る"
+        },
+        {
+          "BTTLastUpdatedAt" : 1690164821.3805361,
+          "BTTTriggerType" : 100,
+          "BTTTriggerTypeDescription" : "3本指で左にスワイプ",
+          "BTTTriggerClass" : "BTTTriggerTypeTouchpadAll",
+          "BTTPredefinedActionType" : 124,
+          "BTTPredefinedActionName" : "メニューバーのメニューアイテムをトリガー",
+          "BTTGenericActionConfig" : "Archive;Go Forward;",
+          "BTTMenubarPath" : "Archive;Go Forward;",
+          "BTTUUID" : "4EF0AD05-E05D-4CF7-A872-6B7679D35BAE",
+          "BTTEnabled" : 1,
+          "BTTEnabled2" : 1,
+          "BTTOrder" : 2,
+          "BTTGestureNotes" : "進む"
+        }
+      ]
     }
   ],
   "BTTPresetSnapAreas" : [
