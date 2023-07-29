@@ -16,7 +16,10 @@ fi
 # create a temporary file
 tmpfile="$(mktemp /tmp/bttpreset.XXXXXX)"
 
-# sort BTTPresetContent by BTTAppBundleIdentifier so that it's always randomly ordered
-jq '.BTTPresetContent |= sort_by(.BTTAppBundleIdentifier)' "$1" > "$tmpfile"
+# sort randomly ordered arrays to make consistent
+jq '
+  .BTTPresetContent |= sort_by(.BTTAppBundleIdentifier)
+   | .BTTPresetContent[].BTTTriggers |= sort_by(.BTTOrder, .BTTTriggerType, .BTTPredefinedActionType)
+' "$1" > "$tmpfile"
 
 mv "$tmpfile" "$1"

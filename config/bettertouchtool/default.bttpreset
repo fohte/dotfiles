@@ -22,6 +22,49 @@
           "BTTEnabled2": 1
         },
         {
+          "BTTLastUpdatedAt": 1687702252.225965,
+          "BTTTriggerType": 0,
+          "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
+          "BTTPredefinedActionType": 177,
+          "BTTPredefinedActionName": "特定のアプリケーションを表示/非表示",
+          "BTTGenericActionConfig": "/Applications/iTerm.app",
+          "BTTGenericActionConfig2": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
+          "BTTAppToShowOrHide": "/Applications/iTerm.app",
+          "BTTShowHideAppConfig": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
+          "BTTAdditionalConfiguration": "524320",
+          "BTTKeyboardShortcutKeyboardType": 0,
+          "BTTUUID": "C3500B20-AB58-46A0-9EB4-CAD660240F20",
+          "BTTTriggerOnDown": 1,
+          "BTTLayoutIndependentChar": "1",
+          "BTTEnabled": 1,
+          "BTTEnabled2": 1,
+          "BTTShortcutKeyCode": 18,
+          "BTTShortcutModifierKeys": 524288,
+          "BTTAutoAdaptToKeyboardLayout": 0
+        },
+        {
+          "BTTLastUpdatedAt": 1687702252.225009,
+          "BTTTriggerType": 0,
+          "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
+          "BTTPredefinedActionType": 177,
+          "BTTPredefinedActionName": "特定のアプリケーションを表示/非表示",
+          "BTTGenericActionConfig": "/Applications/Google Chrome.app",
+          "BTTGenericActionConfig2": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
+          "BTTAppToShowOrHide": "/Applications/Google Chrome.app",
+          "BTTShowHideAppConfig": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
+          "BTTAdditionalConfiguration": "524320",
+          "BTTKeyboardShortcutKeyboardType": 0,
+          "BTTUUID": "4957F9A4-E838-4565-8E07-25276E39B2B6",
+          "BTTTriggerOnDown": 1,
+          "BTTLayoutIndependentChar": "2",
+          "BTTEnabled": 1,
+          "BTTEnabled2": 1,
+          "BTTShortcutKeyCode": 19,
+          "BTTShortcutModifierKeys": 524288,
+          "BTTOrder": 1,
+          "BTTAutoAdaptToKeyboardLayout": 0
+        },
+        {
           "BTTLastUpdatedAt": 1687702265.399071,
           "BTTTriggerType": 0,
           "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
@@ -64,49 +107,6 @@
           "BTTShortcutModifierKeys": 524288,
           "BTTOrder": 3,
           "BTTAutoAdaptToKeyboardLayout": 0
-        },
-        {
-          "BTTLastUpdatedAt": 1687702252.225009,
-          "BTTTriggerType": 0,
-          "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
-          "BTTPredefinedActionType": 177,
-          "BTTPredefinedActionName": "特定のアプリケーションを表示/非表示",
-          "BTTGenericActionConfig": "/Applications/Google Chrome.app",
-          "BTTGenericActionConfig2": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAppToShowOrHide": "/Applications/Google Chrome.app",
-          "BTTShowHideAppConfig": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAdditionalConfiguration": "524320",
-          "BTTKeyboardShortcutKeyboardType": 0,
-          "BTTUUID": "4957F9A4-E838-4565-8E07-25276E39B2B6",
-          "BTTTriggerOnDown": 1,
-          "BTTLayoutIndependentChar": "2",
-          "BTTEnabled": 1,
-          "BTTEnabled2": 1,
-          "BTTShortcutKeyCode": 19,
-          "BTTShortcutModifierKeys": 524288,
-          "BTTOrder": 1,
-          "BTTAutoAdaptToKeyboardLayout": 0
-        },
-        {
-          "BTTLastUpdatedAt": 1687702252.225965,
-          "BTTTriggerType": 0,
-          "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
-          "BTTPredefinedActionType": 177,
-          "BTTPredefinedActionName": "特定のアプリケーションを表示/非表示",
-          "BTTGenericActionConfig": "/Applications/iTerm.app",
-          "BTTGenericActionConfig2": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAppToShowOrHide": "/Applications/iTerm.app",
-          "BTTShowHideAppConfig": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAdditionalConfiguration": "524320",
-          "BTTKeyboardShortcutKeyboardType": 0,
-          "BTTUUID": "C3500B20-AB58-46A0-9EB4-CAD660240F20",
-          "BTTTriggerOnDown": 1,
-          "BTTLayoutIndependentChar": "1",
-          "BTTEnabled": 1,
-          "BTTEnabled2": 1,
-          "BTTShortcutKeyCode": 18,
-          "BTTShortcutModifierKeys": 524288,
-          "BTTAutoAdaptToKeyboardLayout": 0
         }
       ]
     },
@@ -124,19 +124,18 @@
       "BTTAppProcessName": "Google Chrome",
       "BTTTriggers": [
         {
-          "BTTGestureNotes": "戻る",
-          "BTTLastUpdatedAt": 1687702252.222688,
-          "BTTTriggerType": 101,
-          "BTTTriggerTypeDescription": "3本指で右にスワイプ",
+          "BTTGestureNotes": "進む",
+          "BTTLastUpdatedAt": 1687702252.223217,
+          "BTTTriggerType": 100,
+          "BTTTriggerTypeDescription": "3本指で左にスワイプ",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
           "BTTPredefinedActionType": 124,
           "BTTPredefinedActionName": "メニューバーのメニューアイテムをトリガー",
-          "BTTGenericActionConfig": "履歴;戻る;",
-          "BTTMenubarPath": "履歴;戻る;",
-          "BTTUUID": "4589BB89-442E-4C03-BE75-2600C6F74FAF",
+          "BTTGenericActionConfig": "履歴;進む;",
+          "BTTMenubarPath": "履歴;進む;",
+          "BTTUUID": "E30F2FC7-BCE0-4841-834E-E6A1CDE3E417",
           "BTTEnabled": 1,
-          "BTTEnabled2": 1,
-          "BTTOrder": 2
+          "BTTEnabled2": 1
         },
         {
           "BTTGestureNotes": "3本指でスワイプダウン",
@@ -154,18 +153,19 @@
           "BTTOrder": 1
         },
         {
-          "BTTGestureNotes": "進む",
-          "BTTLastUpdatedAt": 1687702252.223217,
-          "BTTTriggerType": 100,
-          "BTTTriggerTypeDescription": "3本指で左にスワイプ",
+          "BTTGestureNotes": "戻る",
+          "BTTLastUpdatedAt": 1687702252.222688,
+          "BTTTriggerType": 101,
+          "BTTTriggerTypeDescription": "3本指で右にスワイプ",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
           "BTTPredefinedActionType": 124,
           "BTTPredefinedActionName": "メニューバーのメニューアイテムをトリガー",
-          "BTTGenericActionConfig": "履歴;進む;",
-          "BTTMenubarPath": "履歴;進む;",
-          "BTTUUID": "E30F2FC7-BCE0-4841-834E-E6A1CDE3E417",
+          "BTTGenericActionConfig": "履歴;戻る;",
+          "BTTMenubarPath": "履歴;戻る;",
+          "BTTUUID": "4589BB89-442E-4C03-BE75-2600C6F74FAF",
           "BTTEnabled": 1,
-          "BTTEnabled2": 1
+          "BTTEnabled2": 1,
+          "BTTOrder": 2
         }
       ]
     },
@@ -192,21 +192,6 @@
           "BTTGestureNotes": "3本指でスワイプダウン"
         },
         {
-          "BTTLastUpdatedAt": 1690165170.572639,
-          "BTTTriggerType": 101,
-          "BTTTriggerTypeDescription": "3本指で右にスワイプ",
-          "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
-          "BTTPredefinedActionType": 124,
-          "BTTPredefinedActionName": "メニューバーのメニューアイテムをトリガー",
-          "BTTGenericActionConfig": "Archive;Go Back;",
-          "BTTMenubarPath": "Archive;Go Back;",
-          "BTTUUID": "AA35AC1B-E6D1-494F-83D2-05645DBD3002",
-          "BTTEnabled": 1,
-          "BTTEnabled2": 1,
-          "BTTOrder": 3,
-          "BTTGestureNotes": "戻る"
-        },
-        {
           "BTTLastUpdatedAt": 1690164821.380536,
           "BTTTriggerType": 100,
           "BTTTriggerTypeDescription": "3本指で左にスワイプ",
@@ -220,6 +205,21 @@
           "BTTEnabled2": 1,
           "BTTOrder": 2,
           "BTTGestureNotes": "進む"
+        },
+        {
+          "BTTLastUpdatedAt": 1690165170.572639,
+          "BTTTriggerType": 101,
+          "BTTTriggerTypeDescription": "3本指で右にスワイプ",
+          "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
+          "BTTPredefinedActionType": 124,
+          "BTTPredefinedActionName": "メニューバーのメニューアイテムをトリガー",
+          "BTTGenericActionConfig": "Archive;Go Back;",
+          "BTTMenubarPath": "Archive;Go Back;",
+          "BTTUUID": "AA35AC1B-E6D1-494F-83D2-05645DBD3002",
+          "BTTEnabled": 1,
+          "BTTEnabled2": 1,
+          "BTTOrder": 3,
+          "BTTGestureNotes": "戻る"
         }
       ]
     }
