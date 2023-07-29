@@ -3,7 +3,7 @@
   "BTTPresetInfoURL": "",
   "BTTPresetName": "Default",
   "BTTPresetColor": "218.790000, 52.509600, 210.475980, 255.000000",
-  "BTTPresetUUID": "625A2C3F-CE92-4A95-8151-BE50CD14709E",
+  "BTTPresetUUID": "0E436746-C869-4222-AF96-386F0661787D",
   "BTTPresetContent": [
     {
       "BTTAppBundleIdentifier": "BT.G",
@@ -14,7 +14,7 @@
       },
       "BTTTriggers": [
         {
-          "BTTLastUpdatedAt": 1690606709.756781,
+          "BTTLastUpdatedAt": 1690609689.6668072,
           "BTTTriggerType": -1,
           "BTTTriggerClass": "BTTTriggerTypeMagicMouse",
           "BTTUUID": "1C60F8B6-28C7-4973-A46F-78AD5E31E77E",
@@ -22,7 +22,7 @@
           "BTTEnabled2": 1
         },
         {
-          "BTTLastUpdatedAt": 1690606709.7581549,
+          "BTTLastUpdatedAt": 1690609689.6674418,
           "BTTTriggerType": 0,
           "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
           "BTTPredefinedActionType": 177,
@@ -43,7 +43,7 @@
           "BTTAutoAdaptToKeyboardLayout": 0
         },
         {
-          "BTTLastUpdatedAt": 1690608342.4841142,
+          "BTTLastUpdatedAt": 1690609689.66713,
           "BTTTriggerType": 0,
           "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
           "BTTPredefinedActionType": 177,
@@ -65,29 +65,7 @@
           "BTTAutoAdaptToKeyboardLayout": 0
         },
         {
-          "BTTLastUpdatedAt": 1690606709.7572088,
-          "BTTTriggerType": 0,
-          "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
-          "BTTPredefinedActionType": 177,
-          "BTTPredefinedActionName": "特定のアプリケーションを表示/非表示",
-          "BTTGenericActionConfig": "/Applications/Slack.app",
-          "BTTGenericActionConfig2": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":true,\"BTTShowHideSpecificAppCMDN\":true,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAppToShowOrHide": "/Applications/Slack.app",
-          "BTTShowHideAppConfig": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":true,\"BTTShowHideSpecificAppCMDN\":true,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAdditionalConfiguration": "524320",
-          "BTTKeyboardShortcutKeyboardType": 0,
-          "BTTUUID": "FE355C50-2818-4362-B247-399BC7205DE7",
-          "BTTTriggerOnDown": 1,
-          "BTTLayoutIndependentChar": "3",
-          "BTTEnabled": 1,
-          "BTTEnabled2": 1,
-          "BTTShortcutKeyCode": 20,
-          "BTTShortcutModifierKeys": 524288,
-          "BTTOrder": 2,
-          "BTTAutoAdaptToKeyboardLayout": 0
-        },
-        {
-          "BTTLastUpdatedAt": 1690606709.757547,
+          "BTTLastUpdatedAt": 1690609689.6677608,
           "BTTTriggerType": 0,
           "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
           "BTTPredefinedActionType": 177,
@@ -124,7 +102,7 @@
       "BTTAppProcessName": "Google Chrome",
       "BTTTriggers": [
         {
-          "BTTLastUpdatedAt": 1690606709.759392,
+          "BTTLastUpdatedAt": 1690609689.6692781,
           "BTTTriggerType": 100,
           "BTTTriggerTypeDescription": "3本指で左にスワイプ",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
@@ -138,7 +116,7 @@
           "BTTGestureNotes": "進む"
         },
         {
-          "BTTLastUpdatedAt": 1690606709.7590852,
+          "BTTLastUpdatedAt": 1690609689.668952,
           "BTTTriggerType": 103,
           "BTTTriggerTypeDescription": "3本指でスワイプダウン",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
@@ -153,7 +131,7 @@
           "BTTGestureNotes": "3本指でスワイプダウン"
         },
         {
-          "BTTLastUpdatedAt": 1690606709.7587528,
+          "BTTLastUpdatedAt": 1690609689.66862,
           "BTTTriggerType": 101,
           "BTTTriggerTypeDescription": "3本指で右にスワイプ",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
@@ -177,7 +155,7 @@
       "BTTAppProcessName": "Arc",
       "BTTTriggers": [
         {
-          "BTTLastUpdatedAt": 1690606709.759917,
+          "BTTLastUpdatedAt": 1690609689.669837,
           "BTTTriggerType": 103,
           "BTTTriggerTypeDescription": "3本指でスワイプダウン",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
@@ -192,7 +170,7 @@
           "BTTGestureNotes": "3本指でスワイプダウン"
         },
         {
-          "BTTLastUpdatedAt": 1690606709.7605639,
+          "BTTLastUpdatedAt": 1690609689.6704879,
           "BTTTriggerType": 100,
           "BTTTriggerTypeDescription": "3本指で左にスワイプ",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
@@ -207,7 +185,7 @@
           "BTTGestureNotes": "進む"
         },
         {
-          "BTTLastUpdatedAt": 1690606709.760229,
+          "BTTLastUpdatedAt": 1690609689.670168,
           "BTTTriggerType": 101,
           "BTTTriggerTypeDescription": "3本指で右にスワイプ",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
