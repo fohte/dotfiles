@@ -3,7 +3,7 @@
   "BTTPresetInfoURL": "",
   "BTTPresetName": "Default",
   "BTTPresetColor": "218.790000, 52.509600, 210.475980, 255.000000",
-  "BTTPresetUUID": "5E703A52-CF07-4F4B-A273-01E332504390",
+  "BTTPresetUUID": "625A2C3F-CE92-4A95-8151-BE50CD14709E",
   "BTTPresetContent": [
     {
       "BTTAppBundleIdentifier": "BT.G",
@@ -14,7 +14,7 @@
       },
       "BTTTriggers": [
         {
-          "BTTLastUpdatedAt": 1687702252.2253242,
+          "BTTLastUpdatedAt": 1690606709.756781,
           "BTTTriggerType": -1,
           "BTTTriggerClass": "BTTTriggerTypeMagicMouse",
           "BTTUUID": "1C60F8B6-28C7-4973-A46F-78AD5E31E77E",
@@ -22,7 +22,7 @@
           "BTTEnabled2": 1
         },
         {
-          "BTTLastUpdatedAt": 1687702252.225965,
+          "BTTLastUpdatedAt": 1690606709.7581549,
           "BTTTriggerType": 0,
           "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
           "BTTPredefinedActionType": 177,
@@ -43,14 +43,14 @@
           "BTTAutoAdaptToKeyboardLayout": 0
         },
         {
-          "BTTLastUpdatedAt": 1687702252.225009,
+          "BTTLastUpdatedAt": 1690608342.4841142,
           "BTTTriggerType": 0,
           "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
           "BTTPredefinedActionType": 177,
           "BTTPredefinedActionName": "特定のアプリケーションを表示/非表示",
-          "BTTGenericActionConfig": "/Applications/Google Chrome.app",
+          "BTTGenericActionConfig": "/Applications/Arc.app",
           "BTTGenericActionConfig2": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAppToShowOrHide": "/Applications/Google Chrome.app",
+          "BTTAppToShowOrHide": "/Applications/Arc.app",
           "BTTShowHideAppConfig": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
           "BTTAdditionalConfiguration": "524320",
           "BTTKeyboardShortcutKeyboardType": 0,
@@ -65,7 +65,7 @@
           "BTTAutoAdaptToKeyboardLayout": 0
         },
         {
-          "BTTLastUpdatedAt": 1687702265.399071,
+          "BTTLastUpdatedAt": 1690606709.7572088,
           "BTTTriggerType": 0,
           "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
           "BTTPredefinedActionType": 177,
@@ -87,7 +87,7 @@
           "BTTAutoAdaptToKeyboardLayout": 0
         },
         {
-          "BTTLastUpdatedAt": 1687702252.2246652,
+          "BTTLastUpdatedAt": 1690606709.757547,
           "BTTTriggerType": 0,
           "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
           "BTTPredefinedActionType": 177,
@@ -124,8 +124,7 @@
       "BTTAppProcessName": "Google Chrome",
       "BTTTriggers": [
         {
-          "BTTGestureNotes": "進む",
-          "BTTLastUpdatedAt": 1687702252.223217,
+          "BTTLastUpdatedAt": 1690606709.759392,
           "BTTTriggerType": 100,
           "BTTTriggerTypeDescription": "3本指で左にスワイプ",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
@@ -135,11 +134,11 @@
           "BTTMenubarPath": "履歴;進む;",
           "BTTUUID": "E30F2FC7-BCE0-4841-834E-E6A1CDE3E417",
           "BTTEnabled": 1,
-          "BTTEnabled2": 1
+          "BTTEnabled2": 1,
+          "BTTGestureNotes": "進む"
         },
         {
-          "BTTGestureNotes": "3本指でスワイプダウン",
-          "BTTLastUpdatedAt": 1687702252.223559,
+          "BTTLastUpdatedAt": 1690606709.7590852,
           "BTTTriggerType": 103,
           "BTTTriggerTypeDescription": "3本指でスワイプダウン",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
@@ -150,11 +149,11 @@
           "BTTUUID": "780BEEAC-A8F6-4A02-BAA0-8449A67C5D70",
           "BTTEnabled": 1,
           "BTTEnabled2": 1,
-          "BTTOrder": 1
+          "BTTOrder": 1,
+          "BTTGestureNotes": "3本指でスワイプダウン"
         },
         {
-          "BTTGestureNotes": "戻る",
-          "BTTLastUpdatedAt": 1687702252.222688,
+          "BTTLastUpdatedAt": 1690606709.7587528,
           "BTTTriggerType": 101,
           "BTTTriggerTypeDescription": "3本指で右にスワイプ",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
@@ -165,7 +164,8 @@
           "BTTUUID": "4589BB89-442E-4C03-BE75-2600C6F74FAF",
           "BTTEnabled": 1,
           "BTTEnabled2": 1,
-          "BTTOrder": 2
+          "BTTOrder": 2,
+          "BTTGestureNotes": "戻る"
         }
       ]
     },
@@ -177,7 +177,7 @@
       "BTTAppProcessName": "Arc",
       "BTTTriggers": [
         {
-          "BTTLastUpdatedAt": 1690165327.710582,
+          "BTTLastUpdatedAt": 1690606709.759917,
           "BTTTriggerType": 103,
           "BTTTriggerTypeDescription": "3本指でスワイプダウン",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
@@ -192,7 +192,7 @@
           "BTTGestureNotes": "3本指でスワイプダウン"
         },
         {
-          "BTTLastUpdatedAt": 1690164821.380536,
+          "BTTLastUpdatedAt": 1690606709.7605639,
           "BTTTriggerType": 100,
           "BTTTriggerTypeDescription": "3本指で左にスワイプ",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
@@ -207,7 +207,7 @@
           "BTTGestureNotes": "進む"
         },
         {
-          "BTTLastUpdatedAt": 1690165170.572639,
+          "BTTLastUpdatedAt": 1690606709.760229,
           "BTTTriggerType": 101,
           "BTTTriggerTypeDescription": "3本指で右にスワイプ",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
