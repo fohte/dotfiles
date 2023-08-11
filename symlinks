@@ -41,6 +41,10 @@ if match_tag tmux; then
   sym roles/tmux/files/.tmux.macos.conf ~/.tmux.macos.conf
 fi
 
+if match_tag wezterm; then
+  sym config/wezterm ~/.config/wezterm
+fi
+
 if match_tag rg; then
   sym config/rg/.rgignore ~/.rgignore
 fi
