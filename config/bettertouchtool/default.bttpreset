@@ -3,7 +3,7 @@
   "BTTPresetInfoURL": "",
   "BTTPresetName": "Default",
   "BTTPresetColor": "218.790000, 52.509600, 210.475980, 255.000000",
-  "BTTPresetUUID": "0E436746-C869-4222-AF96-386F0661787D",
+  "BTTPresetUUID": "53C41571-9CC7-4466-BDB0-FC06DDC24A87",
   "BTTPresetContent": [
     {
       "BTTAppBundleIdentifier": "BT.G",
@@ -22,14 +22,14 @@
           "BTTEnabled2": 1
         },
         {
-          "BTTLastUpdatedAt": 1690609689.6674418,
+          "BTTLastUpdatedAt": 1691767698.905503,
           "BTTTriggerType": 0,
           "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
           "BTTPredefinedActionType": 177,
           "BTTPredefinedActionName": "特定のアプリケーションを表示/非表示",
-          "BTTGenericActionConfig": "/Applications/iTerm.app",
+          "BTTGenericActionConfig": "/Applications/WezTerm.app",
           "BTTGenericActionConfig2": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAppToShowOrHide": "/Applications/iTerm.app",
+          "BTTAppToShowOrHide": "/Applications/WezTerm.app",
           "BTTShowHideAppConfig": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
           "BTTAdditionalConfiguration": "524320",
           "BTTKeyboardShortcutKeyboardType": 0,
