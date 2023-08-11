@@ -17,6 +17,16 @@ config.keys = {
     key = 'F7',
     action = wezterm.action.ActivateCopyMode,
   },
+  {
+    key = '|',
+    mods = 'CTRL|SHIFT',
+    action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' },
+  },
+  {
+    key = '_',
+    mods = 'CTRL|SHIFT',
+    action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' },
+  },
 }
 
 config.window_decorations = 'RESIZE'
