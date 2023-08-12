@@ -45,6 +45,10 @@ if match_tag wezterm; then
   sym config/wezterm ~/.config/wezterm
 fi
 
+if match_tag hammerspoon; then
+  sym config/hammerspoon/init.lua ~/.hammerspoon/init.lua
+fi
+
 if match_tag rg; then
   sym config/rg/.rgignore ~/.rgignore
 fi
