@@ -3,7 +3,7 @@
   "BTTPresetInfoURL": "",
   "BTTPresetName": "Default",
   "BTTPresetColor": "218.790000, 52.509600, 210.475980, 255.000000",
-  "BTTPresetUUID": "53C41571-9CC7-4466-BDB0-FC06DDC24A87",
+  "BTTPresetUUID": "38D57E1B-E95B-4A68-B02D-2CC4EAB72C29",
   "BTTPresetContent": [
     {
       "BTTAppBundleIdentifier": "BT.G",
@@ -12,81 +12,7 @@
       "BTTAppSpecificSettings": {
         "BTTDisableGlobalTriggers": false
       },
-      "BTTTriggers": [
-        {
-          "BTTLastUpdatedAt": 1690609689.6668072,
-          "BTTTriggerType": -1,
-          "BTTTriggerClass": "BTTTriggerTypeMagicMouse",
-          "BTTUUID": "1C60F8B6-28C7-4973-A46F-78AD5E31E77E",
-          "BTTEnabled": 1,
-          "BTTEnabled2": 1
-        },
-        {
-          "BTTLastUpdatedAt": 1691767698.905503,
-          "BTTTriggerType": 0,
-          "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
-          "BTTPredefinedActionType": 177,
-          "BTTPredefinedActionName": "特定のアプリケーションを表示/非表示",
-          "BTTGenericActionConfig": "/Applications/WezTerm.app",
-          "BTTGenericActionConfig2": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAppToShowOrHide": "/Applications/WezTerm.app",
-          "BTTShowHideAppConfig": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAdditionalConfiguration": "524320",
-          "BTTKeyboardShortcutKeyboardType": 0,
-          "BTTUUID": "C3500B20-AB58-46A0-9EB4-CAD660240F20",
-          "BTTTriggerOnDown": 1,
-          "BTTLayoutIndependentChar": "1",
-          "BTTEnabled": 1,
-          "BTTEnabled2": 1,
-          "BTTShortcutKeyCode": 18,
-          "BTTShortcutModifierKeys": 524288,
-          "BTTAutoAdaptToKeyboardLayout": 0
-        },
-        {
-          "BTTLastUpdatedAt": 1690609689.66713,
-          "BTTTriggerType": 0,
-          "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
-          "BTTPredefinedActionType": 177,
-          "BTTPredefinedActionName": "特定のアプリケーションを表示/非表示",
-          "BTTGenericActionConfig": "/Applications/Arc.app",
-          "BTTGenericActionConfig2": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAppToShowOrHide": "/Applications/Arc.app",
-          "BTTShowHideAppConfig": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAdditionalConfiguration": "524320",
-          "BTTKeyboardShortcutKeyboardType": 0,
-          "BTTUUID": "4957F9A4-E838-4565-8E07-25276E39B2B6",
-          "BTTTriggerOnDown": 1,
-          "BTTLayoutIndependentChar": "2",
-          "BTTEnabled": 1,
-          "BTTEnabled2": 1,
-          "BTTShortcutKeyCode": 19,
-          "BTTShortcutModifierKeys": 524288,
-          "BTTOrder": 1,
-          "BTTAutoAdaptToKeyboardLayout": 0
-        },
-        {
-          "BTTLastUpdatedAt": 1690609689.6677608,
-          "BTTTriggerType": 0,
-          "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
-          "BTTPredefinedActionType": 177,
-          "BTTPredefinedActionName": "特定のアプリケーションを表示/非表示",
-          "BTTGenericActionConfig": "/Applications/Obsidian.app",
-          "BTTGenericActionConfig2": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAppToShowOrHide": "/Applications/Obsidian.app",
-          "BTTShowHideAppConfig": "{\"BTTShowHideSpecificAppMoveToSpace\":\"BTTShowHideSpecificAppHiddenToCurrentSpace\",\"BTTShowHideSpecificAppOnlyShow\":true,\"BTTShowHideSpecificAppOnlyHide\":false,\"BTTShowHideSpecificAffectedWindow\":\"BTTShowHideSpecificAppAffectLastUsedWindow\",\"BTTShowHideSpecificAppRegex\":\"\",\"BTTShowHideSpecificAppOnlyTreatActiveAsVisible\":true,\"BTTShowHideSpecificAppOnlyIfRunning\":false,\"BTTShowHideSpecificAppCMDN\":false,\"BTTShowHideSpecificAppMoveToCurrentSpace\":false,\"BTTShowHideSpecificAppMoveAllToCurrentSpace\":false}",
-          "BTTAdditionalConfiguration": "524352",
-          "BTTKeyboardShortcutKeyboardType": 0,
-          "BTTUUID": "52487D06-F34B-42BB-AEE9-C9D510C770C5",
-          "BTTTriggerOnDown": 1,
-          "BTTLayoutIndependentChar": "0",
-          "BTTEnabled": 1,
-          "BTTEnabled2": 1,
-          "BTTShortcutKeyCode": 29,
-          "BTTShortcutModifierKeys": 524288,
-          "BTTOrder": 3,
-          "BTTAutoAdaptToKeyboardLayout": 0
-        }
-      ]
+      "BTTTriggers": []
     },
     {
       "BTTAppBundleIdentifier": "com.apple.finder",
