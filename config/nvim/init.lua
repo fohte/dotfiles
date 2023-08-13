@@ -121,6 +121,6 @@ vim.opt.signcolumn = 'yes'
 
 vim.opt.foldenable = false
 
-vim.call('util#source_rc', 'mappings.rc.vim')
+require('core/mappings')
 require('core/commands')
 vim.call('util#source_rc', 'quickfix.rc.vim')
