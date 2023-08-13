@@ -123,3 +123,4 @@ vim.opt.foldenable = false
 
 require('core/mappings')
 require('core/commands')
+require('core/filetype')
