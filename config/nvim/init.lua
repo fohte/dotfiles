@@ -123,4 +123,3 @@ vim.opt.foldenable = false
 
 require('core/mappings')
 require('core/commands')
-vim.call('util#source_rc', 'quickfix.rc.vim')
