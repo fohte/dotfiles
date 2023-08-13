@@ -90,7 +90,7 @@ local function my_color_settings()
   vim.cmd 'hi! link CursorLineNr Comment'
 end
 
-vim.api.nvim_create_augroup('MyColorSettings', {})
+vim.api.nvim_create_augroup('MyColorSettings', { clear = true })
 vim.api.nvim_create_autocmd('ColorScheme', {
   group = 'MyColorSettings',
   callback = my_color_settings
