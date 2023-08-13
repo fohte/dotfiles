@@ -82,7 +82,45 @@ vim.opt.shell = 'bash'
 
 vim.opt.wildoptions = 'pum'
 
-vim.call('util#source_rc', 'view.rc.vim')
+local function my_color_settings()
+  vim.cmd 'hi! IncSearch gui=none guibg=#444444 guifg=none'
+  vim.cmd 'hi! link Search IncSearch'
+  vim.cmd 'hi! Visual guifg=none'
+  vim.cmd 'hi! link MatchParen Function'
+  vim.cmd 'hi! link CursorLineNr Comment'
+end
+
+vim.api.nvim_create_augroup('MyColorSettings', {})
+vim.api.nvim_create_autocmd('ColorScheme', {
+  group = 'MyColorSettings',
+  callback = my_color_settings
+})
+
+vim.opt.termguicolors = true
+
+vim.cmd.colorscheme('material')
+
+vim.opt.number = true
+vim.opt.title = true
+vim.opt.showmode = false
+vim.opt.laststatus = 2
+
+vim.opt.list = true
+vim.opt.wrap = false
+vim.opt.listchars:append { precedes = '<', extends = '>' }
+
+vim.opt.synmaxcol = 1000
+
+vim.opt.completeopt:remove('preview')
+
+vim.opt.previewheight = 7
+
+-- always show the sign column even if no sign have been appeared
+-- for example diagnostics of coc.nvim
+vim.opt.signcolumn = 'yes'
+
+vim.opt.foldenable = false
+
 vim.call('util#source_rc', 'mappings.rc.vim')
 vim.call('util#source_rc', 'commands.rc.vim')
 vim.call('util#source_rc', 'quickfix.rc.vim')
