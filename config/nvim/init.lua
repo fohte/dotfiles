@@ -43,7 +43,45 @@ require'nvim-treesitter.configs'.setup {
   },
 }
 
-vim.call('util#source_rc', 'edit.rc.vim')
+vim.opt.clipboard:prepend { 'unnamedplus' }
+
+if vim.g.loaded_matchit ~= 1 then
+  vim.cmd [[ runtime macros/matchit.vim ]]
+end
+
+vim.opt.mouse = 'a'
+vim.opt.foldmethod = 'manual'
+vim.opt.autoread = true
+
+vim.opt.swapfile = false
+vim.opt.backup = false
+vim.opt.undofile = true
+
+vim.opt.smartindent = true
+vim.opt.expandtab = true
+vim.opt.tabstop = 2
+vim.opt.shiftwidth = 2
+vim.opt.shiftround = true
+
+vim.opt.backspace = { 'indent', 'eol', 'start' }
+
+vim.opt.hlsearch = true
+vim.opt.incsearch = true
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
+vim.opt.wrapscan = true
+
+vim.opt.showcmd = true
+vim.opt.switchbuf = { 'useopen', 'vsplit' }
+
+vim.opt.inccommand = 'split'
+
+vim.opt.sessionoptions = { 'blank', 'curdir', 'folds', 'tabpages', 'winsize' }
+
+vim.opt.shell = 'bash'
+
+vim.opt.wildoptions = 'pum'
+
 vim.call('util#source_rc', 'view.rc.vim')
 vim.call('util#source_rc', 'mappings.rc.vim')
 vim.call('util#source_rc', 'commands.rc.vim')
