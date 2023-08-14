@@ -88,6 +88,9 @@ local function my_color_settings()
   vim.cmd 'hi! Visual guifg=none'
   vim.cmd 'hi! link MatchParen Function'
   vim.cmd 'hi! link CursorLineNr Comment'
+
+  -- make transparent background
+  vim.cmd 'hi! Normal guibg=none'
 end
 
 vim.api.nvim_create_augroup('MyColorSettings', { clear = true })
