@@ -82,15 +82,14 @@ vim.opt.shell = 'bash'
 
 vim.opt.wildoptions = 'pum'
 
+vim.cmd.colorscheme('material')
+
 local function my_color_settings()
   vim.cmd 'hi! IncSearch gui=none guibg=#444444 guifg=none'
   vim.cmd 'hi! link Search IncSearch'
   vim.cmd 'hi! Visual guifg=none'
   vim.cmd 'hi! link MatchParen Function'
   vim.cmd 'hi! link CursorLineNr Comment'
-
-  -- make transparent background
-  vim.cmd 'hi! Normal guibg=none'
 end
 
 vim.api.nvim_create_augroup('MyColorSettings', { clear = true })
@@ -99,9 +98,10 @@ vim.api.nvim_create_autocmd('ColorScheme', {
   callback = my_color_settings
 })
 
-vim.opt.termguicolors = true
+-- make transparent background
+vim.cmd 'hi Normal guibg=none'
 
-vim.cmd.colorscheme('material')
+vim.opt.termguicolors = true
 
 vim.opt.number = true
 vim.opt.title = true
