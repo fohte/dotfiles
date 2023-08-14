@@ -3,6 +3,7 @@ matches:
   - { trigger: ';book', replace: '📖' }
   - { trigger: ';bow', replace: '🙇' }
   - { trigger: ';check', replace: '✅' }
+  - { trigger: ';cloud', replace: '💭' }
   - { trigger: ';flow', replace: '🌀' }
   - { trigger: ';folder', replace: '📁' }
   - { trigger: ';idea', replace: '💡' }
