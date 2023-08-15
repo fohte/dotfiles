@@ -98,7 +98,7 @@ vim.api.nvim_create_autocmd('ColorScheme', {
   callback = my_color_settings
 })
 
--- make transparent background
+-- make transparent background (use terminal bacgkground color)
 vim.cmd 'hi Normal guibg=none'
 
 vim.opt.termguicolors = true
