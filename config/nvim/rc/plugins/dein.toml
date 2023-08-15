@@ -181,3 +181,8 @@ repo = 'subnut/nvim-ghost.nvim'
 hook_source = '''
   let g:nvim_ghost_autostart = 0
 '''
+
+[[plugins]]
+# use a working version of bfrg/vim-jqplay in neovim
+# ref: https://github.com/bfrg/vim-jqplay/issues/5#issuecomment-1272103814
+repo = 'phelipetls/vim-jqplay'
