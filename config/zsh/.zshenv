@@ -71,6 +71,7 @@ export GPG_TTY=$(tty)
 
 import_env 'homebrew.zsh'
 
+import_env 'asdf.zsh'
 import_env 'fzf.zsh'
 import_env 'go.zsh'
 import_env 'node.zsh'
