@@ -53,6 +53,17 @@ wezterm.on('user-var-changed', function(window, pane, name, value)
   end
 end)
 
+-- Equivalent to POSIX basename(3)
+-- Given "/foo/bar" returns "bar"
+-- Given "c:\\foo\\bar" returns "bar"
+function basename(s)
+  return string.gsub(s, '(.*[/\\])(.*)', '%2')
+end
+
+wezterm.on('format-tab-title', function(tab, tabs, panes, config)
+  return tab.tab_index + 1 .. ' ' .. basename(tab.active_pane.current_working_dir)
+end)
+
 wezterm.on('format-window-title', function(tab, pane, tabs, panes, config)
   if tab.window_id == wezterm.GLOBAL.ghosttext_window_id then
     return 'GhostText'
