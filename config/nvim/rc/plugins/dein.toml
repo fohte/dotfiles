@@ -28,12 +28,6 @@ if = 'isdirectory("/usr/local/opt/fzf")'
 repo = '~/.fzf'
 if = 'isdirectory(expand("~/.fzf"))'
 
-[[plugins]]
-repo = 'kaicataldo/material.vim'
-hook_source = '''
-  let g:material_theme_style = 'dark'
-'''
-
 # light and configurable statusline/tabline
 [[plugins]]
 repo = 'itchyny/lightline.vim'

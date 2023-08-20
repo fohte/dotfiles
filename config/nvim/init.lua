@@ -27,21 +27,7 @@ end
 
 vim.g.mapleader = ' '
 
-vim.call('util#source_rc', 'setup_dein.rc.vim')
-
-require'nvim-treesitter.configs'.setup {
-  ensure_installed = {
-    "javascript",
-    "lua",
-    "tsx",
-    "typescript",
-    "vim",
-  },
-  highlight = {
-    enable = true,
-    disable = {},
-  },
-}
+require('core/lazy')
 
 vim.opt.clipboard:prepend { 'unnamedplus' }
 
