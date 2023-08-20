@@ -1,6 +1,14 @@
 return {
-  'kaicataldo/material.vim',
+  'RRethy/nvim-base16',
   config = function()
-    vim.g.material_theme_style = 'dark'
+    vim.cmd.colorscheme('base16-material-darker')
+
+    vim.api.nvim_set_hl(0, 'IncSearch', { bg = '#444444', fg = 'none' })
+    vim.api.nvim_set_hl(0, 'Search', { link = 'IncSearch' })
+    vim.api.nvim_set_hl(0, 'MatchParen', { link = 'Number' })
+    vim.api.nvim_set_hl(0, 'LineNr', { fg = '#444444' })
+
+    -- make transparent background (use terminal bacgkground color)
+    vim.api.nvim_set_hl(0, 'Normal', { bg = 'none' })
   end,
 }
