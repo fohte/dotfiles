@@ -1,7 +1,6 @@
 let g:coc_global_extensions = [
       \ 'coc-css',
       \ 'coc-eslint',
-      \ 'coc-fzf-preview',
       \ 'coc-json',
       \ 'coc-prettier',
       \ 'coc-prisma',
@@ -31,5 +30,3 @@ endfunction
 
 " Add `:Format` command to format current buffer.
 command! -nargs=0 Format :call CocAction('format')
-
-call util#source_plugin_config('fzf-preview.rc.vim')
