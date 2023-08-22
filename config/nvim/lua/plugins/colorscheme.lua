@@ -5,11 +5,28 @@ return {
 
     vim.cmd.colorscheme('base16-material-darker')
 
-    vim.api.nvim_set_hl(0, 'IncSearch', { bg = '#444444', fg = 'none' })
-    vim.api.nvim_set_hl(0, 'Search', { link = 'IncSearch' })
-    vim.api.nvim_set_hl(0, 'MatchParen', { link = 'Number' })
-    vim.api.nvim_set_hl(0, 'LineNr', { fg = '#444444' })
-    vim.api.nvim_set_hl(0, 'VertSplit', { fg = '#444444' })
+    local function set_hl(names, colors)
+      for _, name in ipairs(names) do
+        vim.api.nvim_set_hl(0, name, colors)
+      end
+    end
+
+    -- search result highlight is too bright, so make it less bright
+    -- The search result highlight is too bright, so make it less bright
+    set_hl({ 'IncSearch' }, { bg = '#444444', fg = 'none' })
+    set_hl({ 'Search' }, { link = 'IncSearch' })
+
+    -- make matching bracket more visible
+    set_hl({ 'MatchParen' }, { link = 'Number' })
+
+    -- make line number less visible
+    set_hl({ 'LineNr' }, { fg = '#444444' })
+
+    -- make vertical split line less visible
+    set_hl({ 'VertSplit' }, { fg = '#444444' })
+
+    -- make comment text brighter
+    set_hl({ 'Comment', 'TSComment' }, { fg = '#777777' })
 
     -- make transparent background (use terminal bacgkground color)
     local transparent_targets = {
