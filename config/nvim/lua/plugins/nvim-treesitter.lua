@@ -6,6 +6,8 @@ return {
     require'nvim-treesitter.configs'.setup {
       ensure_installed = {
         "javascript",
+        "json",
+        "json5",
         "lua",
         "tsx",
         "typescript",
