@@ -5,15 +5,34 @@ return {
     { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
   },
   keys = {
-    { '<Leader>ep', '<cmd>Telescope find_files<cr>', mode = 'n' },
-    { '<Leader>ef', '<cmd>Telescope find_files<cr>', mode = 'n' },
     {
-      '<Leader>e.',
-      "<cmd>lua require('telescope.builtin').find_files({ search_dirs = {vim.fn.expand('%:h')} })<cr>",
+      '<Leader>ep',
+      function()
+        require('telescope.builtin').find_files({ hidden = true })
+      end,
       mode = 'n',
     },
-    { '<Leader>eg', '<cmd>Telescope live_grep<cr>', mode = 'n' },
-    { '<Leader>eb', '<cmd>Telescope buffers<cr>', mode = 'n' },
+    {
+      '<Leader>e.',
+      function()
+        require('telescope.builtin').find_files({ hidden = true, search_dirs = { vim.fn.expand('%:h') } })
+      end,
+      mode = 'n',
+    },
+    {
+      '<Leader>eg',
+      function()
+        require('telescope.builtin').live_grep()
+      end,
+      mode = 'n',
+    },
+    {
+      '<Leader>eb',
+      function()
+        require('telescope.builtin').buffers()
+      end,
+      mode = 'n',
+    },
   },
   config = function()
     require('telescope').setup({
