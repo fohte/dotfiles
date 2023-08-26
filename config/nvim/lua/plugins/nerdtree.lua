@@ -1,7 +1,7 @@
 return {
   'scrooloose/nerdtree',
   dependencies = {
-    { 'Xuyuanp/nerdtree-git-plugin' }
+    { 'Xuyuanp/nerdtree-git-plugin' },
   },
   config = function()
     vim.g.NERDTreeShowHidden = 1
@@ -16,5 +16,5 @@ return {
   keys = {
     { '<Leader>nt', ':NERDTreeToggle<CR>', mode = 'n' },
     { '<Leader>nf', ':NERDTreeFind<CR>', mode = 'n' },
-  }
+  },
 }

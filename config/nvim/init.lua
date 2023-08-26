@@ -29,10 +29,10 @@ vim.g.mapleader = ' '
 
 require('core/lazy')
 
-vim.opt.clipboard:prepend { 'unnamedplus' }
+vim.opt.clipboard:prepend({ 'unnamedplus' })
 
 if vim.g.loaded_matchit ~= 1 then
-  vim.cmd [[ runtime macros/matchit.vim ]]
+  vim.cmd([[ runtime macros/matchit.vim ]])
 end
 
 vim.opt.mouse = 'a'
@@ -77,7 +77,7 @@ vim.opt.laststatus = 2
 
 vim.opt.list = true
 vim.opt.wrap = false
-vim.opt.listchars:append { precedes = '<', extends = '>' }
+vim.opt.listchars:append({ precedes = '<', extends = '>' })
 
 vim.opt.synmaxcol = 1000
 

@@ -4,8 +4,8 @@ local M = {}
 -- e.g. mergeTables({a = 1, b = 2}, {b = 3, c = 4}) -> {a = 1, b = 3, c = 4}
 function M.mergeTables(t1, t2)
   for k, v in pairs(t2) do
-    if type(v) == "table" then
-      if type(t1[k] or false) == "table" then
+    if type(v) == 'table' then
+      if type(t1[k] or false) == 'table' then
         mergeTables(t1[k] or {}, t2[k] or {})
       else
         t1[k] = v

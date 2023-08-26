@@ -1,7 +1,7 @@
-local wezterm = require 'wezterm'
+local wezterm = require('wezterm')
 local config = {}
 
-config.font = wezterm.font 'HackGen35 Console NF'
+config.font = wezterm.font('HackGen35 Console NF')
 config.color_scheme = 'Material Darker (base16)'
 config.window_background_opacity = 0.9
 
@@ -21,12 +21,12 @@ config.keys = {
   {
     key = '|',
     mods = 'CTRL|SHIFT',
-    action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' },
+    action = wezterm.action.SplitHorizontal({ domain = 'CurrentPaneDomain' }),
   },
   {
     key = '_',
     mods = 'CTRL|SHIFT',
-    action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' },
+    action = wezterm.action.SplitVertical({ domain = 'CurrentPaneDomain' }),
   },
 }
 
@@ -34,10 +34,10 @@ config.window_decorations = 'RESIZE'
 
 local hacky_user_commands = {
   ['new-ghosttext-window'] = function(window, pane, cmd_context)
-    local _, _, window = wezterm.mux.spawn_window {
-      args = { 'zsh', '-c', 'nvim -c GhostTextStart'},
+    local _, _, window = wezterm.mux.spawn_window({
+      args = { 'zsh', '-c', 'nvim -c GhostTextStart' },
       cwd = wezterm.home_dir,
-    }
+    })
 
     wezterm.GLOBAL.ghosttext_window_id = window:window_id()
 

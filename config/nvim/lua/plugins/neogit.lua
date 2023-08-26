@@ -1,12 +1,12 @@
 return {
-  "NeogitOrg/neogit",
+  'NeogitOrg/neogit',
   dependencies = {
-    "nvim-lua/plenary.nvim",         -- required
-    "nvim-telescope/telescope.nvim", -- optional
-    "sindrets/diffview.nvim",        -- optional
+    'nvim-lua/plenary.nvim', -- required
+    'nvim-telescope/telescope.nvim', -- optional
+    'sindrets/diffview.nvim', -- optional
   },
   config = true,
   keys = {
     { '<Leader>t', ':Neogit<CR>', mode = 'n', silent = true },
-  }
+  },
 }
