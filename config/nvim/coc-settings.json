@@ -4,6 +4,8 @@
   "diagnostic.displayByAle": false,
   "diagnostic.enableHighlightLineNumber": true,
 
+  "typescript.updateImportsOnFileMove.enabled": "always",
+
   "python.jediEnabled": false,
 
   "eslint.autoFixOnSave": true,
