@@ -15,6 +15,14 @@ config.keys = {
     action = wezterm.action.ActivateTabRelative(1),
   },
   {
+    key = 'F5',
+    action = wezterm.action.MoveTabRelative(-1),
+  },
+  {
+    key = 'F6',
+    action = wezterm.action.MoveTabRelative(1),
+  },
+  {
     key = 'F7',
     action = wezterm.action.ActivateCopyMode,
   },
