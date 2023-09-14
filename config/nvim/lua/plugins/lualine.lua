@@ -14,7 +14,7 @@ return {
         lualine_b = { 'filename' },
         lualine_c = {},
         lualine_x = { 'encoding' },
-        lualine_y = { 'branch', 'diff' },
+        lualine_y = { 'branch', 'diff', 'location' },
         lualine_z = { 'filetype' },
       },
     })
