@@ -26,8 +26,6 @@ Temporary Items
 .apdisk
 
 
-### https://raw.github.com/github/gitignore/8411714b3183a391ea88ae81331f8dccb89afa05/Global/vim.gitignore
-
 # swap
 [._]*.s[a-w][a-z]
 [._]s[a-w][a-z]
@@ -36,9 +34,6 @@ Session.vim
 # temporary
 .netrwhist
 *~
-# auto-generated tag files
-tags
-
 
 # pyenv
 .python-version
