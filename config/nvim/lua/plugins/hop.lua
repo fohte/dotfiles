@@ -14,9 +14,15 @@ return {
         end,
       },
       {
-        '<Leader>l',
+        '<Leader>j',
         function()
-          require('hop').hint_lines_skip_whitespace()
+          require('hop').hint_lines({ direction = require('hop.hint').HintDirection.AFTER_CURSOR })
+        end,
+      },
+      {
+        '<Leader>k',
+        function()
+          require('hop').hint_lines({ direction = require('hop.hint').HintDirection.BEFORE_CURSOR })
         end,
       },
       {
