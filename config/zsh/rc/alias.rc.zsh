@@ -126,10 +126,6 @@ ghqcd() {
   dir="$(ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf)" && cd "$(eval echo "$dir")"
 }
 
-deincd() {
-  GHQ_ROOT=~/.cache/dein/repos ghqcd
-}
-
 gocd() {
   local dir
   dir="$(echo $GOPATH/src/*/*/* | perl -pe 's/ /\n/g' | fzf)" && cd $dir
