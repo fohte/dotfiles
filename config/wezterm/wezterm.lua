@@ -40,6 +40,9 @@ config.keys = {
 
 config.window_decorations = 'RESIZE'
 
+config.send_composed_key_when_left_alt_is_pressed = false
+config.send_composed_key_when_right_alt_is_pressed = false
+
 local hacky_user_commands = {
   ['new-ghosttext-window'] = function(window, pane, cmd_context)
     local _, _, window = wezterm.mux.spawn_window({
