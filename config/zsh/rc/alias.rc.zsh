@@ -90,11 +90,6 @@ has aws-vault && alias ave='aws-vault exec'
 alias ya='yarn add'
 alias yr='yarn run'
 
-alias n='npm'
-alias ni='npm install'
-alias nid='npm install -D'
-alias nr='npm run'
-
 alias tf='terraform'
 
 alias reload='exec $SHELL -l'

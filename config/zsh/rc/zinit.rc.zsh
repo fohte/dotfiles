@@ -11,3 +11,5 @@ zinit light b4b4r07/zsh-vimode-visual
 
 zinit ice pick'*.plugin.zsh'
 zinit light pierpo/fzf-docker
+
+zinit load azu/ni.zsh
