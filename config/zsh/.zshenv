@@ -42,8 +42,6 @@ path=(
   $path
 )
 
-has 'direnv' && eval "$(direnv hook zsh)"
-
 export DOTPATH="$(dotpath)"
 
 # `-R`: display ANSI color escape sequences in "raw" form
@@ -79,5 +77,8 @@ import_env 'python.zsh'
 import_env 'ruby.zsh'
 import_env 'terraform.zsh'
 import_env 'vim.zsh'
+
+# direnv hook must be loaded after homebrew.zsh because direnv is installed by homebrew
+has 'direnv' && eval "$(direnv hook zsh)"
 
 [ -f ~/.local/.zshenv ] && source ~/.local/.zshenv
