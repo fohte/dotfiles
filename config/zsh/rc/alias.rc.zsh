@@ -117,8 +117,17 @@ mkcd() {
 }
 
 ghqcd() {
-  local dir
-  dir="$(ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf)" && cd "$(eval echo "$dir")"
+  if [ -n "$1" ]; then
+    cd "$(ghq list -e -p "$1")"
+  else
+    local dir
+    dir="$(ghq list -p | sed "s/^${HOME//\//\\/}/~/g" | fzf)" && cd "$(eval echo "$dir")"
+  fi
+}
+
+# ghq get & cd
+ghqg() {
+  ghq get "$1" && ghqcd "$1"
 }
 
 gocd() {
