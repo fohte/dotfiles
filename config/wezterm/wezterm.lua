@@ -36,6 +36,16 @@ config.keys = {
     mods = 'CTRL|SHIFT',
     action = wezterm.action.SplitVertical({ domain = 'CurrentPaneDomain' }),
   },
+  {
+    key = '[',
+    mods = 'CTRL|SHIFT',
+    action = wezterm.action.ActivatePaneDirection('Left'),
+  },
+  {
+    key = ']',
+    mods = 'CTRL|SHIFT',
+    action = wezterm.action.ActivatePaneDirection('Right'),
+  },
 }
 
 config.window_decorations = 'RESIZE'
