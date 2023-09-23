@@ -14,4 +14,4 @@ yabai -m config \
   left_padding 0 \
   right_padding 0 \
   window_gap 0 \
-  auto_balance off \
+  auto_balance off
