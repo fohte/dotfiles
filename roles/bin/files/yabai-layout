@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+usage() {
+  cat <<EOF
+usage: yabai-layout <layout>
+  layout: 1, 2
+EOF
+}
+
+if [ $# -ne 1 ]; then
+  usage
+  exit 1
+fi
+
+# { <window-name>: <window-id> }
+window_ids="$(yabai -m query --windows | jq -r 'map({ (.app): .id }) | add')"
+
+# usage: window-id <window-name>
+window-id() {
+  name="$1"
+  echo "$window_ids" | jq --arg name "$name" -r '.[$name]'
+}
+
+# usage: set-window <window-id> <grid>
+set-window() {
+  id="$1"
+  grid="$2"
+  if [ -z "$id" ] || [ "$id" = 'null' ]; then
+    exit
+  fi
+  yabai -m window "$id" --grid "$grid"
+}
+
+layout="$1"
+
+case "$layout" in
+  '1')
+    # Layout 1: Calendar, Logseq, Todoist (20%) / WezTerm (40%) / Arc (40%)
+    set-window "$(window-id 'カレンダー')" 1:10:0:0:2:1
+    set-window "$(window-id 'Logseq')" 1:10:0:0:2:1
+    set-window "$(window-id 'Todoist')" 1:10:0:0:2:1
+    set-window "$(window-id 'WezTerm')" 1:10:2:0:4:1
+    set-window "$(window-id 'Arc')" 1:10:6:0:4:1
+    ;;
+  '2')
+    # Layout 2: Calendar (20%) / WezTerm, Arc (60%) / Logseq, Todoist (20%, horizontal)
+    set-window "$(window-id 'カレンダー')" 1:10:0:0:2:1
+    set-window "$(window-id 'WezTerm')" 1:10:2:0:6:1
+    set-window "$(window-id 'Arc')" 1:10:2:0:6:1
+    set-window "$(window-id 'Logseq')" 2:10:8:0:2:1
+    set-window "$(window-id 'Todoist')" 2:10:8:1:2:1
+    ;;
+  *)
+    echo "error: unknown layout name $layout"
+    usage
+    exit 1
+esac

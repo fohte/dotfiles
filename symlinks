@@ -74,3 +74,7 @@ fi
 if match_tag prettier; then
   sym roles/node/files/.prettierrc ~/.prettierrc
 fi
+
+if match_tag yabai; then
+  sym config/yabai/yabairc ~/.config/yabai/yabairc
+fi
