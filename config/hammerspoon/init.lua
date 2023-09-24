@@ -32,3 +32,26 @@ hs.hotkey.bind({ 'alt' }, '4', function()
     end
   end
 end)
+
+local function run_command(cmd, shell)
+  local output, _, _, rc = hs.execute(cmd, shell)
+
+  if rc ~= 0 then
+    print('Error (status ' .. hs.inspect(rc) .. '): `' .. cmd .. '`\n' .. output)
+  end
+
+  output = output:gsub("\n$", "")
+
+  return output
+end
+
+local yabai = run_command('which yabai', true)
+
+hs.hotkey.bind({ 'alt' }, 'a', function()
+  local value = run_command(yabai .. ' -m config focus_follows_mouse')
+  if value == 'disabled' then
+    run_command(yabai .. " -m config focus_follows_mouse autofocus")
+  else
+    run_command(yabai .. " -m config focus_follows_mouse off")
+  end
+end)
