@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 usage() {
-  cat <<EOF
+  cat << EOF
 usage: yabai-layout <layout>
   layout: 1, 2
 EOF
@@ -34,24 +36,54 @@ set-window() {
 layout="$1"
 
 case "$layout" in
-  '1')
-    # Layout 1: Calendar, Logseq, Todoist (20%) / WezTerm (40%) / Arc (40%)
+  'wide-1')
+    # for ultra wide monitor
+    #  <--- 20 % ---> <-------- 40 % ----------> <-------- 40 % ---------->
+    # +--------------+--------------------------+--------------------------+
+    # |  Calender &  |                          |                          |
+    # |   Logseq &   |         WezTerm          |           Arc            |
+    # |   Todoist    |                          |                          |
+    # +--------------+--------------------------+--------------------------+
     set-window "$(window-id 'カレンダー')" 1:10:0:0:2:1
     set-window "$(window-id 'Logseq')" 1:10:0:0:2:1
     set-window "$(window-id 'Todoist')" 1:10:0:0:2:1
     set-window "$(window-id 'WezTerm')" 1:10:2:0:4:1
     set-window "$(window-id 'Arc')" 1:10:6:0:4:1
     ;;
-  '2')
-    # Layout 2: Calendar (20%) / WezTerm, Arc (60%) / Logseq, Todoist (20%, horizontal)
+
+  'wide-2')
+    # for ultra wide monitor
+    #  <--- 20 % ---> <-------- 60 % ----------> <--- 20 % --->
+    # +--------------+--------------------------+--------------+
+    # |  Calendar    |         WezTerm          |    Logseq    |
+    # |              |            &             |--------------|
+    # |              |           Arc            |    Todoist   |
+    # +--------------+--------------------------+--------------+
     set-window "$(window-id 'カレンダー')" 1:10:0:0:2:1
     set-window "$(window-id 'WezTerm')" 1:10:2:0:6:1
     set-window "$(window-id 'Arc')" 1:10:2:0:6:1
     set-window "$(window-id 'Logseq')" 2:10:8:0:2:1
     set-window "$(window-id 'Todoist')" 2:10:8:1:2:1
     ;;
+
+  '4k-1')
+    # for 4k monitor
+    #  <--- 25 % ---> <-------- 75 % ---------->
+    # +--------------+--------------------------+
+    # |   Todoist    |         WezTerm          |
+    # |--------------|            &             |
+    # | Cal & Logseq |           Arc            |
+    # +--------------+--------------------------+
+    set-window "$(window-id 'Todoist')" 2:100:0:0:25:1
+    set-window "$(window-id 'カレンダー')" 2:100:0:1:25:1
+    set-window "$(window-id 'Logseq')" 2:100:0:1:25:1
+    set-window "$(window-id 'WezTerm')" 1:100:25:0:75:1
+    set-window "$(window-id 'Arc')" 1:100:25:0:75:1
+    ;;
+
   *)
     echo "error: unknown layout name $layout"
     usage
     exit 1
+    ;;
 esac
