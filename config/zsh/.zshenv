@@ -81,6 +81,4 @@ import_env 'vim.zsh'
 # direnv hook must be loaded after homebrew.zsh because direnv is installed by homebrew
 has 'direnv' && eval "$(direnv hook zsh)"
 
-export GH_TOKEN="$(gh auth status -t 2>&1 | grep -o 'gho_.*')"
-
 [ -f ~/.local/.zshenv ] && source ~/.local/.zshenv
