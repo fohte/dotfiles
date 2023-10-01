@@ -108,6 +108,42 @@ return {
           vim.lsp.buf.format()
         end,
       },
+      {
+        'gd',
+        function()
+          vim.lsp.buf.definition()
+        end,
+      },
+      {
+        'gy',
+        function()
+          vim.lsp.buf.type_definition()
+        end,
+      },
+      {
+        'gi',
+        function()
+          vim.lsp.buf.implementation()
+        end,
+      },
+      {
+        'gr',
+        function()
+          vim.lsp.buf.references()
+        end,
+      },
+      {
+        'K',
+        function()
+          vim.lsp.buf.hover()
+        end,
+      },
+      {
+        '<F9>',
+        function()
+          vim.lsp.buf.rename()
+        end,
+      },
     },
     config = function()
       local lspconfig = require('lspconfig')

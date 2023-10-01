@@ -22,30 +22,3 @@ vim.keymap.set({ 'n', 'v' }, 'Q', 'q', { noremap = true })
 
 vim.keymap.set({ 'n', 'v' }, ';', ':', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, ':', ';', { noremap = true })
-
-vim.keymap.set('n', '<C-h>', '<C-w>h', { noremap = true })
-
--- LSP
-vim.keymap.set('n', 'gd', function()
-  vim.lsp.buf.definition()
-end, { noremap = true, silent = true })
-
-vim.keymap.set('n', 'gy', function()
-  vim.lsp.buf.type_definition()
-end, { noremap = true, silent = true })
-
-vim.keymap.set('n', 'gi', function()
-  vim.lsp.buf.implementation()
-end, { noremap = true, silent = true })
-
-vim.keymap.set('n', 'gr', function()
-  vim.lsp.buf.references()
-end, { noremap = true, silent = true })
-
-vim.keymap.set('n', '<F9>', function()
-  vim.lsp.buf.rename()
-end, { noremap = true, silent = true })
-
-vim.keymap.set('n', 'K', function()
-  vim.lsp.buf.hover()
-end, { noremap = true, silent = true })
