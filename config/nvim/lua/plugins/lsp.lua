@@ -69,11 +69,6 @@ return {
             local f_shfmt = require('efmls-configs.formatters.shfmt')
             local f_stylua = require('efmls-configs.formatters.stylua')
 
-            local f_rubocop = {
-              formatCommand = 'rubocop --auto-correct --stdin',
-              formatStdin = true,
-            }
-
             local languages = {
               bash = { l_shellcheck, f_shfmt },
               json = { f_prettier },
