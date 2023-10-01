@@ -4,6 +4,7 @@
   "copilot.vim": { "branch": "release", "commit": "172955782814a49fbebca2d1a2ccce2059103329" },
   "diffview.nvim": { "branch": "main", "commit": "7e5a85c186027cab1e825d018f07c350177077fc" },
   "editorconfig-vim": { "branch": "master", "commit": "e014708e917b457e8f6c57f357d55dd3826880d4" },
+  "efmls-configs-nvim": { "branch": "main", "commit": "265037d589bde340227c60d2ceaaf552a2d83d85" },
   "emmet-vim": { "branch": "master", "commit": "def5d57a1ae5afb1b96ebe83c4652d1c03640f4d" },
   "gitsigns.nvim": { "branch": "main", "commit": "749267aaa863c30d721c9913699c5d94e0c07dd3" },
   "hop.nvim": { "branch": "master", "commit": "03f0434869f1f38868618198b5f4f2ab6d39aef2" },
