@@ -4,7 +4,11 @@ return {
     build = ':TSUpdate',
     event = { 'BufReadPost', 'BufNewFile' },
     dependencies = {
+      -- automatically close end statements (e.g. end in ruby/lua, fi in bash)
       'RRethy/nvim-treesitter-endwise',
+
+      -- keep showing the current context on the top of the window
+      -- e.g. if you're inside an if statement, it will show "if ~~" on the top
       'nvim-treesitter/nvim-treesitter-context',
     },
     config = function()
