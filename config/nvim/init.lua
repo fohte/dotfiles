@@ -31,10 +31,6 @@ require('core/lazy')
 
 vim.opt.clipboard:prepend({ 'unnamedplus' })
 
-if vim.g.loaded_matchit ~= 1 then
-  vim.cmd([[ runtime macros/matchit.vim ]])
-end
-
 vim.opt.mouse = 'a'
 vim.opt.foldmethod = 'manual'
 vim.opt.autoread = true
