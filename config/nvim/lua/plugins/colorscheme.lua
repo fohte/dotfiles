@@ -28,6 +28,9 @@ return {
     -- make comment text brighter
     set_hl({ 'Comment', 'TSComment' }, { fg = '#777777' })
 
+    -- make selected text background brighter
+    set_hl({ 'Visual' }, { link = 'IncSearch' })
+
     -- make transparent background (use terminal bacgkground color)
     local transparent_targets = {
       'Normal',
