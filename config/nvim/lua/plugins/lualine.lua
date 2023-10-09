@@ -10,7 +10,7 @@ return {
         theme = 'base16',
       },
       sections = {
-        lualine_a = { 'mode' },
+        lualine_a = {},
         lualine_b = { 'filename' },
         lualine_c = {},
         lualine_x = { 'encoding' },
