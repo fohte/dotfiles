@@ -65,7 +65,7 @@ return {
             local l_textlint = require('efmls-configs.linters.textlint')
 
             -- formatters
-            local f_prettier = require('efmls-configs.formatters.prettier')
+            local f_prettier = require('efmls-configs.formatters.prettier_d')
             local f_shfmt = require('efmls-configs.formatters.shfmt')
             local f_stylua = require('efmls-configs.formatters.stylua')
 
