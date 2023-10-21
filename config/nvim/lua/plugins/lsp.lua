@@ -70,13 +70,14 @@ return {
             local f_stylua = require('efmls-configs.formatters.stylua')
 
             local languages = {
-              bash = { l_shellcheck, f_shfmt },
-              json = { f_prettier },
-              lua = { f_stylua },
-              markdown = { l_textlint },
-              sh = { l_shellcheck, f_shfmt },
-              typescript = { l_eslint, f_prettier },
-              yaml = { f_prettier },
+              ['bash'] = { l_shellcheck, f_shfmt },
+              ['json'] = { f_prettier },
+              ['lua'] = { f_stylua },
+              ['markdown'] = { l_textlint },
+              ['sh'] = { l_shellcheck, f_shfmt },
+              ['typescript'] = { l_eslint, f_prettier },
+              ['typescript.tsx'] = { l_eslint, f_prettier },
+              ['yaml'] = { f_prettier },
             }
 
             local efmls_config = {
