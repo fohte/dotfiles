@@ -18,12 +18,16 @@ hs.hotkey.bind({ 'alt' }, '6', function()
   hs.application.launchOrFocus('/Applications/Notion.app')
 end)
 
+hs.hotkey.bind({ 'alt' }, '8', function()
+  hs.application.launchOrFocus('/Applications/Todoist.app')
+end)
+
 hs.hotkey.bind({ 'alt' }, '9', function()
-  hs.application.launchOrFocus('/Applications/Logseq.app')
+  hs.application.launchOrFocus('/Applications/Fantastical.app')
 end)
 
 hs.hotkey.bind({ 'alt' }, '0', function()
-  hs.application.launchOrFocus('/Applications/Obsidian.app')
+  hs.application.launchOrFocus('/Applications/Toggl Track.app')
 end)
 
 -- WezTerm の GhostText window を開く
