@@ -44,6 +44,12 @@ return {
         },
 
         handlers = {
+          ['tsserver'] = function()
+            require('lspconfig').tsserver.setup({
+              on_attach = on_attach,
+            })
+          end,
+
           ['lua_ls'] = function()
             require('lspconfig').lua_ls.setup({
               settings = {
