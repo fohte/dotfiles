@@ -1,4 +1,0 @@
-- name: Install hub with Homebrew
-  homebrew:
-    name: hub
-    state: latest

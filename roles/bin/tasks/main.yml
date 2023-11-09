@@ -1,5 +1,0 @@
-- name: Symlink user bin files
-  file:
-    src: '{{ dotfiles_home }}/roles/bin/files'
-    dest: '{{ user_home }}/bin'
-    state: link

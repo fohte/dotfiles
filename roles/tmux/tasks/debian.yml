@@ -1,5 +1,0 @@
-- name: Install tmux with apt
-  become: true
-  apt:
-    name: tmux
-    state: latest

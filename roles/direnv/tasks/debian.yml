@@ -1,5 +1,0 @@
-- name: Install direnv with apt
-  become: true
-  apt:
-    name: direnv
-    state: latest

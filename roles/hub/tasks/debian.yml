@@ -1,9 +1,0 @@
-- name: Check go modules status
-  command: go list github.com/github/hub
-  register: go_module
-  failed_when: go_module.rc not in [0, 1]
-  changed_when: go_module.rc not in [0, 1]
-
-- name: Install hub with go get
-  command: go get -u github.com/github/hub
-  when: go_module.rc == 1

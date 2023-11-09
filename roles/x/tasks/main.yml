@@ -1,9 +1,0 @@
-- name: Symlink x files
-  file:
-    src: '{{ dotfiles_home }}/roles/x/files/{{ item }}'
-    dest: '{{ user_home }}/{{ item }}'
-    state: link
-  with_items:
-    - .Xresources
-    - .xinitrc
-    - .xprofile

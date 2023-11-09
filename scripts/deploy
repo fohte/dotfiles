@@ -97,6 +97,9 @@ sym() {
   fi
 
   if is_force || [ ! -e "$dst" ]; then
+    if [ -d "$dst" ]; then
+      log-exec rm -r "$dst"
+    fi
     log-exec ln -sfnv "$src" "$dst"
   fi
 }

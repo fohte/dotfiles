@@ -1,7 +1,0 @@
-- name: Install rbenv and ruby-build with Homebrew
-  homebrew:
-    name: '{{ item }}'
-    state: latest
-  with_items:
-    - rbenv
-    - ruby-build

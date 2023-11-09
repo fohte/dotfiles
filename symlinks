@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if match_tag bin; then
-  sym roles/bin/files ~/bin
+  sym config/bin ~/bin
 fi
 
 if match_tag fzf; then
@@ -9,12 +9,11 @@ if match_tag fzf; then
 fi
 
 if match_tag git; then
-  sym roles/git/files/.gitconfig ~/.config/git/config
-  sym roles/git/files/.gitignore_global ~/.config/git/ignore
+  sym config/git ~/.config/git
 fi
 
 if match_tag tig; then
-  sym roles/tig/files/.tigrc ~/.tigrc
+  sym config/tig/.tigrc ~/.tigrc
 fi
 
 if match_tag nvim; then
@@ -22,7 +21,7 @@ if match_tag nvim; then
 fi
 
 if match_tag editorconfig; then
-  sym config/.editorconfig ~/.editorconfig
+  sym config/editorconfig/.editorconfig ~/.editorconfig
 fi
 
 if match_tag efm; then
@@ -37,8 +36,8 @@ if match_tag zsh; then
 fi
 
 if match_tag tmux; then
-  sym roles/tmux/files/.tmux.conf ~/.tmux.conf
-  sym roles/tmux/files/.tmux.macos.conf ~/.tmux.macos.conf
+  sym config/tmux/.tmux.conf ~/.tmux.conf
+  sym config/tmux/.tmux.macos.conf ~/.tmux.macos.conf
 fi
 
 if match_tag wezterm; then
@@ -72,7 +71,7 @@ if match_tag gpg; then
 fi
 
 if match_tag prettier; then
-  sym roles/node/files/.prettierrc ~/.prettierrc
+  sym config/prettier/.prettierrc ~/.prettierrc
 fi
 
 if match_tag yabai; then

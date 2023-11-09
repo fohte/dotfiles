@@ -1,7 +1,0 @@
-- name: Clone fzf
-  git:
-    repo: https://github.com/junegunn/fzf.git
-    dest: '{{ fzf_root }}'
-    depth: 1
-  register: git_result
-  changed_when: "git_result.after|default('after') != git_result.before|default('before')"

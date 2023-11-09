@@ -1,4 +1,0 @@
-- name: Install Node.js with Homebrew
-  homebrew:
-    name: node
-    state: latest
