@@ -1,4 +1,0 @@
-- name: Install jq with Homebrew
-  homebrew:
-    name: jq
-    state: latest

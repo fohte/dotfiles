@@ -1,4 +1,0 @@
-- name: Install unclutter with apt
-  become: true
-  apt:
-    name: unclutter

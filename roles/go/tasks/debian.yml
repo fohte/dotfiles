@@ -1,5 +1,0 @@
-- name: Install Golang with apt
-  become: true
-  apt:
-    name: golang-go
-    state: latest
