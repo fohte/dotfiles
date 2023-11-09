@@ -9,8 +9,7 @@ if match_tag fzf; then
 fi
 
 if match_tag git; then
-  sym roles/git/files/.gitconfig ~/.config/git/config
-  sym roles/git/files/.gitignore_global ~/.config/git/ignore
+  sym config/git ~/.config/git
 fi
 
 if match_tag tig; then
