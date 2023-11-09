@@ -71,7 +71,7 @@ if match_tag gpg; then
 fi
 
 if match_tag prettier; then
-  sym roles/node/files/.prettierrc ~/.prettierrc
+  sym config/prettier/.prettierrc ~/.prettierrc
 fi
 
 if match_tag yabai; then
