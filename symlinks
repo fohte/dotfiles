@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if match_tag bin; then
-  sym bin ~/bin
+  sym config/bin ~/bin
 fi
 
 if match_tag fzf; then
