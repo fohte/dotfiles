@@ -36,8 +36,8 @@ if match_tag zsh; then
 fi
 
 if match_tag tmux; then
-  sym roles/tmux/files/.tmux.conf ~/.tmux.conf
-  sym roles/tmux/files/.tmux.macos.conf ~/.tmux.macos.conf
+  sym config/tmux/.tmux.conf ~/.tmux.conf
+  sym config/tmux/.tmux.macos.conf ~/.tmux.macos.conf
 fi
 
 if match_tag wezterm; then
