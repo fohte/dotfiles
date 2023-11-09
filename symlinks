@@ -13,7 +13,7 @@ if match_tag git; then
 fi
 
 if match_tag tig; then
-  sym roles/tig/files/.tigrc ~/.tigrc
+  sym config/tig/.tigrc ~/.tigrc
 fi
 
 if match_tag nvim; then
