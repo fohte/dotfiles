@@ -21,7 +21,7 @@ if match_tag nvim; then
 fi
 
 if match_tag editorconfig; then
-  sym config/.editorconfig ~/.editorconfig
+  sym config/editorconfig/.editorconfig ~/.editorconfig
 fi
 
 if match_tag efm; then
