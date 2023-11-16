@@ -17,4 +17,12 @@ function M.mergeTables(t1, t2)
   return t1
 end
 
+function M.get_keys_from_table(tbl)
+  local keys = {}
+  for key, _ in pairs(tbl) do
+    table.insert(keys, key)
+  end
+  return keys
+end
+
 return M

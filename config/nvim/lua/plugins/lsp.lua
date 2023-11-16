@@ -26,30 +26,41 @@ return {
       { 'neovim/nvim-lspconfig' },
     },
     config = function()
-      require('mason-lspconfig').setup({
-        ensure_installed = {
-          'lua_ls',
+      local utils = require('utils')
+      local function create_lsp_setup_function(server_name)
+        return function()
+          require('lspconfig')[server_name].setup({
+            on_attach = on_attach,
+          })
+        end
+      end
+
+      local function create_handlers(server_names)
+        local handlers = {}
+
+        for _, server_name in ipairs(server_names) do
+          handlers[server_name] = create_lsp_setup_function(server_name)
+        end
+
+        return handlers
+      end
+
+      local handlers = utils.mergeTables(
+        create_handlers({
           'bashls',
           'cssls',
-          'efm',
-          'gopls',
           'emmet_language_server',
-          'jsonls',
-          'tsserver',
+          'gopls',
           'jqls',
+          'jsonls',
           'mdx_analyzer',
           'pyright',
           'solargraph',
+          'terraformls',
+          'tsserver',
           'yamlls',
-        },
-
-        handlers = {
-          ['tsserver'] = function()
-            require('lspconfig').tsserver.setup({
-              on_attach = on_attach,
-            })
-          end,
-
+        }),
+        {
           ['lua_ls'] = function()
             require('lspconfig').lua_ls.setup({
               settings = {
@@ -103,7 +114,12 @@ return {
               on_attach = on_attach,
             }))
           end,
-        },
+        }
+      )
+
+      require('mason-lspconfig').setup({
+        ensure_installed = utils.get_keys_from_table(handlers),
+        handlers = handlers,
       })
     end,
   },
