@@ -153,3 +153,5 @@ gh-review() {
   gh pr checkout "$pr_number"
   echo "[gh-review] checkout #$pr_number"
 }
+
+[ -f "$HOME/.config/op/plugins.sh" ] && source "$HOME/.config/op/plugins.sh"
