@@ -32,6 +32,10 @@ return {
         endwise = { enable = true },
         context = { enable = true },
       })
+
+      -- workaround support zsh syntax
+      -- ref: https://github.com/nvim-treesitter/nvim-treesitter/issues/655#issuecomment-1470096879
+      vim.treesitter.language.register('bash', 'zsh')
     end,
   },
 }
