@@ -31,6 +31,7 @@ return {
           {
             { name = 'nvim_lsp' },
             { name = 'ultisnips' },
+            { name = 'path' },
           },
 
           -- if lsp is not available, use buffer
