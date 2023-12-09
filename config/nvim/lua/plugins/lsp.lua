@@ -89,6 +89,7 @@ return {
             local languages = {
               ['bash'] = { l_shellcheck, f_shfmt },
               ['json'] = { f_prettier },
+              ['json5'] = { f_prettier },
               ['jsonc'] = { f_prettier },
               ['lua'] = { f_stylua },
               ['markdown'] = { l_textlint },
