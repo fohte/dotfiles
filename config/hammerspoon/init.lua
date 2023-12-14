@@ -14,6 +14,10 @@ hs.hotkey.bind({ 'alt' }, '2', function()
   hs.application.launchOrFocus('/Applications/Arc.app')
 end)
 
+hs.hotkey.bind({ 'alt' }, '3', function()
+  hs.application.launchOrFocus('/Applications/Slack.app')
+end)
+
 hs.hotkey.bind({ 'alt' }, '6', function()
   hs.application.launchOrFocus('/Applications/Notion.app')
 end)

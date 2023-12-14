@@ -70,3 +70,6 @@ tf.plan
 tmp/
 
 *.log
+
+# asdf
+.tool-versions
