@@ -1,7 +1,7 @@
 {
   "rules": [
     {
-      "description": "DvorakJP (rev: 1608a7577c366295c508042575cd2b96)",
+      "description": "DvorakJP (rev: 439fa8b70675333e1b6770ce2e5cc68a)",
       "manipulators": [
         {
           "conditions": [
@@ -14,25 +14,420 @@
               "type": "input_source_if"
             }
           ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "c"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
-          },
+          "from": [
+            {
+              "key_code": "c"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "k"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "k"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
           "to": [
             {
               "key_code": "k"
             },
             {
-              "key_code": "a"
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "s"
             },
             {
-              "key_code": "i"
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "s"
+            },
+            {
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "t"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "t"
+            },
+            {
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "h"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "h"
+            },
+            {
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "m"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "m"
+            },
+            {
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "y"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "y"
+            },
+            {
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "r"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "r"
+            },
+            {
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "w"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "w"
+            },
+            {
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "g"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "g"
+            },
+            {
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "z"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "z"
+            },
+            {
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "d"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "d"
+            },
+            {
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "b"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "b"
+            },
+            {
+              "key_code": "y"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
+          "from": [
+            {
+              "key_code": "p"
+            },
+            {
+              "key_code": "n"
+            }
+          ],
+          "to": [
+            {
+              "key_code": "p"
+            },
+            {
+              "key_code": "y"
             }
           ],
           "type": "basic"
@@ -49,24 +444,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "k"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "k"
           },
           "to": [
             {
               "key_code": "k"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "k"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "k"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "k"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "k"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "k"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "k"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "k"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "k"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "k"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -83,24 +776,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "s"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "s"
           },
           "to": [
             {
               "key_code": "s"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "s"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "s"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "s"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "s"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "s"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "s"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "s"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "s"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "s"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -117,24 +1108,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "t"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "t"
           },
           "to": [
             {
               "key_code": "t"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "t"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "t"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "t"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "t"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "t"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "t"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "t"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "t"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "t"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -151,24 +1440,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "n"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "n"
           },
           "to": [
             {
               "key_code": "n"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "n"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "n"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "n"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "n"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "n"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "n"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "n"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "n"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "n"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -185,24 +1772,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "h"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "h"
           },
           "to": [
             {
               "key_code": "h"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "h"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "h"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "h"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "h"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "h"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "h"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "h"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "h"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "h"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -219,24 +2104,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "m"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "m"
           },
           "to": [
             {
               "key_code": "m"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "m"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "m"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "m"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "m"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "m"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "m"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "m"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "m"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "m"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -253,24 +2436,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "y"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "y"
           },
           "to": [
             {
               "key_code": "y"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "y"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "y"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "y"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "y"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "y"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "y"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "y"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "y"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "y"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -287,24 +2768,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "r"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "r"
           },
           "to": [
             {
               "key_code": "r"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "r"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "r"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "r"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "r"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "r"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "r"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "r"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "r"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "r"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -321,24 +3100,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "w"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "w"
           },
           "to": [
             {
               "key_code": "w"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "w"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "w"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "w"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "w"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "w"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "w"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "w"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "w"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "w"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -355,24 +3432,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "g"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "g"
           },
           "to": [
             {
               "key_code": "g"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "g"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "g"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "g"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "g"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "g"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "g"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "g"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "g"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "g"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -389,24 +3764,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "z"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "z"
           },
           "to": [
             {
               "key_code": "z"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "z"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "z"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "z"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "z"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "z"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "z"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "z"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "z"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "z"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -423,24 +4096,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "d"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "d"
           },
           "to": [
             {
               "key_code": "d"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "d"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "d"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "d"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "d"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "d"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "d"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "d"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "d"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "d"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -457,24 +4428,322 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "b"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "b"
           },
           "to": [
             {
               "key_code": "b"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "b"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "b"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "b"
+            }
+          ],
+          "from": {
+            "key_code": "comma"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "b"
+            }
+          ],
+          "from": {
+            "key_code": "period"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "b"
+            }
+          ],
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "b"
+            }
+          ],
+          "from": {
+            "key_code": "q"
+          },
+          "to": [
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "b"
+            }
+          ],
+          "from": {
+            "key_code": "j"
+          },
+          "to": [
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "b"
+            }
+          ],
+          "from": {
+            "key_code": "k"
+          },
+          "to": [
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "b"
+            }
+          ],
+          "from": {
+            "key_code": "x"
+          },
+          "to": [
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -491,24 +4760,62 @@
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "p"
-              },
-              {
-                "key_code": "'"
-              }
-            ]
+            "key_code": "p"
           },
           "to": [
             {
               "key_code": "p"
             },
             {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": "p"
+              }
+            }
+          ],
+          "to_delayed_action": {
+            "to_if_invoked": [
+              {
+                "set_variable": {
+                  "name": "dvorakjp_prev_key",
+                  "value": ""
+                }
+              }
+            ]
+          },
+          "type": "basic"
+        },
+        {
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "p"
+            }
+          ],
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
               "key_code": "a"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -522,27 +4829,28 @@
                 }
               ],
               "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "p"
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "c"
-              },
-              {
-                "key_code": ","
-              }
-            ]
+            "key_code": "comma"
           },
           "to": [
-            {
-              "key_code": "k"
-            },
             {
               "key_code": "o"
             },
             {
               "key_code": "u"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -556,503 +4864,28 @@
                 }
               ],
               "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "p"
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "k"
-              },
-              {
-                "key_code": ","
-              }
-            ]
+            "key_code": "period"
           },
           "to": [
-            {
-              "key_code": "k"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "s"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "s"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "t"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "t"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "n"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "h"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "h"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "m"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "m"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "y"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "y"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "r"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "r"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "w"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "w"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "g"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "g"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "z"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "z"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "d"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "d"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "b"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "b"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "p"
-              },
-              {
-                "key_code": ","
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "p"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "u"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "c"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "k"
-            },
             {
               "key_code": "e"
             },
             {
               "key_code": "i"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -1066,498 +4899,17 @@
                 }
               ],
               "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "p"
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "k"
-              },
-              {
-                "key_code": "."
-              }
-            ]
+            "key_code": "semicolon"
           },
           "to": [
-            {
-              "key_code": "k"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "s"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "s"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "t"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "t"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "n"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "h"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "h"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "m"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "m"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "y"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "y"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "r"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "r"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "w"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "w"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "g"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "g"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "z"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "z"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "d"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "d"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "b"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "b"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "p"
-              },
-              {
-                "key_code": "."
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "p"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "i"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "c"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "k"
-            },
             {
               "key_code": "a"
             },
@@ -1566,6 +4918,12 @@
             },
             {
               "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -1579,540 +4937,17 @@
                 }
               ],
               "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "p"
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "k"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
+            "key_code": "q"
           },
           "to": [
-            {
-              "key_code": "k"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "s"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "s"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "t"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "t"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "n"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "h"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "h"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "m"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "m"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "y"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "y"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "r"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "r"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "w"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "w"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "g"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "g"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "z"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "z"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "d"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "d"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "b"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "b"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "p"
-              },
-              {
-                "key_code": ";"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "p"
-            },
-            {
-              "key_code": "a"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "c"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "k"
-            },
             {
               "key_code": "o"
             },
@@ -2121,6 +4956,12 @@
             },
             {
               "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -2134,540 +4975,17 @@
                 }
               ],
               "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "p"
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "k"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
+            "key_code": "j"
           },
           "to": [
-            {
-              "key_code": "k"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "s"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "s"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "t"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "t"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "n"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "h"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "h"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "m"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "m"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "y"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "y"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "r"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "r"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "w"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "w"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "g"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "g"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "z"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "z"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "d"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "d"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "b"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "b"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "p"
-              },
-              {
-                "key_code": "q"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "p"
-            },
-            {
-              "key_code": "o"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "c"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "k"
-            },
             {
               "key_code": "e"
             },
@@ -2676,6 +4994,12 @@
             },
             {
               "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -2689,540 +5013,17 @@
                 }
               ],
               "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "p"
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "k"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
+            "key_code": "k"
           },
           "to": [
-            {
-              "key_code": "k"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "s"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "s"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "t"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "t"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "n"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "h"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "h"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "m"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "m"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "y"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "y"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "r"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "r"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "w"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "w"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "g"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "g"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "z"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "z"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "d"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "d"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "b"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "b"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "p"
-              },
-              {
-                "key_code": "j"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "p"
-            },
-            {
-              "key_code": "e"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "c"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "k"
-            },
             {
               "key_code": "u"
             },
@@ -3231,6 +5032,12 @@
             },
             {
               "key_code": "n"
+            },
+            {
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
+              }
             }
           ],
           "type": "basic"
@@ -3244,540 +5051,17 @@
                 }
               ],
               "type": "input_source_if"
+            },
+            {
+              "name": "dvorakjp_prev_key",
+              "type": "variable_if",
+              "value": "p"
             }
           ],
           "from": {
-            "simultaneous": [
-              {
-                "key_code": "k"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
+            "key_code": "x"
           },
           "to": [
-            {
-              "key_code": "k"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "s"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "s"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "t"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "t"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "n"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "h"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "h"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "m"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "m"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "y"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "y"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "r"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "r"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "w"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "w"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "g"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "g"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "z"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "z"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "d"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "d"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "b"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "b"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "p"
-              },
-              {
-                "key_code": "k"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "p"
-            },
-            {
-              "key_code": "u"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "c"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "k"
-            },
             {
               "key_code": "i"
             },
@@ -3786,524 +5070,12 @@
             },
             {
               "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
+            },
             {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "k"
-              },
-              {
-                "key_code": "x"
+              "set_variable": {
+                "name": "dvorakjp_prev_key",
+                "value": ""
               }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "k"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "s"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "s"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "t"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "t"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "n"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "h"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "h"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "m"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "m"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "y"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "y"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "r"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "r"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "w"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "w"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "g"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "g"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "z"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "z"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "d"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "d"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "b"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "b"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
-            }
-          ],
-          "type": "basic"
-        },
-        {
-          "conditions": [
-            {
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ],
-              "type": "input_source_if"
-            }
-          ],
-          "from": {
-            "simultaneous": [
-              {
-                "key_code": "p"
-              },
-              {
-                "key_code": "x"
-              }
-            ]
-          },
-          "to": [
-            {
-              "key_code": "p"
-            },
-            {
-              "key_code": "i"
-            },
-            {
-              "key_code": "n"
-            },
-            {
-              "key_code": "n"
             }
           ],
           "type": "basic"
