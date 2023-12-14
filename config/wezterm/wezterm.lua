@@ -6,46 +6,9 @@ config.color_scheme = 'Material Darker (base16)'
 config.window_background_opacity = 0.9
 
 config.keys = {
-  {
-    key = 'F3',
-    action = wezterm.action.ActivateTabRelative(-1),
-  },
-  {
-    key = 'F4',
-    action = wezterm.action.ActivateTabRelative(1),
-  },
-  {
-    key = 'F5',
-    action = wezterm.action.MoveTabRelative(-1),
-  },
-  {
-    key = 'F6',
-    action = wezterm.action.MoveTabRelative(1),
-  },
-  {
-    key = 'F7',
-    action = wezterm.action.ActivateCopyMode,
-  },
-  {
-    key = '|',
-    mods = 'CTRL|SHIFT',
-    action = wezterm.action.SplitHorizontal({ domain = 'CurrentPaneDomain' }),
-  },
-  {
-    key = '_',
-    mods = 'CTRL|SHIFT',
-    action = wezterm.action.SplitVertical({ domain = 'CurrentPaneDomain' }),
-  },
-  {
-    key = '[',
-    mods = 'CTRL|SHIFT',
-    action = wezterm.action.ActivatePaneDirection('Left'),
-  },
-  {
-    key = ']',
-    mods = 'CTRL|SHIFT',
-    action = wezterm.action.ActivatePaneDirection('Right'),
-  },
+  -- disable zoom
+  { key = '+', mods = 'CTRL|SHIFT', action = wezterm.action.DisableDefaultAssignment },
+  { key = '_', mods = 'CTRL|SHIFT', action = wezterm.action.DisableDefaultAssignment },
 }
 
 config.mouse_bindings = {
@@ -66,6 +29,7 @@ config.mouse_bindings = {
 }
 
 config.window_decorations = 'RESIZE'
+config.enable_tab_bar = false
 
 config.send_composed_key_when_left_alt_is_pressed = false
 config.send_composed_key_when_right_alt_is_pressed = false
