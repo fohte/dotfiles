@@ -7,10 +7,55 @@ if [ -z "$TMUX" ]; then
   exit 1
 fi
 
-SELECTED="$(tmux list-sessions | fzf-tmux -p | cut -d: -f1)"
+existing_prefix='🔋'
+new_prefix='🔌'
+kill_prefix='🗑️'
 
-if [ -z "$SELECTED" ]; then
+print_list() {
+  sessions="$(tmux list-sessions | cut -d: -f1)"
+  echo "$sessions" | sed "s/^/$existing_prefix/"
+
+  repos="$(ghq list | cut -d/ -f2-3)"
+
+  echo "$repos" |
+    grep -vFxf <(echo "$sessions") |
+    sed "s/^/$new_prefix/"
+
+  echo "$kill_prefix kill session"
+}
+
+create_session() {
+  tmux new-session -s "$1" -d
+  tmux switch -t "$1"
+}
+
+fzf_result="$(print_list | fzf-tmux -p --reverse --print-query || true)"
+fzf_query="$(echo "$fzf_result" | sed -n 1p)"
+selected="$(echo "$fzf_result" | sed -n 2p)"
+
+# if query and result are empty, do nothing
+if [ -z "$fzf_query" ] && [ -z "$selected" ]; then
   exit
 fi
 
-tmux switch -t "$SELECTED"
+case "$selected" in
+  "$new_prefix"*)
+    session_name="${selected/$new_prefix/}"
+    tmux new-session -s "$session_name" -d -c "$(ghq root)/github.com/$session_name"
+    tmux switch -t "$session_name"
+    ;;
+
+  "$existing_prefix"*)
+    tmux switch -t "${selected/$existing_prefix/}"
+    ;;
+
+  "$kill_prefix"*)
+    tmux-kill-session-fzf
+    ;;
+
+  # not selected (new session with query as name)
+  *)
+    tmux new-session -s "$fzf_query" -d
+    tmux switch -t "$fzf_query"
+    ;;
+esac
