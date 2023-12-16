@@ -13,6 +13,8 @@ kill_prefix='🗑️'
 
 print_list() {
   sessions="$(tmux list-sessions | cut -d: -f1)"
+  # sed is used to add prefix to each line
+  # shellcheck disable=SC2001
   echo "$sessions" | sed "s/^/$existing_prefix/"
 
   repos="$(ghq list | cut -d/ -f2-3)"
