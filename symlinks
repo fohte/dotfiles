@@ -36,8 +36,7 @@ if match_tag zsh; then
 fi
 
 if match_tag tmux; then
-  sym config/tmux/.tmux.conf ~/.tmux.conf
-  sym config/tmux/.tmux.macos.conf ~/.tmux.macos.conf
+  sym config/tmux ~/.config/tmux
 fi
 
 if match_tag wezterm; then
