@@ -20,7 +20,7 @@ print_list() {
   repos="$(ghq list | cut -d/ -f2-3)"
 
   echo "$repos" |
-    grep -vFxf <(echo "$sessions") |
+    grep -vFxf <(echo "$sessions" | tr '_' '.') |
     sed "s/^/$new_prefix/"
 
   echo "$kill_prefix kill session"
