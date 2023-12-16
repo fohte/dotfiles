@@ -43,8 +43,11 @@ fi
 case "$selected" in
   "$new_prefix"*)
     session_name="${selected/$new_prefix/}"
-    tmux new-session -s "$session_name" -d -c "$(ghq root)/github.com/$session_name"
+    dir="$(ghq root)/github.com/$session_name"
+    tmux new-session -s "$session_name" -d -c "$dir"
     tmux switch -t "$session_name"
+    # create a second window
+    tmux new-window -t "$session_name" -c "$dir"
     ;;
 
   "$existing_prefix"*)
