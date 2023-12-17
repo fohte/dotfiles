@@ -11,8 +11,17 @@ existing_prefix='🔋'
 new_prefix='🔌'
 kill_prefix='🗑️'
 
+# sort sessions by last used
+list_sorted_sessions() {
+  tmux list-sessions -F "#{session_last_attached} #{session_name}" |
+    sort -rn |
+    cut -d' ' -f2- |
+    # ignore current session
+    tail -n +2
+}
+
 print_list() {
-  sessions="$(tmux list-sessions | cut -d: -f1)"
+  sessions="$(list_sorted_sessions)"
   # sed is used to add prefix to each line
   # shellcheck disable=SC2001
   echo "$sessions" | sed "s/^/$existing_prefix/"
