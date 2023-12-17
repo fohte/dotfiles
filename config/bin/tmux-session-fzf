@@ -40,7 +40,10 @@ create_session() {
   tmux switch -t "$1"
 }
 
-fzf_result="$(print_list | fzf-tmux -p --reverse --print-query || true)"
+fzf_result="$(print_list | fzf-tmux -p \
+  --reverse \
+  --print-query \
+  --preview 'tmux-tree {}' || true)"
 fzf_query="$(echo "$fzf_result" | sed -n 1p)"
 selected="$(echo "$fzf_result" | sed -n 2p)"
 

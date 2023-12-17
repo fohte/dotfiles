@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+tmux ls -F'#{session_id}' | while read -r session_id; do
+  sessions=$(tmux ls -F'#{session_id}#{session_name}: #{T:tree_mode_format}' | grep ^"$session_id")
+  session_info=${sessions##"${session_id}"}
+  session_name=$(echo "$session_info" | cut -d ':' -f 1)
+  if [[ -n "$1" ]] && [[ "$1" == *"$session_name" ]]; then
+    echo -e "\033[1;34m$session_info\033[0m"
+  else
+    echo -e "\033[1m$session_info\033[0m"
+  fi
+  tmux lsw -t"$session_id" -F'#{window_id}' | while read -r window_id; do
+    window_ids=$(tmux lsw -t"$session_id" -F'#{window_id}#{T:tree_mode_format}' | grep ^"$window_id")
+    echo "  ${window_ids##"${window_id}"}"
+  done
+  echo
+done
