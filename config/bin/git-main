@@ -2,4 +2,4 @@
 
 set -euo pipefail
 
-git branch -l master main | cut -d' ' -f2
+git branch -l master main | sed 's/^[* ]*//'
