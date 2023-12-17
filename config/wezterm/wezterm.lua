@@ -5,6 +5,9 @@ config.font = wezterm.font('HackGen35 Console NF')
 config.color_scheme = 'Material Darker (base16)'
 config.window_background_opacity = 0.9
 
+-- bell is annoying
+config.audible_bell = 'Disabled'
+
 config.keys = {
   -- disable zoom
   { key = '+', mods = 'CTRL|SHIFT', action = wezterm.action.DisableDefaultAssignment },
