@@ -2,18 +2,31 @@
 
 set -euo pipefail
 
-tmux ls -F'#{session_id}' | while read -r session_id; do
-  sessions=$(tmux ls -F'#{session_id}#{session_name}: #{T:tree_mode_format}' | grep ^"$session_id")
-  session_info=${sessions##"${session_id}"}
-  session_name=$(echo "$session_info" | cut -d ':' -f 1)
-  if [[ -n "$1" ]] && [[ "$1" == *"$session_name" ]]; then
-    echo -e "\033[1;34m$session_info\033[0m"
-  else
-    echo -e "\033[1m$session_info\033[0m"
-  fi
-  tmux lsw -t"$session_id" -F'#{window_id}' | while read -r window_id; do
-    window_ids=$(tmux lsw -t"$session_id" -F'#{window_id}#{T:tree_mode_format}' | grep ^"$window_id")
-    echo "  ${window_ids##"${window_id}"}"
+if [ -z "$TMUX" ]; then
+  echo "This command must be run in tmux" >&2
+  exit 1
+fi
+
+previous_session_id=""
+
+tmux list-windows -a -F'#{session_id} #{session_name} #{window_id} #{window_name}' |
+  while read -r session_id session_name window_id window_name; do
+    # print session name only if it's different from the previous one
+    if [ "$session_id" != "$previous_session_id" ]; then
+      # add empty line between sessions
+      if [ -n "$previous_session_id" ]; then
+        echo
+      fi
+
+      # print session and highlight current session
+      if [[ -n "$1" ]] && [[ "$1" == *"$session_name" ]]; then
+        echo -e "\033[1;34m$session_name\033[0m"
+      else
+        echo -e "\033[1m$session_name\033[0m"
+      fi
+
+      previous_session_id="$session_id"
+    fi
+
+    echo "  $window_id: $window_name"
   done
-  echo
-done
