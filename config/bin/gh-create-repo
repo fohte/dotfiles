@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_name="$1"
+shift
+options="$(getopt --long public,private,internal -- "$@")"
+eval set -- "$options"
+
+repo_visibility="private"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    public | private | internal)
+      repo_visibility="$1"
+      ;;
+    *)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+  esac
+done
+
+ghq create "$repo_name"
+
+cd "$(ghq list "$repo_name" --full-path)"
+
+gh repo create --"$repo_visibility" --source=.
+
+git commit --allow-empty -m "initial commit"
+git push -u
