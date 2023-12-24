@@ -101,6 +101,8 @@ return {
               ['lua'] = { f_stylua },
               ['markdown'] = { l_textlint },
               ['sh'] = { l_shellcheck, f_shfmt },
+              ['javascript'] = { l_eslint_d, f_eslint_d, f_prettier },
+              ['javascript.jsx'] = { l_eslint_d, f_eslint_d, f_prettier },
               ['typescript'] = { l_eslint_d, f_eslint_d, f_prettier },
               ['typescript.tsx'] = { l_eslint_d, f_eslint_d, f_prettier },
               ['yaml'] = { f_prettier },
