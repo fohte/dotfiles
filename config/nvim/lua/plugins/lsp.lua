@@ -77,14 +77,21 @@ return {
 
           ['efm'] = function()
             -- linters
-            local l_eslint = require('efmls-configs.linters.eslint')
+            local l_eslint_d = require('efmls-configs.linters.eslint_d')
             local l_shellcheck = require('efmls-configs.linters.shellcheck')
             local l_textlint = require('efmls-configs.linters.textlint')
 
             -- formatters
+            local f_eslint_d = require('efmls-configs.formatters.eslint_d')
             local f_prettier = require('efmls-configs.formatters.prettier_d')
             local f_shfmt = require('efmls-configs.formatters.shfmt')
             local f_stylua = require('efmls-configs.formatters.stylua')
+
+            -- workaround for flat config
+            -- https://github.com/mantoni/eslint_d.js/pull/282
+            l_eslint_d.lintCommand = string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', l_eslint_d.lintCommand)
+            f_eslint_d.formatCommand =
+                string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', f_eslint_d.formatCommand)
 
             local languages = {
               ['bash'] = { l_shellcheck, f_shfmt },
@@ -94,8 +101,8 @@ return {
               ['lua'] = { f_stylua },
               ['markdown'] = { l_textlint },
               ['sh'] = { l_shellcheck, f_shfmt },
-              ['typescript'] = { l_eslint, f_prettier },
-              ['typescript.tsx'] = { l_eslint, f_prettier },
+              ['typescript'] = { l_eslint_d, f_eslint_d, f_prettier },
+              ['typescript.tsx'] = { l_eslint_d, f_eslint_d, f_prettier },
               ['yaml'] = { f_prettier },
             }
 
