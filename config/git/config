@@ -77,3 +77,6 @@
 [diff "ansible-vault"]
 	textconv = ansible-vault view
 	cachetextconv = true
+[diff "lockb"]
+	textconv = bun
+	binary = true
