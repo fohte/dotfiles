@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# usage: git cmd-commit <command> [<args>...]
+# this script runs the given command and commits the output
+
+# check if there are any non-staged changes
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "error: There are non-staged changes. Please commit them first." >&2
+  exit 1
+fi
+
+tmpfile="$(mktemp)"
+
+# this function may not be compatible with non-macOS
+run_script() {
+  script -q "${tmpfile}" "$@"
+}
+
+generate_commit_message() {
+  echo "\$ $*"
+  echo
+  echo 'Output:'
+  echo
+  echo '```'
+  cat "${tmpfile}"
+  echo '```'
+}
+
+run_script "$@"
+
+generate_commit_message "$@" | git commit --all -F -
+
+rm -f "${tmpfile}"
