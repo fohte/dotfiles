@@ -15,6 +15,7 @@ switch_case_indent = true
 # Markdown
 [*.md{,x}]
 trim_trailing_whitespace = false
+indent_size = 4
 
 # Go
 [*.go]
