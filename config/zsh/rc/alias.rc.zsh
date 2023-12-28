@@ -28,6 +28,7 @@ has assh && alias ssh="assh wrapper ssh --"
 
 alias t='tig'
 
+alias g'$'='git cmd-commit'
 alias g='git'
 alias ga='git add'
 alias gaa='git add -A $(git root)'
