@@ -5,10 +5,17 @@ $directory\
 $git_branch\
 $git_state\
 $git_status\
+$time\
 $cmd_duration\
 $line_break\
 $python\
 $character"""
+
+[time]
+disabled = false
+time_format = " %H:%M:%S"
+format = '[$time]($style)'
+style = "bright-black"
 
 [directory]
 style = "blue"
