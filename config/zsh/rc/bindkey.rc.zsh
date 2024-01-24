@@ -27,9 +27,14 @@ function expand-alias() {
 zle -N expand-alias
 bindkey -M main ' ' expand-alias
 
-function expand-alias-for-enter() {
+function custom-accept-line() {
+  # expand aliases
   ! ignore-expansion && zle _expand_alias
+
+  # re-render the prompt
+  zle .reset-prompt
+
   zle .accept-line
 }
 
-zle -N accept-line expand-alias-for-enter
+zle -N accept-line custom-accept-line
