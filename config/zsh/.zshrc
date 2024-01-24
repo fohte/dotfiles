@@ -34,3 +34,5 @@ import_rc 'misc.rc.zsh'
 has 'fzf' && import_rc 'plugins/fzf.rc.zsh'
 
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
+
+eval "$(starship init zsh)"
