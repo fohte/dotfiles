@@ -56,10 +56,28 @@ return {
           'mdx_analyzer',
           'pyright',
           'solargraph',
+          'tailwindcss',
           'terraformls',
           'tsserver',
           'yamlls',
         }),
+        {
+          ['tailwindcss'] = function()
+            require('lspconfig').tailwindcss.setup({
+              on_attach = on_attach,
+              filetypes = {
+                'javascript.jsx',
+                'typescript.tsx',
+              },
+              init_options = {
+                userLanguages = {
+                  ['javascript.jsx'] = 'javascriptreact',
+                  ['typescript.tsx'] = 'typescriptreact',
+                },
+              },
+            })
+          end,
+        },
         {
           ['lua_ls'] = function()
             require('lspconfig').lua_ls.setup({
