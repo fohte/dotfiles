@@ -104,23 +104,25 @@ return {
             local f_prettier = require('efmls-configs.formatters.prettier_d')
             local f_shfmt = require('efmls-configs.formatters.shfmt')
             local f_stylua = require('efmls-configs.formatters.stylua')
+            local f_terraform = require('efmls-configs.formatters.terraform_fmt')
 
             -- workaround for flat config
             -- https://github.com/mantoni/eslint_d.js/pull/282
             l_eslint_d.lintCommand = string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', l_eslint_d.lintCommand)
             f_eslint_d.formatCommand =
-                string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', f_eslint_d.formatCommand)
+              string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', f_eslint_d.formatCommand)
 
             local languages = {
               ['bash'] = { l_shellcheck, f_shfmt },
+              ['hcl'] = { f_terraform },
+              ['javascript'] = { l_eslint_d, f_eslint_d, f_prettier },
+              ['javascript.jsx'] = { l_eslint_d, f_eslint_d, f_prettier },
               ['json'] = { f_prettier },
               ['json5'] = { f_prettier },
               ['jsonc'] = { f_prettier },
               ['lua'] = { f_stylua },
               ['markdown'] = { l_textlint },
               ['sh'] = { l_shellcheck, f_shfmt },
-              ['javascript'] = { l_eslint_d, f_eslint_d, f_prettier },
-              ['javascript.jsx'] = { l_eslint_d, f_eslint_d, f_prettier },
               ['typescript'] = { l_eslint_d, f_eslint_d, f_prettier },
               ['typescript.tsx'] = { l_eslint_d, f_eslint_d, f_prettier },
               ['yaml'] = { f_prettier },
