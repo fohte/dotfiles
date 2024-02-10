@@ -96,6 +96,7 @@ return {
             local l_eslint_d = require('efmls-configs.linters.eslint_d')
             local l_shellcheck = require('efmls-configs.linters.shellcheck')
             local l_textlint = require('efmls-configs.linters.textlint')
+            local l_actionlint = require('efmls-configs.linters.actionlint')
 
             -- formatters
             local f_eslint_d = require('efmls-configs.formatters.eslint_d')
@@ -108,7 +109,7 @@ return {
             -- https://github.com/mantoni/eslint_d.js/pull/282
             l_eslint_d.lintCommand = string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', l_eslint_d.lintCommand)
             f_eslint_d.formatCommand =
-              string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', f_eslint_d.formatCommand)
+                string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', f_eslint_d.formatCommand)
 
             local languages = {
               ['bash'] = { l_shellcheck, f_shfmt },
@@ -124,6 +125,7 @@ return {
               ['typescript'] = { l_eslint_d, f_eslint_d, f_prettier },
               ['typescript.tsx'] = { l_eslint_d, f_eslint_d, f_prettier },
               ['yaml'] = { f_prettier },
+              ['yaml.actions'] = { l_actionlint },
             }
 
             local efmls_config = {
