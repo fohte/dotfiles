@@ -4,6 +4,7 @@ matches:
   - { trigger: ';bow', replace: '🙇' }
   - { trigger: ';check', replace: '✅' }
   - { trigger: ';cloud', replace: '💭' }
+  - { trigger: ';eye', replace: '👀' }
   - { trigger: ';flow', replace: '🌀' }
   - { trigger: ';folder', replace: '📁' }
   - { trigger: ';idea', replace: '💡' }
