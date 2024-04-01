@@ -2,20 +2,20 @@ return {
   'nvim-telescope/telescope.nvim',
   dependencies = {
     'nvim-lua/plenary.nvim',
-    { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
+    {
+      'nvim-telescope/telescope-fzf-native.nvim',
+      build = 'make',
+    },
+    {
+      'danielfalk/smart-open.nvim',
+      dependencies = { 'kkharji/sqlite.lua' },
+    },
   },
   keys = {
     {
       '<Leader>ep',
       function()
-        require('telescope.builtin').find_files({ hidden = true })
-      end,
-      mode = 'n',
-    },
-    {
-      '<Leader>e.',
-      function()
-        require('telescope.builtin').find_files({ hidden = true, search_dirs = { vim.fn.expand('%:h') } })
+        require('telescope').extensions.smart_open.smart_open({ cwd_only = true })
       end,
       mode = 'n',
     },
@@ -55,9 +55,13 @@ return {
           override_file_sorter = true,
           case_mode = 'smart_case',
         },
+        smart_open = {
+          match_algorithm = 'fzf',
+        },
       },
     })
 
     require('telescope').load_extension('fzf')
+    require('telescope').load_extension('smart_open')
   end,
 }
