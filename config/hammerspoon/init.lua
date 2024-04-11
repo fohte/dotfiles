@@ -30,10 +30,6 @@ hs.hotkey.bind({ 'alt' }, '9', function()
   hs.application.launchOrFocus('/Applications/Fantastical.app')
 end)
 
-hs.hotkey.bind({ 'alt' }, '0', function()
-  hs.application.launchOrFocus('/Applications/Toggl Track.app')
-end)
-
 -- WezTerm の GhostText window を開く
 hs.hotkey.bind({ 'alt' }, '4', function()
   local app = hs.application.find('WezTerm')
