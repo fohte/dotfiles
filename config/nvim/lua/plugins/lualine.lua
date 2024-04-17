@@ -11,8 +11,27 @@ return {
       },
       sections = {
         lualine_a = {},
-        lualine_b = { 'filename' },
-        lualine_c = {},
+        lualine_b = {
+          function()
+            return vim.fn.expand('%:t')
+          end,
+          function()
+            if vim.bo.modified then
+              return ''
+            end
+
+            if vim.bo.readonly then
+              return ''
+            end
+
+            return ''
+          end,
+        },
+        lualine_c = {
+          function()
+            return vim.fn.expand('%:h')
+          end,
+        },
         lualine_x = { 'encoding' },
         lualine_y = { 'branch', 'diff', 'location' },
         lualine_z = { 'filetype' },
