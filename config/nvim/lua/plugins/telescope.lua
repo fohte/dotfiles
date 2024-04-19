@@ -47,6 +47,11 @@ return {
           '--smart-case',
           '--hidden',
         },
+        mappings = {
+          i = {
+            ['<C-s>'] = 'select_horizontal',
+          },
+        },
       },
       extensions = {
         fzf = {
