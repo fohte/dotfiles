@@ -18,8 +18,12 @@ hs.hotkey.bind({ 'alt' }, '3', function()
   hs.application.launchOrFocus('/Applications/Slack.app')
 end)
 
+hs.hotkey.bind({ 'alt' }, '5', function()
+  hs.application.launchOrFocus('/Applications/ChatGPT.app')
+end)
+
 hs.hotkey.bind({ 'alt' }, '6', function()
-  hs.application.launchOrFocus('/Applications/Notion.app')
+  hs.application.launchOrFocus('/Applications/Obsidian.app')
 end)
 
 hs.hotkey.bind({ 'alt' }, '8', function()
