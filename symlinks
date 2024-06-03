@@ -46,6 +46,7 @@ fi
 
 if match_tag hammerspoon; then
   sym config/hammerspoon/init.lua ~/.hammerspoon/init.lua
+  sym config/hammerspoon/lib ~/.hammerspoon/lib
 fi
 
 if match_tag rg; then
