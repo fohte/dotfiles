@@ -95,7 +95,7 @@
       "int" : 0
     },
     "dropPaneLocation" : {
-      "int" : 0
+      "int" : 7
     },
     "dropPaneModifier" : {
       "int" : 0
@@ -107,7 +107,7 @@
       "int" : 2
     },
     "footprintAlpha" : {
-      "float" : 0.30000001192092896
+      "float" : 0.3
     },
     "footprintAnimationDurationMultiplier" : {
       "float" : 0.75
@@ -260,7 +260,7 @@
       "int" : 2
     },
     "reticleColor" : {
-      "string" : "{\"red\":0.80000000000000004,\"alpha\":0.5,\"blue\":0.20000000000000001,\"green\":0.29999999999999999}"
+      "string" : "{\"blue\":0.2,\"red\":0.8,\"green\":0.3,\"alpha\":0.5}"
     },
     "reticleDisplayMinDist" : {
       "float" : 0
@@ -302,7 +302,7 @@
       "float" : 20
     },
     "scrollTriggerIncrements" : {
-      "float" : 0.10000000149011612
+      "float" : 0.1
     },
     "shortEdgeSnapAreaSize" : {
       "float" : 145
@@ -365,7 +365,7 @@
       "int" : 0
     },
     "stashHideTime" : {
-      "double" : 0.29999999999999999
+      "double" : 0.3
     },
     "stashHideUsingMod" : {
       "int" : 0
@@ -377,7 +377,7 @@
       "int" : 0
     },
     "stashShowTime" : {
-      "double" : 0.29999999999999999
+      "double" : 0.3
     },
     "stashShowUsingMod" : {
       "int" : 0
@@ -495,14 +495,6 @@
       "keyCode" : 17,
       "modifierFlags" : 786432
     },
-    "leftHalf" : {
-      "keyCode" : 123,
-      "modifierFlags" : 786432
-    },
-    "maximize" : {
-      "keyCode" : 126,
-      "modifierFlags" : 786432
-    },
     "maximizeHeight" : {
       "keyCode" : 126,
       "modifierFlags" : 917504
@@ -519,10 +511,6 @@
       "keyCode" : 51,
       "modifierFlags" : 786432
     },
-    "rightHalf" : {
-      "keyCode" : 124,
-      "modifierFlags" : 786432
-    },
     "smaller" : {
       "keyCode" : 27,
       "modifierFlags" : 786432
@@ -536,6 +524,6 @@
       "modifierFlags" : 786432
     }
   },
-  "timestamp" : 734665213.027385,
+  "timestamp" : 739131021.037183,
   "version" : "163"
 }
