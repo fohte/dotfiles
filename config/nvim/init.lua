@@ -11,8 +11,6 @@ if vim.fn.has('vim_starting') == 0 and vim.opt.encoding ~= 'utf-8' then
   vim.opt.encoding = 'utf-8'
 end
 
-vim.opt.imd = true
-
 -- disable python2
 vim.g.python_host_prog = ''
 
