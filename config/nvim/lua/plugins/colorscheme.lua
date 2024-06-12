@@ -15,6 +15,7 @@ return {
     -- The search result highlight is too bright, so make it less bright
     set_hl({ 'IncSearch' }, { bg = '#444444', fg = 'none' })
     set_hl({ 'Search' }, { link = 'IncSearch' })
+    set_hl({ 'CurSearch' }, { link = 'IncSearch' })
 
     -- make matching bracket more visible
     set_hl({ 'MatchParen' }, { link = 'Number' })
@@ -22,8 +23,9 @@ return {
     -- make line number less visible
     set_hl({ 'LineNr' }, { fg = '#444444' })
 
-    -- make vertical split line less visible
+    -- make window split line less visible
     set_hl({ 'VertSplit' }, { fg = '#444444' })
+    set_hl({ 'WinSeparator' }, { link = 'Vertsplit' })
 
     -- make comment text brighter
     set_hl({ 'Comment', 'TSComment' }, { fg = '#777777' })
