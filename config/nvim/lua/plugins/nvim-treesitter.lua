@@ -27,6 +27,7 @@ return {
           'tsx',
           'typescript',
           'vim',
+          'vimdoc',
         },
         highlight = { enable = true, disable = {} },
         endwise = { enable = true },
