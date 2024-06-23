@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+MAX_LINES=500
+
+usage() {
+  echo "Usage: $0 <file|dir>"
+  exit 1
+}
+
+path="${1:-}"
+
+if [ -z "$path" ]; then
+  usage
+fi
+
+# usage: has <command>
+has() {
+  command -v "$1" > /dev/null 2>&1
+}
+
+# if file
+if [ -f "$path" ]; then
+  if has bat; then
+    bat --color=always --style=plain --line-range :"$MAX_LINES" "$path"
+  else
+    cat "$path"
+  fi
+# if dir
+elif [ -d "$path" ]; then
+  if has exa; then
+    exa -laT --level=2 --git-ignore "$path"
+  else
+    ls -la "$path"
+  fi
+fi | head -n "$MAX_LINES"
