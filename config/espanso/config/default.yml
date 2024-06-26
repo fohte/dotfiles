@@ -1,4 +1,9 @@
 # disable espanso enable/disable toggle
 toggle_key: OFF
 
+# disable espanso search window
 search_shortcut: off
+
+# to input snippets more quickly
+inject_delay: 0
+key_delay: 0
