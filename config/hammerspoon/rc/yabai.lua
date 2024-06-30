@@ -1,12 +1,14 @@
-local function run_command(cmd, shell)
-  shell = shell or false
-  local output, _, _, rc = hs.execute(cmd, shell)
-
-  if rc ~= 0 then
-    print('Error (status ' .. hs.inspect(rc) .. '): `' .. cmd .. '`\n' .. output)
-  end
+local function run_command(cmd, params)
+  local params = params or {}
+  local shell = params.shell or false
+  local silent = params.silent or false
+  local output, _, _, rc = hs.execute(cmd .. ' 2>&1', shell)
 
   output = output:gsub('\n$', '')
+
+  if rc ~= 0 and not silent then
+    hs.notify.show('Error', '$ ' .. cmd, 'output: ' .. output)
+  end
 
   return {
     success = rc == 0,
@@ -15,10 +17,10 @@ local function run_command(cmd, shell)
   }
 end
 
-local yabai = run_command('which yabai', true).output
+local yabai = run_command('which yabai', { shell = true }).output
 
-local function run_yabai(command)
-  return run_command(yabai .. ' -m ' .. command)
+local function run_yabai(command, ...)
+  return run_command(yabai .. ' -m ' .. command, ...)
 end
 
 hs.hotkey.bind({ 'alt' }, 'a', function()
@@ -42,12 +44,12 @@ end
 
 -- windows --------------------------------
 bind_yabai({ 'ctrl', 'shift' }, 'p', function()
-  if not run_yabai('window --focus prev').success then
+  if not run_yabai('window --focus prev', { silent = true }).success then
     run_yabai('window --focus last')
   end
 end)
 bind_yabai({ 'ctrl', 'shift' }, 'n', function()
-  if not run_yabai('window --focus next').success then
+  if not run_yabai('window --focus next', { silent = true }).success then
     run_yabai('window --focus first')
   end
 end)
@@ -100,12 +102,12 @@ bind_resize('l', { modifiers = { 'shift' }, dir = 'right', x = -resize_delta, y 
 
 -- spaces --------------------------------
 bind_yabai({ 'cmd', 'ctrl' }, 'p', function()
-  if not run_yabai('space --focus prev').success then
+  if not run_yabai('space --focus prev', { silent = true }).success then
     run_yabai('space --focus last')
   end
 end)
 bind_yabai({ 'cmd', 'ctrl' }, 'n', function()
-  if not run_yabai('space --focus next').success then
+  if not run_yabai('space --focus next', { silent = true }).success then
     run_yabai('space --focus first')
   end
 end)
