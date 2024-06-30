@@ -51,6 +51,7 @@ bind_yabai({ 'ctrl', 'shift' }, 'n', function()
     run_yabai('window --focus first')
   end
 end)
+bind_yabai({ 'ctrl', 'shift' }, 'tab', 'window --focus recent')
 
 bind_yabai({ 'ctrl', 'shift' }, 'Up', 'window --warp north')
 bind_yabai({ 'ctrl', 'shift' }, 'Down', 'window --swap south')
