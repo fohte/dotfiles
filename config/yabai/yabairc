@@ -1,17 +1,24 @@
 #!/usr/bin/env bash
 
+yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
+sudo yabai --load-sa
+
 # global settings
 yabai -m config \
-  mouse_follows_focus off \
-  focus_follows_mouse autofocus \
+  mouse_follows_focus on \
+  focus_follows_mouse autoraise \
   mouse_modifier fn
 
-# space settings
+padding=10
+
+# layout settings
 yabai -m config \
-  layout layout \
-  top_padding 0 \
-  bottom_padding 0 \
-  left_padding 0 \
-  right_padding 0 \
-  window_gap 0 \
+  layout bsp \
+  top_padding "$padding" \
+  bottom_padding "$padding" \
+  left_padding "$padding" \
+  right_padding "$padding" \
+  window_gap "$padding" \
   auto_balance off
+
+yabai -m rule --add app='^System Settings$' manage='off'

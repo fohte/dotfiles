@@ -47,6 +47,7 @@ fi
 if match_tag hammerspoon; then
   sym config/hammerspoon/init.lua ~/.hammerspoon/init.lua
   sym config/hammerspoon/lib ~/.hammerspoon/lib
+  sym config/hammerspoon/rc ~/.hammerspoon/rc
 fi
 
 if match_tag rg; then
@@ -77,4 +78,8 @@ fi
 
 if match_tag yabai; then
   sym config/yabai/yabairc ~/.config/yabai/yabairc
+fi
+
+if match_tag borders; then
+  sym config/borders ~/.config/borders
 fi
