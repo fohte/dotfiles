@@ -22,3 +22,4 @@ yabai -m config \
   auto_balance off
 
 yabai -m rule --add app='^System Settings$' manage='off'
+yabai -m rule --add app='^Ivory$' title='- Compose$' manage='off' # post window
