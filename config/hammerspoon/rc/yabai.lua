@@ -1,26 +1,9 @@
-local function run_command(cmd, params)
-  local params = params or {}
-  local shell = params.shell or false
-  local silent = params.silent or false
-  local output, _, _, rc = hs.execute(cmd .. ' 2>&1', shell)
+local lib = require('lib')
 
-  output = output:gsub('\n$', '')
-
-  if rc ~= 0 and not silent then
-    hs.notify.show('Error', '$ ' .. cmd, 'output: ' .. output)
-  end
-
-  return {
-    success = rc == 0,
-    output = output,
-    exit_code = rc,
-  }
-end
-
-local yabai = run_command('which yabai', { shell = true }).output
+local yabai = lib:run_command('which yabai', { shell = true }).output
 
 local function run_yabai(command, ...)
-  return run_command(yabai .. ' -m ' .. command, ...)
+  return lib:run_command(yabai .. ' -m ' .. command, ...)
 end
 
 hs.hotkey.bind({ 'alt' }, 'a', function()
@@ -38,7 +21,7 @@ local function bind_yabai(modifiers, key, command)
   end
 
   hs.hotkey.bind(modifiers, key, function()
-    run_command(yabai .. ' -m ' .. command)
+    run_yabai(command)
   end)
 end
 
