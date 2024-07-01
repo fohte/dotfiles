@@ -114,8 +114,16 @@ bind_yabai({ 'cmd', 'ctrl' }, 'tab', 'space --focus recent')
 bind_yabai({ 'cmd', 'ctrl' }, 't', 'space --create')
 bind_yabai({ 'cmd', 'ctrl' }, 'w', 'space --destroy')
 
-bind_yabai({ 'cmd', 'ctrl' }, 'v', 'window --space prev')
-bind_yabai({ 'cmd', 'ctrl' }, 'z', 'window --space next')
+bind_yabai({ 'cmd', 'ctrl' }, 'v', function()
+  if not run_yabai('window --space prev').success then
+    run_yabai('window --space last')
+  end
+end)
+bind_yabai({ 'cmd', 'ctrl' }, 'z', function()
+  if not run_yabai('window --space next').success then
+    run_yabai('window --space first')
+  end
+end)
 
 -- open mission control to see all spaces
 hs.hotkey.bind({ 'cmd', 'ctrl' }, 's', function()
@@ -124,3 +132,14 @@ end)
 
 -- display --------------------------------
 bind_yabai({ 'alt', 'ctrl' }, 'tab', 'display --focus recent')
+
+bind_yabai({ 'alt', 'ctrl' }, 'v', function()
+  if not run_yabai('display --focus prev').success then
+    run_yabai('display --focus last')
+  end
+end)
+bind_yabai({ 'alt', 'ctrl' }, 'z', function()
+  if not run_yabai('display --focus next').success then
+    run_yabai('display --focus first')
+  end
+end)
