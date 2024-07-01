@@ -1,6 +1,6 @@
 matches:
   - trigger: ';details'
-    replace: |
+    replace: |-
       <details>
       <summary>$|$</summary>
 
