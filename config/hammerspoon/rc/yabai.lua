@@ -143,3 +143,9 @@ bind_yabai({ 'alt', 'ctrl' }, 'z', function()
     run_yabai('display --focus first')
   end
 end)
+
+return {
+  cmd = yabai,
+  run = run_yabai,
+  run_command = run_command,
+}
