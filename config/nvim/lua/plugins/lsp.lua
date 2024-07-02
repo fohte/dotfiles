@@ -54,6 +54,7 @@ return {
           'jqls',
           'jsonls',
           'mdx_analyzer',
+          'pylsp',
           'pyright',
           'solargraph',
           'tailwindcss',
@@ -104,12 +105,13 @@ return {
             local f_shfmt = require('efmls-configs.formatters.shfmt')
             local f_stylua = require('efmls-configs.formatters.stylua')
             local f_terraform = require('efmls-configs.formatters.terraform_fmt')
+            local f_ruff = require('efmls-configs.formatters.ruff')
 
             -- workaround for flat config
             -- https://github.com/mantoni/eslint_d.js/pull/282
             l_eslint_d.lintCommand = string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', l_eslint_d.lintCommand)
             f_eslint_d.formatCommand =
-                string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', f_eslint_d.formatCommand)
+              string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', f_eslint_d.formatCommand)
 
             local languages = {
               ['bash'] = { l_shellcheck, f_shfmt },
@@ -121,6 +123,7 @@ return {
               ['jsonc'] = { f_prettier },
               ['lua'] = { f_stylua },
               ['markdown'] = { l_textlint },
+              ['python'] = { f_ruff },
               ['sh'] = { l_shellcheck, f_shfmt },
               ['typescript'] = { l_eslint_d, f_eslint_d, f_prettier },
               ['typescript.tsx'] = { l_eslint_d, f_eslint_d, f_prettier },

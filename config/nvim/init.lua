@@ -15,7 +15,10 @@ end
 vim.g.python_host_prog = ''
 
 if vim.fn.executable('pyenv') == 1 then
-  vim.g.python3_host_prog = vim.fn.expand('~/.pyenv/shims/python3')
+  -- avoid conflict with local python on python projects
+  local latest_python = vim.fn.system('pyenv versions --bare | sort -V | tail -1')
+  vim.fn.setenv('PYENV_VERSION', latest_python)
+  vim.g.python3_host_prog = vim.fn.trim(vim.fn.system('pyenv which python'))
 end
 
 vim.env.CACHE = vim.fn.expand('~/.cache')

@@ -5,3 +5,7 @@ if [ -d "$PYENV_PATH" ]; then
     "$PYENV_PATH"/bin(N-/) \
     "$PYENV_PATH"/shims(N-/)
 fi
+
+if has rye; then
+  source "$HOME/.rye/env"
+fi
