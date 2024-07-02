@@ -46,6 +46,8 @@ bind_yabai({ 'ctrl', 'shift' }, 't', 'window --toggle zoom-fullscreen')
 bind_yabai({ 'ctrl', 'shift' }, 'f', 'window --toggle float')
 bind_yabai({ 'ctrl', 'shift' }, '-', 'window --toggle split')
 
+bind_yabai({ 'ctrl', 'shift' }, 'space', 'window --toggle sticky')
+
 -- resize mode
 local resize_mode = hs.hotkey.modal.new({ 'ctrl', 'shift' }, 'r')
 local resize_mode_alert = nil
