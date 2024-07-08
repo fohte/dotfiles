@@ -21,5 +21,20 @@ yabai -m config \
   window_gap "$padding" \
   auto_balance off
 
-yabai -m rule --add app='^System Settings$' manage='off'
-yabai -m rule --add app='^Ivory$' title='- Compose$' manage='off' # post window
+manage_off() {
+  yabai -m rule --add manage=off mouse_follows_focus=off app="$1"
+}
+
+manage_off subrole="^AXSystemDialog$"       # alert, dialog, etc.
+manage_off app='^Ivory$' title='- Compose$' # posting window
+
+# Preferences for some apps
+mnage_off app='^System Settings$'
+manage_off app='^ChatGPT$' title='^Settings$'
+manage_off app='^Arc$' title='^Fohte$' # Settings' title is set to the user's name
+
+# workaround for Picture in Picture not starting when switching tabs in Arc browser
+# ref: https://github.com/koekeishiya/yabai/issues/1669
+manage_off title="^Picture in Picture$"
+
+manage_off app='^Notes$' title='^(?!Notes$).*' # Quick note
