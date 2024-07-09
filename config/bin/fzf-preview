@@ -5,33 +5,68 @@ set -euo pipefail
 MAX_LINES=500
 
 usage() {
-  echo "Usage: $0 <file|dir>"
+  echo "Usage: $0 <sub-command>"
+  echo
+  echo "  Sub-commands:"
+  echo "    file - Show file content"
+  echo "      fzf-preview file <path>"
+  echo
+  echo "    dir - Show directory content"
+  echo "      fzf-preview dir <path>"
+  echo ""
+  echo "    command - Show command (shell script)"
+  echo "      fzf-preview command <string>"
+  echo ""
   exit 1
 }
-
-path="${1:-}"
-
-if [ -z "$path" ]; then
-  usage
-fi
 
 # usage: has <command>
 has() {
   command -v "$1" > /dev/null 2>&1
 }
 
-# if file
-if [ -f "$path" ]; then
+preview_file() {
+  path="$1"
+
   if has bat; then
     bat --color=always --style=plain --line-range :"$MAX_LINES" "$path"
   else
     cat "$path"
-  fi
-# if dir
-elif [ -d "$path" ]; then
+  fi | head -n "$MAX_LINES"
+}
+
+preview_dir() {
+  path="$1"
+
   if has exa; then
-    exa -laT --level=2 --git-ignore "$path"
+    exa -aT --level=2 --git-ignore "$path"
   else
     ls -la "$path"
-  fi
-fi | head -n "$MAX_LINES"
+  fi | head -n "$MAX_LINES"
+}
+
+preview_command() {
+  string="$1"
+
+  echo "$string" |
+    cut -f2- -d$'\t' |
+    bat --color=always --style=plain --language=zsh
+}
+
+case "${1:-}" in
+  file)
+    shift
+    preview_file "$@"
+    ;;
+  dir)
+    shift
+    preview_dir "$@"
+    ;;
+  command)
+    shift
+    preview_command "$@"
+    ;;
+  *)
+    usage
+    ;;
+esac
