@@ -21,3 +21,5 @@ matches:
 
   - trigger: intsall
     replace: install
+
+  - { trigger: '...', replace: '…' }
