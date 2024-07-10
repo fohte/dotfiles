@@ -70,9 +70,14 @@ end)
 local resize_delta = 20
 
 local function bind_resize(key, params)
-  resize_mode:bind(params.modifiers or {}, key, function()
-    run_yabai(string.format('window --resize %s:%d:%d', params.dir, params.x, params.y))
-  end)
+  local function resize_fn(delta_mult)
+    delta_mult = delta_mult or 1
+    return function()
+      run_yabai(string.format('window --resize %s:%d:%d', params.dir, params.x * delta_mult, params.y * delta_mult))
+    end
+  end
+
+  resize_mode:bind(params.modifiers or {}, key, resize_fn(), nil, resize_fn(5))
 end
 
 bind_resize('h', { dir = 'left', x = -resize_delta, y = 0 })
