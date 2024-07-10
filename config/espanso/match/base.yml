@@ -1,15 +1,15 @@
 matches:
-  - trigger: ';details'
+  - trigger: ';;details'
     replace: |-
       <details>
       <summary>$|$</summary>
 
       </details>
 
-  - trigger: ';lgtm'
+  - trigger: ';;lgtm'
     replace: 'LGTM 👍'
 
-  - trigger: ';mdimg'
+  - trigger: ';;mdimg'
     replace: '<img src="{{output}}" width="50%">'
     vars:
       - name: clipboard
