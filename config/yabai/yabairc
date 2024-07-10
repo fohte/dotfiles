@@ -29,7 +29,7 @@ manage_off subrole="^AXSystemDialog$"       # alert, dialog, etc.
 manage_off app='^Ivory$' title='- Compose$' # posting window
 
 # Preferences for some apps
-mnage_off app='^System Settings$'
+manage_off app='^System Settings$'
 manage_off app='^ChatGPT$' title='^Settings$'
 manage_off app='^Arc$' title='^Fohte$' # Settings' title is set to the user's name
 
