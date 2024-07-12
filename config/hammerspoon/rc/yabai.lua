@@ -7,11 +7,9 @@ local function run_yabai(command, ...)
 end
 
 hs.hotkey.bind({ 'alt' }, 'a', function()
-  if run_yabai('config focus_follows_mouse').output == 'disabled' then
-    run_yabai('config focus_follows_mouse autoraise')
-  else
-    run_yabai('config focus_follows_mouse off')
-  end
+  run_yabai('config focus_follows_mouse off')
+end, function()
+  run_yabai('config focus_follows_mouse autoraise')
 end)
 
 local function bind_yabai(modifiers, key, command)
