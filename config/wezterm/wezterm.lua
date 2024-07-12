@@ -14,6 +14,9 @@ config.keys = {
   { key = '_', mods = 'CTRL|SHIFT', action = wezterm.action.DisableDefaultAssignment },
 }
 
+-- workaround for the problem that SKK sends CTRL + any keys directly to WezTerm instead of SKK
+config.macos_forward_to_ime_modifier_mask = 'SHIFT|CTRL'
+
 config.mouse_bindings = {
   -- Change the default click behavior so that it only selects
   -- text and doesn't open hyperlinks
