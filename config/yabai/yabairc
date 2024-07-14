@@ -27,6 +27,7 @@ manage_off() {
 
 manage_off subrole="^AXSystemDialog$"       # alert, dialog, etc.
 manage_off app='^Ivory$' title='- Compose$' # posting window
+manage_off app='^Ivory$' title='^Ivory$'    # media preview
 
 # Preferences for some apps
 manage_off app='^System Settings$'
