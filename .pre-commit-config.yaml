@@ -1,0 +1,14 @@
+repos:
+  - repo: local
+    hooks:
+      - id: generate-dvorakjp-rule
+        name: '🔧 [aquaskk] dvorakjp.utf8.rule -> dvorakjp.rule'
+        entry: bash -c 'make -C config/aquaskk && git add -u'
+        language: system
+        files: ^config/aquaskk/dvorakjp\.utf8\.rule$
+
+      - id: format-bttpreset
+        name: '✨ [bettertouchtool] format bttpreset'
+        entry: bash -c 'prettier --parser json -w config/bettertouchtool/default.bttpreset && git add -u'
+        language: system
+        files: ^config/bettertouchtool/default\.bttpreset$
