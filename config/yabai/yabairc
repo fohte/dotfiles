@@ -38,5 +38,10 @@ manage_off app='^Arc$' title='^Fohte$' # Settings' title is set to the user's na
 # ref: https://github.com/koekeishiya/yabai/issues/1669
 manage_off title="^Picture in Picture$"
 
+# tiling is not needed for some apps
+manage_off app='^BetterTouchTool$'
+manage_off app='^Karabiner-Elements$'
+manage_off app='^CleanShot$'
+
 # FIXME: invalid regex pattern '^(?!Notes$).*' for key 'title'
 # manage_off app='^Notes$' title='^(?!Notes$).*' # Quick note
