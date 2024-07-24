@@ -45,3 +45,6 @@ manage_off app='^CleanShot$'
 
 # FIXME: invalid regex pattern '^(?!Notes$).*' for key 'title'
 # manage_off app='^Notes$' title='^(?!Notes$).*' # Quick note
+
+# GhostText window
+manage_off app='^wezterm-gui$'
