@@ -67,6 +67,10 @@ export KEYTIMEOUT=1
 # gpg-agent
 export GPG_TTY=$(tty)
 
+# pre-commit
+# ignore pre-commit error when no .pre-commit-config.yaml is found
+export PRE_COMMIT_ALLOW_NO_CONFIG=1
+
 import_env 'homebrew.zsh'
 
 import_env 'asdf.zsh'
