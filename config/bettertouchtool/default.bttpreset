@@ -3,8 +3,20 @@
   "BTTPresetInfoURL": "",
   "BTTPresetName": "Default",
   "BTTPresetColor": "218.790000, 52.509600, 210.475980, 255.000000",
-  "BTTPresetUUID": "EF5A28CE-B861-4EFF-B6DB-CD9D582601C5",
+  "BTTPresetUUID": "4A3F0637-CCEB-44F8-A7B9-784B0C1D2EBC",
   "BTTPresetContent": [
+    {
+      "BTTAppBundleIdentifier": "com.apple.finder",
+      "BTTAppName": "Finder",
+      "BTTAppAutoInvertIcon": 1,
+      "BTTTriggers": []
+    },
+    {
+      "BTTAppBundleIdentifier": "BT.L",
+      "BTTAppName": "Recently Used",
+      "BTTAppAutoInvertIcon": 1,
+      "BTTTriggers": []
+    },
     {
       "BTTAppBundleIdentifier": "BT.G",
       "BTTAppName": "Global",
@@ -14,85 +26,30 @@
       },
       "BTTTriggers": [
         {
-          "BTTLastUpdatedAt": 1721547492.6189852,
-          "BTTTriggerType": 105,
+          "BTTActionCategory": 0,
+          "BTTLastUpdatedAt": 1721700689.479053,
+          "BTTTriggerType": 106,
+          "BTTTriggerTypeDescriptionReadOnly": "4 Finger Swipe Right",
           "BTTTriggerTypeDescription": "4 Finger Swipe Left",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
-          "BTTPredefinedActionType": 366,
-          "BTTPredefinedActionName": "Empty Placeholder",
-          "BTTUUID": "233DBD34-709A-424D-ADF5-3513BEFA2AE0",
-          "BTTEnabled": 1,
-          "BTTEnabled2": 1,
-          "BTTOrder": 1,
-          "BTTAdditionalActions": [
-            {
-              "BTTLastUpdatedAt": 1721547527.9050231,
-              "BTTTriggerType": -1,
-              "BTTTriggerParentUUID": "233DBD34-709A-424D-ADF5-3513BEFA2AE0",
-              "BTTIsPureAction": true,
-              "BTTPredefinedActionType": 206,
-              "BTTPredefinedActionName": "Execute Shell Script / Task",
-              "BTTGenericActionConfig2": "/bin/zsh:::-c:::-:::",
-              "BTTShellTaskActionScript": "yabai -m space --focus next || yabai -m space --focus first",
-              "BTTShellTaskActionConfig": "/bin/zsh:::-c:::-:::",
-              "BTTUUID": "732F004B-39C8-44EB-B3E0-D29B971E50E6",
-              "BTTEnabled": 1,
-              "BTTEnabled2": 1,
-              "BTTOrder": 2
-            }
-          ]
-        },
-        {
-          "BTTLastUpdatedAt": 1721547191.1724792,
-          "BTTTriggerType": 100,
-          "BTTTriggerTypeDescription": "3 Finger Swipe Left",
-          "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
-          "BTTLayoutIndependentActionChar": "]",
-          "BTTShortcutToSend": "55,30",
-          "BTTUUID": "F3D74C1D-5829-4B6E-8CD7-CAB416F85450",
-          "BTTEnabled": 1,
-          "BTTEnabled2": 1,
-          "BTTOrder": 3,
-          "BTTGestureNotes": "進む"
-        },
-        {
-          "BTTLastUpdatedAt": 1721547191.1724911,
-          "BTTTriggerType": 103,
-          "BTTTriggerTypeDescription": "3 Finger Swipe Down",
-          "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
-          "BTTLayoutIndependentActionChar": "w",
-          "BTTGenericActionConfig": "ファイル;タブを閉じる;",
-          "BTTShortcutToSend": "55,13",
-          "BTTUUID": "9CFA6661-BE7C-4849-8B01-ED18C62DDBBC",
-          "BTTEnabled": 1,
-          "BTTEnabled2": 1,
-          "BTTOrder": 5,
-          "BTTGestureNotes": "3本指でスワイプダウン"
-        },
-        {
-          "BTTLastUpdatedAt": 1721547469.6624498,
-          "BTTTriggerType": 106,
-          "BTTTriggerTypeDescription": "4 Finger Swipe Right",
-          "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
-          "BTTPredefinedActionType": 366,
-          "BTTPredefinedActionName": "Empty Placeholder",
           "BTTUUID": "884BB85D-0FB7-4102-B22C-737CA425B052",
+          "BTTPredefinedActionType": 366,
+          "BTTPredefinedActionName": "Empty Placeholder",
           "BTTEnabled": 1,
           "BTTEnabled2": 1,
           "BTTOrder": 2,
           "BTTAdditionalActions": [
             {
-              "BTTLastUpdatedAt": 1721547521.7057581,
-              "BTTTriggerType": -1,
+              "BTTActionCategory": 0,
+              "BTTLastUpdatedAt": 1721977508.7986898,
               "BTTTriggerParentUUID": "884BB85D-0FB7-4102-B22C-737CA425B052",
               "BTTIsPureAction": true,
               "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
-              "BTTPredefinedActionType": 206,
-              "BTTPredefinedActionName": "Execute Shell Script / Task",
-              "BTTGenericActionConfig2": "/bin/zsh:::-c:::-:::",
-              "BTTShellTaskActionScript": "yabai -m space --focus prev || yabai -m space --focus last",
-              "BTTShellTaskActionConfig": "/bin/zsh:::-c:::-:::",
               "BTTUUID": "D025CCF0-DC60-405A-80A9-2D7FC10C80BE",
+              "BTTPredefinedActionType": 206,
+              "BTTPredefinedActionName": "Execute Shell Script  or  Task",
+              "BTTShellTaskActionScript": "~/.config/yabai/scripts/switch-space prev",
+              "BTTShellTaskActionConfig": "/bin/zsh:::-c:::-:::",
               "BTTEnabled": 1,
               "BTTEnabled2": 1,
               "BTTOrder": 17
@@ -101,25 +58,83 @@
           "BTTGestureNotes": "4 Finger Swipe Left"
         },
         {
-          "BTTLastUpdatedAt": 1721547191.1725149,
-          "BTTTriggerType": 101,
-          "BTTTriggerTypeDescription": "3 Finger Swipe Right",
+          "BTTActionCategory": 0,
+          "BTTLastUpdatedAt": 1721700689.478874,
+          "BTTTriggerType": 103,
+          "BTTTriggerTypeDescriptionReadOnly": "3 Finger Swipe Down",
+          "BTTTriggerTypeDescription": "3本指でスワイプダウン",
           "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
+          "BTTUUID": "9CFA6661-BE7C-4849-8B01-ED18C62DDBBC",
+          "BTTLayoutIndependentActionChar": "w",
+          "BTTGenericActionConfig": "ファイル;タブを閉じる;",
+          "BTTShortcutToSend": "55,13",
+          "BTTEnabled": 1,
+          "BTTEnabled2": 1,
+          "BTTOrder": 5,
+          "BTTGestureNotes": "3本指でスワイプダウン"
+        },
+        {
+          "BTTActionCategory": 0,
+          "BTTLastUpdatedAt": 1721700689.477931,
+          "BTTTriggerType": 105,
+          "BTTTriggerTypeDescription": "4 Finger Swipe Left",
+          "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
+          "BTTUUID": "233DBD34-709A-424D-ADF5-3513BEFA2AE0",
+          "BTTPredefinedActionType": 366,
+          "BTTPredefinedActionName": "Empty Placeholder",
+          "BTTEnabled": 1,
+          "BTTEnabled2": 1,
+          "BTTOrder": 1,
+          "BTTAdditionalActions": [
+            {
+              "BTTActionCategory": 0,
+              "BTTLastUpdatedAt": 1721971288.3921189,
+              "BTTTriggerParentUUID": "233DBD34-709A-424D-ADF5-3513BEFA2AE0",
+              "BTTIsPureAction": true,
+              "BTTTriggerClass": "BTTTriggerTypeMagicMouse",
+              "BTTUUID": "732F004B-39C8-44EB-B3E0-D29B971E50E6",
+              "BTTPredefinedActionType": 206,
+              "BTTPredefinedActionName": "Execute Shell Script  or  Task",
+              "BTTShellTaskActionScript": "~/.config/yabai/scripts/switch-space next",
+              "BTTShellTaskActionConfig": "/bin/zsh:::-c:::-:::",
+              "BTTEnabled": 1,
+              "BTTEnabled2": 1,
+              "BTTOrder": 2
+            }
+          ],
+          "BTTGestureNotes": "4 Finger Swipe Left"
+        },
+        {
+          "BTTActionCategory": 0,
+          "BTTLastUpdatedAt": 1721700689.4794168,
+          "BTTTriggerType": 101,
+          "BTTTriggerTypeDescriptionReadOnly": "3 Finger Swipe Right",
+          "BTTTriggerTypeDescription": "戻る",
+          "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
+          "BTTUUID": "9A7587D5-567A-4070-BFF6-9F586104A40E",
           "BTTLayoutIndependentActionChar": "[",
           "BTTShortcutToSend": "55,33",
-          "BTTUUID": "9A7587D5-567A-4070-BFF6-9F586104A40E",
           "BTTEnabled": 1,
           "BTTEnabled2": 1,
           "BTTOrder": 4,
           "BTTGestureNotes": "戻る"
+        },
+        {
+          "BTTActionCategory": 0,
+          "BTTLastUpdatedAt": 1721700689.4786701,
+          "BTTTriggerType": 100,
+          "BTTTriggerTypeDescriptionReadOnly": "3 Finger Swipe Left",
+          "BTTTriggerTypeDescription": "進む",
+          "BTTTriggerClass": "BTTTriggerTypeTouchpadAll",
+          "BTTUUID": "F3D74C1D-5829-4B6E-8CD7-CAB416F85450",
+          "BTTLayoutIndependentActionChar": "]",
+          "BTTShortcutToSend": "55,30",
+          "BTTEnabled": 1,
+          "BTTEnabled2": 1,
+          "BTTOrder": 3,
+          "BTTGestureNotes": "進む"
         }
       ]
-    },
-    {
-      "BTTAppBundleIdentifier": "com.apple.finder",
-      "BTTAppName": "Finder",
-      "BTTAppAutoInvertIcon": 1,
-      "BTTTriggers": []
     }
   ],
   "BTTPresetSnapAreas": []
