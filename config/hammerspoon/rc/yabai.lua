@@ -2,6 +2,12 @@ local lib = require('lib')
 
 local yabai = lib:run_command('which yabai', { shell = true }).output
 
+local yabai_scripts_dir = os.getenv('HOME') .. '/.config/yabai/scripts'
+
+local function run_scripts(file, cmd, ...)
+  return lib:run_command(yabai_scripts_dir .. '/' .. file .. ' ' .. cmd, ...)
+end
+
 local function run_yabai(command, ...)
   return lib:run_command(yabai .. ' -m ' .. command, ...)
 end
@@ -137,4 +143,5 @@ return {
   cmd = yabai,
   run = run_yabai,
   run_command = run_command,
+  run_scripts = run_scripts,
 }

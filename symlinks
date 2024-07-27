@@ -77,7 +77,7 @@ if match_tag prettier; then
 fi
 
 if match_tag yabai; then
-  sym config/yabai/yabairc ~/.config/yabai/yabairc
+  sym config/yabai ~/.config/yabai
 fi
 
 if match_tag borders; then

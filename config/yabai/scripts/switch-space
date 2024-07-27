@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  echo "Usage: $0 <direction>"
+  echo "  direction: next | prev"
+  exit 1
+}
+
+direction="$1"
+
+fetch_new_space_id() {
+  delta="$1"
+
+  yabai -m query --spaces --display mouse | jq --argjson delta "$delta" '
+    # Sort the spaces by their index
+    sort_by(.index) as $spaces |
+
+    # Get the index of the space that has focus
+    ($spaces | map(select(.["has-focus"]))[0].index) as $current_index |
+
+    # Find the position of the focused space in the sorted array
+    ($spaces | map(.index) | index($current_index)) as $current_pos |
+
+    # Calculate the new position based on the delta argument
+    (($current_pos + $delta) % length) as $new_pos |
+
+    # Get the id of the new space
+    $spaces[$new_pos].index
+  '
+}
+
+case "$direction" in
+  next)
+    yabai -m space --focus "$(fetch_new_space_id 1)"
+    ;;
+  prev)
+    yabai -m space --focus "$(fetch_new_space_id -1)"
+    ;;
+  *)
+    usage
+    ;;
+esac
