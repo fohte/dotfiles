@@ -8,6 +8,7 @@ return {
       'hrsh7th/cmp-nvim-lsp',
       'hrsh7th/cmp-path',
       'quangnguyen30192/cmp-nvim-ultisnips',
+      'zbirenbaum/copilot-cmp',
     },
     config = function()
       local cmp = require('cmp')
