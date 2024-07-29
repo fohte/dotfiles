@@ -6,7 +6,7 @@ sudo yabai --load-sa
 # global settings
 yabai -m config \
   mouse_follows_focus off \
-  focus_follows_mouse autoraise \
+  focus_follows_mouse off \
   mouse_modifier fn
 
 padding=10

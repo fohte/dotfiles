@@ -12,12 +12,6 @@ local function run_yabai(command, ...)
   return lib:run_command(yabai .. ' -m ' .. command, ...)
 end
 
-hs.hotkey.bind({ 'alt' }, 'a', function()
-  run_yabai('config focus_follows_mouse off')
-end, function()
-  run_yabai('config focus_follows_mouse autoraise')
-end)
-
 local function bind_yabai(modifiers, key, command)
   if type(command) == 'function' then
     hs.hotkey.bind(modifiers, key, command)
