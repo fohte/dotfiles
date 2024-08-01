@@ -21,3 +21,31 @@ matches:
 
   - trigger: intsall
     replace: install
+
+  # insert date the format such like `2024-01-01 (Sun)`
+  # if clipboard has a date-like string, use it as a base date
+  # otherwise, use today's date
+  - trigger: '/date/'
+    vars:
+      - name: clipboard
+        type: clipboard
+      - name: formatted
+        type: shell
+        params:
+          cmd: |
+            date -d "$ESPANSO_CLIPBOARD" +'%Y-%m-%d (%a)' || date +'%Y-%m-%d (%a)'
+    replace: '{{formatted}}'
+
+  # insert date the format such like `2024-01-01 (Sun)`
+  # usage:
+  #   `/date;2024-01-01;` -> `2024-01-01 (Sun)`
+  #   `/date;tommorow;` -> `2024-01-02 (Mon)`
+  #   `/date;next sunday;` -> `2024-01-07 (Sun)`
+  - regex: '/date;(?P<date>[^;]*);'
+    vars:
+      - name: formatted
+        type: shell
+        params:
+          cmd: |
+            date -d "$ESPANSO_DATE" +'%Y-%m-%d (%a)' || echo
+    replace: '{{formatted}}'
