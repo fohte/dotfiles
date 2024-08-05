@@ -18,7 +18,6 @@ end
 
 hs.hotkey.bind({ 'alt' }, '1', function()
   local window_id = find_window_id('WezTerm')
-  print('Alt-1: ' .. hs.inspect(window_id))
   if window_id == nil then
     hs.application.launchOrFocus('/Applications/WezTerm.app')
   else
