@@ -24,26 +24,13 @@ local function bind_yabai(modifiers, key, command)
 end
 
 -- windows --------------------------------
-bind_yabai({ 'ctrl', 'shift' }, 'p', function()
-  if not run_yabai('window --focus prev', { silent = true }).success then
-    run_yabai('window --focus last')
-  end
-end)
-bind_yabai({ 'ctrl', 'shift' }, 'n', function()
-  if not run_yabai('window --focus next', { silent = true }).success then
-    run_yabai('window --focus first')
-  end
-end)
-
 bind_yabai({ 'ctrl', 'shift' }, 'Up', 'window --warp north')
 bind_yabai({ 'ctrl', 'shift' }, 'Down', 'window --swap south')
 bind_yabai({ 'ctrl', 'shift' }, 'Right', 'window --swap east')
 bind_yabai({ 'ctrl', 'shift' }, 'Left', 'window --swap west')
 
 bind_yabai({ 'ctrl', 'shift' }, 't', 'window --toggle zoom-fullscreen')
-bind_yabai({ 'ctrl', 'shift' }, 'f', 'window --toggle float')
 bind_yabai({ 'ctrl', 'shift' }, '-', 'window --toggle split')
-
 bind_yabai({ 'ctrl', 'shift' }, 'space', 'window --toggle sticky')
 
 -- resize mode
@@ -88,48 +75,14 @@ bind_resize('l', { dir = 'right', x = resize_delta, y = 0 })
 bind_resize('l', { modifiers = { 'shift' }, dir = 'right', x = -resize_delta, y = 0 })
 
 -- spaces --------------------------------
-bind_yabai({ 'cmd', 'ctrl' }, 'p', function()
+bind_yabai({ 'ctrl', 'shift' }, 'v', function()
   if not run_yabai('space --focus prev', { silent = true }).success then
     run_yabai('space --focus last')
   end
 end)
-bind_yabai({ 'cmd', 'ctrl' }, 'n', function()
+bind_yabai({ 'ctrl', 'shift' }, 'z', function()
   if not run_yabai('space --focus next', { silent = true }).success then
     run_yabai('space --focus first')
-  end
-end)
-bind_yabai({ 'cmd', 'ctrl' }, 'tab', 'space --focus recent')
-
-bind_yabai({ 'cmd', 'ctrl' }, 't', 'space --create')
-bind_yabai({ 'cmd', 'ctrl' }, 'w', 'space --destroy')
-
-bind_yabai({ 'cmd', 'ctrl' }, 'v', function()
-  if not run_yabai('window --space prev').success then
-    run_yabai('window --space last')
-  end
-end)
-bind_yabai({ 'cmd', 'ctrl' }, 'z', function()
-  if not run_yabai('window --space next').success then
-    run_yabai('window --space first')
-  end
-end)
-
--- open mission control to see all spaces
-hs.hotkey.bind({ 'cmd', 'ctrl' }, 's', function()
-  hs.application.launchOrFocus('Mission Control')
-end)
-
--- display --------------------------------
-bind_yabai({ 'alt', 'ctrl' }, 'tab', 'display --focus recent')
-
-bind_yabai({ 'alt', 'ctrl' }, 'v', function()
-  if not run_yabai('display --focus prev').success then
-    run_yabai('display --focus last')
-  end
-end)
-bind_yabai({ 'alt', 'ctrl' }, 'z', function()
-  if not run_yabai('display --focus next').success then
-    run_yabai('display --focus first')
   end
 end)
 
