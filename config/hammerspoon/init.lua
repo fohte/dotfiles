@@ -38,7 +38,7 @@ hs.hotkey.bind({ 'alt' }, '5', function()
   hs.application.launchOrFocus('/Applications/ChatGPT.app')
 end)
 
-hs.hotkey.bind({ 'alt' }, '6', function()
+hs.hotkey.bind({ 'alt' }, 'o', function()
   hs.application.launchOrFocus('/Applications/Obsidian.app')
 end)
 
