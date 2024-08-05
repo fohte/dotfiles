@@ -1,5 +1,4 @@
 return {
-  'fatih/vim-go',
   {
     'google/vim-jsonnet',
     config = function()
