@@ -22,7 +22,17 @@ return {
     {
       '<Leader>eg',
       function()
-        require('telescope.builtin').live_grep()
+        require('telescope.builtin').live_grep({
+          attach_mappings = function(prompt_bufnr, map)
+            -- search the grep results with <C-g><C-g>
+            -- ref: https://blog.atusy.net/2024/08/02/telescope-grep-refiement/
+            map('i', '<C-g><C-g>', function()
+              require('telescope.actions').send_to_qflist(prompt_bufnr)
+              require('telescope.builtin').quickfix()
+            end)
+            return true
+          end,
+        })
       end,
       mode = 'n',
     },
