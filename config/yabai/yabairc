@@ -19,7 +19,7 @@ yabai -m config \
   left_padding "$padding" \
   right_padding "$padding" \
   window_gap "$padding" \
-  auto_balance on
+  auto_balance off
 
 manage_off() {
   yabai -m rule --add manage=off mouse_follows_focus=off "$@"

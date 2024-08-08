@@ -23,6 +23,8 @@ local function bind_yabai(modifiers, key, command)
   end)
 end
 
+bind_yabai({ 'alt' }, '=', 'space --balance')
+
 -- windows --------------------------------
 bind_yabai({ 'ctrl', 'shift' }, 'Up', 'window --warp north')
 bind_yabai({ 'ctrl', 'shift' }, 'Down', 'window --swap south')
