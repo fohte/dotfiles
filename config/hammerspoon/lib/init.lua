@@ -19,4 +19,13 @@ function lib:run_command(cmd, params)
   }
 end
 
+function lib:followMouseToWindow()
+  local win = hs.window.focusedWindow()
+  if win then
+    local frame = win:frame()
+    local center = hs.geometry.rectMidPoint(frame)
+    hs.mouse.setAbsolutePosition(center)
+  end
+end
+
 return lib
