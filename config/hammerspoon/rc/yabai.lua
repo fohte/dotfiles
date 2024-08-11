@@ -91,6 +91,5 @@ end)
 return {
   cmd = yabai,
   run = run_yabai,
-  run_command = run_command,
   run_scripts = run_scripts,
 }
