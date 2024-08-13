@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -euo pipefail
+
+if [ $# -ne 2 ]; then
+  echo 'usage: git new-pr <branch> <title>'
+  exit 1
+fi
+
+branch="$1"
+title="$2"
+
+git new-branch "$branch"
+branch="$(git branch --show-current)"
+
+git commit --allow-empty -m "[empty commit] $title"
+git push -u origin "$branch"
+
+gh pr create --base "$(git main)" --head "$branch" --title "$title"
