@@ -7,5 +7,9 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
+branch="$1"
+# remove fohte/ prefix to avoid fohte/fohte/<name>
+branch="${branch#fohte/}"
+
 git fetch -p
-git checkout -b "fohte/$1" "origin/$(git main)"
+git checkout -b "fohte/${branch}" "origin/$(git main)"
