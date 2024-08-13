@@ -11,7 +11,6 @@ return {
       -- unicode is the graph like https://github.com/rbong/vim-flog
       graph_style = 'unicode',
 
-      kind = 'split_above',
       commit_editor = {
         kind = 'auto',
       },
