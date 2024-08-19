@@ -24,7 +24,7 @@ function lib:followMouseToWindow()
   if win then
     local frame = win:frame()
     local center = hs.geometry.rectMidPoint(frame)
-    hs.mouse.setAbsolutePosition(center)
+    hs.mouse.absolutePosition(center)
   end
 end
 
