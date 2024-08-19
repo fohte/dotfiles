@@ -18,8 +18,10 @@ local function find_window_id(app_name)
 end
 
 local function defineOpenAppHotkey(mods, key, func)
-  hs.hotkey.bind(mods, key, func)
-  lib.followMouseToWindow()
+  hs.hotkey.bind(mods, key, function()
+    func()
+    lib:followMouseToWindow()
+  end)
 end
 
 defineOpenAppHotkey({ 'alt' }, '1', function()
