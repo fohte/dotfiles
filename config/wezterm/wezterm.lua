@@ -12,6 +12,9 @@ config.keys = {
   -- disable zoom
   { key = '+', mods = 'CTRL|SHIFT', action = wezterm.action.DisableDefaultAssignment },
   { key = '_', mods = 'CTRL|SHIFT', action = wezterm.action.DisableDefaultAssignment },
+
+  -- disable alt-enter to toggle fullscreen
+  { key = 'Enter', mods = 'ALT', action = wezterm.action.DisableDefaultAssignment },
 }
 
 -- workaround for the problem that SKK sends CTRL + any keys directly to WezTerm instead of SKK
