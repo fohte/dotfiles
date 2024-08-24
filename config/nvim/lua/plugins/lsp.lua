@@ -93,59 +93,61 @@ return {
           end,
 
           ['efm'] = function()
-            -- linters
-            local l_eslint_d = require('efmls-configs.linters.eslint_d')
-            local l_shellcheck = require('efmls-configs.linters.shellcheck')
-            local l_textlint = require('efmls-configs.linters.textlint')
-            local l_actionlint = require('efmls-configs.linters.actionlint')
+            local efm_configs = require('user.lsp.efm')
 
-            -- formatters
-            local f_eslint_d = require('efmls-configs.formatters.eslint_d')
-            local f_prettier = require('efmls-configs.formatters.prettier_d')
-            local f_shfmt = require('efmls-configs.formatters.shfmt')
-            local f_stylua = require('efmls-configs.formatters.stylua')
-            local f_terraform = require('efmls-configs.formatters.terraform_fmt')
-            local f_ruff = require('efmls-configs.formatters.ruff')
+            efm_configs.setup({
+              {
+                languages = { 'javascript', 'typescript', 'typescript.tsx' },
+                linters = { 'eslint' },
+                formatters = { 'eslint', 'prettier' },
+              },
+              {
+                languages = { 'lua' },
+                formatters = { 'stylua' },
+              },
+              {
+                languages = { 'yaml' },
+                formatters = { 'prettier' },
+              },
+              {
+                languages = { 'json', 'json5', 'jsonc' },
+                formatters = { 'prettier' },
+              },
+              {
+                languages = { 'markdown' },
+                linters = { 'textlint' },
+              },
+              {
+                languages = { 'sh', 'bash' },
+                linters = { 'shellcheck' },
+                formatters = { 'shfmt' },
+              },
+              {
+                languages = { 'hcl' },
+                formatters = { 'terraform' },
+              },
+              {
+                languages = { 'yaml.actions' },
+                linters = { 'actionlint' },
+              },
+              {
+                languages = { 'python' },
+                formatters = { 'ruff' },
+              },
+            })
 
-            -- workaround for flat config
-            -- https://github.com/mantoni/eslint_d.js/pull/282
-            l_eslint_d.lintCommand = string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', l_eslint_d.lintCommand)
-            f_eslint_d.formatCommand =
-              string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', f_eslint_d.formatCommand)
-
-            local languages = {
-              ['bash'] = { l_shellcheck, f_shfmt },
-              ['hcl'] = { f_terraform },
-              ['javascript'] = { l_eslint_d, f_eslint_d, f_prettier },
-              ['javascript.jsx'] = { l_eslint_d, f_eslint_d, f_prettier },
-              ['json'] = { f_prettier },
-              ['json5'] = { f_prettier },
-              ['jsonc'] = { f_prettier },
-              ['lua'] = { f_stylua },
-              ['markdown'] = { l_textlint },
-              ['python'] = { f_ruff },
-              ['sh'] = { l_shellcheck, f_shfmt },
-              ['typescript'] = { l_eslint_d, f_eslint_d, f_prettier },
-              ['typescript.tsx'] = { l_eslint_d, f_eslint_d, f_prettier },
-              ['yaml'] = { f_prettier },
-              ['yaml.actions'] = { l_actionlint },
-            }
-
-            local efmls_config = {
-              filetypes = vim.tbl_keys(languages),
+            require('lspconfig').efm.setup({
+              filetypes = efm_configs.filetypes,
               settings = {
                 rootMarkers = { '.git/' },
-                languages = languages,
+                languages = efm_configs.languages,
               },
               init_options = {
                 documentFormatting = true,
                 documentRangeFormatting = true,
               },
-            }
-
-            require('lspconfig').efm.setup(vim.tbl_extend('force', efmls_config, {
               on_attach = on_attach,
-            }))
+            })
           end,
         }
       )
