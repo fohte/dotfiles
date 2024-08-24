@@ -85,6 +85,10 @@ return {
                   diagnostics = {
                     globals = { 'vim', 'hs' },
                   },
+                  -- use stylua
+                  format = {
+                    enable = false,
+                  },
                 },
               },
 
