@@ -135,6 +135,10 @@ return {
                 linters = { 'actionlint' },
               },
               {
+                languages = { 'go' },
+                formatters = { 'goimports' },
+              },
+              {
                 languages = { 'python' },
                 formatters = { 'ruff' },
               },

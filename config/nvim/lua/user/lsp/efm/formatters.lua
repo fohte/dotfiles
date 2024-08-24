@@ -16,4 +16,6 @@ formatters['terraform'] = require('efmls-configs.formatters.terraform_fmt')
 
 formatters['ruff'] = require('efmls-configs.formatters.ruff')
 
+formatters['goimports'] = require('efmls-configs.formatters.goimports')
+
 return formatters
