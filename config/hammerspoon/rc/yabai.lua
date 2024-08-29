@@ -8,6 +8,8 @@ local function run_scripts(file, cmd, ...)
   return lib:run_command(yabai_scripts_dir .. '/' .. file .. ' ' .. cmd, ...)
 end
 
+---@param command string
+---@return { success: boolean, output: string, exit_code: number }
 local function run_yabai(command, ...)
   return lib:run_command(yabai .. ' -m ' .. command, ...)
 end
@@ -21,6 +23,27 @@ local function bind_yabai(modifiers, key, command)
   hs.hotkey.bind(modifiers, key, function()
     run_yabai(command)
   end)
+end
+
+---@param config { key: string, value: string }
+---@param func fun(): nil
+---@return nil
+local function with_temp_config(config, func)
+  local current_values = {}
+
+  for key, value in pairs(config) do
+    current_values[key] = run_yabai('config ' .. key).output
+    if current_values[key] == 'disabled' then
+      current_values[key] = 'off'
+    end
+    run_yabai('config ' .. key .. ' ' .. value)
+  end
+
+  func()
+
+  for key, value in pairs(current_values) do
+    run_yabai('config ' .. key .. ' ' .. value)
+  end
 end
 
 bind_yabai({ 'alt' }, '=', 'space --balance')
@@ -92,4 +115,5 @@ return {
   cmd = yabai,
   run = run_yabai,
   run_scripts = run_scripts,
+  with_temp_config = with_temp_config,
 }

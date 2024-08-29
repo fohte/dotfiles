@@ -1,5 +1,9 @@
 local lib = {}
 
+---run shell command
+---@param cmd string
+---@param params { shell: boolean, silent: boolean }
+---@return { success: boolean, output: string, exit_code: number }
 function lib:run_command(cmd, params)
   params = params or {}
   local shell = params.shell or false

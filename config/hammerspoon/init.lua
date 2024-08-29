@@ -19,8 +19,10 @@ end
 
 local function defineOpenAppHotkey(mods, key, func)
   hs.hotkey.bind(mods, key, function()
-    func()
-    lib:followMouseToWindow()
+    yabai.with_temp_config({
+      focus_follows_mouse = 'off',
+      mouse_follows_focus = 'on',
+    }, func)
   end)
 end
 
