@@ -82,6 +82,9 @@ import_env 'ruby.zsh'
 import_env 'terraform.zsh'
 import_env 'vim.zsh'
 
+# priotize packages installed with aqua
+import_env 'aqua.zsh'
+
 # direnv hook must be loaded after homebrew.zsh because direnv is installed by homebrew
 has 'direnv' && eval "$(direnv hook zsh)"
 

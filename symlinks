@@ -88,3 +88,7 @@ if match_tag aquaskk; then
   sym config/aquaskk/dvorakjp.rule "$HOME/Library/Application Support/AquaSKK/dvorakjp.rule"
   sym config/aquaskk/keymap.conf "$HOME/Library/Application Support/AquaSKK/keymap.conf"
 fi
+
+if match_tag aqua; then
+  sym config/aqua ~/.config/aquaprj-aqua
+fi
