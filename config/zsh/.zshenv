@@ -74,7 +74,6 @@ export PRE_COMMIT_ALLOW_NO_CONFIG=1
 import_env 'homebrew.zsh'
 
 import_env 'asdf.zsh'
-import_env 'aqua.zsh'
 import_env 'fzf.zsh'
 import_env 'go.zsh'
 import_env 'node.zsh'
@@ -82,6 +81,9 @@ import_env 'python.zsh'
 import_env 'ruby.zsh'
 import_env 'terraform.zsh'
 import_env 'vim.zsh'
+
+# priotize packages installed with aqua
+import_env 'aqua.zsh'
 
 # direnv hook must be loaded after homebrew.zsh because direnv is installed by homebrew
 has 'direnv' && eval "$(direnv hook zsh)"
