@@ -1,0 +1,43 @@
+{
+  "title": "Sticky Shift",
+  "rules": [
+    {
+      "description": "Shift キーを単体で押したときに : を送信する (rev 0.0.0)",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "left_shift",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "parameters": {
+            "basic.to_if_held_down_threshold_milliseconds": 100
+          },
+          "to": [
+            {
+              "key_code": "left_shift",
+              "lazy": true
+            }
+          ],
+          "to_if_held_down": [
+            {
+              "key_code": "left_shift"
+            }
+          ],
+          "to_if_alone": [
+            {
+              "modifiers": [
+                "left_shift"
+              ],
+              "key_code": "semicolon"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
