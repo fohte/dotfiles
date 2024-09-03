@@ -2,7 +2,7 @@
   "title": "Sticky Shift",
   "rules": [
     {
-      "description": "Shift キーを単体で押したときに : を送信する (rev 0.0.0)",
+      "description": "Shift キーを単体で押したときに : を送信する (rev 0.0.1)",
       "manipulators": [
         {
           "type": "basic",
@@ -34,6 +34,16 @@
                 "left_shift"
               ],
               "key_code": "semicolon"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "input_source_if",
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ]
             }
           ]
         }
