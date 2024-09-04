@@ -2,7 +2,7 @@
   "title": "Sticky Shift",
   "rules": [
     {
-      "description": "Shift キーを単体で押したときに : を送信する (rev 0.0.1)",
+      "description": "Shift キーを単体で押したときに L (sticky key) を送信する (rev 0.0.2)",
       "manipulators": [
         {
           "type": "basic",
@@ -33,7 +33,7 @@
               "modifiers": [
                 "left_shift"
               ],
-              "key_code": "semicolon"
+              "key_code": "l"
             }
           ],
           "conditions": [
