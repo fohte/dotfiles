@@ -15,6 +15,9 @@ config.keys = {
 
   -- disable alt-enter to toggle fullscreen
   { key = 'Enter', mods = 'ALT', action = wezterm.action.DisableDefaultAssignment },
+
+  -- disable Cmd+t to open new tab
+  { key = 't', mods = 'CMD', action = wezterm.action.DisableDefaultAssignment },
 }
 
 -- workaround for the problem that SKK sends CTRL + any keys directly to WezTerm instead of SKK
