@@ -136,6 +136,7 @@ return {
               },
               {
                 languages = { 'go' },
+                linters = { 'golangci-lint' },
                 formatters = { 'goimports' },
               },
               {

@@ -11,4 +11,6 @@ linters['textlint'] = require('efmls-configs.linters.textlint')
 
 linters['actionlint'] = require('efmls-configs.linters.actionlint')
 
+linters['golangci-lint'] = require('efmls-configs.linters.golangci_lint')
+
 return linters
