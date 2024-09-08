@@ -33,10 +33,10 @@ local function open_github_link(opts)
   local file = vim.fn.expand('%')
 
   local line = ''
-  if opts.line1 ~= nil and opts.line2 ~= nil then
-    line = string.format('L%d-L%d', opts.line1, opts.line2)
-  else
+  if opts.line1 == opts.line2 then
     line = string.format('L%d', vim.fn.line('.'))
+  else
+    line = string.format('L%d-L%d', opts.line1, opts.line2)
   end
 
   local url = string.format('%s/blob/%s/%s#%s', repo_url, branch, file, line)
