@@ -36,3 +36,5 @@ vim.api.nvim_create_user_command('VimShowHlGroup', function()
 
   print(hl_group)
 end, {})
+
+require('core.commands.git_remote')
