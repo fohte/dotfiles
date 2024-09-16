@@ -16,3 +16,4 @@ packages:
   - name: koalaman/shellcheck@v0.10.0
   - name: pre-commit/pre-commit@v3.8.0
   - name: neovim/neovim@v0.10.1
+  - name: google/jsonnet@v0.20.0
