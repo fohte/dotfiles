@@ -1,8 +1,8 @@
 .PHONY: all
-all: clean dvorakjp.rule
+all: clean romaji.rule
 
-dvorakjp.rule: dvorakjp.utf8.rule
-	nkf --utf8-input --euc $< > $@
+romaji.rule: romaji.jsonnet
+	jsonnet romaji.jsonnet | jq -r 'to_entries[] | "\(.key),\(.value[0]),\(.value[1]),\(.value[1])"' | nkf --utf8-input --euc > $@
 
 clean:
-	rm -f dvorakjp.rule
+	rm -f romaji.rule

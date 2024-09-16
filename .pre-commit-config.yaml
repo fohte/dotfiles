@@ -2,10 +2,10 @@ repos:
   - repo: local
     hooks:
       - id: generate-dvorakjp-rule
-        name: '🔧 [aquaskk] dvorakjp.utf8.rule -> dvorakjp.rule'
+        name: '🔧 [aquaskk] generate romaji table'
         entry: bash -c 'make -C config/aquaskk && git add -u'
         language: system
-        files: ^config/aquaskk/dvorakjp\.utf8\.rule$
+        files: ^config/aquaskk/romaji\.jsonnet$
 
       - id: format-bttpreset
         name: '✨ [bettertouchtool] format bttpreset'

@@ -85,7 +85,7 @@ if match_tag borders; then
 fi
 
 if match_tag aquaskk; then
-  sym config/aquaskk/dvorakjp.rule "$HOME/Library/Application Support/AquaSKK/dvorakjp.rule"
+  sym config/aquaskk/romaji.rule "$HOME/Library/Application Support/AquaSKK/romaji.rule"
   sym config/aquaskk/keymap.conf "$HOME/Library/Application Support/AquaSKK/keymap.conf"
 fi
 
