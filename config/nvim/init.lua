@@ -32,7 +32,9 @@ require('core/lazy')
 
 vim.opt.clipboard:prepend({ 'unnamedplus' })
 
-vim.opt.mouse = 'a'
+-- disable mouse
+vim.opt.mouse = ''
+
 vim.opt.foldmethod = 'manual'
 vim.opt.autoread = true
 
