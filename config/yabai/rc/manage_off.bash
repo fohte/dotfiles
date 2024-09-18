@@ -24,6 +24,8 @@ manage_off label='huddle' app='^Slack$' title='^Huddle: ' # Slack Huddle
 manage_off label='btt' app='^BetterTouchTool$'
 manage_off label='karabiner_elements' app='^Karabiner-Elements$'
 manage_off label='cleanshot' app='^CleanShot X$'
+manage_off label='finder' app='^Finder$'
+manage_off label='1password' app='^1Password$'
 
 # FIXME: invalid regex pattern '^(?!Notes$).*' for key 'title'
 # manage_off app='^Notes$' title='^(?!Notes$).*' # Quick note
