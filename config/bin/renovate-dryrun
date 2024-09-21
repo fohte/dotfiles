@@ -75,4 +75,10 @@ $summary | with_entries(.value += $info[.key]) | map(
   ) | join("\n"))
 ) | join("\n")
 JQ
-  )"
+  )" || {
+  echo "[error] Failed to parse the Renovate log" >&2
+  tmp_log="$(mktemp -t renovate-dryrun.XXXXXX.log)"
+  echo "$renovate_log" > "$tmp_log"
+  echo "full log: $tmp_log" >&2
+  exit 1
+}
