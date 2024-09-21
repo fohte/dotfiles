@@ -43,12 +43,36 @@ repo_name="$(basename "$(dirname "$root_path")")/$(basename "$root_path")"
 
 gh_token="$(gh-token)"
 
-env LOG_LEVEL=debug \
-  RENOVATE_CONFIG_FILE="$config_file" \
-  RENOVATE_BASE_BRANCHES="$branch" \
-  npx -y renovate \
-  --token="$gh_token" \
-  --schedule="" \
-  --require-config=ignored \
-  --dry-run=full \
-  "$repo_name"
+renovate_log="$(
+  env LOG_LEVEL=debug \
+    RENOVATE_CONFIG_FILE="$config_file" \
+    RENOVATE_BASE_BRANCHES="$branch" \
+    npx -y renovate \
+    --token="$gh_token" \
+    --schedule="" \
+    --require-config=ignored \
+    --dry-run=full \
+    "$repo_name"
+)"
+
+branch_summary="[$(echo "$renovate_log" | sed -n '/DEBUG: Branch summary/,/DEBUG: /p' | sed -n '/"branches": /,/]/p' | sed '1d;$d')]"
+branches_information="[$(echo "$renovate_log" | sed -n '/DEBUG: branches info extended/,/DEBUG: /p' | sed '1,2d;$d')"
+
+jq -rn \
+  --argjson branch_summary "$branch_summary" \
+  --argjson branches_information "$branches_information" \
+  "$(
+    cat << 'JQ'
+$branch_summary | map({ key: .branchName, value: .}) | from_entries as $summary |
+$branches_information | map({ key: .branchName, value: .}) | from_entries as $info |
+$summary | with_entries(.value += $info[.key]) | map(
+"[\(.branchName)] \(.prTitle) (automerge: \(.automerge))\n" +
+  (.upgrades | map(
+    "  depName: \(.depName)\n" +
+    "  version: \(.currentVersion) -> \(.newVersion)\n" +
+    "  datasource: \(.datasource)\n" +
+    "  packageFile: \(.packageFile)\n"
+  ) | join("\n"))
+) | join("\n")
+JQ
+  )"
