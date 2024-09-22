@@ -2,6 +2,34 @@
 
 set -euo pipefail
 
+# This script is a wrapper around the Renovate CLI to dry-run the Renovate on the current branch.
+# The dry-run result is parsed and pretty-printed for better readability.
+#
+# The format of the output is:
+# [<branch>] <pr-title> (automerge: <automerge>)
+#   depName: <depName>
+#   version: <currentVersion> -> <newVersion>
+#   datasource: <datasource>
+#   packageFile: <packageFile>
+#
+# Example:
+# [renovate/aws-5.x] chore(deps): update terraform aws to v5.68.0 (automerge: true)
+#   depName: aws
+#   version: 5.49.0 -> 5.68.0
+#   datasource: terraform-provider
+#   packageFile: terraform/tfaction/main.tf
+#
+#   depName: aws
+#   version: 5.49.0 -> 5.68.0
+#   datasource: terraform-provider
+#   packageFile: terraform/lambda/main.tf
+#
+# [renovate/tailscale-0.x] chore(deps): update terraform tailscale to v0.17.1 (automerge: true)
+#   depName: tailscale
+#   version: 0.13.13 -> 0.17.1
+#   datasource: terraform-provider
+#   packageFile: terraform/tailscale/main.tf
+
 usage() {
   cat << EOF
 Usage: $0 [options]
