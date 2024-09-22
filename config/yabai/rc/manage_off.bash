@@ -13,6 +13,7 @@ manage_off label='system_settings' app='^System Settings$'
 manage_off label='chatgpt_settings' app='^ChatGPT$' title='^Settings$'
 manage_off label='arc_settings' app='^Arc$' title='^Fohte$' # Settings' title is set to the user's name
 manage_off label='fantastical_settings' app='^Fantastical$' title!='^Fantastical$'
+manage_off label='any_settings' title='^Settings$'
 
 # workaround for Picture in Picture not starting when switching tabs in Arc browser
 # ref: https://github.com/koekeishiya/yabai/issues/1669
