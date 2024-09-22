@@ -6,6 +6,8 @@ vim.filetype.add({
     vimspec = 'vim',
     jsonnet = 'jsonnet',
     dockerfile = 'dockerfile',
+    -- workaround: Grafana Alloy config syntax is not HCL but it's similar
+    alloy = 'hcl',
   },
   filename = {
     ['.themisrc'] = 'vim',
