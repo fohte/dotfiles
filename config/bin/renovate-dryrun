@@ -38,7 +38,6 @@ Options:
   -h, --help                  Show this help message
   -c, --config <config-path>  Path to the config file (default: renovate.json5)
   -b, --branch <branch>       Branch to dry-run the Renovate (default: current branch)
-  <config-path>  Path to the config file (default: renovate.json5)
 EOF
   exit 1
 }
@@ -71,7 +70,7 @@ repo_name="$(basename "$(dirname "$root_path")")/$(basename "$root_path")"
 
 gh_token="$(gh-token)"
 
-renovate_log="$(
+dryrun() {
   env LOG_LEVEL=debug \
     RENOVATE_CONFIG_FILE="$config_file" \
     RENOVATE_BASE_BRANCHES="$branch" \
@@ -81,16 +80,27 @@ renovate_log="$(
     --require-config=ignored \
     --dry-run=full \
     "$repo_name"
-)"
+}
 
-branch_summary="[$(echo "$renovate_log" | sed -n '/DEBUG: Branch summary/,/DEBUG: /p' | sed -n '/"branches": /,/]/p' | sed '1d;$d')]"
-branches_information="[$(echo "$renovate_log" | sed -n '/DEBUG: branches info extended/,/DEBUG: /p' | sed '1,2d;$d')"
+renovate_log="$(dryrun)"
 
-jq -rn \
-  --argjson branch_summary "$branch_summary" \
-  --argjson branches_information "$branches_information" \
-  "$(
-    cat << 'JQ'
+find_json() {
+  target_log="$1"
+
+  printf '{'
+  echo "$renovate_log" | perl -ne 'BEGIN { $target_log = shift } print if /$target_log/ .. !/$target_log/ && /^\s*[A-Z]+:/' "$target_log" | sed '1d;$d' | sed -e 's/: undefined/: null/'
+  printf '}\n'
+}
+
+parse_log() {
+  branch_summary="$(find_json 'DEBUG: Branch summary' | jq -r '.branches | map({ key: .branchName, value: .}) | from_entries')"
+  branches_information="$(find_json 'DEBUG: branches info extended' | jq -r '.branchesInformation | map({ key: .branchName, value: .}) | from_entries')"
+
+  jq -rn \
+    --argjson branch_summary "$branch_summary" \
+    --argjson branches_information "$branches_information" \
+    "$(
+      cat << 'JQ'
 $branch_summary | map({ key: .branchName, value: .}) | from_entries as $summary |
 $branches_information | map({ key: .branchName, value: .}) | from_entries as $info |
 $summary | with_entries(.value += $info[.key]) | map(
@@ -103,7 +113,10 @@ $summary | with_entries(.value += $info[.key]) | map(
   ) | join("\n"))
 ) | join("\n")
 JQ
-  )" || {
+    )"
+}
+
+parse_log || {
   echo "[error] Failed to parse the Renovate log" >&2
   tmp_log="$(mktemp -t renovate-dryrun.XXXXXX.log)"
   echo "$renovate_log" > "$tmp_log"
