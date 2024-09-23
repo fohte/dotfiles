@@ -114,7 +114,7 @@ parse_log() {
       cat << 'JQ'
 $branch_summary | map({ key: .branchName, value: .}) | from_entries as $summary |
 $branches_information | map({ key: .branchName, value: .}) | from_entries as $info |
-$summary | with_entries(.value += $info[.key]) | map(
+$info | with_entries(.value += $summary[.key]) | map(
 "[\(.branchName)] \(.prTitle) (automerge: \(.automerge))\n" +
   (.upgrades | map(
     "  depName: \(.depName)\n" +
