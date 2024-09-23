@@ -114,6 +114,25 @@ $summary | with_entries(.value += $info[.key]) | map(
 ) | join("\n")
 JQ
     )"
+
+  echo "## Detected dependencies (no upgrades)"
+  echo
+
+  jq -rn \
+    --argjson package_files "$(find_json 'DEBUG: Checking packageFiles for deprecated packages')" \
+    "$(
+      cat << 'JQ'
+$package_files | .packageFiles | to_entries | map(
+  "\(.key)\n" + (.value | map(
+    "  \(.packageFile)\n" +
+    (.deps | map(
+      select((.updates | length == 0) and (has("skipReason") | not)) |
+      "    \(.depName) \(if .currentVersien != null then .currentVersion else .currentValue end)"
+    ) | join("\n"))
+  ) | join("\n\n"))
+) | join("\n\n")
+JQ
+    )"
 }
 
 parse_log || {
