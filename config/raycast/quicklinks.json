@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Search Notestock",
+    "link": "https://notestock.osa-p.net/?q={argument name=\"Argument\"}&g=1&dt="
+  },
+  {
+    "name": "Post to Mastodon",
+    "link": "https://social.fohte.net/share?text={argument name=\"text\"}"
+  },
+  {
+    "name": "Search with Perplexity",
+    "link": "https://perplexity.ai/search?q={argument name=\"query\"}&copilot=true"
+  }
+]
