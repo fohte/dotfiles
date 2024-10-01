@@ -69,6 +69,18 @@ return {
             cmp.config.compare.order,
           },
         },
+
+        formatting = {
+          format = require('lspkind').cmp_format({
+            mode = 'symbol',
+            maxwidth = 50,
+            ellipsis_char = '…',
+            show_labelDetails = true,
+            symbol_map = {
+              Copilot = '',
+            },
+          }),
+        },
       })
 
       cmp.setup.cmdline({ '/', '?' }, {
@@ -92,6 +104,7 @@ return {
       'hrsh7th/cmp-cmdline',
       'hrsh7th/cmp-nvim-lsp',
       'hrsh7th/cmp-path',
+      'onsails/lspkind.nvim',
       'quangnguyen30192/cmp-nvim-ultisnips',
       {
         'zbirenbaum/copilot-cmp',
