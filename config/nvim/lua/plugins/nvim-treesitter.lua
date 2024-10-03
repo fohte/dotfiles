@@ -28,6 +28,7 @@ return {
           'typescript',
           'vim',
           'vimdoc',
+          'yaml',
         },
         highlight = { enable = true, disable = {} },
         endwise = { enable = true },
