@@ -129,11 +129,16 @@ JQ
   echo "## Detected dependencies (no upgrades)"
   echo
 
+  package_files="$(find_json 'DEBUG: Checking packageFiles for deprecated packages' | jq -r .packageFiles)"
+  if [[ "$(jq -r 'length' <<< "$package_files")" == 0 ]]; then
+    package_files="$(find_json 'DEBUG: packageFiles with updates' | jq -r .config)"
+  fi
+
   jq -rn \
-    --argjson package_files "$(find_json 'DEBUG: Checking packageFiles for deprecated packages')" \
+    --argjson package_files "$package_files" \
     "$(
       cat << 'JQ'
-$package_files | .packageFiles | to_entries | map(
+$package_files | to_entries | map(
   "\(.key)\n" + (.value | map(
     "  \(.packageFile)\n" +
     (.deps | map(
