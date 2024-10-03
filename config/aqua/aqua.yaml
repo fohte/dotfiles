@@ -15,5 +15,5 @@ packages:
   - name: mvdan/sh@v3.9.0
   - name: koalaman/shellcheck@v0.10.0
   - name: pre-commit/pre-commit@v3.8.0
-  - name: neovim/neovim@v0.10.1
+  - name: neovim/neovim@v0.10.2
   - name: google/jsonnet@v0.20.0
