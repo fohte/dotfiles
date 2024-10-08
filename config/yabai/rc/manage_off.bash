@@ -28,6 +28,9 @@ manage_off label='cleanshot' app='^CleanShot X$'
 manage_off label='finder' app='^Finder$'
 manage_off label='1password' app='^1Password$'
 
+# finder windows of any apps for opening files
+manage_off label='app_finder' title='^Open$'
+
 # FIXME: invalid regex pattern '^(?!Notes$).*' for key 'title'
 # manage_off app='^Notes$' title='^(?!Notes$).*' # Quick note
 
