@@ -7,6 +7,7 @@ return {
       require('copilot').setup({
         filetypes = {
           ['*'] = true,
+          ['markdown'] = false,
         },
       })
     end,
