@@ -24,10 +24,6 @@ if match_tag editorconfig; then
   sym config/editorconfig/.editorconfig ~/.editorconfig
 fi
 
-if match_tag efm; then
-  sym config/efm-langserver ~/.config/efm-langserver
-fi
-
 if match_tag zsh; then
   sym config/zsh/.zshrc ~/.zshrc
   sym config/zsh/.zshenv ~/.zshenv
