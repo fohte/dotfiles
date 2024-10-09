@@ -7,7 +7,10 @@ return {
       require('copilot').setup({
         filetypes = {
           ['*'] = true,
+
+          -- disable copilot on text files
           ['markdown'] = false,
+          ['review'] = false,
         },
       })
     end,
