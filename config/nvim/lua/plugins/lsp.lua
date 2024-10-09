@@ -118,7 +118,7 @@ return {
                 formatters = { 'prettier' },
               },
               {
-                languages = { 'markdown' },
+                languages = { 'markdown', 'review' },
                 linters = { 'textlint' },
               },
               {
