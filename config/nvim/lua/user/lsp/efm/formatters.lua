@@ -18,4 +18,6 @@ formatters['ruff'] = require('efmls-configs.formatters.ruff')
 
 formatters['goimports'] = require('efmls-configs.formatters.goimports')
 
+formatters['textlint'] = require('user.lsp.efm.formatters.textlint')
+
 return formatters

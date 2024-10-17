@@ -120,6 +120,7 @@ return {
               {
                 languages = { 'markdown', 'review' },
                 linters = { 'textlint' },
+                formatters = { 'textlint' },
               },
               {
                 languages = { 'sh', 'bash' },
