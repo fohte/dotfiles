@@ -1,5 +1,12 @@
 local lib = {}
 
+---notify error
+---@param title string
+---@param message string
+function lib:notify_error(title, message)
+  hs.notify.show('ERROR', title, message)
+end
+
 ---run shell command
 ---@param cmd string
 ---@param params { shell: boolean, silent: boolean }
@@ -10,10 +17,11 @@ function lib:run_command(cmd, params)
   local silent = params.silent or false
   local output, _, _, rc = hs.execute(cmd .. ' 2>&1', shell)
 
+  ---@type string
   output = output:gsub('\n$', '')
 
   if rc ~= 0 and not silent then
-    hs.notify.show('Error', '$ ' .. cmd, 'output: ' .. output)
+    lib:notify_error('$ ' .. cmd, 'output: ' .. output)
   end
 
   return {
