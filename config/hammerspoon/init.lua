@@ -1,22 +1,6 @@
 local lib = require('lib')
 local yabai = require('rc/yabai')
 
-local function find_window_id(app_name)
-  local result = yabai.run('query --windows')
-  if not result.success then
-    return nil
-  end
-
-  local windows = hs.json.decode(result.output)
-  for _, window in ipairs(windows) do
-    if window.app == app_name then
-      return window.id
-    end
-  end
-
-  return nil
-end
-
 local function defineOpenAppHotkey(mods, key, func)
   hs.hotkey.bind(mods, key, function()
     yabai.with_temp_config({
@@ -27,7 +11,7 @@ local function defineOpenAppHotkey(mods, key, func)
 end
 
 defineOpenAppHotkey({ 'alt' }, '1', function()
-  local window_id = find_window_id('WezTerm')
+  local window_id = yabai.find_next_window('WezTerm').id
   if window_id == nil then
     hs.application.launchOrFocus('/Applications/WezTerm.app')
   else

@@ -46,6 +46,41 @@ local function with_temp_config(config, func)
   end
 end
 
+local function fetch_windows()
+  local result = run_yabai('query --windows')
+  if not result.success then
+    error('failed to fetch windows')
+  end
+
+  return hs.json.decode(result.output)
+end
+
+local function find_windows(app_name)
+  local windows = fetch_windows()
+
+  local ids = {}
+
+  for _, window in ipairs(windows) do
+    if window.app == app_name then
+      ids[#ids + 1] = window
+    end
+  end
+
+  return ids
+end
+
+local function find_next_window(app_name)
+  local windows = find_windows(app_name)
+
+  for _, window in ipairs(windows) do
+    if not window['has-focus'] then
+      return window
+    end
+  end
+
+  return nil
+end
+
 bind_yabai({ 'alt' }, '=', 'space --balance')
 
 -- windows --------------------------------
@@ -115,5 +150,7 @@ return {
   cmd = yabai,
   run = run_yabai,
   run_scripts = run_scripts,
+  find_windows = find_windows,
+  find_next_window = find_next_window,
   with_temp_config = with_temp_config,
 }
