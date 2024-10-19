@@ -16,22 +16,6 @@ return {
         mode = { 'i' },
         silent = true,
       },
-      {
-        '<Tab>',
-        function()
-          require('luasnip').jump(1)
-        end,
-        mode = { 'i', 's' },
-        silent = true,
-      },
-      {
-        '<S-Tab>',
-        function()
-          require('luasnip').jump(-1)
-        end,
-        mode = { 'i', 's' },
-        silent = true,
-      },
     },
   },
 }
