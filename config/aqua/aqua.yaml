@@ -17,3 +17,4 @@ packages:
   - name: pre-commit/pre-commit@v4.0.1
   - name: neovim/neovim@v0.10.2
   - name: google/jsonnet@v0.20.0
+  - name: pkgxdev/pkgx@v1.2.2
