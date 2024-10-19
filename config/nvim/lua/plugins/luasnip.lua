@@ -16,6 +16,22 @@ return {
         mode = { 'i' },
         silent = true,
       },
+      {
+        '<C-j>',
+        function()
+          require('luasnip').jump(1)
+        end,
+        mode = { 'i', 's' },
+        silent = false,
+      },
+      {
+        '<C-k>',
+        function()
+          require('luasnip').jump(-1)
+        end,
+        mode = { 'i', 's' },
+        silent = false,
+      },
     },
   },
 }
