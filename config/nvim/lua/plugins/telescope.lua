@@ -63,6 +63,12 @@ return {
           },
         },
       },
+      pickers = {
+        find_files = {
+          -- sort by modified
+          find_command = { 'rg', '--files', '--hidden', '--sortr=modified' },
+        },
+      },
       extensions = {
         fzf = {
           fuzzy = true,
