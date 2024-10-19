@@ -45,4 +45,4 @@ local function open_github_link(opts)
   vim.system(cmd):wait()
 end
 
-vim.api.nvim_create_user_command('OpenGitRemote', open_github_link, { nargs = '?', range = true })
+vim.api.nvim_create_user_command('GitRemoteOpen', open_github_link, { nargs = '?', range = true })
