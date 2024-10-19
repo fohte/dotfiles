@@ -1,0 +1,42 @@
+snippet def
+	def ${1:method_name}(${2})
+		${0:raise NotImplementedError}
+	end
+
+snippet @p
+	@param ${1:param_name} [${2:type}] ${0:param_description}
+
+snippet @r
+	@return [${1:type}] ${0:param_description}
+
+snippet itis "it { is_expected.to ... }"
+	it { is_expected.to ${0} }
+
+snippet itisnt "it { is_expected.not_to ... }"
+	it { is_expected.not_to ${0} }
+
+snippet it "it ..."
+	it '${1}' do
+		${0}
+	end
+
+snippet cont "context ..."
+	context '${1}' do
+		${0}
+	end
+
+snippet desc "describe ..."
+	describe '${1}' do
+		${0}
+	end
+
+snippet let "let { ... }"
+	let(:${1}) { ${0} }
+
+snippet sbj "subject { ... }"
+	subject(${1}) { ${0} }
+
+snippet bef "before do ..."
+	before do
+		${0}
+	end

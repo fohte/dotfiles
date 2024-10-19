@@ -37,7 +37,7 @@ return {
           {
             { name = 'copilot' },
             { name = 'nvim_lsp' },
-            { name = 'ultisnips' },
+            { name = 'luasnip' },
             { name = 'path' },
           },
 
@@ -105,7 +105,7 @@ return {
       'hrsh7th/cmp-nvim-lsp',
       'hrsh7th/cmp-path',
       'onsails/lspkind.nvim',
-      'quangnguyen30192/cmp-nvim-ultisnips',
+      'saadparwaiz1/cmp_luasnip',
       {
         'zbirenbaum/copilot-cmp',
         dependencies = {
