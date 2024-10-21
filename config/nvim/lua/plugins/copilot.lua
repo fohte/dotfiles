@@ -10,7 +10,7 @@ return {
 
           -- disable copilot on text files
           ['markdown'] = false,
-          ['review'] = false,
+          -- ['review'] = false,
         },
       })
     end,
