@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+for file in "$@"; do
+  cat << EOF
+\`\`\`$file
+$(cat "$file")
+\`\`\`
+
+EOF
+done
