@@ -120,7 +120,8 @@ return {
               {
                 languages = { 'markdown', 'review' },
                 linters = { 'textlint' },
-                formatters = { 'textlint' },
+                -- The textlint formatter may not be reflected & 2 blank lines may be added to the end of the file, so it is temporarily disabled
+                -- formatters = { 'textlint' },
               },
               {
                 languages = { 'sh', 'bash' },
