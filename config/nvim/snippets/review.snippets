@@ -8,6 +8,11 @@ snippet table
 	$0
 	//}
 
+snippet imgtable
+	//imgtable[${1:ref}][${2:caption}]{
+	$0
+	//}
+
 snippet code
 	@<code>{$1}
 
@@ -24,7 +29,9 @@ snippet @
 	@<$1>{$2}
 
 snippet column
-	====[column]{$1} $2
+	====[column] $1
+	$0
+	====[/column]
 
 snippet fixme
 	#@# FIXME: $1
