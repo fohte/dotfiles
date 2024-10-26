@@ -5,7 +5,9 @@ snippet cmd
 
 snippet table
 	//table[${1:ref}][${2:caption}]{
-	$0
+	${3:header}
+	--------------------
+	${0}
 	//}
 
 snippet imgtable
@@ -18,14 +20,26 @@ snippet source
 	$0
 	//}
 
-snippet code
+snippet @code
 	@<code>{$1}
 
-snippet b
+snippet @b
 	@<b>{$1}
 
-snippet fn
+snippet @fn
 	@<fn>{$1}
+
+snippet @chapref
+	@<chapref>{$1}
+
+snippet @hd
+	@<hd>{$1}
+
+snippet @table
+	@<table>{$1}
+
+snippet @img
+	@<img>{$1}
 
 snippet footnote
 	//footnote[$1][$2]
