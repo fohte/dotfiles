@@ -2,7 +2,7 @@ alias c='cat'
 alias cp='cp -i'
 
 alias l='ls -l'
-has exa && alias ls='exa -aF' || alias ls='ls -ACFG'
+has eza && alias ls='eza -aF' || alias ls='ls -ACFG'
 
 if is_linux; then
   alias pbcopy='xsel --clipboard --input'

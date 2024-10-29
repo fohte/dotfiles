@@ -38,8 +38,8 @@ preview_file() {
 preview_dir() {
   path="$1"
 
-  if has exa; then
-    exa -aT --level=2 --git-ignore "$path"
+  if has eza; then
+    eza -aT --level=2 --git-ignore "$path"
   else
     ls -la "$path"
   fi | head -n "$MAX_LINES"
