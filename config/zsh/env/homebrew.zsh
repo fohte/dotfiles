@@ -8,6 +8,8 @@ if [ -f /opt/homebrew/bin/brew ]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
+! has brew && return 0
+
 brew_prefix="$(brew --prefix)"
 
 fpath=(
