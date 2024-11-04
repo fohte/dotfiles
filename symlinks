@@ -67,7 +67,8 @@ if match_tag espanso; then
   is_linux && espanso_config_path="$HOME/.config/espanso"
   is_macos && espanso_config_path="$HOME/Library/Application Support/espanso"
 
-  sym config/espanso "$espanso_config_path"
+  # FIXME: support WSL
+  ! is_wsl && sym config/espanso "$espanso_config_path"
 fi
 
 if match_tag gpg; then
