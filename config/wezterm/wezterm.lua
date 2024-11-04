@@ -86,4 +86,8 @@ wezterm.on('format-window-title', function(tab, pane, tabs, panes, config)
   return title
 end)
 
+if wezterm.target_triple == 'x86_64-pc-windows-msvc' then
+  require('windows').setup(config)
+end
+
 return config
