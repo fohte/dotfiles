@@ -33,7 +33,12 @@ if match_tag tmux; then
 fi
 
 if match_tag wezterm; then
-  sym config/wezterm ~/.config/wezterm
+  if is_wsl; then
+    # FIXME: This is not working as expected. Creating a symlink in WSL results in a symlink that cannot be recognized on the Windows side.
+    : # sym config/wezterm "$USERPROFILE"/.config/wezterm
+  else
+    sym config/wezterm ~/.config/wezterm
+  fi
 fi
 
 if match_tag hammerspoon; then
