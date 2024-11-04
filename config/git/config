@@ -58,8 +58,13 @@
 	user = fohte
 [status]
 	showUntrackedFiles = all
+
 [include]
 	path = ~/.local/.gitconfig
+
+[include]
+	path = ~/.config/git/os.conf
+
 [init]
 	templatedir = ~/.git_templates
 

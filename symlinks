@@ -5,7 +5,10 @@ if match_tag bin; then
 fi
 
 if match_tag git; then
-  sym config/git ~/.config/git
+  sym config/git/config ~/.config/git/config
+  sym config/git/ignore ~/.config/git/ignore
+
+  is_wsl && sym config/git/wsl.conf ~/.config/git/os.conf
 fi
 
 if match_tag op; then
