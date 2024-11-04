@@ -4,10 +4,6 @@ if match_tag bin; then
   sym config/bin ~/bin
 fi
 
-if match_tag fzf; then
-  sym "$(brew --prefix)/opt/fzf" ~/.fzf
-fi
-
 if match_tag git; then
   sym config/git ~/.config/git
 fi
