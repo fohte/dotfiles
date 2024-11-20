@@ -9,3 +9,9 @@ Style/TrailingCommaInArrayLiteral:
 
 Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: comma
+
+Documentation:
+  Enabled: false
+
+Metrics:
+  Enabled: false
