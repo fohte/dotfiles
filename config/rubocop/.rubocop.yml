@@ -13,6 +13,10 @@ Style/TrailingCommaInHashLiteral:
 Style/EmptyMethod:
   EnforcedStyle: expanded
 
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  SafeAutoCorrect: true
+
 Documentation:
   Enabled: false
 
