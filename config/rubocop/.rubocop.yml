@@ -10,6 +10,9 @@ Style/TrailingCommaInArrayLiteral:
 Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: comma
 
+Style/EmptyMethod:
+  EnforcedStyle: expanded
+
 Documentation:
   Enabled: false
 
