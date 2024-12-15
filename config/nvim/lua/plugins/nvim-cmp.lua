@@ -39,6 +39,7 @@ return {
             { name = 'nvim_lsp' },
             { name = 'luasnip' },
             { name = 'path' },
+            { name = 'git' },
           },
 
           -- if lsp is not available, use buffer
@@ -104,6 +105,18 @@ return {
       'hrsh7th/cmp-cmdline',
       'hrsh7th/cmp-nvim-lsp',
       'hrsh7th/cmp-path',
+      {
+        'petertriho/cmp-git',
+        config = function()
+          require('cmp_git').setup({
+            github = {
+              issues = {
+                state = 'all',
+              },
+            },
+          })
+        end,
+      },
       'onsails/lspkind.nvim',
       'saadparwaiz1/cmp_luasnip',
       {

@@ -26,7 +26,9 @@ if vim.fn.isdirectory(vim.env.CACHE) == 0 then
   vim.fn.mkdir(vim.env.CACHE, 'p')
 end
 
+-- these should be set before loading lazy
 vim.g.mapleader = ' '
+vim.g.maplocalleader = '-'
 
 require('core/lazy')
 
