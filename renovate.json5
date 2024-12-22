@@ -22,7 +22,7 @@
     },
     {
       groupName: 'fzf updates',
-      matchPackagePatterns: ['junegunn/fzf', 'junegunn/fzf/fzf-tmux'],
+      matchPackageNames: ['junegunn/fzf', 'junegunn/fzf/fzf-tmux'],
     },
   ],
 }
