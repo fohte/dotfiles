@@ -6,7 +6,7 @@
   ],
   packageRules: [
     {
-      matchPackagePatterns: ['/^aquaproj//'],
+      matchPackageNames: ['/^aquaproj//'],
       schedule: ['after 9am every saturday'],
       matchUpdateTypes: ['minor', 'patch'],
       automerge: true,
