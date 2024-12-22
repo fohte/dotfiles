@@ -20,5 +20,9 @@
       automerge: true,
       matchUpdateTypes: ['patch'],
     },
+    {
+      groupName: 'fzf updates',
+      matchPackagePatterns: ['junegunn/fzf', 'junegunn/fzf/fzf-tmux'],
+    },
   ],
 }
