@@ -24,7 +24,9 @@ jobs:
 
       - name: test
         run: |
+          jsonnet --version
           cd config/aquaskk
+          jsonnet --version
           jsonnet romaji.jsonnet | jq -r 'to_entries[] | "\(.key),\(.value[0]),\(.value[1]),\(.value[1])"' | iconv -f UTF-8 -t EUC-JP
 
       - name: Run pre-commit hooks
