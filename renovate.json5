@@ -15,7 +15,7 @@
     {
       groupName: 'aqua patch',
       groupSlug: 'aqua-patch',
-      matchFileNames: ['aqua.yaml'],
+      matchFileNames: ['**/aqua.yaml'],
       schedule: ['after 9am every saturday'],
       automerge: true,
       matchUpdateTypes: ['patch'],
