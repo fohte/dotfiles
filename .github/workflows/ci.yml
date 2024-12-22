@@ -18,7 +18,7 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
 
-      - uses: aquaproj/aqua-installer@v3.0.1
+      - uses: aquaproj/aqua-installer@v3.1.0
         with:
           aqua_version: v2.28.0
 
