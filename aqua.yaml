@@ -5,3 +5,4 @@ packages:
   - name: mvdan/sh@v3.9.0
   - name: google/jsonnet@v0.20.0
   - name: oven-sh/bun@bun-v1.1.42
+  - name: pre-commit/pre-commit@v4.0.1
