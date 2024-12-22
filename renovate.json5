@@ -6,23 +6,38 @@
   ],
   packageRules: [
     {
-      matchPackageNames: ['/^aquaproj//'],
-      schedule: ['after 9am every saturday'],
-      matchUpdateTypes: ['minor', 'patch'],
+      matchPackageNames: [
+        '/^aquaproj//',
+      ],
+      schedule: [
+        'after 9am on saturday',
+      ],
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+      ],
       automerge: true,
     },
-    // automerge patch updates
     {
       groupName: 'aqua patch',
       groupSlug: 'aqua-patch',
-      matchFileNames: ['**/aqua.yaml'],
-      schedule: ['after 9am every saturday'],
+      matchFileNames: [
+        '**/aqua.yaml',
+      ],
+      schedule: [
+        'after 9am on saturday',
+      ],
       automerge: true,
-      matchUpdateTypes: ['patch'],
+      matchUpdateTypes: [
+        'patch',
+      ],
     },
     {
       groupName: 'fzf updates',
-      matchPackageNames: ['junegunn/fzf', 'junegunn/fzf/fzf-tmux'],
+      matchPackageNames: [
+        'junegunn/fzf',
+        'junegunn/fzf/fzf-tmux',
+      ],
     },
   ],
 }
