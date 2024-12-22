@@ -11,5 +11,14 @@
       matchUpdateTypes: ['minor', 'patch'],
       automerge: true,
     },
+    // automerge patch updates
+    {
+      groupName: 'aqua patch',
+      groupSlug: 'aqua-patch',
+      matchFileNames: ['aqua.yaml'],
+      schedule: ['after 9am every saturday'],
+      automerge: true,
+      matchUpdateTypes: ['patch'],
+    },
   ],
 }
