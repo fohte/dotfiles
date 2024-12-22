@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: aquaproj/aqua-installer@v3.0.1
+        with:
+          aqua_version: v2.28.0
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files
+
+      - id: auto-commit-action
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_user_name: 'fohte-bot[bot]'
+          commit_user_email: '139195068+fohte-bot[bot]@users.noreply.github.com'
+          commit_author: 'fohte-bot[bot] <139195068+fohte-bot[bot]@users.noreply.github.com>'
+
+      - name: Run if changes have been detected
+        if: steps.auto-commit-action.outputs.changes_detected == 'true'
+        run: |
+          echo 'Changes detected. Committing and pushing to remote.'
+          exit 1
