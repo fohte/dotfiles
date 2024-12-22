@@ -30,6 +30,7 @@ jobs:
         with:
           commit_user_name: 'fohte-bot[bot]'
           commit_user_email: '139195068+fohte-bot[bot]@users.noreply.github.com'
+          commit_author: 'fohte-bot[bot] <139195068+fohte-bot[bot]@users.noreply.github.com>'
 
       - name: Run if changes have been detected
         if: steps.auto-commit-action.outputs.changes_detected == 'true'
