@@ -63,6 +63,7 @@ alias gs='git status'
 alias gsc='git with-stash commit'
 alias gscm='git with-stash commit -m'
 alias gsco='git with-stash commit --amend --no-edit'
+alias gsm='git switch $(git main) && git pull'
 alias gsp='git stash pop'
 alias gss='git stash save'
 
