@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# usage: ghn <octo-args...>
+# ghn (GitHub Neovim) is a wrapper for the Octo plugin
+
+nvim -c "Octo $*"
