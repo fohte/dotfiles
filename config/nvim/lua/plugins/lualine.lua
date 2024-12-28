@@ -33,8 +33,21 @@ return {
           end,
         },
         lualine_x = { 'encoding' },
-        lualine_y = { 'branch', 'diff', 'location' },
+        lualine_y = { 'diff', 'location' },
         lualine_z = { 'filetype' },
+      },
+      tabline = {
+        lualine_a = {
+          {
+            'tabs',
+            mode = 2, -- 2: Shows tab_nr + tab_name
+          },
+        },
+        lualine_b = {},
+        lualine_c = {},
+        lualine_x = {},
+        lualine_y = { 'branch' },
+        lualine_z = {},
       },
     })
   end,
