@@ -59,11 +59,8 @@ return {
       end
     end
 
-    set_hl({ 'DiffAdd', 'DiffAdded', 'DiffviewDiffAdd' }, { bg = darken(colors.base0B, 0.8) }) -- green
-    set_hl(
-      { 'DiffDelete', 'DiffRemoved', 'DiffviewDiffAddAsDelete', 'DiffviewDiffDelete' },
-      { bg = darken(colors.base08, 0.8) }
-    ) -- red
+    set_hl({ 'DiffAdd', 'DiffAdded' }, { bg = darken(colors.base0B, 0.8) }) -- green
+    set_hl({ 'DiffDelete', 'DiffRemoved' }, { bg = darken(colors.base08, 0.8) }) -- red
     set_hl({ 'DiffviewDiffTextAdd' }, { bg = darken(colors.base0B, 0.7) })
     set_hl({ 'DiffviewDiffTextDelete' }, { bg = darken(colors.base08, 0.7) })
 
