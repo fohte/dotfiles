@@ -15,6 +15,7 @@ vim.filetype.add({
     ['.babelrc'] = 'json',
     ['.prettierrc'] = 'json',
     ['Jenkinsfile'] = 'groovy',
+    ['Steepfile'] = 'ruby',
   },
   pattern = {
     -- `.env.*`
