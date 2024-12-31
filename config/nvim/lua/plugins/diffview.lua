@@ -9,13 +9,13 @@ return {
             if ctx.symbol == 'a' then
               vim.opt_local.winhl = table.concat({
                 'DiffAdd:DiffviewDiffAddAsDelete',
-                'DiffDelete:DiffviewDiffDelete',
+                'DiffDelete:DiffviewDiffDeleteDim',
                 'DiffText:DiffviewDiffTextDelete',
                 'DiffChange:DiffviewDiffDelete',
               }, ',')
             elseif ctx.symbol == 'b' then
               vim.opt_local.winhl = table.concat({
-                'DiffDelete:DiffviewDiffDelete',
+                'DiffDelete:DiffviewDiffDeleteDim',
                 'DiffChange:DiffviewDiffAdd',
                 'DiffText:DiffviewDiffTextAdd',
               }, ',')
