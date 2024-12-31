@@ -19,7 +19,9 @@ return {
       cmp.setup({
         snippet = {
           expand = function(args)
-            vim.fn['UltiSnips#Anon'](args.body) -- For `ultisnips` users.
+            if vim.fn.exists('*UltiSnips#Anon') == 1 then
+              vim.fn['UltiSnips#Anon'](args.body) -- For `ultisnips` users.
+            end
           end,
         },
 
