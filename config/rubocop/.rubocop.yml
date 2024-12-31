@@ -37,3 +37,6 @@ Layout/FirstArrayElementIndentation:
 
 Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent
+
+Layout/LeadingCommentSpace:
+  AllowRBSInlineAnnotation: true

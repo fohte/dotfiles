@@ -57,6 +57,7 @@ return {
           'pylsp',
           'pyright',
           'solargraph',
+          'steep',
           'tailwindcss',
           'terraformls',
           'tsserver',
