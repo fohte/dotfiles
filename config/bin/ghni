@@ -26,6 +26,11 @@ if [ "$#" -gt 1 ]; then
   exit 1
 fi
 
+if ! command -v nvr &> /dev/null; then
+  echo "error: 'nvr' is not installed. please install it with 'pip install neovim-remote'" >&2
+  exit 1
+fi
+
 url="${1:-$(pbpaste)}"
 
 if [[ "$url" =~ ^https://github\.com/([^/]+)/([^/]+)/issues/([0-9]+)$ ]]; then
