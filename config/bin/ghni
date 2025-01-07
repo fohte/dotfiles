@@ -59,7 +59,7 @@ if nvr --nostart --servername "$nvim_socket" --remote-expr 1 > /dev/null 2>&1; t
   issue_buf="octo://${owner}/${reponame}/issue/${issue_num}"
 
   found_tab="$(nvr --servername "$nvim_socket" \
-    --remote-expr "luaeval('require(\"user.octo\").find_issue_tab(\"${issue_buf}\")')")"
+    --remote-expr "bufnr(\"${issue_buf}\")")"
 
   if [ "$found_tab" -gt 0 ]; then # if tab found, switch to it
     nvr --servername "$nvim_socket" --remote-send "<cmd>tabnext ${found_tab}<cr>"
