@@ -11,9 +11,10 @@ vim.filetype.add({
     alloy = 'hcl',
   },
   filename = {
-    ['.themisrc'] = 'vim',
     ['.babelrc'] = 'json',
+    ['.envrc'] = 'bash',
     ['.prettierrc'] = 'json',
+    ['.themisrc'] = 'vim',
     ['Jenkinsfile'] = 'groovy',
     ['Steepfile'] = 'ruby',
   },
