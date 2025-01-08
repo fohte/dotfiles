@@ -137,6 +137,28 @@ gocd() {
   dir="$(echo $GOPATH/src/*/*/* | perl -pe 's/ /\n/g' | fzf)" && cd $dir
 }
 
+# cd to some plugin direcotries
+# usage: plugcd <plugin-name>
+plugcd() {
+  local dirs
+
+  case "$1" in
+    lazy)
+      dirs="$(find "${XDG_DATA_HOME:-$HOME/.local/share}/nvim/lazy" -mindepth 1 -maxdepth 1 -type d)"
+      ;;
+    *)
+      cat << EOF
+error: unknown plugin name $1
+valid plugin names:
+  lazy
+EOF
+      return 1
+      ;;
+  esac
+
+  dir="$(echo $dirs | fzf)" && cd "$dir"
+}
+
 # usage: gh-review <pr-url>
 gh-review() {
   pr_url="$1"
