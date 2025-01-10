@@ -4,4 +4,4 @@ set -euo pipefail
 
 # usage: <json-stdin> | jqplay
 
-nvim -c 'Jqplay'
+nvim -c "Jqplay $*"
