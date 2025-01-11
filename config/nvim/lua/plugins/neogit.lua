@@ -32,5 +32,7 @@ return {
   end,
   keys = {
     { '<Leader>nt', ':Neogit<CR>', mode = 'n', silent = true },
+    { '<Leader>nc', ':Neogit commit<CR>', mode = 'n', silent = true },
+    { '<Leader>nd', ':Neogit diff<CR>', mode = 'n', silent = true },
   },
 }
