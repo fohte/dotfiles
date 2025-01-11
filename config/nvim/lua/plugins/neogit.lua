@@ -31,6 +31,6 @@ return {
     })
   end,
   keys = {
-    { '<Leader>t', ':Neogit<CR>', mode = 'n', silent = true },
+    { '<Leader>nt', ':Neogit<CR>', mode = 'n', silent = true },
   },
 }
