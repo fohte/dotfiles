@@ -35,6 +35,9 @@ return {
       -- workaround support zsh syntax
       -- ref: https://github.com/nvim-treesitter/nvim-treesitter/issues/655#issuecomment-1470096879
       vim.treesitter.language.register('bash', 'zsh')
+
+      -- use treesitter markdown parser with Octo.nvim buffers
+      vim.treesitter.language.register('markdown', 'octo')
     end,
   },
 }
