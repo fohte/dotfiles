@@ -1,5 +1,6 @@
 return {
-  'pwntester/octo.nvim',
+  'fohte/octo.nvim',
+  branch = 'fohte/conceallevel',
   config = function()
     require('octo').setup({
       mappings_disable_default = true,
@@ -129,13 +130,6 @@ return {
           toggle_viewed = { lhs = '<localleader><space>', desc = 'toggle viewer viewed state' },
         },
       },
-    })
-
-    vim.api.nvim_create_autocmd('FileType', {
-      pattern = 'octo',
-      callback = function()
-        vim.opt_local.conceallevel = 0
-      end,
     })
   end,
 }
