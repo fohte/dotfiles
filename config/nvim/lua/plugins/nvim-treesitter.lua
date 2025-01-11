@@ -20,6 +20,7 @@ return {
           'json5',
           'lua',
           'markdown',
+          'python',
           'ruby',
           'tsx',
           'typescript',
