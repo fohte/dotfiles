@@ -20,7 +20,7 @@ jobs:
 
       - uses: aquaproj/aqua-installer@v3.1.0
         with:
-          aqua_version: v2.41.0
+          aqua_version: v2.42.2
 
       - name: Run pre-commit hooks
         run: pre-commit run --all-files
