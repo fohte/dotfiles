@@ -10,7 +10,7 @@ packages:
   - name: junegunn/fzf/fzf-tmux@v0.57.0
   - name: dandavison/delta@0.18.2
   - name: 1password/cli@v2.30.0
-  - name: mikefarah/yq@v4.44.6
+  - name: mikefarah/yq@v4.45.1
   - name: JohnnyMorganz/StyLua@v0.20.0
   - name: mvdan/sh@v3.10.0
   - name: koalaman/shellcheck@v0.10.0
