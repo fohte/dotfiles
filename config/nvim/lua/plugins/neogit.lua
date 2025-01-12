@@ -12,7 +12,7 @@ return {
       graph_style = 'unicode',
 
       commit_editor = {
-        kind = 'auto',
+        kind = 'tab',
       },
       log_view = {
         kind = 'auto',
