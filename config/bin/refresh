@@ -2,10 +2,22 @@
 
 set -euo pipefail
 
+with_stash() {
+  git stash
+  "$@"
+  git stash pop
+}
+
 update-skk-dictionary
 
 cd "$(ghq list -p dotfiles)"
-git stash && git pull && git stash pop
+
+if git diff --quiet; then
+  git pull
+else
+  with_stash git pull
+fi
+
 nvim --headless -c 'Lazy! restore' +q
 aqua i -a
 pre-commit run
