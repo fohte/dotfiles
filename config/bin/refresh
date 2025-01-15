@@ -3,4 +3,11 @@
 set -euo pipefail
 
 update-skk-dictionary
+
+cd "$(ghq list -p dotfiles)"
+git stash && git pull && git stash pop
+nvim --headless -c 'Lazy! restore' +q
+aqua i -a
+pre-commit run
+
 brew upgrade
