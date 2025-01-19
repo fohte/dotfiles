@@ -1,7 +1,7 @@
 {
   "rules": [
     {
-      "description": "Left/Right Command/Option -> 英数/かな (rev: 945bb510e052053061cc8c11f118ed8d)",
+      "description": "Left/Right Command/Option -> 英数/かな (rev: 4a267f0d22c27dc02dc4b8ccfacd4de3)",
       "manipulators": [
         {
           "conditions": [
@@ -31,7 +31,7 @@
           ],
           "to_if_alone": [
             {
-              "key_code": "q",
+              "key_code": "quote",
               "modifiers": ["left_control"]
             }
           ],
@@ -185,7 +185,7 @@
           ],
           "to_if_alone": [
             {
-              "key_code": "q",
+              "key_code": "quote",
               "modifiers": ["left_control"]
             }
           ],

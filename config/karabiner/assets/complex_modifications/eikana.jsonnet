@@ -24,23 +24,28 @@ local manipulate(from, to, is_skk) = {
   ],
 };
 
+local eisuu = { key_code: 'japanese_eisuu' };
+local kana = { key_code: 'japanese_kana' };
+local eisuu_skk = { modifiers: ['left_control'], key_code: 'quote' };
+local kana_skk = { modifiers: ['left_control'], key_code: 't' };
+
 local manipulators =
   [
     // [on AquaSKK] Left/Right Command -> Ctrl+q/Ctrl+t
-    manipulate('left_command', { modifiers: ['left_control'], key_code: 'q' }, true),
-    manipulate('right_command', { modifiers: ['left_control'], key_code: 't' }, true),
+    manipulate('left_command', eisuu_skk, true),
+    manipulate('right_command', kana_skk, true),
 
     // [not on AquaSKK] Left/Right Command -> 英数/かな
-    manipulate('left_command', { key_code: 'japanese_eisuu' }, false),
-    manipulate('right_command', { key_code: 'japanese_kana' }, false),
+    manipulate('left_command', eisuu, false),
+    manipulate('right_command', kana, false),
 
     // [on AquaSKK] Left/Right Option -> Ctrl+q/Ctrl+t
-    manipulate('left_option', { modifiers: ['left_control'], key_code: 'q' }, true),
-    manipulate('right_option', { modifiers: ['left_control'], key_code: 't' }, true),
+    manipulate('left_option', eisuu_skk, true),
+    manipulate('right_option', kana_skk, true),
 
     // [not on AquaSKK] Left/Right Option -> 英数/かな
-    manipulate('left_option', { key_code: 'japanese_eisuu' }, false),
-    manipulate('right_option', { key_code: 'japanese_kana' }, false),
+    manipulate('left_option', eisuu, false),
+    manipulate('right_option', kana, false),
 
   ];
 
