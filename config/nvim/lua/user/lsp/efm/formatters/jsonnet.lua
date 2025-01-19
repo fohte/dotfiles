@@ -1,4 +1,4 @@
 return {
-  formatCommand = 'jsonnetfmt -- ${INPUT}',
+  formatCommand = 'jsonnetfmt -',
   formatStdin = true,
 }
