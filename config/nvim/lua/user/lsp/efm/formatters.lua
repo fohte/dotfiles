@@ -20,4 +20,6 @@ formatters['goimports'] = require('efmls-configs.formatters.goimports')
 
 formatters['textlint'] = require('user.lsp.efm.formatters.textlint')
 
+formatters['jsonnet'] = require('user.lsp.efm.formatters.jsonnet')
+
 return formatters

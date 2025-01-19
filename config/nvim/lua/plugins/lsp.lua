@@ -119,6 +119,10 @@ return {
                 formatters = { 'prettier' },
               },
               {
+                languages = { 'jsonnet' },
+                formatters = { 'jsonnet' },
+              },
+              {
                 languages = { 'markdown', 'review' },
                 linters = { 'textlint' },
                 -- The textlint formatter may not be reflected & 2 blank lines may be added to the end of the file, so it is temporarily disabled
