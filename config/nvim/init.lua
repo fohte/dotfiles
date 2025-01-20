@@ -78,6 +78,7 @@ vim.opt.laststatus = 2
 
 vim.opt.list = true
 vim.opt.wrap = false
+vim.opt.list = true
 vim.opt.listchars:append({ precedes = '<', extends = '>' })
 
 vim.opt.synmaxcol = 1000
