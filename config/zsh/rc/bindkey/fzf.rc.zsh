@@ -1,3 +1,8 @@
+# bind ^F instead of ^T
+bindkey -M emacs '^F' fzf-file-widget
+bindkey -M vicmd '^F' fzf-file-widget
+bindkey -M viins '^F' fzf-file-widget
+
 bindkey -r '^G'
 
 _append_to_lbuffer() {
@@ -20,7 +25,7 @@ fzf-git-nocommit-file() {
   _append_to_lbuffer "${selected}"
 }
 zle -N fzf-git-nocommit-file
-bindkey '^G^T' fzf-git-nocommit-file
+bindkey '^G^F' fzf-git-nocommit-file
 
 fzf-git-log() {
   local selected
