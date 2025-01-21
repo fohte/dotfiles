@@ -23,10 +23,6 @@ defineOpenAppHotkey({ 'alt' }, '2', function()
   hs.application.launchOrFocus('/Applications/Arc.app')
 end)
 
-defineOpenAppHotkey({ 'alt' }, '3', function()
-  hs.application.launchOrFocus('/Applications/Slack.app')
-end)
-
 defineOpenAppHotkey({ 'alt' }, '5', function()
   hs.application.launchOrFocus('/Applications/ChatGPT.app')
 end)
