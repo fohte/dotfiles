@@ -9,7 +9,7 @@ return {
     end,
     keys = {
       {
-        '<C-t>',
+        '<C-e>',
         function()
           require('luasnip').expand()
         end,
