@@ -1,7 +1,7 @@
 {
   "rules": [
     {
-      "description": "Left/Right Command/Option -> 英数/かな (rev: 4a267f0d22c27dc02dc4b8ccfacd4de3)",
+      "description": "Left/Right Command/Option -> 英数/かな (rev: 734aedfabd3d2259aee72889cd17c6a8)",
       "manipulators": [
         {
           "conditions": [
@@ -70,7 +70,7 @@
           ],
           "to_if_alone": [
             {
-              "key_code": "t",
+              "key_code": "j",
               "modifiers": ["left_control"]
             }
           ],
@@ -224,7 +224,7 @@
           ],
           "to_if_alone": [
             {
-              "key_code": "t",
+              "key_code": "j",
               "modifiers": ["left_control"]
             }
           ],

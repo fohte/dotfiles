@@ -27,7 +27,7 @@ local manipulate(from, to, is_skk) = {
 local eisuu = { key_code: 'japanese_eisuu' };
 local kana = { key_code: 'japanese_kana' };
 local eisuu_skk = { modifiers: ['left_control'], key_code: 'quote' };
-local kana_skk = { modifiers: ['left_control'], key_code: 't' };
+local kana_skk = { modifiers: ['left_control'], key_code: 'j' };
 
 local manipulators =
   [
