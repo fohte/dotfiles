@@ -17,7 +17,7 @@ return {
         silent = true,
       },
       {
-        '<C-j>',
+        '<Tab>',
         function()
           require('luasnip').jump(1)
         end,
@@ -25,7 +25,7 @@ return {
         silent = false,
       },
       {
-        '<C-k>',
+        '<S-Tab>',
         function()
           require('luasnip').jump(-1)
         end,
