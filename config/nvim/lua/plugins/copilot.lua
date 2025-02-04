@@ -1,6 +1,8 @@
 return {
   {
     'zbirenbaum/copilot.lua',
+    -- renovate: datasource=github-releases depName=zbirenbaum/copilot.lua
+    commit = '86537b286f18783f8b67bccd78a4ef4345679625',
     cmd = 'Copilot',
     event = 'InsertEnter',
     config = function()
@@ -17,7 +19,9 @@ return {
   },
   {
     'CopilotC-Nvim/CopilotChat.nvim',
+    -- renovate: datasource=github-releases depName=CopilotC-Nvim/CopilotChat.nvim
     branch = 'canary',
+    commit = '43d033b68c8bede4cc87092c7db6bb3bbb2fe145',
     dependencies = {
       { 'zbirenbaum/copilot.lua' }, -- or github/copilot.vim
       { 'nvim-lua/plenary.nvim' }, -- for curl, log wrapper
@@ -53,6 +57,8 @@ return {
   },
   {
     'yetone/avante.nvim',
+    -- renovate: datasource=github-releases depName=yetone/avante.nvim
+    commit = '0705234991d03170a72582085dc508600a03a779',
     event = 'VeryLazy',
     lazy = false,
     opts = {

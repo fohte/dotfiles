@@ -1,5 +1,7 @@
 return {
   'haya14busa/vim-asterisk',
+  -- renovate: datasource=github-releases depName=haya14busa/vim-asterisk
+  commit = '77e97061d6691637a034258cc415d98670698459',
   config = function()
     vim.g['asterisk#keeppos'] = 1
   end,

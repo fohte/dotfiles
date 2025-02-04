@@ -24,5 +24,10 @@
       groupName: 'fzf updates',
       matchPackageNames: ['junegunn/fzf', 'junegunn/fzf/fzf-tmux'],
     },
+    {
+      matchPackagePatterns: ['^nvim/lua/plugins/.*\\.lua$'],
+      matchStrings: ['renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\n'],
+      extractVersion: '^\\s*commit\\s*=\\s*["\']?(?<version>[a-f0-9]+)["\']?\\s*,?\\n',
+    },
   ],
 }
