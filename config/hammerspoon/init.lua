@@ -50,8 +50,3 @@ defineOpenAppHotkey({ 'alt' }, '4', function()
     yabai.run('window --focus ' .. window_id)
   end
 end)
-
--- open Obsidian to create a Zettelkasten note
-defineOpenAppHotkey({ 'alt' }, 'n', function()
-  hs.urlevent.openURL('obsidian://advanced-uri?commandid=quickadd%253Achoice%253A0c5f0598-dc5f-47db-863c-bc867fdc2625')
-end)
