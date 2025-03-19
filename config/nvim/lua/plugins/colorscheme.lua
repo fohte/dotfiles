@@ -45,6 +45,8 @@ end
 
 return {
   'RRethy/nvim-base16',
+  -- renovate: datasource=github-releases depName=RRethy/nvim-base16
+  commit = '6ac181b5733518040a33017dde654059cd771b7c',
   config = function()
     local utils = require('utils')
 
