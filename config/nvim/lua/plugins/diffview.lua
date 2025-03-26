@@ -1,5 +1,7 @@
 return {
   'sindrets/diffview.nvim',
+  -- renovate: datasource=github-releases depName=sindrets/diffview.nvim
+  commit = '4516612fe98ff56ae0415a259ff6361a89419b0a',
   config = function()
     require('diffview').setup({
       -- base: https://github.com/sindrets/diffview.nvim/pull/258#issuecomment-1408689220
