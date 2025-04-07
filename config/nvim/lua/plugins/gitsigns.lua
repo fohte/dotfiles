@@ -1,5 +1,7 @@
 return {
   'lewis6991/gitsigns.nvim',
+  -- renovate: datasource=github-releases depName=lewis6991/gitsigns.nvim
+  commit = '562dc47189ad3c8696dbf460d38603a74d544849',
   config = function()
     require('gitsigns').setup({
       current_line_blame = true,
