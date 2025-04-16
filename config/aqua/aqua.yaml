@@ -15,7 +15,7 @@ packages:
   - name: mvdan/sh@v3.10.0
   - name: koalaman/shellcheck@v0.10.0
   - name: pre-commit/pre-commit@v4.1.0
-  - name: neovim/neovim@v0.10.4
+  - name: neovim/neovim@v0.11.0
   - name: google/go-jsonnet@v0.20.0
   - name: pkgxdev/pkgx@v2.5.0
   - name: eza-community/eza@v0.21.0
