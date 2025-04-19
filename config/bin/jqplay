@@ -4,4 +4,38 @@ set -euo pipefail
 
 # usage: <json-stdin> | jqplay
 
-nvim -c "Jqplay $*"
+json="$(mktemp -t jqplay.XXXXXX.json)"
+cat > "$json"
+
+jq_query="$(mktemp -t jqplay.XXXXXX.jq)"
+
+result="$(mktemp -t jqplay.XXXXXX.result)"
+
+nvim "$json" \
+  +"Jqplay" \
+  +"lua
+    local qf = vim.fn.expand('$jq_query')
+    local out = vim.fn.expand('$result')
+
+    vim.api.nvim_create_autocmd('VimLeavePre', {
+      callback = function()
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+          local name = vim.api.nvim_buf_get_name(buf)
+          if name:match('^jq%-filter://') then
+            vim.fn.writefile(vim.api.nvim_buf_get_lines(buf,0,-1,false), qf)
+          elseif name:match('^jq%-output://') then
+            vim.fn.writefile(vim.api.nvim_buf_get_lines(buf,0,-1,false), out)
+          end
+        end
+      end
+    })"
+
+echo "=== filter ==="
+cat "$jq_query"
+
+if [ -s "$jq_query" ]; then
+  echo "=== filter result ==="
+  jq -f "$jq_query" < "$json"
+else
+  echo "=== empty filter ==="
+fi
