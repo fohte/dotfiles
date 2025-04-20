@@ -19,14 +19,24 @@ local function create_autocmd_to_save_query_and_result(jq_query_path, result_pat
 end
 
 local function customize_jq_filter_pane()
-  -- focus on the filter window and start the insert mode
   vim.schedule(function()
     for _, win in ipairs(vim.api.nvim_list_wins()) do
       local buf = vim.api.nvim_win_get_buf(win)
       local name = vim.api.nvim_buf_get_name(buf)
+
       if name:match('^jq%-filter://') then
+        -- focus on the filter window
         vim.api.nvim_set_current_win(win)
+
+        -- <C-w>J to move the filter window to the bottom
+        vim.cmd('wincmd J')
+
+        -- resize 10 lines
+        vim.api.nvim_win_set_height(0, 10)
+
+        -- start insert mode
         vim.cmd('startinsert')
+
         break
       end
     end
