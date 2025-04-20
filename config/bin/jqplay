@@ -12,38 +12,8 @@ jq_query="$(mktemp -t jqplay.XXXXXX.jq)"
 result="$(mktemp -t jqplay.XXXXXX.result)"
 
 nvim "$json" \
-  +"Jqplay" \
-  +"lua
-    local qf = vim.fn.expand('$jq_query')
-    local out = vim.fn.expand('$result')
-
-    -- save the query and result to files
-    vim.api.nvim_create_autocmd('VimLeavePre', {
-      callback = function()
-        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-          local name = vim.api.nvim_buf_get_name(buf)
-          if name:match('^jq%-filter://') then
-            vim.fn.writefile(vim.api.nvim_buf_get_lines(buf,0,-1,false), qf)
-          elseif name:match('^jq%-output://') then
-            vim.fn.writefile(vim.api.nvim_buf_get_lines(buf,0,-1,false), out)
-          end
-        end
-      end
-    })
-
-    -- focus on the filter window and start the insert mode
-    vim.schedule(function()
-      for _, win in ipairs(vim.api.nvim_list_wins()) do
-        local buf = vim.api.nvim_win_get_buf(win)
-        local name = vim.api.nvim_buf_get_name(buf)
-        if name:match('^jq%-filter://') then
-          vim.api.nvim_set_current_win(win)
-          vim.cmd('startinsert')
-          break
-        end
-      end
-    end)
-"
+  +"Jqplay $*" \
+  +"lua require('user.jqplay').setup('$jq_query', '$result')"
 
 echo '$' jq "$@" "$(cat "$jq_query")" | bat --style=plain -l bash
 
