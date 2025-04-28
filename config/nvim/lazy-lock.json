@@ -55,7 +55,7 @@
   "vim-github-link": { "branch": "master", "commit": "0612c180d699c5d298e5181befa1830980e8e083" },
   "vim-illuminate": { "branch": "master", "commit": "5eeb7951fc630682c322e88a9bbdae5c224ff0aa" },
   "vim-jqplay": { "branch": "master", "commit": "219cfed158f1e5bba249ea76b02717fe17b56b84" },
-  "vim-matchup": { "branch": "master", "commit": "1535a769d5dca851fe7d41b0be95f7c7203a4bef" },
+  "vim-matchup": { "branch": "master", "commit": "ea2ff43e09e68b63fc6d9268fc5d82d82d433cb3" },
   "vim-operator-replace": { "branch": "master", "commit": "1345a556a321a092716e149d4765a5e17c0e9f0f" },
   "vim-operator-sort": { "branch": "master", "commit": "0c72bc4e3db9fc873b64baa5e4002f396a971369" },
   "vim-operator-surround": { "branch": "master", "commit": "80337a40a829cfc77b065a71d8a609e2ad7d2c8b" },
