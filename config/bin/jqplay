@@ -5,7 +5,7 @@ set -euo pipefail
 # usage: <json-stdin> | jqplay
 
 json="$(mktemp -t jqplay.XXXXXX.json)"
-cat > "$json"
+cat | jq > "$json"
 
 jq_query="$(mktemp -t jqplay.XXXXXX.jq)"
 
