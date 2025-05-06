@@ -5,7 +5,6 @@
 
 [core]
 	pager = less --tabs=4 -RFX
-	commentchar = ";"
 	quotepath = false
 
 [pager]
