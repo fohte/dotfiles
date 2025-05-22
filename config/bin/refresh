@@ -18,6 +18,8 @@ else
   with_stash git pull
 fi
 
+scripts/deploy
+
 nvim --headless -c 'Lazy! restore' +q
 aqua i -a
 pre-commit run
