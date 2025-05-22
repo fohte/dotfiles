@@ -82,14 +82,6 @@ if match_tag prettier; then
   sym config/prettier/.prettierrc ~/.prettierrc
 fi
 
-if match_tag yabai; then
-  sym config/yabai ~/.config/yabai
-fi
-
-if match_tag borders; then
-  sym config/borders ~/.config/borders
-fi
-
 if match_tag aquaskk; then
   sym config/aquaskk/romaji.rule "$HOME/Library/Application Support/AquaSKK/romaji.rule"
   sym config/aquaskk/keymap.conf "$HOME/Library/Application Support/AquaSKK/keymap.conf"
