@@ -1,3 +1,8 @@
+# mise for Node.js version management
+if has 'mise'; then
+  eval "$(mise activate zsh)"
+fi
+
 export NODENV_PATH="$HOME/.nodenv"
 
 if [ -d "$NODENV_PATH" ]; then
