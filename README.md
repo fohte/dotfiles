@@ -4,6 +4,8 @@
 
 [@fohte](https://github.com/fohte)'s personal dotfiles for macOS and Linux environments.
 
+![Terminal Screenshot](https://github.com/user-attachments/assets/1d966208-a3cd-4c22-97d7-738fb5df0b2e)
+
 ## 🛠️ Tools & Configuration
 
 - ✏️ **Editor**
