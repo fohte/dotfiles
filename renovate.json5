@@ -4,13 +4,11 @@
     'github>fohte/renovate-config:base.json5',
     'github>aquaproj/aqua-renovate-config#2.2.1',
   ],
-  mise: {
-    enabled: true,
-  },
+  enabledManagers: ['mise'],
   packageRules: [
     {
       matchPackageNames: ['/^aquaproj//'],
-      schedule: ['after 9am every saturday'],
+      schedule: ['after 9am on saturday'],
       matchUpdateTypes: ['minor', 'patch'],
       automerge: true,
     },
@@ -19,7 +17,7 @@
       groupName: 'aqua patch',
       groupSlug: 'aqua-patch',
       matchFileNames: ['**/aqua.yaml'],
-      schedule: ['after 9am every saturday'],
+      schedule: ['after 9am on saturday'],
       automerge: true,
       matchUpdateTypes: ['patch'],
     },
@@ -30,7 +28,7 @@
     {
       groupName: 'mise tools',
       matchManagers: ['mise'],
-      schedule: ['after 9am every saturday'],
+      schedule: ['after 9am on saturday'],
       automerge: true,
       matchUpdateTypes: ['patch'],
     },
