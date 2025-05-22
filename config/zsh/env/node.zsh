@@ -1,9 +1,6 @@
-export NODENV_PATH="$HOME/.nodenv"
-
-if [ -d "$NODENV_PATH" ]; then
-  add_path \
-    "$NODENV_PATH"/bin(N-/) \
-    "$NODENV_PATH"/shims(N-/)
+# mise for Node.js version management
+if has 'mise'; then
+  eval "$(mise activate zsh)"
 fi
 
 add_path "$HOME"/.npm-global/bin(N-/)

@@ -23,6 +23,7 @@
     - **[Claude Code](https://github.com/anthropics/claude-code)** - AI coding assistant configuration ([config/claude](./config/claude))
 - ⚙️ **System Tools**
     - **[Aqua](https://aquaproj.github.io)** - Declarative CLI version manager ([config/aqua](./config/aqua))
+    - **[mise](https://mise.jdx.dev)** - Runtime and tool version manager ([config/mise](./config/mise))
     - **[ripgrep](https://github.com/BurntSushi/ripgrep)** - Fast text search tool ([config/rg](./config/rg))
     - **[GnuPG](https://gnupg.org)** - Encryption and signing tool ([config/gnupg](./config/gnupg))
 - 🖥️ **Desktop Apps**
