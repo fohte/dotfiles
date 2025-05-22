@@ -6,6 +6,7 @@
   ],
   mise: {
     enabled: true,
+    fileMatch: ['config/mise/config.toml'],
   },
   packageRules: [
     {
