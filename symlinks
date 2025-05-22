@@ -107,3 +107,7 @@ if match_tag claude; then
   sym config/claude/CLAUDE.md ~/.claude/CLAUDE.md
   sym config/claude/settings.json ~/.claude/settings.json
 fi
+
+if match_tag mise; then
+  sym config/mise ~/.config/mise
+fi
