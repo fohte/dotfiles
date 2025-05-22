@@ -55,9 +55,26 @@ refresh
 
 This command automatically updates the SKK dictionary, Neovim plugins, Aqua packages, and more.
 
-## 📦 Deployment
+## 🔧 How Deployment Works
 
-The `scripts/deploy` script places symbolic links in your home directory that point to the configuration files in this repository.
+### Symlink Configuration
+
+The deployment system uses the [`symlinks`](./symlinks) bash script to define how configuration files are linked to your system. This script contains conditional blocks that:
+
+- Check for specific tags using the `match_tag` function
+- Use the `sym` function to create symbolic links from source to destination
+- Handle platform-specific paths with `is_macos`, `is_linux`, `is_wsl` functions
+
+For example:
+```bash
+if match_tag nvim; then
+  sym config/nvim ~/.config/nvim
+fi
+```
+
+### Deploy Script Options
+
+The [`scripts/deploy`](./scripts/deploy) script reads the [`symlinks`](./symlinks) file and supports various options to customize the deployment process:
 
 - Deploy only specified configs:
   ```bash
