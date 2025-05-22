@@ -73,3 +73,9 @@ tmp/
 
 # asdf
 .tool-versions
+
+# LLM agents
+context_portal/
+
+# Claude Code
+**/.claude/settings.local.json
