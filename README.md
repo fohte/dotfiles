@@ -1,128 +1,50 @@
 # dotfiles
 
+![CI](https://github.com/fohte/dotfiles/actions/workflows/ci.yml/badge.svg)
+
 [@fohte](https://github.com/fohte)'s personal dotfiles for macOS, Linux environments.
 
-## Quick Install
+| Category | Tool | Configurations |
+| --- | --- | --- |
+| Editor | [Neovim](https://neovim.io) | [config/nvim](./config/nvim) |
+...
 
-### One-liner Installation
+## 🚀 Installation
 
-```bash
-curl -sL bit.ly/fohte-dots | sh
-```
-
-or
-
-```bash
-wget -O - bit.ly/fohte-dots | sh
-```
-
-### Manual Installation
+clone repository and run `scripts/deploy`
 
 ```bash
-git clone https://github.com/Fohte/dotfiles.git ~/.dotfiles
-cd ~/.dotfiles
-./scripts/deploy
+git clone https://github.com/fohte/dotfiles ~/ghq/github.com/fohte/dotfiles && cd ~/ghq/github.com/fohte/dotfiles && scripts/deploy
 ```
 
-## What's Included
-
-- **Shell**: Zsh with custom configuration and Starship prompt
-- **Editor**: Neovim with comprehensive plugin setup
-- **Terminal**: WezTerm, Tmux configuration
-- **Git**: Git configuration and utilities
-- **Tools**: Hammerspoon, Karabiner, Yabai (macOS), and various CLI tools
-
-## Deployment System
-
-The dotfiles use a tag-based deployment system via `scripts/deploy`:
-
-### Deploy Everything
+you can deploy specified configs with `--tags` (`-t`) option:
 
 ```bash
-./scripts/deploy
+scripts/deploy -t nvim,zsh
 ```
 
-### Deploy Specific Tools
+if you want to force deploy, you can use `--force` (`-f`) option:
 
 ```bash
-./scripts/deploy --tags nvim,git,zsh
+scripts/deploy -f
 ```
 
-### Available Options
+if you want to dry run, you can use `--dry-run` (`-n`) option:
 
-- `--help, -h`: Show help
-- `--dry-run, -n`: Preview what will be deployed
-- `--force, -f`: Overwrite existing files
-- `--tags, -t`: Deploy only specified tags (comma-separated)
-
-### Available Tags
-
-- `nvim` - Neovim configuration
-- `git` - Git configuration
-- `zsh` - Zsh shell configuration
-- `tmux` - Terminal multiplexer
-- `wezterm` - Terminal emulator
-- `hammerspoon` - macOS automation (macOS only)
-- `karabiner` - Key remapping (macOS only)
-- `yabai` - Window manager (macOS only)
-- `espanso` - Text expander
-- `aqua` - Package manager configuration
-- `claude` - Claude AI configuration
-- And more...
-
-## Platform Support
-
-- **macOS**: Full support with native tools (Hammerspoon, Karabiner, Yabai)
-- **Linux**: Core tools and configurations
-- **WSL**: Windows Subsystem for Linux support with platform-specific adaptations
-
-## Directory Structure
-
-```
-config/
-├── nvim/          # Neovim configuration with Lua
-├── zsh/           # Zsh configuration and plugins
-├── tmux/          # Tmux configuration
-├── git/           # Git configuration and ignore patterns
-├── wezterm/       # WezTerm terminal configuration
-├── hammerspoon/   # macOS automation scripts
-├── karabiner/     # Keyboard customization (macOS)
-├── yabai/         # Window manager (macOS)
-└── ...
+```bash
+scripts/deploy -f -t nvim -n
 ```
 
-## Key Features
+### Upgrade
 
-### Neovim Configuration
-- Modern Lua-based configuration
-- LSP support with automated installation
-- Treesitter for syntax highlighting
-- Telescope for fuzzy finding
-- Git integration with Fugitive and Gitsigns
+Run `refresh` command to upgrade blah, blah, blah...
 
-### Shell Configuration
-- Zsh with Zinit plugin manager
-- Starship prompt with Git integration
-- Custom aliases and functions
-- Cross-platform compatibility
+```bash
+refresh
+```
 
-### Terminal Setup
-- WezTerm with custom themes
-- Tmux with vim-like keybindings
-- Platform-specific optimizations
+and can deploy not symlinked files
 
-## Customization
-
-The configuration uses environment detection to automatically adapt to your platform. Most tools have sensible defaults but can be customized by editing files in the `config/` directory.
-
-For Neovim specifically, see the `config/nvim/` directory for the complete Lua configuration.
-
-## Requirements
-
-- Git (for cloning)
-- Curl or Wget (for one-liner installation)
-- Platform-specific package managers will be detected automatically
-
-## License
-
-MIT License - feel free to use and modify as needed.
+```bash
+scripts/deploy
+```
