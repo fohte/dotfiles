@@ -2,7 +2,7 @@ registries:
   - type: standard
     ref: v4.300.1 # renovate: depName=aquaproj/aqua-registry
 packages:
-  - name: mvdan/sh@v3.10.0
+  - name: mvdan/sh@v3.11.0
   - name: oven-sh/bun@bun-v1.2.13
   - name: pre-commit/pre-commit@v4.2.0
   - name: google/go-jsonnet@v0.20.0
