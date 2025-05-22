@@ -4,6 +4,9 @@
     'github>fohte/renovate-config:base.json5',
     'github>aquaproj/aqua-renovate-config#2.2.1',
   ],
+  mise: {
+    enabled: true,
+  },
   packageRules: [
     {
       matchPackageNames: ['/^aquaproj//'],
@@ -23,6 +26,13 @@
     {
       groupName: 'fzf updates',
       matchPackageNames: ['junegunn/fzf', 'junegunn/fzf/fzf-tmux'],
+    },
+    {
+      groupName: 'mise tools',
+      matchManagers: ['mise'],
+      schedule: ['after 9am every saturday'],
+      automerge: true,
+      matchUpdateTypes: ['patch'],
     },
   ],
 }
