@@ -7,10 +7,10 @@
 ## 🛠️ Tools & Configurations
 
 - ✏️ **Editor**
-    - **[Neovim](https://neovim.io)** - Modern Vim-based editor with LSP support ([config/nvim](./config/nvim))
+    - **[Neovim](https://neovim.io)** - My loving editor ([config/nvim](./config/nvim))
 - 💻 **Shell & Terminal**
-    - **[Zsh](https://www.zsh.org)** - Advanced shell with custom prompt and plugins ([config/zsh](./config/zsh))
-    - **[tmux](https://github.com/tmux/tmux)** - Terminal session management ([config/tmux](./config/tmux))
+    - **[Zsh](https://www.zsh.org)** - Modern shell ([config/zsh](./config/zsh))
+    - **[tmux](https://github.com/tmux/tmux)** - Terminal multiplexer ([config/tmux](./config/tmux))
     - **[WezTerm](https://wezfurlong.org/wezterm/)** - GPU-accelerated terminal emulator ([config/wezterm](./config/wezterm))
 - 🔧 **Development Tools**
     - **[Git](https://git-scm.com)** - Git configuration and ignore patterns ([config/git](./config/git))
@@ -32,7 +32,7 @@
     - **[AquaSKK](https://github.com/codefirst/aquaskk)** - Japanese input method for macOS ([config/aquaskk](./config/aquaskk))
     - **[Espanso](https://espanso.org)** - Cross-platform text expander ([config/espanso](./config/espanso))
 - 📁 **Custom Scripts**
-    - **[bin](./config/bin)** - Custom utility scripts and commands
+    - **[bin](./config/bin)** - Utility shell scripts
 
 ## 🚀 Installation
 
