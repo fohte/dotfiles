@@ -4,18 +4,18 @@
 
 [@fohte](https://github.com/fohte)'s personal dotfiles for macOS and Linux environments.
 
-## 🛠️ Tools & Configurations
+## 🛠️ Tools & Configuration
 
 - ✏️ **Editor**
-    - **[Neovim](https://neovim.io)** - My loving editor ([config/nvim](./config/nvim))
+    - **[Neovim](https://neovim.io)** - My beloved editor of choice ([config/nvim](./config/nvim))
 - 💻 **Shell & Terminal**
-    - **[Zsh](https://www.zsh.org)** - Modern shell ([config/zsh](./config/zsh))
+    - **[Zsh](https://www.zsh.org)** - Feature-rich shell ([config/zsh](./config/zsh))
     - **[tmux](https://github.com/tmux/tmux)** - Terminal multiplexer ([config/tmux](./config/tmux))
-    - **[WezTerm](https://wezfurlong.org/wezterm/)** - GPU-accelerated terminal emulator ([config/wezterm](./config/wezterm))
+    - **[WezTerm](https://wezfurlong.org/wezterm/)** - GPU-accelerated terminal ([config/wezterm](./config/wezterm))
 - 🔧 **Development Tools**
     - **[Git](https://git-scm.com)** - Git configuration and ignore patterns ([config/git](./config/git))
     - **[tig](https://jonas.github.io/tig/)** - Text-based Git interface ([config/tig](./config/tig))
-    - **[EditorConfig](https://editorconfig.org)** - Editor configuration standardization ([config/editorconfig](./config/editorconfig))
+    - **[EditorConfig](https://editorconfig.org)** - Editor settings standardization ([config/editorconfig](./config/editorconfig))
     - **[Prettier](https://prettier.io)** - Code formatter ([config/prettier](./config/prettier))
     - **[RuboCop](https://rubocop.org)** - Ruby static code analyzer ([config/rubocop](./config/rubocop))
     - **[Claude Code](https://github.com/anthropics/claude-code)** - AI coding assistant configuration ([config/claude](./config/claude))
@@ -36,31 +36,31 @@
 
 ## 🚀 Installation
 
-Clone repository and run `scripts/deploy`:
+Clone the repository and run `scripts/deploy`:
 
 ```bash
 git clone https://github.com/fohte/dotfiles ~/ghq/github.com/fohte/dotfiles && cd ~/ghq/github.com/fohte/dotfiles && scripts/deploy
 ```
 
-### ✨ Upgrade
+### ✨ Updating
 
-Run `refresh` command to update dotfiles and upgrade packages:
+Run the `refresh` command to update the dotfiles and upgrade packages:
 
 ```bash
 refresh
 ```
 
-This will automatically update SKK dictionary, Neovim plugins, aqua packages, and more.
+This command automatically updates the SKK dictionary, Neovim plugins, Aqua packages, and more.
 
 ## 📦 Deployment
 
-The `scripts/deploy` script creates symbolic links from your home directory to the configuration files in this repository.
+The `scripts/deploy` script places symbolic links in your home directory that point to the configuration files in this repository.
 
-- Deploy specified configs:
+- Deploy only specified configs:
   ```bash
   scripts/deploy -t nvim,zsh
   ```
-- Force deploy:
+- Force deployment:
   ```bash
   scripts/deploy -f
   ```
@@ -68,7 +68,7 @@ The `scripts/deploy` script creates symbolic links from your home directory to t
   ```bash
   scripts/deploy -f -t nvim -n
   ```
-- Debug mode:
+- Enable debug mode:
   ```bash
   scripts/deploy --debug
   ```
