@@ -102,3 +102,8 @@ fi
 if match_tag rubocop; then
   sym config/rubocop/.rubocop.yml ~/.rubocop.yml
 fi
+
+if match_tag claude; then
+  sym config/claude/CLAUDE.md ~/.claude/CLAUDE.md
+  sym config/claude/settings.json ~/.claude/settings.json
+fi
