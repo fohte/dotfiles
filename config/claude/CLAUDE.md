@@ -21,3 +21,8 @@ After creating a pull request and pushing changes, check the CI status using:
 ```bash
 gh run watch $(gh run list --limit 1 --json databaseId --jq '.[0].databaseId')
 ```
+
+## Code Comments
+
+- **MUST** write code comments in English
+- **SHOULD** focus on explaining "why" or "why not" in comments, rather than "what" or "how"
