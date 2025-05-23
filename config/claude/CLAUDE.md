@@ -13,3 +13,11 @@ When creating pull requests, use the following format:
 
 <!-- Describe what changes are being made. Use present tense, not past tense. Use bullet points. -->
 ```
+
+## CI Status Check
+
+After creating a pull request and pushing changes, check the CI status using:
+
+```bash
+gh run watch $(gh run list --limit 1 --json databaseId --jq '.[0].databaseId')
+```
