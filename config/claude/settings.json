@@ -4,6 +4,8 @@
       "Bash(bun add:*)",
       "Bash(bun run:*)",
       "Bash(find:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run watch:*)",
       "Bash(git add:*)",
       "Bash(git checkout:*)",
       "Bash(git commit:*)",
