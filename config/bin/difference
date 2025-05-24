@@ -1,9 +1,0 @@
-#!/bin/bash
-
-set -e
-
-# xor <(or "$1" "$2") "$2"
-(
-  union "$1" "$2" | sort -u
-  cat "$2"
-) | sort | uniq -u
