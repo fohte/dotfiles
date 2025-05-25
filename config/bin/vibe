@@ -130,16 +130,16 @@ get_current_vibe_name() {
 
   # Check if current session is 'vibe'
   local current_session
-  current_session=$(tmux display-message -p '#S' 2>/dev/null)
+  current_session=$(tmux display-message -p '#S' 2> /dev/null)
   [[ "$current_session" != "vibe" ]] && return 1
 
   # Get current window name
   local window_name
-  window_name=$(tmux display-message -p '#W' 2>/dev/null)
+  window_name=$(tmux display-message -p '#W' 2> /dev/null)
 
   # Get the main git directory (not worktree)
   local git_common_dir
-  git_common_dir=$(git rev-parse --git-common-dir 2>/dev/null) || return 1
+  git_common_dir=$(git rev-parse --git-common-dir 2> /dev/null) || return 1
 
   # Get the parent directory name (project name)
   local project_name
@@ -160,7 +160,7 @@ parse_done_command() {
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
-      --force|-f)
+      --force | -f)
         force=true
         shift
         ;;
@@ -267,6 +267,11 @@ handle_done() {
   # Verify branch is merged (unless forced)
   verify_branch_merged "${branch}" "${force}"
 
+  # Change to git root directory if we're currently in the worktree
+  if [[ "$PWD" == "${worktree_path}"* ]]; then
+    cd "${git_root}" || error_exit "Failed to change directory"
+  fi
+
   # Clean up resources
   remove_worktree "${worktree_path}" "${worktree_dir}"
   delete_branch "${branch}" "${force}"
@@ -282,8 +287,9 @@ handle_done() {
 # Verify prerequisites
 verify_git_repo
 
-# Get the git root directory
-git_root="$(git rev-parse --show-toplevel)"
+# Get the main git directory (not worktree)
+git_common_dir="$(git rev-parse --git-common-dir)"
+git_root="$(dirname "${git_common_dir}")"
 
 SESSION_NAME="vibe"
 
