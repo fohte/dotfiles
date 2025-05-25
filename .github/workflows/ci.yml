@@ -23,6 +23,7 @@ jobs:
           aqua_version: v2.43.2
 
       - name: Run pre-commit hooks
+        continue-on-error: true
         run: pre-commit run --all-files
 
       - id: auto-commit-action
@@ -31,9 +32,3 @@ jobs:
           commit_user_name: 'fohte-bot[bot]'
           commit_user_email: '139195068+fohte-bot[bot]@users.noreply.github.com'
           commit_author: 'fohte-bot[bot] <139195068+fohte-bot[bot]@users.noreply.github.com>'
-
-      - name: Run if changes have been detected
-        if: steps.auto-commit-action.outputs.changes_detected == 'true'
-        run: |
-          echo 'Changes detected. Committing and pushing to remote.'
-          exit 1

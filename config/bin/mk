@@ -4,7 +4,7 @@ executable=false
 
 while getopts x opt; do
   case "$opt" in
-    x) executable=true
+    x) executable=true ;;
   esac
 done
 
