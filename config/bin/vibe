@@ -8,13 +8,16 @@
 #   - claude (Claude Code CLI)
 #
 # Usage:
-#   vibe <name>
+#   vibe start <name>
 #
 set -euo pipefail
 
 usage() {
   cat << EOF
-Usage: $(basename "$0") <name>
+Usage: $(basename "$0") <command> [<args>]
+
+Commands:
+  start <name>  Start a new Claude Code session with worktree
 
 vibe is a wrapper for Claude Code that:
   - Creates/enters a tmux session 'vibe'
@@ -24,12 +27,29 @@ vibe is a wrapper for Claude Code that:
 EOF
 }
 
-if [ "$#" -ne 1 ]; then
+if [ "$#" -lt 1 ]; then
   usage
   exit 1
 fi
 
-name="$1"
+command="$1"
+shift
+
+case "$command" in
+  start)
+    if [ "$#" -ne 1 ]; then
+      echo "error: 'start' requires exactly one argument" >&2
+      usage
+      exit 1
+    fi
+    name="$1"
+    ;;
+  *)
+    echo "error: unknown command '$command'" >&2
+    usage
+    exit 1
+    ;;
+esac
 SESSION_NAME="vibe"
 branch="claude/${name}"
 worktree_dir=".worktrees/${name}"
