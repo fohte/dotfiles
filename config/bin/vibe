@@ -9,7 +9,7 @@
 #
 # Usage:
 #   vibe start <name>
-#   vibe done <name> [--force]
+#   vibe done <name> [--force|-f]
 #
 set -euo pipefail
 
@@ -21,9 +21,9 @@ Commands:
   start <name>
     Start a new Claude Code session with worktree
 
-  done <name> [--force]
+  done <name> [--force|-f]
     Remove branch and worktree (only if merged)
-    Use --force to skip merge check
+    Use --force or -f to skip merge check
 
 vibe is a wrapper for Claude Code that:
   - Creates/enters a tmux session 'vibe'
@@ -129,7 +129,7 @@ parse_done_command() {
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
-      --force)
+      --force|-f)
         force=true
         shift
         ;;
