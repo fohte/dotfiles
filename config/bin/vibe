@@ -19,7 +19,7 @@ LIB_DIR="${SCRIPT_DIR}/lib/vibe"
 
 # Common utility functions
 error_exit() {
-  echo "error: $1" >&2
+  echo -e "error: $1" >&2
   exit 1
 }
 
