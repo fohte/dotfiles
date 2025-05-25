@@ -45,25 +45,22 @@ get_current_vibe_name() {
   # Check if current session is 'vibe'
   local current_session
   current_session=$(tmux display-message -p '#S' 2> /dev/null)
+  debug "Current tmux session: '${current_session}'"
   [[ "$current_session" != "vibe" ]] && return 1
 
-  # Get current window name
-  local window_name
-  window_name=$(tmux display-message -p '#W' 2> /dev/null)
+  # Get current branch name
+  local current_branch
+  current_branch=$(git symbolic-ref --short HEAD 2> /dev/null) || return 1
+  debug "Current branch: '${current_branch}'"
 
-  # Get the main git directory (not worktree)
-  local git_common_dir
-  git_common_dir=$(git rev-parse --git-common-dir 2> /dev/null) || return 1
-
-  # Get the parent directory name (project name)
-  local project_name
-  project_name=$(basename "$(dirname "${git_common_dir}")")
-
-  # Check if window name matches expected pattern: <project>-<name>
-  if [[ "$window_name" =~ ^${project_name}-(.+)$ ]]; then
-    echo "${BASH_REMATCH[1]}"
+  # Check if branch matches vibe pattern: claude/<name>
+  if [[ "$current_branch" =~ ^claude/(.+)$ ]]; then
+    local extracted_name="${BASH_REMATCH[1]}"
+    debug "Extracted name from branch: '${extracted_name}'"
+    echo "${extracted_name}"
     return 0
   fi
 
+  debug "Current branch is not a vibe branch"
   return 1
 }
