@@ -203,7 +203,8 @@ handle_start() {
   local create_new_session=false
   tmux_session_exists "$SESSION_NAME" || create_new_session=true
 
-  local window_name="$(basename "${git_root}")-${name}"
+  local window_name
+  window_name="$(basename "${git_root}")-${name}"
   start_claude_in_tmux "$SESSION_NAME" "$window_name" "${worktree_path}" "$create_new_session"
 }
 
@@ -270,7 +271,8 @@ handle_done() {
   remove_worktree "${worktree_path}" "${worktree_dir}"
   delete_branch "${branch}" "${force}"
 
-  local window_name="$(basename "${git_root}")-${name}"
+  local window_name
+  window_name="$(basename "${git_root}")-${name}"
   close_tmux_window "$SESSION_NAME" "${window_name}"
 
   echo "Done! Branch '${branch}' and worktree '${worktree_dir}' have been removed."
