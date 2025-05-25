@@ -4,6 +4,7 @@
 parse_done_command() {
   local force=false
   local name=""
+  local from_current_window=false
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -26,12 +27,13 @@ parse_done_command() {
   if [[ -z "$name" ]]; then
     if name=$(get_current_vibe_name); then
       debug "Detected current vibe: ${name}"
+      from_current_window=true
     else
       error_usage "'done' requires a name argument (or run from within a vibe tmux window)"
     fi
   fi
 
-  echo "$name $force"
+  echo "$name $force $from_current_window"
 }
 
 handle_done() {
@@ -42,6 +44,7 @@ handle_done() {
   local session_name="$5"
   local project_name="$6"
   local git_root="$7"
+  local from_current_window="${8:-false}"
 
   # Verify branch exists
   check_branch_exists "${branch}" || error_exit "Branch '${branch}' does not exist"
@@ -60,8 +63,16 @@ handle_done() {
 
   # Extract name from branch
   local name="${branch#claude/}"
-  local window_name="${project_name}-${name}"
-  close_tmux_window "$session_name" "${window_name}"
+
+  # Check if we got the name from current window (no argument case)
+  if [[ "$from_current_window" == "true" ]]; then
+    # Close current window instead of trying to match by name
+    close_tmux_window "$session_name" ""
+  else
+    # Close window by name
+    local window_name="${project_name}-${name}"
+    close_tmux_window "$session_name" "${window_name}"
+  fi
 
   echo "Done! Branch '${branch}' and worktree '${worktree_dir}' have been removed."
 }
