@@ -5,7 +5,7 @@
 GHQPATH=$(ghq root)
 dir=$(git root)
 
-repo=${dir#${GHQPATH}/}
+repo=${dir#"${GHQPATH}"/}
 if [ -z "$repo" ]; then
   echo "Could not detect the repository name. Please execute in a local repository on $(ghq root)."
   exit 1

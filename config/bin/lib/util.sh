@@ -1,3 +1,5 @@
+#!/bin/bash
+
 has() {
   which "$1" > /dev/null 2>&1
   return $?
@@ -12,9 +14,9 @@ is_linux() {
 }
 
 is_tmux_running() {
-  [ ! -z "$TMUX" ]
+  [ -n "$TMUX" ]
 }
 
 is_ssh_running() {
-  [ ! -z "$SSH_CONNECTION" ] || [ ! -z "$SSH_CLIENT" ]
+  [ -n "$SSH_CONNECTION" ] || [ -n "$SSH_CLIENT" ]
 }
