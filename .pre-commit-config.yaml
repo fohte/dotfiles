@@ -23,7 +23,7 @@ repos:
       - id: shfmt # mvdan/sh package in aqua.yaml
         name: '🔧 shfmt'
         entry: shfmt -w
-        language: system  # managed by aqua (see: aqua.yaml)
+        language: system
         types: [shell]
         exclude: \.(zsh|zshenv|zshrc)$
 
