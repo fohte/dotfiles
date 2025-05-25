@@ -18,8 +18,8 @@ return {
     'rhysd/vim-operator-surround',
     dependencies = { 'kana/vim-operator-user' },
     keys = {
-      { 'sa', '<Plug>(operator-surround-append)',   mode = { 'n', 'v', 'o' } },
-      { 'sd', '<Plug>(operator-surround-delete)a',  mode = { 'n', 'v', 'o' } },
+      { 'sa', '<Plug>(operator-surround-append)', mode = { 'n', 'v', 'o' } },
+      { 'sd', '<Plug>(operator-surround-delete)a', mode = { 'n', 'v', 'o' } },
       { 'sr', '<Plug>(operator-surround-replace)a', mode = { 'n', 'v', 'o' } },
     },
   },

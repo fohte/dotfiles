@@ -27,6 +27,12 @@ repos:
         types: [shell]
         exclude: \.(zsh|zshenv|zshrc)$
 
+      - id: stylua # JohnnyMorganz/StyLua package in aqua.yaml
+        name: '🔧 stylua'
+        entry: stylua
+        language: system
+        types: [lua]
+
       - id: shellcheck # koalaman/shellcheck package in aqua.yaml
         name: '🔍 shellcheck'
         entry: shellcheck
