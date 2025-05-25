@@ -24,7 +24,7 @@ generate_commit_message() {
   echo 'Output:'
   echo
   echo '```'
-  cat "${tmpfile}" | sed -r 's/\x1b\[[0-9;]*m?//g'
+  sed -r 's/\x1b\[[0-9;]*m?//g' "${tmpfile}"
   echo '```'
 }
 

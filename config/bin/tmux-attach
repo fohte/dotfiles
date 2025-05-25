@@ -2,6 +2,7 @@
 
 set -e
 
+# shellcheck disable=SC1090,SC1091 # Home directory path cannot be statically analyzed
 . ~/bin/lib/util.sh
 
 if ! is_tmux_running && ! tmux has-session > /dev/null 2>&1; then
