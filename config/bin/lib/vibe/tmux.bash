@@ -32,6 +32,13 @@ close_tmux_window() {
   local session="$1"
   local window="$2"
 
+  # If window name is empty, close current window
+  if [[ -z "$window" ]]; then
+    debug "Closing current tmux window..."
+    tmux kill-window || return 0
+    return 0
+  fi
+
   tmux_window_exists "$session" "$window" || return 0
 
   debug "Closing tmux window '${window}'..."

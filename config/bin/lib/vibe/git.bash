@@ -20,10 +20,11 @@ check_pr_merged() {
   command -v gh &> /dev/null || return 1
 
   local pr_info
-  pr_info=$(gh pr list --state all --head "${branch}" --json number,merged,state --limit 1 2> /dev/null)
+  pr_info=$(gh pr list --state all --head "${branch}" --json number,mergedAt,state --limit 1 2> /dev/null)
 
   [[ -n "$pr_info" && "$pr_info" != "[]" ]] || return 1
-  echo "$pr_info" | jq -e '.[0].merged == true' > /dev/null 2>&1
+  # Check if mergedAt is not null (meaning it was merged)
+  echo "$pr_info" | jq -e '.[0].mergedAt != null' > /dev/null 2>&1
 }
 
 create_branch_from_origin() {
@@ -47,10 +48,21 @@ verify_branch_merged() {
   [[ "$force" == "true" ]] && debug "Force deletion requested, skipping merge check..." && return 0
 
   # Try GitHub PR first (handles squash merge)
-  check_pr_merged "${branch}" && return 0
+  debug "Checking if PR is merged for branch '${branch}'"
+  if check_pr_merged "${branch}"; then
+    debug "PR is merged"
+    return 0
+  else
+    debug "PR not found or not merged, falling back to git branch --merged"
+  fi
 
   # Fall back to git branch --merged
-  is_branch_merged "${branch}" && return 0
+  if is_branch_merged "${branch}"; then
+    debug "Branch is merged according to git"
+    return 0
+  else
+    debug "Branch is not merged according to git"
+  fi
 
   # Extract name from branch for error message
   local branch_name="${branch#claude/}"
