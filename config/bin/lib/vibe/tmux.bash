@@ -34,7 +34,7 @@ close_tmux_window() {
 
   tmux_window_exists "$session" "$window" || return 0
 
-  echo "Closing tmux window '${window}'..."
+  debug "Closing tmux window '${window}'..."
   tmux kill-window -t "$session:${window}"
 }
 

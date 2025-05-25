@@ -25,7 +25,7 @@ parse_done_command() {
   # If no name provided, try to get from current tmux window
   if [[ -z "$name" ]]; then
     if name=$(get_current_vibe_name); then
-      echo "Detected current vibe: ${name}" >&2
+      debug "Detected current vibe: ${name}"
     else
       error_usage "'done' requires a name argument (or run from within a vibe tmux window)"
     fi

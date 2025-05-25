@@ -31,7 +31,10 @@ error_usage() {
 
 usage() {
   cat << EOF
-Usage: $(basename "$0") <command> [<args>]
+Usage: $(basename "$0") [--debug] <command> [<args>]
+
+Global Options:
+  --debug           Enable debug output
 
 Commands:
   start <name>
@@ -62,6 +65,30 @@ source "${LIB_DIR}/tmux.bash"
 source "${LIB_DIR}/command_start.bash"
 # shellcheck disable=SC1091
 source "${LIB_DIR}/command_done.bash"
+
+# Debug function
+debug() {
+  if [[ "${VIBE_DEBUG:-}" == "1" ]]; then
+    echo "DEBUG: $*" >&2
+  fi
+}
+
+# Parse global options
+VIBE_DEBUG=0
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    --debug)
+      VIBE_DEBUG=1
+      shift
+      ;;
+    -*)
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
 
 # Main script
 [[ "$#" -lt 1 ]] && error_usage "missing command"

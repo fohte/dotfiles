@@ -28,7 +28,7 @@ check_pr_merged() {
 
 create_branch_from_origin() {
   local branch="$1"
-  echo "Creating branch '${branch}' from origin/master..."
+  debug "Creating branch '${branch}' from origin/master..."
   git fetch origin master
   git branch "${branch}" origin/master
 }
@@ -36,7 +36,7 @@ create_branch_from_origin() {
 create_worktree() {
   local path="$1"
   local branch="$2"
-  echo "Creating worktree at '${path}'..."
+  debug "Creating worktree at '${path}'..."
   git worktree add "${path}" "${branch}"
 }
 
@@ -44,7 +44,7 @@ verify_branch_merged() {
   local branch="$1"
   local force="$2"
 
-  [[ "$force" == "true" ]] && echo "Force deletion requested, skipping merge check..." && return 0
+  [[ "$force" == "true" ]] && debug "Force deletion requested, skipping merge check..." && return 0
 
   # Try GitHub PR first (handles squash merge)
   check_pr_merged "${branch}" && return 0
@@ -63,7 +63,7 @@ remove_worktree() {
 
   [[ ! -d "${worktree_path}" ]] && return 0
 
-  echo "Removing worktree at '${worktree_dir}'..."
+  debug "Removing worktree at '${worktree_dir}'..."
   git worktree remove "${worktree_path}"
 }
 
@@ -71,7 +71,7 @@ delete_branch() {
   local branch="$1"
   local force="$2"
 
-  echo "Deleting branch '${branch}'..."
+  debug "Deleting branch '${branch}'..."
   if [[ "$force" == "true" ]]; then
     git branch -D "${branch}"
   else
