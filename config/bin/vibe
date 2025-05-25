@@ -126,10 +126,26 @@ elif [ "$command" = "done" ]; then
   fi
 
   # Check if branch has been merged
-  if ! git branch --merged | grep -q "^[[:space:]]*${branch}$"; then
-    echo "error: branch '${branch}' has not been merged yet" >&2
-    echo "Please merge the branch first or use 'git branch -D ${branch}' to force delete" >&2
-    exit 1
+  # First, try to check via GitHub PR (handles squash merge case)
+  pr_merged=false
+  if command -v gh &> /dev/null; then
+    # Get PR info for the specific branch
+    pr_info=$(gh pr list --state all --head "${branch}" --json number,merged,state --limit 1 2>/dev/null)
+    if [ -n "$pr_info" ] && [ "$pr_info" != "[]" ]; then
+      # Check if PR exists and is merged
+      if echo "$pr_info" | jq -e '.[0].merged == true' > /dev/null 2>&1; then
+        pr_merged=true
+      fi
+    fi
+  fi
+
+  # If no merged PR found, check with git branch --merged
+  if [ "$pr_merged" = false ]; then
+    if ! git branch --merged | grep -q "^[[:space:]]*${branch}$"; then
+      echo "error: branch '${branch}' has not been merged yet" >&2
+      echo "Please merge the branch first or use 'git branch -D ${branch}' to force delete" >&2
+      exit 1
+    fi
   fi
 
   # Remove worktree if it exists
