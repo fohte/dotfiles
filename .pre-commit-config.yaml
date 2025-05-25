@@ -19,19 +19,26 @@ repos:
         language: system
         files: ^config/bettertouchtool/default\.bttpreset$
 
-      - id: shfmt
+      # Using aqua-managed tools (see: aqua.yaml)
+      - id: shfmt # mvdan/sh package in aqua.yaml
         name: '🔧 shfmt'
         entry: shfmt -w
         language: system  # managed by aqua (see: aqua.yaml)
         types: [shell]
         exclude: \.(zsh|zshenv|zshrc)$
 
-      - id: stylua
+      - id: stylua # JohnnyMorganz/StyLua package in aqua.yaml
         name: '🔧 stylua'
         entry: stylua
-        language: system  # managed by aqua (see: aqua.yaml)
+        language: system
         types: [lua]
 
+      - id: shellcheck # koalaman/shellcheck package in aqua.yaml
+        name: '🔍 shellcheck'
+        entry: shellcheck
+        language: system
+        types: [shell]
+        exclude: \.(zsh|zshenv|zshrc)$
   - repo: https://github.com/renovatebot/pre-commit-hooks
     rev: 39.113.0
     hooks:

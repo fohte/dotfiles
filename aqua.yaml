@@ -6,4 +6,5 @@ packages:
   - name: oven-sh/bun@bun-v1.2.13
   - name: pre-commit/pre-commit@v4.2.0
   - name: google/go-jsonnet@v0.20.0
-  - name: JohnnyMorganz/StyLua@v2.0.4
+  - name: JohnnyMorganz/StyLua@v0.20.0
+  - name: koalaman/shellcheck@v0.10.0
