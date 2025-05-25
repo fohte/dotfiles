@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+#
+# vibe - Claude Code wrapper with tmux session and git worktree management
+#
+# Requirements:
+#   - tmux
+#   - git
+#   - claude (Claude Code CLI)
+#
+# Usage:
+#   vibe <name>
+#
+set -euo pipefail
+
+usage() {
+  cat << EOF
+Usage: $(basename "$0") <name>
+
+vibe is a wrapper for Claude Code that:
+  - Creates/enters a tmux session 'vibe'
+  - Creates a git branch 'claude/<name>' from origin/master
+  - Creates a worktree at '.worktrees/<name>'
+  - Starts Claude Code in a new tmux window
+EOF
+}
+
+if [ "$#" -ne 1 ]; then
+  usage
+  exit 1
+fi
+
+name="$1"
+SESSION_NAME="vibe"
+branch="claude/${name}"
+worktree_dir=".worktrees/${name}"
+
+# Check if git repo
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+  echo "error: not in a git repository" >&2
+  exit 1
+fi
+
+# Get the git root directory
+git_root="$(git rev-parse --show-toplevel)"
+worktree_path="${git_root}/${worktree_dir}"
+
+# Check if we need to create a new session
+create_new_session=false
+if ! tmux has-session -t "$SESSION_NAME" 2> /dev/null; then
+  create_new_session=true
+fi
+
+# Check if branch already exists
+if git show-ref --verify --quiet "refs/heads/${branch}"; then
+  echo "Branch '${branch}' already exists" >&2
+  exit 1
+else
+  # Create new branch from origin/master
+  echo "Creating branch '${branch}' from origin/master..."
+  git fetch origin master
+  git branch "${branch}" origin/master
+fi
+
+# Check if worktree already exists
+if [ -d "${worktree_path}" ]; then
+  echo "Worktree '${worktree_dir}' already exists" >&2
+  exit 1
+else
+  # Create worktree
+  echo "Creating worktree at '${worktree_dir}'..."
+  git worktree add "${worktree_path}" "${branch}"
+fi
+
+# Create new window and start claude code in the worktree
+window_name="$(basename "${git_root}")-${name}"
+
+if [ "$create_new_session" = true ]; then
+  # Create session with the first window
+  tmux new-session -ds "$SESSION_NAME" -n "$window_name" -c "${worktree_path}"
+  tmux send-keys -t "$SESSION_NAME:$window_name" "claude" C-m
+else
+  # Create new window in existing session
+  tmux new-window -t "$SESSION_NAME" -n "$window_name" -c "${worktree_path}"
+  tmux send-keys -t "$SESSION_NAME:$window_name" "claude" C-m
+fi
+
+# Switch to the session
+tmux switch-client -t "$SESSION_NAME" 2> /dev/null || true
