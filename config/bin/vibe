@@ -148,30 +148,6 @@ parse_done_command() {
   echo "$name $force"
 }
 
-case "$command" in
-  start)
-    name=$(parse_start_command "$@")
-    ;;
-  done)
-    read -r name force <<< "$(parse_done_command "$@")"
-    ;;
-  *)
-    error_usage "unknown command '$command'"
-    ;;
-esac
-
-# Configuration
-SESSION_NAME="vibe"
-branch="claude/${name}"
-worktree_dir=".worktrees/${name}"
-
-# Verify prerequisites
-verify_git_repo
-
-# Get the git root directory
-git_root="$(git rev-parse --show-toplevel)"
-worktree_path="${git_root}/${worktree_dir}"
-
 # Command implementations
 handle_start() {
   local branch="$1"
@@ -263,9 +239,29 @@ handle_done() {
   echo "Done! Branch '${branch}' and worktree '${worktree_dir}' have been removed."
 }
 
-# Execute command
-if [[ "$command" == "start" ]]; then
-  handle_start "${branch}" "${worktree_path}" "${worktree_dir}"
-elif [[ "$command" == "done" ]]; then
-  handle_done "${branch}" "${worktree_path}" "${worktree_dir}" "${force}"
-fi
+# Main execution
+# Verify prerequisites
+verify_git_repo
+
+# Get the git root directory
+git_root="$(git rev-parse --show-toplevel)"
+
+SESSION_NAME="vibe"
+branch="claude/${name}"
+worktree_dir=".worktrees/${name}"
+worktree_path="${git_root}/${worktree_dir}"
+
+# Parse command and get name
+case "$command" in
+  start)
+    name=$(parse_start_command "$@")
+    handle_start "${branch}" "${worktree_path}" "${worktree_dir}"
+    ;;
+  done)
+    read -r name force <<< "$(parse_done_command "$@")"
+    handle_done "${branch}" "${worktree_path}" "${worktree_dir}" "${force}"
+    ;;
+  *)
+    error_usage "unknown command '$command'"
+    ;;
+esac
