@@ -137,16 +137,16 @@ get_current_vibe_name() {
   local window_name
   window_name=$(tmux display-message -p '#W' 2>/dev/null)
 
-  # Get git root for pattern matching
-  local git_root_dir
-  git_root_dir=$(git rev-parse --show-toplevel 2>/dev/null) || return 1
+  # Get the main git directory (not worktree)
+  local git_common_dir
+  git_common_dir=$(git rev-parse --git-common-dir 2>/dev/null) || return 1
 
-  # Extract name from window name pattern: <git-root>-<name>
-  local git_root_basename
-  git_root_basename=$(basename "${git_root_dir}")
+  # Get the parent directory name (project name)
+  local project_name
+  project_name=$(basename "$(dirname "${git_common_dir}")")
 
-  # Check if window name matches expected pattern
-  if [[ "$window_name" =~ ^${git_root_basename}-(.+)$ ]]; then
+  # Check if window name matches expected pattern: <project>-<name>
+  if [[ "$window_name" =~ ^${project_name}-(.+)$ ]]; then
     echo "${BASH_REMATCH[1]}"
     return 0
   fi
