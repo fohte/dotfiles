@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit
 
+# shellcheck disable=SC1091 # External file paths cannot be statically analyzed
 source scripts/utils.bash
 
 usage() {
@@ -117,4 +118,5 @@ match_tag() {
   grep -q -F "$tag" <<< "$tags"
 }
 
+# shellcheck disable=SC1091 # External file paths cannot be statically analyzed
 source symlinks

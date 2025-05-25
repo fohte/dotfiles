@@ -19,9 +19,17 @@ repos:
         language: system
         files: ^config/bettertouchtool/default\.bttpreset$
 
-      - id: shfmt
+      # Using aqua-managed tools (see: aqua.yaml)
+      - id: shfmt # mvdan/sh package in aqua.yaml
         name: '🔧 shfmt'
         entry: shfmt -w
+        language: system
+        types: [shell]
+        exclude: \.(zsh|zshenv|zshrc)$
+
+      - id: shellcheck # koalaman/shellcheck package in aqua.yaml
+        name: '🔍 shellcheck'
+        entry: shellcheck
         language: system
         types: [shell]
         exclude: \.(zsh|zshenv|zshrc)$

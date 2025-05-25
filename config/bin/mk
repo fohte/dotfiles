@@ -5,12 +5,16 @@ executable=false
 while getopts x opt; do
   case "$opt" in
     x) executable=true ;;
+    *)
+      echo "Usage: $0 [-x] file..." >&2
+      exit 1
+      ;;
   esac
 done
 
 shift $((OPTIND - 1))
 
-for filepath in $@; do
+for filepath in "$@"; do
   if [ "$(echo "$filepath" | rev | cut -c 1)" = '/' ]; then
     mkdir -p "$filepath"
   else
