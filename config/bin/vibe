@@ -137,9 +137,13 @@ get_current_vibe_name() {
   local window_name
   window_name=$(tmux display-message -p '#W' 2>/dev/null)
 
+  # Get git root for pattern matching
+  local git_root_dir
+  git_root_dir=$(git rev-parse --show-toplevel 2>/dev/null) || return 1
+
   # Extract name from window name pattern: <git-root>-<name>
   local git_root_basename
-  git_root_basename=$(basename "${git_root}")
+  git_root_basename=$(basename "${git_root_dir}")
 
   # Check if window name matches expected pattern
   if [[ "$window_name" =~ ^${git_root_basename}-(.+)$ ]]; then
@@ -280,18 +284,21 @@ verify_git_repo
 git_root="$(git rev-parse --show-toplevel)"
 
 SESSION_NAME="vibe"
-branch="claude/${name}"
-worktree_dir=".worktrees/${name}"
-worktree_path="${git_root}/${worktree_dir}"
 
 # Parse command and get name
 case "$command" in
   start)
     name=$(parse_start_command "$@")
+    branch="claude/${name}"
+    worktree_dir=".worktrees/${name}"
+    worktree_path="${git_root}/${worktree_dir}"
     handle_start "${branch}" "${worktree_path}" "${worktree_dir}"
     ;;
   done)
     read -r name force <<< "$(parse_done_command "$@")"
+    branch="claude/${name}"
+    worktree_dir=".worktrees/${name}"
+    worktree_path="${git_root}/${worktree_dir}"
     handle_done "${branch}" "${worktree_path}" "${worktree_dir}" "${force}"
     ;;
   *)
