@@ -295,7 +295,8 @@ case "$command" in
     handle_start "${branch}" "${worktree_path}" "${worktree_dir}"
     ;;
   done)
-    read -r name force <<< "$(parse_done_command "$@")"
+    parsed_output=$(parse_done_command "$@") || exit 1
+    read -r name force <<< "$parsed_output"
     branch="claude/${name}"
     worktree_dir=".worktrees/${name}"
     worktree_path="${git_root}/${worktree_dir}"
