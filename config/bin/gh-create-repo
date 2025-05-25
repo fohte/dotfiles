@@ -5,27 +5,27 @@ set -euo pipefail
 repo_visibility="private"
 
 while [[ $# -gt 0 ]]; do
-	case "$1" in
-	--public)
-		repo_visibility="public"
-		shift
-		;;
-	--private)
-		repo_visibility="private"
-		shift
-		;;
-	--internal)
-		repo_visibility="internal"
-		shift
-		;;
-	-*)
-		echo "Unknown option: $1"
-		exit 1
-		;;
-	*)
-		break
-		;;
-	esac
+  case "$1" in
+    --public)
+      repo_visibility="public"
+      shift
+      ;;
+    --private)
+      repo_visibility="private"
+      shift
+      ;;
+    --internal)
+      repo_visibility="internal"
+      shift
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
 done
 
 repo_name="$1"

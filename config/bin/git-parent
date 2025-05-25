@@ -1,13 +1,13 @@
 #!/bin/sh
 
 parent_branch() {
-	git show-branch --no-color | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -1 | awk -F'[]~^[]' '{print $2}'
+  git show-branch --no-color | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -1 | awk -F'[]~^[]' '{print $2}'
 }
 
 if [ "$1" = "branch" ]; then
-	parent_branch
+  parent_branch
 fi
 
 if [ "$1" = "commit" ]; then
-	git merge-base "$(parent_branch)" @
+  git merge-base "$(parent_branch)" @
 fi

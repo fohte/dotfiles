@@ -4,13 +4,13 @@ set -euo pipefail
 # usage: format_bttpreset.bash <file>
 
 if [ $# -eq 0 ]; then
-	echo "No input file specified"
-	exit 1
+  echo "No input file specified"
+  exit 1
 fi
 
 if [ ! -f "$1" ]; then
-	echo "File not found: $1"
-	exit 1
+  echo "File not found: $1"
+  exit 1
 fi
 
 # create a temporary file
@@ -20,6 +20,6 @@ tmpfile="$(mktemp /tmp/bttpreset.XXXXXX)"
 jq '
   .BTTPresetContent |= sort_by(.BTTAppBundleIdentifier)
    | .BTTPresetContent[].BTTTriggers |= sort_by(.BTTOrder, .BTTTriggerType, .BTTPredefinedActionType)
-' "$1" >"$tmpfile"
+' "$1" > "$tmpfile"
 
 mv "$tmpfile" "$1"

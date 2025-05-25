@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ghq list | while read -r repo; do
-	printf '\e[1;34mProcessing %s\e[0m\n' "$repo"
-	cd "$(ghq list -p "$repo")"
-	gh poi
+  printf '\e[1;34mProcessing %s\e[0m\n' "$repo"
+  cd "$(ghq list -p "$repo")"
+  gh poi
 done

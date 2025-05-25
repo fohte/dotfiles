@@ -3,8 +3,8 @@
 set -euo pipefail
 
 if [ $# -ne 2 ]; then
-	echo 'usage: git new-pr <branch> <title>'
-	exit 1
+  echo 'usage: git new-pr <branch> <title>'
+  exit 1
 fi
 
 branch="$1"

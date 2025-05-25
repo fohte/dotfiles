@@ -7,25 +7,25 @@ set -euo pipefail
 
 # check if there are any non-staged changes
 if [[ -n "$(git status --porcelain)" ]]; then
-	echo "error: There are non-staged changes. Please commit them first." >&2
-	exit 1
+  echo "error: There are non-staged changes. Please commit them first." >&2
+  exit 1
 fi
 
 tmpfile="$(mktemp)"
 
 # this function may not be compatible with non-macOS
 run_script() {
-	script -q "${tmpfile}" "$@"
+  script -q "${tmpfile}" "$@"
 }
 
 generate_commit_message() {
-	echo "\$ $*"
-	echo
-	echo 'Output:'
-	echo
-	echo '```'
-	cat "${tmpfile}" | sed -r 's/\x1b\[[0-9;]*m?//g'
-	echo '```'
+  echo "\$ $*"
+  echo
+  echo 'Output:'
+  echo
+  echo '```'
+  cat "${tmpfile}" | sed -r 's/\x1b\[[0-9;]*m?//g'
+  echo '```'
 }
 
 run_script "$@"

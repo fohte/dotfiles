@@ -3,9 +3,9 @@
 set -euo pipefail
 
 with_stash() {
-	git stash
-	"$@"
-	git stash pop
+  git stash
+  "$@"
+  git stash pop
 }
 
 update-skk-dictionary
@@ -13,9 +13,9 @@ update-skk-dictionary
 cd "$(ghq list -p dotfiles)"
 
 if git diff --quiet; then
-	git pull
+  git pull
 else
-	with_stash git pull
+  with_stash git pull
 fi
 
 scripts/deploy
