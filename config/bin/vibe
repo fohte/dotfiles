@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+#
+# vibe - Claude Code wrapper with tmux session and git worktree management
+#
+# Requirements:
+#   - tmux
+#   - git
+#   - claude (Claude Code CLI)
+#
+# Usage:
+#   vibe start <name>
+#   vibe done [<name>] [--force|-f]
+#
+set -euo pipefail
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="${SCRIPT_DIR}/lib/vibe"
+
+# Common utility functions
+error_exit() {
+  echo -e "error: $1" >&2
+  exit 1
+}
+
+error_usage() {
+  echo "error: $1" >&2
+  usage
+  exit 1
+}
+
+usage() {
+  cat << EOF
+Usage: $(basename "$0") [--debug] <command> [<args>]
+
+Global Options:
+  --debug           Enable debug output
+
+Commands:
+  start <name>
+    Start a new Claude Code session with worktree
+
+  done [<name>] [--force|-f]
+    Remove branch and worktree (only if merged)
+    If <name> is omitted, uses current window name in vibe session
+    Use --force or -f to skip merge check
+
+vibe is a wrapper for Claude Code that:
+  - Creates/enters a tmux session 'vibe'
+  - Creates a git branch 'claude/<name>' from origin/master
+  - Creates a worktree at '.worktrees/<name>'
+  - Starts Claude Code in a new tmux window
+EOF
+}
+
+# Source library files
+# SC1091: Disable "Not following" warning for dynamic source paths
+# These files are sourced at runtime using variables, making static analysis difficult
+# See: https://github.com/koalaman/shellcheck/issues/2176
+# shellcheck disable=SC1091
+source "${LIB_DIR}/git.bash"
+# shellcheck disable=SC1091
+source "${LIB_DIR}/tmux.bash"
+# shellcheck disable=SC1091
+source "${LIB_DIR}/command_start.bash"
+# shellcheck disable=SC1091
+source "${LIB_DIR}/command_done.bash"
+
+# Debug function
+debug() {
+  if [[ "${VIBE_DEBUG:-}" == "1" ]]; then
+    echo "DEBUG: $*" >&2
+  fi
+}
+
+# Parse global options
+VIBE_DEBUG=0
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    --debug)
+      VIBE_DEBUG=1
+      shift
+      ;;
+    -*)
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+# Main script
+[[ "$#" -lt 1 ]] && error_usage "missing command"
+
+command="$1"
+shift
+
+# Main execution
+# Verify prerequisites
+verify_git_repo
+
+# Get the main git directory (not worktree)
+git_common_dir="$(git rev-parse --git-common-dir)"
+git_root="$(dirname "${git_common_dir}")"
+project_name="$(basename "${git_root}")"
+
+SESSION_NAME="vibe"
+
+# Parse command and get name
+case "$command" in
+  start)
+    name=$(parse_start_command "$@")
+    branch="claude/${name}"
+    worktree_dir=".worktrees/${name}"
+    worktree_path="${git_root}/${worktree_dir}"
+    handle_start "${branch}" "${worktree_path}" "${worktree_dir}" "${SESSION_NAME}" "${project_name}"
+    ;;
+  done)
+    parsed_output=$(parse_done_command "$@") || exit 1
+    read -r name force <<< "$parsed_output"
+    branch="claude/${name}"
+    worktree_dir=".worktrees/${name}"
+    worktree_path="${git_root}/${worktree_dir}"
+    handle_done "${branch}" "${worktree_path}" "${worktree_dir}" "${force}" "${SESSION_NAME}" "${project_name}" "${git_root}"
+    ;;
+  *)
+    error_usage "unknown command '$command'"
+    ;;
+esac

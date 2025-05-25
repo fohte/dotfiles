@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Tmux-related functions for vibe
+
+tmux_session_exists() {
+  local session="$1"
+  tmux has-session -t "$session" 2> /dev/null
+}
+
+tmux_window_exists() {
+  local session="$1"
+  local window="$2"
+  tmux list-windows -t "$session" -F "#{window_name}" 2> /dev/null | grep -q "^${window}$"
+}
+
+start_claude_in_tmux() {
+  local session="$1"
+  local window="$2"
+  local worktree_path="$3"
+  local create_new_session="$4"
+
+  if [[ "$create_new_session" == "true" ]]; then
+    tmux new-session -ds "$session" -n "$window" -c "${worktree_path}"
+  else
+    tmux new-window -t "$session" -n "$window" -c "${worktree_path}"
+  fi
+
+  tmux send-keys -t "$session:$window" "claude" C-m
+  tmux switch-client -t "$session" 2> /dev/null || true
+}
+
+close_tmux_window() {
+  local session="$1"
+  local window="$2"
+
+  tmux_window_exists "$session" "$window" || return 0
+
+  debug "Closing tmux window '${window}'..."
+  tmux kill-window -t "$session:${window}"
+}
+
+get_current_vibe_name() {
+  # Check if we're in tmux
+  [[ -z "${TMUX:-}" ]] && return 1
+
+  # Check if current session is 'vibe'
+  local current_session
+  current_session=$(tmux display-message -p '#S' 2> /dev/null)
+  debug "Current tmux session: '${current_session}'"
+  [[ "$current_session" != "vibe" ]] && return 1
+
+  # Get current branch name
+  local current_branch
+  current_branch=$(git symbolic-ref --short HEAD 2> /dev/null) || return 1
+  debug "Current branch: '${current_branch}'"
+
+  # Check if branch matches vibe pattern: claude/<name>
+  if [[ "$current_branch" =~ ^claude/(.+)$ ]]; then
+    local extracted_name="${BASH_REMATCH[1]}"
+    debug "Extracted name from branch: '${extracted_name}'"
+    echo "${extracted_name}"
+    return 0
+  fi
+
+  debug "Current branch is not a vibe branch"
+  return 1
+}
