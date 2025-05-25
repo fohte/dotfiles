@@ -9,6 +9,7 @@
 #
 # Usage:
 #   vibe start <name>
+#   vibe done <name> [--force]
 #
 set -euo pipefail
 
@@ -17,8 +18,12 @@ usage() {
 Usage: $(basename "$0") <command> [<args>]
 
 Commands:
-  start <name>  Start a new Claude Code session with worktree
-  done <name>   Remove branch and worktree (only if merged)
+  start <name>
+    Start a new Claude Code session with worktree
+
+  done <name> [--force]
+    Remove branch and worktree (only if merged)
+    Use --force to skip merge check
 
 vibe is a wrapper for Claude Code that:
   - Creates/enters a tmux session 'vibe'
@@ -46,12 +51,36 @@ case "$command" in
     name="$1"
     ;;
   done)
-    if [ "$#" -ne 1 ]; then
-      echo "error: 'done' requires exactly one argument" >&2
+    force=false
+    # Parse options
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        --force)
+          force=true
+          shift
+          ;;
+        -*)
+          echo "error: unknown option '$1'" >&2
+          usage
+          exit 1
+          ;;
+        *)
+          if [ -n "${name:-}" ]; then
+            echo "error: 'done' requires exactly one name argument" >&2
+            usage
+            exit 1
+          fi
+          name="$1"
+          shift
+          ;;
+      esac
+    done
+
+    if [ -z "${name:-}" ]; then
+      echo "error: 'done' requires a name argument" >&2
       usage
       exit 1
     fi
-    name="$1"
     ;;
   *)
     echo "error: unknown command '$command'" >&2
@@ -125,27 +154,31 @@ elif [ "$command" = "done" ]; then
     exit 1
   fi
 
-  # Check if branch has been merged
-  # First, try to check via GitHub PR (handles squash merge case)
-  pr_merged=false
-  if command -v gh &> /dev/null; then
-    # Get PR info for the specific branch
-    pr_info=$(gh pr list --state all --head "${branch}" --json number,merged,state --limit 1 2>/dev/null)
-    if [ -n "$pr_info" ] && [ "$pr_info" != "[]" ]; then
-      # Check if PR exists and is merged
-      if echo "$pr_info" | jq -e '.[0].merged == true' > /dev/null 2>&1; then
-        pr_merged=true
+  # Check if branch has been merged (unless --force is used)
+  if [ "$force" = false ]; then
+    # First, try to check via GitHub PR (handles squash merge case)
+    pr_merged=false
+    if command -v gh &> /dev/null; then
+      # Get PR info for the specific branch
+      pr_info=$(gh pr list --state all --head "${branch}" --json number,merged,state --limit 1 2>/dev/null)
+      if [ -n "$pr_info" ] && [ "$pr_info" != "[]" ]; then
+        # Check if PR exists and is merged
+        if echo "$pr_info" | jq -e '.[0].merged == true' > /dev/null 2>&1; then
+          pr_merged=true
+        fi
       fi
     fi
-  fi
 
-  # If no merged PR found, check with git branch --merged
-  if [ "$pr_merged" = false ]; then
-    if ! git branch --merged | grep -q "^[[:space:]]*${branch}$"; then
-      echo "error: branch '${branch}' has not been merged yet" >&2
-      echo "Please merge the branch first or use 'git branch -D ${branch}' to force delete" >&2
-      exit 1
+    # If no merged PR found, check with git branch --merged
+    if [ "$pr_merged" = false ]; then
+      if ! git branch --merged | grep -q "^[[:space:]]*${branch}$"; then
+        echo "error: branch '${branch}' has not been merged yet" >&2
+        echo "Please merge the branch first or use 'vibe done ${name} --force' to force delete" >&2
+        exit 1
+      fi
     fi
+  else
+    echo "Force deletion requested, skipping merge check..."
   fi
 
   # Remove worktree if it exists
@@ -156,7 +189,11 @@ elif [ "$command" = "done" ]; then
 
   # Delete the branch
   echo "Deleting branch '${branch}'..."
-  git branch -d "${branch}"
+  if [ "$force" = true ]; then
+    git branch -D "${branch}"
+  else
+    git branch -d "${branch}"
+  fi
 
   # Close tmux window if it exists
   window_name="$(basename "${git_root}")-${name}"
