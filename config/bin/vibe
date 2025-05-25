@@ -9,7 +9,7 @@
 #
 # Usage:
 #   vibe start <name>
-#   vibe done <name> [--force|-f]
+#   vibe done [<name>] [--force|-f]
 #
 set -euo pipefail
 
@@ -21,8 +21,9 @@ Commands:
   start <name>
     Start a new Claude Code session with worktree
 
-  done <name> [--force|-f]
+  done [<name>] [--force|-f]
     Remove branch and worktree (only if merged)
+    If <name> is omitted, uses current window name in vibe session
     Use --force or -f to skip merge check
 
 vibe is a wrapper for Claude Code that:
@@ -123,6 +124,32 @@ parse_start_command() {
   echo "$1"
 }
 
+get_current_vibe_name() {
+  # Check if we're in tmux
+  [[ -z "${TMUX:-}" ]] && return 1
+
+  # Check if current session is 'vibe'
+  local current_session
+  current_session=$(tmux display-message -p '#S' 2>/dev/null)
+  [[ "$current_session" != "vibe" ]] && return 1
+
+  # Get current window name
+  local window_name
+  window_name=$(tmux display-message -p '#W' 2>/dev/null)
+
+  # Extract name from window name pattern: <git-root>-<name>
+  local git_root_basename
+  git_root_basename=$(basename "${git_root}")
+
+  # Check if window name matches expected pattern
+  if [[ "$window_name" =~ ^${git_root_basename}-(.+)$ ]]; then
+    echo "${BASH_REMATCH[1]}"
+    return 0
+  fi
+
+  return 1
+}
+
 parse_done_command() {
   local force=false
   local name=""
@@ -144,7 +171,13 @@ parse_done_command() {
     esac
   done
 
-  [[ -z "$name" ]] && error_usage "'done' requires a name argument"
+  # If no name provided, try to get from current tmux window
+  if [[ -z "$name" ]] && name=$(get_current_vibe_name); then
+    echo "Detected current vibe: ${name}" >&2
+  elif [[ -z "$name" ]]; then
+    error_usage "'done' requires a name argument (or run from within a vibe tmux window)"
+  fi
+
   echo "$name $force"
 }
 
