@@ -13,7 +13,7 @@
 set -euo pipefail
 
 usage() {
-  cat << EOF
+	cat <<EOF
 Usage: $(basename "$0") [<issue-url>]
 
 ghni means "GitHub Neovim Issue".
@@ -22,55 +22,55 @@ EOF
 }
 
 if [ "$#" -gt 1 ]; then
-  usage
-  exit 1
+	usage
+	exit 1
 fi
 
-if ! command -v nvr &> /dev/null; then
-  echo "error: 'nvr' is not installed. please install it with 'pip install neovim-remote'" >&2
-  exit 1
+if ! command -v nvr &>/dev/null; then
+	echo "error: 'nvr' is not installed. please install it with 'pip install neovim-remote'" >&2
+	exit 1
 fi
 
 url="${1:-$(pbpaste)}"
 
 if [[ "$url" =~ ^https://github\.com/([^/]+)/([^/]+)/issues/([0-9]+)$ ]]; then
-  owner="${BASH_REMATCH[1]}"
-  reponame="${BASH_REMATCH[2]}"
-  issue_num="${BASH_REMATCH[3]}"
-  repo="${owner}/${reponame}"
+	owner="${BASH_REMATCH[1]}"
+	reponame="${BASH_REMATCH[2]}"
+	issue_num="${BASH_REMATCH[3]}"
+	repo="${owner}/${reponame}"
 else
-  echo "error: invalid issue URL: '$url'" >&2
-  usage
-  exit 1
+	echo "error: invalid issue URL: '$url'" >&2
+	usage
+	exit 1
 fi
 
 session="$repo"
 
 nvim_socket="/tmp/ghni-${owner}-${reponame}.sock"
 
-if ! tmux has-session -t "$session" 2> /dev/null; then
-  tmux new-session -ds "$session"
+if ! tmux has-session -t "$session" 2>/dev/null; then
+	tmux new-session -ds "$session"
 fi
 
 tmux switch-client -t "$session"
 
 # if Neovim is already running
-if nvr --nostart --servername "$nvim_socket" --remote-expr 1 > /dev/null 2>&1; then
-  issue_buf="octo://${owner}/${reponame}/issue/${issue_num}"
+if nvr --nostart --servername "$nvim_socket" --remote-expr 1 >/dev/null 2>&1; then
+	issue_buf="octo://${owner}/${reponame}/issue/${issue_num}"
 
-  found_tab="$(nvr --servername "$nvim_socket" \
-    --remote-expr "bufnr(\"${issue_buf}\")")"
+	found_tab="$(nvr --servername "$nvim_socket" \
+		--remote-expr "bufnr(\"${issue_buf}\")")"
 
-  if [ "$found_tab" -gt 0 ]; then # if tab found, switch to it
-    nvr --servername "$nvim_socket" --remote-send "<cmd>tabnext ${found_tab}<cr>"
-  else # if tab not found, open new tab
-    nvr --servername "$nvim_socket" --remote-send "<cmd>tabnew | Octo ${url}<cr>"
-  fi
+	if [ "$found_tab" -gt 0 ]; then # if tab found, switch to it
+		nvr --servername "$nvim_socket" --remote-send "<cmd>tabnext ${found_tab}<cr>"
+	else # if tab not found, open new tab
+		nvr --servername "$nvim_socket" --remote-send "<cmd>tabnew | Octo ${url}<cr>"
+	fi
 
-  tmux last-window
+	tmux last-window
 
 # if Neovim is not running
 else
-  tmux new-window -t "$session" -n "ghni-issue-${issue_num}" \
-    "NVIM_LISTEN_ADDRESS=${nvim_socket} nvim -c 'Octo ${url}'"
+	tmux new-window -t "$session" -n "ghni-issue-${issue_num}" \
+		"NVIM_LISTEN_ADDRESS=${nvim_socket} nvim -c 'Octo ${url}'"
 fi

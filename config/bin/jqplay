@@ -5,20 +5,20 @@ set -euo pipefail
 # usage: <json-stdin> | jqplay
 
 json="$(mktemp -t jqplay.XXXXXX.json)"
-cat | jq > "$json"
+cat | jq >"$json"
 
 jq_query="$(mktemp -t jqplay.XXXXXX.jq)"
 
 result="$(mktemp -t jqplay.XXXXXX.result)"
 
 nvim "$json" \
-  +"Jqplay $*" \
-  +"lua require('user.jqplay').setup('$jq_query', '$result')"
+	+"Jqplay $*" \
+	+"lua require('user.jqplay').setup('$jq_query', '$result')"
 
 echo '$' jq "$@" "$(cat "$jq_query")" | bat --style=plain -l bash
 
 if [ -s "$jq_query" ]; then
-  bat --style=plain -l json "$result"
+	bat --style=plain -l json "$result"
 else
-  echo "(empty)"
+	echo "(empty)"
 fi

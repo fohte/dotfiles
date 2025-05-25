@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 source scripts/utils.bash
 
 usage() {
-  cat << EOS
+	cat <<EOS
 USAGE: $0 [options...]
 
 OPTIONS
@@ -18,103 +18,103 @@ EOS
 }
 
 log-exec() {
-  if is_dryrun; then
-    printf '[dryrun] '
-  else
-    printf '[run] '
-  fi
-  echo "$@"
+	if is_dryrun; then
+		printf '[dryrun] '
+	else
+		printf '[run] '
+	fi
+	echo "$@"
 
-  if ! is_dryrun; then
-    "$@"
-  fi
+	if ! is_dryrun; then
+		"$@"
+	fi
 }
 
 is_dryrun() {
-  test -n "$DRYRUN"
+	test -n "$DRYRUN"
 }
 
 is_force() {
-  test -n "$FORCE"
+	test -n "$FORCE"
 }
 
 while [ $# -gt 0 ]; do
-  case "$1" in
-    --help | -h)
-      usage
-      exit
-      ;;
+	case "$1" in
+	--help | -h)
+		usage
+		exit
+		;;
 
-    --debug | -d)
-      set -x
-      shift
-      ;;
+	--debug | -d)
+		set -x
+		shift
+		;;
 
-    --dry-run | -n)
-      DRYRUN=1
-      shift
-      ;;
+	--dry-run | -n)
+		DRYRUN=1
+		shift
+		;;
 
-    --force | -f)
-      FORCE=1
-      shift
-      ;;
+	--force | -f)
+		FORCE=1
+		shift
+		;;
 
-    --tags | -t)
-      tags="$(tr ',' '\n' <<< "$2")"
-      shift 2
-      ;;
+	--tags | -t)
+		tags="$(tr ',' '\n' <<<"$2")"
+		shift 2
+		;;
 
-    -*)
-      echo "[ERROR] Invalid option '$1'"
-      usage
-      exit 1
-      ;;
-  esac
+	-*)
+		echo "[ERROR] Invalid option '$1'"
+		usage
+		exit 1
+		;;
+	esac
 done
 
 function is_absolute_path {
-  if [[ $1 == /* ]]; then
-    echo "true"
-  else
-    echo "false"
-  fi
+	if [[ $1 == /* ]]; then
+		echo "true"
+	else
+		echo "false"
+	fi
 }
 
 # define a symbolink link
 # usage: sym <src> <dest>
 sym() {
-  src="$1"
-  if [[ "$src" != /* ]]; then
-    src="$PWD/$src"
-  fi
+	src="$1"
+	if [[ "$src" != /* ]]; then
+		src="$PWD/$src"
+	fi
 
-  dst="$2"
-  dst_dir="$(dirname "$dst")"
+	dst="$2"
+	dst_dir="$(dirname "$dst")"
 
-  if [ ! -d "$dst_dir" ]; then
-    log-exec mkdir -p "$dst_dir"
-  fi
+	if [ ! -d "$dst_dir" ]; then
+		log-exec mkdir -p "$dst_dir"
+	fi
 
-  if is_force || [ ! -e "$dst" ]; then
-    if [ -d "$dst" ]; then
-      log-exec rm -r "$dst"
-    fi
-    log-exec ln -sfnv "$src" "$dst"
-  fi
+	if is_force || [ ! -e "$dst" ]; then
+		if [ -d "$dst" ]; then
+			log-exec rm -r "$dst"
+		fi
+		log-exec ln -sfnv "$src" "$dst"
+	fi
 }
 
 # check tag matching
 # usage: match_tag <tag>
 match_tag() {
-  tag="$1"
+	tag="$1"
 
-  # if the --tags option is not set, all tags are assumed to be specified
-  if [ -z "${tags:-}" ]; then
-    return 0
-  fi
+	# if the --tags option is not set, all tags are assumed to be specified
+	if [ -z "${tags:-}" ]; then
+		return 0
+	fi
 
-  grep -q -F "$tag" <<< "$tags"
+	grep -q -F "$tag" <<<"$tags"
 }
 
 source symlinks

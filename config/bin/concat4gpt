@@ -3,7 +3,7 @@
 set -euo pipefail
 
 for file in "$@"; do
-  cat << EOF
+	cat <<EOF
 \`\`\`$file
 $(cat "$file")
 \`\`\`

@@ -3,8 +3,8 @@
 set -euo pipefail
 
 if [ -z "$TMUX" ]; then
-  echo "This command must be run in tmux" >&2
-  exit 1
+	echo "This command must be run in tmux" >&2
+	exit 1
 fi
 
 existing_prefix='🔋'
@@ -13,67 +13,67 @@ kill_prefix='🗑️'
 
 # sort sessions by last used
 list_sorted_sessions() {
-  tmux list-sessions -F "#{session_last_attached} #{session_name}" |
-    sort -rn |
-    cut -d' ' -f2- |
-    # ignore current session
-    tail -n +2
+	tmux list-sessions -F "#{session_last_attached} #{session_name}" |
+		sort -rn |
+		cut -d' ' -f2- |
+		# ignore current session
+		tail -n +2
 }
 
 print_list() {
-  sessions="$(list_sorted_sessions)"
-  # sed is used to add prefix to each line
-  # shellcheck disable=SC2001
-  echo "$sessions" | sed "s/^/$existing_prefix/"
+	sessions="$(list_sorted_sessions)"
+	# sed is used to add prefix to each line
+	# shellcheck disable=SC2001
+	echo "$sessions" | sed "s/^/$existing_prefix/"
 
-  repos="$(ghq list | cut -d/ -f2-3)"
+	repos="$(ghq list | cut -d/ -f2-3)"
 
-  echo "$repos" |
-    grep -vFxf <(echo "$sessions" | tr '_' '.') |
-    sed "s/^/$new_prefix/"
+	echo "$repos" |
+		grep -vFxf <(echo "$sessions" | tr '_' '.') |
+		sed "s/^/$new_prefix/"
 
-  echo "$kill_prefix kill session"
+	echo "$kill_prefix kill session"
 }
 
 create_session() {
-  tmux new-session -s "$1" -d
-  tmux switch -t "$1"
+	tmux new-session -s "$1" -d
+	tmux switch -t "$1"
 }
 
 fzf_result="$(print_list | fzf-tmux -p \
-  --reverse \
-  --print-query \
-  --preview 'tmux-tree {}' || true)"
+	--reverse \
+	--print-query \
+	--preview 'tmux-tree {}' || true)"
 fzf_query="$(echo "$fzf_result" | sed -n 1p)"
 selected="$(echo "$fzf_result" | sed -n 2p)"
 
 # if query and result are empty, do nothing
 if [ -z "$fzf_query" ] && [ -z "$selected" ]; then
-  exit
+	exit
 fi
 
 case "$selected" in
-  "$new_prefix"*)
-    selected="${selected/$new_prefix/}"
-    session_name="$(echo "$selected" | tr '.' '_')"
-    dir="$(ghq root)/github.com/$selected"
-    tmux new-session -s "$session_name" -d -c "$dir"
-    tmux switch -t "$session_name"
-    # create a second window
-    tmux new-window -t "$session_name" -c "$dir"
-    ;;
+"$new_prefix"*)
+	selected="${selected/$new_prefix/}"
+	session_name="$(echo "$selected" | tr '.' '_')"
+	dir="$(ghq root)/github.com/$selected"
+	tmux new-session -s "$session_name" -d -c "$dir"
+	tmux switch -t "$session_name"
+	# create a second window
+	tmux new-window -t "$session_name" -c "$dir"
+	;;
 
-  "$existing_prefix"*)
-    tmux switch -t "${selected/$existing_prefix/}"
-    ;;
+"$existing_prefix"*)
+	tmux switch -t "${selected/$existing_prefix/}"
+	;;
 
-  "$kill_prefix"*)
-    tmux-kill-session-fzf
-    ;;
+"$kill_prefix"*)
+	tmux-kill-session-fzf
+	;;
 
-  # not selected (new session with query as name)
-  *)
-    tmux new-session -s "$fzf_query" -d
-    tmux switch -t "$fzf_query"
-    ;;
+# not selected (new session with query as name)
+*)
+	tmux new-session -s "$fzf_query" -d
+	tmux switch -t "$fzf_query"
+	;;
 esac

@@ -3,22 +3,22 @@
 executable=false
 
 while getopts x opt; do
-  case "$opt" in
-    x) executable=true ;;
-  esac
+	case "$opt" in
+	x) executable=true ;;
+	esac
 done
 
 shift $((OPTIND - 1))
 
 for filepath in $@; do
-  if [ "$(echo "$filepath" | rev | cut -c 1)" = '/' ]; then
-    mkdir -p "$filepath"
-  else
-    mkdir -p "$(dirname "$filepath")"
-    touch "$filepath"
+	if [ "$(echo "$filepath" | rev | cut -c 1)" = '/' ]; then
+		mkdir -p "$filepath"
+	else
+		mkdir -p "$(dirname "$filepath")"
+		touch "$filepath"
 
-    if $executable; then
-      chmod +x "$filepath"
-    fi
-  fi
+		if $executable; then
+			chmod +x "$filepath"
+		fi
+	fi
 done

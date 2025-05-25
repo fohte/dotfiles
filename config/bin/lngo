@@ -7,13 +7,13 @@ dir=$(git root)
 
 repo=${dir#${GHQPATH}/}
 if [ -z "$repo" ]; then
-  echo "Could not detect the repository name. Please execute in a local repository on $(ghq root)."
-  exit 1
+	echo "Could not detect the repository name. Please execute in a local repository on $(ghq root)."
+	exit 1
 fi
 
 if [ -z "$(find . -type f -name '*.go')" ]; then
-  echo "Not found go files in the working directory."
-  exit 1
+	echo "Not found go files in the working directory."
+	exit 1
 fi
 
 ln -snv "$(pwd)" "$GOPATH/src/$repo"

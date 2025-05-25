@@ -3,14 +3,14 @@
 set -euo pipefail
 
 if [ -z "$TMUX" ]; then
-  echo "This command must be run in tmux" >&2
-  exit 1
+	echo "This command must be run in tmux" >&2
+	exit 1
 fi
 
 selected="$(
-  tmux list-sessions |
-    cut -d: -f1 |
-    fzf-tmux -p --reverse --multi --preview='tmux-tree {}' || true
+	tmux list-sessions |
+		cut -d: -f1 |
+		fzf-tmux -p --reverse --multi --preview='tmux-tree {}' || true
 )"
 
 echo "$selected" | xargs -I% tmux kill-session -t %

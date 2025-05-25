@@ -1,20 +1,20 @@
 has() {
-  which "$1" > /dev/null 2>&1
-  return $?
+	which "$1" >/dev/null 2>&1
+	return $?
 }
 
 is_macos() {
-  [[ $OSTYPE == darwin* ]]
+	[[ $OSTYPE == darwin* ]]
 }
 
 is_linux() {
-  [[ $OSTYPE == linux* ]]
+	[[ $OSTYPE == linux* ]]
 }
 
 is_tmux_running() {
-  [ ! -z "$TMUX" ]
+	[ ! -z "$TMUX" ]
 }
 
 is_ssh_running() {
-  [ ! -z "$SSH_CONNECTION" ] || [ ! -z "$SSH_CLIENT" ]
+	[ ! -z "$SSH_CONNECTION" ] || [ ! -z "$SSH_CLIENT" ]
 }

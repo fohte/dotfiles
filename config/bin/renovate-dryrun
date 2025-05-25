@@ -31,7 +31,7 @@ set -euo pipefail
 #   packageFile: terraform/tailscale/main.tf
 
 usage() {
-  cat << EOF
+	cat <<EOF
 Usage: $0 [options]
 
 Options:
@@ -40,30 +40,30 @@ Options:
   -b, --branch <branch>       Branch to dry-run the Renovate (default: current branch)
   --raw                       Show the raw Renovate log
 EOF
-  exit 1
+	exit 1
 }
 
 while (($#)); do
-  case "$1" in
-    -h | --help) usage ;;
-    -c | --config)
-      config_file="$2"
-      shift 2
-      ;;
-    -b | --branch)
-      branch="$2"
-      shift 2
-      ;;
-    --raw)
-      raw=true
-      shift
-      ;;
-    -*)
-      echo "Unknown option: $1" >&2
-      usage
-      ;;
-    *) break ;;
-  esac
+	case "$1" in
+	-h | --help) usage ;;
+	-c | --config)
+		config_file="$2"
+		shift 2
+		;;
+	-b | --branch)
+		branch="$2"
+		shift 2
+		;;
+	--raw)
+		raw=true
+		shift
+		;;
+	-*)
+		echo "Unknown option: $1" >&2
+		usage
+		;;
+	*) break ;;
+	esac
 done
 
 raw="${raw:-false}"
@@ -77,41 +77,41 @@ repo_name="$(basename "$(dirname "$root_path")")/$(basename "$root_path")"
 gh_token="$(gh-token)"
 
 dryrun() {
-  env LOG_LEVEL=debug \
-    RENOVATE_CONFIG_FILE="$config_file" \
-    RENOVATE_BASE_BRANCHES="$branch" \
-    npx -y renovate \
-    --token="$gh_token" \
-    --schedule="" \
-    --require-config=ignored \
-    --dry-run=full \
-    "$repo_name"
+	env LOG_LEVEL=debug \
+		RENOVATE_CONFIG_FILE="$config_file" \
+		RENOVATE_BASE_BRANCHES="$branch" \
+		npx -y renovate \
+		--token="$gh_token" \
+		--schedule="" \
+		--require-config=ignored \
+		--dry-run=full \
+		"$repo_name"
 }
 
 if [[ "$raw" == "true" ]]; then
-  dryrun
-  exit
+	dryrun
+	exit
 fi
 
 renovate_log="$(dryrun)"
 
 find_json() {
-  target_log="$1"
+	target_log="$1"
 
-  printf '{'
-  echo "$renovate_log" | perl -ne 'BEGIN { $target_log = shift } print if /$target_log/ .. !/$target_log/ && /^\s*[A-Z]+:/' "$target_log" | sed '1d;$d' | sed -e 's/: undefined/: null/'
-  printf '}\n'
+	printf '{'
+	echo "$renovate_log" | perl -ne 'BEGIN { $target_log = shift } print if /$target_log/ .. !/$target_log/ && /^\s*[A-Z]+:/' "$target_log" | sed '1d;$d' | sed -e 's/: undefined/: null/'
+	printf '}\n'
 }
 
 parse_log() {
-  branch_summary="$(find_json 'DEBUG: Branch summary' | jq -r '.branches | map({ key: .branchName, value: .}) | from_entries')"
-  branches_information="$(find_json 'DEBUG: branches info extended' | jq -r '.branchesInformation | map({ key: .branchName, value: .}) | from_entries')"
+	branch_summary="$(find_json 'DEBUG: Branch summary' | jq -r '.branches | map({ key: .branchName, value: .}) | from_entries')"
+	branches_information="$(find_json 'DEBUG: branches info extended' | jq -r '.branchesInformation | map({ key: .branchName, value: .}) | from_entries')"
 
-  jq -rn \
-    --argjson branch_summary "$branch_summary" \
-    --argjson branches_information "$branches_information" \
-    "$(
-      cat << 'JQ'
+	jq -rn \
+		--argjson branch_summary "$branch_summary" \
+		--argjson branches_information "$branches_information" \
+		"$(
+			cat <<'JQ'
 $branch_summary | map({ key: .branchName, value: .}) | from_entries as $summary |
 $branches_information | map({ key: .branchName, value: .}) | from_entries as $info |
 $info | with_entries(.value += $summary[.key]) | map(
@@ -124,20 +124,20 @@ $info | with_entries(.value += $summary[.key]) | map(
   ) | join("\n"))
 ) | join("\n")
 JQ
-    )"
+		)"
 
-  echo "## Detected dependencies (no upgrades)"
-  echo
+	echo "## Detected dependencies (no upgrades)"
+	echo
 
-  package_files="$(find_json 'DEBUG: Checking packageFiles for deprecated packages' | jq -r .packageFiles)"
-  if [[ "$(jq -r 'length' <<< "$package_files")" == 0 ]]; then
-    package_files="$(find_json 'DEBUG: packageFiles with updates' | jq -r .config)"
-  fi
+	package_files="$(find_json 'DEBUG: Checking packageFiles for deprecated packages' | jq -r .packageFiles)"
+	if [[ "$(jq -r 'length' <<<"$package_files")" == 0 ]]; then
+		package_files="$(find_json 'DEBUG: packageFiles with updates' | jq -r .config)"
+	fi
 
-  jq -rn \
-    --argjson package_files "$package_files" \
-    "$(
-      cat << 'JQ'
+	jq -rn \
+		--argjson package_files "$package_files" \
+		"$(
+			cat <<'JQ'
 $package_files | to_entries | map(
   "\(.key)\n" + (.value | map(
     "  \(.packageFile)\n" +
@@ -148,13 +148,13 @@ $package_files | to_entries | map(
   ) | join("\n\n"))
 ) | join("\n\n")
 JQ
-    )"
+		)"
 }
 
 parse_log || {
-  echo "[error] Failed to parse the Renovate log" >&2
-  tmp_log="$(mktemp -t renovate-dryrun.XXXXXX.log)"
-  echo "$renovate_log" > "$tmp_log"
-  echo "full log: $tmp_log" >&2
-  exit 1
+	echo "[error] Failed to parse the Renovate log" >&2
+	tmp_log="$(mktemp -t renovate-dryrun.XXXXXX.log)"
+	echo "$renovate_log" >"$tmp_log"
+	echo "full log: $tmp_log" >&2
+	exit 1
 }
