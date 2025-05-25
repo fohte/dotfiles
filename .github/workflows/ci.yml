@@ -23,6 +23,7 @@ jobs:
           aqua_version: v2.43.2
 
       - name: Run pre-commit hooks
+        id: pre-commit
         continue-on-error: true
         run: pre-commit run --all-files
 
@@ -32,3 +33,7 @@ jobs:
           commit_user_name: 'fohte-bot[bot]'
           commit_user_email: '139195068+fohte-bot[bot]@users.noreply.github.com'
           commit_author: 'fohte-bot[bot] <139195068+fohte-bot[bot]@users.noreply.github.com>'
+
+      - name: Fail if pre-commit failed
+        if: steps.pre-commit.outcome == 'failure'
+        run: exit 1
