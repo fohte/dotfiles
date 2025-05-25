@@ -13,275 +13,25 @@
 #
 set -euo pipefail
 
-usage() {
-  cat << EOF
-Usage: $(basename "$0") <command> [<args>]
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="${SCRIPT_DIR}/lib/vibe"
 
-Commands:
-  start <name>
-    Start a new Claude Code session with worktree
-
-  done [<name>] [--force|-f]
-    Remove branch and worktree (only if merged)
-    If <name> is omitted, uses current window name in vibe session
-    Use --force or -f to skip merge check
-
-vibe is a wrapper for Claude Code that:
-  - Creates/enters a tmux session 'vibe'
-  - Creates a git branch 'claude/<name>' from origin/master
-  - Creates a worktree at '.worktrees/<name>'
-  - Starts Claude Code in a new tmux window
-EOF
-}
-
-# Helper functions
-error_exit() {
-  echo "error: $1" >&2
-  exit 1
-}
-
-error_usage() {
-  echo "error: $1" >&2
-  usage
-  exit 1
-}
-
-verify_git_repo() {
-  git rev-parse --git-dir > /dev/null 2>&1 || error_exit "not in a git repository"
-}
-
-check_branch_exists() {
-  local branch="$1"
-  git show-ref --verify --quiet "refs/heads/${branch}"
-}
-
-is_branch_merged() {
-  local branch="$1"
-  git branch --merged | grep -q "^[[:space:]]*${branch}$"
-}
-
-check_pr_merged() {
-  local branch="$1"
-  command -v gh &> /dev/null || return 1
-
-  local pr_info
-  pr_info=$(gh pr list --state all --head "${branch}" --json number,merged,state --limit 1 2> /dev/null)
-
-  [[ -n "$pr_info" && "$pr_info" != "[]" ]] || return 1
-  echo "$pr_info" | jq -e '.[0].merged == true' > /dev/null 2>&1
-}
-
-tmux_session_exists() {
-  local session="$1"
-  tmux has-session -t "$session" 2> /dev/null
-}
-
-tmux_window_exists() {
-  local session="$1"
-  local window="$2"
-  tmux list-windows -t "$session" -F "#{window_name}" 2> /dev/null | grep -q "^${window}$"
-}
-
-create_branch_from_origin() {
-  local branch="$1"
-  echo "Creating branch '${branch}' from origin/master..."
-  git fetch origin master
-  git branch "${branch}" origin/master
-}
-
-create_worktree() {
-  local path="$1"
-  local branch="$2"
-  echo "Creating worktree at '${path}'..."
-  git worktree add "${path}" "${branch}"
-}
-
-start_claude_in_tmux() {
-  local session="$1"
-  local window="$2"
-  local worktree_path="$3"
-  local create_new_session="$4"
-
-  if [[ "$create_new_session" == "true" ]]; then
-    tmux new-session -ds "$session" -n "$window" -c "${worktree_path}"
-  else
-    tmux new-window -t "$session" -n "$window" -c "${worktree_path}"
-  fi
-
-  tmux send-keys -t "$session:$window" "claude" C-m
-  tmux switch-client -t "$session" 2> /dev/null || true
-}
+# Source library files
+# shellcheck source=lib/vibe/common.bash
+source "${LIB_DIR}/common.bash"
+# shellcheck source=lib/vibe/git.bash
+source "${LIB_DIR}/git.bash"
+# shellcheck source=lib/vibe/tmux.bash
+source "${LIB_DIR}/tmux.bash"
+# shellcheck source=lib/vibe/commands.bash
+source "${LIB_DIR}/commands.bash"
 
 # Main script
 [[ "$#" -lt 1 ]] && error_usage "missing command"
 
 command="$1"
 shift
-
-# Parse command and arguments
-parse_start_command() {
-  [[ "$#" -ne 1 ]] && error_usage "'start' requires exactly one argument"
-  echo "$1"
-}
-
-get_current_vibe_name() {
-  # Check if we're in tmux
-  [[ -z "${TMUX:-}" ]] && return 1
-
-  # Check if current session is 'vibe'
-  local current_session
-  current_session=$(tmux display-message -p '#S' 2> /dev/null)
-  [[ "$current_session" != "vibe" ]] && return 1
-
-  # Get current window name
-  local window_name
-  window_name=$(tmux display-message -p '#W' 2> /dev/null)
-
-  # Get the main git directory (not worktree)
-  local git_common_dir
-  git_common_dir=$(git rev-parse --git-common-dir 2> /dev/null) || return 1
-
-  # Get the parent directory name (project name)
-  local project_name
-  project_name=$(basename "$(dirname "${git_common_dir}")")
-
-  # Check if window name matches expected pattern: <project>-<name>
-  if [[ "$window_name" =~ ^${project_name}-(.+)$ ]]; then
-    echo "${BASH_REMATCH[1]}"
-    return 0
-  fi
-
-  return 1
-}
-
-parse_done_command() {
-  local force=false
-  local name=""
-
-  while [[ "$#" -gt 0 ]]; do
-    case "$1" in
-      --force | -f)
-        force=true
-        shift
-        ;;
-      -*)
-        error_usage "unknown option '$1'"
-        ;;
-      *)
-        [[ -n "$name" ]] && error_usage "'done' requires exactly one name argument"
-        name="$1"
-        shift
-        ;;
-    esac
-  done
-
-  # If no name provided, try to get from current tmux window
-  if [[ -z "$name" ]] && name=$(get_current_vibe_name); then
-    echo "Detected current vibe: ${name}" >&2
-  elif [[ -z "$name" ]]; then
-    error_usage "'done' requires a name argument (or run from within a vibe tmux window)"
-  fi
-
-  echo "$name $force"
-}
-
-# Command implementations
-handle_start() {
-  local branch="$1"
-  local worktree_path="$2"
-  local worktree_dir="$3"
-
-  # Check prerequisites
-  check_branch_exists "${branch}" && error_exit "Branch '${branch}' already exists"
-  [[ -d "${worktree_path}" ]] && error_exit "Worktree '${worktree_dir}' already exists"
-
-  # Create branch and worktree
-  create_branch_from_origin "${branch}"
-  create_worktree "${worktree_path}" "${branch}"
-
-  # Setup tmux
-  local create_new_session=false
-  tmux_session_exists "$SESSION_NAME" || create_new_session=true
-
-  local window_name
-  window_name="$(basename "${git_root}")-${name}"
-  start_claude_in_tmux "$SESSION_NAME" "$window_name" "${worktree_path}" "$create_new_session"
-}
-
-verify_branch_merged() {
-  local branch="$1"
-  local force="$2"
-
-  [[ "$force" == "true" ]] && echo "Force deletion requested, skipping merge check..." && return 0
-
-  # Try GitHub PR first (handles squash merge)
-  check_pr_merged "${branch}" && return 0
-
-  # Fall back to git branch --merged
-  is_branch_merged "${branch}" && return 0
-
-  error_exit "branch '${branch}' has not been merged yet\nPlease merge the branch first or use 'vibe done ${name} --force' to force delete"
-}
-
-remove_worktree() {
-  local worktree_path="$1"
-  local worktree_dir="$2"
-
-  [[ ! -d "${worktree_path}" ]] && return 0
-
-  echo "Removing worktree at '${worktree_dir}'..."
-  git worktree remove "${worktree_path}"
-}
-
-delete_branch() {
-  local branch="$1"
-  local force="$2"
-
-  echo "Deleting branch '${branch}'..."
-  if [[ "$force" == "true" ]]; then
-    git branch -D "${branch}"
-  else
-    git branch -d "${branch}"
-  fi
-}
-
-close_tmux_window() {
-  local session="$1"
-  local window="$2"
-
-  tmux_window_exists "$session" "$window" || return 0
-
-  echo "Closing tmux window '${window}'..."
-  tmux kill-window -t "$session:${window}"
-}
-
-handle_done() {
-  local branch="$1"
-  local worktree_path="$2"
-  local worktree_dir="$3"
-  local force="$4"
-
-  # Verify branch exists
-  check_branch_exists "${branch}" || error_exit "Branch '${branch}' does not exist"
-
-  # Verify branch is merged (unless forced)
-  verify_branch_merged "${branch}" "${force}"
-
-  # Change to git root directory if we're currently in the worktree
-  if [[ "$PWD" == "${worktree_path}"* ]]; then
-    cd "${git_root}" || error_exit "Failed to change directory"
-  fi
-
-  # Clean up resources
-  remove_worktree "${worktree_path}" "${worktree_dir}"
-  delete_branch "${branch}" "${force}"
-
-  local window_name
-  window_name="$(basename "${git_root}")-${name}"
-  close_tmux_window "$SESSION_NAME" "${window_name}"
-
-  echo "Done! Branch '${branch}' and worktree '${worktree_dir}' have been removed."
-}
 
 # Main execution
 # Verify prerequisites
@@ -290,6 +40,7 @@ verify_git_repo
 # Get the main git directory (not worktree)
 git_common_dir="$(git rev-parse --git-common-dir)"
 git_root="$(dirname "${git_common_dir}")"
+project_name="$(basename "${git_root}")"
 
 SESSION_NAME="vibe"
 
@@ -300,7 +51,7 @@ case "$command" in
     branch="claude/${name}"
     worktree_dir=".worktrees/${name}"
     worktree_path="${git_root}/${worktree_dir}"
-    handle_start "${branch}" "${worktree_path}" "${worktree_dir}"
+    handle_start "${branch}" "${worktree_path}" "${worktree_dir}" "${SESSION_NAME}" "${project_name}"
     ;;
   done)
     parsed_output=$(parse_done_command "$@") || exit 1
@@ -308,7 +59,7 @@ case "$command" in
     branch="claude/${name}"
     worktree_dir=".worktrees/${name}"
     worktree_path="${git_root}/${worktree_dir}"
-    handle_done "${branch}" "${worktree_path}" "${worktree_dir}" "${force}"
+    handle_done "${branch}" "${worktree_path}" "${worktree_dir}" "${force}" "${SESSION_NAME}" "${project_name}" "${git_root}"
     ;;
   *)
     error_usage "unknown command '$command'"
