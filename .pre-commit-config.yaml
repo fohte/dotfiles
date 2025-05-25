@@ -22,9 +22,15 @@ repos:
       - id: shfmt
         name: '🔧 shfmt'
         entry: shfmt -w
-        language: system
+        language: system  # managed by aqua (see: aqua.yaml)
         types: [shell]
         exclude: \.(zsh|zshenv|zshrc)$
+
+      - id: stylua
+        name: '🔧 stylua'
+        entry: stylua
+        language: system  # managed by aqua (see: aqua.yaml)
+        types: [lua]
 
   - repo: https://github.com/renovatebot/pre-commit-hooks
     rev: 39.113.0
