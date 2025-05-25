@@ -17,15 +17,51 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="${SCRIPT_DIR}/lib/vibe"
 
+# Common utility functions
+error_exit() {
+  echo "error: $1" >&2
+  exit 1
+}
+
+error_usage() {
+  echo "error: $1" >&2
+  usage
+  exit 1
+}
+
+usage() {
+  cat << EOF
+Usage: $(basename "$0") <command> [<args>]
+
+Commands:
+  start <name>
+    Start a new Claude Code session with worktree
+
+  done [<name>] [--force|-f]
+    Remove branch and worktree (only if merged)
+    If <name> is omitted, uses current window name in vibe session
+    Use --force or -f to skip merge check
+
+vibe is a wrapper for Claude Code that:
+  - Creates/enters a tmux session 'vibe'
+  - Creates a git branch 'claude/<name>' from origin/master
+  - Creates a worktree at '.worktrees/<name>'
+  - Starts Claude Code in a new tmux window
+EOF
+}
+
 # Source library files
-# shellcheck source=lib/vibe/common.bash
-source "${LIB_DIR}/common.bash"
-# shellcheck source=lib/vibe/git.bash
+# SC1091: Disable "Not following" warning for dynamic source paths
+# These files are sourced at runtime using variables, making static analysis difficult
+# See: https://github.com/koalaman/shellcheck/issues/2176
+# shellcheck disable=SC1091
 source "${LIB_DIR}/git.bash"
-# shellcheck source=lib/vibe/tmux.bash
+# shellcheck disable=SC1091
 source "${LIB_DIR}/tmux.bash"
-# shellcheck source=lib/vibe/commands.bash
-source "${LIB_DIR}/commands.bash"
+# shellcheck disable=SC1091
+source "${LIB_DIR}/command_start.bash"
+# shellcheck disable=SC1091
+source "${LIB_DIR}/command_done.bash"
 
 # Main script
 [[ "$#" -lt 1 ]] && error_usage "missing command"
