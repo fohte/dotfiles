@@ -5,7 +5,6 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
-  # Using local hooks to reference tools managed by aqua (see: aqua.yaml)
   - repo: local
     hooks:
       - id: generate-dvorakjp-rule
@@ -20,6 +19,7 @@ repos:
         language: system
         files: ^config/bettertouchtool/default\.bttpreset$
 
+      # Using aqua-managed tools (see: aqua.yaml)
       - id: shfmt # mvdan/sh package in aqua.yaml
         name: '🔧 shfmt'
         entry: shfmt -w
