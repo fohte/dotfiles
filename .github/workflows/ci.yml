@@ -25,9 +25,7 @@ jobs:
       - name: Cache aqua packages
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.local/share/aquaproj-aqua
-            ~/aquaproj-aqua
+          path: ~/.local/share/aquaproj-aqua
           key: ${{ runner.os }}-aqua-${{ hashFiles('**/aqua.yaml', '**/aqua-checksums.json', '**/aqua/*.yaml') }}
           restore-keys: |
             ${{ runner.os }}-aqua-
