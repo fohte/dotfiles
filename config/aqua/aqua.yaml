@@ -11,7 +11,7 @@ packages:
   - name: 1password/cli@v2.30.0
   - name: mikefarah/yq@v4.45.4
   - name: JohnnyMorganz/StyLua@v2.1.0
-  - name: mvdan/sh@v3.10.0
+  - name: mvdan/sh@v3.11.0
   - name: koalaman/shellcheck@v0.10.0
   - name: pre-commit/pre-commit@v4.2.0
   - name: neovim/neovim@v0.11.1
