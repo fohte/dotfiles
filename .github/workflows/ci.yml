@@ -18,9 +18,25 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
 
+      - name: Cache aqua packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/aquaproj-aqua
+          key: ${{ runner.os }}-aqua-${{ hashFiles('aqua.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-aqua-
+
       - uses: aquaproj/aqua-installer@v3.1.2
         with:
           aqua_version: v2.43.2
+
+      - name: Cache pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pre-commit-
 
       - name: Run pre-commit hooks
         id: pre-commit
