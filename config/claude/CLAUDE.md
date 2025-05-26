@@ -1,7 +1,6 @@
-# Pull requests
+# Rules
 
-- Format: ## Why (purpose/background) + ## What (changes in present tense)
-- After push: `gh run watch $(gh run list --limit 1 --json databaseId --jq '.[0].databaseId')`
+- When creating a PR: @~/.claude/rules/create-pr.md
 
 # Code style
 
