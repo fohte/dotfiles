@@ -5,8 +5,8 @@ packages:
   - name: cli/cli@v2.73.0
   - name: sharkdp/bat@v0.25.0
   - name: x-motemen/ghq@v1.7.1
-  - name: junegunn/fzf@v0.61.1
-  - name: junegunn/fzf/fzf-tmux@v0.61.1
+  - name: junegunn/fzf@v0.62.0
+  - name: junegunn/fzf/fzf-tmux@v0.62.0
   - name: dandavison/delta@0.18.2
   - name: 1password/cli@v2.30.0
   - name: mikefarah/yq@v4.45.4
