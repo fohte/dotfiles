@@ -36,7 +36,7 @@ close_tmux_window() {
   local window_count
   window_count=$(tmux list-windows -t "$session" 2> /dev/null | wc -l)
 
-  # If only one window remains, switch to previous session instead of killing window
+  # If only one window remains, switch to previous session before killing window
   if [[ "$window_count" -eq 1 ]]; then
     debug "Only one window remains in session '$session', switching to previous session..."
     # Try to switch to the last session (previous session)
@@ -48,7 +48,6 @@ close_tmux_window() {
         tmux switch-client -t "$other_session" 2> /dev/null || true
       fi
     fi
-    return 0
   fi
 
   # If window name is empty, close current window
