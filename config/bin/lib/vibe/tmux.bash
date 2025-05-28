@@ -12,6 +12,12 @@ tmux_window_exists() {
   tmux list-windows -t "$session" -F "#{window_name}" 2> /dev/null | grep -q "^${window}$"
 }
 
+CLAUDE_COMMAND="$(
+  cat << 'EOF'
+GH_TOKEN="$(gh auth token)" claude
+EOF
+)"
+
 start_claude_in_tmux() {
   local session="$1"
   local window="$2"
@@ -24,7 +30,7 @@ start_claude_in_tmux() {
     tmux new-window -t "$session" -n "$window" -c "${worktree_path}"
   fi
 
-  tmux send-keys -t "$session:$window" "claude" C-m
+  tmux send-keys -t "$session:$window" "$CLAUDE_COMMAND" C-m
   tmux switch-client -t "$session" 2> /dev/null || true
 }
 

@@ -178,4 +178,6 @@ gh-review() {
   echo "[gh-review] checkout #$pr_number"
 }
 
-[ -f "$HOME/.config/op/plugins.sh" ] && source "$HOME/.config/op/plugins.sh"
+if [ -z "$CLAUDECODE" ] ; then # use normal gh command on Claude Code to avoid frequent authentication
+  [ -f "$HOME/.config/op/plugins.sh" ] && source "$HOME/.config/op/plugins.sh"
+fi
