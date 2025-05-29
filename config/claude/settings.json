@@ -16,6 +16,8 @@
       "Bash(pnpm run test:*)",
       "mcp__conport__*"
     ],
-    "deny": []
+    "deny": [
+      "Bash(git commit --amend:*)"
+    ]
   }
 }
