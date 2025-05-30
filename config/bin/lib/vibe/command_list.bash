@@ -28,13 +28,15 @@ handle_list() {
     return 0
   fi
 
-  echo -e "\033[1mNAME        BRANCH              PR      DIRECTORY   SESSION\033[0m"
-
   # Check if tmux session exists
   local tmux_available=false
   if tmux_session_exists "$session_name"; then
     tmux_available=true
   fi
+
+  # Collect all data first, then format with column
+  local table_data=""
+  table_data="NAME\tBRANCH\tPR\tDIRECTORY\tSESSION"
 
   # List each vibe session with status
   while IFS= read -r branch; do
@@ -57,37 +59,48 @@ handle_list() {
       tmux_status="YES"
     fi
 
-    # Check PR merge status with colors
-    local pr_status pr_color
+    # Check PR merge status
+    local pr_status
     if check_pr_merged "${branch}"; then
       pr_status="MERGED"
-      pr_color="\033[32m" # green
     elif is_branch_merged "${branch}"; then
       pr_status="MERGED"
-      pr_color="\033[32m" # green
     else
       pr_status="OPEN"
-      pr_color="\033[33m" # yellow
     fi
 
-    # Format directory and session status with icons
+    # Format directory and session status with icons (plain text for column)
     local directory_status session_status
     if [[ "$worktree_status" == "YES" ]]; then
-      directory_status="\033[32m✅ Active\033[0m"
+      directory_status="✅Active"
     else
-      directory_status="\033[31m❌ Missing\033[0m"
+      directory_status="❌Missing"
     fi
 
     if [[ "$tmux_status" == "YES" ]]; then
-      session_status="\033[32m✅ Running\033[0m"
+      session_status="✅Running"
     else
-      session_status="\033[31m❌ Stopped\033[0m"
+      session_status="❌Stopped"
     fi
 
-    # Print table row with proper spacing
-    printf "%-11s %-19s " "$name" "$branch"
-    echo -ne "${pr_color}$(printf "%-7s" "$pr_status")\033[0m "
-    echo -ne "$(printf "%-18s" "$directory_status") "
-    echo -e "$session_status"
+    # Add row to table data
+    table_data="$table_data\n$name\t$branch\t$pr_status\t$directory_status\t$session_status"
   done <<< "$branches"
+
+  # Output formatted table with colors applied after column alignment
+  echo -e "$table_data" | column -t | while IFS= read -r line; do
+    if [[ "$line" == "NAME"* ]]; then
+      # Header row - make it bold
+      echo -e "\033[1m$line\033[0m"
+    else
+      # Data row - apply colors to specific fields
+      echo "$line" | sed \
+        -e 's/MERGED/\x1b[32mMERGED\x1b[0m/' \
+        -e 's/OPEN/\x1b[33mOPEN\x1b[0m/' \
+        -e 's/✅Active/\x1b[32m✅Active\x1b[0m/' \
+        -e 's/❌Missing/\x1b[31m❌Missing\x1b[0m/' \
+        -e 's/✅Running/\x1b[32m✅Running\x1b[0m/' \
+        -e 's/❌Stopped/\x1b[31m❌Stopped\x1b[0m/'
+    fi
+  done
 }
