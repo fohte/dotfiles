@@ -64,9 +64,15 @@ handle_done() {
   # Extract name from branch
   local name="${branch#claude/}"
 
-  # Close the specific window by name (regardless of how we got the name)
-  local window_name="${project_name}-${name}"
-  close_tmux_window "$session_name" "${window_name}"
+  # Check if we got the name from current window (no argument case)
+  if [[ "$from_current_window" == "true" ]]; then
+    # Close current window instead of trying to match by name
+    close_tmux_window "$session_name" ""
+  else
+    # Close window by name
+    local window_name="${project_name}-${name}"
+    close_tmux_window "$session_name" "${window_name}"
+  fi
 
   echo "Done! Branch '${branch}' and worktree '${worktree_dir}' have been removed."
 }
