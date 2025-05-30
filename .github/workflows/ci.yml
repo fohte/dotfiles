@@ -29,7 +29,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-aqua-
 
-      - uses: aquaproj/aqua-installer@v3.1.2
+      - uses: aquaproj/aqua-installer@v4.0.0
         with:
           aqua_version: v2.43.2
           aqua_opts: '--all' # install all packages immediately to populate cache
