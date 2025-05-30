@@ -40,7 +40,7 @@ handle_list() {
 
   # Collect all data first, then format with column
   local table_data=""
-  table_data="REPOSITORY\tNAME\tSTATUS\tBRANCH\tDIRECTORY\tSESSION"
+  table_data="REPOSITORY\tNAME\tSTATUS\tBRANCH\tDIRECTORY\tSESSION\tPR_URL"
 
   # List each vibe session with status
   while IFS= read -r branch; do
@@ -63,14 +63,21 @@ handle_list() {
       tmux_status="YES"
     fi
 
-    # Check session status (done or in-progress)
-    local session_status_value
+    # Check session status (done or in-progress) and get PR URL
+    local session_status_value pr_url
+    pr_url=$(gh pr list --state all --head "${branch}" --json url --jq '.[0].url' 2> /dev/null || echo "")
+
     if check_pr_merged "${branch}"; then
       session_status_value="done"
     elif is_branch_merged "${branch}"; then
       session_status_value="done"
     else
       session_status_value="in-progress"
+    fi
+
+    # Show "-" if no PR URL found
+    if [[ -z "$pr_url" ]]; then
+      pr_url="-"
     fi
 
     # Format directory and tmux status (plain text for column)
@@ -88,7 +95,7 @@ handle_list() {
     fi
 
     # Add row to table data
-    table_data="$table_data\n$repo_name\t$name\t$session_status_value\t$branch\t$directory_status\t$tmux_session_status"
+    table_data="$table_data\n$repo_name\t$name\t$session_status_value\t$branch\t$directory_status\t$tmux_session_status\t$pr_url"
   done <<< "$branches"
 
   # Output formatted table with colors applied after column alignment
