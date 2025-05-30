@@ -34,9 +34,13 @@ handle_list() {
     tmux_available=true
   fi
 
+  # Get repository name from git remote
+  local repo_name
+  repo_name=$(git remote get-url origin 2> /dev/null | sed -E 's|.*/([^/]+/[^/]+)(\.git)?$|\1|' | sed 's/\.git$//')
+
   # Collect all data first, then format with column
   local table_data=""
-  table_data="NAME\tBRANCH\tPR\tDIRECTORY\tSESSION"
+  table_data="REPOSITORY\tNAME\tBRANCH\tPR\tDIRECTORY\tSESSION"
 
   # List each vibe session with status
   while IFS= read -r branch; do
@@ -84,12 +88,12 @@ handle_list() {
     fi
 
     # Add row to table data
-    table_data="$table_data\n$name\t$branch\t$pr_status\t$directory_status\t$session_status"
+    table_data="$table_data\n$repo_name\t$name\t$branch\t$pr_status\t$directory_status\t$session_status"
   done <<< "$branches"
 
   # Output formatted table with colors applied after column alignment
   echo -e "$table_data" | column -t | while IFS= read -r line; do
-    if [[ "$line" == "NAME"* ]]; then
+    if [[ "$line" == "REPOSITORY"* ]]; then
       # Header row - make it bold
       echo -e "\033[1m$line\033[0m"
     else
