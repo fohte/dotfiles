@@ -3,6 +3,9 @@ name: CI
 on:
   push:
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -16,7 +19,7 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
 
       - name: Cache aqua packages
         uses: actions/cache@v4
@@ -44,12 +47,12 @@ jobs:
         continue-on-error: true
         run: pre-commit run --all-files
 
-      - id: auto-commit-action
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Commit formatted files
+        uses: suzuki-shunsuke/commit-action@v0.0.7
         with:
-          commit_user_name: 'fohte-bot[bot]'
-          commit_user_email: '139195068+fohte-bot[bot]@users.noreply.github.com'
-          commit_author: 'fohte-bot[bot] <139195068+fohte-bot[bot]@users.noreply.github.com>'
+          commit_message: 'style: auto-format'
+          workflow: deny
+          github_token: ${{ steps.app-token.outputs.token }}
 
       - name: Fail if pre-commit failed
         if: steps.pre-commit.outcome == 'failure'
