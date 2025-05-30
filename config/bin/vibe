@@ -175,7 +175,7 @@ case "$command" in
     ;;
   list)
     parse_list_command "$@"
-    handle_list "${git_root}" "${project_name}" "${SESSION_NAME}"
+    handle_list
     ;;
   *)
     error_usage "unknown command '$command'"

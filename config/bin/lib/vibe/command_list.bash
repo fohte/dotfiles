@@ -9,9 +9,6 @@ parse_list_command() {
 }
 
 handle_list() {
-  local git_root="$1"
-  local project_name="$2"
-  local session_name="$3"
 
   # Get all vibe branches (claude/*)
   local branches
@@ -28,40 +25,19 @@ handle_list() {
     return 0
   fi
 
-  # Check if tmux session exists
-  local tmux_available=false
-  if tmux_session_exists "$session_name"; then
-    tmux_available=true
-  fi
-
   # Get repository name from git remote
   local repo_name
   repo_name=$(git remote get-url origin 2> /dev/null | sed -E 's|.*/([^/]+/[^/]+)(\.git)?$|\1|' | sed 's/\.git$//')
 
   # Collect all data first, then format with column
   local table_data=""
-  table_data="REPOSITORY\tNAME\tSTATUS\tBRANCH\tDIRECTORY\tSESSION\tPR_URL"
+  table_data="REPOSITORY\tNAME\tSTATUS\tPR_URL"
 
   # List each vibe session with status
   while IFS= read -r branch; do
     [[ -z "$branch" ]] && continue
 
     local name="${branch#claude/}"
-    local worktree_dir=".worktrees/${name}"
-    local worktree_path="${git_root}/${worktree_dir}"
-    local window_name="${project_name}-${name}"
-
-    # Check if worktree exists
-    local worktree_status="NO"
-    if [[ -d "$worktree_path" ]]; then
-      worktree_status="YES"
-    fi
-
-    # Check if tmux window exists
-    local tmux_status="NO"
-    if [[ "$tmux_available" == "true" ]] && tmux_window_exists "$session_name" "$window_name"; then
-      tmux_status="YES"
-    fi
 
     # Check session status (done or in-progress) and get PR URL
     local session_status_value pr_url
@@ -80,22 +56,8 @@ handle_list() {
       pr_url="-"
     fi
 
-    # Format directory and tmux status (plain text for column)
-    local directory_status tmux_session_status
-    if [[ "$worktree_status" == "YES" ]]; then
-      directory_status="Active"
-    else
-      directory_status="Missing"
-    fi
-
-    if [[ "$tmux_status" == "YES" ]]; then
-      tmux_session_status="Running"
-    else
-      tmux_session_status="Stopped"
-    fi
-
     # Add row to table data
-    table_data="$table_data\n$repo_name\t$name\t$session_status_value\t$branch\t$directory_status\t$tmux_session_status\t$pr_url"
+    table_data="$table_data\n$repo_name\t$name\t$session_status_value\t$pr_url"
   done <<< "$branches"
 
   # Output formatted table with colors applied after column alignment
@@ -107,11 +69,7 @@ handle_list() {
       # Data row - apply colors to specific fields
       echo "$line" | sed \
         -e 's/done/\x1b[32mdone\x1b[0m/' \
-        -e 's/in-progress/\x1b[33min-progress\x1b[0m/' \
-        -e 's/Active/\x1b[32mActive\x1b[0m/' \
-        -e 's/Missing/\x1b[31mMissing\x1b[0m/' \
-        -e 's/Running/\x1b[32mRunning\x1b[0m/' \
-        -e 's/Stopped/\x1b[31mStopped\x1b[0m/'
+        -e 's/in-progress/\x1b[33min-progress\x1b[0m/'
     fi
   done
 }
