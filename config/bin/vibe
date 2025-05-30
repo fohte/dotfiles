@@ -35,7 +35,7 @@ Usage: $(basename "$0") [--debug] [-R|--repo <path>] <command> [<args>]
 
 Global Options:
   --debug           Enable debug output
-  -R, --repo <path> Specify repository path (default: current directory)
+  -R, --repo <name> Specify repository by name (e.g., dotfiles, fohte/dotfiles)
 
 Commands:
   start <name>
@@ -74,6 +74,37 @@ debug() {
   fi
 }
 
+# Resolve repository name to path using ghq
+resolve_repo_path() {
+  local repo_name="$1"
+  local ghq_root
+  ghq_root="$(ghq root)" || error_exit "ghq is not available or configured"
+
+  # Get all matching repositories
+  local matches
+  matches=$(ghq list | grep -E "(^|/)${repo_name}$" || true)
+
+  if [[ -z "$matches" ]]; then
+    error_exit "repository '${repo_name}' not found in ghq repositories"
+  fi
+
+  # If multiple matches, show them and exit
+  local match_count
+  match_count=$(echo "$matches" | wc -l | tr -d ' ')
+  if [[ "$match_count" -gt 1 ]]; then
+    echo "error: multiple repositories match '${repo_name}':" >&2
+    while IFS= read -r match; do
+      echo "  $match" >&2
+    done <<< "$matches"
+    echo "Please specify a more specific name." >&2
+    exit 1
+  fi
+
+  local repo_path="${ghq_root}/${matches}"
+  debug "Resolved '${repo_name}' to '${repo_path}'"
+  echo "$repo_path"
+}
+
 # Parse global options
 VIBE_DEBUG=0
 VIBE_REPO_PATH=""
@@ -106,8 +137,9 @@ shift
 # Main execution
 # Change to specified repo directory if provided
 if [[ -n "${VIBE_REPO_PATH}" ]]; then
-  [[ ! -d "${VIBE_REPO_PATH}" ]] && error_exit "repository path '${VIBE_REPO_PATH}' does not exist"
-  cd "${VIBE_REPO_PATH}" || error_exit "failed to change to repository path '${VIBE_REPO_PATH}'"
+  resolved_path=$(resolve_repo_path "${VIBE_REPO_PATH}")
+  [[ ! -d "${resolved_path}" ]] && error_exit "repository path '${resolved_path}' does not exist"
+  cd "${resolved_path}" || error_exit "failed to change to repository path '${resolved_path}'"
 fi
 
 # Verify prerequisites
