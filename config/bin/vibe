@@ -31,10 +31,11 @@ error_usage() {
 
 usage() {
   cat << EOF
-Usage: $(basename "$0") [--debug] <command> [<args>]
+Usage: $(basename "$0") [--debug] [-R|--repo <path>] <command> [<args>]
 
 Global Options:
   --debug           Enable debug output
+  -R, --repo <path> Specify repository path (default: current directory)
 
 Commands:
   start <name>
@@ -75,11 +76,17 @@ debug() {
 
 # Parse global options
 VIBE_DEBUG=0
+VIBE_REPO_PATH=""
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
     --debug)
       VIBE_DEBUG=1
       shift
+      ;;
+    -R | --repo)
+      [[ "$#" -lt 2 ]] && error_usage "option '$1' requires an argument"
+      VIBE_REPO_PATH="$2"
+      shift 2
       ;;
     -*)
       break
@@ -97,6 +104,12 @@ command="$1"
 shift
 
 # Main execution
+# Change to specified repo directory if provided
+if [[ -n "${VIBE_REPO_PATH}" ]]; then
+  [[ ! -d "${VIBE_REPO_PATH}" ]] && error_exit "repository path '${VIBE_REPO_PATH}' does not exist"
+  cd "${VIBE_REPO_PATH}" || error_exit "failed to change to repository path '${VIBE_REPO_PATH}'"
+fi
+
 # Verify prerequisites
 verify_git_repo
 
