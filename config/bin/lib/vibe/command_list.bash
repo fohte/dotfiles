@@ -69,18 +69,18 @@ handle_list() {
       pr_status="OPEN"
     fi
 
-    # Format directory and session status with icons (plain text for column)
+    # Format directory and session status (plain text for column)
     local directory_status session_status
     if [[ "$worktree_status" == "YES" ]]; then
-      directory_status="✅Active"
+      directory_status="Active"
     else
-      directory_status="❌Missing"
+      directory_status="Missing"
     fi
 
     if [[ "$tmux_status" == "YES" ]]; then
-      session_status="✅Running"
+      session_status="Running"
     else
-      session_status="❌Stopped"
+      session_status="Stopped"
     fi
 
     # Add row to table data
@@ -97,10 +97,10 @@ handle_list() {
       echo "$line" | sed \
         -e 's/MERGED/\x1b[32mMERGED\x1b[0m/' \
         -e 's/OPEN/\x1b[33mOPEN\x1b[0m/' \
-        -e 's/✅Active/\x1b[32m✅Active\x1b[0m/' \
-        -e 's/❌Missing/\x1b[31m❌Missing\x1b[0m/' \
-        -e 's/✅Running/\x1b[32m✅Running\x1b[0m/' \
-        -e 's/❌Stopped/\x1b[31m❌Stopped\x1b[0m/'
+        -e 's/Active/\x1b[32mActive\x1b[0m/' \
+        -e 's/Missing/\x1b[31mMissing\x1b[0m/' \
+        -e 's/Running/\x1b[32mRunning\x1b[0m/' \
+        -e 's/Stopped/\x1b[31mStopped\x1b[0m/'
     fi
   done
 }
