@@ -15,6 +15,11 @@ Use this format for the PR description:
 - What will change when this PR is merged? (describe the overall impact in present tense, not individual commits)
 ```
 
+### Notes
+
+- Format text with markdown (`code`, **bold**, *italic*) for better readability
+- Group related items using nested bullet points
+
 ## 2. Watch the CI execution
 
 Use `gh pr checks --watch` command to monitor the CI checks.
