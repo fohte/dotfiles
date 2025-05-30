@@ -131,9 +131,22 @@ fi
 verify_git_repo
 
 # Get the main git directory (not worktree)
+# Use git rev-parse --git-common-dir to get the shared git directory
 git_common_dir="$(git rev-parse --git-common-dir)"
+# Convert to absolute path if relative
+if [[ "$git_common_dir" != /* ]]; then
+  git_common_dir="$(cd "$(dirname "$git_common_dir")" && pwd)/$(basename "$git_common_dir")"
+fi
+
+# Extract the main repository path from the git directory
 git_root="$(dirname "${git_common_dir}")"
 project_name="$(basename "${git_root}")"
+
+# Fallback to git rev-parse --show-toplevel if project_name is empty or '.'
+if [[ -z "$project_name" || "$project_name" == "." ]]; then
+  git_toplevel="$(git rev-parse --show-toplevel)"
+  project_name="$(basename "$git_toplevel")"
+fi
 
 SESSION_NAME="vibe"
 
