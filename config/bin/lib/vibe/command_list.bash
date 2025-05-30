@@ -40,7 +40,7 @@ handle_list() {
 
   # Collect all data first, then format with column
   local table_data=""
-  table_data="REPOSITORY\tSTATUS\tNAME\tBRANCH\tDIRECTORY\tSESSION"
+  table_data="REPOSITORY\tNAME\tSTATUS\tBRANCH\tDIRECTORY\tSESSION"
 
   # List each vibe session with status
   while IFS= read -r branch; do
@@ -88,7 +88,7 @@ handle_list() {
     fi
 
     # Add row to table data
-    table_data="$table_data\n$repo_name\t$session_status_value\t$name\t$branch\t$directory_status\t$tmux_session_status"
+    table_data="$table_data\n$repo_name\t$name\t$session_status_value\t$branch\t$directory_status\t$tmux_session_status"
   done <<< "$branches"
 
   # Output formatted table with colors applied after column alignment
