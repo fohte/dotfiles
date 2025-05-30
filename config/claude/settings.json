@@ -3,6 +3,7 @@
     "allow": [
       "Bash(bun add:*)",
       "Bash(bun run:*)",
+      "Bash(cd:*)",
       "Bash(find:*)",
       "Bash(gh pr checks:*)",
       "Bash(gh pr list:*)",
@@ -14,17 +15,24 @@
       "Bash(git checkout:*)",
       "Bash(git commit:*)",
       "Bash(git fetch:*)",
+      "Bash(git log:*)",
       "Bash(git merge:*)",
+      "Bash(git show:*)",
+      "Bash(git status:*)",
       "Bash(grep:*)",
       "Bash(head:*)",
       "Bash(ls:*)",
       "Bash(mkdir:*)",
       "Bash(pnpm run lint:*)",
       "Bash(pnpm run test:*)",
+      "Read(~/.claude/CLAUDE.md)",
+      "Read(~/.claude/rules/**)",
       "mcp__conport__*"
     ],
     "deny": [
-      "Bash(git commit --amend:*)"
+      "Bash(git commit --amend:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push --force-with-lease:*)"
     ]
   }
 }
