@@ -12,7 +12,7 @@ Use this format for the PR description:
 
 ## What
 
-- What changes were made? (describe the implementation in present tense)
+- What will change when this PR is merged? (describe the overall impact in present tense, not individual commits)
 ```
 
 ## 2. Watch the CI execution
