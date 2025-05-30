@@ -28,7 +28,7 @@ handle_list() {
     return 0
   fi
 
-  echo "Active vibe sessions:"
+  echo -e "\033[1m━━━ Active vibe sessions ━━━\033[0m"
   echo
 
   # Check if tmux session exists
@@ -79,19 +79,38 @@ handle_list() {
       fi
     fi
 
-    # Check PR merge status
-    local pr_status="OPEN"
+    # Check PR merge status with colors
+    local pr_status pr_color
     if check_pr_merged "${branch}"; then
       pr_status="MERGED"
+      pr_color="\033[32m" # green
     elif is_branch_merged "${branch}"; then
       pr_status="MERGED"
+      pr_color="\033[32m" # green
+    else
+      pr_status="OPEN"
+      pr_color="\033[33m" # yellow
     fi
 
-    echo "  $name"
-    echo "    Branch:    $branch $branch_status"
-    echo "    PR:        $pr_status"
-    echo "    Worktree:  $worktree_status $worktree_dir"
-    echo "    Tmux:      $tmux_status $window_name"
+    # Color status indicators
+    local worktree_color tmux_color
+    if [[ "$worktree_status" == "YES" ]]; then
+      worktree_color="\033[32m" # green
+    else
+      worktree_color="\033[31m" # red
+    fi
+
+    if [[ "$tmux_status" == "YES" ]]; then
+      tmux_color="\033[32m" # green
+    else
+      tmux_color="\033[31m" # red
+    fi
+
+    echo -e "  \033[1;36m$name\033[0m"
+    echo -e "    \033[37mBranch:\033[0m    $branch $branch_status"
+    echo -e "    \033[37mPR:\033[0m        ${pr_color}$pr_status\033[0m"
+    echo -e "    \033[37mWorktree:\033[0m  ${worktree_color}$worktree_status\033[0m $worktree_dir"
+    echo -e "    \033[37mTmux:\033[0m      ${tmux_color}$tmux_status\033[0m $window_name"
     echo
   done <<< "$branches"
 }
