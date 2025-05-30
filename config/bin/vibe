@@ -10,6 +10,7 @@
 # Usage:
 #   vibe start <name>
 #   vibe done [<name>] [--force|-f]
+#   vibe list
 #
 set -euo pipefail
 
@@ -46,6 +47,9 @@ Commands:
     If <name> is omitted, uses current window name in vibe session
     Use --force or -f to skip merge check
 
+  list
+    List all active vibe sessions with their status
+
 vibe is a wrapper for Claude Code that:
   - Creates/enters a tmux session 'vibe'
   - Creates a git branch 'claude/<name>' from origin/master
@@ -66,6 +70,8 @@ source "${LIB_DIR}/tmux.bash"
 source "${LIB_DIR}/command_start.bash"
 # shellcheck disable=SC1091
 source "${LIB_DIR}/command_done.bash"
+# shellcheck disable=SC1091
+source "${LIB_DIR}/command_list.bash"
 
 # Debug function
 debug() {
@@ -166,6 +172,10 @@ case "$command" in
     worktree_dir=".worktrees/${name}"
     worktree_path="${git_root}/${worktree_dir}"
     handle_done "${branch}" "${worktree_path}" "${worktree_dir}" "${force}" "${SESSION_NAME}" "${project_name}" "${git_root}" "${from_current_window}"
+    ;;
+  list)
+    parse_list_command "$@"
+    handle_list "${git_root}" "${project_name}" "${SESSION_NAME}"
     ;;
   *)
     error_usage "unknown command '$command'"
