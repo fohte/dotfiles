@@ -16,7 +16,7 @@ packages:
   - name: pre-commit/pre-commit@v4.2.0
   - name: neovim/neovim@v0.11.1
   - name: google/go-jsonnet@v0.20.0
-  - name: pkgxdev/pkgx@v2.5.0
+  - name: pkgxdev/pkgx@v2.7.0
   - name: eza-community/eza@v0.21.3
   - name: starship/starship@v1.23.0
   - name: BurntSushi/ripgrep@14.1.1
