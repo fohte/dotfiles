@@ -40,7 +40,7 @@ handle_list() {
 
   # Collect all data first, then format with column
   local table_data=""
-  table_data="REPOSITORY\tNAME\tBRANCH\tPR\tDIRECTORY\tSESSION"
+  table_data="REPOSITORY\tSTATUS\tNAME\tBRANCH\tDIRECTORY\tSESSION"
 
   # List each vibe session with status
   while IFS= read -r branch; do
@@ -63,18 +63,18 @@ handle_list() {
       tmux_status="YES"
     fi
 
-    # Check PR merge status
-    local pr_status
+    # Check session status (done or in-progress)
+    local session_status_value
     if check_pr_merged "${branch}"; then
-      pr_status="MERGED"
+      session_status_value="done"
     elif is_branch_merged "${branch}"; then
-      pr_status="MERGED"
+      session_status_value="done"
     else
-      pr_status="OPEN"
+      session_status_value="in-progress"
     fi
 
-    # Format directory and session status (plain text for column)
-    local directory_status session_status
+    # Format directory and tmux status (plain text for column)
+    local directory_status tmux_session_status
     if [[ "$worktree_status" == "YES" ]]; then
       directory_status="Active"
     else
@@ -82,13 +82,13 @@ handle_list() {
     fi
 
     if [[ "$tmux_status" == "YES" ]]; then
-      session_status="Running"
+      tmux_session_status="Running"
     else
-      session_status="Stopped"
+      tmux_session_status="Stopped"
     fi
 
     # Add row to table data
-    table_data="$table_data\n$repo_name\t$name\t$branch\t$pr_status\t$directory_status\t$session_status"
+    table_data="$table_data\n$repo_name\t$session_status_value\t$name\t$branch\t$directory_status\t$tmux_session_status"
   done <<< "$branches"
 
   # Output formatted table with colors applied after column alignment
@@ -99,8 +99,8 @@ handle_list() {
     else
       # Data row - apply colors to specific fields
       echo "$line" | sed \
-        -e 's/MERGED/\x1b[32mMERGED\x1b[0m/' \
-        -e 's/OPEN/\x1b[33mOPEN\x1b[0m/' \
+        -e 's/done/\x1b[32mdone\x1b[0m/' \
+        -e 's/in-progress/\x1b[33min-progress\x1b[0m/' \
         -e 's/Active/\x1b[32mActive\x1b[0m/' \
         -e 's/Missing/\x1b[31mMissing\x1b[0m/' \
         -e 's/Running/\x1b[32mRunning\x1b[0m/' \
