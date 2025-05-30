@@ -8,11 +8,11 @@ Use this format for the PR description:
 ```markdown
 ## Why
 
-- purpose/background
+- Why is this PR necessary? (purpose/background/motivation)
 
 ## What
 
-- changes in present tense
+- What changes were made? (describe the implementation in present tense)
 ```
 
 ## 2. Watch the CI execution
