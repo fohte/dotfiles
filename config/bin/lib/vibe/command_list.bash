@@ -28,8 +28,7 @@ handle_list() {
     return 0
   fi
 
-  echo -e "\033[1m━━━ Active vibe sessions ━━━\033[0m"
-  echo
+  echo -e "\033[1mNAME        BRANCH              PR      DIRECTORY   SESSION\033[0m"
 
   # Check if tmux session exists
   local tmux_available=false
@@ -58,27 +57,6 @@ handle_list() {
       tmux_status="YES"
     fi
 
-    # Get branch status (ahead/behind main)
-    local branch_status=""
-    if git show-ref --verify --quiet "refs/heads/${branch}"; then
-      local ahead_behind
-      if ahead_behind=$(git rev-list --left-right --count origin/master..."${branch}" 2> /dev/null); then
-        local behind ahead
-        behind=$(echo "$ahead_behind" | cut -f1)
-        ahead=$(echo "$ahead_behind" | cut -f2)
-
-        if [[ "$ahead" -gt 0 ]] && [[ "$behind" -gt 0 ]]; then
-          branch_status="(ahead $ahead, behind $behind)"
-        elif [[ "$ahead" -gt 0 ]]; then
-          branch_status="(ahead $ahead)"
-        elif [[ "$behind" -gt 0 ]]; then
-          branch_status="(behind $behind)"
-        else
-          branch_status="(up to date)"
-        fi
-      fi
-    fi
-
     # Check PR merge status with colors
     local pr_status pr_color
     if check_pr_merged "${branch}"; then
@@ -92,25 +70,24 @@ handle_list() {
       pr_color="\033[33m" # yellow
     fi
 
-    # Color status indicators
-    local worktree_color tmux_color
+    # Format directory and session status with icons
+    local directory_status session_status
     if [[ "$worktree_status" == "YES" ]]; then
-      worktree_color="\033[32m" # green
+      directory_status="\033[32m✅ Active\033[0m"
     else
-      worktree_color="\033[31m" # red
+      directory_status="\033[31m❌ Missing\033[0m"
     fi
 
     if [[ "$tmux_status" == "YES" ]]; then
-      tmux_color="\033[32m" # green
+      session_status="\033[32m✅ Running\033[0m"
     else
-      tmux_color="\033[31m" # red
+      session_status="\033[31m❌ Stopped\033[0m"
     fi
 
-    echo -e "  \033[1;36m$name\033[0m"
-    echo -e "    \033[37mBranch:\033[0m    $branch $branch_status"
-    echo -e "    \033[37mPR:\033[0m        ${pr_color}$pr_status\033[0m"
-    echo -e "    \033[37mWorktree:\033[0m  ${worktree_color}$worktree_status\033[0m $worktree_dir"
-    echo -e "    \033[37mTmux:\033[0m      ${tmux_color}$tmux_status\033[0m $window_name"
-    echo
+    # Print table row with proper spacing
+    printf "%-11s %-19s " "$name" "$branch"
+    echo -ne "${pr_color}$(printf "%-7s" "$pr_status")\033[0m "
+    echo -ne "$(printf "%-18s" "$directory_status") "
+    echo -e "$session_status"
   done <<< "$branches"
 }
