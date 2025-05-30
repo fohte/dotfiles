@@ -79,8 +79,17 @@ handle_list() {
       fi
     fi
 
+    # Check PR merge status
+    local pr_status="OPEN"
+    if check_pr_merged "${branch}"; then
+      pr_status="MERGED"
+    elif is_branch_merged "${branch}"; then
+      pr_status="MERGED"
+    fi
+
     echo "  $name"
     echo "    Branch:    $branch $branch_status"
+    echo "    PR:        $pr_status"
     echo "    Worktree:  $worktree_status $worktree_dir"
     echo "    Tmux:      $tmux_status $window_name"
     echo
