@@ -17,8 +17,5 @@ Use this format for the PR description:
 
 ## 2. Watch the CI execution
 
-```bash
-gh run watch $(gh run list --limit 1 --json databaseId --jq '.[0].databaseId')
-```
-
+Use `gh pr checks --watch` command to monitor the CI checks.
 If CI passes, you're done. If it fails, investigate the cause, fix it, and push again.
