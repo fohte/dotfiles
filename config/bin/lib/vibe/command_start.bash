@@ -2,27 +2,8 @@
 # Start command functions for vibe
 
 parse_start_command() {
-  local name=""
-
-  while [[ "$#" -gt 0 ]]; do
-    case "$1" in
-      -R | --repo)
-        # Skip repo option and its argument as it's handled globally
-        shift 2
-        ;;
-      -*)
-        error_usage "unknown option '$1'"
-        ;;
-      *)
-        [[ -n "$name" ]] && error_usage "'start' requires exactly one argument"
-        name="$1"
-        shift
-        ;;
-    esac
-  done
-
-  [[ -z "$name" ]] && error_usage "'start' requires exactly one argument"
-  echo "$name"
+  [[ "$#" -ne 1 ]] && error_usage "'start' requires exactly one argument"
+  echo "$1"
 }
 
 handle_start() {

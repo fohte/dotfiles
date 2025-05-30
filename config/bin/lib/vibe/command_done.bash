@@ -12,10 +12,6 @@ parse_done_command() {
         force=true
         shift
         ;;
-      -R | --repo)
-        # Skip repo option and its argument as it's handled globally
-        shift 2
-        ;;
       -*)
         error_usage "unknown option '$1'"
         ;;
