@@ -65,6 +65,12 @@ handle_list() {
 
       local name="${branch#claude/}"
 
+      # Check if worktree exists (only show managed sessions)
+      local worktree_dir=".worktrees/${name}"
+      if [[ ! -d "$worktree_dir" ]]; then
+        continue
+      fi
+
       # Check session status (done or in-progress) and get PR URL
       local session_status_value pr_url
       pr_url=$(gh pr list --state all --head "${branch}" --json url --jq '.[0].url' 2> /dev/null || echo "")
