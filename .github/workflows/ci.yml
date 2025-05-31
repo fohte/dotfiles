@@ -21,15 +21,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install mise
-        run: |
-          curl https://mise.run | sh
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Install tools with mise
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          mise install
+      - uses: jdx/mise-action@v2
+        with:
+          version: 'latest'
 
       - name: Cache pre-commit
         uses: actions/cache@v4
