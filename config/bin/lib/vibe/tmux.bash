@@ -38,7 +38,7 @@ start_claude_in_tmux() {
     # Schedule the initial prompt to be sent after claude starts up
     (
       sleep 3 # Wait for claude to initialize
-      tmux send-keys -t "$session:$window" "$initial_prompt" C-m
+      tmux send-keys -t "$session:$window" "$initial_prompt"
     ) &
   fi
 
