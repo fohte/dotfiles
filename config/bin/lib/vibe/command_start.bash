@@ -5,13 +5,19 @@ generate_name_from_description() {
   local description="$1"
 
   # Use Claude to generate a project name based on the description
-  local claude_prompt="Based on this task description: \"${description}\", suggest a short, descriptive project name suitable for a git branch. The name should be lowercase, use hyphens instead of spaces, and be 2-4 words maximum. Output ONLY the suggested name, nothing else."
+  local claude_prompt="Generate a git branch name for this task: \"${description}\". Rules: lowercase only, use hyphens not spaces, 2-4 words max. Output ONLY the branch name on a single line, no explanation."
 
   local suggested_name
-  suggested_name=$(echo "$claude_prompt" | claude --no-conversation 2> /dev/null)
+  suggested_name=$(echo "$claude_prompt" | claude --print 2> /dev/null | head -n1 | tr -d '\r')
 
+  # Validate the generated name
   if [[ -z "$suggested_name" ]]; then
     error_exit "Failed to generate project name suggestion"
+  fi
+
+  # Ensure the name is valid for a git branch
+  if ! echo "$suggested_name" | grep -qE '^[a-z0-9][a-z0-9-]*$'; then
+    error_exit "Generated name '$suggested_name' is not valid for a git branch"
   fi
 
   echo "$suggested_name"
@@ -46,12 +52,12 @@ parse_start_command() {
     local suggested_name
     suggested_name=$(generate_name_from_description "$message")
 
-    echo "Suggested project name: $suggested_name"
-    echo -n "Use this name? (Y/n): "
+    echo "Suggested project name: $suggested_name" >&2
+    echo -n "Use this name? (Y/n): " >&2
     read -r confirm
 
     if [[ "$confirm" =~ ^[Nn]$ ]]; then
-      echo -n "Enter your preferred name: "
+      echo -n "Enter your preferred name: " >&2
       read -r suggested_name
     fi
 
@@ -61,18 +67,18 @@ parse_start_command() {
     echo "$name"
   else
     # Interactive mode
-    echo "What would you like to work on?"
+    echo "What would you like to work on?" >&2
     read -r description
 
     local suggested_name
     suggested_name=$(generate_name_from_description "$description")
 
-    echo "Suggested project name: $suggested_name"
-    echo -n "Use this name? (Y/n): "
+    echo "Suggested project name: $suggested_name" >&2
+    echo -n "Use this name? (Y/n): " >&2
     read -r confirm
 
     if [[ "$confirm" =~ ^[Nn]$ ]]; then
-      echo -n "Enter your preferred name: "
+      echo -n "Enter your preferred name: " >&2
       read -r suggested_name
     fi
 
