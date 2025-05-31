@@ -38,6 +38,7 @@ jobs:
         continue-on-error: true
         run: |
           pip install pre-commit
+          eval "$(mise activate bash)"
           pre-commit run --all-files
 
       - name: Commit formatted files
