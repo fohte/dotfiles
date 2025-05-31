@@ -96,34 +96,52 @@ resolve_repo_path() {
   echo "$repo_path"
 }
 
-# Parse global options
+# Parse arguments to extract global options and command
 VIBE_DEBUG=0
 VIBE_REPO_PATH=""
-while [[ "$#" -gt 0 ]]; do
-  case "$1" in
+command=""
+command_args=()
+
+# First pass: collect all arguments
+all_args=("$@")
+i=0
+while [[ $i -lt ${#all_args[@]} ]]; do
+  arg="${all_args[$i]}"
+  case "$arg" in
     --debug)
       VIBE_DEBUG=1
-      shift
+      ((i++))
       ;;
     -R | --repo)
-      [[ "$#" -lt 2 ]] && error_usage "option '$1' requires an argument"
-      VIBE_REPO_PATH="$2"
-      shift 2
+      if [[ $((i + 1)) -lt ${#all_args[@]} ]]; then
+        VIBE_REPO_PATH="${all_args[$((i + 1))]}"
+        ((i += 2))
+      else
+        error_usage "option '$arg' requires an argument"
+      fi
       ;;
-    -*)
-      break
+    start | done | list)
+      # Found command
+      if [[ -z "$command" ]]; then
+        command="$arg"
+      else
+        # This is an argument to the command, not the command itself
+        command_args+=("$arg")
+      fi
+      ((i++))
       ;;
     *)
-      break
+      # If we have a command, this is a command argument
+      if [[ -n "$command" ]]; then
+        command_args+=("$arg")
+      fi
+      ((i++))
       ;;
   esac
 done
 
 # Main script
-[[ "$#" -lt 1 ]] && error_usage "missing command"
-
-command="$1"
-shift
+[[ -z "$command" ]] && error_usage "missing command"
 
 # Main execution
 # Change to specified repo directory if provided
@@ -159,14 +177,14 @@ SESSION_NAME="vibe"
 # Parse command and get name
 case "$command" in
   start)
-    name=$(parse_start_command "$@")
+    name=$(parse_start_command "${command_args[@]}")
     branch="claude/${name}"
     worktree_dir=".worktrees/${name}"
     worktree_path="${git_root}/${worktree_dir}"
     handle_start "${branch}" "${worktree_path}" "${worktree_dir}" "${SESSION_NAME}" "${project_name}"
     ;;
   done)
-    parsed_output=$(parse_done_command "$@") || exit 1
+    parsed_output=$(parse_done_command "${command_args[@]}") || exit 1
     read -r name force from_current_window <<< "$parsed_output"
     branch="claude/${name}"
     worktree_dir=".worktrees/${name}"
@@ -174,7 +192,7 @@ case "$command" in
     handle_done "${branch}" "${worktree_path}" "${worktree_dir}" "${force}" "${SESSION_NAME}" "${project_name}" "${git_root}" "${from_current_window}"
     ;;
   list)
-    parse_list_command "$@"
+    parse_list_command "${command_args[@]}"
     handle_list
     ;;
   *)
