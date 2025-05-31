@@ -114,7 +114,7 @@ while [[ $i -lt ${#all_args[@]} ]]; do
       ((i++)) || true # move to next argument
       ;;
     -R | --repo)
-      if [[ $((i + 1)) -lt ${#all_args[@]} ]]; then # check if argument exists
+      if [[ $((i + 1)) -lt ${#all_args[@]} ]]; then # check if repo name is provided after -R
         VIBE_REPO_PATH="${all_args[$((i + 1))]}"
         ((i += 2)) || true # skip both -R and its argument
       else
