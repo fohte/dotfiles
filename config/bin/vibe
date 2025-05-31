@@ -130,13 +130,6 @@ while [[ $i -lt ${#all_args[@]} ]]; do
       fi
       ((i++)) || true
       ;;
-    --force | -f)
-      # Command-specific options should be passed to command
-      if [[ -n "$command" ]]; then
-        command_args+=("$arg")
-      fi
-      ((i++)) || true
-      ;;
     *)
       # If we have a command, this is a command argument
       if [[ -n "$command" ]]; then
