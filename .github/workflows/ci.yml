@@ -31,17 +31,6 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           mise install
 
-      - name: Debug mise installation
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          echo "mise version: $(mise --version)"
-          echo "Available tools:"
-          mise list
-          echo "PATH: $PATH"
-          which shfmt || echo "shfmt not found"
-          which stylua || echo "stylua not found"
-          which shellcheck || echo "shellcheck not found"
-
       - name: Cache pre-commit
         uses: actions/cache@v4
         with:
