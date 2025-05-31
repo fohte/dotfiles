@@ -129,14 +129,14 @@ while [[ $i -lt ${#all_args[@]} ]]; do
         # This is an argument to the command, not the command itself
         command_args+=("$arg")
       fi
-      ((i++)) || true
+      ((i++)) || true # move to next argument
       ;;
     *)
       # If we have a command, this is a command argument
       if [[ -n "$command" ]]; then
         command_args+=("$arg")
       fi
-      ((i++)) || true
+      ((i++)) || true # move to next argument
       ;;
   esac
 done
