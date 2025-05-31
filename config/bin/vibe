@@ -67,6 +67,8 @@ source "${LIB_DIR}/git.bash"
 # shellcheck disable=SC1091
 source "${LIB_DIR}/tmux.bash"
 # shellcheck disable=SC1091
+source "${LIB_DIR}/claude_project.bash"
+# shellcheck disable=SC1091
 source "${LIB_DIR}/command_start.bash"
 # shellcheck disable=SC1091
 source "${LIB_DIR}/command_done.bash"
@@ -182,7 +184,7 @@ case "$command" in
     branch="claude/${name}"
     worktree_dir=".worktrees/${name}"
     worktree_path="${git_root}/${worktree_dir}"
-    handle_start "${branch}" "${worktree_path}" "${worktree_dir}" "${SESSION_NAME}" "${project_name}"
+    handle_start "${branch}" "${worktree_path}" "${worktree_dir}" "${SESSION_NAME}" "${project_name}" "${git_root}"
     ;;
   done)
     parsed_output=$(parse_done_command "${command_args[@]}") || exit 1
