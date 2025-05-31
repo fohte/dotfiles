@@ -61,6 +61,9 @@ handle_done() {
   remove_worktree "${worktree_path}" "${worktree_dir}"
   delete_branch "${branch}" "${force}"
 
+  # Remove Claude project directory symlink
+  remove_claude_project_symlink "${worktree_path}"
+
   # Extract name from branch
   local name="${branch#claude/}"
 

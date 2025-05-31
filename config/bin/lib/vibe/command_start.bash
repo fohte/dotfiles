@@ -92,6 +92,7 @@ handle_start() {
   local worktree_dir="$3"
   local session_name="$4"
   local project_name="$5"
+  local git_root="$6"
 
   # Check prerequisites
   check_branch_exists "${branch}" && error_exit "Branch '${branch}' already exists"
@@ -108,5 +109,10 @@ handle_start() {
   # Extract name from branch
   local name="${branch#claude/}"
   local window_name="${project_name}-${name}"
+
+  # Setup Claude project directory symlink before starting Claude Code
+  # This needs git_root from the parent scope
+  setup_claude_project_symlink "${worktree_path}" "${git_root}"
+
   start_claude_in_tmux "$session_name" "$window_name" "${worktree_path}" "$create_new_session"
 }
