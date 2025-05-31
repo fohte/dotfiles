@@ -9,6 +9,7 @@
 #
 # Usage:
 #   vibe start [<name>]
+#   vibe start -m|--message <description>
 #   vibe done [<name>] [--force|-f]
 #   vibe list
 #
@@ -42,6 +43,9 @@ Commands:
   start [<name>]
     Start a new Claude Code session with worktree
     If <name> is omitted, enters interactive mode to generate a name
+
+  start -m|--message <description>
+    Start a new session with an auto-generated name based on the description
 
   done [<name>] [--force|-f]
     Remove branch and worktree (only if merged)
