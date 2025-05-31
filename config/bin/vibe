@@ -8,7 +8,8 @@
 #   - claude (Claude Code CLI)
 #
 # Usage:
-#   vibe start <name>
+#   vibe start [<name>]
+#   vibe start -m|--message <description>
 #   vibe done [<name>] [--force|-f]
 #   vibe list
 #
@@ -39,8 +40,12 @@ Global Options:
   -R, --repo <name> Specify repository by name (e.g., dotfiles, fohte/dotfiles)
 
 Commands:
-  start <name>
+  start [<name>]
     Start a new Claude Code session with worktree
+    If <name> is omitted, enters interactive mode to generate a name
+
+  start -m|--message <description>
+    Start a new session with an auto-generated name based on the description
 
   done [<name>] [--force|-f]
     Remove branch and worktree (only if merged)
@@ -180,11 +185,13 @@ SESSION_NAME="vibe"
 # Parse command and get name
 case "$command" in
   start)
-    name=$(parse_start_command "${command_args[@]}")
+    parsed_output=$(parse_start_command "${command_args[@]}")
+    name=$(echo "$parsed_output" | head -n1)
+    initial_prompt=$(echo "$parsed_output" | tail -n+2)
     branch="claude/${name}"
     worktree_dir=".worktrees/${name}"
     worktree_path="${git_root}/${worktree_dir}"
-    handle_start "${branch}" "${worktree_path}" "${worktree_dir}" "${SESSION_NAME}" "${project_name}" "${git_root}"
+    handle_start "${branch}" "${worktree_path}" "${worktree_dir}" "${SESSION_NAME}" "${project_name}" "${git_root}" "$initial_prompt"
     ;;
   done)
     parsed_output=$(parse_done_command "${command_args[@]}") || exit 1

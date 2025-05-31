@@ -23,6 +23,7 @@ start_claude_in_tmux() {
   local window="$2"
   local worktree_path="$3"
   local create_new_session="$4"
+  local initial_prompt="$5"
 
   if [[ "$create_new_session" == "true" ]]; then
     tmux new-session -ds "$session" -n "$window" -c "${worktree_path}"
@@ -31,6 +32,16 @@ start_claude_in_tmux() {
   fi
 
   tmux send-keys -t "$session:$window" "$CLAUDE_COMMAND" C-m
+
+  # If initial prompt is provided, send it after a short delay
+  if [[ -n "$initial_prompt" ]]; then
+    # Schedule the initial prompt to be sent after claude starts up
+    (
+      sleep 3 # Wait for claude to initialize
+      tmux send-keys -t "$session:$window" "$initial_prompt" C-m
+    ) &
+  fi
+
   tmux switch-client -t "$session" 2> /dev/null || true
 }
 
