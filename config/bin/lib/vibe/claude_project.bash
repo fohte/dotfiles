@@ -55,7 +55,7 @@ setup_claude_project_symlink() {
   debug "Creating symlink: ${worktree_project_dir} -> ${root_project_dir}"
   ln -s "${root_project_dir}" "${worktree_project_dir}"
 
-  echo "Linked Claude project: worktree → root repository"
+  debug "Linked Claude project: worktree → root repository"
 }
 
 # Remove Claude Code project directory symlink
@@ -73,7 +73,7 @@ remove_claude_project_symlink() {
   if [[ -L "${worktree_project_dir}" ]]; then
     debug "Removing Claude project symlink: ${worktree_project_dir}"
     rm "${worktree_project_dir}"
-    echo "Removed Claude project symlink"
+    debug "Removed Claude project symlink"
   else
     debug "No symlink found at: ${worktree_project_dir}"
   fi
