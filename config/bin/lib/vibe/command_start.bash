@@ -23,6 +23,42 @@ generate_name_from_description() {
   echo "$suggested_name"
 }
 
+get_message_from_editor() {
+  # Create a temporary file for editor input
+  local temp_file
+  temp_file=$(mktemp)
+
+  # Add instructions to the temporary file
+  cat > "$temp_file" << 'EOF'
+
+# Please enter your task description above this line.
+# Lines starting with '#' will be ignored.
+# The description will be used to generate a project name and
+# passed to Claude as the initial prompt.
+#
+# Examples:
+#   Implement user authentication with OAuth2
+#   Fix memory leak in the parser module
+#   Add dark mode support to the UI
+EOF
+
+  # Determine editor to use
+  local editor="${EDITOR:-${VISUAL:-nano}}"
+
+  # Open editor
+  "$editor" "$temp_file" >&2
+
+  # Read the content and filter out comments and empty lines
+  local message
+  message=$(grep -v '^#' "$temp_file" | grep -v '^\s*$' | head -n1)
+
+  # Clean up
+  rm -f "$temp_file"
+
+  # Return the message
+  echo "$message"
+}
+
 parse_start_command() {
   local message=""
   local name=""
@@ -70,9 +106,15 @@ parse_start_command() {
     echo "$name"
     echo "" # No initial prompt
   else
-    # Interactive mode
-    echo -ne "\033[1mWhat would you like to work on:\033[0m " >&2
-    read -r description
+    # Editor mode: launch editor for message input
+    echo -e "\033[1mLaunching editor for task description...\033[0m" >&2
+    local description
+    description=$(get_message_from_editor)
+
+    # Check if user provided a description
+    if [[ -z "$description" ]]; then
+      error_exit "No task description provided"
+    fi
 
     local suggested_name
     suggested_name=$(generate_name_from_description "$description")
