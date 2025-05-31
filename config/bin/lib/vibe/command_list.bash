@@ -8,99 +8,117 @@ parse_list_command() {
   fi
 }
 
-handle_list() {
-  # Collect all data first, then format with column
-  local table_data=""
-  table_data="REPOSITORY\tNAME\tSTATUS\tPR_URL"
-  local found_any_sessions=false
+get_repo_name() {
+  local repo_path="$1"
+  local repo_name
+  repo_name=$(git remote get-url origin 2> /dev/null | sed -E 's|.*/([^/]+/[^/]+)(\.git)?$|\1|' | sed 's/\.git$//')
 
-  # Get all repositories using ghq
-  local repos
-  repos=$(ghq list --full-path 2> /dev/null) || {
-    echo "Error: ghq not found or no repositories available."
-    return 1
-  }
+  # If no remote, use the directory name as fallback
+  if [[ -z "$repo_name" ]]; then
+    repo_name=$(basename "$repo_path")
+  fi
 
-  # Check each repository for vibe branches
-  while IFS= read -r repo_path; do
-    [[ -z "$repo_path" ]] && continue
-    [[ ! -d "$repo_path" ]] && continue
+  echo "$repo_name"
+}
 
-    # Change to repository directory
-    local original_dir="$PWD"
-    cd "$repo_path" || continue
+get_session_status() {
+  local branch="$1"
+  local pr_url="$2"
 
-    # Get all vibe branches (claude/*) in this repository
-    local branches
-    branches=$(git branch --list 'claude/*' --format='%(refname:short)' 2> /dev/null)
+  if check_pr_merged "${branch}"; then
+    echo "done"
+  elif is_branch_merged "${branch}"; then
+    echo "done"
+  else
+    echo "in-progress"
+  fi
+}
 
-    # Skip if no vibe branches found
-    if [[ -z "$branches" ]]; then
-      cd "$original_dir" || return 1
+get_pr_url() {
+  local branch="$1"
+  local pr_url
+  pr_url=$(gh pr list --state all --head "${branch}" --json url --jq '.[0].url' 2> /dev/null || echo "")
+
+  # Show "-" if no PR URL found
+  if [[ -z "$pr_url" ]]; then
+    pr_url="-"
+  fi
+
+  echo "$pr_url"
+}
+
+process_vibe_sessions() {
+  local repo_path="$1"
+  local repo_name="$2"
+  local branches="$3"
+  local table_data_var="$4"
+
+  while IFS= read -r branch; do
+    [[ -z "$branch" ]] && continue
+
+    local name="${branch#claude/}"
+
+    # Check if worktree exists (only show managed sessions)
+    local worktree_dir=".worktrees/${name}"
+    if [[ ! -d "$worktree_dir" ]]; then
       continue
     fi
 
-    # Filter out empty results
-    branches=$(echo "$branches" | grep -v '^$' || true)
+    # Get PR URL and session status
+    local pr_url session_status_value
+    pr_url=$(get_pr_url "${branch}")
+    session_status_value=$(get_session_status "${branch}" "${pr_url}")
 
-    if [[ -z "$branches" ]]; then
-      cd "$original_dir" || return 1
-      continue
-    fi
+    # Add row to table data
+    printf -v "$table_data_var" "%s\n%s\t%s\t%s\t%s" "${!table_data_var}" "$repo_name" "$name" "$session_status_value" "$pr_url"
+  done <<< "$branches"
+}
 
-    found_any_sessions=true
+process_repository() {
+  local repo_path="$1"
+  local original_dir="$2"
+  local table_data_var="$3"
+  local found_sessions_var="$4"
 
-    # Get repository name from git remote
-    local repo_name
-    repo_name=$(git remote get-url origin 2> /dev/null | sed -E 's|.*/([^/]+/[^/]+)(\.git)?$|\1|' | sed 's/\.git$//')
+  [[ -z "$repo_path" ]] && return 0
+  [[ ! -d "$repo_path" ]] && return 0
 
-    # If no remote, use the directory name as fallback
-    if [[ -z "$repo_name" ]]; then
-      repo_name=$(basename "$repo_path")
-    fi
+  # Change to repository directory
+  cd "$repo_path" || return 0
 
-    # List each vibe session with status
-    while IFS= read -r branch; do
-      [[ -z "$branch" ]] && continue
+  # Get all vibe branches (claude/*) in this repository
+  local branches
+  branches=$(git branch --list 'claude/*' --format='%(refname:short)' 2> /dev/null)
 
-      local name="${branch#claude/}"
-
-      # Check if worktree exists (only show managed sessions)
-      local worktree_dir=".worktrees/${name}"
-      if [[ ! -d "$worktree_dir" ]]; then
-        continue
-      fi
-
-      # Check session status (done or in-progress) and get PR URL
-      local session_status_value pr_url
-      pr_url=$(gh pr list --state all --head "${branch}" --json url --jq '.[0].url' 2> /dev/null || echo "")
-
-      if check_pr_merged "${branch}"; then
-        session_status_value="done"
-      elif is_branch_merged "${branch}"; then
-        session_status_value="done"
-      else
-        session_status_value="in-progress"
-      fi
-
-      # Show "-" if no PR URL found
-      if [[ -z "$pr_url" ]]; then
-        pr_url="-"
-      fi
-
-      # Add row to table data
-      table_data="$table_data\n$repo_name\t$name\t$session_status_value\t$pr_url"
-    done <<< "$branches"
-
-    # Return to original directory
+  # Skip if no vibe branches found
+  if [[ -z "$branches" ]]; then
     cd "$original_dir" || return 1
-  done <<< "$repos"
-
-  # Check if any sessions were found
-  if [[ "$found_any_sessions" == false ]]; then
-    echo "No active vibe sessions found."
     return 0
   fi
+
+  # Filter out empty results
+  branches=$(echo "$branches" | grep -v '^$' || true)
+
+  if [[ -z "$branches" ]]; then
+    cd "$original_dir" || return 1
+    return 0
+  fi
+
+  printf -v "$found_sessions_var" "true"
+
+  # Get repository name
+  local repo_name
+  repo_name=$(get_repo_name "$repo_path")
+
+  # Process each vibe session
+  process_vibe_sessions "$repo_path" "$repo_name" "$branches" "$table_data_var"
+
+  # Return to original directory
+  cd "$original_dir" || return 1
+}
+
+format_and_display_table() {
+  local table_data="$1"
 
   # Output formatted table with colors applied after column alignment
   echo -e "$table_data" | column -t | while IFS= read -r line; do
@@ -114,4 +132,31 @@ handle_list() {
         -e 's/in-progress/\x1b[33min-progress\x1b[0m/'
     fi
   done
+}
+
+handle_list() {
+  local table_data="REPOSITORY\tNAME\tSTATUS\tPR_URL"
+  local found_any_sessions="false"
+
+  # Get all repositories using ghq
+  local repos
+  repos=$(ghq list --full-path 2> /dev/null) || {
+    echo "Error: ghq not found or no repositories available."
+    return 1
+  }
+
+  # Process each repository
+  local original_dir="$PWD"
+  while IFS= read -r repo_path; do
+    process_repository "$repo_path" "$original_dir" table_data found_any_sessions
+  done <<< "$repos"
+
+  # Check if any sessions were found
+  if [[ "$found_any_sessions" == "false" ]]; then
+    echo "No active vibe sessions found."
+    return 0
+  fi
+
+  # Display the formatted table
+  format_and_display_table "$table_data"
 }
