@@ -110,12 +110,12 @@ while [[ $i -lt ${#all_args[@]} ]]; do
   case "$arg" in
     --debug)
       VIBE_DEBUG=1
-      ((i++))
+      ((i++)) || true
       ;;
     -R | --repo)
       if [[ $((i + 1)) -lt ${#all_args[@]} ]]; then
         VIBE_REPO_PATH="${all_args[$((i + 1))]}"
-        ((i += 2))
+        ((i += 2)) || true
       else
         error_usage "option '$arg' requires an argument"
       fi
@@ -128,21 +128,21 @@ while [[ $i -lt ${#all_args[@]} ]]; do
         # This is an argument to the command, not the command itself
         command_args+=("$arg")
       fi
-      ((i++))
+      ((i++)) || true
       ;;
     --force | -f)
       # Command-specific options should be passed to command
       if [[ -n "$command" ]]; then
         command_args+=("$arg")
       fi
-      ((i++))
+      ((i++)) || true
       ;;
     *)
       # If we have a command, this is a command argument
       if [[ -n "$command" ]]; then
         command_args+=("$arg")
       fi
-      ((i++))
+      ((i++)) || true
       ;;
   esac
 done
