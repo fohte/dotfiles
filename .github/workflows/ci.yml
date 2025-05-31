@@ -34,7 +34,9 @@ jobs:
       - name: Run pre-commit hooks
         id: pre-commit
         continue-on-error: true
-        run: pre-commit run --all-files
+        run: |
+          eval "$(mise activate bash)"
+          pre-commit run --all-files
 
       - name: Commit formatted files
         uses: suzuki-shunsuke/commit-action@v0.0.7
