@@ -17,7 +17,11 @@ generate_name_from_description() {
   local description="$1"
 
   # Use Claude to generate a project name based on the description
-  local claude_prompt="Task: Convert to git branch name (2-4 words, lowercase, hyphens): \"${description}\"
+  local claude_prompt="Task: Convert the following user task description to a git branch name (2-4 words, lowercase, hyphens).
+
+<user-task-description>
+${description}
+</user-task-description>
 
 IMPORTANT: Output ONLY the branch name. Do not analyze, explain, or investigate the task. Just generate the name."
 
