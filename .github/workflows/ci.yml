@@ -22,8 +22,6 @@ jobs:
           persist-credentials: false
 
       - uses: jdx/mise-action@v2
-        with:
-          version: 'latest'
 
       - name: Cache pre-commit
         uses: actions/cache@v4
