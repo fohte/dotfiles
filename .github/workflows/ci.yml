@@ -21,10 +21,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: jdx/mise-action@v2
-        with:
-          install: true
-          cache: true
+      - name: Install mise
+        run: |
+          curl https://mise.run | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install tools with mise
+        run: mise install
 
       - name: Cache pre-commit
         uses: actions/cache@v4
