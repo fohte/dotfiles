@@ -2,8 +2,36 @@
 # Start command functions for vibe
 
 parse_start_command() {
-  [[ "$#" -ne 1 ]] && error_usage "'start' requires exactly one argument"
-  echo "$1"
+  if [[ "$#" -eq 0 ]]; then
+    # Interactive mode: prompt for description and use Claude to generate name
+    echo "What would you like to work on?"
+    read -r description
+
+    # Use Claude to generate a project name based on the description
+    local claude_prompt="Based on this task description: \"${description}\", suggest a short, descriptive project name suitable for a git branch. The name should be lowercase, use hyphens instead of spaces, and be 2-4 words maximum. Output ONLY the suggested name, nothing else."
+
+    local suggested_name
+    suggested_name=$(echo "$claude_prompt" | claude --no-conversation 2> /dev/null)
+
+    if [[ -z "$suggested_name" ]]; then
+      error_exit "Failed to generate project name suggestion"
+    fi
+
+    echo "Suggested project name: $suggested_name"
+    echo -n "Use this name? (Y/n): "
+    read -r confirm
+
+    if [[ "$confirm" =~ ^[Nn]$ ]]; then
+      echo -n "Enter your preferred name: "
+      read -r suggested_name
+    fi
+
+    echo "$suggested_name"
+  elif [[ "$#" -eq 1 ]]; then
+    echo "$1"
+  else
+    error_usage "'start' requires at most one argument"
+  fi
 }
 
 handle_start() {

@@ -8,7 +8,7 @@
 #   - claude (Claude Code CLI)
 #
 # Usage:
-#   vibe start <name>
+#   vibe start [<name>]
 #   vibe done [<name>] [--force|-f]
 #   vibe list
 #
@@ -39,8 +39,9 @@ Global Options:
   -R, --repo <name> Specify repository by name (e.g., dotfiles, fohte/dotfiles)
 
 Commands:
-  start <name>
+  start [<name>]
     Start a new Claude Code session with worktree
+    If <name> is omitted, enters interactive mode to generate a name
 
   done [<name>] [--force|-f]
     Remove branch and worktree (only if merged)
