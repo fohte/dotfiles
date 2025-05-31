@@ -1,0 +1,7 @@
+[tools]
+# CI用の最小限のツール
+shfmt = "3.11.0"
+"npm:bun" = "1.2.15"
+pre-commit = "4.2.0"
+stylua = "2.1.0"
+shellcheck = "0.10.0"
