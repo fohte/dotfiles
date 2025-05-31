@@ -79,7 +79,7 @@ EOF
 
   # Read the content and filter out comments and empty lines
   local message
-  message=$(grep -v '^#' "$temp_file" | grep -v '^\s*$' | head -n1)
+  message=$(grep -v '^#' "$temp_file" | sed '/^\s*$/d' | sed 's/[[:space:]]*$//')
 
   # Clean up
   rm -f "$temp_file"
