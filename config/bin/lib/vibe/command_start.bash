@@ -1,14 +1,43 @@
 #!/usr/bin/env bash
 # Start command functions for vibe
 
+show_claude_spinner() {
+  local message="$1"
+  local spinner_chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+  local i=0
+
+  while true; do
+    printf "\r🤖 %s %s" "$message" "${spinner_chars:$i:1}" >&2
+    i=$(((i + 1) % ${#spinner_chars}))
+    sleep 0.1
+  done
+}
+
 generate_name_from_description() {
   local description="$1"
 
   # Use Claude to generate a project name based on the description
   local claude_prompt="Generate a git branch name for this task: \"${description}\". Rules: lowercase only, use hyphens not spaces, 2-4 words max. Output ONLY the branch name on a single line, no explanation."
 
+  # Start spinner in background
+  show_claude_spinner "Asking Claude for project name suggestions..." &
+  local spinner_pid=$!
+
+  # Function to clean up spinner
+  cleanup_spinner() {
+    kill $spinner_pid 2> /dev/null || true
+    printf "\r🤖 Asking Claude for project name suggestions... ✨ Done!    \n" >&2
+  }
+
+  # Ensure spinner is killed on exit
+  trap cleanup_spinner EXIT
+
   local suggested_name
   suggested_name=$(echo "$claude_prompt" | claude --print 2> /dev/null | head -n1 | tr -d '\r')
+
+  # Stop spinner and clear line
+  cleanup_spinner
+  trap - EXIT # Remove the trap
 
   # Validate the generated name
   if [[ -z "$suggested_name" ]]; then
