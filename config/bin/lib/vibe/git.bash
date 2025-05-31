@@ -90,3 +90,40 @@ delete_branch() {
     git branch -d "${branch}"
   fi
 }
+
+get_pr_url() {
+  local branch="$1"
+  command -v gh &> /dev/null || {
+    echo "-"
+    return 0
+  }
+
+  local pr_url
+  pr_url=$(gh pr list --state all --head "${branch}" --json url --jq '.[0].url' 2> /dev/null || echo "")
+
+  # Show "-" if no PR URL found
+  if [[ -z "$pr_url" ]]; then
+    pr_url="-"
+  fi
+
+  echo "$pr_url"
+}
+
+get_repo_name_from_remote() {
+  local repo_path="$1"
+  local repo_name
+
+  # Try to get from git remote first
+  repo_name=$(git remote get-url origin 2> /dev/null | sed -E 's|.*/([^/]+/[^/]+)(\.git)?$|\1|' | sed 's/\.git$//')
+
+  # If no remote, use the directory name as fallback
+  if [[ -z "$repo_name" ]]; then
+    repo_name=$(basename "$repo_path")
+  fi
+
+  echo "$repo_name"
+}
+
+list_vibe_branches() {
+  git branch --list 'claude/*' --format='%(refname:short)' 2> /dev/null
+}

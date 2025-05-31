@@ -8,22 +8,8 @@ parse_list_command() {
   fi
 }
 
-get_repo_name() {
-  local repo_path="$1"
-  local repo_name
-  repo_name=$(git remote get-url origin 2> /dev/null | sed -E 's|.*/([^/]+/[^/]+)(\.git)?$|\1|' | sed 's/\.git$//')
-
-  # If no remote, use the directory name as fallback
-  if [[ -z "$repo_name" ]]; then
-    repo_name=$(basename "$repo_path")
-  fi
-
-  echo "$repo_name"
-}
-
 get_session_status() {
   local branch="$1"
-  local pr_url="$2"
 
   if check_pr_merged "${branch}"; then
     echo "done"
@@ -32,19 +18,6 @@ get_session_status() {
   else
     echo "in-progress"
   fi
-}
-
-get_pr_url() {
-  local branch="$1"
-  local pr_url
-  pr_url=$(gh pr list --state all --head "${branch}" --json url --jq '.[0].url' 2> /dev/null || echo "")
-
-  # Show "-" if no PR URL found
-  if [[ -z "$pr_url" ]]; then
-    pr_url="-"
-  fi
-
-  echo "$pr_url"
 }
 
 process_vibe_sessions() {
@@ -67,7 +40,7 @@ process_vibe_sessions() {
     # Get PR URL and session status
     local pr_url session_status_value
     pr_url=$(get_pr_url "${branch}")
-    session_status_value=$(get_session_status "${branch}" "${pr_url}")
+    session_status_value=$(get_session_status "${branch}")
 
     # Add row to table data
     printf -v "$table_data_var" "%s\n%s\t%s\t%s\t%s" "${!table_data_var}" "$repo_name" "$name" "$session_status_value" "$pr_url"
@@ -88,7 +61,7 @@ process_repository() {
 
   # Get all vibe branches (claude/*) in this repository
   local branches
-  branches=$(git branch --list 'claude/*' --format='%(refname:short)' 2> /dev/null)
+  branches=$(list_vibe_branches)
 
   # Skip if no vibe branches found
   if [[ -z "$branches" ]]; then
@@ -108,7 +81,7 @@ process_repository() {
 
   # Get repository name
   local repo_name
-  repo_name=$(get_repo_name "$repo_path")
+  repo_name=$(get_repo_name_from_remote "$repo_path")
 
   # Process each vibe session
   process_vibe_sessions "$repo_path" "$repo_name" "$branches" "$table_data_var"
