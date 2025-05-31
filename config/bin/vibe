@@ -102,20 +102,24 @@ VIBE_REPO_PATH=""
 command=""
 command_args=()
 
-# First pass: collect all arguments
+# Parse arguments: separate global options from command and its arguments
+# We iterate through all arguments to handle options in any position
 all_args=("$@")
 i=0
+# Note: ((i++)) increments i and returns the OLD value
+# When i=0, ((i++)) returns 0, which causes script to exit with set -e
+# Adding || true prevents exit while still incrementing i
 while [[ $i -lt ${#all_args[@]} ]]; do
   arg="${all_args[$i]}"
   case "$arg" in
     --debug)
       VIBE_DEBUG=1
-      ((i++)) || true
+      ((i++)) || true # Move to next argument
       ;;
     -R | --repo)
       if [[ $((i + 1)) -lt ${#all_args[@]} ]]; then
         VIBE_REPO_PATH="${all_args[$((i + 1))]}"
-        ((i += 2)) || true
+        ((i += 2)) || true # Skip both -R and its argument
       else
         error_usage "option '$arg' requires an argument"
       fi
