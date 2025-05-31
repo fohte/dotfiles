@@ -27,7 +27,20 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install tools with mise
-        run: mise install
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          mise install
+
+      - name: Debug mise installation
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          echo "mise version: $(mise --version)"
+          echo "Available tools:"
+          mise list
+          echo "PATH: $PATH"
+          which shfmt || echo "shfmt not found"
+          which stylua || echo "stylua not found"
+          which shellcheck || echo "shellcheck not found"
 
       - name: Cache pre-commit
         uses: actions/cache@v4
@@ -50,5 +63,5 @@ jobs:
           github_token: ${{ steps.app-token.outputs.token }}
 
       - name: Fail if pre-commit failed
-        if: steps.pre-commit.outcome == 'failure'
+        if: steps.pre-commit.conclusion == 'failure'
         run: exit 1
