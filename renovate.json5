@@ -31,5 +31,9 @@
       automerge: true,
       matchUpdateTypes: ['patch'],
     },
+    {
+      matchPackageNames: ['eza-community/eza'],
+      enabled: false,
+    },
   ],
 }
