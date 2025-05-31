@@ -52,12 +52,12 @@ parse_start_command() {
     local suggested_name
     suggested_name=$(generate_name_from_description "$message")
 
-    echo "Suggested project name: $suggested_name" >&2
-    echo -n "Use this name? (Y/n): " >&2
+    echo -e "\nSuggested project name: \033[1m$suggested_name\033[0m" >&2
+    echo -ne "\033[1mUse this name? (Y/n):\033[0m " >&2
     read -r confirm
 
     if [[ "$confirm" =~ ^[Nn]$ ]]; then
-      echo -n "Enter your preferred name: " >&2
+      echo -ne "\033[1mEnter your preferred name:\033[0m " >&2
       read -r suggested_name
     fi
 
@@ -67,18 +67,18 @@ parse_start_command() {
     echo "$name"
   else
     # Interactive mode
-    echo "What would you like to work on?" >&2
+    echo -ne "\033[1mWhat would you like to work on:\033[0m " >&2
     read -r description
 
     local suggested_name
     suggested_name=$(generate_name_from_description "$description")
 
-    echo "Suggested project name: $suggested_name" >&2
-    echo -n "Use this name? (Y/n): " >&2
+    echo -e "\nSuggested project name: \033[1m$suggested_name\033[0m" >&2
+    echo -ne "\033[1mUse this name? (Y/n):\033[0m " >&2
     read -r confirm
 
     if [[ "$confirm" =~ ^[Nn]$ ]]; then
-      echo -n "Enter your preferred name: " >&2
+      echo -ne "\033[1mEnter your preferred name:\033[0m " >&2
       read -r suggested_name
     fi
 
