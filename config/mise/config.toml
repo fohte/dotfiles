@@ -1,3 +1,29 @@
 [tools]
 node = "23.11.1"
 "npm:@devcontainers/cli" = "0.76.0"
+
+# Tools from aqua.yaml (root)
+shfmt = "3.11.0"
+"npm:bun" = "1.2.15"
+pre-commit = "4.2.0"
+go-jsonnet = "0.20.0"
+stylua = "2.1.0"
+shellcheck = "0.10.0"
+
+# Tools from config/aqua/aqua.yaml
+github-cli = "2.74.0"
+bat = "0.25.0"
+ghq = "1.7.1"
+fzf = "0.61.1"
+delta = "0.18.2"
+yq = "4.45.4"
+neovim = "0.11.2"
+eza = "0.21.4"
+starship = "1.23.0"
+ripgrep = "14.1.1"
+
+# 1password CLI
+op = "2.30.0"
+
+# pkgx is not available in mise, needs alternative approach
+# pkgx = "2.7.0"

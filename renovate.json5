@@ -2,24 +2,8 @@
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
     'github>fohte/renovate-config:base.json5',
-    'github>aquaproj/aqua-renovate-config#2.2.1',
   ],
   packageRules: [
-    {
-      matchPackageNames: ['/^aquaproj//'],
-      schedule: ['after 9am on saturday'],
-      matchUpdateTypes: ['minor', 'patch'],
-      automerge: true,
-    },
-    // automerge patch updates
-    {
-      groupName: 'aqua patch',
-      groupSlug: 'aqua-patch',
-      matchFileNames: ['**/aqua.yaml'],
-      schedule: ['after 9am on saturday'],
-      automerge: true,
-      matchUpdateTypes: ['patch'],
-    },
     {
       groupName: 'fzf updates',
       matchPackageNames: ['junegunn/fzf', 'junegunn/fzf/fzf-tmux'],
