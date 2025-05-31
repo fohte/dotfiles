@@ -12,12 +12,6 @@ tmux_window_exists() {
   tmux list-windows -t "$session" -F "#{window_name}" 2> /dev/null | grep -q "^${window}$"
 }
 
-CLAUDE_COMMAND="$(
-  cat << 'EOF'
-GH_TOKEN="$(gh auth token)" claude
-EOF
-)"
-
 start_claude_in_tmux() {
   local session="$1"
   local window="$2"
@@ -31,16 +25,15 @@ start_claude_in_tmux() {
     tmux new-window -t "$session" -n "$window" -c "${worktree_path}"
   fi
 
-  tmux send-keys -t "$session:$window" "$CLAUDE_COMMAND" C-m
-
-  # If initial prompt is provided, send it after a short delay
+  # Build the claude command with or without initial prompt
+  local claude_command="GH_TOKEN=\"\$(gh auth token)\" claude"
   if [[ -n "$initial_prompt" ]]; then
-    # Schedule the initial prompt to be sent after claude starts up
-    (
-      sleep 3 # Wait for claude to initialize
-      tmux send-keys -t "$session:$window" "$initial_prompt"
-    ) &
+    # Escape quotes in the prompt
+    local escaped_prompt="${initial_prompt//\"/\\\"}"
+    claude_command="$claude_command \"$escaped_prompt\""
   fi
+
+  tmux send-keys -t "$session:$window" "$claude_command" C-m
 
   tmux switch-client -t "$session" 2> /dev/null || true
 }
