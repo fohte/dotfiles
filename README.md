@@ -22,7 +22,6 @@
     - **[RuboCop](https://rubocop.org)** - Ruby static code analyzer ([config/rubocop](./config/rubocop))
     - **[Claude Code](https://github.com/anthropics/claude-code)** - AI coding assistant configuration ([config/claude](./config/claude))
 - ⚙️ **System Tools**
-    - **[Aqua](https://aquaproj.github.io)** - Declarative CLI version manager ([config/aqua](./config/aqua))
     - **[mise](https://mise.jdx.dev)** - Runtime and tool version manager ([config/mise](./config/mise))
     - **[ripgrep](https://github.com/BurntSushi/ripgrep)** - Fast text search tool ([config/rg](./config/rg))
     - **[GnuPG](https://gnupg.org)** - Encryption and signing tool ([config/gnupg](./config/gnupg))
@@ -53,7 +52,7 @@ Run the `refresh` command to update the dotfiles and upgrade packages:
 refresh
 ```
 
-This command automatically updates the SKK dictionary, Neovim plugins, Aqua packages, and more.
+This command automatically updates the SKK dictionary, Neovim plugins, mise tools, and more.
 
 ## 🔧 How Deployment Works
 
