@@ -17,12 +17,13 @@ setup_claude_project_symlink() {
   local git_root="$2"
 
   # Convert paths to Claude Code's directory naming format
-  # Claude Code uses dashes instead of slashes and dots
+  # Claude Code replaces all non-alphanumeric characters with dashes
+  # Using printf to avoid trailing newline that would become a dash
   local worktree_project_name
-  worktree_project_name=$(echo "$worktree_path" | sed 's|^/|-|' | sed 's|/|-|g' | sed 's|\.|-|g')
+  worktree_project_name=$(printf '%s' "$worktree_path" | tr -c 'a-zA-Z0-9' '-')
 
   local root_project_name
-  root_project_name=$(echo "$git_root" | sed 's|^/|-|' | sed 's|/|-|g' | sed 's|\.|-|g')
+  root_project_name=$(printf '%s' "$git_root" | tr -c 'a-zA-Z0-9' '-')
 
   local claude_projects_dir="${HOME}/.claude/projects"
   local worktree_project_dir="${claude_projects_dir}/${worktree_project_name}"
