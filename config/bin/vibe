@@ -185,11 +185,13 @@ SESSION_NAME="vibe"
 # Parse command and get name
 case "$command" in
   start)
-    name=$(parse_start_command "${command_args[@]}")
+    parsed_output=$(parse_start_command "${command_args[@]}")
+    name=$(echo "$parsed_output" | head -n1)
+    initial_prompt=$(echo "$parsed_output" | tail -n+2)
     branch="claude/${name}"
     worktree_dir=".worktrees/${name}"
     worktree_path="${git_root}/${worktree_dir}"
-    handle_start "${branch}" "${worktree_path}" "${worktree_dir}" "${SESSION_NAME}" "${project_name}" "${git_root}"
+    handle_start "${branch}" "${worktree_path}" "${worktree_dir}" "${SESSION_NAME}" "${project_name}" "${git_root}" "$initial_prompt"
     ;;
   done)
     parsed_output=$(parse_done_command "${command_args[@]}") || exit 1

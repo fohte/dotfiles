@@ -26,6 +26,7 @@ generate_name_from_description() {
 parse_start_command() {
   local message=""
   local name=""
+  local initial_prompt=""
 
   # Parse options
   while [[ "$#" -gt 0 ]]; do
@@ -61,10 +62,13 @@ parse_start_command() {
       read -r suggested_name
     fi
 
+    # Return both name and initial prompt
     echo "$suggested_name"
+    echo "$message"
   elif [[ -n "$name" ]]; then
     # Direct name provided
     echo "$name"
+    echo "" # No initial prompt
   else
     # Interactive mode
     echo -ne "\033[1mWhat would you like to work on:\033[0m " >&2
@@ -82,7 +86,9 @@ parse_start_command() {
       read -r suggested_name
     fi
 
+    # Return both name and initial prompt
     echo "$suggested_name"
+    echo "$description"
   fi
 }
 
@@ -93,6 +99,7 @@ handle_start() {
   local session_name="$4"
   local project_name="$5"
   local git_root="$6"
+  local initial_prompt="$7"
 
   # Check prerequisites
   check_branch_exists "${branch}" && error_exit "Branch '${branch}' already exists"
@@ -114,5 +121,5 @@ handle_start() {
   # This needs git_root from the parent scope
   setup_claude_project_symlink "${worktree_path}" "${git_root}"
 
-  start_claude_in_tmux "$session_name" "$window_name" "${worktree_path}" "$create_new_session"
+  start_claude_in_tmux "$session_name" "$window_name" "${worktree_path}" "$create_new_session" "$initial_prompt"
 }
