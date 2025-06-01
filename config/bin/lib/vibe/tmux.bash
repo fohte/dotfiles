@@ -35,7 +35,7 @@ start_claude_in_tmux() {
 
   tmux send-keys -t "$session:$window" "$claude_command" C-m
 
-  tmux switch-client -t "$session" 2> /dev/null || true
+  tmux switch-client -t "$session:$window" 2> /dev/null || true
 }
 
 close_tmux_window() {

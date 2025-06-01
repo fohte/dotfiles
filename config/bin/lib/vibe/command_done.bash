@@ -73,7 +73,8 @@ handle_done() {
     close_tmux_window "$session_name" ""
   else
     # Close window by name
-    local window_name="${project_name}-${name}"
+    # Replace dots with underscores in window name to match the naming in start command
+    local window_name="${project_name//./_}-${name}"
     close_tmux_window "$session_name" "${window_name}"
   fi
 
