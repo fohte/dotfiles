@@ -21,18 +21,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Cache aqua packages
-        uses: actions/cache@v4
+      - uses: jdx/mise-action@v2
         with:
-          path: ~/.local/share/aquaproj-aqua
-          key: ${{ runner.os }}-aqua-${{ hashFiles('aqua.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-aqua-
-
-      - uses: aquaproj/aqua-installer@v3.1.2
-        with:
-          aqua_version: v2.51.2
-          aqua_opts: '--all' # install all packages immediately to populate cache
+          install: true
 
       - name: Cache pre-commit
         uses: actions/cache@v4
@@ -45,7 +36,9 @@ jobs:
       - name: Run pre-commit hooks
         id: pre-commit
         continue-on-error: true
-        run: pre-commit run --all-files
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files
 
       - name: Commit formatted files
         uses: suzuki-shunsuke/commit-action@v0.0.7
@@ -55,5 +48,5 @@ jobs:
           github_token: ${{ steps.app-token.outputs.token }}
 
       - name: Fail if pre-commit failed
-        if: steps.pre-commit.outcome == 'failure'
+        if: steps.pre-commit.conclusion == 'failure'
         run: exit 1

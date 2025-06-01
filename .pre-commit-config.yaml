@@ -19,21 +19,21 @@ repos:
         language: system
         files: ^config/bettertouchtool/default\.bttpreset$
 
-      # Using aqua-managed tools (see: aqua.yaml)
-      - id: shfmt # mvdan/sh package in aqua.yaml
+      # Using mise-managed tools (see: config/mise/config.toml)
+      - id: shfmt # shfmt package in mise config
         name: '🔧 shfmt'
         entry: shfmt -w
         language: system
         types: [shell]
         exclude: \.(zsh|zshenv|zshrc)$
 
-      - id: stylua # JohnnyMorganz/StyLua package in aqua.yaml
+      - id: stylua # stylua package in mise config
         name: '🔧 stylua'
         entry: stylua
         language: system
         types: [lua]
 
-      - id: shellcheck # koalaman/shellcheck package in aqua.yaml
+      - id: shellcheck # shellcheck package in mise config
         name: '🔍 shellcheck'
         entry: shellcheck
         language: system

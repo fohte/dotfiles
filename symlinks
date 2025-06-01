@@ -87,9 +87,6 @@ if match_tag aquaskk; then
   sym config/aquaskk/keymap.conf "$HOME/Library/Application Support/AquaSKK/keymap.conf"
 fi
 
-if match_tag aqua; then
-  sym config/aqua ~/.config/aquaprj-aqua
-fi
 
 if match_tag rubocop; then
   sym config/rubocop/.rubocop.yml ~/.rubocop.yml
