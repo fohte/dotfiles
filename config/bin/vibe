@@ -185,7 +185,16 @@ SESSION_NAME="vibe"
 # Parse command and get name
 case "$command" in
   start)
-    parsed_output=$(parse_start_command "${command_args[@]}")
+    # Check if -m or --message flag is used for auto-approval
+    auto_approve="false"
+    for arg in "${command_args[@]}"; do
+      if [[ "$arg" == "-m" || "$arg" == "--message" ]]; then
+        auto_approve="true"
+        break
+      fi
+    done
+
+    parsed_output=$(parse_start_command "$auto_approve" "${command_args[@]}")
     name=$(echo "$parsed_output" | head -n1)
     initial_prompt=$(echo "$parsed_output" | tail -n+2)
     branch="claude/${name}"
