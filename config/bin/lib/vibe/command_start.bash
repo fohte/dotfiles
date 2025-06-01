@@ -192,8 +192,7 @@ handle_start() {
 
   # Extract name from branch
   local name="${branch#claude/}"
-  # Replace dots with underscores in window name to avoid tmux parsing issues
-  local window_name="${project_name//./_}-${name}"
+  local window_name="${project_name}-${name}"
 
   # Setup Claude project directory symlink before starting Claude Code
   # This needs git_root from the parent scope
