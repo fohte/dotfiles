@@ -1,6 +1,23 @@
 #!/usr/bin/env bash
 # Tmux-related functions for vibe
 
+# Get window ID for a given vibe name
+get_window_id_by_vibe_name() {
+  local session="$1"
+  local vibe_name="$2"
+
+  # List all windows and find the one matching our vibe name pattern
+  while IFS=' ' read -r window_id window_name; do
+    # Check if window name ends with the vibe name
+    if [[ "$window_name" =~ -${vibe_name}$ ]]; then
+      echo "$window_id"
+      return 0
+    fi
+  done < <(tmux list-windows -t "$session" -F "#{window_id} #{window_name}" 2> /dev/null)
+
+  return 1
+}
+
 tmux_session_exists() {
   local session="$1"
   tmux has-session -t "$session" 2> /dev/null
@@ -19,10 +36,13 @@ start_claude_in_tmux() {
   local create_new_session="$4"
   local initial_prompt="$5"
 
+  local window_id
   if [[ "$create_new_session" == "true" ]]; then
-    tmux new-session -ds "$session" -n "$window" -c "${worktree_path}"
+    # Create new session and capture window ID
+    window_id=$(tmux new-session -ds "$session" -n "$window" -c "${worktree_path}" -P -F "#{window_id}")
   else
-    tmux new-window -t "$session" -n "$window" -c "${worktree_path}"
+    # Create new window and capture window ID
+    window_id=$(tmux new-window -t "$session" -n "$window" -c "${worktree_path}" -P -F "#{window_id}")
   fi
 
   # Build the claude command with or without initial prompt
@@ -33,14 +53,17 @@ start_claude_in_tmux() {
     claude_command="$claude_command \"$escaped_prompt\""
   fi
 
-  tmux send-keys -t "$session:$window" "$claude_command" C-m
+  tmux send-keys -t "$window_id" "$claude_command" C-m
 
-  tmux switch-client -t "$session:$window" 2> /dev/null || true
+  tmux switch-client -t "$window_id" 2> /dev/null || true
+
+  # Return the window ID for later use
+  echo "$window_id"
 }
 
-close_tmux_window() {
+close_tmux_window_by_id() {
   local session="$1"
-  local window="$2"
+  local window_id="$2"
 
   # Check how many windows are in the current session
   local window_count
@@ -60,17 +83,20 @@ close_tmux_window() {
     fi
   fi
 
-  # If window name is empty, close current window
-  if [[ -z "$window" ]]; then
+  # If window ID is empty, close current window
+  if [[ -z "$window_id" ]]; then
     debug "Closing current tmux window..."
     tmux kill-window || return 0
     return 0
   fi
 
-  tmux_window_exists "$session" "$window" || return 0
+  # Check if window exists
+  if ! tmux list-windows -t "$session" -F "#{window_id}" 2> /dev/null | grep -q "^${window_id}$"; then
+    return 0
+  fi
 
-  debug "Closing tmux window '${window}'..."
-  tmux kill-window -t "$session:${window}"
+  debug "Closing tmux window ID '${window_id}'..."
+  tmux kill-window -t "$window_id"
 }
 
 get_current_vibe_name() {
