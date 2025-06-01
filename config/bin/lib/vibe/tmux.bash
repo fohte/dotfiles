@@ -45,19 +45,15 @@ start_claude_in_tmux() {
     window_id=$(tmux new-window -t "$session" -n "$window" -c "${worktree_path}" -P -F "#{window_id}")
   fi
 
-  # Start Claude without initial prompt
+  # Build the claude command with or without initial prompt
   local claude_command="GH_TOKEN=\"\$(gh auth token)\" claude"
-  tmux send-keys -t "$window_id" "$claude_command" C-m
-
-  # Display the prompt if provided
   if [[ -n "$initial_prompt" ]]; then
-    # Wait a moment for Claude to start
-    sleep 1
-    # Display the prompt to the user
-    tmux send-keys -t "$window_id" "echo '🎯 Initial prompt:'" C-m
-    tmux send-keys -t "$window_id" "echo '${initial_prompt//\'/\'\\\'\'}'" C-m
-    tmux send-keys -t "$window_id" "echo ''" C-m
+    # Escape quotes in the prompt
+    local escaped_prompt="${initial_prompt//\"/\\\"}"
+    claude_command="$claude_command \"$escaped_prompt\""
   fi
+
+  tmux send-keys -t "$window_id" "$claude_command" C-m
 
   tmux switch-client -t "$window_id" 2> /dev/null || true
 

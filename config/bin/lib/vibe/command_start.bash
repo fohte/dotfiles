@@ -133,6 +133,11 @@ parse_start_command() {
       read -r suggested_name
     fi
 
+    # Display the initial prompt
+    echo -e "\n🎯 \033[1mInitial prompt:\033[0m" >&2
+    echo -e "\033[36m$message\033[0m" >&2
+    echo "" >&2
+
     # Return both name and initial prompt
     echo "$suggested_name"
     echo "$message"
@@ -162,6 +167,11 @@ parse_start_command() {
       echo -ne "\033[1mEnter your preferred name:\033[0m " >&2
       read -r suggested_name
     fi
+
+    # Display the initial prompt
+    echo -e "\n🎯 \033[1mInitial prompt:\033[0m" >&2
+    echo -e "\033[36m$description\033[0m" >&2
+    echo "" >&2
 
     # Return both name and initial prompt
     echo "$suggested_name"
