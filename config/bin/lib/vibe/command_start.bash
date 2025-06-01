@@ -135,7 +135,9 @@ parse_start_command() {
 
     # Display the initial prompt
     echo -e "\nPrompt" >&2
-    echo -e "│ \033[30m$message\033[0m" >&2
+    while IFS= read -r line; do
+      echo -e "│ \033[2m$line\033[0m" >&2
+    done <<< "$message"
     echo "" >&2
 
     # Return both name and initial prompt
@@ -170,7 +172,9 @@ parse_start_command() {
 
     # Display the initial prompt
     echo -e "\nPrompt" >&2
-    echo -e "│ \033[30m$description\033[0m" >&2
+    while IFS= read -r line; do
+      echo -e "│ \033[2m$line\033[0m" >&2
+    done <<< "$description"
     echo "" >&2
 
     # Return both name and initial prompt
