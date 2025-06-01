@@ -9,7 +9,7 @@ get_window_id_by_vibe_name() {
   # List all windows and find the one matching our vibe name pattern
   while IFS=' ' read -r window_id window_name; do
     # Check if window name ends with the vibe name
-    if [[ "$window_name" =~ -${vibe_name}$ ]]; then
+    if [[ "$window_name" =~ /${vibe_name}$ ]]; then
       echo "$window_id"
       return 0
     fi
