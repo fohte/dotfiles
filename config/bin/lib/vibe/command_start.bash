@@ -136,7 +136,7 @@ parse_start_command() {
     # Display the initial prompt
     echo -e "\nPrompt" >&2
     echo -e "│ \033[30m$message\033[0m" >&2
-    echo -e "│" >&2
+    echo "" >&2
 
     # Return both name and initial prompt
     echo "$suggested_name"
@@ -171,7 +171,7 @@ parse_start_command() {
     # Display the initial prompt
     echo -e "\nPrompt" >&2
     echo -e "│ \033[30m$description\033[0m" >&2
-    echo -e "│" >&2
+    echo "" >&2
 
     # Return both name and initial prompt
     echo "$suggested_name"
