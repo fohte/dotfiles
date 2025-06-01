@@ -98,10 +98,6 @@ parse_start_command() {
   local message=""
   local name=""
   local initial_prompt=""
-  local auto_approve="${1:-false}"
-
-  # Skip the auto_approve parameter
-  shift
 
   # Parse options
   while [[ "$#" -gt 0 ]]; do
@@ -128,19 +124,7 @@ parse_start_command() {
     local suggested_name
     suggested_name=$(generate_name_from_description "$message")
 
-    echo -e "\nSuggested project name: \033[1m$suggested_name\033[0m" >&2
-
-    if [[ "$auto_approve" == "true" ]]; then
-      echo -e "\033[1mAuto-approving name...\033[0m" >&2
-    else
-      echo -ne "\033[1mUse this name? (Y/n):\033[0m " >&2
-      read -r confirm
-
-      if [[ "$confirm" =~ ^[Nn]$ ]]; then
-        echo -ne "\033[1mEnter your preferred name:\033[0m " >&2
-        read -r suggested_name
-      fi
-    fi
+    echo -e "\nGenerated project name: \033[1m$suggested_name\033[0m" >&2
 
     # Display the initial prompt
     echo -e "\n─ Prompt ─────────────────────────────────" >&2
@@ -169,19 +153,7 @@ parse_start_command() {
     local suggested_name
     suggested_name=$(generate_name_from_description "$description")
 
-    echo -e "\nSuggested project name: \033[1m$suggested_name\033[0m" >&2
-
-    if [[ "$auto_approve" == "true" ]]; then
-      echo -e "\033[1mAuto-approving name...\033[0m" >&2
-    else
-      echo -ne "\033[1mUse this name? (Y/n):\033[0m " >&2
-      read -r confirm
-
-      if [[ "$confirm" =~ ^[Nn]$ ]]; then
-        echo -ne "\033[1mEnter your preferred name:\033[0m " >&2
-        read -r suggested_name
-      fi
-    fi
+    echo -e "\nGenerated project name: \033[1m$suggested_name\033[0m" >&2
 
     # Display the initial prompt
     echo -e "\n─ Prompt ─────────────────────────────────" >&2
