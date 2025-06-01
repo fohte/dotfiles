@@ -124,14 +124,7 @@ parse_start_command() {
     local suggested_name
     suggested_name=$(generate_name_from_description "$message")
 
-    echo -e "\nSuggested project name: \033[1m$suggested_name\033[0m" >&2
-    echo -ne "\033[1mUse this name? (Y/n):\033[0m " >&2
-    read -r confirm
-
-    if [[ "$confirm" =~ ^[Nn]$ ]]; then
-      echo -ne "\033[1mEnter your preferred name:\033[0m " >&2
-      read -r suggested_name
-    fi
+    echo -e "\nGenerated project name: \033[1m$suggested_name\033[0m" >&2
 
     # Display the initial prompt
     echo -e "\n─ Prompt ─────────────────────────────────" >&2
@@ -160,14 +153,7 @@ parse_start_command() {
     local suggested_name
     suggested_name=$(generate_name_from_description "$description")
 
-    echo -e "\nSuggested project name: \033[1m$suggested_name\033[0m" >&2
-    echo -ne "\033[1mUse this name? (Y/n):\033[0m " >&2
-    read -r confirm
-
-    if [[ "$confirm" =~ ^[Nn]$ ]]; then
-      echo -ne "\033[1mEnter your preferred name:\033[0m " >&2
-      read -r suggested_name
-    fi
+    echo -e "\nGenerated project name: \033[1m$suggested_name\033[0m" >&2
 
     # Display the initial prompt
     echo -e "\n─ Prompt ─────────────────────────────────" >&2
