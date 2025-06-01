@@ -134,10 +134,9 @@ parse_start_command() {
     fi
 
     # Display the initial prompt
-    echo -e "\nPrompt" >&2
-    while IFS= read -r line; do
-      echo -e "│ \033[2m$line\033[0m" >&2
-    done <<< "$message"
+    echo -e "\n─ Prompt ─────────────────────────────────" >&2
+    echo -e "\033[2m$message\033[0m" >&2
+    echo -e "──────────────────────────────────────────" >&2
     echo "" >&2
 
     # Return both name and initial prompt
@@ -171,10 +170,9 @@ parse_start_command() {
     fi
 
     # Display the initial prompt
-    echo -e "\nPrompt" >&2
-    while IFS= read -r line; do
-      echo -e "│ \033[2m$line\033[0m" >&2
-    done <<< "$description"
+    echo -e "\n─ Prompt ─────────────────────────────────" >&2
+    echo -e "\033[2m$description\033[0m" >&2
+    echo -e "──────────────────────────────────────────" >&2
     echo "" >&2
 
     # Return both name and initial prompt
