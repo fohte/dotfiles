@@ -42,9 +42,8 @@ handle_done() {
   local worktree_dir="$3"
   local force="$4"
   local session_name="$5"
-  local project_name="$6"
-  local git_root="$7"
-  local from_current_window="${8:-false}"
+  local git_root="$6"
+  local from_current_window="${7:-false}"
 
   # Verify branch exists
   check_branch_exists "${branch}" || error_exit "Branch '${branch}' does not exist"
@@ -70,11 +69,19 @@ handle_done() {
   # Check if we got the name from current window (no argument case)
   if [[ "$from_current_window" == "true" ]]; then
     # Close current window instead of trying to match by name
-    close_tmux_window "$session_name" ""
+    debug "Closing current tmux window..."
+    close_tmux_window_by_id "$session_name" ""
   else
-    # Close window by name
-    local window_name="${project_name}-${name}"
-    close_tmux_window "$session_name" "${window_name}"
+    # Find window ID by vibe name
+    debug "Looking for window with vibe name: ${name}"
+    local window_id
+    window_id=$(get_window_id_by_vibe_name "$session_name" "$name")
+    if [[ -n "$window_id" ]]; then
+      debug "Found window ID: ${window_id}"
+      close_tmux_window_by_id "$session_name" "$window_id"
+    else
+      debug "No window found for vibe name: ${name}"
+    fi
   fi
 
   echo "Done! Branch '${branch}' and worktree '${worktree_dir}' have been removed."

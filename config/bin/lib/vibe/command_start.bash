@@ -198,5 +198,7 @@ handle_start() {
   # This needs git_root from the parent scope
   setup_claude_project_symlink "${worktree_path}" "${git_root}"
 
-  start_claude_in_tmux "$session_name" "$window_name" "${worktree_path}" "$create_new_session" "$initial_prompt"
+  local window_id
+  window_id=$(start_claude_in_tmux "$session_name" "$window_name" "${worktree_path}" "$create_new_session" "$initial_prompt")
+  debug "Created tmux window with ID: ${window_id}"
 }
