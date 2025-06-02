@@ -17,7 +17,7 @@
       "Bash(git commit:*)",
       "Bash(git fetch:*)",
       "Bash(git log:*)",
-      "Bash(git merge:*)",
+      "Bash(git merge origin/master:*)",
       "Bash(git rev-parse:*)",
       "Bash(git show:*)",
       "Bash(git status:*)",
