@@ -91,12 +91,26 @@ debug() {
 resolve_repo_path() {
   local repo_name="$1"
 
-  # Get matching repository path directly
-  local repo_path
-  repo_path=$(ghq list -p "$repo_name" 2> /dev/null | head -1)
+  # Get matching repository paths
+  local repo_paths
+  repo_paths=$(ghq list -p "$repo_name" 2> /dev/null)
 
-  if [[ -z "$repo_path" ]]; then
+  if [[ -z "$repo_paths" ]]; then
     error_exit "repository '${repo_name}' not found in ghq repositories"
+  fi
+
+  # Look for exact match first (matching the last component of the path)
+  local repo_path
+  while IFS= read -r path; do
+    if [[ "$(basename "$path")" == "$repo_name" ]]; then
+      repo_path="$path"
+      break
+    fi
+  done <<< "$repo_paths"
+
+  # If no exact match found, use the first result
+  if [[ -z "$repo_path" ]]; then
+    repo_path=$(echo "$repo_paths" | head -1)
   fi
 
   debug "Resolved '${repo_name}' to '${repo_path}'"
