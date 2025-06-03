@@ -30,8 +30,34 @@ if [ -z "$(git status --porcelain)" ]; then
   exit 1
 fi
 
-# Generate commit message using Claude
-echo "Generating commit message..." >&2
+# Spinner function
+show_spinner() {
+  local message="$1"
+  local spinner_chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+  local i=0
+
+  while true; do
+    printf "\r🤖 %s %s" "$message" "${spinner_chars:$i:1}" >&2
+    i=$(((i + 1) % ${#spinner_chars}))
+    sleep 0.1
+  done
+}
+
+# Start spinner
+show_spinner "Generating commit message..." &
+spinner_pid=$!
+
+# Cleanup function
+cleanup_spinner() {
+  if [[ -n "${spinner_pid:-}" ]] && kill -0 "$spinner_pid" 2> /dev/null; then
+    kill "$spinner_pid" 2> /dev/null || true
+    wait "$spinner_pid" 2> /dev/null || true
+  fi
+  printf "\r🤖 Generating commit message... ✨ Done!    \n" >&2
+}
+
+# Ensure spinner cleanup on exit
+trap cleanup_spinner EXIT
 
 # Build prompt
 prompt=$(
@@ -46,10 +72,15 @@ PROMPT
 
 commit_message=$(echo "$prompt" | claude --model sonnet --print)
 
-# Show generated message
+# Stop spinner
+cleanup_spinner
+trap - EXIT
+
+# Show generated message with border
 echo >&2
-echo "Generated commit message:" >&2
-echo "$commit_message" >&2
+echo -e "─ Generated commit message ───────────────" >&2
+echo -e "\033[2m$commit_message\033[0m" >&2
+echo -e "──────────────────────────────────────────" >&2
 echo >&2
 
 # Commit with generated message
