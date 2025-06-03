@@ -62,7 +62,10 @@ trap cleanup_spinner EXIT
 # Build prompt
 prompt=$(
   cat << PROMPT
-Generate a concise git commit message for the following changes. Output only the commit message, nothing else.
+You are a git commit message generator. Output ONLY a single-line commit message.
+Do not include any explanation, context, or additional text.
+Do not start with "Based on..." or "Here's the commit message:".
+Just output the commit message itself.
 
 <notes>
 $notes
