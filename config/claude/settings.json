@@ -32,7 +32,6 @@
       "Read(~/.claude/rules/**)"
     ],
     "deny": [
-      "Bash(git add -A:*)",
       "Bash(git commit --amend:*)",
       "Bash(git push --force-with-lease:*)",
       "Bash(git push --force:*)"
