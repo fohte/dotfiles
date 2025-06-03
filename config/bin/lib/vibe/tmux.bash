@@ -48,9 +48,11 @@ start_claude_in_tmux() {
   # Build the claude command with or without initial prompt
   local claude_command="GH_TOKEN=\"\$(gh auth token)\" claude"
   if [[ -n "$initial_prompt" ]]; then
-    # Escape quotes in the prompt
-    local escaped_prompt="${initial_prompt//\"/\\\"}"
-    claude_command="$claude_command \"$escaped_prompt\""
+    # Write prompt to temporary file and use command substitution
+    local temp_file
+    temp_file=$(mktemp)
+    echo "$initial_prompt" > "$temp_file"
+    claude_command="$claude_command \"\$(cat $temp_file)\""
   fi
 
   tmux send-keys -t "$window_id" "$claude_command" C-m
