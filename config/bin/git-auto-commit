@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+#
+# git-auto-commit - Generate commit messages automatically using Claude Code
+#
+# Usage:
+#   git-auto-commit [<notes>]
+#
+set -euo pipefail
+
+usage() {
+  cat << EOF
+Usage: $(basename "$0") [<notes>]
+
+Generate commit messages automatically using Claude Code.
+If <notes> is provided, it will be used to help generate a better commit message.
+EOF
+}
+
+if [ "$#" -gt 1 ]; then
+  usage
+  exit 1
+fi
+
+# Get notes from first argument
+notes="${1:-}"
+
+# Check if there are changes to commit
+if [ -z "$(git status --porcelain)" ]; then
+  echo "No changes to commit"
+  exit 1
+fi
+
+# Generate commit message using Claude
+echo "Generating commit message..." >&2
+
+# Build prompt
+prompt=$(
+  cat << PROMPT
+Generate a concise git commit message for the following changes. Output only the commit message, nothing else.
+
+<notes>
+$notes
+</notes>
+PROMPT
+)
+
+commit_message=$(echo "$prompt" | claude --model sonnet --print)
+
+# Show generated message
+echo >&2
+echo "Generated commit message:" >&2
+echo "$commit_message" >&2
+echo >&2
+
+# Commit with generated message
+git commit -m "$commit_message"
