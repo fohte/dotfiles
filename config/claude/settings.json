@@ -33,7 +33,7 @@
       "Read(~/.claude/CLAUDE.md)",
       "Read(~/.claude/rules/**)",
       "Read(~/ghq/**)",
-      "mcp__sequential-thinkini"
+      "mcp__sequential-thinking"
     ],
     "deny": [
       "Bash(git commit --amend:*)",
