@@ -29,8 +29,11 @@
       "Bash(pnpm run lint:*)",
       "Bash(pnpm run test:*)",
       "Bash(rg:*)",
+      "Bash(terraform fmt)",
       "Read(~/.claude/CLAUDE.md)",
-      "Read(~/.claude/rules/**)"
+      "Read(~/.claude/rules/**)",
+      "Read(~/ghq/**)",
+      "mcp__sequential-thinkini"
     ],
     "deny": [
       "Bash(git commit --amend:*)",
