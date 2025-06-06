@@ -1,4 +1,5 @@
 {
+  "includeCoAuthoredBy": false,
   "permissions": {
     "allow": [
       "Bash(bun add:*)",
@@ -36,6 +37,5 @@
       "Bash(git push --force-with-lease:*)",
       "Bash(git push --force:*)"
     ]
-  },
-  "includeCoAuthoredBy": false
+  }
 }
