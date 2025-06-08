@@ -6,8 +6,8 @@
 
 - Always formalize the plan for next steps using sequential-thinking, context7 MCP servers, and get user confirmation before proceeding with implementation
 - Focus on ensuring you are adding reminders and steps to research and understand the latest information from web search, parallel web search (very useful), and parallel agentic execution where possible.
-- Maximize productivity through parallel execution:
-  - Launch multiple Task agents concurrently for independent research/analysis tasks
+- Maximize productivity through parallel execution using sub-agents:
+  - Launch multiple Task sub-agents concurrently for independent research/analysis tasks
   - Break down complex tasks into atomic, self-contained units that can execute in parallel
   - Batch tool calls (e.g., multiple file reads, searches) in single messages for concurrent execution
   - Ensure each parallel task has sufficient context to operate autonomously
