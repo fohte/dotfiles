@@ -1,6 +1,6 @@
 [tools]
 node = "23.11.1"
-"npm:@devcontainers/cli" = "0.76.0"
+"npm:@devcontainers/cli" = "0.77.0"
 
 github-cli = "2.74.0"
 bat = "0.25.0"
