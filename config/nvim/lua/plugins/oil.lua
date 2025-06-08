@@ -11,7 +11,7 @@ return {
         show_hidden = true,
       },
       float = {
-        padding = 20,
+        -- padding = 20,
       },
       keymaps = {
         ['<C-v>'] = { 'actions.select', opts = { vertical = true } },
