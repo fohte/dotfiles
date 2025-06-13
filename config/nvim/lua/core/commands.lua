@@ -38,3 +38,4 @@ vim.api.nvim_create_user_command('VimShowHlGroup', function()
 end, {})
 
 require('core.commands.git_remote')
+require('core.commands.llm_reference')
