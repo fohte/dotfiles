@@ -33,7 +33,6 @@
       "Bash(rg:*)",
       "Bash(terraform fmt)",
       "Read(~/.claude/CLAUDE.md)",
-      "Read(~/.claude/rules/**)",
       "Read(~/Dropbox)",
       "Read(~/Library/CloudStorage/Dropbox)",
       "Read(~/ghq/**)",

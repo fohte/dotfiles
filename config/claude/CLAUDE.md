@@ -15,7 +15,6 @@
 
 ## Workflow
 
-- When creating a PR: @~/.claude/rules/create-pr.md
 - Do not revert changes with `git commit --amend`, `git reset --soft|hard`; keep the history linear and clear
 - If pre-commit hooks fail or modify files, fix the issues and commit again using the original message
 - Commit at logical checkpoints: one feature, one fix, or one coherent change per commit
