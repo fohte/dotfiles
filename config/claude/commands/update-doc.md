@@ -1,6 +1,7 @@
 # Update or create documentation following project conventions
 
 Update project documentation when making significant changes, discovering patterns, or solving common issues. Focus on practical, actionable information that helps future development.
+Note that updates are not necessary if no changes are deemed needed.
 
 # When to document
 
