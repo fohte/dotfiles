@@ -22,6 +22,7 @@
       "Bash(git log:*)",
       "Bash(git merge origin/master:*)",
       "Bash(git mv:*)",
+      "Bash(git push:*)",
       "Bash(git rev-parse:*)",
       "Bash(git rm:*)",
       "Bash(git show:*)",
