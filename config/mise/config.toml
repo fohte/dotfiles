@@ -15,3 +15,8 @@ ripgrep = "14.1.1"
 op = "2.30.0"
 difftastic = "0.63.0"
 uv = "0.7.12"
+
+[settings]
+# disable the idiomatic version file such as Gemfile
+# this is the default behavior from the 2025.10.0 version
+idiomatic_version_file_enable_tools = []
