@@ -28,6 +28,8 @@ Project-specific instructions for Claude Code following [Anthropic's best practi
 - Verbose explanations or tutorials
 - Generic best practices
 - Information already in README.md
+- Details that are obvious from reading the codebase (e.g., what a file extends or imports)
+- Implementation details that don't affect daily development
 
 **Example:**
 ```markdown
@@ -77,3 +79,5 @@ Project overview, setup instructions, and general workflows.
 - Include code examples with clear Good/Bad patterns
 - Focus on "what to do" rather than lengthy explanations
 - Add warnings for non-obvious constraints
+- Only document behavior that affects development (e.g., "relative imports will error"), not details visible in the codebase
+- Test if information is necessary: Would removing it cause someone to make a mistake or get stuck?
