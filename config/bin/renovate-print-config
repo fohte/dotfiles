@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  cat << EOF
+Usage: $0 [options]
+
+Options:
+  -h, --help   Show this help message
+EOF
+  exit 1
+}
+
+while (($#)); do
+  case "$1" in
+    -h | --help) usage ;;
+    *)
+      echo "Unknown argument: $1"
+      usage
+      ;;
+  esac
+done
+
+# assume the current working directory is inside the repo and follows the path pattern `**/<owner>/<repo>`
+root_path="$(git root)"
+repo_name="$(basename "$(dirname "$root_path")")/$(basename "$root_path")"
+
+gh_token="$(gh-token)"
+
+npx -y renovate \
+  --token="$gh_token" \
+  --print-config=true \
+  --dry-run=full \
+  "$repo_name"
