@@ -16,9 +16,6 @@
 [interactive]
 	diffFilter = delta --color-only --features=interactive
 
-[diff]
-	external = difft --display inline
-
 [delta]
 	features = decorations
 
