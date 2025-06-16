@@ -20,6 +20,7 @@
 - Commit at logical checkpoints: one feature, one fix, or one coherent change per commit
 - GitHub access: Use `gh` command for all GitHub operations (avoid `gh api` subcommand). This includes handling GitHub URLs. Use `-R` option when accessing other repositories. (Purpose: `gh` commands are pre-approved for safe automatic execution)
 - File deletion: Use `git rm` instead of `rm` when deleting tracked files to properly stage the deletion
+- Temporary files: Use `.claude/tmp/` directory for any temporary files as it is ignored by git
 
 ## Code style
 
