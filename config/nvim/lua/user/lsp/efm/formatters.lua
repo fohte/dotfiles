@@ -6,7 +6,7 @@ formatters['eslint'] = require('efmls-configs.formatters.eslint_d')
 formatters['eslint'].formatCommand =
   string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', formatters['eslint'].formatCommand)
 
-formatters['prettier'] = require('efmls-configs.formatters.prettier_d')
+formatters['prettier'] = require('efmls-configs.formatters.prettier')
 
 formatters['shfmt'] = require('efmls-configs.formatters.shfmt')
 
