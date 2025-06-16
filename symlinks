@@ -92,7 +92,7 @@ if match_tag rubocop; then
 fi
 
 if match_tag claude; then
-  sym config/claude/CLAUDE.md ~/.claude/CLAUDE.md
+  sym config/claude/_CLAUDE.md ~/.claude/CLAUDE.md
   sym config/claude/commands ~/.claude/commands
   sym config/claude/settings.json ~/.claude/settings.json
 fi
