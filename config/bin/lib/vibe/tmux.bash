@@ -42,7 +42,7 @@ start_claude_in_tmux() {
     window_id=$(tmux new-session -ds "$session" -n "$window" -c "${worktree_path}" -P -F "#{window_id}")
   else
     # Create new window and capture window ID
-    window_id=$(tmux new-window -t "$session" -n "$window" -c "${worktree_path}" -P -F "#{window_id}")
+    window_id=$(tmux new-window -a -t "$session" -n "$window" -c "${worktree_path}" -P -F "#{window_id}")
   fi
 
   # Build the claude command with or without initial prompt
