@@ -38,6 +38,7 @@ Options:
   -h, --help                  Show this help message
   -c, --config <config-path>  Path to the config file (default: renovate.json5)
   -b, --branch <branch>       Branch to dry-run the Renovate (default: current branch)
+  -t, --token <token>         GitHub token for Renovate (default: from gh-token)
   --raw                       Show the raw Renovate log
 EOF
   exit 1
@@ -58,6 +59,10 @@ while (($#)); do
       raw=true
       shift
       ;;
+    -t | --token)
+      token="$2"
+      shift 2
+      ;;
     -*)
       echo "Unknown option: $1" >&2
       usage
@@ -69,19 +74,18 @@ done
 raw="${raw:-false}"
 config_file="${config_file:-renovate.json5}"
 branch="${branch:-$(git rev-parse --abbrev-ref HEAD)}"
+token="${token:-$(gh-token)}"
 
 # assume the current working directory is inside the repo and follows the path pattern `**/<owner>/<repo>`
 root_path="$(git root)"
 repo_name="$(basename "$(dirname "$root_path")")/$(basename "$root_path")"
-
-gh_token="$(gh-token)"
 
 dryrun() {
   env LOG_LEVEL=debug \
     RENOVATE_CONFIG_FILE="$config_file" \
     RENOVATE_BASE_BRANCHES="$branch" \
     npx -y renovate \
-    --token="$gh_token" \
+    --token="$token" \
     --schedule="" \
     --require-config=ignored \
     --dry-run=full \
