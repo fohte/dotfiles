@@ -54,7 +54,7 @@
       "Read(~/Dropbox)",
       "Read(~/Library/CloudStorage/Dropbox)",
       "Read(~/ghq/**)",
-      "WebFetch(domain:github.com)",
+      "WebFetch(domain:*)",
       "mcp__context7__get-library-docs",
       "mcp__context7__resolve-library-id",
       "mcp__sequential-thinking__sequentialthinking"

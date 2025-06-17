@@ -13,6 +13,12 @@
   - Ensure each parallel task has sufficient context to operate autonomously
   - Use MECE (Mutually Exclusive, Collectively Exhaustive) task decomposition for optimal parallelization
 
+## Repository Access
+
+- GitHub repositories are available for research and analysis in the `~/ghq` directory
+- User's repositories: Located at `~/ghq/github.com/fohte/<repo-name>`
+- External repositories: Clone using `ghq get <org>/<repo-name>` to make them available for analysis
+
 ## Workflow
 
 - Do not revert changes with `git commit --amend`, `git reset --soft|hard`; keep the history linear and clear
