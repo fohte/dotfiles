@@ -4,7 +4,8 @@
 
 ## Methodology
 
-- Always formalize the plan for next steps using sequential-thinking, context7 MCP servers, and get user confirmation before proceeding with implementation
+- Always formalize the plan for next steps using sequential-thinking and get user confirmation before proceeding with implementation
+- Consult latest documentation using context7 MCP server for up-to-date library and framework information
 - Focus on ensuring you are adding reminders and steps to research and understand the latest information from web search, parallel web search (very useful), and parallel agentic execution where possible.
 - Maximize productivity through parallel execution using sub-agents:
   - Launch multiple Task sub-agents concurrently for independent research/analysis tasks
