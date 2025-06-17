@@ -4,8 +4,6 @@ zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
 zinit light zsh-users/zsh-syntax-highlighting
 
-zinit light marlonrichert/zsh-autocomplete
-
 zinit light b4b4r07/zsh-vimode-visual
 
 zinit ice pick'*.plugin.zsh'
