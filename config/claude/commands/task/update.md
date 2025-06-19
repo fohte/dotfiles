@@ -1,6 +1,6 @@
 # Update Task
 
-Update task status, progress, and documentation in fohte/tasks repository. This command handles progress tracking, comment updates, and checklist maintenance.
+Update task status, progress, and documentation in fohte/tasks repository. This command handles progress tracking, comment updates, and TODOs maintenance.
 
 **Important**: All tasks are managed in Japanese language. Use Japanese for all task-related content.
 
@@ -21,7 +21,7 @@ gh issue comment <task-number> --repo fohte/tasks --body "## 〜〜をした
 "
 ```
 
-## 2. Update checklists in task body
+## 2. Update TODOs in task body
 
 ### Get current task body
 
@@ -30,12 +30,12 @@ gh issue comment <task-number> --repo fohte/tasks --body "## 〜〜をした
 gh issue view <task-number> --repo fohte/tasks --json body -q .body > .claude/tmp/task-body.md
 ```
 
-### Update checklist items
+### Update TODO items
 
 Edit the saved body to mark completed items:
 
 ```markdown
-## タスクリスト
+## TODOs
 - [x] 既存の実装を調査
 - [x] 設計案を作成
 - [x] コア機能を実装 (https://github.com/<owner>/<repo>/pull/<task-number>)
@@ -53,26 +53,25 @@ gh issue edit <task-number> --repo fohte/tasks --body-file .claude/tmp/task-body
 
 ## 3. Add or update todo lists
 
-### Add new todo section
+### Update TODOs section
 ```bash
-# Append new todos to existing body
+# Get current task body
 gh issue view <task-number> --repo fohte/tasks --json body -q .body > .claude/tmp/task-body.md
-cat >> .claude/tmp/task-body.md << 'EOF'
 
-## 追加で発見されたタスク
-- [ ] 認証モジュールのリファクタリング
-- [ ] レート制限の追加
-- [ ] APIドキュメントの更新
-EOF
+# Edit the file to add new TODOs to the existing TODOs section
+# Add new items like:
+# - [ ] 認証モジュールのリファクタリング
+# - [ ] レート制限の追加
+# - [ ] APIドキュメントの更新
 
+# Apply the update
 gh issue edit <task-number> --repo fohte/tasks --body-file .claude/tmp/task-body.md
 ```
 
-^ cat 使わず普通にファイルを update して更新する、という手順にする
-あと「追加で発見されたタスク」と section わけるのではなく、TODOs section を更新するだけにする
-
 ### Convert findings to actionable items
 When discovering new requirements during work:
+
+1. First, add a comment documenting the new requirements:
 ```bash
 gh issue comment <task-number> --repo fohte/tasks --body "## 追加でやるべきこと
 
@@ -85,7 +84,16 @@ gh issue comment <task-number> --repo fohte/tasks --body "## 追加でやるべ�
 "
 ```
 
-^ これ別コメントもしつつ body の TODOS も更新すること
+2. Then, update the task body to include these items in the TODOs section:
+```bash
+# Get current task body
+gh issue view <task-number> --repo fohte/tasks --json body -q .body > .claude/tmp/task-body.md
+
+# Edit the file to add the new tasks to the TODOs section
+
+# Apply the update
+gh issue edit <task-number> --repo fohte/tasks --body-file .claude/tmp/task-body.md
+```
 
 ## 6. Document decisions and changes
 
@@ -130,7 +138,7 @@ gh issue comment <task-number> --repo fohte/tasks --body "## スコープ変更
 
 - Update regularly but avoid noise - batch small updates
 - Be specific about progress percentages and blockers
-- Keep checklists in task body, detailed updates in comments
+- Keep TODOs in task body, detailed updates in comments
 - Link to relevant commits, PRs, and related tasks
 - Document decisions that affect future work
 - Update labels to reflect current state
@@ -144,7 +152,7 @@ gh issue comment <task-number> --repo fohte/tasks --body "## スコープ変更
 タスク #123 の進捗を更新しました。
 
 更新内容:
-- チェックリスト: 3/5 項目完了
+- TODOs: 3/5 項目完了
 - ラベル: "作業中" を追加
 - 進捗コメントを追加
 

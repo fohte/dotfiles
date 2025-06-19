@@ -70,9 +70,9 @@ gh issue comment <task-number> --repo fohte/tasks --body "## タスク完了サ�
 "
 ```
 
-## 3. Update final checklist status
+## 3. Update final TODOs status
 
-If using checklists, ensure all items are marked complete:
+If using TODOs, ensure all items are marked complete:
 
 ```bash
 # Get current body

@@ -56,7 +56,7 @@ gh issue list --repo fohte/tasks --search "created:2024-01-01..2024-01-31" --sta
 
 ### Find tasks with similar patterns
 ```bash
-# Tasks with similar structure (has checklist)
+# Tasks with similar structure (has TODOs)
 gh issue list --repo fohte/tasks --search "- [ ]" --state all
 
 # Tasks with sub-tasks

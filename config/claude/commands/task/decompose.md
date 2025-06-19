@@ -1,6 +1,6 @@
 # Decompose Task
 
-Break down a task from fohte/tasks repository into manageable subtasks. This command helps structure work by creating either simple checklists or separate sub-tasks based on complexity.
+Break down a task from fohte/tasks repository into manageable subtasks. This command helps structure work by creating either simple TODOs or separate sub-tasks based on complexity.
 
 **Important**: All tasks are managed in Japanese language. Use Japanese for all task-related content.
 
@@ -14,14 +14,14 @@ First, run `task-analyze` if you haven't already, then assess:
 
 ## 2. Choose decomposition strategy
 
-### For simple tasks (use checklist)
+### For simple tasks (use TODOs)
 
 When tasks are:
 - Small and sequential
 - All part of a single coherent change
 - Can be completed in one work session
 
-Update the task body with a checklist:
+Update the task body with TODOs:
 ```bash
 gh issue edit <task-number> --repo fohte/tasks --body "$(cat <<'EOF'
 <existing body>
@@ -67,11 +67,8 @@ gh issue create \
 ### TODOs
 
 - [ ] ...
-" \
-  --label "サブタスク"
+"
 ```
-
-^ label いらない。あと why/what のフォーマットにする
 
 ## 4. Link sub-tasks to parent
 
@@ -119,8 +116,6 @@ Save the decomposition plan to `.claude/tmp/task-<number>-decomposition.md`:
 ## Best practices
 
 - Keep subtask titles descriptive but concise (in Japanese)
-- Include parent task number in sub-task titles for context
-- Use labels consistently (e.g., "サブタスク", priority labels)
 - Don't over-decompose - aim for 3-7 subtasks
 - Consider dependencies when ordering tasks
 - Update parent task when sub-tasks are completed

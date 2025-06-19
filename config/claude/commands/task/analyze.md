@@ -18,7 +18,7 @@ From the fetched data, identify:
 - **Title and description**: What needs to be done
 - **Labels**: Priority, type, area, project
 - **Linked tasks**: References to related tasks (#123 format)
-- **Checklists**: Any existing `- [ ]` items in the body
+- **TODOs**: Any existing `- [ ]` items in the body
 - **Comments**: Important context, decisions, or updates
 
 ## 3. Create work context
@@ -43,9 +43,9 @@ Save the analyzed information to `.claude/tmp/task-<number>-context.md`:
 
 <タスクの要件を日本語で整理>
 
-## チェックリスト
+## TODOs
 
-<既存のチェックリスト項目>
+<既存のTODOリスト項目>
 
 ## 関連タスク
 
@@ -63,9 +63,9 @@ Save the analyzed information to `.claude/tmp/task-<number>-context.md`:
 ## 4. Determine task complexity
 
 Assess whether the task needs:
-- **Simple checklist**: For straightforward tasks with clear steps
+- **Simple TODOs**: For straightforward tasks with clear steps
 - **Sub-tasks**: For complex work requiring multiple independent tasks
-- **Both**: Main checklist with some items expanded as sub-tasks
+- **Both**: Main TODOs with some items expanded as sub-tasks
 
 ## 5. Display summary and suggest next steps
 
