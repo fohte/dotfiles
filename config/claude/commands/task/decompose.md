@@ -15,6 +15,7 @@ First, run `task-analyze` if you haven't already, then assess:
 ## 2. Choose decomposition strategy
 
 ### For simple tasks (use checklist)
+
 When tasks are:
 - Small and sequential
 - All part of a single coherent change
@@ -25,7 +26,8 @@ Update the task body with a checklist:
 gh issue edit <task-number> --repo fohte/tasks --body "$(cat <<'EOF'
 <existing body>
 
-## タスクリスト
+## TODOs
+
 - [ ] 既存の実装を調査
 - [ ] 設計案を作成
 - [ ] コア機能を実装
@@ -36,6 +38,7 @@ EOF
 ```
 
 ### For complex tasks (use sub-tasks)
+
 When tasks are:
 - Large and independent
 - Require different expertise
@@ -49,20 +52,26 @@ For each major component, create a sub-task:
 ```bash
 gh issue create \
   --repo fohte/tasks \
-  --title "[親タスク #<parent-number>] <サブタスクのタイトル>" \
-  --body "親タスク #<parent-number> の一部
+  --title "<サブタスクのタイトル>" \
+  --body "## Why
 
-## コンテキスト
+- from: <親タスクの issue URL>
+
 <親タスクからの関連情報>
 
-## タスク内容
-<具体的なタスクの説明>
+## What
 
-## 完了条件
+<具体的なタスクの説明>
 <何をもって完了とするか>
+
+### TODOs
+
+- [ ] ...
 " \
   --label "サブタスク"
 ```
+
+^ label いらない。あと why/what のフォーマットにする
 
 ## 4. Link sub-tasks to parent
 
@@ -117,29 +126,7 @@ Save the decomposition plan to `.claude/tmp/task-<number>-decomposition.md`:
 - Update parent task when sub-tasks are completed
 - Write all descriptions and comments in Japanese
 
-## Examples
-
-### Simple checklist example
-```markdown
-## 実装タスク
-- [ ] 新しいAPIエンドポイントを追加
-- [ ] フロントエンドから新しいエンドポイントを呼び出す
-- [ ] エラーハンドリングを追加
-- [ ] ユニットテストを作成
-```
-
-### Sub-tasks example
-```
-親タスク: #123 - ユーザー認証システムの追加
-
-サブタスク:
-- #124 - [親タスク #123] JWTトークン生成の実装
-- #125 - [親タスク #123] ログイン/ログアウトエンドポイントの作成
-- #126 - [親タスク #123] 認証ミドルウェアの追加
-- #127 - [親タスク #123] フロントエンド認証フローの更新
-```
-
-### Output example
+## Output example
 ```
 タスク #123 を分解しました。
 
