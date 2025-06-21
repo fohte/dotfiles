@@ -5,6 +5,17 @@
 ## Methodology
 
 - Always formalize the plan for next steps using sequential-thinking and get user confirmation before proceeding with implementation
+- Task management is done through GitHub issues in the fohte/tasks repository. Follow the instructions in `~/.claude/commands/task-*.md`
+  - Use the `task` command (located at `config/bin/task`) to interact with issues in the tasks repository:
+    - `task create --title <text> [--body <text>]`: Create a new task
+    - `task view <number>`: View task details
+    - `task list [--all]`: List tasks (open by default, all with --all flag)
+    - `task close <number> [--comment <text>] [--reason <completed|not planned>]`: Close a task
+    - `task comment <number> --body <text>`: Add a comment to a task
+    - `task edit <number> [--title <text>] [--body <text>]`: Edit a task
+    - `task add-sub <parent> <child>`: Add a sub-task relationship
+    - `task remove-sub <parent> <child>`: Remove a sub-task relationship
+    - `task tree <number>`: Show task hierarchy tree
 - Consult latest documentation using context7 MCP server for up-to-date library and framework information
 - Focus on ensuring you are adding reminders and steps to research and understand the latest information from web search, parallel web search (very useful), and parallel agentic execution where possible.
 - Maximize productivity through parallel execution using sub-agents:
