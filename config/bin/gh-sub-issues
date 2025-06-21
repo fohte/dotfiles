@@ -50,10 +50,10 @@ gh_api() {
   shift 2
 
   if [[ -n "$REPO" ]]; then
-    endpoint="${endpoint/\{owner\}\/\{repo\}/$REPO}"
+    endpoint="repos/${REPO}${endpoint}"
   else
     # Use gh's default behavior for current directory
-    endpoint="repos/{owner}/{repo}${endpoint#repos/\{owner\}/\{repo\}}"
+    endpoint="repos/{owner}/{repo}${endpoint}"
   fi
 
   if [[ "$method" == "GET" ]]; then
@@ -94,9 +94,27 @@ add_sub_issue() {
   local parent="$1"
   local child="$2"
 
-  gh_api POST "/issues/${parent}/sub_issues" \
-    -f "sub_issue_id=${child}" \
-    -F "replace_parent=false"
+  # Get node IDs for both issues
+  local parent_node_id
+  local child_node_id
+  if [[ -n "$REPO" ]]; then
+    parent_node_id=$(gh api "repos/${REPO}/issues/${parent}" --jq '.node_id')
+    child_node_id=$(gh api "repos/${REPO}/issues/${child}" --jq '.node_id')
+  else
+    parent_node_id=$(gh api "repos/{owner}/{repo}/issues/${parent}" --jq '.node_id')
+    child_node_id=$(gh api "repos/{owner}/{repo}/issues/${child}" --jq '.node_id')
+  fi
+
+  # Use GraphQL to add sub-issue
+  gh api graphql -f query="
+    mutation {
+      addSubIssue(input: {
+        issueId: \"${parent_node_id}\"
+        subIssueId: \"${child_node_id}\"
+      }) {
+        clientMutationId
+      }
+    }"
 }
 
 # Remove sub-issue

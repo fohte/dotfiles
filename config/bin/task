@@ -55,7 +55,6 @@ EOF
 
 # Create a new task
 create_task() {
-  shift # Remove 'create' from args
   local title=""
   local body=""
 
