@@ -82,17 +82,6 @@ You can also view the hierarchy:
 task tree <parent-number>
 ```
 
-Optionally, add a comment to track the decomposition:
-
-```bash
-task comment <parent-number> --body "## 作成したサブタスク:
-- #<sub-task-1> - <タイトル>
-- #<sub-task-2> - <タイトル>
-- #<sub-task-3> - <タイトル>
-
-これらのリンクされたタスクで進捗を追跡します。"
-```
-
 ## 5. Create tracking structure
 
 Save the decomposition plan to `.claude/tmp/task-<number>-decomposition.md`:
