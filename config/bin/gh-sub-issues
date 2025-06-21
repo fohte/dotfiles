@@ -174,6 +174,7 @@ show_tree() {
   local issue="$1"
   local prefix="${2:-}"
   local is_last="${3:-true}"
+  local is_root="${4:-true}"
 
   # Get issue details
   local issue_data
@@ -183,7 +184,7 @@ show_tree() {
   title=$(echo "$issue_data" | jq -r '.title')
 
   # Print current issue with tree characters
-  if [[ -z "$prefix" ]]; then
+  if [[ "$is_root" == "true" ]]; then
     # Root issue
     echo "#${issue} - ${title}"
   else
@@ -216,19 +217,20 @@ show_tree() {
     i=$((i + 1))
     local new_prefix
     if [[ -z "$prefix" ]]; then
+      # First level - pass empty string to get tree chars without indent
       new_prefix=""
     else
       if [[ "$is_last" == "true" ]]; then
-        new_prefix="${prefix}    "
+        new_prefix="${prefix}  "
       else
-        new_prefix="${prefix}│   "
+        new_prefix="${prefix}│ "
       fi
     fi
     local is_last_sub="false"
     if [[ $i -eq $count ]]; then
       is_last_sub="true"
     fi
-    show_tree "$sub_issue" "$new_prefix" "$is_last_sub"
+    show_tree "$sub_issue" "$new_prefix" "$is_last_sub" "false"
   done
 }
 
