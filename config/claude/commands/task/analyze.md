@@ -9,6 +9,11 @@ Read and understand a task from fohte/tasks repository to start working on it. T
 Retrieve comprehensive task information from fohte/tasks repository:
 
 ```bash
+task view <task-number>
+```
+
+Or for JSON output:
+```bash
 gh issue view <task-number> --repo fohte/tasks --json number,title,body,labels,assignees,state,comments,createdAt,updatedAt
 ```
 
@@ -28,6 +33,11 @@ Find similar or related tasks to understand context and avoid duplication:
 ### Search by keywords from the task
 ```bash
 # Extract key terms from title and search for similar tasks
+task list --all | grep -i "<keyword>"
+```
+
+Or use gh directly for more advanced search:
+```bash
 gh issue list --repo fohte/tasks --search "<extracted-keywords>" --state all
 ```
 

@@ -23,18 +23,14 @@ When tasks are:
 
 Update the task body with TODOs:
 ```bash
-gh issue edit <task-number> --repo fohte/tasks --body "$(cat <<'EOF'
-<existing body>
+# First get the current body
+task view <task-number> | grep -A 1000 "^##" > /tmp/task-body.md
 
-## TODOs
+# Edit the file to add TODOs section
+echo "\n## TODOs\n\n- [ ] 既存の実装を調査\n- [ ] 設計案を作成\n- [ ] コア機能を実装\n- [ ] テストを追加\n- [ ] ドキュメントを更新" >> /tmp/task-body.md
 
-- [ ] 既存の実装を調査
-- [ ] 設計案を作成
-- [ ] コア機能を実装
-- [ ] テストを追加
-- [ ] ドキュメントを更新
-EOF
-)"
+# Update the task
+task edit <task-number> --body "$(cat /tmp/task-body.md)"
 ```
 
 ### For complex tasks (use sub-tasks)
@@ -51,12 +47,11 @@ For each major component, create a sub-task:
 
 ```bash
 # Create a new sub-task
-gh issue create \
-  --repo fohte/tasks \
+task create \
   --title "<サブタスクのタイトル>" \
   --body "## Why
 
-- from: <親タスクの issue URL>
+- from: https://github.com/fohte/tasks/issues/<parent-number>
 
 <親タスクからの関連情報>
 
@@ -77,20 +72,20 @@ After creating each sub-task, link it to the parent using the sub-issues feature
 
 ```bash
 # Add sub-task to parent issue
-gh-sub-issues -R fohte/tasks add <parent-number> <sub-task-number>
+task add-sub <parent-number> <sub-task-number>
 ```
 
 You can also view the hierarchy:
 
 ```bash
 # View the task hierarchy
-gh-sub-issues -R fohte/tasks tree <parent-number>
+task tree <parent-number>
 ```
 
 Optionally, add a comment to track the decomposition:
 
 ```bash
-gh issue comment <parent-number> --repo fohte/tasks --body "## 作成したサブタスク:
+task comment <parent-number> --body "## 作成したサブタスク:
 - #<sub-task-1> - <タイトル>
 - #<sub-task-2> - <タイトル>
 - #<sub-task-3> - <タイトル>

@@ -9,7 +9,7 @@ Close a task in fohte/tasks repository.
 If you implemented code, add PR links as a comment:
 
 ```bash
-gh issue comment <task-number> --repo fohte/tasks --body "- <pr-url>
+task comment <task-number> --body "- <pr-url>
 - <pr-url>"
 ```
 
@@ -18,11 +18,17 @@ gh issue comment <task-number> --repo fohte/tasks --body "- <pr-url>
 Use the appropriate reason:
 
 ```bash
-# For completed tasks
-gh issue close <task-number> --repo fohte/tasks --reason completed --comment "完了したので close"
+# For completed tasks (default)
+task close <task-number>
+
+# For completed tasks with custom comment
+task close <task-number> --comment "完了したので close"
 
 # For tasks that won't be done
-gh issue close <task-number> --repo fohte/tasks --reason "not planned" --comment "対応不要になったので close"
+task close <task-number> --reason "not planned"
+
+# For tasks that won't be done with custom comment
+task close <task-number> --reason "not planned" --comment "対応不要になったので close"
 ```
 
 ## Best practices
@@ -35,8 +41,8 @@ gh issue close <task-number> --repo fohte/tasks --reason "not planned" --comment
 
 ```bash
 # Add PR link
-gh issue comment 123 --repo fohte/tasks --body "- https://github.com/fohte/someproject/pull/45"
+task comment 123 --body "- https://github.com/fohte/someproject/pull/45"
 
 # Close as completed
-gh issue close 123 --repo fohte/tasks --reason completed --comment "完了したので close"
+task close 123
 ```

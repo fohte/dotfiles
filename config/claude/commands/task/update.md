@@ -11,7 +11,7 @@ Update task status, progress, and documentation in fohte/tasks repository. This 
 Document work progress with detailed comments:
 
 ```bash
-gh issue comment <task-number> --repo fohte/tasks --body "## 〜〜をした
+task comment <task-number> --body "## 〜〜をした
 
 <具体的になにをやったか記述>
 
@@ -27,7 +27,7 @@ gh issue comment <task-number> --repo fohte/tasks --body "## 〜〜をした
 
 ```bash
 # Save current body to edit
-gh issue view <task-number> --repo fohte/tasks --json body -q .body > .claude/tmp/task-body.md
+task view <task-number> | grep -A 1000 "^##" > .claude/tmp/task-body.md
 ```
 
 ### Update TODO items
@@ -48,7 +48,7 @@ PR リンクがあるときは貼ること
 ### Apply the update
 
 ```bash
-gh issue edit <task-number> --repo fohte/tasks --body-file .claude/tmp/task-body.md
+task edit <task-number> --body "$(cat .claude/tmp/task-body.md)"
 ```
 
 ## 3. Add or update todo lists
@@ -56,7 +56,7 @@ gh issue edit <task-number> --repo fohte/tasks --body-file .claude/tmp/task-body
 ### Update TODOs section
 ```bash
 # Get current task body
-gh issue view <task-number> --repo fohte/tasks --json body -q .body > .claude/tmp/task-body.md
+task view <task-number> | grep -A 1000 "^##" > .claude/tmp/task-body.md
 
 # Edit the file to add new TODOs to the existing TODOs section
 # Add new items like:
@@ -65,7 +65,7 @@ gh issue view <task-number> --repo fohte/tasks --json body -q .body > .claude/tm
 # - [ ] APIドキュメントの更新
 
 # Apply the update
-gh issue edit <task-number> --repo fohte/tasks --body-file .claude/tmp/task-body.md
+task edit <task-number> --body "$(cat .claude/tmp/task-body.md)"
 ```
 
 ### Convert findings to actionable items
@@ -73,7 +73,7 @@ When discovering new requirements during work:
 
 1. First, add a comment documenting the new requirements:
 ```bash
-gh issue comment <task-number> --repo fohte/tasks --body "## 追加でやるべきこと
+task comment <task-number> --body "## 追加でやるべきこと
 
 - **タスク**: <説明>
    - 理由: <なぜ必要か>
@@ -87,19 +87,19 @@ gh issue comment <task-number> --repo fohte/tasks --body "## 追加でやるべ�
 2. Then, update the task body to include these items in the TODOs section:
 ```bash
 # Get current task body
-gh issue view <task-number> --repo fohte/tasks --json body -q .body > .claude/tmp/task-body.md
+task view <task-number> | grep -A 1000 "^##" > .claude/tmp/task-body.md
 
 # Edit the file to add the new tasks to the TODOs section
 
 # Apply the update
-gh issue edit <task-number> --repo fohte/tasks --body-file .claude/tmp/task-body.md
+task edit <task-number> --body "$(cat .claude/tmp/task-body.md)"
 ```
 
 ## 6. Document decisions and changes
 
 ### Technical decisions
 ```bash
-gh issue comment <task-number> --repo fohte/tasks --body "## 技術的決定
+task comment <task-number> --body "## 技術的決定
 
 ### 背景
 <この決定に至った経緯>
@@ -118,7 +118,7 @@ gh issue comment <task-number> --repo fohte/tasks --body "## 技術的決定
 
 ### Scope changes
 ```bash
-gh issue comment <task-number> --repo fohte/tasks --body "## スコープ変更
+task comment <task-number> --body "## スコープ変更
 
 ### 当初のスコープ
 <最初に計画していた内容>
