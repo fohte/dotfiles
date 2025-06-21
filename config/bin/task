@@ -93,13 +93,19 @@ close_task() {
   select opt in "${options[@]}"; do
     case $opt in
       "Completed")
-        local close_comment="${comment:-完了したので close}"
-        gh issue close "$number" --repo "$REPO" --reason completed --comment "$close_comment"
+        if [[ -n "$comment" ]]; then
+          gh issue close "$number" --repo "$REPO" --reason completed --comment "$comment"
+        else
+          gh issue close "$number" --repo "$REPO" --reason completed
+        fi
         break
         ;;
       "Not planned")
-        local close_comment="${comment:-対応不要になったので close}"
-        gh issue close "$number" --repo "$REPO" --reason "not planned" --comment "$close_comment"
+        if [[ -n "$comment" ]]; then
+          gh issue close "$number" --repo "$REPO" --reason "not planned" --comment "$comment"
+        else
+          gh issue close "$number" --repo "$REPO" --reason "not planned"
+        fi
         break
         ;;
       *)
