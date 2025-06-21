@@ -50,6 +50,7 @@ When tasks are:
 For each major component, create a sub-task:
 
 ```bash
+# Create a new sub-task
 gh issue create \
   --repo fohte/tasks \
   --title "<サブタスクのタイトル>" \
@@ -70,9 +71,23 @@ gh issue create \
 "
 ```
 
-## 4. Link sub-tasks to parent
+## 4. Link sub-tasks to parent using GitHub sub-issues
 
-Update the parent task to reference all sub-tasks:
+After creating each sub-task, link it to the parent using the sub-issues feature:
+
+```bash
+# Add sub-task to parent issue
+gh-sub-issues -R fohte/tasks add <parent-number> <sub-task-number>
+```
+
+You can also view the hierarchy:
+
+```bash
+# View the task hierarchy
+gh-sub-issues -R fohte/tasks tree <parent-number>
+```
+
+Optionally, add a comment to track the decomposition:
 
 ```bash
 gh issue comment <parent-number> --repo fohte/tasks --body "## 作成したサブタスク:
@@ -132,6 +147,12 @@ Save the decomposition plan to `.claude/tmp/task-<number>-decomposition.md`:
 - #125: ログイン/ログアウトエンドポイントの作成
 - #126: 認証ミドルウェアの追加
 - #127: フロントエンド認証フローの更新
+
+GitHub sub-issues でリンクしました:
+- gh-sub-issues -R fohte/tasks add 123 124
+- gh-sub-issues -R fohte/tasks add 123 125
+- gh-sub-issues -R fohte/tasks add 123 126
+- gh-sub-issues -R fohte/tasks add 123 127
 
 分解計画は .claude/tmp/task-123-decomposition.md に保存されました。
 ```
