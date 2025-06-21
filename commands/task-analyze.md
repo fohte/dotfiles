@@ -108,7 +108,7 @@ Assess whether the task needs:
 After analysis, provide:
 1. Brief task overview (in Japanese)
 2. Complexity assessment
-3. If the task is complex and needs decomposition, automatically run `~/.claude/commands/task/decompose.md`
+3. If the task is complex and needs decomposition, automatically run `commands/task-decompose.md`
 4. Otherwise, suggest appropriate next steps
 
 ## Best practices
@@ -133,7 +133,7 @@ After analysis, provide:
 コンテキストは .claude/tmp/task-42-context.md に保存されました。
 
 自動的にタスクを分解します...
-[~/.claude/commands/task/decompose.md を実行]
+[commands/task-decompose.md を実行]
 ```
 
 ### For simple tasks
@@ -144,7 +144,7 @@ After analysis, provide:
 
 次の推奨アクション:
 - 直接修正を実施
-- PR作成後、~/.claude/commands/task/complete.md で完了
+- PR作成後、commands/task-complete.md で完了
 
 コンテキストは .claude/tmp/task-43-context.md に保存されました。
 ```
