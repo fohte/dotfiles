@@ -67,12 +67,13 @@ Assess whether the task needs:
 - **Sub-tasks**: For complex work requiring multiple independent tasks
 - **Both**: Main TODOs with some items expanded as sub-tasks
 
-## 5. Display summary and suggest next steps
+## 5. Display summary and next steps
 
 After analysis, provide:
 1. Brief task overview (in Japanese)
 2. Complexity assessment
-3. Suggested next command (e.g., `task-decompose` for complex tasks)
+3. If the task is complex and needs decomposition, automatically run `task-decompose`
+4. Otherwise, suggest appropriate next steps
 
 ## Best practices
 
@@ -83,16 +84,29 @@ After analysis, provide:
 - Write all task-related content in Japanese
 - Use clear and concise Japanese for better understanding
 
-## Example output
+## Example outputs
 
+### For complex tasks (auto-decompose)
 ```
 タスク #42 を分析しました: 「ユーザー認証システムの実装」
 
 複雑度: 高（複数の独立したコンポーネントが必要）
 
-次の推奨アクション:
-- task-decompose を使用してサブタスクに分解
-- 認証フロー、データベース設計、APIエンドポイントなどに分割することを推奨
-
 コンテキストは .claude/tmp/task-42-context.md に保存されました。
+
+自動的にタスクを分解します...
+[task-decompose を実行]
+```
+
+### For simple tasks
+```
+タスク #43 を分析しました: 「READMEファイルの誤字修正」
+
+複雑度: 低（単純な修正タスク）
+
+次の推奨アクション:
+- 直接修正を実施
+- PR作成後、task-complete で完了
+
+コンテキストは .claude/tmp/task-43-context.md に保存されました。
 ```
