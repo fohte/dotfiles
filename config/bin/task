@@ -34,12 +34,12 @@ Task management tool for fohte/tasks repository
 Usage: task <command> [args]
 
 Commands:
-  create              Create a new task
+  create --title <text> [--body <text>]  Create a new task
   view <number>       View task details
   list                List open tasks (use --all for all tasks)
-  close <number> [comment]    Close a task with optional comment
+  close <number> [--comment <text>] [--reason <completed|not planned>]  Close a task
   comment <number> --body <text>      Add a comment to a task
-  edit <number>       Edit a task
+  edit <number> [--title <text>] [--body <text>]  Edit a task
   add-sub <parent> <child>    Add a sub-task
   remove-sub <parent> <child> Remove a sub-task
   tree <number>       Show task hierarchy tree
@@ -55,8 +55,39 @@ EOF
 
 # Create a new task
 create_task() {
+  shift # Remove 'create' from args
+  local title=""
+  local body=""
+
+  # Parse options
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --title)
+        title="$2"
+        shift 2
+        ;;
+      --body)
+        body="$2"
+        shift 2
+        ;;
+      *)
+        echo "Error: Unknown option $1" >&2
+        return 1
+        ;;
+    esac
+  done
+
+  if [[ -z "$title" ]]; then
+    echo "Error: --title is required" >&2
+    return 1
+  fi
+
   echo "Creating new task in $REPO..."
-  gh issue create --repo "$REPO"
+  if [[ -n "$body" ]]; then
+    gh issue create --repo "$REPO" --title "$title" --body "$body"
+  else
+    gh issue create --repo "$REPO" --title "$title" --body ""
+  fi
 }
 
 # View task details
@@ -77,42 +108,41 @@ list_tasks() {
 # Close task
 close_task() {
   local number="$1"
-  local comment="${2:-}"
+  shift
+  local comment=""
+  local reason="completed"
 
-  echo "Closing task #$number..."
-
-  # Ask for PR links if any
-  read -r -p "Any PR links to add? (leave empty to skip): " pr_links
-  if [[ -n "$pr_links" ]]; then
-    gh issue comment "$number" --repo "$REPO" --body "$pr_links"
-  fi
-
-  # Close with appropriate reason
-  PS3="Select close reason: "
-  options=("Completed" "Not planned")
-  select opt in "${options[@]}"; do
-    case $opt in
-      "Completed")
-        if [[ -n "$comment" ]]; then
-          gh issue close "$number" --repo "$REPO" --reason completed --comment "$comment"
-        else
-          gh issue close "$number" --repo "$REPO" --reason completed
-        fi
-        break
+  # Parse options
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --comment)
+        comment="$2"
+        shift 2
         ;;
-      "Not planned")
-        if [[ -n "$comment" ]]; then
-          gh issue close "$number" --repo "$REPO" --reason "not planned" --comment "$comment"
-        else
-          gh issue close "$number" --repo "$REPO" --reason "not planned"
-        fi
-        break
+      --reason)
+        reason="$2"
+        shift 2
         ;;
       *)
-        echo "Invalid option"
+        echo "Error: Unknown option $1" >&2
+        return 1
         ;;
     esac
   done
+
+  echo "Closing task #$number..."
+
+  # Validate reason
+  if [[ "$reason" != "completed" && "$reason" != "not planned" ]]; then
+    echo "Error: --reason must be 'completed' or 'not planned'" >&2
+    return 1
+  fi
+
+  if [[ -n "$comment" ]]; then
+    gh issue close "$number" --repo "$REPO" --reason "$reason" --comment "$comment"
+  else
+    gh issue close "$number" --repo "$REPO" --reason "$reason"
+  fi
 }
 
 # Add comment to task
@@ -148,8 +178,39 @@ comment_task() {
 # Edit task
 edit_task() {
   local number="$1"
+  shift
+  local title=""
+  local body=""
+
+  # Parse options
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --title)
+        title="$2"
+        shift 2
+        ;;
+      --body)
+        body="$2"
+        shift 2
+        ;;
+      *)
+        echo "Error: Unknown option $1" >&2
+        return 1
+        ;;
+    esac
+  done
+
+  if [[ -z "$title" && -z "$body" ]]; then
+    echo "Error: at least one of --title or --body is required" >&2
+    return 1
+  fi
+
   echo "Editing task #$number..."
-  gh issue edit "$number" --repo "$REPO"
+  local args=()
+  [[ -n "$title" ]] && args+=(--title "$title")
+  [[ -n "$body" ]] && args+=(--body "$body")
+
+  gh issue edit "$number" --repo "$REPO" "${args[@]}"
 }
 
 # Add sub-task (wrapper for gh-sub-issues)
@@ -177,7 +238,7 @@ show_task_tree() {
 # Main execution
 case "$SUBCOMMAND" in
   create)
-    create_task
+    create_task "$@"
     ;;
   view)
     if [[ $# -ne 1 ]]; then
@@ -190,8 +251,8 @@ case "$SUBCOMMAND" in
     list_tasks "$@"
     ;;
   close)
-    if [[ $# -lt 1 ]] || [[ $# -gt 2 ]]; then
-      echo "Error: close requires 1 or 2 arguments: <number> [comment]" >&2
+    if [[ $# -lt 1 ]]; then
+      echo "Error: close requires at least 1 argument: <number>" >&2
       exit 1
     fi
     close_task "$@"
@@ -204,11 +265,11 @@ case "$SUBCOMMAND" in
     comment_task "$@"
     ;;
   edit)
-    if [[ $# -ne 1 ]]; then
-      echo "Error: edit requires exactly 1 argument: <number>" >&2
+    if [[ $# -lt 1 ]]; then
+      echo "Error: edit requires at least 1 argument: <number>" >&2
       exit 1
     fi
-    edit_task "$1"
+    edit_task "$@"
     ;;
   add-sub)
     if [[ $# -ne 2 ]]; then
