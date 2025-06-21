@@ -140,19 +140,12 @@ Save the decomposition plan to `.claude/tmp/task-<number>-decomposition.md`:
 ```
 タスク #123 を分解しました。
 
-戦略: サブタスク（複雑なタスクのため）
-
-作成したサブタスク:
-- #124: JWTトークン生成の実装
-- #125: ログイン/ログアウトエンドポイントの作成
-- #126: 認証ミドルウェアの追加
-- #127: フロントエンド認証フローの更新
-
-GitHub sub-issues でリンクしました:
-- gh-sub-issues -R fohte/tasks add 123 124
-- gh-sub-issues -R fohte/tasks add 123 125
-- gh-sub-issues -R fohte/tasks add 123 126
-- gh-sub-issues -R fohte/tasks add 123 127
+$ gh-sub-issues -R fohte/tasks tree 123
+#123 - 認証システムの実装
+  #124 - JWTトークン生成の実装
+  #125 - ログイン/ログアウトエンドポイントの作成
+  #126 - 認証ミドルウェアの追加
+  #127 - フロントエンド認証フローの更新
 
 分解計画は .claude/tmp/task-123-decomposition.md に保存されました。
 ```
