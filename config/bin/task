@@ -38,7 +38,7 @@ Commands:
   view <number>       View task details
   list                List open tasks (use --all for all tasks)
   close <number> [comment]    Close a task with optional comment
-  comment <number> [--body <text>]    Add a comment to a task
+  comment <number> --body <text>      Add a comment to a task
   edit <number>       Edit a task
   add-sub <parent> <child>    Add a sub-task
   remove-sub <parent> <child> Remove a sub-task
@@ -135,38 +135,14 @@ comment_task() {
     esac
   done
 
-  echo "Adding comment to task #$number..."
-
-  if [[ -n "$body" ]]; then
-    # Use provided body
-    gh issue comment "$number" --repo "$REPO" --body "$body"
-    echo "Comment added to task #$number"
-  else
-    # Interactive mode with editor
-    local tmpfile
-    tmpfile=$(mktemp)
-    echo "# Comment for task #$number" > "$tmpfile"
-    echo "" >> "$tmpfile"
-    echo "# Write your comment above. Lines starting with # will be ignored." >> "$tmpfile"
-
-    # Open editor
-    ${EDITOR:-vim} "$tmpfile"
-
-    # Remove comment lines and empty file check
-    local comment
-    comment=$(grep -v '^#' "$tmpfile" | sed '/^$/d')
-
-    if [[ -z "$comment" ]]; then
-      echo "Comment is empty, aborting."
-      rm "$tmpfile"
-      return 1
-    fi
-
-    # Post comment
-    gh issue comment "$number" --repo "$REPO" --body "$comment"
-    rm "$tmpfile"
-    echo "Comment added to task #$number"
+  if [[ -z "$body" ]]; then
+    echo "Error: --body is required" >&2
+    return 1
   fi
+
+  echo "Adding comment to task #$number..."
+  gh issue comment "$number" --repo "$REPO" --body "$body"
+  echo "Comment added to task #$number"
 }
 
 # Edit task
@@ -222,7 +198,7 @@ case "$SUBCOMMAND" in
     ;;
   comment)
     if [[ $# -lt 1 ]]; then
-      echo "Error: comment requires at least 1 argument: <number> [--body <text>]" >&2
+      echo "Error: comment requires: <number> --body <text>" >&2
       exit 1
     fi
     comment_task "$@"
