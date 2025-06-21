@@ -2,7 +2,7 @@
 node = "23.11.1"
 "npm:@devcontainers/cli" = "0.77.0"
 
-github-cli = "2.74.1"
+github-cli = "2.74.2"
 bat = "0.25.0"
 ghq = "1.7.1"
 fzf = "0.61.1"
@@ -14,7 +14,7 @@ starship = "1.23.0"
 ripgrep = "14.1.1"
 op = "2.30.0"
 difftastic = "0.63.0"
-uv = "0.7.12"
+uv = "0.7.13"
 
 [settings]
 # disable the idiomatic version file such as Gemfile
