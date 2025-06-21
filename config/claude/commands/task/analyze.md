@@ -21,9 +21,31 @@ From the fetched data, identify:
 - **TODOs**: Any existing `- [ ]` items in the body
 - **Comments**: Important context, decisions, or updates
 
-## 3. Create work context
+## 3. Search for related tasks
 
-Save the analyzed information to `.claude/tmp/task-<number>-context.md`:
+Find similar or related tasks to understand context and avoid duplication:
+
+### Search by keywords from the task
+```bash
+# Extract key terms from title and search for similar tasks
+gh issue list --repo fohte/tasks --search "<extracted-keywords>" --state all
+```
+
+### Search by labels
+```bash
+# Find tasks with same labels to understand patterns
+gh issue list --repo fohte/tasks --label "<label1>,<label2>" --state all
+```
+
+### Analyze search results
+- Identify similar completed tasks for reference
+- Find ongoing related work to coordinate
+- Learn from past implementations and challenges
+- Extract useful patterns and approaches
+
+## 4. Create work context
+
+Save the analyzed information including related tasks to `.claude/tmp/task-<number>-context.md`:
 
 ```markdown
 # Task #<number>: <title>
@@ -49,7 +71,11 @@ Save the analyzed information to `.claude/tmp/task-<number>-context.md`:
 
 ## 関連タスク
 
+### 直接リンクされているタスク
 <リンクされているタスクとその概要>
+
+### 類似・関連タスク（検索結果）
+<検索で見つかった関連タスクとその学び>
 
 ## 重要なコンテキスト
 
@@ -60,14 +86,14 @@ Save the analyzed information to `.claude/tmp/task-<number>-context.md`:
 <このタスクをどう進めるかの提案>
 ```
 
-## 4. Determine task complexity
+## 5. Determine task complexity
 
 Assess whether the task needs:
 - **Simple TODOs**: For straightforward tasks with clear steps
 - **Sub-tasks**: For complex work requiring multiple independent tasks
 - **Both**: Main TODOs with some items expanded as sub-tasks
 
-## 5. Display summary and next steps
+## 6. Display summary and next steps
 
 After analysis, provide:
 1. Brief task overview (in Japanese)
@@ -83,6 +109,8 @@ After analysis, provide:
 - Note any special requirements or constraints mentioned
 - Write all task-related content in Japanese
 - Use clear and concise Japanese for better understanding
+- Search for related tasks to avoid duplication and learn from past work
+- Consider patterns from similar completed tasks
 
 ## Example outputs
 
