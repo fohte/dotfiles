@@ -198,39 +198,74 @@ show_tree() {
     echo "${prefix}${branch}#${issue} - ${title}"
   fi
 
-  # Get sub-issues
+  # Get sub-issues with full data
   local sub_issues
   sub_issues=$(gh_api GET "/issues/${issue}/sub_issues" 2> /dev/null || echo '[]')
 
-  # Get sub-issue numbers
-  local sub_issue_numbers=()
-  while IFS= read -r sub_issue; do
-    if [[ -n "$sub_issue" ]]; then
-      sub_issue_numbers+=("$sub_issue")
-    fi
-  done < <(echo "$sub_issues" | jq -r '.[] | .number')
+  # Process sub-issues directly from the API response
+  show_tree_children "$sub_issues" "$prefix" "$is_last"
+}
 
-  # Process each sub-issue
-  local count=${#sub_issue_numbers[@]}
+# Helper function to show children without additional API calls
+show_tree_children() {
+  local sub_issues="$1"
+  local prefix="$2"
+  local parent_is_last="$3"
+
+  # Parse sub-issues into an array
+  local sub_issue_data=()
+  while IFS= read -r line; do
+    if [[ -n "$line" ]]; then
+      sub_issue_data+=("$line")
+    fi
+  done < <(echo "$sub_issues" | jq -c '.[]')
+
+  local count=${#sub_issue_data[@]}
   local i=0
-  for sub_issue in "${sub_issue_numbers[@]}"; do
+
+  for sub_issue_json in "${sub_issue_data[@]}"; do
     i=$((i + 1))
+    local sub_number
+    local sub_title
+    sub_number=$(echo "$sub_issue_json" | jq -r '.number')
+    sub_title=$(echo "$sub_issue_json" | jq -r '.title')
+
+    # Calculate prefix for this level
     local new_prefix
     if [[ -z "$prefix" ]]; then
-      # First level - pass empty string to get tree chars without indent
+      # First level - no indent
       new_prefix=""
     else
-      if [[ "$is_last" == "true" ]]; then
+      if [[ "$parent_is_last" == "true" ]]; then
         new_prefix="${prefix}  "
       else
         new_prefix="${prefix}│ "
       fi
     fi
+
+    # Determine if this is the last item
     local is_last_sub="false"
     if [[ $i -eq $count ]]; then
       is_last_sub="true"
     fi
-    show_tree "$sub_issue" "$new_prefix" "$is_last_sub" "false"
+
+    # Print this sub-issue
+    local branch
+    if [[ "$is_last_sub" == "true" ]]; then
+      branch="└── "
+    else
+      branch="├── "
+    fi
+    echo "${new_prefix}${branch}#${sub_number} - ${sub_title}"
+
+    # Recursively get children of this sub-issue
+    local grand_children
+    grand_children=$(gh_api GET "/issues/${sub_number}/sub_issues" 2> /dev/null || echo '[]')
+
+    # Only recurse if there are grand children
+    if [[ "$grand_children" != "[]" && -n "$grand_children" ]]; then
+      show_tree_children "$grand_children" "$new_prefix" "$is_last_sub"
+    fi
   done
 }
 
