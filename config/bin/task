@@ -1,0 +1,233 @@
+#!/usr/bin/env bash
+#
+# task - Task management tool for fohte/tasks repository
+#
+# Requirements:
+#   - gh (GitHub CLI)
+#   - jq
+#
+# Usage:
+#   task create
+#   task view <number>
+#   task list
+#   task close <number>
+#   task comment <number>
+#   task edit <number>
+#   task add-sub <parent> <child>
+#   task remove-sub <parent> <child>
+#   task tree <number>
+#
+set -euo pipefail
+
+# Fixed repository
+readonly REPO="fohte/tasks"
+
+# Parse command line arguments
+SUBCOMMAND="${1:-}"
+shift || true
+
+# Show help
+show_help() {
+  cat << EOF
+Task management tool for fohte/tasks repository
+
+Usage: task <command> [args]
+
+Commands:
+  create              Create a new task
+  view <number>       View task details
+  list                List open tasks (use --all for all tasks)
+  close <number>      Close a task
+  comment <number>    Add a comment to a task
+  edit <number>       Edit a task
+  add-sub <parent> <child>    Add a sub-task
+  remove-sub <parent> <child> Remove a sub-task
+  tree <number>       Show task hierarchy tree
+
+Examples:
+  task create
+  task view 123
+  task list
+  task close 456
+  task tree 123
+EOF
+}
+
+# Create a new task
+create_task() {
+  echo "Creating new task in $REPO..."
+  gh issue create --repo "$REPO"
+}
+
+# View task details
+view_task() {
+  local number="$1"
+  gh issue view "$number" --repo "$REPO"
+}
+
+# List tasks
+list_tasks() {
+  local state="open"
+  if [[ "${1:-}" == "--all" ]]; then
+    state="all"
+  fi
+  gh issue list --repo "$REPO" --state "$state"
+}
+
+# Close task
+close_task() {
+  local number="$1"
+  echo "Closing task #$number..."
+
+  # Ask for PR links if any
+  read -r -p "Any PR links to add? (leave empty to skip): " pr_links
+  if [[ -n "$pr_links" ]]; then
+    gh issue comment "$number" --repo "$REPO" --body "$pr_links"
+  fi
+
+  # Close with appropriate reason
+  PS3="Select close reason: "
+  options=("Completed" "Not planned")
+  select opt in "${options[@]}"; do
+    case $opt in
+      "Completed")
+        gh issue close "$number" --repo "$REPO" --reason completed --comment "完了したので close"
+        break
+        ;;
+      "Not planned")
+        gh issue close "$number" --repo "$REPO" --reason "not planned" --comment "対応不要になったので close"
+        break
+        ;;
+      *)
+        echo "Invalid option"
+        ;;
+    esac
+  done
+}
+
+# Add comment to task
+comment_task() {
+  local number="$1"
+  echo "Adding comment to task #$number..."
+
+  # Create temporary file for comment
+  local tmpfile
+  tmpfile=$(mktemp)
+  echo "# Comment for task #$number" > "$tmpfile"
+  echo "" >> "$tmpfile"
+  echo "# Write your comment above. Lines starting with # will be ignored." >> "$tmpfile"
+
+  # Open editor
+  ${EDITOR:-vim} "$tmpfile"
+
+  # Remove comment lines and empty file check
+  local comment
+  comment=$(grep -v '^#' "$tmpfile" | sed '/^$/d')
+
+  if [[ -z "$comment" ]]; then
+    echo "Comment is empty, aborting."
+    rm "$tmpfile"
+    return 1
+  fi
+
+  # Post comment
+  gh issue comment "$number" --repo "$REPO" --body "$comment"
+  rm "$tmpfile"
+  echo "Comment added to task #$number"
+}
+
+# Edit task
+edit_task() {
+  local number="$1"
+  echo "Editing task #$number..."
+  gh issue edit "$number" --repo "$REPO"
+}
+
+# Add sub-task (wrapper for gh-sub-issues)
+add_sub_task() {
+  local parent="$1"
+  local child="$2"
+  gh-sub-issues -R "$REPO" add "$parent" "$child"
+  echo "Added #$child as sub-task of #$parent"
+}
+
+# Remove sub-task (wrapper for gh-sub-issues)
+remove_sub_task() {
+  local parent="$1"
+  local child="$2"
+  gh-sub-issues -R "$REPO" remove "$parent" "$child"
+  echo "Removed #$child from sub-tasks of #$parent"
+}
+
+# Show task tree (wrapper for gh-sub-issues)
+show_task_tree() {
+  local number="$1"
+  gh-sub-issues -R "$REPO" tree "$number"
+}
+
+# Main execution
+case "$SUBCOMMAND" in
+  create)
+    create_task
+    ;;
+  view)
+    if [[ $# -ne 1 ]]; then
+      echo "Error: view requires exactly 1 argument: <number>" >&2
+      exit 1
+    fi
+    view_task "$1"
+    ;;
+  list)
+    list_tasks "$@"
+    ;;
+  close)
+    if [[ $# -ne 1 ]]; then
+      echo "Error: close requires exactly 1 argument: <number>" >&2
+      exit 1
+    fi
+    close_task "$1"
+    ;;
+  comment)
+    if [[ $# -ne 1 ]]; then
+      echo "Error: comment requires exactly 1 argument: <number>" >&2
+      exit 1
+    fi
+    comment_task "$1"
+    ;;
+  edit)
+    if [[ $# -ne 1 ]]; then
+      echo "Error: edit requires exactly 1 argument: <number>" >&2
+      exit 1
+    fi
+    edit_task "$1"
+    ;;
+  add-sub)
+    if [[ $# -ne 2 ]]; then
+      echo "Error: add-sub requires exactly 2 arguments: <parent> <child>" >&2
+      exit 1
+    fi
+    add_sub_task "$1" "$2"
+    ;;
+  remove-sub)
+    if [[ $# -ne 2 ]]; then
+      echo "Error: remove-sub requires exactly 2 arguments: <parent> <child>" >&2
+      exit 1
+    fi
+    remove_sub_task "$1" "$2"
+    ;;
+  tree)
+    if [[ $# -ne 1 ]]; then
+      echo "Error: tree requires exactly 1 argument: <number>" >&2
+      exit 1
+    fi
+    show_task_tree "$1"
+    ;;
+  help | "")
+    show_help
+    ;;
+  *)
+    echo "Error: Unknown command: $SUBCOMMAND" >&2
+    echo "Run 'task help' for usage information" >&2
+    exit 1
+    ;;
+esac
