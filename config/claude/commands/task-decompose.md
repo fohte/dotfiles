@@ -6,7 +6,7 @@ Break down a task from fohte/tasks repository into manageable subtasks. This com
 
 ## 1. Analyze task complexity
 
-First, run `commands/task-analyze.md` if you haven't already, then assess:
+First, run `~/.claude/commands/task-analyze.md` if you haven't already, then assess:
 - Number of distinct features or components involved
 - Dependencies between tasks
 - Estimated effort for each part
