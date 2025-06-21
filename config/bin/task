@@ -92,7 +92,7 @@ create_task() {
 # View task details
 view_task() {
   local number="$1"
-  gh issue view "$number" --repo "$REPO"
+  gh issue view "$number" --repo "$REPO" --json number,title,body,labels,assignees,state,comments,createdAt,updatedAt
 }
 
 # List tasks

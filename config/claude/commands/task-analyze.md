@@ -12,11 +12,6 @@ Retrieve comprehensive task information from fohte/tasks repository:
 task view <task-number>
 ```
 
-Or for JSON output:
-```bash
-gh issue view <task-number> --repo fohte/tasks --json number,title,body,labels,assignees,state,comments,createdAt,updatedAt
-```
-
 ## 2. Extract and analyze key information
 
 From the fetched data, identify:
