@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
-
+#
+# gh-sub-issues - GitHub sub-issues management tool
+#
+# Requirements:
+#   - gh (GitHub CLI)
+#   - jq
+#
+# Usage:
+#   gh-sub-issues add <parent> <child>
+#   gh-sub-issues remove <parent> <child>
+#   gh-sub-issues move <child> <new-parent>
+#   gh-sub-issues list <parent>
+#   gh-sub-issues tree <issue>
+#   gh-sub-issues parent <child>
+#
 set -euo pipefail
 
 # Default values
