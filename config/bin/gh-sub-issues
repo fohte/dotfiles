@@ -154,7 +154,8 @@ show_parent_issue() {
 # Show issue tree
 show_tree() {
   local issue="$1"
-  local indent="${2:-}"
+  local prefix="${2:-}"
+  local is_last="${3:-true}"
 
   # Get issue details
   local issue_data
@@ -163,17 +164,53 @@ show_tree() {
   local title
   title=$(echo "$issue_data" | jq -r '.title')
 
-  echo "${indent}#${issue} - ${title}"
+  # Print current issue with tree characters
+  if [[ -z "$prefix" ]]; then
+    # Root issue
+    echo "#${issue} - ${title}"
+  else
+    # Sub-issue with tree branch
+    local branch
+    if [[ "$is_last" == "true" ]]; then
+      branch="└── "
+    else
+      branch="├── "
+    fi
+    echo "${prefix}${branch}#${issue} - ${title}"
+  fi
 
   # Get sub-issues
   local sub_issues
   sub_issues=$(gh_api GET "/issues/${issue}/sub_issues" 2> /dev/null || echo '[]')
 
-  # Process each sub-issue
-  echo "$sub_issues" | jq -r '.[] | .number' | while read -r sub_issue; do
+  # Get sub-issue numbers
+  local sub_issue_numbers=()
+  while IFS= read -r sub_issue; do
     if [[ -n "$sub_issue" ]]; then
-      show_tree "$sub_issue" "${indent}  "
+      sub_issue_numbers+=("$sub_issue")
     fi
+  done < <(echo "$sub_issues" | jq -r '.[] | .number')
+
+  # Process each sub-issue
+  local count=${#sub_issue_numbers[@]}
+  local i=0
+  for sub_issue in "${sub_issue_numbers[@]}"; do
+    i=$((i + 1))
+    local new_prefix
+    if [[ -z "$prefix" ]]; then
+      new_prefix=""
+    else
+      if [[ "$is_last" == "true" ]]; then
+        new_prefix="${prefix}    "
+      else
+        new_prefix="${prefix}│   "
+      fi
+    fi
+    local is_last_sub="false"
+    if [[ $i -eq $count ]]; then
+      is_last_sub="true"
+    fi
+    show_tree "$sub_issue" "$new_prefix" "$is_last_sub"
   done
 }
 
