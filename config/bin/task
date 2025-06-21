@@ -37,7 +37,7 @@ Commands:
   create              Create a new task
   view <number>       View task details
   list                List open tasks (use --all for all tasks)
-  close <number>      Close a task
+  close <number> [comment]    Close a task with optional comment
   comment <number>    Add a comment to a task
   edit <number>       Edit a task
   add-sub <parent> <child>    Add a sub-task
@@ -77,6 +77,8 @@ list_tasks() {
 # Close task
 close_task() {
   local number="$1"
+  local comment="${2:-}"
+
   echo "Closing task #$number..."
 
   # Ask for PR links if any
@@ -91,11 +93,13 @@ close_task() {
   select opt in "${options[@]}"; do
     case $opt in
       "Completed")
-        gh issue close "$number" --repo "$REPO" --reason completed --comment "完了したので close"
+        local close_comment="${comment:-完了したので close}"
+        gh issue close "$number" --repo "$REPO" --reason completed --comment "$close_comment"
         break
         ;;
       "Not planned")
-        gh issue close "$number" --repo "$REPO" --reason "not planned" --comment "対応不要になったので close"
+        local close_comment="${comment:-対応不要になったので close}"
+        gh issue close "$number" --repo "$REPO" --reason "not planned" --comment "$close_comment"
         break
         ;;
       *)
@@ -181,11 +185,11 @@ case "$SUBCOMMAND" in
     list_tasks "$@"
     ;;
   close)
-    if [[ $# -ne 1 ]]; then
-      echo "Error: close requires exactly 1 argument: <number>" >&2
+    if [[ $# -lt 1 ]] || [[ $# -gt 2 ]]; then
+      echo "Error: close requires 1 or 2 arguments: <number> [comment]" >&2
       exit 1
     fi
-    close_task "$1"
+    close_task "$@"
     ;;
   comment)
     if [[ $# -ne 1 ]]; then
