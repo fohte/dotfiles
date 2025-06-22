@@ -16,8 +16,8 @@ Update task TODOs and document completed work in fohte/tasks repository.
 When working on a task, keep the TODO list in the issue body updated:
 
 ```bash
-# Get current task body
-task view <task-number> | grep -A 1000 "^##" > .claude/tmp/task-body.md
+# Get current task body (task view returns JSON)
+task view <task-number> | jq -r '.body' > .claude/tmp/task-body.md
 
 # Edit the file to update TODO items:
 # - Mark completed items with [x]
