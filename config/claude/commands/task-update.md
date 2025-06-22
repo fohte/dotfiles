@@ -54,11 +54,10 @@ task comment 123 --body "## コア機能を実装する
 
 Next.js App Router を使って基本的な CRUD 機能を実装した。
 
+- 実装 PR: https://github.com/fohte/example/pull/456
 - `/api/items` エンドポイントを作成
 - Prisma でデータベース操作を実装
 - エラーハンドリングとバリデーションを追加
-
-PR: https://github.com/fohte/example/pull/456
 "
 ```
 
