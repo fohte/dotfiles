@@ -26,11 +26,11 @@ task edit <task-number> --body "$(cat .claude/tmp/task-body.md)"
 Example TODO format:
 ```markdown
 ## TODOs
-- [x] 既存の実装を調査
-- [x] 設計案を作成
-- [x] コア機能を実装 (https://github.com/<owner>/<repo>/pull/<pr-number>)
-- [ ] テストを追加
-- [ ] ドキュメントを更新
+- [x] 既存の実装を調査する
+- [x] 設計案を作成する
+- [x] コア機能を実装する (https://github.com/<owner>/<repo>/pull/<pr-number>)
+- [ ] テストを追加する
+- [ ] ドキュメントを更新する
 ```
 
 ### 2. Add completion comment for each TODO
@@ -50,12 +50,12 @@ task comment <task-number> --body "## <TODO項目名>
 
 Example:
 ```bash
-task comment 123 --body "## コア機能を実装
+task comment 123 --body "## コア機能を実装する
 
-Next.js App Router を使用して基本的な CRUD 機能を実装しました。
+Next.js App Router を使って基本的な CRUD 機能を実装した。
 
 - `/api/items` エンドポイントを作成
-- Prisma を使用したデータベース操作を実装
+- Prisma でデータベース操作を実装
 - エラーハンドリングとバリデーションを追加
 
 PR: https://github.com/fohte/example/pull/456
