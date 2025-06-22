@@ -23,14 +23,23 @@ When tasks are:
 
 Update the task body with TODOs:
 ```bash
-# First get the current body
-task view <task-number> | grep -A 1000 "^##" > /tmp/task-body.md
+# First get the current body (task view now returns JSON)
+task view <task-number> | jq -r '.body' > .claude/tmp/task-<task-number>-body.md
 
-# Edit the file to add TODOs section
-echo "\n## TODOs\n\n- [ ] 既存の実装を調査\n- [ ] 設計案を作成\n- [ ] コア機能を実装\n- [ ] テストを追加\n- [ ] ドキュメントを更新" >> /tmp/task-body.md
+# Append TODOs section to the file
+cat >> .claude/tmp/task-<task-number>-body.md << 'EOF'
+
+## TODOs
+
+- [ ] 既存の実装を調査
+- [ ] 設計案を作成
+- [ ] コア機能を実装
+- [ ] テストを追加
+- [ ] ドキュメントを更新
+EOF
 
 # Update the task
-task edit <task-number> --body "$(cat /tmp/task-body.md)"
+task edit <task-number> --body "$(cat .claude/tmp/task-<task-number>-body.md)"
 ```
 
 ### For complex tasks (use sub-tasks)
