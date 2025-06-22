@@ -42,6 +42,14 @@ Do NOT create todos for:
 - **Implementation details**: Steps that are naturally part of completing a larger task
 - **Routine operations**: Standard development activities like committing code or updating dependencies
 
+### When to Mark Todos as Done
+
+Todos are done when the deliverable is **shipped**, not just implemented:
+- Code changes → PR merged
+- Decisions → Documented and shared
+- Integrations → Working in production
+- Features → Deployed and verified
+
 ## Repository Access
 
 - GitHub repositories are available for research and analysis in the `~/ghq` directory
