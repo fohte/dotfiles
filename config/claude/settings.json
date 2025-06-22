@@ -48,6 +48,7 @@
       "Bash(pnpm run lint:*)",
       "Bash(pnpm run test:*)",
       "Bash(rg:*)",
+      "Bash(task:*)",
       "Bash(terraform fmt)",
       "Bash(touch:*)",
       "Read(~/.claude/CLAUDE.md)",

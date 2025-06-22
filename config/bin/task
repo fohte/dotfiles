@@ -1,0 +1,302 @@
+#!/usr/bin/env bash
+#
+# task - Task management tool for fohte/tasks repository
+#
+# Requirements:
+#   - gh (GitHub CLI)
+#   - jq
+#
+# Usage:
+#   task create
+#   task view <number>
+#   task list
+#   task close <number>
+#   task comment <number>
+#   task edit <number>
+#   task add-sub <parent> <child>
+#   task remove-sub <parent> <child>
+#   task tree <number>
+#
+set -euo pipefail
+
+# Fixed repository
+readonly REPO="fohte/tasks"
+
+# Parse command line arguments
+SUBCOMMAND="${1:-}"
+shift || true
+
+# Show help
+show_help() {
+  cat << EOF
+Task management tool for fohte/tasks repository
+
+Usage: task <command> [args]
+
+Commands:
+  create --title <text> [--body <text>]  Create a new task
+  view <number>       View task details
+  list                List open tasks (use --all for all tasks)
+  close <number> [--comment <text>] [--reason <completed|not planned>]  Close a task
+  comment <number> --body <text>      Add a comment to a task
+  edit <number> [--title <text>] [--body <text>]  Edit a task
+  add-sub <parent> <child>    Add a sub-task
+  remove-sub <parent> <child> Remove a sub-task
+  tree <number>       Show task hierarchy tree
+
+Examples:
+  task create
+  task view 123
+  task list
+  task close 456
+  task tree 123
+EOF
+}
+
+# Create a new task
+create_task() {
+  local title=""
+  local body=""
+
+  # Parse options
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --title)
+        title="$2"
+        shift 2
+        ;;
+      --body)
+        body="$2"
+        shift 2
+        ;;
+      *)
+        echo "Error: Unknown option $1" >&2
+        return 1
+        ;;
+    esac
+  done
+
+  if [[ -z "$title" ]]; then
+    echo "Error: --title is required" >&2
+    return 1
+  fi
+
+  echo "Creating new task in $REPO..."
+  if [[ -n "$body" ]]; then
+    gh issue create --repo "$REPO" --title "$title" --body "$body"
+  else
+    gh issue create --repo "$REPO" --title "$title" --body ""
+  fi
+}
+
+# View task details
+view_task() {
+  local number="$1"
+  gh issue view "$number" --repo "$REPO" --json number,title,body,labels,assignees,state,comments,createdAt,updatedAt
+}
+
+# List tasks
+list_tasks() {
+  local state="open"
+  if [[ "${1:-}" == "--all" ]]; then
+    state="all"
+  fi
+  gh issue list --repo "$REPO" --state "$state"
+}
+
+# Close task
+close_task() {
+  local number="$1"
+  shift
+  local comment=""
+  local reason="completed"
+
+  # Parse options
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --comment)
+        comment="$2"
+        shift 2
+        ;;
+      --reason)
+        reason="$2"
+        shift 2
+        ;;
+      *)
+        echo "Error: Unknown option $1" >&2
+        return 1
+        ;;
+    esac
+  done
+
+  echo "Closing task #$number..."
+
+  # Validate reason
+  if [[ "$reason" != "completed" && "$reason" != "not planned" ]]; then
+    echo "Error: --reason must be 'completed' or 'not planned'" >&2
+    return 1
+  fi
+
+  if [[ -n "$comment" ]]; then
+    gh issue close "$number" --repo "$REPO" --reason "$reason" --comment "$comment"
+  else
+    gh issue close "$number" --repo "$REPO" --reason "$reason"
+  fi
+}
+
+# Add comment to task
+comment_task() {
+  local number="$1"
+  shift
+  local body=""
+
+  # Parse options
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --body)
+        body="$2"
+        shift 2
+        ;;
+      *)
+        echo "Error: Unknown option $1" >&2
+        return 1
+        ;;
+    esac
+  done
+
+  if [[ -z "$body" ]]; then
+    echo "Error: --body is required" >&2
+    return 1
+  fi
+
+  echo "Adding comment to task #$number..."
+  gh issue comment "$number" --repo "$REPO" --body "$body"
+  echo "Comment added to task #$number"
+}
+
+# Edit task
+edit_task() {
+  local number="$1"
+  shift
+  local title=""
+  local body=""
+
+  # Parse options
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --title)
+        title="$2"
+        shift 2
+        ;;
+      --body)
+        body="$2"
+        shift 2
+        ;;
+      *)
+        echo "Error: Unknown option $1" >&2
+        return 1
+        ;;
+    esac
+  done
+
+  if [[ -z "$title" && -z "$body" ]]; then
+    echo "Error: at least one of --title or --body is required" >&2
+    return 1
+  fi
+
+  echo "Editing task #$number..."
+  local args=()
+  [[ -n "$title" ]] && args+=(--title "$title")
+  [[ -n "$body" ]] && args+=(--body "$body")
+
+  gh issue edit "$number" --repo "$REPO" "${args[@]}"
+}
+
+# Add sub-task (wrapper for gh-sub-issues)
+add_sub_task() {
+  local parent="$1"
+  local child="$2"
+  gh-sub-issues -R "$REPO" add "$parent" "$child"
+  echo "Added #$child as sub-task of #$parent"
+}
+
+# Remove sub-task (wrapper for gh-sub-issues)
+remove_sub_task() {
+  local parent="$1"
+  local child="$2"
+  gh-sub-issues -R "$REPO" remove "$parent" "$child"
+  echo "Removed #$child from sub-tasks of #$parent"
+}
+
+# Show task tree (wrapper for gh-sub-issues)
+show_task_tree() {
+  local number="$1"
+  gh-sub-issues -R "$REPO" tree "$number"
+}
+
+# Main execution
+case "$SUBCOMMAND" in
+  create)
+    create_task "$@"
+    ;;
+  view)
+    if [[ $# -ne 1 ]]; then
+      echo "Error: view requires exactly 1 argument: <number>" >&2
+      exit 1
+    fi
+    view_task "$1"
+    ;;
+  list)
+    list_tasks "$@"
+    ;;
+  close)
+    if [[ $# -lt 1 ]]; then
+      echo "Error: close requires at least 1 argument: <number>" >&2
+      exit 1
+    fi
+    close_task "$@"
+    ;;
+  comment)
+    if [[ $# -lt 1 ]]; then
+      echo "Error: comment requires: <number> --body <text>" >&2
+      exit 1
+    fi
+    comment_task "$@"
+    ;;
+  edit)
+    if [[ $# -lt 1 ]]; then
+      echo "Error: edit requires at least 1 argument: <number>" >&2
+      exit 1
+    fi
+    edit_task "$@"
+    ;;
+  add-sub)
+    if [[ $# -ne 2 ]]; then
+      echo "Error: add-sub requires exactly 2 arguments: <parent> <child>" >&2
+      exit 1
+    fi
+    add_sub_task "$1" "$2"
+    ;;
+  remove-sub)
+    if [[ $# -ne 2 ]]; then
+      echo "Error: remove-sub requires exactly 2 arguments: <parent> <child>" >&2
+      exit 1
+    fi
+    remove_sub_task "$1" "$2"
+    ;;
+  tree)
+    if [[ $# -ne 1 ]]; then
+      echo "Error: tree requires exactly 1 argument: <number>" >&2
+      exit 1
+    fi
+    show_task_tree "$1"
+    ;;
+  help | "")
+    show_help
+    ;;
+  *)
+    echo "Error: Unknown command: $SUBCOMMAND" >&2
+    echo "Run 'task help' for usage information" >&2
+    exit 1
+    ;;
+esac

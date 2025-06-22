@@ -1,0 +1,352 @@
+#!/usr/bin/env bash
+#
+# gh-sub-issues - GitHub sub-issues management tool
+#
+# Requirements:
+#   - gh (GitHub CLI)
+#   - jq
+#
+# Usage:
+#   gh-sub-issues add <parent> <child>
+#   gh-sub-issues remove <parent> <child>
+#   gh-sub-issues move <child> <new-parent>
+#   gh-sub-issues list <parent>
+#   gh-sub-issues tree <issue>
+#   gh-sub-issues parent <child>
+#
+set -euo pipefail
+
+# Default values
+REPO=""
+SUBCOMMAND=""
+ARGS=()
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -R | --repo)
+      REPO="$2"
+      shift 2
+      ;;
+    -h | --help)
+      SUBCOMMAND="help"
+      shift
+      ;;
+    *)
+      if [[ -z "$SUBCOMMAND" ]]; then
+        SUBCOMMAND="$1"
+      else
+        ARGS+=("$1")
+      fi
+      shift
+      ;;
+  esac
+done
+
+# Helper function to execute gh api with optional repo
+gh_api() {
+  local method="${1:-GET}"
+  local endpoint="$2"
+  shift 2
+
+  if [[ -n "$REPO" ]]; then
+    endpoint="repos/${REPO}${endpoint}"
+  else
+    # Use gh's default behavior for current directory
+    endpoint="repos/{owner}/{repo}${endpoint}"
+  fi
+
+  if [[ "$method" == "GET" ]]; then
+    gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "$endpoint" "$@"
+  else
+    gh api --method "$method" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "$endpoint" "$@"
+  fi
+}
+
+# Show help
+show_help() {
+  cat << EOF
+GitHub sub-issues management tool
+
+Usage: gh-sub-issues [options] <command> [args]
+
+Options:
+  -R, --repo <owner/repo>  Select another repository
+  -h, --help              Show this help message
+
+Commands:
+  add <parent> <child>     Add a child issue to a parent issue
+  remove <parent> <child>  Remove a child issue from a parent issue
+  move <child> <new-parent> Move a child issue to a new parent
+  list <parent>            List all child issues of a parent
+  tree <issue>             Show issue hierarchy as a tree
+  parent <child>           Show the parent issue of a child
+
+Examples:
+  gh-sub-issues add 123 456
+  gh-sub-issues -R owner/repo list 123
+  gh-sub-issues tree 123
+EOF
+}
+
+# Add sub-issue
+add_sub_issue() {
+  local parent="$1"
+  local child="$2"
+
+  # Get node IDs for both issues
+  local parent_node_id
+  local child_node_id
+  if [[ -n "$REPO" ]]; then
+    parent_node_id=$(gh api "repos/${REPO}/issues/${parent}" --jq '.node_id')
+    child_node_id=$(gh api "repos/${REPO}/issues/${child}" --jq '.node_id')
+  else
+    parent_node_id=$(gh api "repos/{owner}/{repo}/issues/${parent}" --jq '.node_id')
+    child_node_id=$(gh api "repos/{owner}/{repo}/issues/${child}" --jq '.node_id')
+  fi
+
+  # Use GraphQL to add sub-issue
+  gh api graphql -f query="
+    mutation {
+      addSubIssue(input: {
+        issueId: \"${parent_node_id}\"
+        subIssueId: \"${child_node_id}\"
+      }) {
+        clientMutationId
+      }
+    }"
+}
+
+# Remove sub-issue
+remove_sub_issue() {
+  local parent="$1"
+  local child="$2"
+
+  gh_api DELETE "/issues/${parent}/sub_issue" \
+    -f "sub_issue_id=${child}"
+}
+
+# Move sub-issue to new parent
+move_sub_issue() {
+  local child="$1"
+  local new_parent="$2"
+
+  # First find current parent
+  local current_parent
+  current_parent=$(get_parent_issue "$child" | jq -r '.number // empty')
+
+  if [[ -z "$current_parent" ]]; then
+    echo "Error: Issue #${child} has no parent" >&2
+    return 1
+  fi
+
+  # Remove from current parent
+  remove_sub_issue "$current_parent" "$child"
+
+  # Add to new parent
+  add_sub_issue "$new_parent" "$child"
+}
+
+# List sub-issues
+list_sub_issues() {
+  local parent="$1"
+
+  gh_api GET "/issues/${parent}/sub_issues"
+}
+
+# Get parent issue
+get_parent_issue() {
+  local child="$1"
+
+  # Get issue details and extract parent information
+  gh_api GET "/issues/${child}" | jq '.parent // empty'
+}
+
+# Show parent issue
+show_parent_issue() {
+  local child="$1"
+
+  get_parent_issue "$child"
+}
+
+# Show issue tree using GraphQL
+show_tree() {
+  local issue="$1"
+  local prefix="${2:-}"
+  local is_last="${3:-true}"
+  local is_root="${4:-true}"
+
+  # Fetch issue hierarchy using GraphQL
+  local graphql_query
+  graphql_query=$(
+    cat << EOF
+{
+  repository(owner: "${REPO%/*}", name: "${REPO#*/}") {
+    issue(number: ${issue}) {
+      number
+      title
+      subIssues(first: 100) {
+        nodes {
+          number
+          title
+          subIssues {
+            totalCount
+          }
+        }
+      }
+    }
+  }
+}
+EOF
+  )
+
+  local issue_data
+  if ! issue_data=$(gh api graphql -f query="$graphql_query" 2> /dev/null) || [[ -z "$issue_data" ]]; then
+    echo "Error: Failed to fetch issue data" >&2
+    return 1
+  fi
+
+  # Extract root issue info
+  local root_issue
+  root_issue=$(echo "$issue_data" | jq -r '.data.repository.issue')
+
+  if [[ "$root_issue" == "null" ]]; then
+    echo "Error: Issue #${issue} not found" >&2
+    return 1
+  fi
+
+  local title
+  title=$(echo "$root_issue" | jq -r '.title')
+
+  # Print current issue
+  if [[ "$is_root" == "true" ]]; then
+    echo "#${issue} - ${title}"
+  else
+    local branch
+    if [[ "$is_last" == "true" ]]; then
+      branch="└── "
+    else
+      branch="├── "
+    fi
+    echo "${prefix}${branch}#${issue} - ${title}"
+  fi
+
+  # Process sub-issues
+  local sub_issues
+  sub_issues=$(echo "$root_issue" | jq -r '.subIssues.nodes')
+
+  if [[ "$sub_issues" != "[]" && "$sub_issues" != "null" ]]; then
+    show_tree_graphql_children "$sub_issues" "$prefix" "$is_last"
+  fi
+}
+
+# Helper function to process GraphQL sub-issues
+show_tree_graphql_children() {
+  local sub_issues="$1"
+  local prefix="$2"
+  local parent_is_last="$3"
+
+  local count
+  count=$(echo "$sub_issues" | jq 'length')
+  local i=0
+
+  while [[ $i -lt $count ]]; do
+    local sub_issue
+    sub_issue=$(echo "$sub_issues" | jq ".[$i]")
+
+    local sub_number
+    local sub_title
+    local sub_has_children
+    sub_number=$(echo "$sub_issue" | jq -r '.number')
+    sub_title=$(echo "$sub_issue" | jq -r '.title')
+    sub_has_children=$(echo "$sub_issue" | jq -r '.subIssues.totalCount')
+
+    # Calculate prefix for this level
+    local new_prefix
+    if [[ -z "$prefix" ]]; then
+      new_prefix=""
+    else
+      if [[ "$parent_is_last" == "true" ]]; then
+        new_prefix="${prefix}  "
+      else
+        new_prefix="${prefix}│ "
+      fi
+    fi
+
+    # Determine if this is the last item
+    local is_last_sub="false"
+    if [[ $((i + 1)) -eq $count ]]; then
+      is_last_sub="true"
+    fi
+
+    # Print this sub-issue
+    local branch
+    if [[ "$is_last_sub" == "true" ]]; then
+      branch="└── "
+    else
+      branch="├── "
+    fi
+    echo "${new_prefix}${branch}#${sub_number} - ${sub_title}"
+
+    # Recursively fetch and show children if they exist
+    if [[ "$sub_has_children" -gt 0 ]]; then
+      show_tree "$sub_number" "$new_prefix" "$is_last_sub" "false"
+    fi
+
+    i=$((i + 1))
+  done
+}
+
+# Main execution
+case "$SUBCOMMAND" in
+  add)
+    if [[ ${#ARGS[@]} -ne 2 ]]; then
+      echo "Error: add requires exactly 2 arguments: <parent> <child>" >&2
+      exit 1
+    fi
+    add_sub_issue "${ARGS[0]}" "${ARGS[1]}"
+    ;;
+  remove)
+    if [[ ${#ARGS[@]} -ne 2 ]]; then
+      echo "Error: remove requires exactly 2 arguments: <parent> <child>" >&2
+      exit 1
+    fi
+    remove_sub_issue "${ARGS[0]}" "${ARGS[1]}"
+    ;;
+  move)
+    if [[ ${#ARGS[@]} -ne 2 ]]; then
+      echo "Error: move requires exactly 2 arguments: <child> <new-parent>" >&2
+      exit 1
+    fi
+    move_sub_issue "${ARGS[0]}" "${ARGS[1]}"
+    ;;
+  list)
+    if [[ ${#ARGS[@]} -ne 1 ]]; then
+      echo "Error: list requires exactly 1 argument: <parent>" >&2
+      exit 1
+    fi
+    list_sub_issues "${ARGS[0]}"
+    ;;
+  tree)
+    if [[ ${#ARGS[@]} -ne 1 ]]; then
+      echo "Error: tree requires exactly 1 argument: <issue>" >&2
+      exit 1
+    fi
+    show_tree "${ARGS[0]}"
+    ;;
+  parent)
+    if [[ ${#ARGS[@]} -ne 1 ]]; then
+      echo "Error: parent requires exactly 1 argument: <child>" >&2
+      exit 1
+    fi
+    show_parent_issue "${ARGS[0]}"
+    ;;
+  help | "")
+    show_help
+    ;;
+  *)
+    echo "Error: Unknown command: $SUBCOMMAND" >&2
+    echo "Run 'gh-sub-issues --help' for usage information" >&2
+    exit 1
+    ;;
+esac
