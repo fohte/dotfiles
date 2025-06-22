@@ -26,17 +26,15 @@ Update the task body with TODOs:
 # First get the current body (task view now returns JSON)
 task view <task-number> | jq -r '.body' > .claude/tmp/task-<task-number>-body.md
 
-# Append TODOs section to the file
-cat >> .claude/tmp/task-<task-number>-body.md << 'EOF'
-
-## TODOs
-
-- [ ] 既存の実装を調査
-- [ ] 設計案を作成
-- [ ] コア機能を実装
-- [ ] テストを追加
-- [ ] ドキュメントを更新
-EOF
+# Edit the file to add TODOs section
+# Add the following at the end of the file:
+# ## TODOs
+#
+# - [ ] 既存の実装を調査
+# - [ ] 設計案を作成
+# - [ ] コア機能を実装
+# - [ ] テストを追加
+# - [ ] ドキュメントを更新
 
 # Update the task
 task edit <task-number> --body "$(cat .claude/tmp/task-<task-number>-body.md)"

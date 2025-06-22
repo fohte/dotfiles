@@ -55,8 +55,8 @@ task edit <task-number> --body "$(cat .claude/tmp/task-body.md)"
 
 ### Update TODOs section
 ```bash
-# Get current task body
-task view <task-number> | grep -A 1000 "^##" > .claude/tmp/task-body.md
+# Get current task body (task view now returns JSON)
+task view <task-number> | jq -r '.body' > .claude/tmp/task-body.md
 
 # Edit the file to add new TODOs to the existing TODOs section
 # Add new items like:
