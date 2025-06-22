@@ -1,160 +1,80 @@
 # Update Task
 
-Update task status, progress, and documentation in fohte/tasks repository. This command handles progress tracking, comment updates, and TODOs maintenance.
+Update task TODOs and document completed work in fohte/tasks repository.
 
 **Important**: All tasks are managed in Japanese language. Use Japanese for all task-related content.
 
-## 1. Update task progress
+## Main Functions
 
-### Add a progress comment
+### 1. Update TODOs in task body
 
-Document work progress with detailed comments:
+When working on a task, keep the TODO list in the issue body updated:
 
-```bash
-task comment <task-number> --body "## 〜〜をした
-
-<具体的になにをやったか記述>
-
-### Next Actions
-
-- 次なにやるか
-"
-```
-
-## 2. Update TODOs in task body
-
-### Get current task body
-
-```bash
-# Save current body to edit
-task view <task-number> | grep -A 1000 "^##" > .claude/tmp/task-body.md
-```
-
-### Update TODO items
-
-Edit the saved body to mark completed items:
-
-```markdown
-## TODOs
-- [x] 既存の実装を調査
-- [x] 設計案を作成
-- [x] コア機能を実装 (https://github.com/<owner>/<repo>/pull/<task-number>)
-- [ ] テストを追加 (https://github.com/<owner>/<repo>/pull/<task-number>)
-- [ ] ドキュメントを更新 (https://github.com/<owner>/<repo>/pull/<task-number>)
-```
-
-PR リンクがあるときは貼ること
-
-### Apply the update
-
-```bash
-task edit <task-number> --body "$(cat .claude/tmp/task-body.md)"
-```
-
-## 3. Add or update todo lists
-
-### Update TODOs section
-```bash
-# Get current task body (task view now returns JSON)
-task view <task-number> | jq -r '.body' > .claude/tmp/task-body.md
-
-# Edit the file to add new TODOs to the existing TODOs section
-# Add new items like:
-# - [ ] 認証モジュールのリファクタリング
-# - [ ] レート制限の追加
-# - [ ] APIドキュメントの更新
-
-# Apply the update
-task edit <task-number> --body "$(cat .claude/tmp/task-body.md)"
-```
-
-### Convert findings to actionable items
-When discovering new requirements during work:
-
-1. First, add a comment documenting the new requirements:
-```bash
-task comment <task-number> --body "## 追加でやるべきこと
-
-- **タスク**: <説明>
-   - 理由: <なぜ必要か>
-   - 影響: <何に影響するか>
-- **タスク**: <説明>
-   - 理由: <理由>
-   - 影響: <影響範囲>
-"
-```
-
-2. Then, update the task body to include these items in the TODOs section:
 ```bash
 # Get current task body
 task view <task-number> | grep -A 1000 "^##" > .claude/tmp/task-body.md
 
-# Edit the file to add the new tasks to the TODOs section
+# Edit the file to update TODO items:
+# - Mark completed items with [x]
+# - Add PR links when available
+# - Add new TODO items as discovered
 
 # Apply the update
 task edit <task-number> --body "$(cat .claude/tmp/task-body.md)"
 ```
 
-## 6. Document decisions and changes
+Example TODO format:
+```markdown
+## TODOs
+- [x] 既存の実装を調査
+- [x] 設計案を作成
+- [x] コア機能を実装 (https://github.com/<owner>/<repo>/pull/<pr-number>)
+- [ ] テストを追加
+- [ ] ドキュメントを更新
+```
 
-### Technical decisions
+### 2. Add completion comment for each TODO
+
+When completing a TODO item, add a comment documenting what was done:
+
 ```bash
-task comment <task-number> --body "## 技術的決定
+task comment <task-number> --body "## <TODO項目名>
 
-### 背景
-<この決定に至った経緯>
+<実際に行った作業の詳細>
 
-### 検討した選択肢
-1. <選択肢1>: <メリット/デメリット>
-2. <選択肢2>: <メリット/デメリット>
-
-### 決定内容
-<選択した内容とその理由>
-
-### 影響
-<実装への影響>
+- 何を実装/変更したか
+- どのような判断をしたか
+- 関連するPRやコミット
 "
 ```
 
-### Scope changes
+Example:
 ```bash
-task comment <task-number> --body "## スコープ変更
+task comment 123 --body "## コア機能を実装
 
-### 当初のスコープ
-<最初に計画していた内容>
+Next.js App Router を使用して基本的な CRUD 機能を実装しました。
 
-### 変更後のスコープ
-<新しいスコープ>
+- `/api/items` エンドポイントを作成
+- Prisma を使用したデータベース操作を実装
+- エラーハンドリングとバリデーションを追加
 
-### 変更理由
-<なぜ変更が必要か>
-
-### スケジュールへの影響
-<完了時期への影響>
+PR: https://github.com/fohte/example/pull/456
 "
 ```
 
-## Best practices
+## Workflow
 
-- Update regularly but avoid noise - batch small updates
-- Be specific about progress percentages and blockers
-- Keep TODOs in task body, detailed updates in comments
-- Link to relevant commits, PRs, and related tasks
-- Document decisions that affect future work
-- Update labels to reflect current state
-- Write all content in Japanese for consistency
-- Notify stakeholders of significant changes with @mentions
+1. **Start working on a TODO**: Update status to in-progress
+2. **Complete a TODO**:
+   - Mark it as completed in the issue body
+   - Add a comment with implementation details
+3. **Discover new TODOs**: Add them to the TODO list in the issue body
+4. **Finish all TODOs**: Consider closing the issue or creating follow-up issues
 
-## Examples
+## Best Practices
 
-### Output example
-```
-タスク #123 の進捗を更新しました。
-
-更新内容:
-- TODOs: 3/5 項目完了
-- ラベル: "作業中" を追加
-- 進捗コメントを追加
-
-次のステップ: テストの実装
-```
+- Update TODOs in real-time as you work
+- Keep comments focused on what was actually done
+- Include relevant links (PRs, commits, documentation)
+- Write all content in Japanese
+- Batch small TODO updates to avoid excessive edits
