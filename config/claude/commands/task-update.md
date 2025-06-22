@@ -4,6 +4,11 @@ Update task TODOs and document completed work in fohte/tasks repository.
 
 **Important**: All tasks are managed in Japanese language. Use Japanese for all task-related content.
 
+## Writing Style Guidelines
+
+- **Use casual language**: 敬語は不要（自分用のタスク管理のため）
+- **End TODOs with action verbs**: 全てのTODOは「〜する」で終わるようにして、完了条件を明確にする
+
 ## Main Functions
 
 ### 1. Update TODOs in task body
