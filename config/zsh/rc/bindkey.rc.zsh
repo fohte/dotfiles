@@ -28,6 +28,11 @@ zle -N expand-alias
 bindkey -M main ' ' expand-alias
 
 function custom-accept-line() {
+  # if buffer is empty and we're in a git repository, run git status
+  if [[ -z "$BUFFER" ]] && git rev-parse --is-inside-work-tree &>/dev/null; then
+    BUFFER="git status"
+  fi
+
   # expand aliases
   ! ignore-expansion && zle _expand_alias
 
