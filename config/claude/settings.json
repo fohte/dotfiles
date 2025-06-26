@@ -52,6 +52,7 @@
       "Bash(rg:*)",
       "Bash(task:*)",
       "Bash(terraform fmt)",
+      "Bash(terraform fmt:*)",
       "Bash(touch:*)",
       "Read(~/.claude/CLAUDE.md)",
       "Read(~/Dropbox)",
