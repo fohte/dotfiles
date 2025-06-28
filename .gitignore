@@ -2,3 +2,9 @@
 *.retry
 
 /roles/i3/files/config.d/*.local.conf
+
+# ZDOTDIR is set to ~/.config/zsh, which is symlinked to config/zsh
+# These files are created by zsh in ZDOTDIR but should not be tracked by git
+/config/zsh/.zcompdump*
+/config/zsh/.zsh_history
+/config/zsh/.zsh_sessions/

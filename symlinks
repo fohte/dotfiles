@@ -31,11 +31,8 @@ if match_tag editorconfig; then
 fi
 
 if match_tag zsh; then
-  sym config/zsh/.zshrc ~/.zshrc
-  sym config/zsh/.zshenv ~/.zshenv
-  sym config/zsh/rc ~/.config/zsh/rc
-  sym config/zsh/env ~/.config/zsh/env
-  sym config/zsh/starship.toml ~/.config/starship.toml
+  sym config/zsh/root_zshenv ~/.zshenv
+  sym config/zsh ~/.config/zsh
 fi
 
 if match_tag tmux; then

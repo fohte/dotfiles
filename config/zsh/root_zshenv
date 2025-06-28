@@ -1,0 +1,8 @@
+# Zsh always looks for ~/.zshenv first, so we need this minimal bootstrap file
+# to set ZDOTDIR and redirect zsh to use ~/.config/zsh for all other config files
+
+# Set ZDOTDIR to use ~/.config/zsh for all other zsh config files
+export ZDOTDIR="$HOME/.config/zsh"
+
+# Source the actual .zshenv from ZDOTDIR
+source "$ZDOTDIR/.zshenv"
