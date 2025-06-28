@@ -18,6 +18,15 @@ import_env() {
   import_zsh_config "$ZSH_CONFIG_HOME/env/$1"
 }
 
+# Calculate checksum of zsh config files
+calculate_zsh_config_checksum() {
+  find -L "$ZSH_CONFIG_HOME" -type f \( -name "*.zsh" -o -name ".zshenv" -o -name ".zshrc" \) \
+    ! -name ".zsh_history" \
+    ! -name ".zsh_sessions" \
+    ! -path "*/.zsh_sessions/*" \
+    -exec cat {} \; 2>/dev/null | shasum -a 256 | cut -d' ' -f1
+}
+
 typeset -U path PATH fpath FPATH manpath MANPATH
 
 add_path() {
@@ -86,5 +95,8 @@ import_env 'mise.zsh'
 
 # direnv hook must be loaded after homebrew.zsh because direnv is installed by homebrew
 has 'direnv' && eval "$(direnv hook zsh)"
+
+# Calculate initial checksum of zsh config files
+export ZSH_CONFIG_CHECKSUM=$(calculate_zsh_config_checksum)
 
 [ -f ~/.local/.zshenv ] && source ~/.local/.zshenv

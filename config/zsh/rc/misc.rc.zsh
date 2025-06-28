@@ -26,3 +26,18 @@ zle-line-init zle-keymap-select() {
 }
 zle -N zle-line-init
 zle -N zle-keymap-select
+
+# Auto-reload zsh configuration when files change
+auto_reload_on_config_change() {
+  # Calculate current checksum
+  local current_checksum=$(calculate_zsh_config_checksum)
+
+  # Auto-reload if checksum differs
+  if [[ "$current_checksum" != "$ZSH_CONFIG_CHECKSUM" ]]; then
+    # Show message on current line in dim yellow
+    printf '\e[2;33m✨ zsh config changed, reloading shell...\e[0m\r'
+    exec $SHELL -l
+  fi
+}
+
+precmd_functions+=(auto_reload_on_config_change)
