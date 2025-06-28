@@ -60,7 +60,7 @@ return {
           'steep',
           'tailwindcss',
           'terraformls',
-          'tsserver',
+          'ts_ls',
           'yamlls',
         }),
         {
