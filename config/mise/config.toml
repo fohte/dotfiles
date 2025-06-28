@@ -14,7 +14,7 @@ starship = "1.23.0"
 ripgrep = "14.1.1"
 op = "2.30.0"
 difftastic = "0.63.0"
-uv = "0.7.13"
+uv = "0.7.16"
 
 [settings]
 # disable the idiomatic version file such as Gemfile
