@@ -8,6 +8,8 @@ config.window_background_opacity = 0.9
 -- bell is annoying
 config.audible_bell = 'Disabled'
 
+config.default_prog = { 'zsh', '-c', 'tmux-attach' }
+
 config.keys = {
   -- disable zoom
   { key = '+', mods = 'CTRL|SHIFT', action = wezterm.action.DisableDefaultAssignment },
@@ -76,13 +78,13 @@ end)
 -- Equivalent to POSIX basename(3)
 -- Given "/foo/bar" returns "bar"
 -- Given "c:\\foo\\bar" returns "bar"
-function basename(s)
-  return string.gsub(s, '(.*[/\\])(.*)', '%2')
-end
-
-wezterm.on('format-tab-title', function(tab, tabs, panes, config)
-  return tab.tab_index + 1 .. ' ' .. basename(tab.active_pane.current_working_dir)
-end)
+-- function basename(s)
+--   return string.gsub(s, '(.*[/\\])(.*)', '%2')
+-- end
+--
+-- wezterm.on('format-tab-title', function(tab, tabs, panes, config)
+--   return tab.tab_index + 1 .. ' ' .. basename(tab.active_pane.current_working_dir)
+-- end)
 
 wezterm.on('format-window-title', function(tab, pane, tabs, panes, config)
   if tab.window_id == wezterm.GLOBAL.ghosttext_window_id then
