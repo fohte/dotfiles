@@ -1,17 +1,23 @@
 {
-  "title": "Sticky Shift",
   "rules": [
     {
-      "description": "Left Shift キーを単体で押したときに Ctrl-, (sticky key) を送信する (rev 0.0.3)",
+      "description": "Left Shift キーを単体で押したときに Ctrl-, (sticky key) を送信する (rev: f75049ac207cf705af4b99e7b3c7d8b5)",
       "manipulators": [
         {
-          "type": "basic",
+          "conditions": [
+            {
+              "input_sources": [
+                {
+                  "language": "ja"
+                }
+              ],
+              "type": "input_source_if"
+            }
+          ],
           "from": {
             "key_code": "left_shift",
             "modifiers": {
-              "optional": [
-                "any"
-              ]
+              "optional": ["any"]
             }
           },
           "parameters": {
@@ -23,31 +29,21 @@
               "lazy": true
             }
           ],
+          "to_if_alone": [
+            {
+              "key_code": "comma",
+              "modifiers": ["left_control"]
+            }
+          ],
           "to_if_held_down": [
             {
               "key_code": "left_shift"
             }
           ],
-          "to_if_alone": [
-            {
-              "modifiers": [
-                "left_control"
-              ],
-              "key_code": "comma"
-            }
-          ],
-          "conditions": [
-            {
-              "type": "input_source_if",
-              "input_sources": [
-                {
-                  "language": "ja"
-                }
-              ]
-            }
-          ]
+          "type": "basic"
         }
       ]
     }
-  ]
+  ],
+  "title": "Sticky Shift"
 }
