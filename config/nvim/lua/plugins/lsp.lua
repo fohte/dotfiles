@@ -1,8 +1,14 @@
 local on_attach = function(client, buffer)
+  -- Disable formatting for lua_ls (use stylua via EFM instead)
+  if client.name == 'lua_ls' then
+    client.server_capabilities.documentFormattingProvider = false
+    client.server_capabilities.documentRangeFormattingProvider = false
+  end
+
   local augroup = vim.api.nvim_create_augroup('LspFormatting', { clear = false })
   if client.supports_method('textDocument/formatting') then
+    vim.api.nvim_clear_autocmds({ group = augroup, buffer = buffer })
     vim.api.nvim_create_autocmd('BufWritePre', {
-      vim.api.nvim_clear_autocmds({ group = augroup, buffer = buffer }),
       group = augroup,
       buffer = buffer,
       callback = function()
@@ -28,152 +34,154 @@ return {
       { 'neovim/nvim-lspconfig' },
     },
     config = function()
-      local utils = require('utils')
-      local function create_lsp_setup_function(server_name)
-        return function()
+      -- List of servers to ensure are installed
+      local ensure_installed = {
+        'bashls',
+        'cssls',
+        'efm',
+        'emmet_language_server',
+        'gopls',
+        'jqls',
+        'jsonls',
+        'lua_ls',
+        'mdx_analyzer',
+        'pylsp',
+        'pyright',
+        'solargraph',
+        'steep',
+        'tailwindcss',
+        'terraformls',
+        'ts_ls',
+        'yamlls',
+      }
+
+      -- For mason-lspconfig v2.0.0+, we need to disable automatic_enable
+      -- and manually configure servers
+      require('mason-lspconfig').setup({
+        ensure_installed = ensure_installed,
+        automatic_enable = false, -- Disable automatic enabling to use our custom configs
+      })
+
+      -- Manually set up servers with custom configurations
+      local handlers = {
+        -- Default handler for servers without custom configuration
+        function(server_name)
           require('lspconfig')[server_name].setup({
             on_attach = on_attach,
           })
-        end
-      end
+        end,
 
-      local function create_handlers(server_names)
-        local handlers = {}
-
-        for _, server_name in ipairs(server_names) do
-          handlers[server_name] = create_lsp_setup_function(server_name)
-        end
-
-        return handlers
-      end
-
-      local handlers = utils.mergeTables(
-        create_handlers({
-          'bashls',
-          'cssls',
-          'emmet_language_server',
-          'gopls',
-          'jqls',
-          'jsonls',
-          'mdx_analyzer',
-          'pylsp',
-          'pyright',
-          'solargraph',
-          'steep',
-          'tailwindcss',
-          'terraformls',
-          'ts_ls',
-          'yamlls',
-        }),
-        {
-          ['tailwindcss'] = function()
-            require('lspconfig').tailwindcss.setup({
-              on_attach = on_attach,
-              filetypes = {
-                'javascript.jsx',
-                'typescript.tsx',
+        -- Custom handlers for specific servers
+        ['tailwindcss'] = function()
+          require('lspconfig').tailwindcss.setup({
+            on_attach = on_attach,
+            filetypes = {
+              'javascript.jsx',
+              'typescript.tsx',
+            },
+            init_options = {
+              userLanguages = {
+                ['javascript.jsx'] = 'javascriptreact',
+                ['typescript.tsx'] = 'typescriptreact',
               },
-              init_options = {
-                userLanguages = {
-                  ['javascript.jsx'] = 'javascriptreact',
-                  ['typescript.tsx'] = 'typescriptreact',
+            },
+          })
+        end,
+        ['lua_ls'] = function()
+          require('lspconfig').lua_ls.setup({
+            on_attach = on_attach,
+            settings = {
+              Lua = {
+                diagnostics = {
+                  globals = { 'vim', 'hs' },
+                },
+                -- use stylua
+                format = {
+                  enable = false,
                 },
               },
-            })
-          end,
-          ['lua_ls'] = function()
-            require('lspconfig').lua_ls.setup({
-              settings = {
-                Lua = {
-                  diagnostics = {
-                    globals = { 'vim', 'hs' },
-                  },
-                  -- use stylua
-                  format = {
-                    enable = false,
-                  },
-                },
-              },
+            },
+          })
+        end,
 
-              on_attach = on_attach,
-            })
-          end,
+        ['efm'] = function()
+          local efm_configs = require('user.lsp.efm')
 
-          ['efm'] = function()
-            local efm_configs = require('user.lsp.efm')
+          efm_configs.setup({
+            {
+              languages = { 'javascript', 'typescript', 'typescript.tsx' },
+              linters = { 'eslint' },
+              formatters = { 'eslint', 'prettier' },
+            },
+            {
+              languages = { 'lua' },
+              formatters = { 'stylua' },
+            },
+            {
+              languages = { 'yaml' },
+              formatters = { 'prettier' },
+            },
+            {
+              languages = { 'json', 'json5', 'jsonc' },
+              formatters = { 'prettier' },
+            },
+            {
+              languages = { 'jsonnet' },
+              formatters = { 'jsonnet' },
+            },
+            {
+              languages = { 'markdown', 'review' },
+              linters = { 'textlint' },
+              -- The textlint formatter may not be reflected & 2 blank lines may be added to the end of the file, so it is temporarily disabled
+              -- formatters = { 'textlint' },
+            },
+            {
+              languages = { 'sh', 'bash' },
+              linters = { 'shellcheck' },
+              formatters = { 'shfmt' },
+            },
+            {
+              languages = { 'hcl' },
+              formatters = { 'terraform' },
+            },
+            {
+              languages = { 'yaml.actions' },
+              linters = { 'actionlint' },
+            },
+            {
+              languages = { 'go' },
+              linters = { 'golangci-lint' },
+              formatters = { 'goimports' },
+            },
+            {
+              languages = { 'python' },
+              formatters = { 'ruff' },
+            },
+          })
 
-            efm_configs.setup({
-              {
-                languages = { 'javascript', 'typescript', 'typescript.tsx' },
-                linters = { 'eslint' },
-                formatters = { 'eslint', 'prettier' },
-              },
-              {
-                languages = { 'lua' },
-                formatters = { 'stylua' },
-              },
-              {
-                languages = { 'yaml' },
-                formatters = { 'prettier' },
-              },
-              {
-                languages = { 'json', 'json5', 'jsonc' },
-                formatters = { 'prettier' },
-              },
-              {
-                languages = { 'jsonnet' },
-                formatters = { 'jsonnet' },
-              },
-              {
-                languages = { 'markdown', 'review' },
-                linters = { 'textlint' },
-                -- The textlint formatter may not be reflected & 2 blank lines may be added to the end of the file, so it is temporarily disabled
-                -- formatters = { 'textlint' },
-              },
-              {
-                languages = { 'sh', 'bash' },
-                linters = { 'shellcheck' },
-                formatters = { 'shfmt' },
-              },
-              {
-                languages = { 'hcl' },
-                formatters = { 'terraform' },
-              },
-              {
-                languages = { 'yaml.actions' },
-                linters = { 'actionlint' },
-              },
-              {
-                languages = { 'go' },
-                linters = { 'golangci-lint' },
-                formatters = { 'goimports' },
-              },
-              {
-                languages = { 'python' },
-                formatters = { 'ruff' },
-              },
-            })
+          require('lspconfig').efm.setup({
+            filetypes = efm_configs.filetypes,
+            settings = {
+              rootMarkers = { '.git/' },
+              languages = efm_configs.languages,
+            },
+            init_options = {
+              documentFormatting = true,
+              documentRangeFormatting = true,
+            },
+            on_attach = on_attach,
+          })
+        end,
+      }
 
-            require('lspconfig').efm.setup({
-              filetypes = efm_configs.filetypes,
-              settings = {
-                rootMarkers = { '.git/' },
-                languages = efm_configs.languages,
-              },
-              init_options = {
-                documentFormatting = true,
-                documentRangeFormatting = true,
-              },
-              on_attach = on_attach,
-            })
-          end,
-        }
-      )
-
-      require('mason-lspconfig').setup({
-        ensure_installed = utils.get_keys_from_table(handlers),
-        handlers = handlers,
-      })
+      -- Set up each server
+      for _, server in ipairs(ensure_installed) do
+        if handlers[server] then
+          handlers[server]()
+        else
+          handlers[1](server) -- Use default handler
+        end
+      end
     end,
   },
   {
