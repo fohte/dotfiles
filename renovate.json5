@@ -8,14 +8,10 @@
       customType: 'regex',
       fileMatch: ['config/nvim/lua/plugins/.*\\.lua$'],
       matchStrings: [
-        // Match plugins with version field
-        "\\s*'(?<depName>[^/]+/[^']+)',\\s*\\n\\s*version\\s*=\\s*'(?<currentValue>[^']+)'",
-        // Match plugins with commit field
-        "\\s*'(?<depName>[^/]+/[^']+)',\\s*\\n\\s*commit\\s*=\\s*'(?<currentDigest>[^']+)'",
-        // Match dependencies with version field (for nested tables)
-        "\\s*\\{?\\s*'(?<depName>[^/]+/[^']+)'\\s*,?\\s*\\n\\s*version\\s*=\\s*'(?<currentValue>[^']+)'",
-        // Match dependencies with commit field (for nested tables)
-        "\\s*\\{?\\s*'(?<depName>[^/]+/[^']+)'\\s*,?\\s*\\n\\s*commit\\s*=\\s*'(?<currentDigest>[^']+)'",
+        // Match plugins with version field - more strict pattern
+        "'(?<depName>[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+)',\\s*\\n\\s*version\\s*=\\s*'(?<currentValue>[^']+)'",
+        // Match plugins with commit field - more strict pattern
+        "'(?<depName>[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+)',\\s*\\n\\s*commit\\s*=\\s*'(?<currentDigest>[a-f0-9]+)'",
       ],
       datasourceTemplate: 'github-tags',
     },
