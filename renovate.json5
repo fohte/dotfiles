@@ -17,11 +17,11 @@
       customType: 'regex',
       fileMatch: ['config/nvim/lua/plugins/.*\\.lua$'],
       matchStrings: [
-        // Match plugins with commit field
-        "'(?<depName>[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+)',\\s*\\n\\s*commit\\s*=\\s*'(?<currentDigest>[a-f0-9]+)'",
+        // Match plugins with commit field - use commit as currentValue
+        "'(?<depName>[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+)',\\s*\\n\\s*commit\\s*=\\s*'(?<currentValue>[a-f0-9]+)'",
       ],
-      datasourceTemplate: 'git-refs',
-      currentValueTemplate: 'HEAD',
+      datasourceTemplate: 'git-tags',
+      versioningTemplate: 'git',
     },
   ],
   packageRules: [
