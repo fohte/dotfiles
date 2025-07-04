@@ -1,5 +1,6 @@
 return {
   'stevearc/oil.nvim',
+  commit = '08c2bce8b00fd780fb7999dbffdf7cd174e896fb',
   opts = {},
   dependencies = { 'nvim-tree/nvim-web-devicons' },
   keys = {

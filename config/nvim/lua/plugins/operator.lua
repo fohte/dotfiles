@@ -1,7 +1,9 @@
 return {
   'kana/vim-operator-user',
+  version = '0.1.0',
   {
     'kana/vim-operator-replace',
+    version = '0.0.5',
     dependencies = { 'kana/vim-operator-user' },
     keys = {
       { 'p', '<Plug>(operator-replace)', mode = { 'v' } },

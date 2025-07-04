@@ -45,6 +45,7 @@ end
 
 return {
   'RRethy/nvim-base16',
+  commit = 'aa923daec4e778cd31ccfb0dcf083aff3c442159',
   config = function()
     local utils = require('utils')
 

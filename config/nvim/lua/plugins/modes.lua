@@ -1,5 +1,6 @@
 return {
   'mvllow/modes.nvim',
+  version = 'v0.3.0',
   dependencies = {
     'RRethy/nvim-base16',
   },

@@ -1,7 +1,9 @@
 return {
   'kevinhwang91/nvim-ufo',
+  version = 'v1.5.0',
   dependencies = {
     'kevinhwang91/promise-async',
+    version = 'v1.0.0',
   },
   config = function()
     vim.keymap.set('n', 'zR', require('ufo').openAllFolds)

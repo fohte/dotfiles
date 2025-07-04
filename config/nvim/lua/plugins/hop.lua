@@ -1,5 +1,6 @@
 return {
   'smoka7/hop.nvim',
+  version = 'v2.7.2',
   config = function()
     require('hop').setup({
       keys = 'aoeusnth',

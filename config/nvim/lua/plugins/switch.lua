@@ -1,5 +1,6 @@
 return {
   'AndrewRadev/switch.vim',
+  version = 'v0.3.0',
   init = function()
     vim.g.switch_mapping = '_'
 

@@ -15,12 +15,14 @@ end
 return {
   {
     'williamboman/mason.nvim',
+    version = 'v2.0.0',
     config = function()
       require('mason').setup()
     end,
   },
   {
     'williamboman/mason-lspconfig.nvim',
+    version = 'v2.0.0',
     dependencies = {
       { 'williamboman/mason.nvim' },
       { 'neovim/nvim-lspconfig' },
@@ -176,6 +178,7 @@ return {
   },
   {
     'neovim/nvim-lspconfig',
+    version = 'v2.3.0',
     keys = {
       {
         '<F10>',
@@ -228,11 +231,12 @@ return {
   },
   {
     'creativenull/efmls-configs-nvim',
-    version = 'v1.x.x', -- version is optional, but recommended
+    version = 'v1.9.0',
     dependencies = { 'neovim/nvim-lspconfig' },
   },
   {
     'https://git.sr.ht/~whynothugo/lsp_lines.nvim',
+    version = 'v3.0.0',
     config = function()
       require('lsp_lines').setup()
 

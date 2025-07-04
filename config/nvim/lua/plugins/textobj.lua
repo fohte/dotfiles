@@ -1,5 +1,6 @@
 return {
   'kana/vim-textobj-user',
+  version = '0.7.6',
   {
     'rhysd/vim-textobj-ruby',
     dependencies = { 'kana/vim-textobj-user' },
@@ -7,10 +8,12 @@ return {
   },
   {
     'kana/vim-textobj-indent',
+    version = '0.0.6',
     dependencies = { 'kana/vim-textobj-user' },
   },
   {
     'glts/vim-textobj-comment',
+    version = 'v1.0.0',
     dependencies = { 'kana/vim-textobj-user' },
     keys = {
       { 'i-', '<Plug>(textobj-comment-i)', mode = { 'o', 'x' } },
@@ -35,6 +38,7 @@ return {
   },
   {
     'thinca/vim-textobj-between',
+    version = 'v0.1.0',
     dependencies = { 'kana/vim-textobj-user' },
     init = function()
       vim.g.textobj_between_no_default_key_mappings = 1
@@ -46,6 +50,7 @@ return {
   },
   {
     'kana/vim-textobj-syntax',
+    version = '0.0.2',
     dependencies = { 'kana/vim-textobj-user' },
     init = function()
       vim.g.textobj_syntax_no_default_key_mappings = 1

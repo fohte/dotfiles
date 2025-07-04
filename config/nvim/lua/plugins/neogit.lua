@@ -1,8 +1,11 @@
 return {
   'NeogitOrg/neogit',
+  version = 'v2.0.0',
   dependencies = {
     'nvim-lua/plenary.nvim', -- required
+    version = 'v0.1.4',
     'nvim-telescope/telescope.nvim', -- optional
+    version = '0.1.0',
     'sindrets/diffview.nvim', -- optional
   },
   config = function()
