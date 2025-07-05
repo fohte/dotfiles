@@ -1,7 +1,7 @@
 return {
   {
     'nvim-treesitter/nvim-treesitter',
-    version = 'v0.10.0',
+    commit = '42fc28ba918343ebfd5565147a42a26580579482',
     build = ':TSUpdate',
     event = { 'BufReadPost', 'BufNewFile' },
     dependencies = {

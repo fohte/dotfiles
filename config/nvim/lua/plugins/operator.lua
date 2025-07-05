@@ -1,9 +1,9 @@
 return {
   'kana/vim-operator-user',
-  version = '0.1.0',
+  commit = 'c3dfd41c1ed516b4b901c97562e644de62c367aa',
   {
     'kana/vim-operator-replace',
-    version = '0.0.5',
+    commit = '1345a556a321a092716e149d4765a5e17c0e9f0f',
     dependencies = { 'kana/vim-operator-user' },
     keys = {
       { 'p', '<Plug>(operator-replace)', mode = { 'v' } },

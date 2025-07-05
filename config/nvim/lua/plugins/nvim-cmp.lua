@@ -1,7 +1,7 @@
 return {
   {
     'hrsh7th/nvim-cmp',
-    version = 'v0.0.2',
+    commit = 'b5311ab3ed9c846b585c0c15b7559be131ec4be9',
     event = { 'InsertEnter' },
     config = function()
       local cmp = require('cmp')

@@ -1,6 +1,6 @@
 return {
   'andymass/vim-matchup',
-  version = 'v0.7.3',
+  commit = 'c478d4a72bbf397eff42743198f1939f6a264736',
   event = 'VimEnter',
   config = function()
     vim.g.matchup_matchparen_offscreen = { method = 'popup' }

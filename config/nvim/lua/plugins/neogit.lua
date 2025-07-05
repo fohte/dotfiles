@@ -1,11 +1,11 @@
 return {
   'NeogitOrg/neogit',
-  version = 'v2.0.0',
+  commit = 'e3c148905c334c886453df1490360ebb1a2ba2ed',
   dependencies = {
     'nvim-lua/plenary.nvim', -- required
-    version = 'v0.1.4',
+    commit = '857c5ac632080dba10aae49dba902ce3abf91b35',
     'nvim-telescope/telescope.nvim', -- optional
-    version = '0.1.0',
+    commit = 'b4da76be54691e854d3e0e02c36b0245f945c2c7',
     'sindrets/diffview.nvim', -- optional
   },
   config = function()

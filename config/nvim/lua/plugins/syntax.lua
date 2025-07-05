@@ -4,10 +4,10 @@ return {
   'hashivim/vim-terraform',
   commit = '520498fab16a3a11f2ae1b8cb65e0a1684bc317a',
   'tokorom/vim-review',
-  version = '1.0.1',
+  commit = 'a8a0f5b7ee2d4e9a858d2f2fa13eefd9bad450ff',
   {
     'tpope/vim-rails',
-    version = 'v5.4',
+    commit = 'b0a5c76f86ea214ade36ab0b811e730c3f0add67',
     ft = 'ruby',
   },
 }

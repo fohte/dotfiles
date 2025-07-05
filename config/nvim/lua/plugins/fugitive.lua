@@ -1,4 +1,4 @@
 return {
   'tpope/vim-fugitive',
-  version = 'v3.7',
+  commit = '593f831d6f6d779cbabb70a4d1e6b1b1936a88af',
 }

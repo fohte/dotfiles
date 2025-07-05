@@ -15,14 +15,14 @@ end
 return {
   {
     'williamboman/mason.nvim',
-    version = 'v2.0.0',
+    commit = '8024d64e1330b86044fed4c8494ef3dcd483a67c',
     config = function()
       require('mason').setup()
     end,
   },
   {
     'williamboman/mason-lspconfig.nvim',
-    version = 'v2.0.0',
+    commit = 'c4c84f4521d62de595c0d0f718a9a40c1890c8ce',
     dependencies = {
       { 'williamboman/mason.nvim' },
       { 'neovim/nvim-lspconfig' },
@@ -178,7 +178,7 @@ return {
   },
   {
     'neovim/nvim-lspconfig',
-    version = 'v2.3.0',
+    commit = '6bba673aa8993eceec233be17b42ddfb9540794b',
     keys = {
       {
         '<F10>',
@@ -231,12 +231,12 @@ return {
   },
   {
     'creativenull/efmls-configs-nvim',
-    version = 'v1.9.0',
+    commit = '8d7ede48afa7d0344fa62fefb95132c0dad41e97',
     dependencies = { 'neovim/nvim-lspconfig' },
   },
   {
     'https://git.sr.ht/~whynothugo/lsp_lines.nvim',
-    version = 'v3.0.0',
+    commit = 'a92c755f182b89ea91bd8a6a2227208026f27b4d',
     config = function()
       require('lsp_lines').setup()
 

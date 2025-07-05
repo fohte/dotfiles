@@ -1,6 +1,6 @@
 return {
   'AndrewRadev/switch.vim',
-  version = 'v0.3.0',
+  commit = 'df58397cfa36d2f428ddc2652ba32d1db2af6d02',
   init = function()
     vim.g.switch_mapping = '_'
 

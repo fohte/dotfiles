@@ -1,6 +1,6 @@
 return {
   'haya14busa/vim-asterisk',
-  version = 'v1.0.0',
+  commit = '77e97061d6691637a034258cc415d98670698459',
   config = function()
     vim.g['asterisk#keeppos'] = 1
   end,
