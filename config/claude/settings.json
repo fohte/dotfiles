@@ -68,6 +68,7 @@
       "Bash(terraform fmt:*)",
       "Bash(touch:*)",
       "Read(~/.claude/CLAUDE.md)",
+      "Read(~/.local/share/nvim/lazy)",
       "Read(~/Dropbox)",
       "Read(~/Library/CloudStorage/Dropbox)",
       "Read(~/ghq/**)",
