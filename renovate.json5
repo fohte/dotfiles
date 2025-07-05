@@ -3,33 +3,7 @@
   extends: [
     'github>fohte/renovate-config:base.json5',
   ],
-  customManagers: [
-    {
-      customType: 'regex',
-      fileMatch: ['config/nvim/lua/plugins/.*\\.lua$'],
-      matchStrings: [
-        // Match plugins with version field
-        "'(?<depName>[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+)',\\s*\\n\\s*version\\s*=\\s*'(?<currentValue>[^']+)'",
-      ],
-      datasourceTemplate: 'github-tags',
-    },
-    {
-      customType: 'regex',
-      fileMatch: ['config/nvim/lua/plugins/.*\\.lua$'],
-      matchStrings: [
-        // Match plugins with commit field - use commit as currentValue
-        "'(?<depName>[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+)',\\s*\\n\\s*commit\\s*=\\s*'(?<currentValue>[a-f0-9]+)'",
-      ],
-      datasourceTemplate: 'git-tags',
-      versioningTemplate: 'git',
-    },
-  ],
   packageRules: [
-    {
-      groupName: 'Neovim plugins',
-      matchManagers: ['custom.regex'],
-      matchFiles: ['config/nvim/lua/plugins/**/*.lua'],
-    },
     {
       groupName: 'fzf updates',
       matchPackageNames: ['junegunn/fzf', 'junegunn/fzf/fzf-tmux'],
