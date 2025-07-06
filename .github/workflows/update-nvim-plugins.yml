@@ -2,8 +2,9 @@ name: Update Neovim Plugins
 
 on:
   push:
-    paths:
-      - 'config/nvim/lua/plugins/**/*.lua'
+    # FIXME: for Debug
+    # paths:
+    #   - 'config/nvim/lua/plugins/**/*.lua'
 
 permissions:
   contents: write
