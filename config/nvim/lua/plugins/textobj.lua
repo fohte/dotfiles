@@ -1,8 +1,8 @@
 return {
-  'kana/vim-textobj-user',
-  commit = '41a675ddbeefd6a93664a4dc52f302fe3086a933',
+  { 'kana/vim-textobj-user', commit = '41a675ddbeefd6a93664a4dc52f302fe3086a933' },
   {
     'rhysd/vim-textobj-ruby',
+    commit = 'fb99d918273a65010b3ac4084371a19c34260c66',
     dependencies = { 'kana/vim-textobj-user' },
     ft = 'ruby',
   },
@@ -22,6 +22,7 @@ return {
   },
   {
     'osyo-manga/vim-textobj-multiblock',
+    commit = '670a5ba57d73fcd793f480e262617c6eb0103355',
     dependencies = { 'kana/vim-textobj-user' },
     keys = {
       { 'ib', '<Plug>(textobj-multiblock-i)', mode = { 'o', 'x' } },
@@ -30,10 +31,12 @@ return {
   },
   {
     'osyo-manga/vim-textobj-blockwise',
+    commit = 'c731da12fbd5728a22fb8d3c800b8bcdcbf94da8',
     dependencies = { 'kana/vim-textobj-user' },
   },
   {
     'sgur/vim-textobj-parameter',
+    commit = '201144f19a1a7081033b3cf2b088916dd0bcb98c',
     dependencies = { 'kana/vim-textobj-user' },
   },
   {
