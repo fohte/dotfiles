@@ -23,9 +23,7 @@ jobs:
 
       - uses: jdx/mise-action@v2
         with:
-          install: true
-          working_directory: .mise
-          mise_toml: pre-commit.toml
+          install: false  # Skip upfront install, use auto_install instead
 
       - name: Cache pre-commit
         uses: actions/cache@v4
@@ -40,7 +38,7 @@ jobs:
         continue-on-error: true
         run: |
           pip install pre-commit
-          pre-commit run --all-files
+          mise x -- pre-commit run --all-files
 
       - name: Commit formatted files
         uses: suzuki-shunsuke/commit-action@v0.0.8

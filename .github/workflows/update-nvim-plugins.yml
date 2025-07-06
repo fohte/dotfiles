@@ -29,9 +29,7 @@ jobs:
 
       - uses: jdx/mise-action@v2
         with:
-          install: true
-          working_directory: .mise
-          mise_toml: nvim.toml
+          install: false  # Skip upfront install, use auto_install instead
 
       - name: Cache Neovim plugins
         uses: actions/cache@v4
@@ -44,7 +42,7 @@ jobs:
             ${{ runner.os }}-nvim-plugins-
 
       - name: Sync Neovim plugins
-        run: nvim --headless -c 'Lazy! sync' +q
+        run: mise x -- nvim --headless -c 'Lazy! sync' +q
 
       - name: Commit updated lazy-lock.json
         uses: suzuki-shunsuke/commit-action@v0.0.8
