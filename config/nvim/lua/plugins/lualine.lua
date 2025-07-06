@@ -2,8 +2,9 @@ return {
   'nvim-lualine/lualine.nvim',
   commit = 'a94fc68960665e54408fe37dcf573193c4ce82c9',
   dependencies = {
-    { 'nvim-tree/nvim-web-devicons', commit = '19d6211c78169e78bab372b585b6fb17ad974e82' },
-    { 'RRethy/nvim-base16', commit = 'aa923daec4e778cd31ccfb0dcf083aff3c442159' },
+    'nvim-tree/nvim-web-devicons',
+    commit = '19d6211c78169e78bab372b585b6fb17ad974e82',
+    'RRethy/nvim-base16',
   },
   config = function()
     require('lualine').setup({

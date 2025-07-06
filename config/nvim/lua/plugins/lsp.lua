@@ -1,8 +1,10 @@
-local function on_attach(client, bufnr)
-  if client.name == 'efm' then
-    -- format with prettier on save
+local on_attach = function(client, buffer)
+  local augroup = vim.api.nvim_create_augroup('LspFormatting', { clear = false })
+  if client.supports_method('textDocument/formatting') then
     vim.api.nvim_create_autocmd('BufWritePre', {
-      pattern = { '*.js', '*.ts', '*.jsx', '*.tsx', '*.json', '*.md' },
+      vim.api.nvim_clear_autocmds({ group = augroup, buffer = buffer }),
+      group = augroup,
+      buffer = buffer,
       callback = function()
         vim.lsp.buf.format()
       end,
@@ -29,131 +31,144 @@ return {
       local utils = require('utils')
       local function create_lsp_setup_function(server_name)
         return function()
-          require('lspconfig')[server_name].setup({ on_attach = on_attach })
+          require('lspconfig')[server_name].setup({
+            on_attach = on_attach,
+          })
         end
       end
 
-      local prettier_efm = require('efmls-configs.formatters.prettier')
-      prettier_efm.env = {
-        PRETTIERD_DEFAULT_CONFIG = (vim.loop.os_homedir() .. '/.config/prettier/.prettierrc.yml'),
-      }
+      local function create_handlers(server_names)
+        local handlers = {}
 
-      local handlers = {
-        create_lsp_setup_function,
-        bashls = create_lsp_setup_function('bashls'),
-        efm = function()
-          local languages = {
-            javascript = { prettier_efm },
-            typescript = { prettier_efm },
-            json = { prettier_efm },
-            jsonc = { prettier_efm },
-            json5 = { prettier_efm },
-            markdown = { prettier_efm },
-            ['markdown.mdx'] = { prettier_efm },
-            yaml = { prettier_efm },
-          }
+        for _, server_name in ipairs(server_names) do
+          handlers[server_name] = create_lsp_setup_function(server_name)
+        end
 
-          require('lspconfig').efm.setup({
-            filetypes = vim.tbl_keys(languages),
-            settings = {
-              rootMarkers = { '.git/' },
-              languages = languages,
-            },
-            init_options = {
-              documentFormatting = true,
-              documentRangeFormatting = true,
-            },
-            on_attach = on_attach,
-          })
-        end,
-        emmet_language_server = function()
-          require('lspconfig').emmet_language_server.setup({
-            on_attach = on_attach,
-            filetypes = { 'html', 'erb', 'eruby' },
-          })
-        end,
-        eslint = function()
-          require('lspconfig').eslint.setup({
-            on_attach = function(client, bufnr)
-              -- disable formatting capabilities provided by eslint lsp,
-              -- because we will use prettier via efm instead
-              client.server_capabilities.documentFormattingProvider = false
-              client.server_capabilities.documentRangeFormattingProvider = false
+        return handlers
+      end
 
-              on_attach(client, bufnr)
-            end,
-          })
-        end,
-        jsonls = create_lsp_setup_function('jsonls'),
-        lua_ls = function()
-          require('lspconfig').lua_ls.setup({
-            on_attach = on_attach,
-            settings = {
-              Lua = {
-                runtime = {
-                  version = 'LuaJIT',
-                },
-                diagnostics = {
-                  globals = { 'vim' },
-                },
-                workspace = {
-                  library = vim.api.nvim_get_runtime_file('', true),
-                },
-                telemetry = {
-                  enable = false,
+      local handlers = utils.mergeTables(
+        create_handlers({
+          'bashls',
+          'cssls',
+          'emmet_language_server',
+          'gopls',
+          'jqls',
+          'jsonls',
+          'mdx_analyzer',
+          'pylsp',
+          'pyright',
+          'solargraph',
+          'steep',
+          'tailwindcss',
+          'terraformls',
+          'ts_ls',
+          'yamlls',
+        }),
+        {
+          ['tailwindcss'] = function()
+            require('lspconfig').tailwindcss.setup({
+              on_attach = on_attach,
+              filetypes = {
+                'javascript.jsx',
+                'typescript.tsx',
+              },
+              init_options = {
+                userLanguages = {
+                  ['javascript.jsx'] = 'javascriptreact',
+                  ['typescript.tsx'] = 'typescriptreact',
                 },
               },
-            },
-          })
-        end,
-        nixd = function()
-          require('lspconfig').nixd.setup({
-            on_attach = on_attach,
-            cmd = { 'nixd' },
-            settings = {
-              nixd = {
-                nixpkgs = {
-                  expr = 'import <nixpkgs> { }',
-                },
-                formatting = {
-                  command = { 'nixpkgs-fmt' },
-                },
-                options = {
-                  nixos = {
-                    expr = '(builtins.getFlake ("git+file://" + toString ./.)).nixosConfigurations.k-on.options',
+            })
+          end,
+          ['lua_ls'] = function()
+            require('lspconfig').lua_ls.setup({
+              settings = {
+                Lua = {
+                  diagnostics = {
+                    globals = { 'vim', 'hs' },
                   },
-                  home_manager = {
-                    expr = '(builtins.getFlake ("git+file://" + toString ./.)).homeConfigurations."heineken@k-on".options',
+                  -- use stylua
+                  format = {
+                    enable = false,
                   },
                 },
               },
-            },
-          })
-        end,
-        pylsp = create_lsp_setup_function('pylsp'),
-        pyright = create_lsp_setup_function('pyright'),
-        rnix = create_lsp_setup_function('rnix'),
-        ruby_lsp = function()
-          require('lspconfig').ruby_lsp.setup({
-            on_attach = on_attach,
-            cmd = { vim.fn.expand('~/.rbenv/shims/ruby-lsp') },
-          })
-        end,
-        rust_analyzer = create_lsp_setup_function('rust_analyzer'),
-        sorbet = function()
-          require('lspconfig').sorbet.setup({
-            on_attach = on_attach,
-            cmd = { 'bundle', 'exec', 'srb', 'tc', '--lsp' },
-          })
-        end,
-        tailwindcss = create_lsp_setup_function('tailwindcss'),
-        terraformls = create_lsp_setup_function('terraformls'),
-        tflint = create_lsp_setup_function('tflint'),
-        ['typescript-language-server'] = function()
-          require('lspconfig').ts_ls.setup({ on_attach = on_attach })
-        end,
-        yamlls = create_lsp_setup_function('yamlls'),
-      }
+
+              on_attach = on_attach,
+            })
+          end,
+
+          ['efm'] = function()
+            local efm_configs = require('user.lsp.efm')
+
+            efm_configs.setup({
+              {
+                languages = { 'javascript', 'typescript', 'typescript.tsx' },
+                linters = { 'eslint' },
+                formatters = { 'eslint', 'prettier' },
+              },
+              {
+                languages = { 'lua' },
+                formatters = { 'stylua' },
+              },
+              {
+                languages = { 'yaml' },
+                formatters = { 'prettier' },
+              },
+              {
+                languages = { 'json', 'json5', 'jsonc' },
+                formatters = { 'prettier' },
+              },
+              {
+                languages = { 'jsonnet' },
+                formatters = { 'jsonnet' },
+              },
+              {
+                languages = { 'markdown', 'review' },
+                linters = { 'textlint' },
+                -- The textlint formatter may not be reflected & 2 blank lines may be added to the end of the file, so it is temporarily disabled
+                -- formatters = { 'textlint' },
+              },
+              {
+                languages = { 'sh', 'bash' },
+                linters = { 'shellcheck' },
+                formatters = { 'shfmt' },
+              },
+              {
+                languages = { 'hcl' },
+                formatters = { 'terraform' },
+              },
+              {
+                languages = { 'yaml.actions' },
+                linters = { 'actionlint' },
+              },
+              {
+                languages = { 'go' },
+                linters = { 'golangci-lint' },
+                formatters = { 'goimports' },
+              },
+              {
+                languages = { 'python' },
+                formatters = { 'ruff' },
+              },
+            })
+
+            require('lspconfig').efm.setup({
+              filetypes = efm_configs.filetypes,
+              settings = {
+                rootMarkers = { '.git/' },
+                languages = efm_configs.languages,
+              },
+              init_options = {
+                documentFormatting = true,
+                documentRangeFormatting = true,
+              },
+              on_attach = on_attach,
+            })
+          end,
+        }
+      )
 
       require('mason-lspconfig').setup({
         ensure_installed = utils.get_keys_from_table(handlers),
@@ -172,21 +187,15 @@ return {
         end,
       },
       {
-        'K',
-        function()
-          vim.lsp.buf.hover()
-        end,
-      },
-      {
         'gd',
         function()
           vim.lsp.buf.definition()
         end,
       },
       {
-        'gD',
+        'gy',
         function()
-          vim.lsp.buf.declaration()
+          vim.lsp.buf.type_definition()
         end,
       },
       {
@@ -196,33 +205,21 @@ return {
         end,
       },
       {
-        'go',
-        function()
-          vim.lsp.buf.type_definition()
-        end,
-      },
-      {
         'gr',
         function()
           vim.lsp.buf.references()
         end,
       },
       {
-        'gs',
+        'K',
         function()
-          vim.lsp.buf.signature_help()
+          vim.lsp.buf.hover()
         end,
       },
       {
-        '<F2>',
+        '<F9>',
         function()
           vim.lsp.buf.rename()
-        end,
-      },
-      {
-        '<F3>',
-        function()
-          vim.lsp.buf.code_action()
         end,
       },
     },
@@ -248,7 +245,7 @@ return {
         virtual_text = false,
       })
 
-      vim.keymap.set('', '<Leader>l', require('lsp_lines').toggle, { desc = 'Toggle lsp_lines' })
+      vim.keymap.set('n', '<Leader>ll', require('lsp_lines').toggle, { desc = 'Toggle lsp_lines' })
     end,
   },
 }

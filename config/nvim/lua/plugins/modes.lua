@@ -2,7 +2,7 @@ return {
   'mvllow/modes.nvim',
   commit = 'b156d4e4a7c0c7ea9b5609c5d2741c10b8c1d7f5',
   dependencies = {
-    { 'RRethy/nvim-base16', commit = 'aa923daec4e778cd31ccfb0dcf083aff3c442159' },
+    'RRethy/nvim-base16',
   },
   config = function()
     local colors = require('base16-colorscheme').colors
