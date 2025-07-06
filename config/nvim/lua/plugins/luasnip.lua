@@ -10,27 +10,21 @@ return {
     keys = {
       {
         '<C-w>',
+        mode = { 'i', 's' },
         function()
-          require('luasnip').expand()
+          if require('luasnip').expand_or_jumpable() then
+            require('luasnip').expand_or_jump()
+          end
         end,
-        mode = { 'i' },
-        silent = true,
       },
       {
-        '<Tab>',
-        function()
-          require('luasnip').jump(1)
-        end,
+        '<C-b>',
         mode = { 'i', 's' },
-        silent = false,
-      },
-      {
-        '<S-Tab>',
         function()
-          require('luasnip').jump(-1)
+          if require('luasnip').jumpable(-1) then
+            require('luasnip').jump(-1)
+          end
         end,
-        mode = { 'i', 's' },
-        silent = false,
       },
     },
   },

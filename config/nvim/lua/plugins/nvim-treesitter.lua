@@ -6,11 +6,11 @@ return {
     event = { 'BufReadPost', 'BufNewFile' },
     dependencies = {
       -- automatically close end statements (e.g. end in ruby/lua, fi in bash)
-      'RRethy/nvim-treesitter-endwise',
+      { 'RRethy/nvim-treesitter-endwise', commit = 'd6cbb83307d516ec076d17c9a33d704ef626ee8c' },
 
       -- automatically set the commentstring based on the current context
       -- this plugin is used to determine the comment character in comment.nvim
-      'JoosepAlviste/nvim-ts-context-commentstring',
+      { 'JoosepAlviste/nvim-ts-context-commentstring', commit = '1b212c2eee76d787bbea6aa5e92a2b534e7b4f8f' },
     },
     config = function()
       require('nvim-treesitter.configs').setup({
@@ -19,28 +19,30 @@ return {
           'javascript',
           'json',
           'json5',
-          'jsonnet',
+          'jsonc',
           'lua',
           'markdown',
           'python',
           'ruby',
-          'tsx',
+          'rust',
           'typescript',
           'vim',
-          'vimdoc',
           'yaml',
+          'nix',
+          'terraform',
+          'hcl',
+          'toml',
+          'tsx',
+          'regex',
+          'markdown_inline',
+          'comment',
         },
-        highlight = { enable = true, disable = {} },
+        highlight = { enable = true },
+        incremental_selection = { enable = false },
+        indent = { enable = true },
         endwise = { enable = true },
-        context = { enable = true },
+        ts_context_commentstring = { enable = true },
       })
-
-      -- workaround support zsh syntax
-      -- ref: https://github.com/nvim-treesitter/nvim-treesitter/issues/655#issuecomment-1470096879
-      vim.treesitter.language.register('bash', 'zsh')
-
-      -- use treesitter markdown parser with Octo.nvim buffers
-      vim.treesitter.language.register('markdown', 'octo')
     end,
   },
 }
