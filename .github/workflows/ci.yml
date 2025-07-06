@@ -50,3 +50,29 @@ jobs:
       - name: Fail if pre-commit failed
         if: steps.pre-commit.conclusion == 'failure'
         run: exit 1
+
+  nvim-plugins:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy configs
+        run: ./scripts/deploy --tags mise,nvim
+
+      - uses: jdx/mise-action@v2
+        with:
+          install: true
+
+      - name: Cache Neovim plugins
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/nvim/lazy
+            ~/.cache/nvim
+          key: ${{ runner.os }}-nvim-plugins-${{ hashFiles('config/nvim/lua/plugins/**/*.lua') }}
+          restore-keys: |
+            ${{ runner.os }}-nvim--plugins-
+
+      - name: Sync Neovim plugins
+        run: nvim --headless -c 'Lazy! sync' +q
