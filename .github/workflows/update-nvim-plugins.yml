@@ -1,0 +1,53 @@
+name: Update Neovim Plugins
+
+on:
+  push:
+    paths:
+      - 'config/nvim/lua/plugins/**/*.lua'
+
+permissions:
+  contents: write
+
+jobs:
+  update-plugins:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Deploy Neovim config
+        run: ./scripts/deploy --tags nvim
+
+      - uses: jdx/mise-action@v2
+        with:
+          install: true
+
+      - name: Cache Neovim plugins
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/nvim/lazy
+            ~/.cache/nvim
+          key: ${{ runner.os }}-nvim-plugins-${{ hashFiles('config/nvim/lua/plugins/**/*.lua') }}
+          restore-keys: |
+            ${{ runner.os }}-nvim-plugins-
+
+      - name: Sync Neovim plugins
+        run: nvim --headless -c 'Lazy! sync' +q
+
+      - name: Commit updated lazy-lock.json
+        uses: suzuki-shunsuke/commit-action@v0.0.8
+        with:
+          commit_message: 'chore: update lazy-lock.json'
+          workflow: deny
+          github_token: ${{ steps.app-token.outputs.token }}
+          file_pattern: config/nvim/lazy-lock.json
