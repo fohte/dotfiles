@@ -5,6 +5,8 @@ pre-commit = "4.2.0"
 shellcheck = "0.10.0"
 shfmt = "3.11.0"
 stylua = "2.1.0"
+jsonnet = "0.20.0"
+jq = "1.7.1"
 
 # Required for CI (update-nvim-plugins job)
 neovim = "0.11.2"

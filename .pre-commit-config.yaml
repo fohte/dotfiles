@@ -15,27 +15,27 @@ repos:
 
       - id: format-bttpreset
         name: '✨ [bettertouchtool] format bttpreset'
-        entry: bash -c 'bun x prettier --parser json -w config/bettertouchtool/default.bttpreset && git add -u'
+        entry: bash -c 'mise x -- bun x prettier --parser json -w config/bettertouchtool/default.bttpreset && git add -u'
         language: system
         files: ^config/bettertouchtool/default\.bttpreset$
 
-      # Using mise-managed tools (see: config/mise/config.toml)
-      - id: shfmt # shfmt package in mise config
+      # Using mise-managed tools with lazy install
+      - id: shfmt
         name: '🔧 shfmt'
-        entry: shfmt -w
+        entry: mise x -- shfmt -w
         language: system
         types: [shell]
         exclude: \.(zsh|zshenv|zshrc)$
 
-      - id: stylua # stylua package in mise config
+      - id: stylua
         name: '🔧 stylua'
-        entry: stylua
+        entry: mise x -- stylua
         language: system
         types: [lua]
 
-      - id: shellcheck # shellcheck package in mise config
+      - id: shellcheck
         name: '🔍 shellcheck'
-        entry: shellcheck
+        entry: mise x -- shellcheck
         language: system
         types: [shell]
         exclude: \.(zsh|zshenv|zshrc)$
