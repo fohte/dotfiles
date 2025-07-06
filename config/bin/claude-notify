@@ -19,6 +19,17 @@ json_input=$(cat)
 title=$(echo "$json_input" | jq -r '.title // "Claude Code"')
 message=$(echo "$json_input" | jq -r '.message // "Notification"')
 
+# Get tmux session name if available in environment
+tmux_session=""
+if [ -n "${TMUX:-}" ]; then
+  tmux_session=$(tmux display-message -p '#S')
+fi
+
+# Add tmux session to title if found
+if [ -n "$tmux_session" ]; then
+  title="$title [$tmux_session]"
+fi
+
 # Escape special characters for AppleScript
 # Use printf to handle escaping more reliably
 title_escaped=$(printf '%s' "$title" | sed 's/\\/\\\\/g; s/"/\\"/g')
