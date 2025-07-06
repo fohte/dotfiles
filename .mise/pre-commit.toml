@@ -1,11 +1,7 @@
 [tools]
+# Tools required for pre-commit hooks
 "npm:bun" = "1.2.18"
-
-# Required for pre-commit hooks
 pre-commit = "4.2.0"
 shellcheck = "0.10.0"
 shfmt = "3.11.0"
 stylua = "2.1.0"
-
-# Required for CI
-neovim = "0.11.2"

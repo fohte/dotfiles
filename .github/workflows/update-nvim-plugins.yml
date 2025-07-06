@@ -30,6 +30,8 @@ jobs:
       - uses: jdx/mise-action@v2
         with:
           install: true
+          working_directory: .mise
+          mise_toml: nvim.toml
 
       - name: Cache Neovim plugins
         uses: actions/cache@v4

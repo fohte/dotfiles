@@ -24,6 +24,8 @@ jobs:
       - uses: jdx/mise-action@v2
         with:
           install: true
+          working_directory: .mise
+          mise_toml: pre-commit.toml
 
       - name: Cache pre-commit
         uses: actions/cache@v4
