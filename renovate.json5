@@ -9,12 +9,11 @@
       fileMatch: ['config/nvim/lua/plugins/.*\\.lua$'],
       matchStrings: [
         // Match plugin format: 'author/repo', commit = 'hash'
-        "'(?<depName>[\\w-]+/[\\w.-]+)'[^}]*?commit\\s*=\\s*'(?<currentDigest>[a-f0-9]{40})'",
+        "'(?<depName>[\\w-]+/[\\w.-]+)'[^}]*?commit\\s*=\\s*'(?<currentValue>[a-f0-9]{40})'",
       ],
-      datasourceTemplate: 'git-refs',
-      lookupNameTemplate: 'https://github.com/{{{depName}}}',
-      currentValueTemplate: 'master',
+      datasourceTemplate: 'github-commits',
       depTypeTemplate: 'nvim-plugin',
+      extractVersionTemplate: '^(?<version>.*)$',
     },
   ],
   packageRules: [
@@ -39,15 +38,20 @@
     {
       description: 'Group Neovim plugin updates',
       groupName: 'neovim plugins',
-      matchManagers: ['regex'],
+      matchManagers: ['custom.regex'],
       matchDepTypes: ['nvim-plugin'],
       schedule: ['after 9am on saturday'],
-      digest: {
-        automerge: false,
-        prBodyNotes: [
-          'After merging, the update-nvim-plugins workflow will automatically sync lazy-lock.json.',
-        ],
-      },
+      automerge: false,
+      prBodyNotes: [
+        'After merging, the update-nvim-plugins workflow will automatically sync lazy-lock.json.',
+      ],
+    },
+    // Ignore non-GitHub plugin repositories
+    {
+      matchManagers: ['custom.regex'],
+      matchDepTypes: ['nvim-plugin'],
+      matchPackagePatterns: ['^https://'],
+      enabled: false,
     },
   ],
 }
