@@ -8,12 +8,11 @@
       customType: 'regex',
       fileMatch: ['config/nvim/lua/plugins/.*\\.lua$'],
       matchStrings: [
-        // Match simple plugin format: 'author/repo', commit = 'hash'
-        "'(?<depName>[^']+/[^']+)'[^}]*commit\\s*=\\s*'(?<currentDigest>[a-f0-9]{40})'",
-        // Match plugin format in dependencies: { 'author/repo', commit = 'hash' }
-        "\\{\\s*'(?<depName>[^']+/[^']+)'[^}]*commit\\s*=\\s*'(?<currentDigest>[a-f0-9]{40})'",
+        // Match plugin format: 'author/repo', commit = 'hash'
+        "'(?<depName>[\\w-]+/[\\w.-]+)'[^}]*?commit\\s*=\\s*'(?<currentDigest>[a-f0-9]{40})'",
       ],
-      datasourceTemplate: 'github-tags',
+      datasourceTemplate: 'git-refs',
+      lookupNameTemplate: 'https://github.com/{{{depName}}}',
       currentValueTemplate: 'master',
       depTypeTemplate: 'nvim-plugin',
     },
