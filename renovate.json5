@@ -3,6 +3,10 @@
   extends: [
     'github>fohte/renovate-config:base.json5',
   ],
+  // Note: Renovate's support for tracking Git commit updates is limited.
+  // The configuration below will detect plugins but may not automatically
+  // find newer commits. Consider using the update-nvim-plugins workflow
+  // for reliable plugin updates.
   customManagers: [
     {
       customType: 'regex',
@@ -11,11 +15,10 @@
         // Match plugin format: 'author/repo', commit = 'hash'
         "'(?<depName>[\\w-]+/[\\w.-]+)'[^}]*?commit\\s*=\\s*'(?<currentDigest>[a-f0-9]{40})'",
       ],
-      datasourceTemplate: 'git-refs',
-      packageNameTemplate: 'https://github.com/{{{depName}}}',
+      datasourceTemplate: 'github-commits',
       depTypeTemplate: 'nvim-plugin',
-      // Look for updates on the default branch
-      currentValueTemplate: 'HEAD',
+      currentValueTemplate: 'master',
+      extractVersionTemplate: '^(?<version>.*)$',
     },
   ],
   packageRules: [
