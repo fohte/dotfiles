@@ -15,10 +15,10 @@
         // Match plugin format: 'author/repo', commit = 'hash'
         "'(?<depName>[\\w-]+/[\\w.-]+)'[^}]*?commit\\s*=\\s*'(?<currentDigest>[a-f0-9]{40})'",
       ],
-      datasourceTemplate: 'github-commits',
+      datasourceTemplate: 'git-refs',
+      depNameTemplate: 'https://github.com/{{{depName}}}.git',
       depTypeTemplate: 'nvim-plugin',
       currentValueTemplate: 'master',
-      extractVersionTemplate: '^(?<version>.*)$',
     },
   ],
   packageRules: [
