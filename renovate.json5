@@ -9,13 +9,12 @@
       fileMatch: ['config/nvim/lua/plugins/.*\\.lua$'],
       matchStrings: [
         // Match plugin format: 'author/repo', commit = 'hash'
-        "'(?<depName>[\\w-]+/[\\w.-]+)'[^}]*?commit\\s*=\\s*'(?<currentDigest>[a-f0-9]{40})'",
+        "'(?<depName>[\\w-]+/[\\w.-]+)'[^}]*?commit\\s*=\\s*'(?<currentValue>[a-f0-9]{40})'",
       ],
-      datasourceTemplate: 'github-tags',
+      datasourceTemplate: 'git-tags',
+      packageNameTemplate: 'https://github.com/{{{depName}}}.git',
       depTypeTemplate: 'nvim-plugin',
-      currentValueTemplate: 'HEAD',
-      // Version pattern to match any git ref
-      versioningTemplate: 'git',
+      versioningTemplate: 'loose',
     },
   ],
   packageRules: [
@@ -43,17 +42,10 @@
       matchManagers: ['custom.regex'],
       matchDepTypes: ['nvim-plugin'],
       schedule: ['after 9am on saturday'],
-      automerge: false,
       prBodyNotes: [
+        'Note: Renovate has limited support for commit-based updates.',
         'After merging, the update-nvim-plugins workflow will automatically sync lazy-lock.json.',
       ],
-    },
-    // Ignore non-GitHub plugin repositories
-    {
-      matchManagers: ['custom.regex'],
-      matchDepTypes: ['nvim-plugin'],
-      matchPackagePatterns: ['^https://'],
-      enabled: false,
     },
   ],
 }
