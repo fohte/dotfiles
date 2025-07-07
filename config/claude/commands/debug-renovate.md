@@ -2,7 +2,38 @@
 
 Test Renovate configuration changes locally using the `renovate-dryrun` command. This wrapper script runs Renovate in dry-run mode on the current repository and provides formatted output of what updates would be created.
 
-## 1. Basic usage
+## 1. Validate configuration
+
+Before running Renovate, validate your configuration file syntax:
+
+```bash
+# Validate renovate.json5 in current directory
+npx --package renovate -c 'renovate-config-validator renovate.json5'
+```
+
+This checks for:
+- JSON/JSON5 syntax errors
+- Invalid configuration options
+- Type mismatches in configuration values
+- Deprecated options
+- Config migrations needed
+
+Example output:
+```
+INFO: Validating renovate.json5
+INFO: Config validated successfully
+```
+
+If migrations are needed:
+```
+INFO: Validating renovate.json5
+WARN: Config migration necessary
+      "oldConfig": { ... }
+      "newConfig": { ... }
+INFO: Config validated successfully
+```
+
+## 2. Basic usage
 
 Run from inside a git repository:
 
@@ -12,7 +43,7 @@ renovate-dryrun --token $GH_TOKEN
 
 **Important**: Use `$GH_TOKEN` environment variable, not `$GITHUB_TOKEN`.
 
-## 2. Output format
+## 3. Output format
 
 Shows proposed updates in this format:
 ```
@@ -23,7 +54,7 @@ Shows proposed updates in this format:
   packageFile: terraform/tfaction/main.tf
 ```
 
-## 3. Common usage patterns
+## 4. Common usage patterns
 
 ### Test configuration changes
 ```bash
