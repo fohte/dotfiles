@@ -25,14 +25,6 @@ jobs:
         with:
           install: false  # Skip upfront install, use auto_install instead
 
-      - name: Cache pre-commit
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pre-commit-
-
       - name: Run pre-commit hooks
         id: pre-commit
         continue-on-error: true
