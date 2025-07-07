@@ -9,12 +9,13 @@
       fileMatch: ['config/nvim/lua/plugins/.*\\.lua$'],
       matchStrings: [
         // Match plugin format: 'author/repo', commit = 'hash'
-        "'(?<depName>[\\w-]+/[\\w.-]+)'[^}]*?commit\\s*=\\s*'(?<currentValue>[a-f0-9]{40})'",
+        "'(?<depName>[\\w-]+/[\\w.-]+)'[^}]*?commit\\s*=\\s*'(?<currentDigest>[a-f0-9]{40})'",
       ],
-      datasourceTemplate: 'git-tags',
-      packageNameTemplate: 'https://github.com/{{{depName}}}.git',
+      datasourceTemplate: 'git-refs',
+      packageNameTemplate: 'https://github.com/{{{depName}}}',
       depTypeTemplate: 'nvim-plugin',
-      versioningTemplate: 'loose',
+      // Look for updates on the default branch
+      currentValueTemplate: 'HEAD',
     },
   ],
   packageRules: [
