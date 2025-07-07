@@ -45,10 +45,6 @@
       matchManagers: ['custom.regex'],
       matchDepTypes: ['nvim-plugin'],
       schedule: ['after 9am on saturday'],
-      prBodyNotes: [
-        'Note: Renovate has limited support for commit-based updates.',
-        'After merging, the update-nvim-plugins workflow will automatically sync lazy-lock.json.',
-      ],
     },
   ],
 }
