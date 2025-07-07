@@ -3,6 +3,21 @@
   extends: [
     'github>fohte/renovate-config:base.json5',
   ],
+  customManagers: [
+    {
+      customType: 'regex',
+      fileMatch: ['config/nvim/lua/plugins/.*\\.lua$'],
+      matchStrings: [
+        // Match simple plugin format: 'author/repo', commit = 'hash'
+        "'(?<depName>[^']+/[^']+)'[^}]*commit\\s*=\\s*'(?<currentDigest>[a-f0-9]{40})'",
+        // Match plugin format in dependencies: { 'author/repo', commit = 'hash' }
+        "\\{\\s*'(?<depName>[^']+/[^']+)'[^}]*commit\\s*=\\s*'(?<currentDigest>[a-f0-9]{40})'",
+      ],
+      datasourceTemplate: 'github-tags',
+      currentValueTemplate: 'master',
+      depTypeTemplate: 'nvim-plugin',
+    },
+  ],
   packageRules: [
     {
       groupName: 'fzf updates',
@@ -20,6 +35,20 @@
       matchPackageNames: ['eza-community/eza'],
       matchNewValue: ['v0.21.4'],
       enabled: false,
+    },
+    // Neovim plugin updates
+    {
+      description: 'Group Neovim plugin updates',
+      groupName: 'neovim plugins',
+      matchManagers: ['regex'],
+      matchDepTypes: ['nvim-plugin'],
+      schedule: ['after 9am on saturday'],
+      digest: {
+        automerge: false,
+        prBodyNotes: [
+          'After merging, the update-nvim-plugins workflow will automatically sync lazy-lock.json.',
+        ],
+      },
     },
   ],
 }
