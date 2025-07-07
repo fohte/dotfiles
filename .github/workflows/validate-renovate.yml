@@ -4,11 +4,11 @@ on:
   push:
     paths:
       - .github/workflows/validate-renovate.yml
-      - renovate.json
+      - renovate.json5
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npx --package renovate -c 'renovate-config-validator renovate.json --strict'
+      - run: npx --package renovate -c 'renovate-config-validator renovate.json5 --strict'
