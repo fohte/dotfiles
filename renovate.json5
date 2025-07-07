@@ -3,10 +3,9 @@
   extends: [
     'github>fohte/renovate-config:base.json5',
   ],
-  // Note: Renovate's support for tracking Git commit updates is limited.
-  // The configuration below will detect plugins but may not automatically
-  // find newer commits. Consider using the update-nvim-plugins workflow
-  // for reliable plugin updates.
+  // Custom manager for Neovim plugins that use commit hashes.
+  // This tracks the latest commits on the master branch and creates PRs when updates are available.
+  // After merging, the update-nvim-plugins workflow will sync lazy-lock.json.
   customManagers: [
     {
       customType: 'regex',
