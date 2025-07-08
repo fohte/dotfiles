@@ -122,7 +122,11 @@ $info | with_entries(.value += $summary[.key]) | map(
 "[\(.branchName)] \(.prTitle) (automerge: \(.automerge))\n" +
   (.upgrades | map(
     "  depName: \(.depName)\n" +
-    "  version: \(.currentVersion) -> \(.newVersion)\n" +
+    (if .datasource == "git-refs" then
+      "  digest: \(.currentDigest[0:7] // "null") -> \(.newDigest[0:7] // "null")\n"
+    else
+      "  version: \(.currentVersion // "null") -> \(.newVersion // "null")\n"
+    end) +
     "  datasource: \(.datasource)\n" +
     "  packageFile: \(.packageFile)\n"
   ) | join("\n"))
@@ -147,7 +151,7 @@ $package_files | to_entries | map(
     "  \(.packageFile)\n" +
     (.deps | map(
       select((.updates | length == 0) and (has("skipReason") | not)) |
-      "    \(.depName) \(if .currentVersien != null then .currentVersion else .currentValue end)"
+      "    \(.depName) \(if .currentVersion != null then .currentVersion else .currentValue end)"
     ) | join("\n"))
   ) | join("\n\n"))
 ) | join("\n\n")
