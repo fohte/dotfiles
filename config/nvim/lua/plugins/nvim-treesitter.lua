@@ -10,7 +10,7 @@ return {
 
       -- automatically set the commentstring based on the current context
       -- this plugin is used to determine the comment character in comment.nvim
-      { 'JoosepAlviste/nvim-ts-context-commentstring', commit = '1b212c2eee76d787bbea6aa5e92a2b534e7b4f8f' },
+      { 'JoosepAlviste/nvim-ts-context-commentstring', commit = '1b212c2eee76d787bbea6aa5e92a2b534e7b4f8f' }, -- renovate: branch=main
     },
     config = function()
       require('nvim-treesitter.configs').setup({

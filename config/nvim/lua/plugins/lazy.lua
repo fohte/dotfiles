@@ -1,4 +1,4 @@
 return {
   'folke/lazy.nvim',
-  commit = '6c3bda4aca61a13a9c63f1c1d1b16b9d3be90d7a',
+  commit = '6c3bda4aca61a13a9c63f1c1d1b16b9d3be90d7a', -- renovate: branch=main
 }

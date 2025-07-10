@@ -1,7 +1,7 @@
 return {
   {
     'hrsh7th/nvim-cmp',
-    commit = 'b5311ab3ed9c846b585c0c15b7559be131ec4be9',
+    commit = 'b5311ab3ed9c846b585c0c15b7559be131ec4be9', -- renovate: branch=main
     event = { 'InsertEnter' },
     config = function()
       local cmp = require('cmp')
@@ -110,7 +110,7 @@ return {
       { 'hrsh7th/cmp-path', commit = 'c6635aae33a50d6010bf1aa756ac2398a2d54c32' },
       {
         'petertriho/cmp-git',
-        commit = 'b24309c386c9666c549a1abaedd4956541676d06',
+        commit = 'b24309c386c9666c549a1abaedd4956541676d06', -- renovate: branch=main
         config = function()
           require('cmp_git').setup({
             github = {
