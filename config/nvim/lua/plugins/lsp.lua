@@ -186,7 +186,7 @@ return {
   },
   {
     'neovim/nvim-lspconfig',
-    commit = '6bba673aa8993eceec233be17b42ddfb9540794b',
+    commit = '6bba673aa8993eceec233be17b42ddfb9540794b', -- renovate: branch=master
     keys = {
       {
         '<F10>',
@@ -244,7 +244,7 @@ return {
   },
   {
     'https://git.sr.ht/~whynothugo/lsp_lines.nvim',
-    commit = 'a92c755f182b89ea91bd8a6a2227208026f27b4d',
+    commit = 'a92c755f182b89ea91bd8a6a2227208026f27b4d', -- renovate: branch=master
     config = function()
       require('lsp_lines').setup()
 

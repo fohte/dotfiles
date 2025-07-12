@@ -1,6 +1,6 @@
 return {
   'haya14busa/vim-asterisk',
-  commit = '77e97061d6691637a034258cc415d98670698459',
+  commit = '77e97061d6691637a034258cc415d98670698459', -- renovate: branch=master
   config = function()
     vim.g['asterisk#keeppos'] = 1
   end,
