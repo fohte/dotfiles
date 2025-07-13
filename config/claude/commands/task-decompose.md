@@ -12,14 +12,9 @@ First, run `~/.claude/commands/task-analyze.md` if you haven't already, then ass
 - Estimated effort for each part
 - Whether tasks can be done in parallel
 
-## 2. Choose decomposition strategy
+## 2. Default strategy: Use TODOs
 
-### For simple tasks (use TODOs)
-
-When tasks are:
-- Small and sequential
-- All part of a single coherent change
-- Can be completed in one work session
+**Always start with TODOs first**. Sub-tasks can be created later if needed.
 
 Update the task body with TODOs:
 ```bash
@@ -40,102 +35,83 @@ task view <task-number> | jq -r '.body' > .claude/tmp/task-<task-number>-body.md
 task edit <task-number> --body "$(cat .claude/tmp/task-<task-number>-body.md)"
 ```
 
-### For complex tasks (use sub-tasks)
+For complex tasks, create nested TODOs:
+```markdown
+## TODOs
 
-When tasks are:
-- Large and independent
-- Require different expertise
-- Can be worked on in parallel
-- Need separate tracking
+- [ ] 大きなタスク1
+  - [ ] サブタスク1-1
+  - [ ] サブタスク1-2
+  - [ ] サブタスク1-3
+- [ ] 大きなタスク2
+  - [ ] サブタスク2-1
+  - [ ] サブタスク2-2
+```
 
-## 3. Create sub-tasks for complex work
+## 3. (Optional) Create sub-tasks later if needed
 
-For each major component, create a sub-task:
+**Note**: Sub-tasks should only be created when:
+- A TODO item becomes too large and needs independent tracking
+- Multiple people need to work on different parts
+- A specific part needs its own discussion thread
+
+If you later decide a TODO needs to be a sub-task:
 
 ```bash
-# Create a new sub-task
+# Create a new sub-task from a TODO item
 task create \
-  --title "<サブタスクのタイトル>" \
+  --title "<TODOから抽出したタイトル>" \
   --body "## Why
 
 - from: https://github.com/fohte/tasks/issues/<parent-number>
-
-<親タスクからの関連情報>
+- <このTODOを独立させる理由>
 
 ## What
 
 <具体的なタスクの説明>
-<何をもって完了とするか>
 
 ### TODOs
 
-- [ ] ...
+- [ ] <詳細なステップ>
 "
-```
 
-## 4. Link sub-tasks to parent using GitHub sub-issues
-
-After creating each sub-task, link it to the parent using the sub-issues feature:
-
-```bash
-# Add sub-task to parent issue
+# Link to parent
 task add-sub <parent-number> <sub-task-number>
+
+# Update parent task's TODO to reference the sub-task
+# - [ ] 元のTODO → - [ ] 元のTODO (→ #<sub-task-number>)
 ```
 
-You can also view the hierarchy:
+## 4. Save decomposition for reference
+
+Save the TODO structure to `.claude/tmp/task-<number>-todos.md` for future reference:
 
 ```bash
-# View the task hierarchy
-task tree <parent-number>
-```
-
-## 5. Create tracking structure
-
-Save the decomposition plan to `.claude/tmp/task-<number>-decomposition.md`:
-
-```markdown
-# タスク分解: Task #<number>
-
-## 戦略: <checklist|sub-tasks|mixed>
-
-## タスク内訳
-
-### タスク 1: <名前>
-- 説明: <何をするか>
-- タイプ: <checklist-item|sub-task>
-- タスク番号: <#number if sub-task>
-- 依存関係: <なし|リスト>
-- 見積もり工数: <小|中|大>
-
-### タスク 2: <名前>
-...
-
-## 実行順序
-1. <最初に行うべきタスク>
-2. <次のタスク>
-...
-
-## 備考
-<特別な考慮事項>
+# Extract just the TODOs section
+task view <number> | jq -r '.body' | sed -n '/## TODOs/,$p' > .claude/tmp/task-<number>-todos.md
 ```
 
 ## Best practices
 
-- Keep subtask titles descriptive but concise (in Japanese)
-- Don't over-decompose - aim for 3-7 subtasks
-- Consider dependencies when ordering tasks
-- Update parent task when sub-tasks are completed
+- Start with TODOs, create issues only when necessary
+- Keep TODO items actionable and specific (in Japanese)
+- Use nested TODOs for logical grouping
+- Don't over-decompose - aim for 3-7 main TODO items
+- Update TODOs as work progresses (mark completed, add new ones)
 - Write all descriptions and comments in Japanese
 
 ## Output example
 ```
-タスク #123 を分解しました。
+タスク #123 のTODOリストを更新しました。
 
-#123 - 認証システムの実装
-├── **#124 - JWTトークン生成の実装** (New)
-├── #125 - ログイン/ログアウトエンドポイントの作成
-├── **#126 - 認証ミドルウェアの追加** (New)
-└── #127 - フロントエンド認証フローの更新
+## TODOs
+- [ ] JWTトークン生成の実装
+  - [ ] JWT ライブラリの選定
+  - [ ] トークン生成関数の実装
+  - [ ] テストの作成
+- [ ] ログイン/ログアウトエンドポイントの作成
+- [ ] 認証ミドルウェアの追加
+- [ ] フロントエンド認証フローの更新
 
-分解計画は .claude/tmp/task-123-decomposition.md に保存されました。
+TODOリストは .claude/tmp/task-123-todos.md に保存されました。
 ```
