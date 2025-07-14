@@ -104,10 +104,10 @@ return {
       })
     end,
     dependencies = {
-      { 'hrsh7th/cmp-buffer', commit = 'b74fab3656eea9de20a9b8116afa3cfc4ec09657' }, -- renovate: branch=master
-      { 'hrsh7th/cmp-cmdline', commit = 'd126061b624e0af6c3a556428712dd4d4194ec6d' }, -- renovate: branch=master
-      { 'hrsh7th/cmp-nvim-lsp', commit = 'a8912b88ce488f411177fc8aed358b04dc246d7b' }, -- renovate: branch=master
-      { 'hrsh7th/cmp-path', commit = 'c6635aae33a50d6010bf1aa756ac2398a2d54c32' }, -- renovate: branch=master
+      { 'hrsh7th/cmp-buffer', commit = 'b74fab3656eea9de20a9b8116afa3cfc4ec09657' }, -- renovate: branch=main
+      { 'hrsh7th/cmp-cmdline', commit = 'd126061b624e0af6c3a556428712dd4d4194ec6d' }, -- renovate: branch=main
+      { 'hrsh7th/cmp-nvim-lsp', commit = 'a8912b88ce488f411177fc8aed358b04dc246d7b' }, -- renovate: branch=main
+      { 'hrsh7th/cmp-path', commit = 'c6635aae33a50d6010bf1aa756ac2398a2d54c32' }, -- renovate: branch=main
       {
         'petertriho/cmp-git',
         commit = 'b24309c386c9666c549a1abaedd4956541676d06', -- renovate: branch=main

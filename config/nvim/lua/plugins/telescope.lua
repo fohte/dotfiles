@@ -3,7 +3,7 @@ return {
   commit = 'b4da76be54691e854d3e0e02c36b0245f945c2c7', -- renovate: branch=master
   dependencies = {
     { 'nvim-lua/plenary.nvim', commit = '857c5ac632080dba10aae49dba902ce3abf91b35' }, -- renovate: branch=master
-    { 'nvim-telescope/telescope-fzf-native.nvim', commit = '1f08ed60cafc8f6168b72b80be2b2ea149813e55', build = 'make' }, -- renovate: branch=master
+    { 'nvim-telescope/telescope-fzf-native.nvim', commit = '1f08ed60cafc8f6168b72b80be2b2ea149813e55', build = 'make' }, -- renovate: branch=main
   },
   keys = {
     {
