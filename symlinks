@@ -13,6 +13,10 @@ if match_tag git; then
   is_wsl && sym config/git/wsl.conf ~/.config/git/os.conf
 fi
 
+if match_tag gh; then
+  sym config/gh/config.yml ~/.config/gh/config.yml
+fi
+
 if match_tag op; then
   is_macos && sym /Applications/1Password.app/Contents/MacOS/op-ssh-sign ~/.local/bin/op-ssh-sign
   is_wsl && sym "$USERPROFILE"/AppData/Local/1Password/app/8/op-ssh-sign-wsl ~/.local/bin/op-ssh-sign
