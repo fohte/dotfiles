@@ -2,7 +2,7 @@ return {
   'nvim-lualine/lualine.nvim',
   commit = 'a94fc68960665e54408fe37dcf573193c4ce82c9', -- renovate: branch=master
   dependencies = {
-    { 'nvim-tree/nvim-web-devicons', commit = '19d6211c78169e78bab372b585b6fb17ad974e82' }, -- renovate: branch=master
+    { 'nvim-tree/nvim-web-devicons', commit = '0422a19d9aa3aad2c7e5cca167e5407b13407a9d' }, -- renovate: branch=master
     'RRethy/nvim-base16',
   },
   config = function()

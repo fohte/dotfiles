@@ -1,6 +1,6 @@
 return {
   'NeogitOrg/neogit',
-  commit = 'e3c148905c334c886453df1490360ebb1a2ba2ed', -- renovate: branch=master
+  commit = '62136c657e9b0723031c56595394f792fd7be0ab', -- renovate: branch=master
   dependencies = {
     { 'nvim-lua/plenary.nvim', commit = '857c5ac632080dba10aae49dba902ce3abf91b35' }, -- required -- renovate: branch=master
     { 'nvim-telescope/telescope.nvim', commit = 'b4da76be54691e854d3e0e02c36b0245f945c2c7' }, -- optional -- renovate: branch=master
