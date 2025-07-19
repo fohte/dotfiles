@@ -1,8 +1,8 @@
 return {
   'stevearc/oil.nvim',
-  commit = '08c2bce8b00fd780fb7999dbffdf7cd174e896fb', -- renovate: branch=master
+  commit = 'bbad9a76b2617ce1221d49619e4e4b659b3c61fc', -- renovate: branch=master
   opts = {},
-  dependencies = { { 'nvim-tree/nvim-web-devicons', commit = '19d6211c78169e78bab372b585b6fb17ad974e82' } }, -- renovate: branch=master
+  dependencies = { { 'nvim-tree/nvim-web-devicons', commit = '0422a19d9aa3aad2c7e5cca167e5407b13407a9d' } }, -- renovate: branch=master
   keys = {
     { '<Leader>eo', ':Oil --float<CR>', mode = 'n', silent = true },
   },

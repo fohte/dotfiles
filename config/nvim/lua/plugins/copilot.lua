@@ -1,7 +1,7 @@
 return {
   {
     'zbirenbaum/copilot.lua',
-    commit = '46f4b7d026cba9497159dcd3e6aa61a185cb1c48', -- renovate: branch=master
+    commit = '14bf786180b2ca4578915c56989b6d676dddc6f3', -- renovate: branch=master
     cmd = 'Copilot',
     event = 'InsertEnter',
     config = function()

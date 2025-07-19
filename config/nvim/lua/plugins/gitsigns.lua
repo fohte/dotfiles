@@ -1,6 +1,6 @@
 return {
   'lewis6991/gitsigns.nvim',
-  commit = '1b0350ab707713b2bc6c236151f1a324175347b1', -- renovate: branch=main
+  commit = '0cb5a7753d3c4b8e9cfdc9d88d9110cb8d4b1544', -- renovate: branch=main
   config = function()
     require('gitsigns').setup({
       current_line_blame = true,
