@@ -45,7 +45,7 @@ jobs:
         run: mise x neovim -- nvim --headless -c 'Lazy! sync' +q
 
       - name: Commit updated lazy-lock.json
-        uses: suzuki-shunsuke/commit-action@v0.0.8
+        uses: suzuki-shunsuke/commit-action@v0.0.9
         with:
           commit_message: 'chore: update lazy-lock.json'
           workflow: deny
