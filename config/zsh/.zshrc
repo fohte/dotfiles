@@ -24,7 +24,6 @@ fi
 
 import_rc 'zinit.rc.zsh'
 
-import_rc 'lazy.rc.zsh'
 import_rc 'alias.rc.zsh'
 import_rc 'bindkey.rc.zsh'
 import_rc 'prompt.rc.zsh'

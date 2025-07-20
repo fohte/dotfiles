@@ -14,11 +14,9 @@ end
 -- disable python2
 vim.g.python_host_prog = ''
 
-if vim.fn.executable('pyenv') == 1 then
-  -- avoid conflict with local python on python projects
-  local latest_python = vim.fn.system('pyenv versions --bare | sort -V | tail -1')
-  vim.fn.setenv('PYENV_VERSION', latest_python)
-  vim.g.python3_host_prog = vim.fn.trim(vim.fn.system('pyenv which python'))
+if vim.fn.executable('mise') == 1 then
+  -- use mise-managed python
+  vim.g.python3_host_prog = vim.fn.trim(vim.fn.system('mise which python'))
 end
 
 vim.env.CACHE = vim.fn.expand('~/.cache')

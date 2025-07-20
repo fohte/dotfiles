@@ -1,9 +1,16 @@
 # this config.toml is global config (~/.config/mise/config.toml), the repository specify config is in <dotfiles root>/mise.toml
 
 [tools]
+# Language versions
 node = "23.11.1"
+python = "3.13.3"
+ruby = "3.2.1"
+rust = "1.88.0"
+
+# npm packages
 "npm:@devcontainers/cli" = "0.80.0"
 
+# CLI tools
 github-cli = "2.75.0"
 bat = "0.25.0"
 ghq = "1.7.1"

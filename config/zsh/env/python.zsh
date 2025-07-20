@@ -1,11 +1,5 @@
-export PYENV_PATH="$HOME/.pyenv"
+export RYE_HOME="$HOME/.rye"
 
-if [ -d "$PYENV_PATH" ]; then
-  add_path \
-    "$PYENV_PATH"/bin(N-/) \
-    "$PYENV_PATH"/shims(N-/)
-fi
-
-if has rye; then
-  source "$HOME/.rye/env"
+if [ -d "$RYE_HOME" ]; then
+  add_path "$RYE_HOME"/shims(N-/)
 fi

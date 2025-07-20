@@ -40,7 +40,6 @@ setopt no_global_rcs
 
 path=(
   $HOME/.cabal/bin(N-/)
-  $HOME/.cargo/bin(N-/)
   $HOME/.local/bin(N-/)
   $HOME/bin(N-/)
   /usr/local/bin(N-/)
