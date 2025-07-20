@@ -1,3 +1,5 @@
+# this mise.toml is repository specific config, the global config is in config/mise/config.toml
+
 [tools]
 # Required for pre-commit
 "npm:bun" = "1.2.19"

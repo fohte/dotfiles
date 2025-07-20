@@ -1,3 +1,5 @@
+# this config.toml is global config (~/.config/mise/config.toml), the repository specify config is in <dotfiles root>/mise.toml
+
 [tools]
 node = "23.11.1"
 "npm:@devcontainers/cli" = "0.80.0"
