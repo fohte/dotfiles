@@ -34,7 +34,6 @@ lua = "5.4.7"
 rye = "0.44.0"
 terraform-ls = "0.36.5"
 tmux = "3.5a"
-"ubi:sharkdp/fd" = "10.2.0"
 
 [settings]
 # disable the idiomatic version file such as Gemfile

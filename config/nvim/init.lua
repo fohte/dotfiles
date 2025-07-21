@@ -15,7 +15,15 @@ end
 vim.g.python_host_prog = ''
 
 if vim.fn.executable('mise') == 1 then
-  -- use mise-managed python
+  -- Use a stable python for neovim, not a project-specific one. This avoids
+  -- issues where pynvim is not installed for a project's python version.
+  -- We mimic the old pyenv logic by finding the latest installed python version
+  -- and forcing mise to use it for Neovim's python host.
+  local latest_python =
+    vim.fn.trim(vim.fn.system('mise ls python --installed | grep "^  python" | awk \'{print $2}\' | sort -V | tail -1'))
+  if vim.v.shell_error == 0 and latest_python ~= '' then
+    vim.env.MISE_PYTHON_VERSION = latest_python
+  end
   vim.g.python3_host_prog = vim.fn.trim(vim.fn.system('mise which python'))
 end
 
