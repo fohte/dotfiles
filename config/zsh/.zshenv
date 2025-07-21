@@ -85,7 +85,6 @@ import_env 'fzf.zsh'
 import_env 'go.zsh'
 import_env 'node.zsh'
 import_env 'python.zsh'
-import_env 'ruby.zsh'
 import_env 'terraform.zsh'
 import_env 'vim.zsh'
 

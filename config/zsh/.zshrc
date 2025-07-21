@@ -11,8 +11,6 @@ import_rc() {
   import_zsh_config "$ZSH_CONFIG_HOME/rc/$1"
 }
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
 autoload -Uz compinit && compinit -u
 autoload -Uz colors; colors
 autoload -U +X bashcompinit && bashcompinit

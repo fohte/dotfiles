@@ -24,6 +24,17 @@ ripgrep = "14.1.1"
 op = "2.30.0"
 difftastic = "0.63.0"
 uv = "0.7.19"
+actionlint = "latest"
+conftest = "latest"
+coreutils = "latest"
+direnv = "latest"
+fd = "latest"
+go = "latest"
+lua = "latest"
+rye = "latest"
+terraform-ls = "latest"
+tmux = "latest"
+"ubi:sharkdp/fd" = "latest"
 
 [settings]
 # disable the idiomatic version file such as Gemfile
