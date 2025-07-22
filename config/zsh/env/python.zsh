@@ -1,11 +1,6 @@
-export PYENV_PATH="$HOME/.pyenv"
+export RYE_HOME="$HOME/.rye"
 
-if [ -d "$PYENV_PATH" ]; then
-  add_path \
-    "$PYENV_PATH"/bin(N-/) \
-    "$PYENV_PATH"/shims(N-/)
-fi
-
-if has rye; then
-  source "$HOME/.rye/env"
+# Sourcing the env file is the recommended and most robust way to set up rye.
+if [ -f "$RYE_HOME/env" ]; then
+  source "$RYE_HOME/env"
 fi

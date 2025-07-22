@@ -40,7 +40,6 @@ setopt no_global_rcs
 
 path=(
   $HOME/.cabal/bin(N-/)
-  $HOME/.cargo/bin(N-/)
   $HOME/.local/bin(N-/)
   $HOME/bin(N-/)
   /usr/local/bin(N-/)
@@ -86,7 +85,6 @@ import_env 'fzf.zsh'
 import_env 'go.zsh'
 import_env 'node.zsh'
 import_env 'python.zsh'
-import_env 'ruby.zsh'
 import_env 'terraform.zsh'
 import_env 'vim.zsh'
 

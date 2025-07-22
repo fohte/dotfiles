@@ -14,7 +14,7 @@ _append_to_lbuffer() {
 
 fzf-git-nocommit-file() {
   local selected
-  selected=($(git status -s | fzf-tmux $FZF_TMUX_OPTS -m --ansi --reverse | awk '{ print $2 }'))
+  selected=($(git status -s | fzf -m --ansi --reverse | awk '{ print $2 }'))
 
   zle reset-prompt
 
@@ -30,7 +30,7 @@ bindkey '^G^F' fzf-git-nocommit-file
 fzf-git-log() {
   local selected
   selected=($(git log --pretty=format:'%C(yellow)%h%C(reset) %s %C(green)%an%C(reset)' |
-    fzf-tmux $FZF_TMUX_OPTS --ansi --reverse |
+    fzf --ansi --reverse |
     awk '{ print $1 }'))
 
   zle reset-prompt
@@ -47,7 +47,7 @@ bindkey '^G^L' fzf-git-log
 fzf-git-branch() {
   selected=$(
     git branch -a | \
-    fzf-tmux $FZF_TMUX_OPTS -m --ansi --reverse | \
+    fzf -m --ansi --reverse | \
     sed -e 's/^* //g' | \
     awk '{ print $1 }'
   )

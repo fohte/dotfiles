@@ -40,7 +40,7 @@ create_session() {
   tmux switch -t "$1"
 }
 
-fzf_result="$(print_list | fzf-tmux \
+fzf_result="$(print_list | fzf \
   --reverse \
   --print-query \
   --preview 'tmux-tree {}' || true)"
