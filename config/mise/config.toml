@@ -4,7 +4,7 @@
 # Language versions
 node = "23.11.1"
 python = "3.13.3"
-ruby = "3.2.1"
+ruby = "3.4.5"
 rust = "1.88.0"
 go = "1.24.5"
 lua = "5.4.7"
