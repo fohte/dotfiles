@@ -14,7 +14,7 @@ lua = "5.4.7"
 "pipx:neovim-remote" = "latest"
 
 # CLI tools
-github-cli = "2.75.0"
+github-cli = "2.76.2"
 bat = "0.25.0"
 ghq = "1.7.1"
 fzf = "0.61.1"
