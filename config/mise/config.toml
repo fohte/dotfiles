@@ -9,8 +9,9 @@ rust = "1.88.0"
 go = "1.24.5"
 lua = "5.4.7"
 
-# npm packages
+# packages
 "npm:@devcontainers/cli" = "0.80.0"
+"pipx:neovim-remote" = "latest"
 
 # CLI tools
 github-cli = "2.75.0"
