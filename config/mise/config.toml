@@ -27,6 +27,7 @@ ripgrep = "14.1.1"
 op = "2.30.0"
 difftastic = "0.63.0"
 uv = "0.7.19"
+jq = "1.7.1"
 
 [settings]
 # disable the idiomatic version file such as Gemfile
