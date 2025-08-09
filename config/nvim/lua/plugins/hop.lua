@@ -1,6 +1,6 @@
 return {
   'smoka7/hop.nvim',
-  commit = '9c6a1dd9afb53a112b128877ccd583a1faa0b8b6', -- renovate: branch=master
+  commit = '2254e0b3c8054b9ee661c9be3cb201d4b3384d8e', -- renovate: branch=master
   config = function()
     require('hop').setup({
       keys = 'aoeusnth',
