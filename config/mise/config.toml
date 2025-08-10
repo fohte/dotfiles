@@ -28,6 +28,8 @@ op = "2.30.0"
 difftastic = "0.63.0"
 uv = "0.7.19"
 jq = "1.7.1"
+lefthook = "1.12.2"
+bun = "1.2.18"
 
 [settings]
 # disable the idiomatic version file such as Gemfile
