@@ -5,6 +5,7 @@ After pushing your changes, follow these steps:
 ## 1. Create a PR with the `gh pr create` command
 
 Use this format for the PR description:
+
 ```markdown
 ## Why
 
@@ -19,6 +20,7 @@ Use this format for the PR description:
 
 - Format text with markdown (`code`, **bold**, *italic*) for better readability
 - Group related items using nested bullet points
+- Do not include any references for fohte/tasks issues, as this is a private repository
 
 ## 2. Watch the CI execution
 
