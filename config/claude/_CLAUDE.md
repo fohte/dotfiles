@@ -14,20 +14,6 @@
   - Ensure each parallel task has sufficient context to operate autonomously
   - Use MECE (Mutually Exclusive, Collectively Exhaustive) task decomposition for optimal parallelization
 
-## Task Management
-
-- Task management is done through GitHub issues in the fohte/tasks repository. Follow the instructions in `~/.claude/commands/task-*.md`
-- Use the `task` command (located at `config/bin/task`) to interact with issues in the tasks repository:
-  - `task create --title <text> [--body <text>]`: Create a new task
-  - `task view <number>`: View task details
-  - `task list [--all]`: List tasks (open by default, all with --all flag)
-  - `task close <number> [--comment <text>] [--reason <completed|not planned>]`: Close a task
-  - `task comment <number> --body <text>`: Add a comment to a task
-  - `task edit <number> [--title <text>] [--body <text>]`: Edit a task
-  - `task add-sub <parent> <child>`: Add a sub-task relationship
-  - `task remove-sub <parent> <child>`: Remove a sub-task relationship
-  - `task tree <number>`: Show task hierarchy tree
-
 ### Todo Granularity Guidelines
 
 Create todos only for:
