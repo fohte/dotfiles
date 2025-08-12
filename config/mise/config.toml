@@ -36,4 +36,4 @@ shellcheck = "0.10.0"
 [settings]
 # disable the idiomatic version file such as Gemfile
 # this is the default behavior from the 2025.10.0 version
-idiomatic_version_file_enable_tools = []
+idiomatic_version_file_enable_tools = ['terraform']
