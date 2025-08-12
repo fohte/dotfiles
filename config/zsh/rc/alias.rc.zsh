@@ -68,7 +68,8 @@ alias gsp='git stash pop'
 alias gss='git stash save'
 
 alias ghr='gh repo view --web'
-alias ghpr='gh pr view --web'
+alias ghprv='gh pr view --web' # [gh] [p]ull [r]equest [v]iew
+alias ghprc='gh pr create --web' # [gh] [p]ull [r]equest [c]reate
 
 has 'nvim' && alias vim='nvim'
 
