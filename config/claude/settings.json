@@ -13,6 +13,10 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.ts"
+  },
   "permissions": {
     "allow": [
       "Bash(bun install)",
