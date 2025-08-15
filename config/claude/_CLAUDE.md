@@ -4,7 +4,6 @@
 
 ## Methodology
 
-- Always formalize the plan for next steps using sequential-thinking and get user confirmation before proceeding with implementation
 - Consult latest documentation using context7 MCP server for up-to-date library and framework information
 - Focus on ensuring you are adding reminders and steps to research and understand the latest information from web search, parallel web search (very useful), and parallel agentic execution where possible.
 - **Proactively use specialized sub-agents**: Always leverage Task tool with appropriate sub-agents for tasks matching their expertise, and launch multiple agents in parallel when tasks are independent
