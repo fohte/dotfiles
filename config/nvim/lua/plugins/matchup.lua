@@ -1,6 +1,6 @@
 return {
   'andymass/vim-matchup',
-  commit = 'c478d4a72bbf397eff42743198f1939f6a264736', -- renovate: branch=master
+  commit = '704c9d98e686836ae1c4b6c4ea5b057ecf5fbbca', -- renovate: branch=master
   event = 'VimEnter',
   config = function()
     vim.g.matchup_matchparen_offscreen = { method = 'popup' }
