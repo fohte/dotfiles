@@ -14,28 +14,6 @@
   - Ensure each parallel task has sufficient context to operate autonomously
   - Use MECE (Mutually Exclusive, Collectively Exhaustive) task decomposition for optimal parallelization
 
-### Todo Granularity Guidelines
-
-Create todos only for:
-- **Meaningful deliverables**: Features, integrations, or capabilities that can be independently verified
-- **Research/decisions**: Tasks that produce architectural decisions or technology choices
-- **Significant artifacts**: Creating workflows, documentation, or major code components
-- **Integration milestones**: Points where systems connect and need verification
-
-Do NOT create todos for:
-- **Configuration updates**: Setting IDs, tokens, or environment variables
-- **Single commands**: Running tests, builds, or deployments locally
-- **Implementation details**: Steps that are naturally part of completing a larger task
-- **Routine operations**: Standard development activities like committing code or updating dependencies
-
-### When to Mark Todos as Done
-
-Todos are done when the deliverable is **shipped**, not just implemented:
-- Code changes → PR merged
-- Decisions → Documented and shared
-- Integrations → Working in production
-- Features → Deployed and verified
-
 ## Repository Access
 
 - GitHub repositories are available for research and analysis in the `~/ghq` directory
