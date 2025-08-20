@@ -15,7 +15,21 @@ nvim "$json" \
   +"Jqplay $*" \
   +"lua require('user.jqplay').setup('$jq_query', '$result')"
 
-echo '$' jq "$@" "$(cat "$jq_query")" | bat --style=plain -l bash
+# Display the command with the original pipeline if available
+if [ -n "${JQPLAY_FULL_CMD:-}" ]; then
+  # Extract the part before "| jqplay" and append the jq command
+  pipeline_prefix="${JQPLAY_FULL_CMD% | jqplay*}"
+  if [ "$pipeline_prefix" != "$JQPLAY_FULL_CMD" ]; then
+    # Found the pipeline
+    echo '$' "${pipeline_prefix} | jq" "$@" "$(cat "$jq_query")" | bat --style=plain -l bash
+  else
+    # jqplay was called without pipe
+    echo '$' jq "$@" "$(cat "$jq_query")" | bat --style=plain -l bash
+  fi
+else
+  # Fallback to default display
+  echo '$' jq "$@" "$(cat "$jq_query")" | bat --style=plain -l bash
+fi
 
 if [ -s "$jq_query" ]; then
   bat --style=plain -l json "$result"
