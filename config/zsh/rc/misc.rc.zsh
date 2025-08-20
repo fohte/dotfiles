@@ -42,11 +42,5 @@ auto_reload_on_config_change() {
 
 precmd_functions+=(auto_reload_on_config_change)
 
-# Capture command for jqplay
-jqplay_preexec() {
-  if [[ "$1" == *"jqplay"* ]]; then
-    export JQPLAY_FULL_CMD="$1"
-  fi
-}
-
-add-zsh-hook preexec jqplay_preexec
+# Load custom functions
+autoload -Uz jqplay

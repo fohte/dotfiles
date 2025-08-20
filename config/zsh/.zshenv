@@ -20,7 +20,7 @@ import_env() {
 
 # Calculate checksum of zsh config files
 calculate_zsh_config_checksum() {
-  find -L "$ZSH_CONFIG_HOME" -type f \( -name "*.zsh" -o -name ".zshenv" -o -name ".zshrc" \) \
+  find -L "$ZSH_CONFIG_HOME" -type f \( -name "*.zsh" -o -name ".zshenv" -o -name ".zshrc" \) -o -path "*/rc/functions/*" -type f \
     ! -name ".zsh_history" \
     ! -name ".zsh_sessions" \
     ! -path "*/.zsh_sessions/*" \

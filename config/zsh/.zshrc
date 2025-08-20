@@ -14,7 +14,6 @@ import_rc() {
 autoload -Uz compinit && compinit -u
 autoload -Uz colors; colors
 autoload -U +X bashcompinit && bashcompinit
-autoload -Uz add-zsh-hook
 complete -C "$(which aws_completer)" aws
 
 if ! [ -d ~/.zinit ]; then

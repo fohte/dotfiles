@@ -1,0 +1,53 @@
+#!/usr/bin/env zsh
+
+# usage: <json-stdin> | jqplay [jq-options]
+
+local json jq_query result
+
+json="$(mktemp -t jqplay.XXXXXX.json)"
+cat | jq > "$json"
+
+jq_query="$(mktemp -t jqplay.XXXXXX.jq)"
+result="$(mktemp -t jqplay.XXXXXX.result)"
+
+nvim "$json" \
+  +"Jqplay $*" \
+  +"lua require('user.jqplay').setup('$jq_query', '$result')"
+
+if [ -s "$jq_query" ]; then
+  local expanded_cmd
+  local current_cmd="${history[$HISTCMD]}"
+
+  # Extract the part before "| jqplay" and append the jq command
+  local jq_args="$*"
+  local query="$(cat "$jq_query")"
+  # Escape single quotes in query and wrap with single quotes
+  local quoted_query="'${query//\'/\'\\\'\'}'"
+
+  if [[ "$current_cmd" == *" | jqplay"* ]]; then
+    local pipeline_prefix="${current_cmd% | jqplay*}"
+    if [[ -n "$jq_args" ]]; then
+      expanded_cmd="${pipeline_prefix} | jq ${jq_args} ${quoted_query}"
+    else
+      expanded_cmd="${pipeline_prefix} | jq ${quoted_query}"
+    fi
+  else
+    if [[ -n "$jq_args" ]]; then
+      expanded_cmd="jq ${jq_args} ${quoted_query}"
+    else
+      expanded_cmd="jq ${quoted_query}"
+    fi
+  fi
+
+  # Add expanded command to history
+  print -s "$expanded_cmd"
+
+  # Display the command
+  echo "❯ $expanded_cmd"
+
+  # Show result
+  cat "$result"
+fi
+
+# Cleanup
+rm -f "$json" "$jq_query" "$result"

@@ -13,6 +13,7 @@ fi
 brew_prefix="$(brew --prefix)"
 
 fpath=(
+  "$ZSH_CONFIG_HOME"/rc/functions(N-/)
   "$brew_prefix"/share/zsh/site-functions(N-/)
   $fpath
 )
