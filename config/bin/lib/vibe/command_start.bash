@@ -39,7 +39,7 @@ IMPORTANT: Output ONLY the branch name. Do not analyze, explain, or investigate 
   trap cleanup_spinner EXIT
 
   local suggested_name
-  suggested_name=$(echo "$claude_prompt" | claude --model sonnet --print 2> /dev/null | head -n1 | tr -d '\r')
+  suggested_name=$(echo "$claude_prompt" | claude --model "${VIBE_BRANCH_MODEL:-haiku}" --print 2> /dev/null | head -n1 | tr -d '\r')
 
   # Stop spinner and clear line
   cleanup_spinner
