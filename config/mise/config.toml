@@ -38,3 +38,6 @@ shellcheck = "0.10.0"
 # disable the idiomatic version file such as Gemfile
 # this is the default behavior from the 2025.10.0 version
 idiomatic_version_file_enable_tools = ['terraform']
+
+# to use gem backend (gem backend is experimental)
+experimental = true
