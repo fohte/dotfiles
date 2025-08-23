@@ -14,3 +14,7 @@ zinit load azu/ni.zsh
 # replace zsh's default completion selection menu with fzf
 zinit light Aloxaf/fzf-tab
 zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
+
+# zsh-histdb - SQLite-backed command history
+zinit ice pick"sqlite-history.zsh" src"histdb-interactive.zsh"
+zinit light larkery/zsh-histdb
