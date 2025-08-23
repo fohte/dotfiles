@@ -22,7 +22,9 @@ fzf-history-widget() {
   local selected
 
   _histdb_init
-  local query="SELECT h.id || '  ' || c.argv
+  # Modified query to replace newlines with space for single-line display
+  # This makes it work better with fzf while preserving the full command for preview
+  local query="SELECT h.id || '  ' || REPLACE(c.argv, CHAR(10), ' ')
                FROM history h
                JOIN commands c ON h.command_id = c.id
                JOIN places p ON h.place_id = p.id
@@ -30,19 +32,37 @@ fzf-history-widget() {
                ORDER BY h.start_time DESC
                LIMIT 1000"
 
-  # from original fzf-history-widget (fzf --zsh)
-  # Added preview window with syntax highlighting using bat
-  selected=$(_histdb_query "$query" |
-    FZF_DEFAULT_OPTS=$(__fzf_defaults "" "-n2..,.. --scheme=history --bind=ctrl-r:toggle-sort --wrap-sign '\t↳ ' --highlight-line ${FZF_CTRL_R_OPTS-} --query=${(qqq)LBUFFER} +m --preview 'echo {2..} | bat --color=always --style=plain --language=zsh' --preview-window=bottom:3:wrap") \
-    FZF_DEFAULT_OPTS_FILE='' $(__fzfcmd))
+  # Store the database path for preview command
+  local histdb_file="${HISTDB_FILE:-${HOME}/.histdb/zsh-history.db}"
+
+  # Get all history and apply bat highlighting in batch
+  selected=$(
+    _histdb_query "$query" | \
+    bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null | \
+    FZF_DEFAULT_OPTS=$(
+      __fzf_defaults "" \
+        "-n2..,.. \
+        --ansi \
+        --scheme=history \
+        --bind=ctrl-r:toggle-sort \
+        --wrap-sign '\t↳ ' \
+        --highlight-line ${FZF_CTRL_R_OPTS-} \
+        --query=${(qqq)LBUFFER} \
+        +m --preview \"sqlite3 '${histdb_file}' 'SELECT c.argv FROM history h JOIN commands c ON h.command_id = c.id WHERE h.id = {1}' | bat --color=always --style=plain --language=zsh --paging=never\" \
+        --preview-window=bottom:3:wrap") \
+    FZF_DEFAULT_OPTS_FILE='' \
+    $(__fzfcmd))
 
   local ret=$?
   if [ -n "$selected" ]; then
-    # Remove the ID prefix and use the command
-    local cmd="${selected#*  }"
-    if [ -n "$cmd" ]; then
-      BUFFER="$cmd"
-      CURSOR=$#BUFFER
+    # Get the actual command (with newlines) from the database using the ID
+    local id=$(echo "$selected" | awk '{print $1}')
+    if [ -n "$id" ]; then
+      local cmd=$(_histdb_query "SELECT c.argv FROM history h JOIN commands c ON h.command_id = c.id WHERE h.id = $id")
+      if [ -n "$cmd" ]; then
+        BUFFER="$cmd"
+        CURSOR=$#BUFFER
+      fi
     fi
   fi
   zle reset-prompt
