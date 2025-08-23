@@ -40,13 +40,22 @@ fzf-history-widget() {
   local histdb_file="${HISTDB_FILE:-${HOME}/.histdb/zsh-history.db}"
 
   # Create preview command
-  local preview_cmd="sqlite3 '${histdb_file}' 'SELECT c.argv FROM history h JOIN commands c ON h.command_id = c.id WHERE h.id = {1}' | bat --color=always --style=plain --language=zsh --paging=never"
+  local preview_cmd=$(cat <<-EOF
+	sqlite3 '${histdb_file}' \\
+	  'SELECT c.argv FROM history h JOIN commands c ON h.command_id = c.id WHERE h.id = {1}' \\
+	| bat --color=always --style=plain --language=zsh --paging=never
+	EOF
+  )
   
   # Get all history and apply bat highlighting in batch
+  local fzf_opts="-n2..,.. --ansi --scheme=history --bind=ctrl-r:toggle-sort"
+  fzf_opts+=" --wrap-sign '\t↳ ' --highlight-line"
+  fzf_opts+=" ${FZF_CTRL_R_OPTS-} --query=${(qqq)LBUFFER} +m"
+  
   selected=$(
     _histdb_query "$query" | \
     bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null | \
-    FZF_DEFAULT_OPTS=$(__fzf_defaults "" "-n2..,.. --ansi --scheme=history --bind=ctrl-r:toggle-sort --wrap-sign '\t↳ ' --highlight-line ${FZF_CTRL_R_OPTS-} --query=${(qqq)LBUFFER} +m") \
+    FZF_DEFAULT_OPTS=$(__fzf_defaults "" "${fzf_opts}") \
     FZF_DEFAULT_OPTS_FILE='' \
     $(__fzfcmd) --preview "${preview_cmd}" --preview-window=bottom:3:wrap)
 
