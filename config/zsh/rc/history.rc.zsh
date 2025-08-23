@@ -24,14 +24,17 @@ fzf-history-widget() {
   _histdb_init
   # Modified query to get unique commands, showing the most recent execution of each
   # Replace newlines with space for single-line display in fzf
-  local query="SELECT MAX(h.id) || '  ' || REPLACE(c.argv, CHAR(10), ' ')
-               FROM history h
-               JOIN commands c ON h.command_id = c.id
-               JOIN places p ON h.place_id = p.id
-               WHERE p.host = '$(hostname)'
-               GROUP BY c.argv
-               ORDER BY MAX(h.start_time) DESC
-               LIMIT 1000"
+  local query=$(cat <<-EOF
+	SELECT MAX(h.id) || '  ' || REPLACE(c.argv, CHAR(10), ' ')
+	FROM history h
+	JOIN commands c ON h.command_id = c.id
+	JOIN places p ON h.place_id = p.id
+	WHERE p.host = '$(hostname)'
+	GROUP BY c.argv
+	ORDER BY MAX(h.start_time) DESC
+	LIMIT 1000
+	EOF
+  )
 
   # Store the database path for preview command
   local histdb_file="${HISTDB_FILE:-${HOME}/.histdb/zsh-history.db}"
