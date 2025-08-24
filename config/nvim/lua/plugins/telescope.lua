@@ -4,6 +4,7 @@ return {
   dependencies = {
     { 'nvim-lua/plenary.nvim', commit = '857c5ac632080dba10aae49dba902ce3abf91b35' }, -- renovate: branch=master
     { 'nvim-telescope/telescope-fzf-native.nvim', commit = '1f08ed60cafc8f6168b72b80be2b2ea149813e55', build = 'make' }, -- renovate: branch=main
+    { 'fdschmidt93/telescope-egrepify.nvim', commit = '8da5e3ba5faf3bdd6bbfaccb3eb3b8e7ebf9b131' }, -- renovate: branch=master
   },
   keys = {
     {
@@ -23,17 +24,7 @@ return {
     {
       '<Leader>eg',
       function()
-        require('telescope.builtin').live_grep({
-          attach_mappings = function(prompt_bufnr, map)
-            -- search the grep results with <C-g><C-g>
-            -- ref: https://blog.atusy.net/2024/08/02/telescope-grep-refiement/
-            map('i', '<C-g><C-g>', function()
-              require('telescope.actions').send_to_qflist(prompt_bufnr)
-              require('telescope.builtin').quickfix()
-            end)
-            return true
-          end,
-        })
+        require('telescope').extensions.egrepify.egrepify({})
       end,
       mode = 'n',
     },
@@ -81,5 +72,6 @@ return {
     })
 
     require('telescope').load_extension('fzf')
+    require('telescope').load_extension('egrepify')
   end,
 }
