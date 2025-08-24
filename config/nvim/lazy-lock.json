@@ -40,6 +40,7 @@
   "plenary.nvim": { "branch": "master", "commit": "857c5ac632080dba10aae49dba902ce3abf91b35" },
   "promise-async": { "branch": "main", "commit": "119e8961014c9bfaf1487bf3c2a393d254f337e2" },
   "switch.vim": { "branch": "main", "commit": "df58397cfa36d2f428ddc2652ba32d1db2af6d02" },
+  "telescope-egrepify.nvim": { "branch": "master", "commit": "8da5e3ba5faf3bdd6bbfaccb3eb3b8e7ebf9b131" },
   "telescope-fzf-native.nvim": { "branch": "main", "commit": "1f08ed60cafc8f6168b72b80be2b2ea149813e55" },
   "telescope.nvim": { "branch": "master", "commit": "b4da76be54691e854d3e0e02c36b0245f945c2c7" },
   "vim-asterisk": { "branch": "master", "commit": "77e97061d6691637a034258cc415d98670698459" },
