@@ -1,6 +1,6 @@
 return {
   'mvllow/modes.nvim',
-  commit = 'b156d4e4a7c0c7ea9b5609c5d2741c10b8c1d7f5', -- renovate: branch=main
+  commit = '69407cef8b8074db0c692abb9216cb123152ef46', -- renovate: branch=main
   dependencies = {
     'RRethy/nvim-base16',
   },
