@@ -21,14 +21,14 @@ end
 return {
   {
     'williamboman/mason.nvim',
-    commit = '8024d64e1330b86044fed4c8494ef3dcd483a67c', -- renovate: branch=main
+    commit = '7dc4facca9702f95353d5a1f87daf23d78e31c2a', -- renovate: branch=main
     config = function()
       require('mason').setup()
     end,
   },
   {
     'williamboman/mason-lspconfig.nvim',
-    commit = 'c4c84f4521d62de595c0d0f718a9a40c1890c8ce', -- renovate: branch=main
+    commit = '1ec4da522fa49dcecee8d190efda273464dd2192', -- renovate: branch=main
     dependencies = {
       { 'williamboman/mason.nvim' },
       { 'neovim/nvim-lspconfig' },
@@ -186,7 +186,7 @@ return {
   },
   {
     'neovim/nvim-lspconfig',
-    commit = '6bba673aa8993eceec233be17b42ddfb9540794b', -- renovate: branch=master
+    commit = '3d97ec4174bcc750d70718ddedabf150536a5891', -- renovate: branch=master
     keys = {
       {
         '<F10>',
@@ -239,7 +239,7 @@ return {
   },
   {
     'creativenull/efmls-configs-nvim',
-    commit = '8d7ede48afa7d0344fa62fefb95132c0dad41e97', -- renovate: branch=main
+    commit = '5a037773e615ccae3ede9990fd43ea4b1ea26c5a', -- renovate: branch=main
     dependencies = { 'neovim/nvim-lspconfig' },
   },
   {
