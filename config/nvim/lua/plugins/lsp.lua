@@ -44,6 +44,7 @@ return {
         'jqls',
         'jsonls',
         'lua_ls',
+        'marksman',
         'mdx_analyzer',
         'pylsp',
         'pyright',
