@@ -28,14 +28,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-repo_name="$1"
+repo="$1"
 shift
 
-ghq create "$repo_name"
+ghq create "$repo"
 
-cd "$(ghq root)/$(ghq list "$repo_name" --full-path)"
+cd "$(ghq root)/$(ghq list "$repo" --full-path)"
 
-gh repo create --"$repo_visibility" --source=.
+gh repo create "$repo" "--$repo_visibility" --source=.
 
 git commit --allow-empty -m "initial commit"
 git push -u
