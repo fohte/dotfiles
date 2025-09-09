@@ -31,18 +31,24 @@ return {
         diffview = true,
       },
 
+      mappings = {
+        status = {
+          ['y'] = 'YankSelected', -- Use 'y' to copy commit hash
+        },
+      },
+
       -- Add custom actions to diff popup
       builders = {
         NeogitDiffPopup = function(builder)
           -- Add action to diff against master
-          builder:action("m", "master...HEAD", function(popup)
+          builder:action('m', 'master...HEAD', function(popup)
             popup:close()
-            require("neogit.integrations.diffview").open("range", "master...HEAD")
+            require('neogit.integrations.diffview').open('range', 'master...HEAD')
           end)
           -- Add action to diff against origin/master
-          builder:action("M", "origin/master...HEAD", function(popup)
+          builder:action('M', 'origin/master...HEAD', function(popup)
             popup:close()
-            require("neogit.integrations.diffview").open("range", "origin/master...HEAD")
+            require('neogit.integrations.diffview').open('range', 'origin/master...HEAD')
           end)
           return builder
         end,
