@@ -41,6 +41,7 @@
       "Bash(gh run view:*)",
       "Bash(gh run watch:*)",
       "Bash(gh search:*)",
+      "Bash(ghq get:*)",
       "Bash(git add:*)",
       "Bash(git commit -m:*)",
       "Bash(git commit:*)",
