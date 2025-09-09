@@ -1,22 +1,9 @@
 {
-  "includeCoAuthoredBy": true,
-  "hooks": {
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "claude-notify"
-          }
-        ]
-      }
-    ]
-  },
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.ts"
   },
+  "includeCoAuthoredBy": true,
   "permissions": {
     "allow": [
       "Bash(bun install)",
@@ -91,5 +78,19 @@
       "Bash(git push --force:*)",
       "Bash(git push -f:*)"
     ]
-  }
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-notify"
+          }
+        ]
+      }
+    ]
+  },
+  "model": "sonnet"
 }
