@@ -41,3 +41,8 @@ idiomatic_version_file_enable_tools = ['terraform']
 
 # to use gem backend (gem backend is experimental)
 experimental = true
+
+# config files with these prefixes will be trusted by default
+trusted_config_paths = [
+  '~/ghq/github.com/fohte',
+]
