@@ -65,14 +65,15 @@ return {
       local handlers = {
         -- Default handler for servers without custom configuration
         function(server_name)
-          require('lspconfig')[server_name].setup({
+          vim.lsp.config(server_name, {
             on_attach = on_attach,
           })
+          vim.lsp.enable(server_name)
         end,
 
         -- Custom handlers for specific servers
         ['tailwindcss'] = function()
-          require('lspconfig').tailwindcss.setup({
+          vim.lsp.config('tailwindcss', {
             on_attach = on_attach,
             filetypes = {
               'javascript.jsx',
@@ -85,9 +86,10 @@ return {
               },
             },
           })
+          vim.lsp.enable('tailwindcss')
         end,
         ['lua_ls'] = function()
-          require('lspconfig').lua_ls.setup({
+          vim.lsp.config('lua_ls', {
             on_attach = on_attach,
             settings = {
               Lua = {
@@ -101,6 +103,7 @@ return {
               },
             },
           })
+          vim.lsp.enable('lua_ls')
         end,
 
         ['efm'] = function()
@@ -158,7 +161,7 @@ return {
             },
           })
 
-          require('lspconfig').efm.setup({
+          vim.lsp.config('efm', {
             filetypes = efm_configs.filetypes,
             settings = {
               rootMarkers = { '.git/' },
@@ -170,6 +173,7 @@ return {
             },
             on_attach = on_attach,
           })
+          vim.lsp.enable('efm')
         end,
       }
 
@@ -230,9 +234,8 @@ return {
       },
     },
     config = function()
-      local lspconfig = require('lspconfig')
-
-      require('lspconfig').rubocop.setup({ on_attach = on_attach })
+      vim.lsp.config('rubocop', { on_attach = on_attach })
+      vim.lsp.enable('rubocop')
     end,
   },
   {
