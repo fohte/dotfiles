@@ -3,24 +3,6 @@
   extends: [
     'github>fohte/renovate-config:base.json5',
   ],
-  // Custom manager for Neovim plugins that use commit hashes.
-  // This tracks the latest commits on the master branch and creates PRs when updates are available.
-  // After merging, the update-nvim-plugins workflow will sync lazy-lock.json.
-  customManagers: [
-    {
-      customType: 'regex',
-      fileMatch: ['config/nvim/lua/plugins/.*\\.lua$'],
-      matchStrings: [
-        // Match plugin format: 'author/repo', commit = 'hash' with optional branch override comment
-        // Example: 'author/repo', commit = 'hash', -- renovate: branch=main
-        "'(?<depName>[\\w-]+/[\\w.-]+)'[^}]*?commit\\s*=\\s*'(?<currentDigest>[a-f0-9]{40})'(?:.*?--\\s*renovate:\\s*branch=(?<currentValue>\\S+))?",
-      ],
-      datasourceTemplate: 'git-refs',
-      depNameTemplate: 'https://github.com/{{{depName}}}.git',
-      depTypeTemplate: 'nvim-plugin',
-      currentValueTemplate: '{{#if currentValue}}{{{currentValue}}}{{else}}master{{/if}}',
-    },
-  ],
   packageRules: [
     {
       groupName: 'fzf updates',
@@ -38,14 +20,6 @@
       matchPackageNames: ['eza-community/eza'],
       matchNewValue: ['v0.21.4'],
       enabled: false,
-    },
-    // Neovim plugin updates
-    {
-      description: 'Group Neovim plugin updates',
-      groupName: 'neovim plugins',
-      matchManagers: ['custom.regex'],
-      matchDepTypes: ['nvim-plugin'],
-      schedule: ['after 9am on saturday'],
     },
   ],
 }
