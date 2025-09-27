@@ -3,14 +3,14 @@
 [tools]
 # Language versions
 node = "23.11.1"
-python = "3.13.3"
-ruby = "3.4.5"
+python = "3.13.7"
+ruby = "3.4.6"
 rust = "1.88.0"
 go = "1.24.5"
-lua = "5.4.7"
+lua = "5.4.8"
 
 # packages
-"npm:@devcontainers/cli" = "0.80.0"
+"npm:@devcontainers/cli" = "0.80.1"
 "pipx:neovim-remote" = "latest"
 "gem:rubocop" = "1.79.2"
 
@@ -30,7 +30,7 @@ difftastic = "0.63.0"
 uv = "0.7.19"
 jq = "1.7.1"
 lefthook = "1.12.2"
-bun = "1.2.18"
+bun = "1.2.22"
 shfmt = "3.12.0"
 shellcheck = "0.10.0"
 
