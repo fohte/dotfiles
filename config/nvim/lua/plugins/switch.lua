@@ -1,6 +1,6 @@
 return {
   'AndrewRadev/switch.vim',
-  commit = 'df58397cfa36d2f428ddc2652ba32d1db2af6d02', -- renovate: branch=main
+  commit = '4017a58f7ed8a2d76a288e36130affe8eb55e83a', -- renovate: branch=main
   init = function()
     vim.g.switch_mapping = '_'
 

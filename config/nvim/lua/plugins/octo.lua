@@ -1,6 +1,6 @@
 return {
   'fohte/octo.nvim',
-  commit = '73ff024fb8f87433432273dac43344d4d0b166dc',
+  commit = 'ec0d2b50e7405b786b3ea84040a177a07a1f458d',
   branch = 'fohte/conceallevel',
   config = function()
     require('octo').setup({

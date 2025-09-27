@@ -1,7 +1,7 @@
 return {
   {
     'L3MON4D3/LuaSnip',
-    commit = '03c8e67eb7293c404845b3982db895d59c0d1538', -- renovate: branch=master
+    commit = 'b3104910bb5ebf40492aadffae18f2528fa757d9', -- renovate: branch=master
     -- install jsregexp (optional!).
     build = 'make install_jsregexp',
     config = function()

@@ -45,7 +45,7 @@ end
 
 return {
   'RRethy/nvim-base16',
-  commit = 'aa923daec4e778cd31ccfb0dcf083aff3c442159', -- renovate: branch=master
+  commit = 'a2907cc3cd661e0f89f7db1f4fc304782a676a7d', -- renovate: branch=master
   config = function()
     local utils = require('utils')
 

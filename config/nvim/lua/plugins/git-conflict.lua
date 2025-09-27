@@ -1,7 +1,7 @@
 return {
   {
     'akinsho/git-conflict.nvim',
-    commit = '4bbfdd92d547d2862a75b4e80afaf30e73f7bbb4', -- renovate: branch=main
+    commit = 'a1badcd070d176172940eb55d9d59029dad1c5a6', -- renovate: branch=main
     config = true,
   },
 }

@@ -1,4 +1,4 @@
 return {
   'tpope/vim-fugitive',
-  commit = '593f831d6f6d779cbabb70a4d1e6b1b1936a88af', -- renovate: branch=master
+  commit = '61b51c09b7c9ce04e821f6cf76ea4f6f903e3cf4', -- renovate: branch=master
 }
