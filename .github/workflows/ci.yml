@@ -31,7 +31,7 @@ jobs:
         run: mise x pre-commit -- pre-commit run --all-files
 
       - name: Commit formatted files
-        uses: suzuki-shunsuke/commit-action@v0.0.8
+        uses: suzuki-shunsuke/commit-action@v0.0.11
         with:
           commit_message: 'style: auto-format'
           workflow: deny
