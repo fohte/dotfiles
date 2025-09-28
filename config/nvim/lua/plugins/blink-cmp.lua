@@ -3,9 +3,9 @@ return {
     'saghen/blink.cmp',
     event = { 'InsertEnter' },
     dependencies = {
-      'rafamadriz/friendly-snippets',
       'onsails/lspkind.nvim',
       'fang2hou/blink-copilot',
+      'L3MON4D3/LuaSnip',
     },
     version = '1.*',
     ---@module 'blink.cmp'
@@ -87,7 +87,7 @@ return {
       },
 
       snippets = {
-        preset = 'default',
+        preset = 'luasnip',
       },
     },
   },
