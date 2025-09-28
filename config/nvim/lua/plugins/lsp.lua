@@ -18,6 +18,16 @@ local on_attach = function(client, buffer)
   end
 end
 
+-- Get capabilities with blink.cmp integration
+local function get_capabilities()
+  local ok, blink = pcall(require, 'blink.cmp')
+  if ok then
+    return blink.get_lsp_capabilities()
+  else
+    return vim.lsp.protocol.make_client_capabilities()
+  end
+end
+
 return {
   {
     'williamboman/mason.nvim',
@@ -68,6 +78,7 @@ return {
         function(server_name)
           vim.lsp.config(server_name, {
             on_attach = on_attach,
+            capabilities = get_capabilities(),
           })
           vim.lsp.enable(server_name)
         end,
@@ -76,6 +87,7 @@ return {
         ['tailwindcss'] = function()
           vim.lsp.config('tailwindcss', {
             on_attach = on_attach,
+            capabilities = get_capabilities(),
             filetypes = {
               'javascript.jsx',
               'typescript.tsx',
@@ -92,6 +104,7 @@ return {
         ['lua_ls'] = function()
           vim.lsp.config('lua_ls', {
             on_attach = on_attach,
+            capabilities = get_capabilities(),
             settings = {
               Lua = {
                 diagnostics = {
@@ -177,6 +190,7 @@ return {
               documentRangeFormatting = true,
             },
             on_attach = on_attach,
+            capabilities = get_capabilities(),
           })
           vim.lsp.enable('efm')
         end,
