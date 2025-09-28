@@ -43,6 +43,9 @@ return {
         documentation = {
           auto_show = true, -- Show documentation automatically
           auto_show_delay_ms = 200,
+          window = {
+            border = 'rounded',
+          },
         },
         ghost_text = {
           enabled = true,
@@ -52,6 +55,10 @@ return {
             preselect = false,
             auto_insert = false,
           },
+        },
+        menu = {
+          border = 'rounded',
+          winhighlight = 'Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder,CursorLine:BlinkCmpDocCursorLine,Search:None',
         },
       },
 
