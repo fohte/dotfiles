@@ -91,23 +91,23 @@ return {
     -- make selected text background brighter
     set_hl({ 'Visual' }, { link = 'IncSearch' })
 
-    -- blink.cmp highlights
-    -- Label and matching
-    set_hl({ 'BlinkCmpLabel' }, { fg = colors.base05 }) -- Normal text
-    set_hl({ 'BlinkCmpLabelMatch' }, { fg = colors.base0D, bold = true }) -- Matched characters (blue, bold)
-
-    -- Kind highlights
-    set_hl({ 'BlinkCmpKindFunction', 'BlinkCmpKindMethod' }, { link = 'Function' })
-    set_hl({ 'BlinkCmpKindVariable', 'BlinkCmpKindField', 'BlinkCmpKindProperty' }, { link = 'Identifier' })
-    set_hl(
-      { 'BlinkCmpKindClass', 'BlinkCmpKindStruct', 'BlinkCmpKindInterface', 'BlinkCmpKindModule' },
-      { link = 'Type' }
-    )
-    set_hl({ 'BlinkCmpKindConstant', 'BlinkCmpKindEnum', 'BlinkCmpKindEnumMember' }, { link = 'Constant' })
-    set_hl({ 'BlinkCmpKindKeyword' }, { link = 'Keyword' })
-    set_hl({ 'BlinkCmpKindSnippet' }, { link = 'Special' })
-    set_hl({ 'BlinkCmpKindText', 'BlinkCmpKindString' }, { link = 'String' })
-    set_hl({ 'BlinkCmpKindFile', 'BlinkCmpKindFolder' }, { link = 'Directory' })
+    -- -- blink.cmp highlights
+    -- -- Label and matching
+    -- set_hl({ 'BlinkCmpLabel' }, { fg = colors.base05 }) -- Normal text
+    -- set_hl({ 'BlinkCmpLabelMatch' }, { fg = colors.base0D, bold = true }) -- Matched characters (blue, bold)
+    --
+    -- -- Kind highlights
+    -- set_hl({ 'BlinkCmpKindFunction', 'BlinkCmpKindMethod' }, { link = 'Function' })
+    -- set_hl({ 'BlinkCmpKindVariable', 'BlinkCmpKindField', 'BlinkCmpKindProperty' }, { link = 'Identifier' })
+    -- set_hl(
+    --   { 'BlinkCmpKindClass', 'BlinkCmpKindStruct', 'BlinkCmpKindInterface', 'BlinkCmpKindModule' },
+    --   { link = 'Type' }
+    -- )
+    -- set_hl({ 'BlinkCmpKindConstant', 'BlinkCmpKindEnum', 'BlinkCmpKindEnumMember' }, { link = 'Constant' })
+    -- set_hl({ 'BlinkCmpKindKeyword' }, { link = 'Keyword' })
+    -- set_hl({ 'BlinkCmpKindSnippet' }, { link = 'Special' })
+    -- set_hl({ 'BlinkCmpKindText', 'BlinkCmpKindString' }, { link = 'String' })
+    -- set_hl({ 'BlinkCmpKindFile', 'BlinkCmpKindFolder' }, { link = 'Directory' })
 
     -- make transparent background (use terminal background color)
     local transparent_targets = {

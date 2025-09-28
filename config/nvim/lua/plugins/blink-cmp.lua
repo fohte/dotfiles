@@ -62,6 +62,7 @@ return {
           winhighlight = 'Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder,CursorLine:BlinkCmpDocCursorLine,Search:None',
           draw = {
             columns = { { 'kind_icon' }, { 'label', gap = 1 }, { 'kind' } },
+            treesitter = { 'lsp' },
             components = {
               kind = {
                 highlight = function(ctx)
