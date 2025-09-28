@@ -91,7 +91,7 @@ return {
     -- make selected text background brighter
     set_hl({ 'Visual' }, { link = 'IncSearch' })
 
-    -- make transparent background (use terminal bacgkground color)
+    -- make transparent background (use terminal background color)
     local transparent_targets = {
       'Normal',
       'NormalNC',
