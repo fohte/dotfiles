@@ -26,13 +26,11 @@ return {
             end
 
             -- Then handle Copilot NES
+            local nes = require('copilot-lsp.nes')
             local bufnr = vim.api.nvim_get_current_buf()
             if vim.b[bufnr].nes_state then
               cmp.hide()
-              return (
-                require('copilot-lsp.nes').apply_pending_nes()
-                and require('copilot-lsp.nes').walk_cursor_end_edit()
-              )
+              return nes.apply_pending_nes() and nes.walk_cursor_end_edit()
             end
           end,
           'snippet_forward',

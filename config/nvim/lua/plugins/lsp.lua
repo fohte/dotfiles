@@ -72,22 +72,28 @@ return {
         automatic_enable = false, -- Disable automatic enabling to use our custom configs
       })
 
+      -- Base configuration for all servers
+      local base_config = {
+        on_attach = on_attach,
+        capabilities = get_capabilities(),
+      }
+
+      -- Helper function to setup server with config
+      local function setup_server(server_name, config)
+        vim.lsp.config(server_name, vim.tbl_deep_extend('force', base_config, config or {}))
+        vim.lsp.enable(server_name)
+      end
+
       -- Manually set up servers with custom configurations
       local handlers = {
         -- Default handler for servers without custom configuration
         function(server_name)
-          vim.lsp.config(server_name, {
-            on_attach = on_attach,
-            capabilities = get_capabilities(),
-          })
-          vim.lsp.enable(server_name)
+          setup_server(server_name)
         end,
 
         -- Custom handlers for specific servers
         ['tailwindcss'] = function()
-          vim.lsp.config('tailwindcss', {
-            on_attach = on_attach,
-            capabilities = get_capabilities(),
+          setup_server('tailwindcss', {
             filetypes = {
               'javascript.jsx',
               'typescript.tsx',
@@ -99,12 +105,9 @@ return {
               },
             },
           })
-          vim.lsp.enable('tailwindcss')
         end,
         ['lua_ls'] = function()
-          vim.lsp.config('lua_ls', {
-            on_attach = on_attach,
-            capabilities = get_capabilities(),
+          setup_server('lua_ls', {
             settings = {
               Lua = {
                 diagnostics = {
@@ -117,7 +120,6 @@ return {
               },
             },
           })
-          vim.lsp.enable('lua_ls')
         end,
 
         ['copilot'] = function()
