@@ -6,6 +6,7 @@ return {
       'onsails/lspkind.nvim',
       'fang2hou/blink-copilot',
       'L3MON4D3/LuaSnip',
+      'xzbdmw/colorful-menu.nvim',
     },
     version = '1.*',
     ---@module 'blink.cmp'
@@ -59,6 +60,16 @@ return {
         menu = {
           border = 'rounded',
           winhighlight = 'Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder,CursorLine:BlinkCmpDocCursorLine,Search:None',
+          draw = {
+            columns = { { 'kind_icon' }, { 'label', gap = 1 }, { 'kind' } },
+            components = {
+              kind = {
+                highlight = function(ctx)
+                  return 'BlinkCmpKind' .. ctx.kind
+                end,
+              },
+            },
+          },
         },
       },
 
