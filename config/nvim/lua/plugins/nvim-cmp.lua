@@ -6,16 +6,6 @@ return {
       local cmp = require('cmp')
       local map = cmp.mapping
 
-      -- Tab Completion Configuration (Highly Recommended)
-      -- from: https://github.com/zbirenbaum/copilot-cmp#tab-completion-configuration-highly-recommended
-      local has_words_before = function()
-        if vim.api.nvim_buf_get_option(0, 'buftype') == 'prompt' then
-          return false
-        end
-        local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-        return col ~= 0 and vim.api.nvim_buf_get_text(0, line - 1, 0, line - 1, col, {})[1]:match('^%s*$') == nil
-      end
-
       cmp.setup({
         snippet = {
           expand = function(args)
@@ -29,7 +19,28 @@ return {
           ['<C-b>'] = map.scroll_docs(-4),
           ['<C-f>'] = map.scroll_docs(4),
           ['<C-g>'] = map.abort(),
-          ['<Tab>'] = map.confirm({ select = true }),
+          -- Custom Tab mapping with copilot-lsp priority
+          ['<Tab>'] = map(function(fallback)
+            local bufnr = vim.api.nvim_get_current_buf()
+            local copilot_state = vim.b[bufnr].nes_state
+
+            -- Priority 1: Copilot-LSP suggestion
+            if copilot_state then
+              if require('copilot-lsp.nes').apply_pending_nes() then
+                require('copilot-lsp.nes').walk_cursor_end_edit()
+                return
+              end
+            end
+
+            -- Priority 2: nvim-cmp completion
+            if cmp.visible() then
+              cmp.confirm({ select = true })
+            else
+              -- Priority 3: Default Tab behavior
+              fallback()
+            end
+          end, { 'i', 's' }),
+
           ['<C-e>'] = map.complete(),
           ['<C-n>'] = map.select_next_item(),
           ['<C-p>'] = map.select_prev_item(),
@@ -37,7 +48,6 @@ return {
 
         sources = cmp.config.sources(
           {
-            { name = 'copilot' },
             { name = 'nvim_lsp' },
             { name = 'luasnip' },
             { name = 'path' },
@@ -57,8 +67,6 @@ return {
         sorting = {
           priority_weight = 2,
           comparators = {
-            require('copilot_cmp.comparators').prioritize,
-
             -- Below is the default comparitor list and order for nvim-cmp
             cmp.config.compare.offset,
             -- cmp.config.compare.scopes, --this is commented in nvim-cmp too
@@ -80,7 +88,7 @@ return {
             ellipsis_char = '…',
             show_labelDetails = true,
             symbol_map = {
-              Copilot = '',
+              Copilot = '',
             },
           }),
         },
@@ -121,17 +129,6 @@ return {
       },
       { 'onsails/lspkind.nvim' },
       { 'saadparwaiz1/cmp_luasnip' },
-      {
-        'zbirenbaum/copilot-cmp',
-        dependencies = {
-          { 'zbirenbaum/copilot.lua' },
-        },
-        config = function()
-          require('copilot_cmp').setup({
-            panel = { enabled = false },
-          })
-        end,
-      },
     },
   },
 }

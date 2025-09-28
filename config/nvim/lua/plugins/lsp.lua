@@ -35,6 +35,7 @@ return {
       -- List of servers to ensure are installed
       local ensure_installed = {
         'bashls',
+        'copilot',
         'cssls',
         'efm',
         'emmet_language_server',
@@ -104,6 +105,10 @@ return {
             },
           })
           vim.lsp.enable('lua_ls')
+        end,
+
+        ['copilot'] = function()
+          -- Do nothing - copilot-lsp plugin will handle copilot_ls server
         end,
 
         ['efm'] = function()
