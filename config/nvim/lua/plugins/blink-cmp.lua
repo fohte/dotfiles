@@ -15,6 +15,9 @@ return {
       keymap = {
         preset = 'default',
         -- Custom Tab mapping with copilot-lsp NES priority
+        -- Manual trigger completion
+        ['<C-e>'] = { 'show' },
+        ['<C-u>'] = { 'hide' },
         ['<Tab>'] = {
           function(cmp)
             local bufnr = vim.api.nvim_get_current_buf()
@@ -41,6 +44,14 @@ return {
       },
 
       completion = {
+        trigger = {
+          show_on_keyword = true, -- Show after typing keywords
+          show_on_trigger_character = true, -- Show after typing trigger characters (., :, etc.)
+          show_on_backspace = false, -- Don't show after backspace
+          show_on_backspace_in_keyword = true, -- Show after backspacing in a keyword
+          show_on_backspace_after_accept = true, -- Show after accepting and backspacing
+          show_in_snippet = true, -- Show in snippet
+        },
         documentation = {
           auto_show = true, -- Show documentation automatically
           auto_show_delay_ms = 200,
