@@ -5,6 +5,8 @@ $directory\
 $git_branch\
 $git_state\
 $git_status\
+${custom.aws_sso_valid}\
+${custom.aws_sso_expired}\
 $time\
 $cmd_duration\
 $line_break\
@@ -48,3 +50,17 @@ style = "bright-black"
 [cmd_duration]
 format = "[$duration]($style) "
 style = "yellow"
+
+[custom.aws_sso_valid]
+command = "check-aws-sso-status && echo '󰅠'" # nf-md-cloud_check
+when = "command -v check-aws-sso-status"
+shell = "bash"
+format = "[$output]($style) "
+style = "bright-green"
+
+[custom.aws_sso_expired]
+command = "check-aws-sso-status; [ $? -eq 1 ] && echo '󰧠'" # nf-md-cloud_alert
+when = "command -v check-aws-sso-status"
+shell = "bash"
+format = "[$output]($style) "
+style = "bright-red"
