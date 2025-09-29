@@ -16,7 +16,7 @@ return {
         preset = 'default',
         -- Manual trigger completion
         ['<C-e>'] = { 'show' },
-        ['<C-u>'] = { 'hide' },
+        ['<C-u>'] = { 'cancel' },
         -- Custom Tab mapping: prioritize completion when menu is visible
         ['<Tab>'] = {
           function(cmp)
@@ -63,8 +63,8 @@ return {
         },
         list = {
           selection = {
-            preselect = false,
-            auto_insert = false,
+            preselect = true,
+            auto_insert = true,
           },
         },
         menu = {
