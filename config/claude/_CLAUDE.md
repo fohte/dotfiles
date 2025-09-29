@@ -6,7 +6,7 @@
 
 - Consult latest documentation using context7 MCP server for up-to-date library and framework information
 - Focus on ensuring you are adding reminders and steps to research and understand the latest information from web search, parallel web search (very useful), and parallel agentic execution where possible.
-- **Proactively use specialized sub-agents**: Always leverage Task tool with appropriate sub-agents for tasks matching their expertise, and launch multiple agents in parallel when tasks are independent
+- **MANDATORY use of specialized sub-agents**: You MUST ALWAYS use the Task tool with appropriate sub-agents for ANY task that matches their expertise. Default to using sub-agents unless the task is trivial (single file read/edit). Launch multiple agents in parallel for all independent tasks
 - Maximize productivity through parallel execution using sub-agents:
   - Launch multiple Task sub-agents concurrently for independent research/analysis tasks
   - Break down complex tasks into atomic, self-contained units that can execute in parallel
