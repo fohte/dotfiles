@@ -15,7 +15,7 @@ lua = "5.4.8"
 "gem:rubocop" = "1.79.2"
 
 # CLI tools
-github-cli = "2.76.2"
+github-cli = "2.80.0"
 bat = "0.25.0"
 ghq = "1.7.1"
 fzf = "0.61.1"
