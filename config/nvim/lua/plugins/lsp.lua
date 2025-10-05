@@ -57,6 +57,7 @@ return {
         'mdx_analyzer',
         'pylsp',
         'pyright',
+        'rust_analyzer',
         'solargraph',
         'steep',
         'tailwindcss',
