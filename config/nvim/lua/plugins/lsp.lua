@@ -127,6 +127,33 @@ return {
           -- Do nothing - copilot-lsp plugin will handle copilot_ls server
         end,
 
+        ['rust_analyzer'] = function()
+          setup_server('rust_analyzer', {
+            on_attach = function(client, buffer)
+              on_attach(client, buffer)
+
+              -- Enable inlay hints
+              vim.lsp.inlay_hint.enable(true, { bufnr = buffer })
+            end,
+
+            settings = {
+              ['rust-analyzer'] = {
+                inlayHints = {
+                  typeHints = {
+                    enable = true,
+                  },
+                  chainingHints = {
+                    enable = true,
+                  },
+                  parameterHints = {
+                    enable = true,
+                  },
+                },
+              },
+            },
+          })
+        end,
+
         ['efm'] = function()
           local efm_configs = require('user.lsp.efm')
 
