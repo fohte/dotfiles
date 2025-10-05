@@ -284,14 +284,6 @@ return {
           vim.lsp.buf.rename()
         end,
       },
-      {
-        'ga',
-        function()
-          vim.lsp.buf.code_action()
-        end,
-        desc = 'Code Action',
-        mode = { 'n', 'v' },
-      },
     },
     config = function()
       vim.lsp.config('rubocop', { on_attach = on_attach })
@@ -313,6 +305,12 @@ return {
       })
 
       vim.keymap.set('n', '<Leader>ll', require('lsp_lines').toggle, { desc = 'Toggle lsp_lines' })
+    end,
+  },
+  {
+    'aznhe21/actions-preview.nvim',
+    config = function()
+      vim.keymap.set({ 'v', 'n' }, 'ga', require('actions-preview').code_actions)
     end,
   },
 }
