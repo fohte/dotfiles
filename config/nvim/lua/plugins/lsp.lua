@@ -284,6 +284,14 @@ return {
           vim.lsp.buf.rename()
         end,
       },
+      {
+        'ga',
+        function()
+          vim.lsp.buf.code_action()
+        end,
+        desc = 'Code Action',
+        mode = { 'n', 'v' },
+      },
     },
     config = function()
       vim.lsp.config('rubocop', { on_attach = on_attach })
