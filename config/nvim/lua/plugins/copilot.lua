@@ -27,12 +27,10 @@ return {
         end
       end, { desc = 'Accept Copilot NES suggestion', expr = true })
 
-      vim.keymap.set('n', '<esc>', function()
-        if not require('copilot-lsp.nes').clear() then
-          -- fallback to other functionality
-          return '<esc>'
-        end
-      end, { desc = 'Clear Copilot suggestion or fallback', expr = true })
+      -- Register handler for <ESC> key to clear Copilot NES suggestions
+      require('core.mappings').on_esc(function()
+        require('copilot-lsp.nes').clear()
+      end, { desc = 'Clear Copilot NES suggestions' })
     end,
   },
 }
