@@ -1,8 +1,4 @@
 {
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/statusline.ts"
-  },
   "includeCoAuthoredBy": true,
   "permissions": {
     "allow": [
@@ -93,5 +89,9 @@
       }
     ]
   },
-  "model": "sonnet"
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.ts"
+  },
+  "alwaysThinkingEnabled": false
 }
