@@ -93,5 +93,5 @@
     "type": "command",
     "command": "~/.claude/statusline.ts"
   },
-  "alwaysThinkingEnabled": false
+  "alwaysThinkingEnabled": true
 }
