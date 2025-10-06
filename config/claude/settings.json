@@ -69,6 +69,7 @@
       "mcp__sequential-thinking__sequentialthinking"
     ],
     "deny": [
+      "Bash(gh repo set-default:*)",
       "Bash(git commit --amend:*)",
       "Bash(git push --force-with-lease:*)",
       "Bash(git push --force:*)",
