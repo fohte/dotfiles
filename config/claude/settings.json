@@ -2,6 +2,7 @@
   "includeCoAuthoredBy": true,
   "permissions": {
     "allow": [
+      "Bash(actionlint:*)",
       "Bash(bun install)",
       "Bash(bun pm ls:*)",
       "Bash(bun run build:*)",
@@ -52,7 +53,9 @@
       "Bash(pnpm run lint:*)",
       "Bash(pnpm run test:*)",
       "Bash(rg:*)",
+      "Bash(ruby -c:*)",
       "Bash(shellcheck:*)",
+      "Bash(shfmt:*)",
       "Bash(task:*)",
       "Bash(terraform fmt)",
       "Bash(terraform fmt:*)",
