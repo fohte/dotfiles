@@ -88,6 +88,9 @@ return {
     -- make comment text brighter
     set_hl({ 'Comment', 'TSComment' }, { fg = '#777777' })
 
+    -- make inlay hints more visible
+    set_hl({ 'LspInlayHint' }, { link = 'Comment' })
+
     -- make selected text background brighter
     set_hl({ 'Visual' }, { link = 'IncSearch' })
 
