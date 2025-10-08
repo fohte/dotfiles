@@ -16,7 +16,7 @@ if [[ ! -d "$cache_dir" ]]; then
 fi
 
 # Get the most recent cache file
-cache_file=$(find "$cache_dir" -name "*.json" -type f -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1)
+cache_file=$(find "$cache_dir" -name "*.json" -type f -print0 2> /dev/null | xargs -0 ls -t 2> /dev/null | head -1)
 if [[ -z "$cache_file" ]]; then
   exit 1
 fi
