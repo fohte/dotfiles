@@ -111,6 +111,18 @@ return {
       snippets = {
         preset = 'luasnip',
       },
+
+      signature = {
+        enabled = true,
+        trigger = {
+          enabled = true, -- Enable automatic signature help
+          show_on_trigger_character = true, -- Show when typing (
+          show_on_insert_on_trigger_character = true, -- Show when entering insert mode after (
+        },
+        window = {
+          border = 'rounded',
+        },
+      },
     },
   },
 }
