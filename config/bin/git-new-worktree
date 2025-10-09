@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# git new-worktree - Create a new Git worktree for a branch
+#
+set -euo pipefail
+
+usage() {
+  cat << EOF
+Usage: $0 [options] [-b|-B <branch> [<base-branch>]] [<name>]
+
+Options:
+  -h, --help   Show this help message
+  -b <branch>  Create branch and worktree (pass to git worktree add)
+  -B <branch>  Same as -b, but force recreate (pass to git worktree add)
+
+Arguments:
+  <name>       worktree and branch name
+               if -b or -B is not passed, this will be used to base branch
+EOF
+  exit 1
+}
+
+b_option=()
+name=""
+
+while (($#)); do
+  case "$1" in
+    -h | --help)
+      usage
+      ;;
+    -b | -B)
+      [ $# -ge 2 ] || usage
+      b_option+=("$1" "$2")
+
+      shift 2
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      usage
+      ;;
+    *)
+      # First non-option is treated as worktree name input
+      name="$1"
+      shift
+      ;;
+  esac
+done
+
+# remove fohte/ prefix to avoid fohte/fohte/<name>
+name_no_prefix="${name#fohte/}"
+# replace slashes with dashes
+worktree_name="${name_no_prefix//\//-}"
+worktree_dir="$(git root)/.worktrees/${worktree_name}"
+
+# if -b or -B is passed
+if [ ${#b_option[@]} -ne 0 ]; then
+  # if commit-ish argument is passed, it will be used as the base for the new branch
+  # e.g. `git new-worktree -b <branch> <commit-ish>`
+  git worktree add "${b_option[@]}" "$worktree_dir" "$name"
+  exit 0
+fi
+
+branch="fohte/${name_no_prefix}"
+
+git fetch -p
+git worktree add "${worktree_dir}" -b "${branch}" "origin/$(git main)"
+
+# create a tmux window in the current session
+tmux new-window -c "${worktree_dir}" -n "${worktree_name}" zsh
