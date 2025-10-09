@@ -12,6 +12,7 @@
       "Bash(bun test:*)",
       "Bash(cat:*)",
       "Bash(cd:*)",
+      "Bash(chmod +x:*)",
       "Bash(find:*)",
       "Bash(gh issue list:*)",
       "Bash(gh issue view:*)",
