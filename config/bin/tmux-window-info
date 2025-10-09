@@ -9,6 +9,15 @@ fi
 
 window_id="$1"
 
+# Get session name
+session_name=$(tmux display-message -p '#S')
+
+# For vibe session, just show window name
+if [ "$session_name" = "vibe" ]; then
+  tmux display-message -p '#W'
+  exit 0
+fi
+
 # Get the current working directory of the active pane
 current_dir=$(tmux list-panes -t "$window_id" -F '#{pane_current_path}' | head -1)
 
