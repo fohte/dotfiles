@@ -5,8 +5,8 @@ config.font = wezterm.font('HackGen35 Console NF')
 config.color_scheme = 'Material Darker (base16)'
 config.window_background_opacity = 0.9
 
--- bell is annoying but we want tmux to handle it visually
-config.audible_bell = 'SystemBeep'
+-- bell is annoying
+config.audible_bell = 'Disabled'
 
 config.default_prog = { 'zsh', '-c', 'tmux-attach' }
 
