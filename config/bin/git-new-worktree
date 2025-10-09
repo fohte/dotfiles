@@ -14,7 +14,8 @@ Options:
   --force           Force create new branch even if it already exists
 
 Arguments:
-  <name>            worktree and branch name
+  <name>            Branch name (existing branch will be checked out,
+                    non-existing branch will be created with fohte/ prefix)
 EOF
   exit 1
 }
@@ -49,21 +50,42 @@ while (($#)); do
   esac
 done
 
+# Function to check if branch exists
+branch_exists() {
+  local branch="$1"
+  # Check local branch
+  if git show-ref --verify --quiet "refs/heads/$branch"; then
+    return 0
+  fi
+  # Check remote branch
+  if git show-ref --verify --quiet "refs/remotes/$branch"; then
+    return 0
+  fi
+  return 1
+}
+
+# Determine worktree directory name from branch name
 # remove fohte/ prefix to avoid fohte/fohte/<name>
 name_no_prefix="${name#fohte/}"
 # replace slashes with dashes
 worktree_name="${name_no_prefix//\//-}"
 worktree_dir="$(git root)/.worktrees/${worktree_name}"
 
-# Use --from if specified, otherwise use main branch (e.g. origin/main or origin/master)
-base_branch="${from_branch:-origin/$(git main)}"
-branch="fohte/${name_no_prefix}"
-
 git fetch -p
 
+# Determine action based on branch existence and flags
 if [ "$force_create" = true ]; then
+  # Force create new branch with fohte/ prefix
+  base_branch="${from_branch:-origin/$(git main)}"
+  branch="fohte/${name_no_prefix}"
   git worktree add "$worktree_dir" -B "$branch" "$base_branch"
+elif branch_exists "$name"; then
+  # Branch exists, check it out as-is
+  git worktree add "$worktree_dir" "$name"
 else
+  # Branch doesn't exist, create new one with fohte/ prefix
+  base_branch="${from_branch:-origin/$(git main)}"
+  branch="fohte/${name_no_prefix}"
   git worktree add "$worktree_dir" -b "$branch" "$base_branch"
 fi
 
