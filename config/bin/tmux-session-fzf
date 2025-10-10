@@ -1,5 +1,25 @@
 #!/usr/bin/env bash
-
+#
+# tmux-session-fzf - Interactive tmux session switcher with fzf preview
+#
+# Requirements:
+#   - tmux
+#   - fzf
+#   - ghq (for listing repositories)
+#   - tmux-window-info (for window information display)
+#
+# Usage:
+#   tmux-session-fzf
+#     - Shows a list of existing tmux sessions and available ghq repositories
+#     - 🔋 prefix: existing sessions (sorted by last used, excluding current session)
+#     - 🔌 prefix: new sessions from ghq repositories (not yet created)
+#     - 🗑️: kill session option
+#     - Preview shows windows and active pane contents with powerline-style headers
+#
+#   tmux-session-fzf --preview <session-name>
+#     - Internal command used by fzf for preview generation
+#     - Shows session windows with powerline-style headers and pane contents
+#
 set -euo pipefail
 
 if [ -z "$TMUX" ]; then
@@ -7,9 +27,61 @@ if [ -z "$TMUX" ]; then
   exit 1
 fi
 
-existing_prefix='🔋'
-new_prefix='🔌'
-kill_prefix='🗑️'
+EXISTING_PREFIX='🔋'
+NEW_PREFIX='🔌'
+KILL_PREFIX='🗑️'
+
+# Preview mode
+if [ "${1:-}" = "--preview" ]; then
+  selected="$2"
+
+  # No preview for new sessions or kill session option
+  if [[ "$selected" == "$NEW_PREFIX"* ]] || [[ "$selected" == "$KILL_PREFIX"* ]]; then
+    exit 0
+  fi
+
+  session_name="$selected"
+  session_name="${session_name#"$EXISTING_PREFIX"}"
+  session_name="${session_name# }"
+
+  if ! tmux has-session -t "$session_name" 2>/dev/null; then
+    exit 0
+  fi
+
+  # \033[1;34m = bold blue, \033[0m = reset
+  echo -e "\033[1;34m━━━ $session_name ━━━\033[0m"
+  echo ""
+
+  tmux list-windows -t "$session_name" -F "#{window_index}|#{window_id}|#{window_active}" |
+    while IFS='|' read -r win_index win_id win_active; do
+      active_pane=$(tmux list-panes -t "$session_name:$win_index" -F "#{pane_index}|#{pane_current_command}|#{pane_active}" | grep '|1$' | cut -d'|' -f1,2)
+      pane_index=$(echo "$active_pane" | cut -d'|' -f1)
+
+      win_info=$(tmux-window-info "$win_id")
+
+      header_text="$win_index  $win_info"
+      padding_length=$((120 - ${#header_text} - 10))
+      padding=$(printf '%*s' $padding_length '')
+
+      # Powerline-style header with color segments
+      # Format: \033[48;5;N;Mm = background color N, foreground color M
+      # Colors: 28=dark green, 238=gray, 240=light gray, 237=darker gray, 97=bright white
+      #  = powerline separator character
+      if [ "$win_active" = "1" ]; then
+        # Active window: [dark green bg + white text] [separator] [light gray bg] [separator] [darker gray bg]
+        echo -e "\033[48;5;28;97m $win_index \033[48;5;240;38;5;28m\033[48;5;240;97m $win_info \033[48;5;237;38;5;240m\033[48;5;237m$padding\033[0m"
+      else
+        # Inactive window: [gray bg + white text] [separator] [light gray bg] [separator] [darker gray bg]
+        echo -e "\033[48;5;238;97m $win_index \033[48;5;240;38;5;238m\033[48;5;240;97m $win_info \033[48;5;237;38;5;240m\033[48;5;237m$padding\033[0m"
+      fi
+      echo ""
+
+      tmux capture-pane -t "$session_name:$win_index.$pane_index" -e -p | tail -15
+
+      echo ""
+    done
+  exit 0
+fi
 
 # sort sessions by last used
 list_sorted_sessions() {
@@ -24,15 +96,15 @@ print_list() {
   sessions="$(list_sorted_sessions)"
   # sed is used to add prefix to each line
   # shellcheck disable=SC2001
-  echo "$sessions" | sed "s/^/$existing_prefix/"
+  echo "$sessions" | sed "s/^/$EXISTING_PREFIX/"
 
   repos="$(ghq list | cut -d/ -f2-3)"
 
   echo "$repos" |
     grep -vFxf <(tmux list-sessions -F "#{session_name}" | tr '_' '.') |
-    sed "s/^/$new_prefix/"
+    sed "s/^/$NEW_PREFIX/"
 
-  echo "$kill_prefix kill session"
+  echo "$KILL_PREFIX kill session"
 }
 
 create_session() {
@@ -40,10 +112,10 @@ create_session() {
   tmux switch -t "$1"
 }
 
-fzf_result="$(print_list | fzf --tmux \
-  --reverse \
+fzf_result="$(print_list | fzf --tmux 90%,90% \
   --print-query \
-  --preview 'tmux-tree {}' || true)"
+  --preview "$0 --preview {}" \
+  --preview-window 'right:70%' || true)"
 selected="$(echo "$fzf_result" | sed -n 2p)"
 
 # if no selection, do nothing
@@ -52,8 +124,8 @@ if [ -z "$selected" ]; then
 fi
 
 case "$selected" in
-  "$new_prefix"*)
-    selected="${selected/$new_prefix/}"
+  "$NEW_PREFIX"*)
+    selected="${selected/$NEW_PREFIX/}"
     session_name="$(echo "$selected" | tr '.' '_')"
     dir="$(ghq root)/github.com/$selected"
     tmux new-session -s "$session_name" -d -c "$dir"
@@ -62,11 +134,11 @@ case "$selected" in
     tmux new-window -t "$session_name" -c "$dir"
     ;;
 
-  "$existing_prefix"*)
-    tmux switch -t "${selected/$existing_prefix/}"
+  "$EXISTING_PREFIX"*)
+    tmux switch -t "${selected/$EXISTING_PREFIX/}"
     ;;
 
-  "$kill_prefix"*)
+  "$KILL_PREFIX"*)
     tmux-kill-session-fzf
     ;;
 esac
