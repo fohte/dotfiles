@@ -10,13 +10,20 @@
 #
 # Usage:
 #   tmux-session-fzf
+#     - Shows help message
+#
+#   tmux-session-fzf switch
 #     - Shows a list of existing tmux sessions and available ghq repositories
 #     - 🔋 prefix: existing sessions (sorted by last used, excluding current session)
 #     - 🔌 prefix: new sessions from ghq repositories (not yet created)
 #     - 🗑️: kill session option
 #     - Preview shows windows and active pane contents with powerline-style headers
 #
-#   tmux-session-fzf --preview <session-name>
+#   tmux-session-fzf kill
+#     - Shows a list of tmux sessions to kill
+#     - Supports multi-selection
+#
+#   tmux-session-fzf preview <session-name>
 #     - Internal command used by fzf for preview generation
 #     - Shows session windows with powerline-style headers and pane contents
 #
@@ -31,9 +38,29 @@ EXISTING_PREFIX='🔋'
 NEW_PREFIX='🔌'
 KILL_PREFIX='🗑️'
 
-# Preview mode
-if [ "${1:-}" = "--preview" ]; then
-  selected="$2"
+#
+# Helper functions
+#
+
+show_help() {
+  cat <<'EOF'
+tmux-session-fzf - Interactive tmux session switcher
+
+Usage:
+  tmux-session-fzf switch    Switch to a tmux session (with fzf preview)
+  tmux-session-fzf kill      Kill tmux sessions (with multi-selection)
+
+Options:
+  -h, --help                 Show this help message
+EOF
+}
+
+#
+# Preview mode functions (internal use by fzf)
+#
+
+run_preview_mode() {
+  selected="${1:-}"
 
   # No preview for kill session option
   if [[ "$selected" == "$KILL_PREFIX"* ]]; then
@@ -95,7 +122,11 @@ if [ "${1:-}" = "--preview" ]; then
       echo ""
     done
   exit 0
-fi
+}
+
+#
+# Switch mode functions
+#
 
 # sort sessions by last used
 list_sorted_sessions() {
@@ -121,38 +152,87 @@ print_list() {
   echo "$KILL_PREFIX kill session"
 }
 
-create_session() {
-  tmux new-session -s "$1" -d
-  tmux switch -t "$1"
+run_switch_mode() {
+  fzf_result="$(print_list | fzf --tmux 90%,90% \
+    --print-query \
+    --preview "$0 preview {}" \
+    --preview-window 'right:70%' || true)"
+  selected="$(echo "$fzf_result" | sed -n 2p)"
+
+  # if no selection, do nothing
+  if [ -z "$selected" ]; then
+    return
+  fi
+
+  case "$selected" in
+    "$NEW_PREFIX"*)
+      selected="${selected/$NEW_PREFIX/}"
+      session_name="$(echo "$selected" | tr '.' '_')"
+      dir="$(ghq root)/github.com/$selected"
+      tmux new-session -s "$session_name" -d -c "$dir"
+      tmux switch -t "$session_name"
+      # create a second window
+      tmux new-window -t "$session_name" -c "$dir"
+      ;;
+
+    "$EXISTING_PREFIX"*)
+      tmux switch -t "${selected/$EXISTING_PREFIX/}"
+      ;;
+
+    "$KILL_PREFIX"*)
+      run_kill_mode
+      ;;
+  esac
 }
 
-fzf_result="$(print_list | fzf --tmux 90%,90% \
-  --print-query \
-  --preview "$0 --preview {}" \
-  --preview-window 'right:70%' || true)"
-selected="$(echo "$fzf_result" | sed -n 2p)"
+#
+# Kill mode functions
+#
 
-# if no selection, do nothing
-if [ -z "$selected" ]; then
-  exit
+run_kill_mode() {
+  selected="$(
+    tmux list-sessions |
+      cut -d: -f1 |
+      fzf --tmux --reverse --multi --preview='tmux-tree {}' || true
+  )"
+
+  if [ -n "$selected" ]; then
+    echo "$selected" | xargs -I% tmux kill-session -t %
+  fi
+}
+
+#
+# Main logic
+#
+
+# Show help if no arguments
+if [ $# -eq 0 ]; then
+  show_help
+  exit 0
 fi
 
-case "$selected" in
-  "$NEW_PREFIX"*)
-    selected="${selected/$NEW_PREFIX/}"
-    session_name="$(echo "$selected" | tr '.' '_')"
-    dir="$(ghq root)/github.com/$selected"
-    tmux new-session -s "$session_name" -d -c "$dir"
-    tmux switch -t "$session_name"
-    # create a second window
-    tmux new-window -t "$session_name" -c "$dir"
-    ;;
+MODE="${1:-}"
+shift || true
 
-  "$EXISTING_PREFIX"*)
-    tmux switch -t "${selected/$EXISTING_PREFIX/}"
+# Handle different modes
+case "$MODE" in
+  preview)
+    run_preview_mode "$@"
     ;;
-
-  "$KILL_PREFIX"*)
-    tmux-kill-session-fzf
+  switch)
+    run_switch_mode
+    ;;
+  kill)
+    run_kill_mode
+    ;;
+  -h|--help)
+    show_help
+    exit 0
+    ;;
+  *)
+    echo "Error: Unknown mode: $MODE" >&2
+    echo "" >&2
+    show_help
+    exit 1
     ;;
 esac
