@@ -55,6 +55,19 @@ Options:
 EOF
 }
 
+# Extract session name by removing any known prefix
+# Usage: extract_session_name <text>
+extract_session_name() {
+  local text="$1"
+  # Remove any prefix
+  text="${text#"$EXISTING_PREFIX"}"
+  text="${text#"$NEW_PREFIX"}"
+  text="${text#"$KILL_PREFIX"}"
+  # Remove leading space if any
+  text="${text# }"
+  echo "$text"
+}
+
 # Common fzf wrapper with consistent UI settings
 # Usage: run_fzf_selector <input> [additional-fzf-options...]
 run_fzf_selector() {
@@ -81,7 +94,7 @@ run_preview_mode() {
 
   # Preview README.md for new sessions
   if [[ "$selected" == "$NEW_PREFIX"* ]]; then
-    repo_name="${selected#"$NEW_PREFIX"}"
+    repo_name="$(extract_session_name "$selected")"
     readme_path="$(ghq root)/github.com/$repo_name/README.md"
 
     if [ -f "$readme_path" ]; then
@@ -93,9 +106,7 @@ run_preview_mode() {
   fi
 
   # Preview existing session
-  session_name="$selected"
-  session_name="${session_name#"$EXISTING_PREFIX"}"
-  session_name="${session_name# }"
+  session_name="$(extract_session_name "$selected")"
 
   if ! tmux has-session -t "$session_name" 2>/dev/null; then
     exit 0
@@ -175,9 +186,9 @@ run_switch_mode() {
 
   case "$selected" in
     "$NEW_PREFIX"*)
-      selected="${selected/$NEW_PREFIX/}"
-      session_name="$(echo "$selected" | tr '.' '_')"
-      dir="$(ghq root)/github.com/$selected"
+      repo_name="$(extract_session_name "$selected")"
+      session_name="$(echo "$repo_name" | tr '.' '_')"
+      dir="$(ghq root)/github.com/$repo_name"
       tmux new-session -s "$session_name" -d -c "$dir"
       tmux switch -t "$session_name"
       # create a second window
@@ -185,7 +196,8 @@ run_switch_mode() {
       ;;
 
     "$EXISTING_PREFIX"*)
-      tmux switch -t "${selected/$EXISTING_PREFIX/}"
+      session_name="$(extract_session_name "$selected")"
+      tmux switch -t "$session_name"
       ;;
 
     "$KILL_PREFIX"*)
