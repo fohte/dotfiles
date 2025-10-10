@@ -35,11 +35,25 @@ KILL_PREFIX='🗑️'
 if [ "${1:-}" = "--preview" ]; then
   selected="$2"
 
-  # No preview for new sessions or kill session option
-  if [[ "$selected" == "$NEW_PREFIX"* ]] || [[ "$selected" == "$KILL_PREFIX"* ]]; then
+  # No preview for kill session option
+  if [[ "$selected" == "$KILL_PREFIX"* ]]; then
     exit 0
   fi
 
+  # Preview README.md for new sessions
+  if [[ "$selected" == "$NEW_PREFIX"* ]]; then
+    repo_name="${selected#"$NEW_PREFIX"}"
+    readme_path="$(ghq root)/github.com/$repo_name/README.md"
+
+    if [ -f "$readme_path" ]; then
+      bat --style=plain --color=always "$readme_path"
+    else
+      echo "No README.md found for $repo_name"
+    fi
+    exit 0
+  fi
+
+  # Preview existing session
   session_name="$selected"
   session_name="${session_name#"$EXISTING_PREFIX"}"
   session_name="${session_name# }"
