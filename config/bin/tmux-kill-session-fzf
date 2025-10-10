@@ -10,7 +10,7 @@ fi
 selected="$(
   tmux list-sessions |
     cut -d: -f1 |
-    fzf --reverse --multi --preview='tmux-tree {}' || true
+    fzf --tmux --reverse --multi --preview='tmux-tree {}' || true
 )"
 
 echo "$selected" | xargs -I% tmux kill-session -t %
