@@ -44,11 +44,10 @@ fzf_result="$(print_list | fzf --tmux \
   --reverse \
   --print-query \
   --preview 'tmux-tree {}' || true)"
-fzf_query="$(echo "$fzf_result" | sed -n 1p)"
 selected="$(echo "$fzf_result" | sed -n 2p)"
 
-# if query and result are empty, do nothing
-if [ -z "$fzf_query" ] && [ -z "$selected" ]; then
+# if no selection, do nothing
+if [ -z "$selected" ]; then
   exit
 fi
 
@@ -69,11 +68,5 @@ case "$selected" in
 
   "$kill_prefix"*)
     tmux-kill-session-fzf
-    ;;
-
-  # not selected (new session with query as name)
-  *)
-    tmux new-session -s "$fzf_query" -d
-    tmux switch -t "$fzf_query"
     ;;
 esac
