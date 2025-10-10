@@ -55,6 +55,18 @@ Options:
 EOF
 }
 
+# Common fzf wrapper with consistent UI settings
+# Usage: run_fzf_selector <input> [additional-fzf-options...]
+run_fzf_selector() {
+  local input="$1"
+  shift
+
+  echo "$input" | fzf --tmux 90%,90% \
+    --preview "$0 preview {}" \
+    --preview-window 'right:70%' \
+    "$@" || true
+}
+
 #
 # Preview mode functions (internal use by fzf)
 #
@@ -153,10 +165,7 @@ print_list() {
 }
 
 run_switch_mode() {
-  fzf_result="$(print_list | fzf --tmux 90%,90% \
-    --print-query \
-    --preview "$0 preview {}" \
-    --preview-window 'right:70%' || true)"
+  fzf_result="$(run_fzf_selector "$(print_list)" --print-query)"
   selected="$(echo "$fzf_result" | sed -n 2p)"
 
   # if no selection, do nothing
@@ -190,11 +199,8 @@ run_switch_mode() {
 #
 
 run_kill_mode() {
-  selected="$(
-    tmux list-sessions |
-      cut -d: -f1 |
-      fzf --tmux --reverse --multi --preview='tmux-tree {}' || true
-  )"
+  session_list="$(tmux list-sessions | cut -d: -f1)"
+  selected="$(run_fzf_selector "$session_list" --multi)"
 
   if [ -n "$selected" ]; then
     echo "$selected" | xargs -I% tmux kill-session -t %
