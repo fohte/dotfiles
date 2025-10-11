@@ -23,6 +23,7 @@ alias ..='cd ..'
 alias /='cd $(git-root || echo $HOME)'
 alias u='cd -'
 alias ~='cd ~'
+alias q=exit
 
 has assh && alias ssh="assh wrapper ssh --"
 
