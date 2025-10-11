@@ -10,7 +10,7 @@ hs.hotkey.bind({ 'alt' }, '2', function()
 end)
 
 hs.hotkey.bind({ 'alt' }, '5', function()
-  hs.application.launchOrFocus('/Applications/ChatGPT.app')
+  hs.application.launchOrFocus('/Applications/Claude.app')
 end)
 
 hs.hotkey.bind({ 'alt' }, 'o', function()
