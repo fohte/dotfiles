@@ -1,35 +1,35 @@
-# Rules
+# ルール
 
-- You **MUST** follow these rules
+- これらのルールに**従わなければならない**
 
-## Methodology
+## 方法論
 
-- Consult latest documentation using context7 MCP server for up-to-date library and framework information
-- Focus on ensuring you are adding reminders and steps to research and understand the latest information from web search, parallel web search (very useful), and parallel agentic execution where possible.
-- **MANDATORY use of specialized sub-agents**: You MUST ALWAYS use the Task tool with appropriate sub-agents for ANY task that matches their expertise. Default to using sub-agents unless the task is trivial (single file read/edit). Launch multiple agents in parallel for all independent tasks
-- Maximize productivity through parallel execution using sub-agents:
-  - Launch multiple Task sub-agents concurrently for independent research/analysis tasks
-  - Break down complex tasks into atomic, self-contained units that can execute in parallel
-  - Batch tool calls (e.g., multiple file reads, searches) in single messages for concurrent execution
-  - Ensure each parallel task has sufficient context to operate autonomously
-  - Use MECE (Mutually Exclusive, Collectively Exhaustive) task decomposition for optimal parallelization
+- 最新のライブラリやフレームワーク情報については、context7 MCP サーバーを使用して最新のドキュメントを参照すること
+- Web 検索、並列 Web 検索（非常に有用）、および並列エージェント実行を活用し、最新情報を調査・理解するためのリマインダーやステップを追加することに重点を置くこと
+- **専門サブエージェントの必須使用**: その専門知識に合致するタスクについては、**必ず常に**適切なサブエージェントと共に Task ツールを使用すること。タスクが些細なもの（単一ファイルの読み取り/編集）でない限り、サブエージェントの使用をデフォルトとすること。独立したタスクについては、複数のエージェントを並列で起動すること
+- サブエージェントを使った並列実行によって生産性を最大化すること:
+  - 独立した調査/分析タスクについては、複数の Task サブエージェントを同時に起動すること
+  - 複雑なタスクを、並列実行可能な原子的で自己完結したユニットに分解すること
+  - 同時実行のため、単一メッセージ内でツール呼び出し（複数ファイル読み取り、検索など）をバッチ処理すること
+  - 各並列タスクが自律的に動作するための十分なコンテキストを持つようにすること
+  - 最適な並列化のために MECE（相互排他的で網羅的）なタスク分解を使用すること
 
-## Repository Access
+## リポジトリアクセス
 
-- GitHub repositories are available for research and analysis in the `~/ghq` directory
-- User's repositories: Located at `~/ghq/github.com/fohte/<repo-name>`
-- External repositories: Clone using `ghq get <org>/<repo-name>` to make them available for analysis
+- GitHub リポジトリは `~/ghq` ディレクトリ内で調査・分析用に利用可能
+- ユーザーのリポジトリ: `~/ghq/github.com/fohte/<repo-name>` に配置
+- 外部リポジトリ: 分析用に利用可能にするには `ghq get <org>/<repo-name>` を使用してクローン
 
-## Workflow
+## ワークフロー
 
-- Do not revert changes with `git commit --amend`, `git reset --soft|hard`; keep the history linear and clear
-- If pre-commit hooks fail or modify files, fix the issues and commit again using the original message
-- Commit at logical checkpoints: one feature, one fix, or one coherent change per commit
-- GitHub access: Use `gh` command for all GitHub operations (avoid `gh api` subcommand). This includes handling GitHub URLs. Use `-R` option when accessing other repositories. (Purpose: `gh` commands are pre-approved for safe automatic execution)
-- File deletion: Use `git rm` instead of `rm` when deleting tracked files to properly stage the deletion
-- Temporary files: Use `.claude/tmp/` directory for any temporary files as it is ignored by git
+- `git commit --amend`、`git reset --soft|hard` による変更の巻き戻しは行わないこと。履歴を直線的かつ明確に保つこと
+- pre-commit フックが失敗またはファイルを変更した場合は、問題を修正し、元のメッセージを使用して再度コミットすること
+- 論理的なチェックポイントでコミットすること: 1 つの機能、1 つの修正、または 1 つのまとまった変更につき 1 コミット
+- GitHub アクセス: すべての GitHub 操作には `gh` コマンドを使用すること（`gh api` サブコマンドは避けること）。これには GitHub URL の処理も含まれる。他のリポジトリにアクセスする際は `-R` オプションを使用すること（目的: `gh` コマンドは安全な自動実行のため事前承認済み）
+- ファイル削除: 追跡されているファイルを削除する際は、削除を適切にステージングするため `rm` ではなく `git rm` を使用すること
+- 一時ファイル: 一時ファイルには `.claude/tmp/` ディレクトリを使用すること（git で無視される）
 
-## Code style
+## コードスタイル
 
-- Comments: English only, explain "why" not "what"
-- Files: Must always end with a newline character to avoid "No newline at end of file" warnings
+- コメント: 英語のみ、「何を」ではなく「なぜ」を説明すること
+- ファイル: 「No newline at end of file」警告を避けるため、常に改行文字で終わらなければならない
