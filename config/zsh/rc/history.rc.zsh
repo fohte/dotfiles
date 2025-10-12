@@ -17,6 +17,29 @@ alias histdb-recent='histdb --limit 30 --no-host'
 alias histdb-pwd='histdb --limit 30 --no-host -d "$(pwd)"'
 alias histdb-search='histdb --no-host'
 
+# Wrap histdb's _histdb_addhistory to apply hist_reduce_blanks behavior
+if (( ${+functions[_histdb_addhistory]} )); then
+  # Save original function
+  functions[_histdb_addhistory_original]=${functions[_histdb_addhistory]}
+
+  # Wrap it with cleanup logic
+  _histdb_addhistory() {
+    local cmd="${1[0, -2]}"
+
+    # Apply hist_reduce_blanks equivalent using zsh parameter expansion
+    if [[ -o histreduceblanks ]]; then
+      setopt local_options extended_glob
+      cmd="${cmd//$'\n'/ }"              # newline to space
+      cmd="${cmd//[[:space:]]##/ }"      # multiple spaces to one
+      cmd="${cmd##[[:space:]]##}"        # trim start
+      cmd="${cmd%%[[:space:]]##}"        # trim end
+    fi
+
+    # Call original function with cleaned string
+    _histdb_addhistory_original "$cmd"$'\n'
+  }
+fi
+
 # Use histdb with fzf for Ctrl-R (override default fzf-history-widget)
 fzf-history-widget() {
   local selected
@@ -46,12 +69,12 @@ fzf-history-widget() {
 	| bat --color=always --style=plain --language=zsh --paging=never
 	EOF
   )
-  
+
   # Get all history and apply bat highlighting in batch
   local fzf_opts="-n2..,.. --ansi --scheme=history --bind=ctrl-r:toggle-sort"
   fzf_opts+=" --wrap-sign '\t↳ ' --highlight-line"
   fzf_opts+=" ${FZF_CTRL_R_OPTS-} --query=${(qqq)LBUFFER} +m"
-  
+
   selected=$(
     _histdb_query "$query" | \
     bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null | \
