@@ -45,19 +45,38 @@ fzf-history-widget() {
   local selected
 
   _histdb_init
-  # Modified query to get unique commands, showing the most recent execution of each
-  # Replace newlines with space for single-line display in fzf
-  local query=$(cat <<-EOF
-	SELECT MAX(h.id) || '  ' || REPLACE(c.argv, CHAR(10), ' ')
-	FROM history h
-	JOIN commands c ON h.command_id = c.id
-	JOIN places p ON h.place_id = p.id
-	WHERE p.host = '$(hostname)'
-	GROUP BY c.argv
-	ORDER BY MAX(h.start_time) DESC
-	LIMIT 1000
-	EOF
-  )
+
+  # Base query template for all commands with exit status display
+  # Format: id  status_icon  command
+  local query_base="
+    SELECT
+      h.id || '  ' ||
+      CASE
+        WHEN h.exit_status = 0 THEN '✓'
+        WHEN h.exit_status IS NULL THEN '�'
+        ELSE '✗'
+      END || '  ' ||
+      REPLACE(c.argv, CHAR(10), ' ')
+    FROM history h
+    JOIN commands c ON h.command_id = c.id
+    JOIN places p ON h.place_id = p.id
+    WHERE p.host = '$(hostname)'"
+
+  # Query variations for filtering
+  local query_all="${query_base}
+    GROUP BY c.argv
+    ORDER BY MAX(h.start_time) DESC
+    LIMIT 1000"
+
+  local query_success="${query_base} AND h.exit_status = 0
+    GROUP BY c.argv
+    ORDER BY MAX(h.start_time) DESC
+    LIMIT 1000"
+
+  local query_failed="${query_base} AND h.exit_status IS NOT NULL AND h.exit_status != 0
+    GROUP BY c.argv
+    ORDER BY MAX(h.start_time) DESC
+    LIMIT 1000"
 
   # Store the database path for preview command
   local histdb_file="${HISTDB_FILE:-${HOME}/.histdb/zsh-history.db}"
@@ -70,15 +89,24 @@ fzf-history-widget() {
 	EOF
   )
 
+  # Commands for reload bindings
+  local reload_all="sqlite3 '${histdb_file}' \"${query_all}\" | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null"
+  local reload_success="sqlite3 '${histdb_file}' \"${query_success}\" | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null"
+  local reload_failed="sqlite3 '${histdb_file}' \"${query_failed}\" | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null"
+
   # Get all history and apply bat highlighting in batch
   # --with-nth=2.. hides the id from display (but preview can still access it via {1})
   # --accept-nth=1 outputs the id on selection (references original line, not transformed)
-  local fzf_opts="--with-nth=2.. --accept-nth=1 --ansi --scheme=history --bind=ctrl-r:toggle-sort"
+  # Keybindings: ctrl-f (failed), ctrl-s (success), ctrl-r (all/reset)
+  local fzf_opts="--with-nth=2.. --accept-nth=1 --ansi --scheme=history"
+  fzf_opts+=" --bind 'ctrl-f:reload:${reload_failed}'"
+  fzf_opts+=" --bind 'ctrl-s:reload:${reload_success}'"
+  fzf_opts+=" --bind 'ctrl-r:reload:${reload_all}'"
   fzf_opts+=" --wrap-sign '\t↳ ' --highlight-line"
   fzf_opts+=" ${FZF_CTRL_R_OPTS-} --query=${(qqq)LBUFFER} +m"
 
   selected=$(
-    _histdb_query "$query" | \
+    sqlite3 "${histdb_file}" "${query_all}" | \
     bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null | \
     FZF_DEFAULT_OPTS=$(__fzf_defaults "" "${fzf_opts}") \
     FZF_DEFAULT_OPTS_FILE='' \
