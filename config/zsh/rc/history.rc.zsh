@@ -71,7 +71,9 @@ fzf-history-widget() {
   )
 
   # Get all history and apply bat highlighting in batch
-  local fzf_opts="--nth=2.. --accept-nth=1 --ansi --scheme=history --bind=ctrl-r:toggle-sort"
+  # --with-nth=2.. hides the id from display (but preview can still access it via {1})
+  # --accept-nth=1 outputs the id on selection (references original line, not transformed)
+  local fzf_opts="--with-nth=2.. --accept-nth=1 --ansi --scheme=history --bind=ctrl-r:toggle-sort"
   fzf_opts+=" --wrap-sign '\t↳ ' --highlight-line"
   fzf_opts+=" ${FZF_CTRL_R_OPTS-} --query=${(qqq)LBUFFER} +m"
 
