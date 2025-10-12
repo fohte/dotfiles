@@ -4,7 +4,7 @@ Create and maintain a structured todo list for tracking task progress. The todo 
 
 ## Todo file location
 
-Todo lists must store at `.claude/tmp/todo.md`. `~/.claude/tmp/` is gitignored, so no commits are needed.
+Todo lists must store at `.z/todo.md`. `~/.z/` is gitignored, so no commits are needed.
 
 ## Creating the todo list
 

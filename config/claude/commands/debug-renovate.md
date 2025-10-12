@@ -6,13 +6,13 @@ Test Renovate configuration changes locally with the `renovate-dryrun` command. 
 
 ```bash
 # Basic usage
-renovate-dryrun --token $GH_TOKEN > .claude/tmp/renovate-dryrun.log
+renovate-dryrun --token $GH_TOKEN > .z/renovate-dryrun.log
 
 # Test specific branch (defaults to current branch)
-renovate-dryrun --token $GH_TOKEN --branch feature/update-deps > .claude/tmp/renovate-dryrun.log
+renovate-dryrun --token $GH_TOKEN --branch feature/update-deps > .z/renovate-dryrun.log
 
 # Debug mode with raw Renovate output
-renovate-dryrun --token $GH_TOKEN --raw > .claude/tmp/renovate-debug.log
+renovate-dryrun --token $GH_TOKEN --raw > .z/renovate-debug.log
 ```
 
 The output displays proposed updates in this format:
@@ -31,5 +31,5 @@ The output displays proposed updates in this format:
     # Validate renovate.json5 in current directory
     npx --package renovate -c 'renovate-config-validator renovate.json5'
     ```
-- You SHOULD save output to `.claude/tmp/` since the command takes time and produces extensive output:
+- You SHOULD save output to `.z/` since the command takes time and produces extensive output:
 - You MUST specify `--token $GH_TOKEN`. Use the `$GH_TOKEN` environment variable, not `$GITHUB_TOKEN`.
