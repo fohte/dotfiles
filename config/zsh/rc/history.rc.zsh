@@ -46,37 +46,38 @@ fzf-history-widget() {
 
   _histdb_init
 
-  # Base query template for all commands with exit status display
-  # Format: id  status_icon  command
-  local query_base="
-    SELECT
-      h.id || '  ' ||
-      CASE
-        WHEN h.exit_status = 0 THEN '✓'
-        WHEN h.exit_status IS NULL THEN '�'
-        ELSE '✗'
-      END || '  ' ||
-      REPLACE(c.argv, CHAR(10), ' ')
+  # Query to get ID
+  local query_id_status_base="
+    SELECT h.id
+    FROM history h
+    JOIN commands c ON h.command_id = c.id
+    JOIN places p ON h.place_id = p.id
+    WHERE p.host = '$(hostname)'"
+
+  # Query to get commands (for syntax highlighting)
+  local query_cmd_base="
+    SELECT REPLACE(c.argv, CHAR(10), ' ')
     FROM history h
     JOIN commands c ON h.command_id = c.id
     JOIN places p ON h.place_id = p.id
     WHERE p.host = '$(hostname)'"
 
   # Query variations for filtering
-  local query_all="${query_base}
+  local group_order="
     GROUP BY c.argv
     ORDER BY MAX(h.start_time) DESC
     LIMIT 1000"
 
-  local query_success="${query_base} AND h.exit_status = 0
-    GROUP BY c.argv
-    ORDER BY MAX(h.start_time) DESC
-    LIMIT 1000"
+  local query_id_status_all="${query_id_status_base} ${group_order}"
+  local query_cmd_all="${query_cmd_base} ${group_order}"
 
-  local query_failed="${query_base} AND h.exit_status IS NOT NULL AND h.exit_status != 0
-    GROUP BY c.argv
-    ORDER BY MAX(h.start_time) DESC
-    LIMIT 1000"
+  local filter_success=" AND h.exit_status = 0"
+  local query_id_status_success="${query_id_status_base}${filter_success} ${group_order}"
+  local query_cmd_success="${query_cmd_base}${filter_success} ${group_order}"
+
+  local filter_failed=" AND h.exit_status IS NOT NULL AND h.exit_status != 0"
+  local query_id_status_failed="${query_id_status_base}${filter_failed} ${group_order}"
+  local query_cmd_failed="${query_cmd_base}${filter_failed} ${group_order}"
 
   # Store the database path for preview command
   local histdb_file="${HISTDB_FILE:-${HOME}/.histdb/zsh-history.db}"
@@ -89,28 +90,44 @@ fzf-history-widget() {
 	EOF
   )
 
-  # Commands for reload bindings
-  local reload_all="sqlite3 '${histdb_file}' \"${query_all}\" | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null"
-  local reload_success="sqlite3 '${histdb_file}' \"${query_success}\" | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null"
-  local reload_failed="sqlite3 '${histdb_file}' \"${query_failed}\" | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null"
+  # ANSI color codes for header
+  local c_reset=$'\033[0m'
+  local c_green=$'\033[1;32m'
+  local c_red=$'\033[1;31m'
+  local c_cyan=$'\033[1;36m'
 
-  # Get all history and apply bat highlighting in batch
-  # --with-nth=2.. hides the id from display (but preview can still access it via {1})
-  # --accept-nth=1 outputs the id on selection (references original line, not transformed)
-  # Keybindings: ctrl-f (failed), ctrl-s (success), ctrl-r (all/reset)
-  local fzf_opts="--with-nth=2.. --accept-nth=1 --ansi --scheme=history"
-  fzf_opts+=" --bind 'ctrl-f:reload:${reload_failed}'"
-  fzf_opts+=" --bind 'ctrl-s:reload:${reload_success}'"
-  fzf_opts+=" --bind 'ctrl-r:reload:${reload_all}'"
-  fzf_opts+=" --wrap-sign '\t↳ ' --highlight-line"
-  fzf_opts+=" ${FZF_CTRL_R_OPTS-} --query=${(qqq)LBUFFER} +m"
+  # Build fzf options array
+  local fzf_opts=(
+    --header "C-s: ${c_green}Success${c_reset} | C-f: Failed | C-r: All"
+    --preview "${preview_cmd}"
+    --preview-window=bottom:3:wrap
+    --bind "ctrl-f:change-header(C-s: Success | C-f: ${c_red}Failed${c_reset} | C-r: All)+reload:paste -d' ' <(sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_ID_STATUS_FAILED) <(sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_CMD_FAILED | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null)"
+    --bind "ctrl-s:change-header(C-s: ${c_green}Success${c_reset} | C-f: Failed | C-r: All)+reload:paste -d' ' <(sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_ID_STATUS_SUCCESS) <(sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_CMD_SUCCESS | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null)"
+    --bind "ctrl-r:change-header(C-s: Success | C-f: Failed | C-r: ${c_cyan}All${c_reset})+reload:paste -d' ' <(sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_ID_STATUS_ALL) <(sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_CMD_ALL | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null)"
+    # --with-nth=2.. hides the id from display (but preview can still access it via {1})
+    # --accept-nth=1 outputs the id on selection (references original line, not transformed)
+    --with-nth=2.. --accept-nth=1 --ansi --scheme=history
+    --wrap-sign $'\t↳ ' --highlight-line
+    +m
+  )
+
+  # Add --query only if LBUFFER is not empty
+  [[ -n "$LBUFFER" ]] && fzf_opts+=(--query "$LBUFFER")
 
   selected=$(
-    sqlite3 "${histdb_file}" "${query_all}" | \
-    bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null | \
-    FZF_DEFAULT_OPTS=$(__fzf_defaults "" "${fzf_opts}") \
-    FZF_DEFAULT_OPTS_FILE='' \
-    $(__fzfcmd) --preview "${preview_cmd}" --preview-window=bottom:3:wrap)
+    paste -d' ' \
+      <(sqlite3 "${histdb_file}" "${query_id_status_success}") \
+      <(sqlite3 "${histdb_file}" "${query_cmd_success}" | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null) | \
+    env \
+    HISTDB_FILE="${histdb_file}" \
+    HISTDB_QUERY_ID_STATUS_ALL="${query_id_status_all}" \
+    HISTDB_QUERY_CMD_ALL="${query_cmd_all}" \
+    HISTDB_QUERY_ID_STATUS_SUCCESS="${query_id_status_success}" \
+    HISTDB_QUERY_CMD_SUCCESS="${query_cmd_success}" \
+    HISTDB_QUERY_ID_STATUS_FAILED="${query_id_status_failed}" \
+    HISTDB_QUERY_CMD_FAILED="${query_cmd_failed}" \
+    $(__fzfcmd) "${fzf_opts[@]}"
+  )
 
   local ret=$?
   if [ -n "$selected" ]; then
