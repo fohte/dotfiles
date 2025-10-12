@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+#
+# claude-pr-draft - PR body draft management tool for Claude Code
+#
+# This command is designed to be used by Claude Code to create and manage
+# PR body drafts with user review via Neovim in a new Wezterm window.
+#
+# Usage:
+#   claude-pr-draft new
+#   claude-pr-draft review <filepath>
+#   claude-pr-draft submit <filepath> [gh pr create options...]
+#
+set -euo pipefail
+
+# Show help
+show_help() {
+  cat << EOF
+PR body draft management tool for Claude Code
+
+Usage: claude-pr-draft [--help] <command> [args]
+
+Commands:
+  new                          Create a new temporary draft file and output its path
+  review <filepath>            Open the draft file in Neovim (new Wezterm window)
+  submit <filepath> [options]  Create PR with the draft file as body
+
+Examples:
+  # Create a new draft file (outputs path to stdout)
+  claude-pr-draft new
+
+  # Open draft file for user review
+  claude-pr-draft review /tmp/pr-body-draft.xxx.md
+
+  # Create PR after user approval
+  claude-pr-draft submit /tmp/pr-body-draft.xxx.md --title "..." --base main
+EOF
+}
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h | --help)
+      show_help
+      exit 0
+      ;;
+    -*)
+      echo "Error: Unknown option: $1" >&2
+      echo "Run 'claude-pr-draft --help' for usage information" >&2
+      exit 1
+      ;;
+    *)
+      # First non-option argument is the subcommand
+      break
+      ;;
+  esac
+done
+
+# Parse command line arguments
+SUBCOMMAND="${1:-}"
+shift || true
+
+# Create a new temporary draft file
+new_draft() {
+  local draft_file
+  draft_file=$(mktemp -t pr-body-draft.XXXXXX.md)
+  echo "$draft_file"
+}
+
+# Review draft in Neovim (new Wezterm window)
+review_draft() {
+  local filepath="$1"
+
+  if [[ ! -f "$filepath" ]]; then
+    echo "Error: File not found: $filepath" >&2
+    exit 1
+  fi
+
+  wezterm start -- nvim "$filepath"
+}
+
+# Submit PR with draft file as body
+submit_pr() {
+  local filepath="$1"
+  shift
+
+  if [[ ! -f "$filepath" ]]; then
+    echo "Error: File not found: $filepath" >&2
+    exit 1
+  fi
+
+  # Pass remaining arguments to gh pr create
+  gh pr create --body-file "$filepath" "$@"
+}
+
+# Main execution
+case "$SUBCOMMAND" in
+  new)
+    new_draft
+    ;;
+  review)
+    if [[ $# -ne 1 ]]; then
+      echo "Error: review requires exactly 1 argument: <filepath>" >&2
+      exit 1
+    fi
+    review_draft "$1"
+    ;;
+  submit)
+    if [[ $# -lt 1 ]]; then
+      echo "Error: submit requires at least 1 argument: <filepath> [gh pr create options...]" >&2
+      exit 1
+    fi
+    submit_pr "$@"
+    ;;
+  "")
+    echo "Error: No command specified" >&2
+    echo "Run 'claude-pr-draft --help' for usage information" >&2
+    exit 1
+    ;;
+  *)
+    echo "Error: Unknown command: $SUBCOMMAND" >&2
+    echo "Run 'claude-pr-draft --help' for usage information" >&2
+    exit 1
+    ;;
+esac
