@@ -71,7 +71,7 @@ fzf-history-widget() {
   )
 
   # Get all history and apply bat highlighting in batch
-  local fzf_opts="-n2..,.. --ansi --scheme=history --bind=ctrl-r:toggle-sort"
+  local fzf_opts="--nth=2.. --accept-nth=1 --ansi --scheme=history --bind=ctrl-r:toggle-sort"
   fzf_opts+=" --wrap-sign '\t↳ ' --highlight-line"
   fzf_opts+=" ${FZF_CTRL_R_OPTS-} --query=${(qqq)LBUFFER} +m"
 
@@ -85,7 +85,8 @@ fzf-history-widget() {
   local ret=$?
   if [ -n "$selected" ]; then
     # Get the actual command (with newlines) from the database using the ID
-    local id=$(echo "$selected" | awk '{print $1}')
+    # --accept-nth=1 returns only the id
+    local id="$selected"
     if [ -n "$id" ]; then
       local cmd=$(_histdb_query "SELECT c.argv FROM history h JOIN commands c ON h.command_id = c.id WHERE h.id = $id")
       if [ -n "$cmd" ]; then
