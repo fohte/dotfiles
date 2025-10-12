@@ -21,12 +21,13 @@ Usage: claude-pr-draft [--help] <command> [args]
 
 Commands:
   new                          Create a new temporary draft file and output its path
+                               Accepts content from stdin if provided
   review <filepath>            Open the draft file in Neovim (new Wezterm window)
   submit <filepath> [options]  Create PR with the draft file as body
 
 Examples:
-  # Create a new draft file (outputs path to stdout)
-  claude-pr-draft new
+  # Create a new draft file with content from stdin (using heredoc)
+  echo "PR body content..." | claude-pr-draft new
 
   # Open draft file for user review
   claude-pr-draft review /tmp/pr-body-draft.xxx.md
@@ -62,7 +63,13 @@ shift || true
 # Create a new temporary draft file
 new_draft() {
   local draft_file
-  draft_file=$(mktemp -t pr-body-draft.XXXXXX.md)
+  draft_file=$(mktemp /tmp/pr-body-draft.XXXXXX.md)
+
+  # If stdin is available, read content from stdin
+  if [ ! -t 0 ]; then
+    cat > "$draft_file"
+  fi
+
   echo "$draft_file"
 }
 
@@ -75,7 +82,8 @@ review_draft() {
     exit 1
   fi
 
-  wezterm start -- nvim "$filepath"
+  # Use nohup to run in background without blocking
+  nohup wezterm start -- nvim "$filepath" >/dev/null 2>&1 &
 }
 
 # Submit PR with draft file as body
