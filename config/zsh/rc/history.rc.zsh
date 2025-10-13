@@ -46,6 +46,36 @@ fzf-history-widget() {
 
   _histdb_init
 
+  # Build directory priority CASE statement for SQL
+  local pwd_clean="${PWD:a}"  # Resolve symlinks
+  local -a dir_levels=()
+  local current_path="$pwd_clean"
+
+  # Build array of directory paths from current to root
+  while [[ "$current_path" != "/" ]]; do
+    dir_levels+=("$current_path")
+    current_path="${current_path:h}"
+  done
+
+  # Build CASE statement for directory priority
+  # Lower number = higher priority (closer to current directory)
+  local priority_case="CASE"
+  local priority=0
+  for dir in "${dir_levels[@]}"; do
+    priority_case+="
+      WHEN p.dir = '${dir}' THEN ${priority}"
+    ((priority++))
+
+    # Also match subdirectories of parent directories (with same priority as parent)
+    if [[ $priority -gt 1 ]]; then
+      priority_case+="
+      WHEN p.dir LIKE '${dir}/%' THEN ${priority}"
+    fi
+  done
+  priority_case+="
+      ELSE 1000
+    END"
+
   # Build history query with filter type (all, success, failed)
   _build_history_query() {
     local filter_type="$1"
@@ -70,7 +100,9 @@ fzf-history-widget() {
 	JOIN places p ON h.place_id = p.id
 	WHERE p.host = '$(hostname)' ${filter}
 	GROUP BY c.argv
-	ORDER BY MAX(h.start_time) DESC
+	ORDER BY
+	  MIN(${priority_case}),
+	  MAX(h.start_time) DESC
 	LIMIT 1000
 	EOF
   }
