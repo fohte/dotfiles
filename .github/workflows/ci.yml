@@ -22,8 +22,6 @@ jobs:
           persist-credentials: false
 
       - uses: jdx/mise-action@v2
-        with:
-          install: false  # Skip upfront install, use auto_install instead
 
       - name: Run pre-commit hooks
         id: pre-commit
