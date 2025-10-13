@@ -23,8 +23,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### コミットメッセージと Pull Request
 
-- **言語**: コミットメッセージと Pull Request の説明は英語で記述すること
+#### 言語
+
+- **コミットメッセージと Pull Request**: 英語で記述すること
 - **理由**: オープンソースプロジェクトとの一貫性を保ち、国際的な可読性を確保するため
+
+#### コミットメッセージフォーマット
+
+基本フォーマット:
+```
+<scope>: <description>
+```
+
+**ルール:**
+- **スコープ**: 変更対象の設定ディレクトリを指定 (例: `zsh`, `nvim`, `tmux`, `bin`)
+  - 機能単位やスクリプト名で細分化可能 (例: `zsh/history`, `nvim/cmp`, `bin/tmux-session-fzf`)
+  - 複数スコープの場合は `, ` で区切る (例: `claude, bin`)
+- **説明**: 小文字で始まり、現在形の命令形を使用 (例: `add`, `fix`, `refactor`, `update`, `remove`)
+- **簡潔性**: 1 行で変更内容を明確に説明
+
+**例:**
+```
+zsh/history: refactor SQL query generation
+tmux: add visual distinction for inactive panes
+claude, bin: add claude-pr-draft command for PR body management
+git: set commit.verbose to true
+```
 
 ## ツールバージョン管理
 
