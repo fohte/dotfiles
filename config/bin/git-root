@@ -44,7 +44,7 @@ fi
 recursive=false
 while [[ $# -gt 0 ]]; do
   case $1 in
-    -r|--recursive)
+    -r | --recursive)
       recursive=true
       shift
       ;;

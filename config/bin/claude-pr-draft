@@ -83,7 +83,7 @@ review_draft() {
   fi
 
   # Use nohup to run in background without blocking
-  nohup wezterm start -- nvim "$filepath" >/dev/null 2>&1 &
+  nohup wezterm start -- nvim "$filepath" > /dev/null 2>&1 &
 }
 
 # Submit PR with draft file as body
