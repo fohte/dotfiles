@@ -46,38 +46,38 @@ fzf-history-widget() {
 
   _histdb_init
 
-  # Query to get ID
-  local query_id_status_base="
-    SELECT h.id
-    FROM history h
-    JOIN commands c ON h.command_id = c.id
-    JOIN places p ON h.place_id = p.id
-    WHERE p.host = '$(hostname)'"
+  # Build history query with filter type (all, success, failed)
+  _build_history_query() {
+    local filter_type="$1"
+    local filter=""
 
-  # Query to get commands (for syntax highlighting)
-  local query_cmd_base="
-    SELECT REPLACE(c.argv, CHAR(10), ' ')
-    FROM history h
-    JOIN commands c ON h.command_id = c.id
-    JOIN places p ON h.place_id = p.id
-    WHERE p.host = '$(hostname)'"
+    case "$filter_type" in
+      success)
+        filter="AND h.exit_status = 0"
+        ;;
+      failed)
+        filter="AND h.exit_status IS NOT NULL AND h.exit_status != 0"
+        ;;
+      all)
+        filter=""
+        ;;
+    esac
 
-  # Query variations for filtering
-  local group_order="
-    GROUP BY c.argv
-    ORDER BY MAX(h.start_time) DESC
-    LIMIT 1000"
+    cat <<-EOF
+	SELECT h.id || CHAR(9) || REPLACE(c.argv, CHAR(10), ' ')
+	FROM history h
+	JOIN commands c ON h.command_id = c.id
+	JOIN places p ON h.place_id = p.id
+	WHERE p.host = '$(hostname)' ${filter}
+	GROUP BY c.argv
+	ORDER BY MAX(h.start_time) DESC
+	LIMIT 1000
+	EOF
+  }
 
-  local query_id_status_all="${query_id_status_base} ${group_order}"
-  local query_cmd_all="${query_cmd_base} ${group_order}"
-
-  local filter_success=" AND h.exit_status = 0"
-  local query_id_status_success="${query_id_status_base}${filter_success} ${group_order}"
-  local query_cmd_success="${query_cmd_base}${filter_success} ${group_order}"
-
-  local filter_failed=" AND h.exit_status IS NOT NULL AND h.exit_status != 0"
-  local query_id_status_failed="${query_id_status_base}${filter_failed} ${group_order}"
-  local query_cmd_failed="${query_cmd_base}${filter_failed} ${group_order}"
+  local query_all=$(_build_history_query "all")
+  local query_success=$(_build_history_query "success")
+  local query_failed=$(_build_history_query "failed")
 
   # Store the database path for preview command
   local histdb_file="${HISTDB_FILE:-${HOME}/.histdb/zsh-history.db}"
@@ -98,15 +98,15 @@ fzf-history-widget() {
 
   # Build fzf options array
   local fzf_opts=(
+    --delimiter=$'\t'  # Use TAB as delimiter to separate ID and command
     --header "C-s: ${c_green}Success${c_reset} | C-f: Failed | C-r: All"
     --preview "${preview_cmd}"
     --preview-window=bottom:3:wrap
-    --bind "ctrl-f:change-header(C-s: Success | C-f: ${c_red}Failed${c_reset} | C-r: All)+reload:paste -d' ' <(sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_ID_STATUS_FAILED) <(sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_CMD_FAILED | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null)"
-    --bind "ctrl-s:change-header(C-s: ${c_green}Success${c_reset} | C-f: Failed | C-r: All)+reload:paste -d' ' <(sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_ID_STATUS_SUCCESS) <(sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_CMD_SUCCESS | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null)"
-    --bind "ctrl-r:change-header(C-s: Success | C-f: Failed | C-r: ${c_cyan}All${c_reset})+reload:paste -d' ' <(sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_ID_STATUS_ALL) <(sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_CMD_ALL | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null)"
+    --bind "ctrl-f:change-header(C-s: Success | C-f: ${c_red}Failed${c_reset} | C-r: All)+reload:sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_FAILED | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null"
+    --bind "ctrl-s:change-header(C-s: ${c_green}Success${c_reset} | C-f: Failed | C-r: All)+reload:sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_SUCCESS | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null"
+    --bind "ctrl-r:change-header(C-s: Success | C-f: Failed | C-r: ${c_cyan}All${c_reset})+reload:sqlite3 \$HISTDB_FILE \$HISTDB_QUERY_ALL | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null"
     # --with-nth=2.. hides the id from display (but preview can still access it via {1})
-    # --accept-nth=1 outputs the id on selection (references original line, not transformed)
-    --with-nth=2.. --accept-nth=1 --ansi --scheme=history
+    --with-nth=2.. --ansi --scheme=history
     --wrap-sign $'\t↳ ' --highlight-line
     +m
   )
@@ -115,25 +115,20 @@ fzf-history-widget() {
   [[ -n "$LBUFFER" ]] && fzf_opts+=(--query "$LBUFFER")
 
   selected=$(
-    paste -d' ' \
-      <(sqlite3 "${histdb_file}" "${query_id_status_success}") \
-      <(sqlite3 "${histdb_file}" "${query_cmd_success}" | bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null) | \
+    sqlite3 "${histdb_file}" "${query_success}" | \
+    bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null | \
     env \
     HISTDB_FILE="${histdb_file}" \
-    HISTDB_QUERY_ID_STATUS_ALL="${query_id_status_all}" \
-    HISTDB_QUERY_CMD_ALL="${query_cmd_all}" \
-    HISTDB_QUERY_ID_STATUS_SUCCESS="${query_id_status_success}" \
-    HISTDB_QUERY_CMD_SUCCESS="${query_cmd_success}" \
-    HISTDB_QUERY_ID_STATUS_FAILED="${query_id_status_failed}" \
-    HISTDB_QUERY_CMD_FAILED="${query_cmd_failed}" \
+    HISTDB_QUERY_ALL="${query_all}" \
+    HISTDB_QUERY_SUCCESS="${query_success}" \
+    HISTDB_QUERY_FAILED="${query_failed}" \
     $(__fzfcmd) "${fzf_opts[@]}"
   )
 
   local ret=$?
   if [ -n "$selected" ]; then
-    # Get the actual command (with newlines) from the database using the ID
-    # --accept-nth=1 returns only the id
-    local id="$selected"
+    # Extract ID from the first field (TAB-separated)
+    local id="${selected%%$'\t'*}"
     if [ -n "$id" ]; then
       local cmd=$(_histdb_query "SELECT c.argv FROM history h JOIN commands c ON h.command_id = c.id WHERE h.id = $id")
       if [ -n "$cmd" ]; then
