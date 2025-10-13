@@ -1,4 +1,4 @@
-# this mise.toml is repository specific config, the global config is in config/mise/config.toml
+# this mise.toml is repository specific config, the global config is in config/mise/home-config.toml
 
 [tools]
 # Required for pre-commit

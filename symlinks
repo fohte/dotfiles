@@ -103,5 +103,5 @@ if match_tag claude; then
 fi
 
 if match_tag mise; then
-  sym config/mise ~/.config/mise
+  sym config/mise/home-config.toml ~/.config/mise/config.toml
 fi
