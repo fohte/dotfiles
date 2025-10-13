@@ -19,6 +19,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. 設定は `config/<tool-name>/` ディレクトリに配置すること
 3. タグベースのデプロイをサポートするため、`symlinks` に適切な `match_tag` ブロックを追加すること
 
+## Git ワークフロー
+
+### コミットメッセージと Pull Request
+
+- **言語**: コミットメッセージと Pull Request の説明は英語で記述すること
+- **理由**: オープンソースプロジェクトとの一貫性を保ち、国際的な可読性を確保するため
+
 ## ツールバージョン管理
 
 ### mise
