@@ -9,6 +9,3 @@ shfmt = "3.12.0"
 stylua = "2.1.0"
 go-jsonnet = "0.21.0"
 jq = "1.7.1"
-
-# Required for CI (update-nvim-plugins job)
-neovim = "0.11.2"
