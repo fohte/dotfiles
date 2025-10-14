@@ -194,10 +194,6 @@ return {
               formatters = { 'shfmt' },
             },
             {
-              languages = { 'hcl' },
-              formatters = { 'terraform' },
-            },
-            {
               languages = { 'yaml.actions' },
               linters = { 'actionlint' },
             },
