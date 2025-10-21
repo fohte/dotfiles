@@ -69,7 +69,7 @@ branch_exists() {
 name_no_prefix="${name#fohte/}"
 # replace slashes with dashes
 worktree_name="${name_no_prefix//\//-}"
-worktree_dir="$(git root)/.worktrees/${worktree_name}"
+worktree_dir="$(git root -r)/.worktrees/${worktree_name}"
 
 git fetch -p
 
