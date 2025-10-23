@@ -101,6 +101,7 @@ fzf-history-widget() {
 	WHERE p.host = '$(hostname)' ${filter}
 	GROUP BY c.argv
 	ORDER BY
+	  COUNT(h.id) DESC,
 	  MIN(${priority_case}),
 	  MAX(h.start_time) DESC
 	LIMIT 1000
