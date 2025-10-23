@@ -70,29 +70,51 @@ new_draft() {
     cat > "$draft_file"
   fi
 
+  # Create lock file to prevent accidental submission without review
+  touch "${draft_file}.lock"
+
   echo "$draft_file"
 }
 
 # Review draft in Neovim (new Wezterm window)
 review_draft() {
   local filepath="$1"
+  local lock_file="${filepath}.lock"
 
   if [[ ! -f "$filepath" ]]; then
     echo "Error: File not found: $filepath" >&2
     exit 1
   fi
 
+  # Create a wrapper script that removes the lock file after Neovim exits
+  local wrapper_script
+  wrapper_script=$(mktemp /tmp/nvim-wrapper.XXXXXX.sh)
+  cat > "$wrapper_script" << EOF
+#!/usr/bin/env bash
+nvim "$filepath"
+rm -f "$lock_file"
+EOF
+  chmod +x "$wrapper_script"
+
   # Use nohup to run in background without blocking
-  nohup wezterm start -- nvim "$filepath" > /dev/null 2>&1 &
+  nohup wezterm start -- "$wrapper_script" > /dev/null 2>&1 &
 }
 
 # Submit PR with draft file as body
 submit_pr() {
   local filepath="$1"
+  local lock_file="${filepath}.lock"
   shift
 
   if [[ ! -f "$filepath" ]]; then
     echo "Error: File not found: $filepath" >&2
+    exit 1
+  fi
+
+  # Check if lock file exists (review not completed)
+  if [[ -f "$lock_file" ]]; then
+    echo "Error: Draft file is still locked. Please complete the review first." >&2
+    echo "Lock file: $lock_file" >&2
     exit 1
   fi
 
