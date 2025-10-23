@@ -102,5 +102,8 @@
     "type": "command",
     "command": "~/.claude/statusline.ts"
   },
+  "enabledPlugins": {
+    "criticalthink@criticalthink": true
+  },
   "alwaysThinkingEnabled": true
 }
