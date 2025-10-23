@@ -89,5 +89,12 @@ else
   git worktree add "$worktree_dir" -b "$branch" "$base_branch"
 fi
 
-# create a tmux window in the current session
-tmux new-window -c "${worktree_dir}" -n "${worktree_name}" zsh
+# create a tmux window in the current session with split layout
+# left pane: neovim, right pane: claude code
+tmux new-window -c "${worktree_dir}" -n "${worktree_name}" \; \
+  split-window -h -c "${worktree_dir}" \; \
+  select-pane -t 1 \; \
+  send-keys "nvim" C-m \; \
+  select-pane -t 2 \; \
+  send-keys "claude" C-m \; \
+  select-pane -t 1
