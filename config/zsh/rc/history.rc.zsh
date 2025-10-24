@@ -79,17 +79,17 @@ fzf-history-widget() {
   # Build history query with filter type (all, success, failed)
   _build_history_query() {
     local filter_type="$1"
-    local filter=""
+    local where_clause=""
 
     case "$filter_type" in
       success)
-        filter="AND h.exit_status = 0"
+        where_clause="WHERE h.exit_status = 0"
         ;;
       failed)
-        filter="AND h.exit_status IS NOT NULL AND h.exit_status != 0"
+        where_clause="WHERE h.exit_status IS NOT NULL AND h.exit_status != 0"
         ;;
       all)
-        filter=""
+        where_clause=""
         ;;
     esac
 
@@ -98,7 +98,7 @@ fzf-history-widget() {
 	FROM history h
 	JOIN commands c ON h.command_id = c.id
 	JOIN places p ON h.place_id = p.id
-	WHERE p.host = '$(hostname)' ${filter}
+	${where_clause}
 	GROUP BY c.argv
 	ORDER BY
 	  COUNT(h.id) DESC,
