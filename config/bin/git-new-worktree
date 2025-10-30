@@ -57,7 +57,11 @@ branch_exists() {
   if git show-ref --verify --quiet "refs/heads/$branch"; then
     return 0
   fi
-  # Check remote branch
+  # Check remote branch (with origin/ prefix)
+  if git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+    return 0
+  fi
+  # Check remote branch (as-is, in case it already has remote prefix)
   if git show-ref --verify --quiet "refs/remotes/$branch"; then
     return 0
   fi
@@ -80,8 +84,17 @@ if [ "$force_create" = true ]; then
   branch="fohte/${name_no_prefix}"
   git worktree add "$worktree_dir" -B "$branch" "$base_branch"
 elif branch_exists "$name"; then
-  # Branch exists, check it out as-is
-  git worktree add "$worktree_dir" "$name"
+  # Branch exists, check it out
+  # If local branch exists, use it as-is
+  if git show-ref --verify --quiet "refs/heads/$name"; then
+    git worktree add "$worktree_dir" "$name"
+  # If remote branch exists, create local tracking branch
+  elif git show-ref --verify --quiet "refs/remotes/origin/$name"; then
+    git worktree add "$worktree_dir" -b "$name" "origin/$name"
+  else
+    # Fallback: use as-is
+    git worktree add "$worktree_dir" "$name"
+  fi
 else
   # Branch doesn't exist, create new one with fohte/ prefix
   base_branch="${from_branch:-origin/$(git main)}"
