@@ -43,11 +43,11 @@ echo 'use `gh` command'
 claude-pr-draft review <filepath>
 ```
 
-ユーザーが編集を終えたら、必要に応じて再度ドラフトを確認し、さらに修正が必要な場合は再度 `review` サブコマンドで編集してもらう。
+**重要:** このコマンドは非同期で実行されるため、コマンドが即座に完了してもユーザーはまだ編集中である。ユーザーがレビューを完了して明示的に指示するまで、次のステップには進まないこと。
 
 ## 3. `claude-pr-draft submit` で PR を作成
 
-2 でレビューが完了したら、`claude-pr-draft submit` コマンドを使用して PR を作成する（引数にはステップ 1 で取得したファイルパスを使用する）。
+ユーザーがレビュー完了を伝えたら、`claude-pr-draft submit` コマンドを使用して PR を作成する（引数にはステップ 1 で取得したファイルパスを使用する）。
 
 ```bash
 claude-pr-draft submit <filepath> <gh pr create と同じオプション>

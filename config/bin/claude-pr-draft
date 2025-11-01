@@ -113,8 +113,7 @@ submit_pr() {
 
   # Check if lock file exists (review not completed)
   if [[ -f "$lock_file" ]]; then
-    echo "Error: Draft file is still locked. Please complete the review first." >&2
-    echo "Lock file: $lock_file" >&2
+    echo "Error: Please complete the review in the editor before submitting the PR." >&2
     exit 1
   fi
 
