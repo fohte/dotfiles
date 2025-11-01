@@ -4,7 +4,9 @@
 
 ## 1. PR body のドラフトファイルを作成する
 
-`echo` コマンドを使用して、PR の説明のドラフトを `claude-pr-draft new` コマンドに渡す。このドラフトは日本語で書く。
+`echo` コマンドを使用して、PR の説明のドラフトを `claude-pr-draft new` コマンドに渡す。
+
+**重要:** このドラフトは **常に日本語で書くこと**（public repo、private repo に関わらず）。
 
 ```bash
 echo "## Why
@@ -59,7 +61,7 @@ claude-pr-draft submit <filepath> <gh pr create と同じオプション>
 claude-pr-draft submit <filepath> --title "..." --base "$(git main)"
 ```
 
-ここで title, body は GitHub リポジトリが public であれば英語で記述し、private であれば日本語で記述する。
+ここで title と body を作成する際、**draft（日本語で書かれている）を元に**して、GitHub リポジトリが public であれば英語で、private であれば日本語で記述する。
 public かどうかは `gh repo view --json isPrivate` コマンドで確認できる。
 
 ## 4. CI 実行を監視
