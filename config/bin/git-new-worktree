@@ -84,7 +84,7 @@ if [ "$force_create" = true ]; then
   branch="fohte/${name_no_prefix}"
   git worktree add "$worktree_dir" -B "$branch" "$base_branch"
 elif branch_exists "$name"; then
-  # Branch exists, check it out
+  # Branch exists with the exact name provided
   # If local branch exists, use it as-is
   if git show-ref --verify --quiet "refs/heads/$name"; then
     git worktree add "$worktree_dir" "$name"
@@ -94,6 +94,16 @@ elif branch_exists "$name"; then
   else
     # Fallback: use as-is
     git worktree add "$worktree_dir" "$name"
+  fi
+elif branch_exists "fohte/${name_no_prefix}"; then
+  # Branch exists with fohte/ prefix
+  branch="fohte/${name_no_prefix}"
+  if git show-ref --verify --quiet "refs/heads/$branch"; then
+    git worktree add "$worktree_dir" "$branch"
+  elif git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+    git worktree add "$worktree_dir" -b "$branch" "origin/$branch"
+  else
+    git worktree add "$worktree_dir" "$branch"
   fi
 else
   # Branch doesn't exist, create new one with fohte/ prefix
