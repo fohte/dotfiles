@@ -9,6 +9,10 @@ hs.hotkey.bind({ 'alt' }, '2', function()
   hs.application.launchOrFocus('/Applications/Arc.app')
 end)
 
+hs.hotkey.bind({ 'alt' }, '3', function()
+  hs.application.launchOrFocus('/Applications/Slack.app')
+end)
+
 hs.hotkey.bind({ 'alt' }, '5', function()
   -- try to launch Claude, fallback to ChatGPT if not installed
   if hs.fs.attributes('/Applications/Claude.app') then
