@@ -52,8 +52,6 @@ setopt no_global_rcs
 
 path=(
   $HOME/.cabal/bin(N-/)
-  $HOME/.local/bin(N-/)
-  $HOME/bin(N-/)
   /usr/local/bin(N-/)
   /usr/bin(N-/)
   /bin(N-/)
@@ -110,5 +108,12 @@ has 'direnv' && eval "$(direnv hook zsh)"
 
 # Calculate initial checksum of zsh config files
 export ZSH_CONFIG_CHECKSUM=$(calculate_zsh_config_checksum)
+
+# prioritize user's local bin directories
+path=(
+  $HOME/.local/bin(N-/)
+  $HOME/bin(N-/)
+  $path
+)
 
 [ -f ~/.local/.zshenv ] && source ~/.local/.zshenv
