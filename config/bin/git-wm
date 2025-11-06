@@ -169,7 +169,7 @@ cmd_delete() {
   fi
 
   # Resolve to absolute path
-  worktree_path="$(cd "$worktree_path" 2>/dev/null && pwd)" || {
+  worktree_path="$(cd "$worktree_path" 2> /dev/null && pwd)" || {
     echo "Error: Invalid worktree path: $worktree_path" >&2
     exit 1
   }
@@ -201,7 +201,7 @@ cmd_delete() {
       # Check if branch is merged into base branch using git merge-base --is-ancestor
       # Note: This only detects regular merges, not squash merges
       # (squash merge detection is not reliably possible with git alone)
-      if ! git merge-base --is-ancestor "$branch_name" "$base_branch" 2>/dev/null; then
+      if ! git merge-base --is-ancestor "$branch_name" "$base_branch" 2> /dev/null; then
         if [ "$force_delete" = false ]; then
           echo "Warning: Branch '$branch_name' is not fully merged into $base_branch" >&2
           echo "Note: Squash-merged branches cannot be automatically detected" >&2
