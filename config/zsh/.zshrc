@@ -31,3 +31,10 @@ import_rc 'misc.rc.zsh'
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
 
 eval "$(starship init zsh)"
+
+if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
+  . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+fi
+
+# don't manage zshrc with home-manager
+. $HOME/.nix-profile/etc/profile.d/hm-session-vars.sh
