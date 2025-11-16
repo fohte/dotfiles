@@ -48,23 +48,25 @@ claude-pr-draft review <filepath>
 
 **重要:** このコマンドは非同期で実行されるため、コマンドが即座に完了してもユーザーはまだ編集中である。ユーザーがレビューを完了して明示的に指示するまで、次のステップには進まないこと。
 
-## 3. `claude-pr-draft submit` で PR を作成
+## 3. draft ファイルを翻訳（public repo の場合のみ）
 
-ユーザーがレビュー完了を伝えたら、`claude-pr-draft submit` コマンドを使用して PR を作成する（引数にはステップ 1 で取得したファイルパスを使用する）。
+`gh repo view --json isPrivate -q .isPrivate` で確認 (false=public)。public repo の場合は、draft ファイルを英語に翻訳する:
 
 ```bash
-claude-pr-draft submit <filepath> <gh pr create と同じオプション>
+# draft ファイルの内容を読んで英語に翻訳し、上書き
 ```
 
-例：
+private repo の場合はこのステップをスキップ。
+
+## 4. `claude-pr-draft submit` で PR を作成
+
 ```bash
-claude-pr-draft submit <filepath> --title "..." --base "$(git main)"
+claude-pr-draft submit <filepath> --title "..." [--base main]
 ```
 
-ここで title と body を作成する際、**draft（日本語で書かれている）を元に**して、GitHub リポジトリが public であれば英語で、private であれば日本語で記述する。
-public かどうかは `gh repo view --json isPrivate` コマンドで確認できる。
+draft ファイルの内容が body として使用される。title は public repo なら英語、private repo なら日本語で指定。
 
-## 4. CI 実行を監視
+## 5. CI 実行を監視
 
 `gh pr checks --watch`コマンドを使用してCIチェックを監視します。
 CI が成功したら完了です。失敗した場合は、問題を調査・修正して再度プッシュしてください。
