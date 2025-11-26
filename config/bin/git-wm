@@ -140,6 +140,7 @@ cmd_new() {
 }
 
 cmd_delete() {
+  local worktree_arg=""
   local worktree_path=""
   local force_delete=false
 
@@ -157,22 +158,30 @@ cmd_delete() {
         usage
         ;;
       *)
-        worktree_path="$1"
+        worktree_arg="$1"
         shift
         ;;
     esac
   done
 
   # If no worktree specified, use current directory
-  if [ -z "$worktree_path" ]; then
+  if [ -z "$worktree_arg" ]; then
     worktree_path="$(pwd)"
+  else
+    # First, try to treat the argument as an existing path
+    if ! worktree_path="$(cd "$worktree_arg" 2> /dev/null && pwd)"; then
+      # Fall back to resolving the value as a branch/worktree name
+      local repo_root=""
+      repo_root="$(git root -r)"
+      local name_no_prefix="${worktree_arg#fohte/}"
+      local worktree_name="${name_no_prefix//\//-}"
+      local candidate_path="${repo_root}/.worktrees/${worktree_name}"
+      if ! worktree_path="$(cd "$candidate_path" 2> /dev/null && pwd)"; then
+        echo "Error: Invalid worktree path: $worktree_arg" >&2
+        exit 1
+      fi
+    fi
   fi
-
-  # Resolve to absolute path
-  worktree_path="$(cd "$worktree_path" 2> /dev/null && pwd)" || {
-    echo "Error: Invalid worktree path: $worktree_path" >&2
-    exit 1
-  }
 
   # Verify this is actually a worktree
   if ! git worktree list | grep -q "$worktree_path"; then
