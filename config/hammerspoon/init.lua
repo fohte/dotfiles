@@ -130,3 +130,19 @@ end
 
 hs.hotkey.bind({ 'ctrl', 'shift', 'alt' }, 'Left', move_third_split('left'))
 hs.hotkey.bind({ 'ctrl', 'shift', 'alt' }, 'Right', move_third_split('right'))
+
+-- move window to previous display
+hs.hotkey.bind({ 'ctrl', 'shift' }, 'Up', function()
+  local window = hs.window.focusedWindow()
+  local screen = window:screen()
+  local previousScreen = screen:previous()
+  window:moveToScreen(previousScreen)
+end)
+
+-- move window to next display
+hs.hotkey.bind({ 'ctrl', 'shift' }, 'Down', function()
+  local window = hs.window.focusedWindow()
+  local screen = window:screen()
+  local nextScreen = screen:next()
+  window:moveToScreen(nextScreen)
+end)
