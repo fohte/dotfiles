@@ -10,7 +10,7 @@ with_stash() {
 
 update-skk-dictionary
 
-cd "$(ghq list -p dotfiles)"
+cd "$(ghq list -p fohte/dotfiles)"
 
 if git diff --quiet; then
   git pull
