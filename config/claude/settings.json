@@ -21,6 +21,7 @@
       "Bash(cd:*)",
       "Bash(chmod +x:*)",
       "Bash(claude-pr-draft:*)",
+      "Bash(curl -X GET:*)",
       "Bash(echo:*)",
       "Bash(find:*)",
       "Bash(gh issue list:*)",
