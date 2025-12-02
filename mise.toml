@@ -1,5 +1,60 @@
 # this mise.toml is repository specific config, the global config is in config/mise/home-config.toml
 
+[tasks.refresh]
+description = "Refresh dotfiles and tools"
+depends = [
+  "refresh:update-skk",
+  "refresh:nvim-restore",
+  "refresh:mise-install",
+  "refresh:pre-commit",
+  "refresh:brew-upgrade",
+]
+
+[tasks."refresh:pull"]
+description = "Pull latest dotfiles"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(ghq list -p fohte/dotfiles)"
+
+if git diff --quiet; then
+  git pull
+else
+  git stash
+  git pull
+  git stash pop
+fi
+'''
+
+[tasks."refresh:deploy"]
+description = "Deploy dotfiles symlinks"
+depends = ["refresh:pull"]
+run = "scripts/deploy"
+
+[tasks."refresh:update-skk"]
+description = "Update SKK dictionary"
+run = "update-skk-dictionary"
+
+[tasks."refresh:nvim-restore"]
+description = "Restore Neovim plugins"
+depends = ["refresh:deploy"]
+run = "nvim --headless -c 'Lazy! restore' +q"
+
+[tasks."refresh:mise-install"]
+description = "Install mise tools"
+depends = ["refresh:deploy"]
+run = "mise install"
+
+[tasks."refresh:pre-commit"]
+description = "Run pre-commit hooks"
+depends = ["refresh:deploy"]
+run = "pre-commit run"
+
+[tasks."refresh:brew-upgrade"]
+description = "Upgrade Homebrew packages"
+run = "brew upgrade"
+
 [tools]
 # Required for pre-commit
 "npm:bun" = "1.2.22"
