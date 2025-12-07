@@ -15,8 +15,9 @@ Usage:
   gh-issue-agent <command> [options]
 
 Commands:
-  pull    Fetch issue and save locally
-  push    Push local changes to GitHub
+  pull      Fetch issue and save locally (fails if local changes exist)
+  refresh   Discard local changes and fetch latest from GitHub
+  push      Push local changes to GitHub
 
 Run 'gh-issue-agent <command> --help' for more information on a command.
 
@@ -43,8 +44,22 @@ Options:
 
 Notes:
   - Saves issue to ~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/
+  - Fails if local changes exist (use 'refresh' to discard and re-fetch)
   - Only your own comments can be edited
   - Create new comments as comments/new_<name>.md
+EOF
+}
+
+show_refresh_help() {
+  cat <<EOF
+Discard local changes and fetch latest from GitHub
+
+Usage:
+  gh-issue-agent refresh <issue-number> [options]
+
+Options:
+  -R <owner/repo>   Target repository (default: current repo)
+  -h, --help        Show this help
 EOF
 }
 
@@ -182,6 +197,91 @@ EOF
   done
 }
 
+has_local_changes() {
+  local issue_dir="$1"
+  local remote_issue_data="$2"
+  local remote_comments_data="$3"
+
+  # Check issue body
+  if [[ -f "${issue_dir}/issue.md" ]]; then
+    local local_body remote_body
+    local_body=$(cat "${issue_dir}/issue.md")
+    remote_body=$(echo "$remote_issue_data" | jq -r '.body // ""')
+    if [[ "$local_body" != "$remote_body" ]]; then
+      return 0
+    fi
+  fi
+
+  # Check metadata (title only for simplicity)
+  if [[ -f "${issue_dir}/metadata.json" ]]; then
+    local local_title remote_title
+    local_title=$(jq -r '.title' "${issue_dir}/metadata.json")
+    remote_title=$(echo "$remote_issue_data" | jq -r '.title')
+    if [[ "$local_title" != "$remote_title" ]]; then
+      return 0
+    fi
+  fi
+
+  # Check comments
+  for local_file in "${issue_dir}/comments/"[0-9]*.md; do
+    [[ -f "$local_file" ]] || continue
+
+    local comment_id local_comment_body remote_comment_body
+    comment_id=$(grep -oP '(?<=<!-- id: )[^>]+(?= -->)' "$local_file" || echo "")
+    [[ -z "$comment_id" ]] && continue
+
+    local_comment_body=$(sed '/^<!-- .* -->$/d' "$local_file" | sed '/./,$!d')
+    remote_comment_body=$(echo "$remote_comments_data" | jq -r --arg id "$comment_id" '.[] | select(.id == $id) | .body // ""')
+
+    if [[ "$local_comment_body" != "$remote_comment_body" ]]; then
+      return 0
+    fi
+  done
+
+  # Check for new comments
+  for new_file in "${issue_dir}/comments/"new_*.md; do
+    if [[ -f "$new_file" ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+do_fetch_issue() {
+  local repo="$1"
+  local issue_number="$2"
+  local issue_dir="$3"
+
+  local issue_data
+  issue_data=$(fetch_issue_data "$repo" "$issue_number")
+
+  local comments_data
+  comments_data=$(fetch_comments_data "$repo" "$issue_number")
+
+  mkdir -p "${issue_dir}/comments"
+
+  local body
+  body=$(echo "$issue_data" | jq -r '.body // ""')
+  save_issue_body "$issue_dir" "$body"
+
+  save_metadata "$issue_dir" "$issue_data"
+
+  save_comments "$issue_dir" "$comments_data"
+
+  local title
+  title=$(echo "$issue_data" | jq -r '.title')
+
+  echo "Done! Issue #${issue_number} has been saved to ${issue_dir}/"
+  echo ""
+  echo "Title: ${title}"
+  echo ""
+  echo "Files:"
+  echo "  ${issue_dir}/issue.md          - Issue body (editable)"
+  echo "  ${issue_dir}/metadata.json     - Metadata (editable: title, labels, assignees)"
+  echo "  ${issue_dir}/comments/         - Comments (only your own comments are editable)"
+}
+
 cmd_pull() {
   local repo=""
   local issue_number=""
@@ -220,33 +320,59 @@ cmd_pull() {
 
   echo "Fetching issue #${issue_number} from ${repo}..."
 
-  local issue_data
-  issue_data=$(fetch_issue_data "$repo" "$issue_number")
+  # Check for local changes before overwriting
+  if [[ -d "$issue_dir" ]]; then
+    local issue_data comments_data
+    issue_data=$(fetch_issue_data "$repo" "$issue_number")
+    comments_data=$(fetch_comments_data "$repo" "$issue_number")
 
-  local comments_data
-  comments_data=$(fetch_comments_data "$repo" "$issue_number")
+    if has_local_changes "$issue_dir" "$issue_data" "$comments_data"; then
+      die "Local changes would be overwritten. Use 'refresh' to discard local changes."
+    fi
+  fi
 
-  mkdir -p "${issue_dir}/comments"
+  do_fetch_issue "$repo" "$issue_number" "$issue_dir"
+}
 
-  local body
-  body=$(echo "$issue_data" | jq -r '.body // ""')
-  save_issue_body "$issue_dir" "$body"
+cmd_refresh() {
+  local repo=""
+  local issue_number=""
 
-  save_metadata "$issue_dir" "$issue_data"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help)
+        show_refresh_help
+        exit 0
+        ;;
+      -R)
+        [[ $# -ge 2 ]] || die "-R requires a repository argument"
+        repo="$2"
+        shift 2
+        ;;
+      -*)
+        die "Unknown option: $1"
+        ;;
+      *)
+        if [[ -z "$issue_number" ]]; then
+          issue_number="$1"
+        else
+          die "Unexpected argument: $1"
+        fi
+        shift
+        ;;
+    esac
+  done
 
-  save_comments "$issue_dir" "$comments_data"
+  [[ -n "$issue_number" ]] || die "Issue number is required"
 
-  local title
-  title=$(echo "$issue_data" | jq -r '.title')
+  repo=$(get_repo_from_arg_or_current "$repo")
 
-  echo "Done! Issue #${issue_number} has been saved to ${issue_dir}/"
-  echo ""
-  echo "Title: ${title}"
-  echo ""
-  echo "Files:"
-  echo "  ${issue_dir}/issue.md          - Issue body (editable)"
-  echo "  ${issue_dir}/metadata.json     - Metadata (editable: title, labels, assignees)"
-  echo "  ${issue_dir}/comments/         - Comments (only your own comments are editable)"
+  local issue_dir
+  issue_dir=$(get_issue_dir "$repo" "$issue_number")
+
+  echo "Refreshing issue #${issue_number} from ${repo}..."
+
+  do_fetch_issue "$repo" "$issue_number" "$issue_dir"
 }
 
 cmd_push() {
@@ -470,6 +596,9 @@ main() {
       ;;
     pull)
       cmd_pull "$@"
+      ;;
+    refresh)
+      cmd_refresh "$@"
       ;;
     push)
       cmd_push "$@"
