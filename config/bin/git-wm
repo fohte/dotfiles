@@ -16,6 +16,7 @@ Commands:
         -h, --help        Show this help message
         --from <branch>   Base branch for new branch creation (default: origin/main or origin/master)
         --force           Force create new branch even if it already exists
+        --prompt <text>   Initial prompt to send to Claude Code
 
       Arguments:
         <name>            Branch name (existing branch will be checked out,
@@ -57,6 +58,7 @@ cmd_new() {
   local from_branch=""
   local force_create=false
   local name=""
+  local prompt=""
 
   while (($#)); do
     case "$1" in
@@ -71,6 +73,11 @@ cmd_new() {
       --force)
         force_create=true
         shift
+        ;;
+      --prompt)
+        [ $# -ge 2 ] || usage
+        prompt="$2"
+        shift 2
         ;;
       -*)
         echo "Unknown option: $1" >&2
@@ -130,12 +137,18 @@ cmd_new() {
 
   # create a tmux window in the current session with split layout
   # left pane: neovim, right pane: claude code
+  local claude_cmd="claude"
+  if [ -n "$prompt" ]; then
+    # Use printf %q to safely escape the prompt for shell
+    claude_cmd="claude --prompt $(printf %q "$prompt")"
+  fi
+
   tmux new-window -c "${worktree_dir}" -n "${worktree_name}" \; \
     split-window -h -c "${worktree_dir}" \; \
     select-pane -t 1 \; \
     send-keys "nvim" C-m \; \
     select-pane -t 2 \; \
-    send-keys "claude" C-m \; \
+    send-keys "$claude_cmd" C-m \; \
     select-pane -t 1
 }
 
