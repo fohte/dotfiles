@@ -36,6 +36,7 @@
       "Bash(gh run view:*)",
       "Bash(gh run watch:*)",
       "Bash(gh search:*)",
+      "Bash(gh-issue-agent pull:*)",
       "Bash(ghq get:*)",
       "Bash(ghq list:*)",
       "Bash(git add:*)",
@@ -95,6 +96,7 @@
       "Read(.envrc)"
     ]
   },
+  "model": "opus",
   "hooks": {
     "Notification": [
       {
