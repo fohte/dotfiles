@@ -391,7 +391,7 @@ cmd_push() {
     fi
 
     # Extract body without metadata lines
-    local_comment_body=$(sed '/^<!-- .* -->$/d' "$local_file" | sed '/^$/N;/^\n$/d')
+    local_comment_body=$(sed '/^<!-- .* -->$/d' "$local_file" | sed '/./,$!d')
 
     # Find remote comment
     local remote_comment_body
