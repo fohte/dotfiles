@@ -27,6 +27,16 @@ This saves the issue to `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`
 - `metadata.json` - Title, labels, assignees (editable)
 - `comments/` - Comment files (only your own comments are editable)
 
+**Note**: Fails if local changes exist. Use `refresh` to discard and re-fetch.
+
+### Refresh (discard local changes and re-fetch)
+
+```bash
+gh-issue-agent refresh <issue-number> [-R <owner/repo>]
+```
+
+Use this when you want to discard local changes and get the latest from GitHub.
+
 ### Push (apply changes to GitHub)
 
 ```bash
@@ -35,6 +45,12 @@ gh-issue-agent push <issue-number> --dry-run
 
 # Apply changes
 gh-issue-agent push <issue-number>
+
+# Force overwrite if remote has changed since pull
+gh-issue-agent push <issue-number> --force
+
+# Edit other users' comments
+gh-issue-agent push <issue-number> --edit-others
 ```
 
 ## Workflow
@@ -46,12 +62,18 @@ gh-issue-agent push <issue-number>
 
 ## Editing Comments
 
-- Only your own comments can be edited
+- Only your own comments can be edited by default
+- To edit other users' comments, use `--edit-others` flag
 - To add a new comment, create a file like `comments/new_<name>.md`
 - Comment files have metadata in HTML comments at the top (author, id, etc.)
 
+## Safety Features
+
+- `pull` fails if local changes exist (use `refresh` to discard)
+- `push` fails if remote has changed since pull (use `--force` to overwrite)
+- `push` fails when editing other users' comments (use `--edit-others` to allow)
+- Use `--dry-run` to preview what will be changed
+
 ## Notes
 
-- `push` always fetches latest from GitHub before comparing, so it handles concurrent edits safely
-- Use `--dry-run` to preview what will be changed
 - For other repos, use `-R owner/repo` option

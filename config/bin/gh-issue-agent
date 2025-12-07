@@ -73,12 +73,14 @@ Usage:
 Options:
   -R <owner/repo>   Target repository (default: current repo)
   --dry-run         Show what would be changed without applying
-  --force           Allow editing other users' comments
+  --force           Allow overwriting remote changes (like git push --force)
+  --edit-others     Allow editing other users' comments
   -h, --help        Show this help
 
 Notes:
   - Compares with latest GitHub state before applying
-  - Fails if you try to edit other users' comments (use --force to allow)
+  - Fails if remote has changed since pull (use --force to overwrite)
+  - Fails if you try to edit other users' comments (use --edit-others to allow)
 EOF
 }
 
@@ -380,6 +382,7 @@ cmd_push() {
   local issue_number=""
   local dry_run=false
   local force=false
+  local edit_others=false
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -398,6 +401,10 @@ cmd_push() {
         ;;
       --force)
         force=true
+        shift
+        ;;
+      --edit-others)
+        edit_others=true
         shift
         ;;
       -*)
@@ -430,6 +437,20 @@ cmd_push() {
 
   local remote_comments_data
   remote_comments_data=$(fetch_comments_data "$repo" "$issue_number")
+
+  # Check if remote has changed since pull
+  local local_updated_at remote_updated_at
+  local_updated_at=$(jq -r '.updatedAt // ""' "${issue_dir}/metadata.json")
+  remote_updated_at=$(echo "$remote_issue_data" | jq -r '.updatedAt // ""')
+
+  if [[ -n "$local_updated_at" && "$local_updated_at" != "$remote_updated_at" && "$force" != "true" ]]; then
+    echo ""
+    echo "Remote has changed since pull:"
+    echo "  Local:  ${local_updated_at}"
+    echo "  Remote: ${remote_updated_at}"
+    echo ""
+    die "Remote has changed. Use --force to overwrite, or 'refresh' to update local copy."
+  fi
 
   local has_changes=false
 
@@ -524,8 +545,8 @@ cmd_push() {
     remote_comment_body=$(echo "$remote_comments_data" | jq -r --arg id "$comment_id" '.[] | select(.id == $id) | .body // ""')
 
     if [[ "$local_comment_body" != "$remote_comment_body" ]]; then
-      if [[ "$author" != "$current_user" && "$force" != "true" ]]; then
-        die "Cannot edit other user's comment: ${filename} (author: ${author}). Use --force to allow."
+      if [[ "$author" != "$current_user" && "$edit_others" != "true" ]]; then
+        die "Cannot edit other user's comment: ${filename} (author: ${author}). Use --edit-others to allow."
       fi
 
       echo ""
