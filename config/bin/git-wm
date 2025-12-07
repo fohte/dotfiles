@@ -135,15 +135,17 @@ cmd_new() {
     git worktree add "$worktree_dir" -b "$branch" "$base_branch"
   fi
 
-  # create a tmux window in the current session with split layout
-  # left pane: neovim, right pane: claude code
+  # Build claude command with optional prompt
   local claude_cmd="claude"
   if [ -n "$prompt" ]; then
-    # Escape single quotes for shell: ' -> '\''
-    local escaped_prompt="${prompt//\'/\'\\\'\'}"
-    claude_cmd="claude --prompt '${escaped_prompt}'"
+    local prompt_file
+    prompt_file="$(mktemp)"
+    echo "$prompt" > "$prompt_file"
+    claude_cmd="claude \"\$(cat $prompt_file)\""
   fi
 
+  # create a tmux window in the current session with split layout
+  # left pane: neovim, right pane: claude code
   tmux new-window -c "${worktree_dir}" -n "${worktree_name}" \; \
     split-window -h -c "${worktree_dir}" \; \
     select-pane -t 1 \; \
