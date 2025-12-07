@@ -8,7 +8,7 @@ get_cache_dir() {
 }
 
 show_help() {
-  cat <<EOF
+  cat << EOF
 gh-issue-agent - Manage GitHub Issues as local files for LLM agents
 
 Usage:
@@ -32,7 +32,7 @@ EOF
 }
 
 show_pull_help() {
-  cat <<EOF
+  cat << EOF
 Fetch issue and save locally
 
 Usage:
@@ -51,7 +51,7 @@ EOF
 }
 
 show_refresh_help() {
-  cat <<EOF
+  cat << EOF
 Discard local changes and fetch latest from GitHub
 
 Usage:
@@ -64,7 +64,7 @@ EOF
 }
 
 show_push_help() {
-  cat <<EOF
+  cat << EOF
 Push local changes to GitHub
 
 Usage:
@@ -189,7 +189,7 @@ save_comments() {
 
     local filename="${index}_${id}.md"
 
-    cat > "${comments_dir}/${filename}" <<EOF
+    cat > "${comments_dir}/${filename}" << EOF
 <!-- author: ${author} -->
 <!-- createdAt: ${created_at} -->
 <!-- id: ${id} -->
