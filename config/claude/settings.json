@@ -4,6 +4,7 @@
   },
   "includeCoAuthoredBy": true,
   "permissions": {
+    "defaultMode": "acceptEdits",
     "allow": [
       "Bash(actionlint:*)",
       "Bash(bun install)",
