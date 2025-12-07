@@ -594,6 +594,11 @@ cmd_push() {
     fi
   else
     if [[ "$has_changes" == "true" ]]; then
+      # Update local updatedAt to match remote after successful push
+      local new_updated_at
+      new_updated_at=$(fetch_issue_data "$repo" "$issue_number" | jq -r '.updatedAt')
+      jq --arg ts "$new_updated_at" '.updatedAt = $ts' "${issue_dir}/metadata.json" > "${issue_dir}/metadata.json.tmp"
+      mv "${issue_dir}/metadata.json.tmp" "${issue_dir}/metadata.json"
       echo "Done! Changes have been pushed to GitHub."
     else
       echo "No changes to push."
