@@ -139,8 +139,9 @@ cmd_new() {
   # left pane: neovim, right pane: claude code
   local claude_cmd="claude"
   if [ -n "$prompt" ]; then
-    # Use printf %q to safely escape the prompt for shell
-    claude_cmd="claude --prompt $(printf %q "$prompt")"
+    # Escape single quotes for shell: ' -> '\''
+    local escaped_prompt="${prompt//\'/\'\\\'\'}"
+    claude_cmd="claude --prompt '${escaped_prompt}'"
   fi
 
   tmux new-window -c "${worktree_dir}" -n "${worktree_name}" \; \
