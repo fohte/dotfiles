@@ -90,11 +90,6 @@ if match_tag aquaskk; then
   sym config/aquaskk/keymap.conf "$HOME/Library/Application Support/AquaSKK/keymap.conf"
 fi
 
-if match_tag azookey && is_macos; then
-  sym config/azookey/custom_input_table.tsv \
-    "$HOME/Library/Application Support/azooKeyMac/CustomInputTable/custom_input_table.tsv"
-fi
-
 if match_tag rubocop; then
   sym config/rubocop/.rubocop.yml ~/.rubocop.yml
 fi
