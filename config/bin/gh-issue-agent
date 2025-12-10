@@ -133,7 +133,29 @@ fetch_comments_data() {
   local repo="$1"
   local issue_number="$2"
 
-  gh_with_repo "$repo" issue view "$issue_number" --json comments --jq '.comments'
+  # Use GraphQL to get both id (node ID) and databaseId (numeric ID for REST API)
+  local owner repo_name
+  owner=$(echo "$repo" | cut -d/ -f1)
+  repo_name=$(echo "$repo" | cut -d/ -f2)
+
+  gh api graphql -f query='
+    query($owner: String!, $repo: String!, $number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        issue(number: $number) {
+          comments(first: 100) {
+            nodes {
+              id
+              databaseId
+              author { login }
+              createdAt
+              body
+            }
+          }
+        }
+      }
+    }
+  ' -f owner="$owner" -f repo="$repo_name" -F number="$issue_number" \
+    --jq '.data.repository.issue.comments.nodes'
 }
 
 save_issue_body() {
@@ -181,9 +203,10 @@ save_comments() {
     local comment
     comment=$(echo "$comments_json" | jq ".[$i]")
 
-    local id author created_at body
+    local id database_id author created_at body
     id=$(echo "$comment" | jq -r '.id')
-    author=$(echo "$comment" | jq -r '.author.login')
+    database_id=$(echo "$comment" | jq -r '.databaseId')
+    author=$(echo "$comment" | jq -r '.author.login // "unknown"')
     created_at=$(echo "$comment" | jq -r '.createdAt')
     body=$(echo "$comment" | jq -r '.body')
 
@@ -193,6 +216,7 @@ save_comments() {
 <!-- author: ${author} -->
 <!-- createdAt: ${created_at} -->
 <!-- id: ${id} -->
+<!-- databaseId: ${database_id} -->
 
 ${body}
 EOF
@@ -528,9 +552,10 @@ cmd_push() {
   for local_file in "${issue_dir}/comments/"[0-9]*.md; do
     [[ -f "$local_file" ]] || continue
 
-    local filename comment_id author local_comment_body
+    local filename comment_id database_id author local_comment_body
     filename=$(basename "$local_file")
     comment_id=$(grep -oP '(?<=<!-- id: )[^>]+(?= -->)' "$local_file" || echo "")
+    database_id=$(grep -oP '(?<=<!-- databaseId: )[^>]+(?= -->)' "$local_file" || echo "")
     author=$(grep -oP '(?<=<!-- author: )[^>]+(?= -->)' "$local_file" || echo "")
 
     if [[ -z "$comment_id" ]]; then
@@ -559,7 +584,9 @@ cmd_push() {
       if [[ "$dry_run" == "false" ]]; then
         echo ""
         echo "Updating comment..."
-        gh api -X PATCH "/repos/${repo}/issues/comments/${comment_id}" -f body="$local_comment_body"
+        # Use databaseId (numeric) for REST API, fallback to comment_id for backward compatibility
+        local api_comment_id="${database_id:-$comment_id}"
+        gh api -X PATCH "/repos/${repo}/issues/comments/${api_comment_id}" -f body="$local_comment_body"
       fi
       has_changes=true
     fi
