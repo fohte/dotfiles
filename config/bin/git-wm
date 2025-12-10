@@ -258,9 +258,13 @@ cmd_new() {
     claude_cmd="claude \"\$(cat $prompt_file)\""
   fi
 
-  # create a tmux window in the current session with split layout
+  # Determine target tmux session from repository root
+  local target_session
+  target_session="$(tmux-name session "$(git root -r)")"
+
+  # create a tmux window in the target session with split layout
   # left pane: neovim, right pane: claude code
-  tmux new-window -c "${worktree_dir}" -n "${worktree_name}" \; \
+  tmux new-window -t "${target_session}" -c "${worktree_dir}" -n "${worktree_name}" \; \
     split-window -h -c "${worktree_dir}" \; \
     select-pane -t 1 \; \
     send-keys "nvim" C-m \; \
