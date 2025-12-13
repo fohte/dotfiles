@@ -42,7 +42,8 @@ Draft File Format:
   Frontmatter fields:
     title    - PR title (required for submit)
     english  - If true, submit fails when title or body contains Japanese
-    approve  - Must be set to true before submit (prevents accidental submission)
+    approve  - Set to true to approve; file hash is saved on editor exit
+               Any modification after approval invalidates the hash
 
 Examples:
   # Create a new draft file with content from stdin (using heredoc)
@@ -118,28 +119,56 @@ FRONTMATTER
   echo "$draft_file"
 }
 
+# Calculate hash of file content
+calc_file_hash() {
+  local filepath="$1"
+  shasum -a 256 "$filepath" | cut -d' ' -f1
+}
+
 # Review draft in Neovim (new Wezterm window)
 review_draft() {
   local filepath="$1"
   local lock_file="${filepath}.lock"
+  local approve_file="${filepath}.approve"
 
   if [[ ! -f "$filepath" ]]; then
     echo "Error: File not found: $filepath" >&2
     exit 1
   fi
 
-  # Create a wrapper script that removes the lock file after Neovim exits
+  # Create a wrapper script that handles approval after Neovim exits
   local wrapper_script
   wrapper_script=$(mktemp /tmp/nvim-wrapper.XXXXXX.sh)
-  cat > "$wrapper_script" << EOF
+  cat > "$wrapper_script" << 'WRAPPER_EOF'
 #!/usr/bin/env bash
+set -euo pipefail
+
+filepath="$1"
+lock_file="${filepath}.lock"
+approve_file="${filepath}.approve"
+
 nvim "$filepath"
+
+# Check approve value in frontmatter
+approve=$(sed -n '2,/^---$/p' "$filepath" | sed '$d' | yq -r '.approve // "false"')
+
+if [[ "$approve" == "true" ]]; then
+  # Save hash of file content for verification
+  shasum -a 256 "$filepath" | cut -d' ' -f1 > "$approve_file"
+  echo "Approved. Hash saved."
+else
+  # Remove approve file if exists (rejected)
+  rm -f "$approve_file"
+  echo "Rejected or not approved."
+fi
+
+# Always remove lock file after review
 rm -f "$lock_file"
-EOF
+WRAPPER_EOF
   chmod +x "$wrapper_script"
 
   # Use nohup to run in background without blocking
-  nohup wezterm start -- "$wrapper_script" > /dev/null 2>&1 &
+  nohup wezterm start -- "$wrapper_script" "$filepath" > /dev/null 2>&1 &
 }
 
 # Extract YAML frontmatter as raw YAML
@@ -173,6 +202,7 @@ contains_japanese() {
 submit_pr() {
   local filepath="$1"
   local lock_file="${filepath}.lock"
+  local approve_file="${filepath}.approve"
   shift
 
   if [[ ! -f "$filepath" ]]; then
@@ -186,17 +216,26 @@ submit_pr() {
     exit 1
   fi
 
-  # Parse frontmatter
-  local title english approve
-  title=$(get_frontmatter_value "$filepath" "title")
-  english=$(get_frontmatter_value "$filepath" "english")
-  approve=$(get_frontmatter_value "$filepath" "approve")
-
-  # Validate approve flag
-  if [[ "$approve" != "true" ]]; then
-    echo "Error: Please set 'approve: true' in the frontmatter to submit the PR." >&2
+  # Check if approve file exists (rejected if not)
+  if [[ ! -f "$approve_file" ]]; then
+    echo "Error: PR was rejected or not approved. Please run 'review' and set 'approve: true'." >&2
     exit 1
   fi
+
+  # Verify hash matches (detect tampering after approval)
+  local saved_hash current_hash
+  saved_hash=$(cat "$approve_file")
+  current_hash=$(calc_file_hash "$filepath")
+
+  if [[ "$saved_hash" != "$current_hash" ]]; then
+    echo "Error: File has been modified after approval. Please run 'review' again." >&2
+    exit 1
+  fi
+
+  # Parse frontmatter
+  local title english
+  title=$(get_frontmatter_value "$filepath" "title")
+  english=$(get_frontmatter_value "$filepath" "english")
 
   # Validate title is not empty
   if [[ -z "$title" ]]; then

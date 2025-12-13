@@ -44,7 +44,7 @@ approve: false
 
 - `title`: PR のタイトル（submit 時に使用される）
 - `english`: true の場合、title と body に日本語が含まれていると submit が失敗する
-- `approve`: true にしないと submit できない（誤送信防止）
+- `approve`: true にするとエディタ終了時にファイルのハッシュが保存される。submit 時にハッシュが一致しないと失敗する（改ざん防止）
 
 ### 注意事項
 
@@ -67,14 +67,14 @@ claude-pr-draft review <filepath>
 
 ユーザーがレビューを完了したら、draft ファイルを読み込んで frontmatter の `english` フィールドを確認する。
 
+`english: false` の場合はこのステップをスキップして、ステップ 4 に進む。
+
 `english: true` の場合:
 1. title と body を英語に翻訳する
-2. `approve: true` に変更する
+2. `approve: false` に変更する（翻訳によりハッシュが無効になるため）
 3. ファイルを上書き保存する
-
-`english: false` の場合:
-1. `approve: true` に変更する
-2. ファイルを上書き保存する
+4. 再度 `claude-pr-draft review <filepath>` を実行して、ユーザーに翻訳内容を確認してもらう
+5. ユーザーがレビューを完了して明示的に指示するまで待機する
 
 ## 4. `claude-pr-draft submit` で PR を作成
 
@@ -83,6 +83,11 @@ claude-pr-draft submit <filepath> [--base main]
 ```
 
 frontmatter の `title` が PR タイトルとして、body 部分が PR 本文として使用される。
+
+**注意:** submit は以下の条件をすべて満たす場合のみ成功する:
+- `.lock` ファイルがない（レビュー完了）
+- `.approve` ファイルがある（approve: true でエディタを終了した）
+- ファイルのハッシュが `.approve` と一致する（承認後に改ざんされていない）
 
 ## 5. CI 実行を監視
 
