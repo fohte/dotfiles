@@ -101,6 +101,7 @@ branch_exists() {
 # Sets global variables:
 #   MERGE_STATUS: "merged" or "not_merged"
 #   MERGE_REASON: human-readable reason
+# Returns 0 if merged, 1 if not merged
 get_merge_status() {
   local branch_name="$1"
   MERGE_STATUS="not_merged"
@@ -315,7 +316,7 @@ cmd_clean() {
       fi
 
       # Check merge status
-      get_merge_status "$branch_name"
+      get_merge_status "$branch_name" || true
       if [ "$MERGE_STATUS" = "merged" ]; then
         to_delete+=("$worktree_path|$branch_name|$MERGE_REASON")
       else
