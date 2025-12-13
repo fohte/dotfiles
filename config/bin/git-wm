@@ -12,6 +12,7 @@ Commands:
   list      List all worktrees
   new       Create a new Git worktree for a branch
   delete    Delete a Git worktree and its branch
+  clean     Delete all merged worktrees
 
 Run 'git wm <command> --help' for more information on a command.
 EOF
@@ -65,6 +66,19 @@ EOF
   exit 1
 }
 
+usage_clean() {
+  cat << EOF
+Usage: git wm clean [options]
+
+Delete all merged worktrees.
+
+Options:
+  -h, --help        Show this help message
+  -n, --dry-run     Show what would be deleted without actually deleting
+EOF
+  exit 1
+}
+
 # Function to check if branch exists
 branch_exists() {
   local branch="$1"
@@ -80,6 +94,29 @@ branch_exists() {
   if git show-ref --verify --quiet "refs/remotes/$branch"; then
     return 0
   fi
+  return 1
+}
+
+# Check if a branch is merged (via PR or git merge-base)
+# Returns 0 if merged, 1 if not merged
+is_branch_merged() {
+  local branch_name="$1"
+
+  # First, check if PR for this branch is merged via gh command
+  local pr_state=""
+  if pr_state="$(gh pr view "$branch_name" --json state --jq '.state' 2> /dev/null)"; then
+    if [ "$pr_state" = "MERGED" ]; then
+      return 0
+    fi
+  fi
+
+  # Fallback: check if branch is merged using git merge-base --is-ancestor
+  # This detects regular merges but not squash merges
+  local base_branch="origin/$(git main)"
+  if git merge-base --is-ancestor "$branch_name" "$base_branch" 2> /dev/null; then
+    return 0
+  fi
+
   return 1
 }
 
@@ -204,6 +241,98 @@ cmd_new() {
     select-pane -t 1
 }
 
+cmd_clean() {
+  local dry_run=false
+
+  while (($#)); do
+    case "$1" in
+      -h | --help)
+        usage_clean
+        ;;
+      -n | --dry-run)
+        dry_run=true
+        shift
+        ;;
+      -*)
+        echo "Unknown option: $1" >&2
+        usage_clean
+        ;;
+      *)
+        echo "Unknown argument: $1" >&2
+        usage_clean
+        ;;
+    esac
+  done
+
+  git fetch -p
+
+  local repo_root
+  repo_root="$(git root -r)"
+
+  # Collect merged worktrees
+  local merged_worktrees=()
+  local worktree_path=""
+  local branch_name=""
+
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^worktree\ (.+)$ ]]; then
+      worktree_path="${BASH_REMATCH[1]}"
+    elif [[ "$line" =~ ^branch\ refs/heads/(.+)$ ]]; then
+      branch_name="${BASH_REMATCH[1]}"
+
+      # Skip main worktree (bare repository root)
+      if [ "$worktree_path" = "$repo_root" ]; then
+        continue
+      fi
+
+      # Check if branch is merged
+      if is_branch_merged "$branch_name"; then
+        merged_worktrees+=("$worktree_path")
+      fi
+    fi
+  done < <(git worktree list --porcelain)
+
+  if [ ${#merged_worktrees[@]} -eq 0 ]; then
+    echo "No merged worktrees found."
+    return 0
+  fi
+
+  echo "Merged worktrees to delete:"
+  for wt in "${merged_worktrees[@]}"; do
+    echo "  $wt"
+  done
+
+  if [ "$dry_run" = true ]; then
+    echo "(dry-run mode, no changes made)"
+    return 0
+  fi
+
+  echo
+  read -p "Delete these worktrees? [y/N] " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Cancelled."
+    return 0
+  fi
+
+  for wt in "${merged_worktrees[@]}"; do
+    # Get branch name for this worktree
+    branch_name="$(git worktree list --porcelain | grep -A 3 "^worktree $wt$" | grep "^branch " | sed 's/^branch //' | sed 's|^refs/heads/||')"
+
+    git worktree remove "$wt"
+    echo "Worktree removed: $wt"
+
+    if [ -n "$branch_name" ]; then
+      if git show-ref --verify --quiet "refs/heads/$branch_name"; then
+        git branch -D "$branch_name"
+        echo "Branch deleted: $branch_name"
+      fi
+    fi
+  done
+
+  echo "Done."
+}
+
 cmd_delete() {
   local worktree_arg=""
   local worktree_path=""
@@ -270,26 +399,7 @@ cmd_delete() {
   # Check if the branch can be safely deleted before deleting worktree
   if [ -n "$branch_name" ]; then
     if git show-ref --verify --quiet "refs/heads/$branch_name"; then
-      local is_merged=false
-
-      # First, check if PR for this branch is merged via gh command
-      local pr_state=""
-      if pr_state="$(gh pr view "$branch_name" --json state --jq '.state' 2> /dev/null)"; then
-        if [ "$pr_state" = "MERGED" ]; then
-          is_merged=true
-        fi
-      fi
-
-      # Fallback: check if branch is merged using git merge-base --is-ancestor
-      # This detects regular merges but not squash merges
-      if [ "$is_merged" = false ]; then
-        local base_branch="origin/$(git main)"
-        if git merge-base --is-ancestor "$branch_name" "$base_branch" 2> /dev/null; then
-          is_merged=true
-        fi
-      fi
-
-      if [ "$is_merged" = false ] && [ "$force_delete" = false ]; then
+      if ! is_branch_merged "$branch_name" && [ "$force_delete" = false ]; then
         echo "Warning: Branch '$branch_name' is not merged (no merged PR found, not ancestor of base branch)" >&2
         read -p "Delete anyway? [y/N] " -n 1 -r
         echo
@@ -332,6 +442,10 @@ case "${1:-}" in
   delete)
     shift
     cmd_delete "$@"
+    ;;
+  clean)
+    shift
+    cmd_clean "$@"
     ;;
   -h | --help)
     usage
