@@ -9,29 +9,58 @@ usage() {
 Usage: git wm <command> [options]
 
 Commands:
-  new [options] [--from <base-branch>] [<name>]
-      Create a new Git worktree for a branch
+  list      List all worktrees
+  new       Create a new Git worktree for a branch
+  delete    Delete a Git worktree and its branch
 
-      Options:
-        -h, --help        Show this help message
-        --from <branch>   Base branch for new branch creation (default: origin/main or origin/master)
-        --force           Force create new branch even if it already exists
-        --prompt <text>   Initial prompt to send to Claude Code
+Run 'git wm <command> --help' for more information on a command.
+EOF
+  exit 1
+}
 
-      Arguments:
-        <name>            Branch name (existing branch will be checked out,
-                          non-existing branch will be created with fohte/ prefix)
+usage_new() {
+  cat << EOF
+Usage: git wm new [options] [<name>]
 
-  delete [options] [<worktree>]
-      Delete a Git worktree and its branch
+Create a new Git worktree for a branch.
 
-      Options:
-        -h, --help        Show this help message
-        -f, --force       Force delete without confirmation even if not merged
+Options:
+  -h, --help        Show this help message
+  --from <branch>   Base branch for new branch creation (default: origin/main or origin/master)
+  --force           Force create new branch even if it already exists
+  --prompt <text>   Initial prompt to send to Claude Code
 
-      Arguments:
-        <worktree>        Worktree path or name (default: current directory)
+Arguments:
+  <name>            Branch name (existing branch will be checked out,
+                    non-existing branch will be created with fohte/ prefix)
+EOF
+  exit 1
+}
 
+usage_delete() {
+  cat << EOF
+Usage: git wm delete [options] [<worktree>]
+
+Delete a Git worktree and its branch.
+
+Options:
+  -h, --help        Show this help message
+  -f, --force       Force delete without confirmation even if not merged
+
+Arguments:
+  <worktree>        Worktree path or name (default: current directory)
+EOF
+  exit 1
+}
+
+usage_list() {
+  cat << EOF
+Usage: git wm list [options]
+
+List all worktrees.
+
+Options:
+  -h, --help        Show this help message
 EOF
   exit 1
 }
@@ -54,6 +83,26 @@ branch_exists() {
   return 1
 }
 
+cmd_list() {
+  while (($#)); do
+    case "$1" in
+      -h | --help)
+        usage_list
+        ;;
+      -*)
+        echo "Unknown option: $1" >&2
+        usage_list
+        ;;
+      *)
+        echo "Unknown argument: $1" >&2
+        usage_list
+        ;;
+    esac
+  done
+
+  git worktree list
+}
+
 cmd_new() {
   local from_branch=""
   local force_create=false
@@ -63,10 +112,10 @@ cmd_new() {
   while (($#)); do
     case "$1" in
       -h | --help)
-        usage
+        usage_new
         ;;
       --from)
-        [ $# -ge 2 ] || usage
+        [ $# -ge 2 ] || usage_new
         from_branch="$2"
         shift 2
         ;;
@@ -75,13 +124,13 @@ cmd_new() {
         shift
         ;;
       --prompt)
-        [ $# -ge 2 ] || usage
+        [ $# -ge 2 ] || usage_new
         prompt="$2"
         shift 2
         ;;
       -*)
         echo "Unknown option: $1" >&2
-        usage
+        usage_new
         ;;
       *)
         # First non-option is treated as worktree name input
@@ -163,7 +212,7 @@ cmd_delete() {
   while (($#)); do
     case "$1" in
       -h | --help)
-        usage
+        usage_delete
         ;;
       -f | --force)
         force_delete=true
@@ -171,7 +220,7 @@ cmd_delete() {
         ;;
       -*)
         echo "Unknown option: $1" >&2
-        usage
+        usage_delete
         ;;
       *)
         worktree_arg="$1"
@@ -272,6 +321,10 @@ cmd_delete() {
 
 # Main command dispatcher
 case "${1:-}" in
+  list)
+    shift
+    cmd_list "$@"
+    ;;
   new)
     shift
     cmd_new "$@"
