@@ -221,21 +221,32 @@ cmd_delete() {
   # Check if the branch can be safely deleted before deleting worktree
   if [ -n "$branch_name" ]; then
     if git show-ref --verify --quiet "refs/heads/$branch_name"; then
-      local base_branch="origin/$(git main)"
+      local is_merged=false
 
-      # Check if branch is merged into base branch using git merge-base --is-ancestor
-      # Note: This only detects regular merges, not squash merges
-      # (squash merge detection is not reliably possible with git alone)
-      if ! git merge-base --is-ancestor "$branch_name" "$base_branch" 2> /dev/null; then
-        if [ "$force_delete" = false ]; then
-          echo "Warning: Branch '$branch_name' is not fully merged into $base_branch" >&2
-          echo "Note: Squash-merged branches cannot be automatically detected" >&2
-          read -p "Delete anyway? [y/N] " -n 1 -r
-          echo
-          if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            echo "Cancelled."
-            exit 0
-          fi
+      # First, check if PR for this branch is merged via gh command
+      local pr_state=""
+      if pr_state="$(gh pr view "$branch_name" --json state --jq '.state' 2> /dev/null)"; then
+        if [ "$pr_state" = "MERGED" ]; then
+          is_merged=true
+        fi
+      fi
+
+      # Fallback: check if branch is merged using git merge-base --is-ancestor
+      # This detects regular merges but not squash merges
+      if [ "$is_merged" = false ]; then
+        local base_branch="origin/$(git main)"
+        if git merge-base --is-ancestor "$branch_name" "$base_branch" 2> /dev/null; then
+          is_merged=true
+        fi
+      fi
+
+      if [ "$is_merged" = false ] && [ "$force_delete" = false ]; then
+        echo "Warning: Branch '$branch_name' is not merged (no merged PR found, not ancestor of base branch)" >&2
+        read -p "Delete anyway? [y/N] " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+          echo "Cancelled."
+          exit 0
         fi
       fi
     fi
