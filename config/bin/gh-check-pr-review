@@ -24,18 +24,19 @@ Usage:
 
 Options:
   -R <owner/repo>   Target repository (default: current repo)
+  -a, --all         Include resolved comments (default: only unresolved)
   -h, --help        Show this help
 
 Output Format:
-  Groups comments by file path, showing:
-  - File path
-  - Line number (or range)
-  - Author
-  - Comment body
-  - Diff context (3 lines around the commented line)
+  Groups comments by thread, showing:
+  - Author and timestamp
+  - Diff context with line numbers
+  - Comment body (rendered with glow if available)
+  - Replies with tree structure
 
 Examples:
   gh-check-pr-review 123
+  gh-check-pr-review 123 --all
   gh-check-pr-review 456 -R owner/repo
 EOF
 }
@@ -71,13 +72,14 @@ print_comment() {
   local comment="$1"
   local indent="$2"
   local is_reply="$3"
+  local is_resolved="$4"
 
   local path author created_at diff_hunk body
 
   path=$(echo "$comment" | jq -r '.path')
-  author=$(echo "$comment" | jq -r '.user.login')
-  created_at=$(echo "$comment" | jq -r '.created_at')
-  diff_hunk=$(echo "$comment" | jq -r '.diff_hunk // empty')
+  author=$(echo "$comment" | jq -r '.author.login // "unknown"')
+  created_at=$(echo "$comment" | jq -r '.createdAt')
+  diff_hunk=$(echo "$comment" | jq -r '.diffHunk // empty')
   body=$(echo "$comment" | jq -r '.body')
 
   local formatted_date
@@ -88,7 +90,12 @@ print_comment() {
   if [[ "$is_reply" == "true" ]]; then
     printf '%s└─ \e[48;5;238m @%s (%s) \e[0m\n' "$indent" "$author" "$formatted_date"
   else
-    printf '\e[48;5;238m @%s (%s) \e[0m\n' "$author" "$formatted_date"
+    # Build resolved indicator (dim text) for root comments only
+    local resolved_indicator=""
+    if [[ "$is_resolved" == "true" ]]; then
+      resolved_indicator=" \e[2m[resolved]\e[0m"
+    fi
+    printf '\e[48;5;238m @%s (%s) \e[0m%b\n' "$author" "$formatted_date" "$resolved_indicator"
   fi
 
   # Print diff context (only for root comments)
@@ -115,35 +122,109 @@ print_comment() {
   echo ""
 }
 
-format_comments() {
-  local comments_json="$1"
+fetch_review_threads() {
+  local owner="$1"
+  local repo="$2"
+  local pr_number="$3"
+  local include_resolved="$4"
 
-  if [[ "$comments_json" == "[]" ]] || [[ -z "$comments_json" ]]; then
+  local query='
+query($owner: String!, $repo: String!, $pr: Int!, $cursor: String) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $pr) {
+      reviewThreads(first: 100, after: $cursor) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          isResolved
+          comments(first: 100) {
+            nodes {
+              databaseId
+              author { login }
+              body
+              createdAt
+              path
+              line
+              originalLine
+              diffHunk
+              replyTo { databaseId }
+            }
+          }
+        }
+      }
+    }
+  }
+}'
+
+  local all_threads="[]"
+  local cursor=""
+  local has_next_page="true"
+
+  while [[ "$has_next_page" == "true" ]]; do
+    local result
+    if [[ -z "$cursor" ]]; then
+      result=$(gh api graphql -f query="$query" -F owner="$owner" -F repo="$repo" -F pr="$pr_number")
+    else
+      result=$(gh api graphql -f query="$query" -F owner="$owner" -F repo="$repo" -F pr="$pr_number" -f cursor="$cursor")
+    fi
+
+    local threads
+    threads=$(echo "$result" | jq '.data.repository.pullRequest.reviewThreads.nodes')
+    all_threads=$(echo "$all_threads $threads" | jq -s 'add')
+
+    has_next_page=$(echo "$result" | jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage')
+    cursor=$(echo "$result" | jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.endCursor')
+  done
+
+  # Filter by resolved status if needed
+  if [[ "$include_resolved" == "false" ]]; then
+    echo "$all_threads" | jq '[.[] | select(.isResolved == false)]'
+  else
+    echo "$all_threads"
+  fi
+}
+
+format_threads() {
+  local threads_json="$1"
+
+  local thread_count
+  thread_count=$(echo "$threads_json" | jq 'length')
+
+  if [[ "$thread_count" == "0" ]]; then
     echo "No review comments found."
     return 0
   fi
 
-  # Get root comments (no in_reply_to_id) sorted by path and line
-  local root_comments
-  root_comments=$(echo "$comments_json" | jq -c '[.[] | select(.in_reply_to_id == null)] | sort_by(.path, .line // .original_line // 0) | .[]')
+  # Process each thread
+  echo "$threads_json" | jq -c '.[]' | while read -r thread; do
+    local comments is_resolved
+    comments=$(echo "$thread" | jq -c '.comments.nodes')
+    is_resolved=$(echo "$thread" | jq -r '.isResolved')
 
-  echo "$root_comments" | while read -r root_comment; do
-    local root_id
-    root_id=$(echo "$root_comment" | jq -r '.id')
+    # Get root comment (no replyTo)
+    local root_comment
+    root_comment=$(echo "$comments" | jq -c '[.[] | select(.replyTo == null)] | .[0]')
 
-    # Print root comment
-    print_comment "$root_comment" "" "false"
+    if [[ "$root_comment" != "null" ]]; then
+      print_comment "$root_comment" "" "false" "$is_resolved"
 
-    # Find and print replies to this comment
-    echo "$comments_json" | jq -c --argjson parent_id "$root_id" '[.[] | select(.in_reply_to_id == $parent_id)] | sort_by(.created_at) | .[]' | while read -r reply; do
-      print_comment "$reply" "  " "true"
-    done
+      local root_id
+      root_id=$(echo "$root_comment" | jq -r '.databaseId')
+
+      # Find and print replies
+      echo "$comments" | jq -c --argjson parent_id "$root_id" '[.[] | select(.replyTo.databaseId == $parent_id)] | sort_by(.createdAt) | .[]' 2>/dev/null | while read -r reply; do
+        print_comment "$reply" "  " "true" "$is_resolved"
+      done
+    fi
   done
 }
 
 main() {
   local repo=""
   local pr_number=""
+  local include_resolved="false"
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -155,6 +236,10 @@ main() {
         [[ $# -ge 2 ]] || die "-R requires a repository argument"
         repo="$2"
         shift 2
+        ;;
+      -a | --all)
+        include_resolved="true"
+        shift
         ;;
       -*)
         die "Unknown option: $1"
@@ -173,12 +258,15 @@ main() {
   [[ -n "$pr_number" ]] || die "PR number is required"
 
   repo=$(get_repo_from_arg_or_current "$repo")
+  local owner repo_name
+  owner=$(echo "$repo" | cut -d'/' -f1)
+  repo_name=$(echo "$repo" | cut -d'/' -f2)
 
-  # Fetch review comments using gh api
-  local comments_json
-  comments_json=$(gh api "repos/${repo}/pulls/${pr_number}/comments" --paginate)
+  # Fetch review threads using GraphQL
+  local threads_json
+  threads_json=$(fetch_review_threads "$owner" "$repo_name" "$pr_number" "$include_resolved")
 
-  format_comments "$comments_json"
+  format_threads "$threads_json"
 }
 
 main "$@"
