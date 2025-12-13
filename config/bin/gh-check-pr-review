@@ -122,17 +122,64 @@ print_comment() {
   echo ""
 }
 
-fetch_review_threads() {
+print_review() {
+  local review="$1"
+
+  local author state created_at body
+
+  author=$(echo "$review" | jq -r '.author.login // "unknown"')
+  state=$(echo "$review" | jq -r '.state')
+  created_at=$(echo "$review" | jq -r '.createdAt')
+  body=$(echo "$review" | jq -r '.body')
+
+  local formatted_date
+  formatted_date=$(format_datetime "$created_at")
+
+  # Format state indicator
+  local state_indicator
+  case "$state" in
+    APPROVED) state_indicator="\e[32m[approved]\e[0m" ;;
+    CHANGES_REQUESTED) state_indicator="\e[31m[changes requested]\e[0m" ;;
+    COMMENTED) state_indicator="\e[33m[commented]\e[0m" ;;
+    DISMISSED) state_indicator="\e[2m[dismissed]\e[0m" ;;
+    *) state_indicator="[$state]" ;;
+  esac
+
+  printf '\e[48;5;238m @%s (%s) \e[0m %b\n' "$author" "$formatted_date" "$state_indicator"
+
+  # Print review body with glow (if available)
+  if command -v glow &>/dev/null; then
+    echo "$body" | glow - 2>/dev/null
+  else
+    echo "$body"
+  fi
+  echo ""
+}
+
+fetch_pr_data() {
   local owner="$1"
   local repo="$2"
   local pr_number="$3"
   local include_resolved="$4"
 
   local query='
-query($owner: String!, $repo: String!, $pr: Int!, $cursor: String) {
+query($owner: String!, $repo: String!, $pr: Int!, $threadCursor: String, $reviewCursor: String) {
   repository(owner: $owner, name: $repo) {
     pullRequest(number: $pr) {
-      reviewThreads(first: 100, after: $cursor) {
+      reviews(first: 100, after: $reviewCursor) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          databaseId
+          author { login }
+          body
+          state
+          createdAt
+        }
+      }
+      reviewThreads(first: 100, after: $threadCursor) {
         pageInfo {
           hasNextPage
           endCursor
@@ -150,6 +197,7 @@ query($owner: String!, $repo: String!, $pr: Int!, $cursor: String) {
               originalLine
               diffHunk
               replyTo { databaseId }
+              pullRequestReview { databaseId }
             }
           }
         }
@@ -159,65 +207,96 @@ query($owner: String!, $repo: String!, $pr: Int!, $cursor: String) {
 }'
 
   local all_threads="[]"
-  local cursor=""
-  local has_next_page="true"
+  local all_reviews="[]"
+  local thread_cursor=""
+  local review_cursor=""
+  local thread_has_next="true"
+  local review_has_next="true"
 
-  while [[ "$has_next_page" == "true" ]]; do
+  # Fetch all pages
+  while [[ "$thread_has_next" == "true" ]] || [[ "$review_has_next" == "true" ]]; do
     local result
-    if [[ -z "$cursor" ]]; then
-      result=$(gh api graphql -f query="$query" -F owner="$owner" -F repo="$repo" -F pr="$pr_number")
-    else
-      result=$(gh api graphql -f query="$query" -F owner="$owner" -F repo="$repo" -F pr="$pr_number" -f cursor="$cursor")
+    local args=(-f query="$query" -F owner="$owner" -F repo="$repo" -F pr="$pr_number")
+    [[ -n "$thread_cursor" ]] && args+=(-f threadCursor="$thread_cursor")
+    [[ -n "$review_cursor" ]] && args+=(-f reviewCursor="$review_cursor")
+
+    result=$(gh api graphql "${args[@]}")
+
+    if [[ "$thread_has_next" == "true" ]]; then
+      local threads
+      threads=$(echo "$result" | jq '.data.repository.pullRequest.reviewThreads.nodes // []')
+      all_threads=$(echo "$all_threads $threads" | jq -s 'add')
+      thread_has_next=$(echo "$result" | jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage')
+      thread_cursor=$(echo "$result" | jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.endCursor')
     fi
 
-    local threads
-    threads=$(echo "$result" | jq '.data.repository.pullRequest.reviewThreads.nodes')
-    all_threads=$(echo "$all_threads $threads" | jq -s 'add')
-
-    has_next_page=$(echo "$result" | jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage')
-    cursor=$(echo "$result" | jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.endCursor')
+    if [[ "$review_has_next" == "true" ]]; then
+      local reviews
+      reviews=$(echo "$result" | jq '.data.repository.pullRequest.reviews.nodes // []')
+      all_reviews=$(echo "$all_reviews $reviews" | jq -s 'add')
+      review_has_next=$(echo "$result" | jq -r '.data.repository.pullRequest.reviews.pageInfo.hasNextPage')
+      review_cursor=$(echo "$result" | jq -r '.data.repository.pullRequest.reviews.pageInfo.endCursor')
+    fi
   done
 
-  # Filter by resolved status if needed
+  # Filter threads by resolved status if needed
   if [[ "$include_resolved" == "false" ]]; then
-    echo "$all_threads" | jq '[.[] | select(.isResolved == false)]'
-  else
-    echo "$all_threads"
+    all_threads=$(echo "$all_threads" | jq '[.[] | select(.isResolved == false)]')
+  fi
+
+  # Filter reviews with non-empty body
+  all_reviews=$(echo "$all_reviews" | jq '[.[] | select(.body != "")]')
+
+  # Return both as JSON object
+  jq -n --argjson threads "$all_threads" --argjson reviews "$all_reviews" \
+    '{threads: $threads, reviews: $reviews}'
+}
+
+format_thread() {
+  local thread="$1"
+
+  local comments is_resolved
+  comments=$(echo "$thread" | jq -c '.comments.nodes')
+  is_resolved=$(echo "$thread" | jq -r '.isResolved')
+
+  # Get root comment (no replyTo)
+  local root_comment
+  root_comment=$(echo "$comments" | jq -c '[.[] | select(.replyTo == null)] | .[0]')
+
+  if [[ "$root_comment" != "null" ]]; then
+    print_comment "$root_comment" "" "false" "$is_resolved"
+
+    local root_id
+    root_id=$(echo "$root_comment" | jq -r '.databaseId')
+
+    # Find and print replies
+    echo "$comments" | jq -c --argjson parent_id "$root_id" '[.[] | select(.replyTo.databaseId == $parent_id)] | sort_by(.createdAt) | .[]' 2>/dev/null | while read -r reply; do
+      print_comment "$reply" "  " "true" "$is_resolved"
+    done
   fi
 }
 
-format_threads() {
-  local threads_json="$1"
+format_review_with_threads() {
+  local review="$1"
+  local threads_json="$2"
 
-  local thread_count
-  thread_count=$(echo "$threads_json" | jq 'length')
+  local review_id body
+  review_id=$(echo "$review" | jq -r '.databaseId')
+  body=$(echo "$review" | jq -r '.body')
 
-  if [[ "$thread_count" == "0" ]]; then
-    echo "No review comments found."
-    return 0
+  # Print review header and body (if body is not empty)
+  if [[ -n "$body" && "$body" != "" ]]; then
+    print_review "$review"
   fi
 
-  # Process each thread
-  echo "$threads_json" | jq -c '.[]' | while read -r thread; do
-    local comments is_resolved
-    comments=$(echo "$thread" | jq -c '.comments.nodes')
-    is_resolved=$(echo "$thread" | jq -r '.isResolved')
+  # Find threads belonging to this review
+  local review_threads
+  review_threads=$(echo "$threads_json" | jq -c --argjson rid "$review_id" \
+    '[.[] | select(.comments.nodes[0].pullRequestReview.databaseId == $rid)]')
 
-    # Get root comment (no replyTo)
-    local root_comment
-    root_comment=$(echo "$comments" | jq -c '[.[] | select(.replyTo == null)] | .[0]')
-
-    if [[ "$root_comment" != "null" ]]; then
-      print_comment "$root_comment" "" "false" "$is_resolved"
-
-      local root_id
-      root_id=$(echo "$root_comment" | jq -r '.databaseId')
-
-      # Find and print replies
-      echo "$comments" | jq -c --argjson parent_id "$root_id" '[.[] | select(.replyTo.databaseId == $parent_id)] | sort_by(.createdAt) | .[]' 2>/dev/null | while read -r reply; do
-        print_comment "$reply" "  " "true" "$is_resolved"
-      done
-    fi
+  # Print threads for this review
+  echo "$review_threads" | jq -c '.[]' 2>/dev/null | while read -r thread; do
+    format_thread "$thread"
   done
 }
 
@@ -262,11 +341,45 @@ main() {
   owner=$(echo "$repo" | cut -d'/' -f1)
   repo_name=$(echo "$repo" | cut -d'/' -f2)
 
-  # Fetch review threads using GraphQL
-  local threads_json
-  threads_json=$(fetch_review_threads "$owner" "$repo_name" "$pr_number" "$include_resolved")
+  # Fetch PR data using GraphQL
+  local pr_data
+  pr_data=$(fetch_pr_data "$owner" "$repo_name" "$pr_number" "$include_resolved")
 
-  format_threads "$threads_json"
+  local reviews threads
+  reviews=$(echo "$pr_data" | jq '.reviews')
+  threads=$(echo "$pr_data" | jq '.threads')
+
+  local review_count thread_count
+  review_count=$(echo "$reviews" | jq 'length')
+  thread_count=$(echo "$threads" | jq 'length')
+
+  if [[ "$review_count" == "0" && "$thread_count" == "0" ]]; then
+    echo "No review comments found."
+    exit 0
+  fi
+
+  # Collect all review IDs
+  local review_ids
+  review_ids=$(echo "$reviews" | jq '[.[].databaseId]')
+
+  # Process reviews in chronological order with their associated threads
+  echo "$reviews" | jq -c 'sort_by(.createdAt) | .[]' | while read -r review; do
+    format_review_with_threads "$review" "$threads"
+  done
+
+  # Find orphan threads (not associated with any review)
+  local orphan_threads
+  orphan_threads=$(echo "$threads" | jq -c --argjson rids "$review_ids" \
+    '[.[] | select(.comments.nodes[0].pullRequestReview.databaseId as $tid | $rids | index($tid) | not)]')
+
+  local orphan_count
+  orphan_count=$(echo "$orphan_threads" | jq 'length')
+
+  if [[ "$orphan_count" -gt 0 ]]; then
+    echo "$orphan_threads" | jq -c '.[]' | while read -r thread; do
+      format_thread "$thread"
+    done
+  fi
 }
 
 main "$@"
