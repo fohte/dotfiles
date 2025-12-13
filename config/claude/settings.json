@@ -36,6 +36,7 @@
       "Bash(gh run view:*)",
       "Bash(gh run watch:*)",
       "Bash(gh search:*)",
+      "Bash(gh-check-pr-review:*)",
       "Bash(gh-issue-agent pull:*)",
       "Bash(ghq get:*)",
       "Bash(ghq list:*)",

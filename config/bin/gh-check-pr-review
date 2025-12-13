@@ -1,0 +1,184 @@
+#!/bin/bash
+set -euo pipefail
+
+# gh-check-pr-review: Fetch PR review comments in a concise format for LLM agents
+
+print_diff() {
+  local path="$1"
+  local hunk_header="$2"
+  {
+    echo "diff --git a/$path b/$path"
+    echo "--- a/$path"
+    echo "+++ b/$path"
+    echo "$hunk_header"
+    cat
+  } | delta --paging=never --line-numbers
+}
+
+show_help() {
+  cat << EOF
+gh-check-pr-review - Fetch PR review comments in a concise format
+
+Usage:
+  gh-check-pr-review <pr-number> [options]
+
+Options:
+  -R <owner/repo>   Target repository (default: current repo)
+  -h, --help        Show this help
+
+Output Format:
+  Groups comments by file path, showing:
+  - File path
+  - Line number (or range)
+  - Author
+  - Comment body
+  - Diff context (3 lines around the commented line)
+
+Examples:
+  gh-check-pr-review 123
+  gh-check-pr-review 456 -R owner/repo
+EOF
+}
+
+die() {
+  echo "Error: $1" >&2
+  exit 1
+}
+
+get_repo_from_arg_or_current() {
+  local repo="$1"
+  if [[ -n "$repo" ]]; then
+    echo "$repo"
+  else
+    gh repo view --json nameWithOwner --jq '.nameWithOwner'
+  fi
+}
+
+format_datetime() {
+  local iso_date="$1"
+  # Convert ISO 8601 to readable format
+  if command -v gdate &>/dev/null; then
+    gdate -d "$iso_date" '+%Y-%m-%d %H:%M'
+  elif date --version &>/dev/null 2>&1; then
+    date -d "$iso_date" '+%Y-%m-%d %H:%M'
+  else
+    # macOS date fallback
+    echo "$iso_date" | sed 's/T/ /; s/Z//; s/\.[0-9]*//' | cut -c1-16
+  fi
+}
+
+print_comment() {
+  local comment="$1"
+  local indent="$2"
+  local is_reply="$3"
+
+  local path author created_at diff_hunk body
+
+  path=$(echo "$comment" | jq -r '.path')
+  author=$(echo "$comment" | jq -r '.user.login')
+  created_at=$(echo "$comment" | jq -r '.created_at')
+  diff_hunk=$(echo "$comment" | jq -r '.diff_hunk // empty')
+  body=$(echo "$comment" | jq -r '.body')
+
+  local formatted_date
+  formatted_date=$(format_datetime "$created_at")
+
+  # Print comment header with optional tree prefix
+  # 48;5;238 = dark gray background
+  if [[ "$is_reply" == "true" ]]; then
+    printf '%s└─ \e[48;5;238m @%s (%s) \e[0m\n' "$indent" "$author" "$formatted_date"
+  else
+    printf '\e[48;5;238m @%s (%s) \e[0m\n' "$author" "$formatted_date"
+  fi
+
+  # Print diff context (only for root comments)
+  if [[ "$is_reply" != "true" && -n "$diff_hunk" ]]; then
+    local hunk_header
+    hunk_header=$(echo "$diff_hunk" | head -n 1)
+    echo "$diff_hunk" | tail -n 3 | print_diff "$path" "$hunk_header"
+  fi
+
+  # Print comment body with glow (if available)
+  if command -v glow &>/dev/null; then
+    if [[ "$is_reply" == "true" ]]; then
+      echo "$body" | glow - 2>/dev/null | sed "s/^/${indent}   /"
+    else
+      echo "$body" | glow - 2>/dev/null
+    fi
+  else
+    if [[ "$is_reply" == "true" ]]; then
+      echo "$body" | sed "s/^/${indent}   /"
+    else
+      echo "$body"
+    fi
+  fi
+  echo ""
+}
+
+format_comments() {
+  local comments_json="$1"
+
+  if [[ "$comments_json" == "[]" ]] || [[ -z "$comments_json" ]]; then
+    echo "No review comments found."
+    return 0
+  fi
+
+  # Get root comments (no in_reply_to_id) sorted by path and line
+  local root_comments
+  root_comments=$(echo "$comments_json" | jq -c '[.[] | select(.in_reply_to_id == null)] | sort_by(.path, .line // .original_line // 0) | .[]')
+
+  echo "$root_comments" | while read -r root_comment; do
+    local root_id
+    root_id=$(echo "$root_comment" | jq -r '.id')
+
+    # Print root comment
+    print_comment "$root_comment" "" "false"
+
+    # Find and print replies to this comment
+    echo "$comments_json" | jq -c --argjson parent_id "$root_id" '[.[] | select(.in_reply_to_id == $parent_id)] | sort_by(.created_at) | .[]' | while read -r reply; do
+      print_comment "$reply" "  " "true"
+    done
+  done
+}
+
+main() {
+  local repo=""
+  local pr_number=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help)
+        show_help
+        exit 0
+        ;;
+      -R)
+        [[ $# -ge 2 ]] || die "-R requires a repository argument"
+        repo="$2"
+        shift 2
+        ;;
+      -*)
+        die "Unknown option: $1"
+        ;;
+      *)
+        if [[ -z "$pr_number" ]]; then
+          pr_number="$1"
+        else
+          die "Unexpected argument: $1"
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  [[ -n "$pr_number" ]] || die "PR number is required"
+
+  repo=$(get_repo_from_arg_or_current "$repo")
+
+  # Fetch review comments using gh api
+  local comments_json
+  comments_json=$(gh api "repos/${repo}/pulls/${pr_number}/comments" --paginate)
+
+  format_comments "$comments_json"
+}
+
+main "$@"
