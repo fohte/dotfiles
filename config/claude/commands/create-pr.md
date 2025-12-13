@@ -28,8 +28,23 @@ echo "use \`gh\` command"
 echo 'use `gh` command'
 ```
 
+コマンドは `/tmp` に YAML frontmatter 付きの一時ファイルを作成し、stdin から受け取った内容を追記して、ファイルパスを stdout に出力する（その結果を記憶して以降のステップで使用する）。
 
-コマンドは `/tmp` に一時ファイルを作成し、stdin から受け取った内容を書き込んで、ファイルパスを stdout に出力する（その結果を記憶して以降のステップで使用する）。
+### Frontmatter について
+
+作成されるファイルには以下の YAML frontmatter が含まれる:
+
+```yaml
+---
+title: ""
+english: true  # public repo なら true、private repo なら false
+approve: false
+---
+```
+
+- `title`: PR のタイトル（submit 時に使用される）
+- `english`: true の場合、title と body に日本語が含まれていると submit が失敗する
+- `approve`: true にしないと submit できない（誤送信防止）
 
 ### 注意事項
 
@@ -48,23 +63,26 @@ claude-pr-draft review <filepath>
 
 **重要:** このコマンドは非同期で実行されるため、コマンドが即座に完了してもユーザーはまだ編集中である。ユーザーがレビューを完了して明示的に指示するまで、次のステップには進まないこと。
 
-## 3. draft ファイルを翻訳（public repo の場合のみ）
+## 3. draft ファイルを翻訳（english: true の場合のみ）
 
-`gh repo view --json isPrivate -q .isPrivate` で確認 (false=public)。public repo の場合は、draft ファイルを英語に翻訳する:
+ユーザーがレビューを完了したら、draft ファイルを読み込んで frontmatter の `english` フィールドを確認する。
 
-```bash
-# draft ファイルの内容を読んで英語に翻訳し、上書き
-```
+`english: true` の場合:
+1. title と body を英語に翻訳する
+2. `approve: true` に変更する
+3. ファイルを上書き保存する
 
-private repo の場合はこのステップをスキップ。
+`english: false` の場合:
+1. `approve: true` に変更する
+2. ファイルを上書き保存する
 
 ## 4. `claude-pr-draft submit` で PR を作成
 
 ```bash
-claude-pr-draft submit <filepath> --title "..." [--base main]
+claude-pr-draft submit <filepath> [--base main]
 ```
 
-draft ファイルの内容が body として使用される。title は public repo なら英語、private repo なら日本語で指定。
+frontmatter の `title` が PR タイトルとして、body 部分が PR 本文として使用される。
 
 ## 5. CI 実行を監視
 

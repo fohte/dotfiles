@@ -28,6 +28,22 @@ Commands:
   review <filepath>            Open the draft file in Neovim (new Wezterm window)
   submit <filepath> [options]  Create PR with the draft file as body
 
+Draft File Format:
+  The draft file uses YAML frontmatter to control PR creation:
+
+  ---
+  title: "PR title here"
+  english: true
+  approve: false
+  ---
+
+  PR body content here...
+
+  Frontmatter fields:
+    title    - PR title (required for submit)
+    english  - If true, submit fails when title or body contains Japanese
+    approve  - Must be set to true before submit (prevents accidental submission)
+
 Examples:
   # Create a new draft file with content from stdin (using heredoc)
   echo "PR body content..." | claude-pr-draft new
@@ -35,8 +51,8 @@ Examples:
   # Open draft file for user review
   claude-pr-draft review /tmp/pr-body-draft.xxx.md
 
-  # Create PR after user approval
-  claude-pr-draft submit /tmp/pr-body-draft.xxx.md --title "..." --base main
+  # Create PR after user approval (title is taken from frontmatter)
+  claude-pr-draft submit /tmp/pr-body-draft.xxx.md --base main
 EOF
 }
 
@@ -63,14 +79,37 @@ done
 SUBCOMMAND="${1:-}"
 shift || true
 
+# Check if current repository is public
+is_public_repo() {
+  local visibility
+  visibility=$(gh repo view --json isPrivate -q '.isPrivate' 2> /dev/null)
+  [[ "$visibility" == "false" ]]
+}
+
 # Create a new temporary draft file
 new_draft() {
   local draft_file
   draft_file=$(mktemp /tmp/pr-body-draft.XXXXXX.md)
 
-  # If stdin is available, read content from stdin
+  # Determine english default based on repo visibility
+  local english_default="false"
+  if is_public_repo; then
+    english_default="true"
+  fi
+
+  # Write YAML frontmatter template
+  cat > "$draft_file" << FRONTMATTER
+---
+title: ""
+english: ${english_default}
+approve: false
+---
+
+FRONTMATTER
+
+  # If stdin is available, append content from stdin
   if [ ! -t 0 ]; then
-    cat > "$draft_file"
+    cat >> "$draft_file"
   fi
 
   # Create lock file to prevent accidental submission without review
@@ -103,6 +142,33 @@ EOF
   nohup wezterm start -- "$wrapper_script" > /dev/null 2>&1 &
 }
 
+# Extract YAML frontmatter as raw YAML
+get_frontmatter() {
+  local filepath="$1"
+  sed -n '2,/^---$/p' "$filepath" | sed '$d'
+}
+
+# Extract YAML frontmatter value by key using yq
+# Usage: get_frontmatter_value <filepath> <key>
+get_frontmatter_value() {
+  local filepath="$1"
+  local key="$2"
+  get_frontmatter "$filepath" | yq -r ".$key // \"\""
+}
+
+# Extract body content (everything after frontmatter)
+get_body_content() {
+  local filepath="$1"
+  sed '1,/^---$/d' "$filepath" | sed '1,/^---$/d'
+}
+
+# Check if text contains Japanese characters
+contains_japanese() {
+  local text="$1"
+  echo "$text" | grep -qE '[\p{Hiragana}\p{Katakana}\p{Han}]' 2> /dev/null ||
+    echo "$text" | grep -qE '[ぁ-んァ-ン一-龯]'
+}
+
 # Submit PR with draft file as body
 submit_pr() {
   local filepath="$1"
@@ -120,8 +186,52 @@ submit_pr() {
     exit 1
   fi
 
+  # Parse frontmatter
+  local title english approve
+  title=$(get_frontmatter_value "$filepath" "title")
+  english=$(get_frontmatter_value "$filepath" "english")
+  approve=$(get_frontmatter_value "$filepath" "approve")
+
+  # Validate approve flag
+  if [[ "$approve" != "true" ]]; then
+    echo "Error: Please set 'approve: true' in the frontmatter to submit the PR." >&2
+    exit 1
+  fi
+
+  # Validate title is not empty
+  if [[ -z "$title" ]]; then
+    echo "Error: Please set a title in the frontmatter." >&2
+    exit 1
+  fi
+
+  # Check for Japanese characters if english: true
+  if [[ "$english" == "true" ]]; then
+    local body
+    body=$(get_body_content "$filepath")
+
+    if contains_japanese "$title"; then
+      echo "Error: Title contains Japanese characters but 'english: true' is set." >&2
+      echo "Please translate the title to English or set 'english: false'." >&2
+      exit 1
+    fi
+
+    if contains_japanese "$body"; then
+      echo "Error: Body contains Japanese characters but 'english: true' is set." >&2
+      echo "Please translate the body to English or set 'english: false'." >&2
+      exit 1
+    fi
+  fi
+
+  # Create temporary file with body content only (without frontmatter)
+  local body_file
+  body_file=$(mktemp /tmp/pr-body.XXXXXX.md)
+  get_body_content "$filepath" > "$body_file"
+
   # Pass remaining arguments to gh pr create
-  gh pr create --body-file "$filepath" "$@"
+  gh pr create --title "$title" --body-file "$body_file" "$@"
+
+  # Clean up temporary body file
+  rm -f "$body_file"
 }
 
 # Main execution
