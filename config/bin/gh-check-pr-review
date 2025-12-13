@@ -58,9 +58,9 @@ get_repo_from_arg_or_current() {
 format_datetime() {
   local iso_date="$1"
   # Convert ISO 8601 to readable format
-  if command -v gdate &>/dev/null; then
+  if command -v gdate &> /dev/null; then
     gdate -d "$iso_date" '+%Y-%m-%d %H:%M'
-  elif date --version &>/dev/null 2>&1; then
+  elif date --version &> /dev/null 2>&1; then
     date -d "$iso_date" '+%Y-%m-%d %H:%M'
   else
     # macOS date fallback
@@ -106,11 +106,11 @@ print_comment() {
   fi
 
   # Print comment body with glow (if available)
-  if command -v glow &>/dev/null; then
+  if command -v glow &> /dev/null; then
     if [[ "$is_reply" == "true" ]]; then
-      echo "$body" | glow - 2>/dev/null | sed "s/^/${indent}   /"
+      echo "$body" | glow - 2> /dev/null | sed "s/^/${indent}   /"
     else
-      echo "$body" | glow - 2>/dev/null
+      echo "$body" | glow - 2> /dev/null
     fi
   else
     if [[ "$is_reply" == "true" ]]; then
@@ -148,8 +148,8 @@ print_review() {
   printf '\e[48;5;238m @%s (%s) \e[0m %b\n' "$author" "$formatted_date" "$state_indicator"
 
   # Print review body with glow (if available)
-  if command -v glow &>/dev/null; then
-    echo "$body" | glow - 2>/dev/null
+  if command -v glow &> /dev/null; then
+    echo "$body" | glow - 2> /dev/null
   else
     echo "$body"
   fi
@@ -270,7 +270,7 @@ format_thread() {
     root_id=$(echo "$root_comment" | jq -r '.databaseId')
 
     # Find and print replies
-    echo "$comments" | jq -c --argjson parent_id "$root_id" '[.[] | select(.replyTo.databaseId == $parent_id)] | sort_by(.createdAt) | .[]' 2>/dev/null | while read -r reply; do
+    echo "$comments" | jq -c --argjson parent_id "$root_id" '[.[] | select(.replyTo.databaseId == $parent_id)] | sort_by(.createdAt) | .[]' 2> /dev/null | while read -r reply; do
       print_comment "$reply" "  " "true" "$is_resolved"
     done
   fi
@@ -295,7 +295,7 @@ format_review_with_threads() {
     '[.[] | select(.comments.nodes[0].pullRequestReview.databaseId == $rid)]')
 
   # Print threads for this review
-  echo "$review_threads" | jq -c '.[]' 2>/dev/null | while read -r thread; do
+  echo "$review_threads" | jq -c '.[]' 2> /dev/null | while read -r thread; do
     format_thread "$thread"
   done
 }
