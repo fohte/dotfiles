@@ -4,7 +4,6 @@
   },
   "includeCoAuthoredBy": true,
   "permissions": {
-    "defaultMode": "acceptEdits",
     "allow": [
       "Bash(actionlint:*)",
       "Bash(bun install)",
@@ -96,8 +95,10 @@
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
       "Bash(rm -rf:*)",
+      "NotebookEdit",
       "Read(.envrc)"
-    ]
+    ],
+    "defaultMode": "acceptEdits"
   },
   "model": "opus",
   "hooks": {
