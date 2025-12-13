@@ -5,6 +5,9 @@
 # This command is designed to be used by Claude Code to create and manage
 # PR body drafts with user review via Neovim in a new Wezterm window.
 #
+# See also: config/claude/commands/create-pr.md
+# (When modifying this script, update the command file as well)
+#
 # Usage:
 #   claude-pr-draft new
 #   claude-pr-draft review <filepath>
