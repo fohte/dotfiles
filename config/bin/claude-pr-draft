@@ -216,8 +216,8 @@ get_body_content() {
 # Check if text contains Japanese characters
 contains_japanese() {
   local text="$1"
-  echo "$text" | grep -qE '[\p{Hiragana}\p{Katakana}\p{Han}]' 2> /dev/null ||
-    echo "$text" | grep -qE '[ぁ-んァ-ン一-龯]'
+  # Use Perl for proper Unicode property support (grep doesn't support \p{...})
+  ! echo "$text" | perl -CSD -ne 'exit 1 if /[\p{Hiragana}\p{Katakana}\p{Han}]/'
 }
 
 # Submit PR with draft file as body
