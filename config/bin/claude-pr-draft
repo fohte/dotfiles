@@ -9,7 +9,7 @@
 # (When modifying this script, update the command file as well)
 #
 # Usage:
-#   claude-pr-draft new
+#   claude-pr-draft new [--title "PR title"]
 #   claude-pr-draft review <filepath>
 #   claude-pr-draft submit <filepath> [gh pr create options...]
 #
@@ -23,7 +23,7 @@ PR body draft management tool for Claude Code
 Usage: claude-pr-draft [--help] <command> [args]
 
 Commands:
-  new                          Create a new temporary draft file and output its path
+  new [--title "title"]        Create a new temporary draft file and output its path
                                Accepts content from stdin if provided
   review <filepath>            Open the draft file in Neovim (new Wezterm window)
   submit <filepath> [options]  Create PR with the draft file as body
@@ -46,8 +46,8 @@ Draft File Format:
                Any modification after approval invalidates the hash
 
 Examples:
-  # Create a new draft file with content from stdin (using heredoc)
-  echo "PR body content..." | claude-pr-draft new
+  # Create a new draft file with title and content from stdin
+  echo "PR body content..." | claude-pr-draft new --title "Add new feature"
 
   # Open draft file for user review
   claude-pr-draft review /tmp/pr-body-draft.xxx.md
@@ -89,6 +89,26 @@ is_public_repo() {
 
 # Create a new temporary draft file
 new_draft() {
+  local title=""
+
+  # Parse options for new subcommand
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --title)
+        if [[ $# -lt 2 ]]; then
+          echo "Error: --title requires a value" >&2
+          exit 1
+        fi
+        title="$2"
+        shift 2
+        ;;
+      *)
+        echo "Error: Unknown option for 'new': $1" >&2
+        exit 1
+        ;;
+    esac
+  done
+
   local draft_file
   draft_file=$(mktemp /tmp/pr-body-draft.XXXXXX.md)
 
@@ -101,7 +121,7 @@ new_draft() {
   # Write YAML frontmatter template
   cat > "$draft_file" << FRONTMATTER
 ---
-title: ""
+title: "${title}"
 english: ${english_default}
 approve: false
 ---
@@ -276,7 +296,7 @@ submit_pr() {
 # Main execution
 case "$SUBCOMMAND" in
   new)
-    new_draft
+    new_draft "$@"
     ;;
   review)
     if [[ $# -ne 1 ]]; then

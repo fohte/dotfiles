@@ -15,8 +15,18 @@ echo "## Why
 
 ## What
 
-- この PR が merge されたら何が変わるのかを、個々のコミットではなく全体的な影響を現在形で記述" | claude-pr-draft new
+- この PR が merge されたら何が変わるのかを、個々のコミットではなく全体的な影響を現在形で記述" | claude-pr-draft new --title "PRタイトル"
 ```
+
+### タイトルの生成ガイドライン
+
+- **簡潔に**: 50 文字以内で変更内容を要約
+- **現在形の命令形**: 「Add ...」「Fix ...」「Update ...」など
+- **日本語で生成**: body と同様に日本語で書く（翻訳はステップ 3 で行う）
+- **フォーマット例**:
+  - 機能追加: `<scope>: <機能名>を追加`
+  - バグ修正: `<scope>: <問題>を修正`
+  - リファクタリング: `<scope>: <対象>をリファクタリング`
 
 注意: Markdown のコードブロックにバッククォートを含める場合、シェルのクォートの種類によってエスケープが必要。
 
@@ -36,7 +46,7 @@ echo 'use `gh` command'
 
 ```yaml
 ---
-title: ""
+title: "PRタイトル"  # --title オプションで指定した値
 english: true  # public repo なら true、private repo なら false
 approve: false
 ---
