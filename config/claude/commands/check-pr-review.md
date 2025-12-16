@@ -14,6 +14,7 @@ gh-check-pr-review <pr-number> [-R <owner/repo>] [--all] [--review N] [--full]
 - `-a, --all`: Include resolved comments (default: only unresolved)
 - `-r, --review N`: Show details for review number N
 - `-f, --full`: Show all details (original behavior)
+- `-d, --open-details`: Expand `<details>` blocks (default: collapsed)
 
 ## Output Modes
 

@@ -15,6 +15,16 @@ print_diff() {
   } | delta --paging=never --line-numbers
 }
 
+# Collapse <details> blocks, keeping only <summary> content
+collapse_details() {
+  local text="$1"
+  # Use perl for multiline regex replacement
+  # Replace <details>...<summary>X</summary>...</details> with [▶ X]
+  echo "$text" | perl -0777 -pe '
+    s{<details[^>]*>\s*<summary[^>]*>(.*?)</summary>.*?</details>}{[▶ $1]}gs;
+  '
+}
+
 show_help() {
   cat << EOF
 gh-check-pr-review - Fetch PR review comments in a concise format
@@ -27,6 +37,7 @@ Options:
   -a, --all         Include resolved comments (default: only unresolved)
   -r, --review N    Show details for review number N (from summary)
   -f, --full        Show all details (original behavior)
+  -d, --open-details  Expand <details> blocks (default: collapsed)
   -h, --help        Show this help
 
 Output Modes:
@@ -89,6 +100,11 @@ print_comment() {
   diff_hunk=$(echo "$comment" | jq -r '.diffHunk // empty')
   body=$(echo "$comment" | jq -r '.body')
 
+  # Collapse <details> blocks unless --open-details is specified
+  if [[ "${OPEN_DETAILS:-false}" != "true" ]]; then
+    body=$(collapse_details "$body")
+  fi
+
   local formatted_date
   formatted_date=$(format_datetime "$created_at")
 
@@ -139,6 +155,11 @@ print_review() {
   state=$(echo "$review" | jq -r '.state')
   created_at=$(echo "$review" | jq -r '.createdAt')
   body=$(echo "$review" | jq -r '.body')
+
+  # Collapse <details> blocks unless --open-details is specified
+  if [[ "${OPEN_DETAILS:-false}" != "true" ]]; then
+    body=$(collapse_details "$body")
+  fi
 
   local formatted_date
   formatted_date=$(format_datetime "$created_at")
@@ -404,6 +425,7 @@ main() {
   local include_resolved="false"
   local show_review=""
   local full_mode="false"
+  export OPEN_DETAILS="false"
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -427,6 +449,10 @@ main() {
         ;;
       -f | --full)
         full_mode="true"
+        shift
+        ;;
+      -d | --open-details)
+        OPEN_DETAILS="true"
         shift
         ;;
       -*)
