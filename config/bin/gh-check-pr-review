@@ -25,19 +25,26 @@ Usage:
 Options:
   -R <owner/repo>   Target repository (default: current repo)
   -a, --all         Include resolved comments (default: only unresolved)
+  -r, --review N    Show details for review number N (from summary)
+  -f, --full        Show all details (original behavior)
   -h, --help        Show this help
 
-Output Format:
-  Groups comments by thread, showing:
-  - Author and timestamp
-  - Diff context with line numbers
-  - Comment body (rendered with glow if available)
-  - Replies with tree structure
+Output Modes:
+  Default (summary):
+    Shows review list with thread counts and first line of comments.
+    Use this to get an overview before diving into details.
+
+  --review N:
+    Shows full details for a specific review (body + all threads).
+
+  --full:
+    Shows all reviews and threads with full details (original behavior).
 
 Examples:
-  gh-check-pr-review 123
-  gh-check-pr-review 123 --all
-  gh-check-pr-review 456 -R owner/repo
+  gh-check-pr-review 123              # Summary view
+  gh-check-pr-review 123 --review 1   # Details for review [1]
+  gh-check-pr-review 123 --full       # Full details
+  gh-check-pr-review 123 --all        # Include resolved threads
 EOF
 }
 
@@ -106,6 +113,7 @@ print_comment() {
   fi
 
   # Print comment body with glow (if available)
+  # shellcheck disable=SC2001 # sed is needed for multiline prefix
   if command -v glow &> /dev/null; then
     if [[ "$is_reply" == "true" ]]; then
       echo "$body" | glow - 2> /dev/null | sed "s/^/${indent}   /"
@@ -162,6 +170,7 @@ fetch_pr_data() {
   local pr_number="$3"
   local include_resolved="$4"
 
+  # shellcheck disable=SC2016 # GraphQL variables use $ syntax intentionally
   local query='
 query($owner: String!, $repo: String!, $pr: Int!, $threadCursor: String, $reviewCursor: String) {
   repository(owner: $owner, name: $repo) {
@@ -300,10 +309,101 @@ format_review_with_threads() {
   done
 }
 
+truncate_text() {
+  local text="$1"
+  local max_length="${2:-80}"
+  local first_line
+  first_line=$(echo "$text" | head -n 1 | sed 's/^[[:space:]]*//')
+  if [[ ${#first_line} -gt $max_length ]]; then
+    echo "${first_line:0:$max_length}..."
+  else
+    echo "$first_line"
+  fi
+}
+
+format_summary() {
+  local reviews_json="$1"
+  local threads_json="$2"
+
+  local review_index=0
+
+  echo "$reviews_json" | jq -c 'sort_by(.createdAt) | .[]' | while read -r review; do
+    review_index=$((review_index + 1))
+
+    local review_id author state body
+    review_id=$(echo "$review" | jq -r '.databaseId')
+    author=$(echo "$review" | jq -r '.author.login // "unknown"')
+    state=$(echo "$review" | jq -r '.state')
+    body=$(echo "$review" | jq -r '.body')
+
+    # Find threads belonging to this review
+    local review_threads thread_count
+    review_threads=$(echo "$threads_json" | jq -c --argjson rid "$review_id" \
+      '[.[] | select(.comments.nodes[0].pullRequestReview.databaseId == $rid)]')
+    thread_count=$(echo "$review_threads" | jq 'length')
+
+    # Count unresolved threads
+    local unresolved_count
+    unresolved_count=$(echo "$review_threads" | jq '[.[] | select(.isResolved == false)] | length')
+
+    # Format state
+    local state_text
+    case "$state" in
+      APPROVED) state_text="approved" ;;
+      CHANGES_REQUESTED) state_text="changes_requested" ;;
+      COMMENTED) state_text="commented" ;;
+      DISMISSED) state_text="dismissed" ;;
+      *) state_text="$state" ;;
+    esac
+
+    # Print review summary line
+    local thread_info=""
+    if [[ "$thread_count" -gt 0 ]]; then
+      thread_info=" - ${unresolved_count}/${thread_count} unresolved"
+    fi
+    printf '[%d] @%s (%s)%s\n' "$review_index" "$author" "$state_text" "$thread_info"
+
+    # Print body preview if exists
+    if [[ -n "$body" && "$body" != "" ]]; then
+      local body_preview
+      body_preview=$(truncate_text "$body" 70)
+      printf '    "%s"\n' "$body_preview"
+    fi
+
+    # Print thread summaries
+    echo "$review_threads" | jq -c '.[]' 2> /dev/null | while read -r thread; do
+      local path is_resolved comment_count root_body root_author
+      local root_comment
+
+      root_comment=$(echo "$thread" | jq -c '.comments.nodes | [.[] | select(.replyTo == null)] | .[0]')
+      path=$(echo "$root_comment" | jq -r '.path')
+      line=$(echo "$root_comment" | jq -r '.line // .originalLine // "?"')
+      root_author=$(echo "$root_comment" | jq -r '.author.login // "unknown"')
+      root_body=$(echo "$root_comment" | jq -r '.body')
+      is_resolved=$(echo "$thread" | jq -r '.isResolved')
+      comment_count=$(echo "$thread" | jq '.comments.nodes | length')
+
+      local resolved_mark=""
+      if [[ "$is_resolved" == "true" ]]; then
+        resolved_mark=" [resolved]"
+      fi
+
+      local body_preview
+      body_preview=$(truncate_text "$root_body" 50)
+      printf '    - %s:%s (%d comments)%s\n' "$path" "$line" "$comment_count" "$resolved_mark"
+      printf '      @%s: "%s"\n' "$root_author" "$body_preview"
+    done
+
+    echo ""
+  done
+}
+
 main() {
   local repo=""
   local pr_number=""
   local include_resolved="false"
+  local show_review=""
+  local full_mode="false"
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -318,6 +418,15 @@ main() {
         ;;
       -a | --all)
         include_resolved="true"
+        shift
+        ;;
+      -r | --review)
+        [[ $# -ge 2 ]] || die "--review requires a number argument"
+        show_review="$2"
+        shift 2
+        ;;
+      -f | --full)
+        full_mode="true"
         shift
         ;;
       -*)
@@ -362,22 +471,69 @@ main() {
   local review_ids
   review_ids=$(echo "$reviews" | jq '[.[].databaseId]')
 
-  # Process reviews in chronological order with their associated threads
-  echo "$reviews" | jq -c 'sort_by(.createdAt) | .[]' | while read -r review; do
-    format_review_with_threads "$review" "$threads"
-  done
-
   # Find orphan threads (not associated with any review)
   local orphan_threads
   orphan_threads=$(echo "$threads" | jq -c --argjson rids "$review_ids" \
     '[.[] | select(.comments.nodes[0].pullRequestReview.databaseId as $tid | $rids | index($tid) | not)]')
 
+  # Show specific review details
+  if [[ -n "$show_review" ]]; then
+    local target_review
+    target_review=$(echo "$reviews" | jq -c --argjson idx "$show_review" 'sort_by(.createdAt) | .[$idx - 1]')
+
+    if [[ "$target_review" == "null" ]]; then
+      die "Review [$show_review] not found. Run without --review to see available reviews."
+    fi
+
+    format_review_with_threads "$target_review" "$threads"
+    exit 0
+  fi
+
+  # Full mode: show all details (original behavior)
+  if [[ "$full_mode" == "true" ]]; then
+    echo "$reviews" | jq -c 'sort_by(.createdAt) | .[]' | while read -r review; do
+      format_review_with_threads "$review" "$threads"
+    done
+
+    local orphan_count
+    orphan_count=$(echo "$orphan_threads" | jq 'length')
+
+    if [[ "$orphan_count" -gt 0 ]]; then
+      echo "$orphan_threads" | jq -c '.[]' | while read -r thread; do
+        format_thread "$thread"
+      done
+    fi
+    exit 0
+  fi
+
+  # Default: summary mode
+  format_summary "$reviews" "$threads"
+
+  # Show orphan threads summary
   local orphan_count
   orphan_count=$(echo "$orphan_threads" | jq 'length')
 
   if [[ "$orphan_count" -gt 0 ]]; then
-    echo "$orphan_threads" | jq -c '.[]' | while read -r thread; do
-      format_thread "$thread"
+    echo "Orphan threads (not associated with a review): $orphan_count"
+    echo "$orphan_threads" | jq -c '.[]' 2> /dev/null | while read -r thread; do
+      local path root_comment root_author root_body is_resolved comment_count
+      root_comment=$(echo "$thread" | jq -c '.comments.nodes | [.[] | select(.replyTo == null)] | .[0]')
+      path=$(echo "$root_comment" | jq -r '.path')
+      line=$(echo "$root_comment" | jq -r '.line // .originalLine // "?"')
+      root_author=$(echo "$root_comment" | jq -r '.author.login // "unknown"')
+      root_body=$(echo "$root_comment" | jq -r '.body')
+      is_resolved=$(echo "$thread" | jq -r '.isResolved')
+      comment_count=$(echo "$thread" | jq '.comments.nodes | length')
+
+      local resolved_mark=""
+      if [[ "$is_resolved" == "true" ]]; then
+        resolved_mark=" [resolved]"
+      fi
+
+      local body_preview
+      body_preview=$(truncate_text "$root_body" 50)
+      printf '  - %s:%s (%d comments)%s\n' "$path" "$line" "$comment_count" "$resolved_mark"
+      printf '    @%s: "%s"\n' "$root_author" "$body_preview"
     done
   fi
 }
