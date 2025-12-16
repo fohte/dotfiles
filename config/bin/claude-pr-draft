@@ -208,7 +208,9 @@ get_frontmatter_value() {
 # Extract body content (everything after frontmatter)
 get_body_content() {
   local filepath="$1"
-  sed '1,/^---$/d' "$filepath" | sed '1,/^---$/d'
+  # BSD sed: '1,/^---$/d' deletes from line 1 to the first line matching ^---$
+  # after line 1 (i.e., the closing ---), so one sed is enough
+  sed '1,/^---$/d' "$filepath"
 }
 
 # Check if text contains Japanese characters
