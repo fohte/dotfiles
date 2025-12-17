@@ -262,6 +262,11 @@ cmd_new() {
   local target_session
   target_session="$(tmux-name session "$(git root -r)")"
 
+  # Create session if it doesn't exist
+  if ! tmux has-session -t "$target_session" 2> /dev/null; then
+    tmux new-session -ds "$target_session" -c "$(git root -r)"
+  fi
+
   # create a tmux window in the target session with split layout
   # left pane: neovim, right pane: claude code
   tmux new-window -t "${target_session}" -c "${worktree_dir}" -n "${worktree_name}" \; \
@@ -271,6 +276,15 @@ cmd_new() {
     select-pane -t 2 \; \
     send-keys "$claude_cmd" C-m \; \
     select-pane -t 1
+
+  # Switch to the target session if not already in it
+  if [ -n "${TMUX:-}" ]; then
+    local current_session
+    current_session="$(tmux display-message -p '#{session_name}')"
+    if [ "$current_session" != "$session_name" ]; then
+      tmux switch-client -t "$session_name"
+    fi
+  fi
 }
 
 cmd_clean() {
