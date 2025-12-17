@@ -442,11 +442,12 @@ cmd_delete() {
   branch_name="$(git worktree list --porcelain | grep -A 3 "^worktree $worktree_path$" | grep "^branch " | sed 's/^branch //' | sed 's|^refs/heads/||')"
 
   # Check if we're in a tmux session and current pane is in the worktree
-  local should_close_window=false
+  local target_window_id=""
   if [ -n "${TMUX:-}" ]; then
     current_pane_path="$(tmux display-message -p '#{pane_current_path}')"
     if [[ "$current_pane_path" == "$worktree_path"* ]]; then
-      should_close_window=true
+      # Record the window ID to close later (in case user switches windows during deletion)
+      target_window_id="$(tmux display-message -p '#{window_id}')"
     fi
   fi
 
@@ -477,9 +478,9 @@ cmd_delete() {
     fi
   fi
 
-  # Close tmux window if we're in it
-  if [ "$should_close_window" = true ]; then
-    tmux kill-window
+  # Close the original tmux window (identified by window ID)
+  if [ -n "$target_window_id" ]; then
+    tmux kill-window -t "$target_window_id"
   fi
 }
 
