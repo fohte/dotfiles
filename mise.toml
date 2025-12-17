@@ -58,7 +58,7 @@ run = "brew upgrade"
 [tools]
 # Required for pre-commit
 "npm:bun" = "1.2.22"
-pre-commit = "4.2.0"
+pre-commit = "4.5.1"
 shellcheck = "0.11.0"
 shfmt = "3.12.0"
 stylua = "2.1.0"
