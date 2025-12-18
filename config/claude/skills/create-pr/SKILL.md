@@ -1,3 +1,8 @@
+---
+name: create-pr
+description: Use this skill when creating a Pull Request. This skill provides the workflow for drafting, reviewing, and submitting PRs using claude-pr-draft command.
+---
+
 # Create PR
 
 変更を push した後、以下の手順で PR を作成する。
