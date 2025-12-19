@@ -16,6 +16,18 @@ Use this skill when:
 
 ## Commands
 
+### View (read-only)
+
+```bash
+gh-issue-agent view <issue-number> [-R <owner/repo>]
+```
+
+Use this when you only need to **read** the issue content. No local cache is created.
+
+**When to use `view` vs `pull`:**
+- `view`: Just reading/viewing the issue (no editing needed)
+- `pull`: When you plan to edit the issue body, metadata, or comments
+
 ### Pull (fetch issue locally)
 
 ```bash
@@ -54,6 +66,14 @@ gh-issue-agent push <issue-number> --edit-others
 ```
 
 ## Workflow
+
+### Viewing only (no edits)
+
+```bash
+gh-issue-agent view 123
+```
+
+### Editing
 
 1. Pull the issue: `gh-issue-agent pull 123`
 2. Read/Edit files in `~/.cache/gh-issue-agent/<owner>/<repo>/123/`
