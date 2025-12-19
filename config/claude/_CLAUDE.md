@@ -23,6 +23,9 @@
 
 ## ワークフロー
 
+- **Skill の優先使用**: タスクに合致する Skill が `available_skills` にある場合は、**必ず最初に** Skill ツールを呼び出すこと。直接 Bash コマンドを実行してはならない
+  - PR 作成時: `create-pr` Skill を使用すること (`gh pr create` を直接実行しない)
+  - GitHub Issue の閲覧・編集時: `github-issue` Skill を使用すること
 - `git commit --amend`、`git reset --soft|hard` による変更の巻き戻しは行わないこと。履歴を直線的かつ明確に保つこと
 - pre-commit フックが失敗またはファイルを変更した場合は、問題を修正し、元のメッセージを使用して再度コミットすること
 - 論理的なチェックポイントでコミットすること: 1 つの機能、1 つの修正、または 1 つのまとまった変更につき 1 コミット
