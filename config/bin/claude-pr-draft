@@ -133,9 +133,6 @@ FRONTMATTER
     cat >> "$draft_file"
   fi
 
-  # Create lock file to prevent accidental submission without review
-  touch "${draft_file}.lock"
-
   echo "$draft_file"
 }
 
@@ -156,9 +153,8 @@ review_draft() {
     exit 1
   fi
 
-  # Skip if already being reviewed (lock file is removed when Neovim exits)
-  # Note: lock file is created by new_draft and removed by wrapper script
-  if [[ ! -f "$lock_file" ]]; then
+  # Skip if Neovim is already open for this file
+  if [[ -f "$lock_file" ]]; then
     return 0
   fi
 
@@ -188,10 +184,13 @@ else
   echo "Rejected or not approved."
 fi
 
-# Always remove lock file after review
+# Remove lock file (Neovim is closed)
 rm -f "$lock_file"
 WRAPPER_EOF
   chmod +x "$wrapper_script"
+
+  # Mark as currently being reviewed
+  touch "$lock_file"
 
   # Use nohup to run in background without blocking
   nohup wezterm start -- "$wrapper_script" "$filepath" > /dev/null 2>&1 &
@@ -238,15 +237,15 @@ submit_pr() {
     exit 1
   fi
 
-  # Check if lock file exists (review not completed)
+  # Check if Neovim is still open
   if [[ -f "$lock_file" ]]; then
-    echo "Error: Please complete the review in the editor before submitting the PR." >&2
+    echo "Error: Please close the editor before submitting the PR." >&2
     exit 1
   fi
 
   # Check if approve file exists (rejected if not)
   if [[ ! -f "$approve_file" ]]; then
-    echo "Error: PR was rejected or not approved. Please run 'review' and set 'approve: true'." >&2
+    echo "Error: PR was not approved. Please run 'review' and set 'approve: true'." >&2
     exit 1
   fi
 
