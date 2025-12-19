@@ -294,10 +294,16 @@ submit_pr() {
   get_body_content "$filepath" > "$body_file"
 
   # Pass remaining arguments to gh pr create
-  gh pr create --title "$title" --body-file "$body_file" "$@"
+  local pr_url
+  pr_url=$(gh pr create --title "$title" --body-file "$body_file" "$@")
 
   # Clean up temporary body file
   rm -f "$body_file"
+
+  echo "$pr_url"
+
+  # Open PR in browser
+  gh pr view --web "$pr_url"
 }
 
 # Main execution
