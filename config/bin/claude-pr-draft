@@ -156,6 +156,12 @@ review_draft() {
     exit 1
   fi
 
+  # Skip if already being reviewed (lock file is removed when Neovim exits)
+  # Note: lock file is created by new_draft and removed by wrapper script
+  if [[ ! -f "$lock_file" ]]; then
+    return 0
+  fi
+
   # Create a wrapper script that handles approval after Neovim exits
   local wrapper_script
   wrapper_script=$(mktemp /tmp/nvim-wrapper.XXXXXX.sh)
