@@ -15,6 +15,7 @@ Usage:
   gh-issue-agent <command> [options]
 
 Commands:
+  view      View issue and comments (read-only, no local cache)
   pull      Fetch issue and save locally (fails if local changes exist)
   refresh   Discard local changes and fetch latest from GitHub
   push      Push local changes to GitHub
@@ -84,6 +85,23 @@ Notes:
 EOF
 }
 
+show_view_help() {
+  cat << EOF
+View issue and comments (read-only, no local cache)
+
+Usage:
+  gh-issue-agent view <issue-number> [options]
+
+Options:
+  -R <owner/repo>   Target repository (default: current repo)
+  -h, --help        Show this help
+
+Examples:
+  gh-issue-agent view 123
+  gh-issue-agent view 123 -R owner/repo
+EOF
+}
+
 die() {
   echo "Error: $1" >&2
   exit 1
@@ -138,6 +156,7 @@ fetch_comments_data() {
   owner=$(echo "$repo" | cut -d/ -f1)
   repo_name=$(echo "$repo" | cut -d/ -f2)
 
+  # shellcheck disable=SC2016 -- $owner, $repo, $number are GraphQL variables, not shell variables
   gh api graphql -f query='
     query($owner: String!, $repo: String!, $number: Int!) {
       repository(owner: $owner, name: $repo) {
@@ -633,6 +652,135 @@ cmd_push() {
   fi
 }
 
+format_relative_time() {
+  local timestamp="$1"
+  local now diff
+
+  now=$(date +%s)
+  diff=$((now - $(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$timestamp" +%s 2> /dev/null || date -d "$timestamp" +%s 2> /dev/null || echo "$now")))
+
+  if [[ $diff -lt 60 ]]; then
+    echo "just now"
+  elif [[ $diff -lt 3600 ]]; then
+    echo "$((diff / 60)) minutes ago"
+  elif [[ $diff -lt 86400 ]]; then
+    echo "$((diff / 3600)) hours ago"
+  elif [[ $diff -lt 604800 ]]; then
+    echo "$((diff / 86400)) days ago"
+  else
+    echo "$((diff / 604800)) weeks ago"
+  fi
+}
+
+indent_text() {
+  local text="$1"
+  local indent="${2:-  }"
+  while IFS= read -r line; do
+    printf '%s%s\n' "$indent" "$line"
+  done <<< "$text"
+}
+
+cmd_view() {
+  local repo=""
+  local issue_number=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help)
+        show_view_help
+        exit 0
+        ;;
+      -R)
+        [[ $# -ge 2 ]] || die "-R requires a repository argument"
+        repo="$2"
+        shift 2
+        ;;
+      -*)
+        die "Unknown option: $1"
+        ;;
+      *)
+        if [[ -z "$issue_number" ]]; then
+          issue_number="$1"
+        else
+          die "Unexpected argument: $1"
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  [[ -n "$issue_number" ]] || die "Issue number is required"
+
+  repo=$(get_repo_from_arg_or_current "$repo")
+
+  local issue_data comments_data
+  issue_data=$(fetch_issue_data "$repo" "$issue_number")
+  comments_data=$(fetch_comments_data "$repo" "$issue_number")
+
+  local title state author created_at body
+  title=$(echo "$issue_data" | jq -r '.title')
+  state=$(echo "$issue_data" | jq -r '.state')
+  author=$(echo "$issue_data" | jq -r '.author.login')
+  created_at=$(echo "$issue_data" | jq -r '.createdAt')
+  body=$(echo "$issue_data" | jq -r '.body // ""')
+
+  local labels assignees
+  labels=$(echo "$issue_data" | jq -r '[.labels[].name] | join(", ")')
+  assignees=$(echo "$issue_data" | jq -r '[.assignees[].login] | join(", ")')
+
+  local comment_count
+  comment_count=$(echo "$comments_data" | jq 'length')
+
+  local relative_time
+  relative_time=$(format_relative_time "$created_at")
+
+  local state_display
+  if [[ "$state" == "OPEN" ]]; then
+    state_display="Open"
+  else
+    state_display="Closed"
+  fi
+
+  echo "${title} #${issue_number}"
+  echo ""
+  echo "${state_display} • ${author} opened ${relative_time} • ${comment_count} comments"
+
+  if [[ -n "$labels" ]]; then
+    echo "Labels: ${labels}"
+  fi
+  if [[ -n "$assignees" ]]; then
+    echo "Assignees: ${assignees}"
+  fi
+
+  echo ""
+  if [[ -n "$body" ]]; then
+    indent_text "$body"
+  else
+    echo "  No description provided."
+  fi
+
+  if [[ "$comment_count" -gt 0 ]]; then
+    local count
+    count=$(echo "$comments_data" | jq 'length')
+
+    for ((i = 0; i < count; i++)); do
+      local comment comment_author comment_created_at comment_body comment_relative_time
+      comment=$(echo "$comments_data" | jq ".[$i]")
+      comment_author=$(echo "$comment" | jq -r '.author.login // "unknown"')
+      comment_created_at=$(echo "$comment" | jq -r '.createdAt')
+      comment_body=$(echo "$comment" | jq -r '.body')
+      comment_relative_time=$(format_relative_time "$comment_created_at")
+
+      echo ""
+      echo "──────────────────────────────────────────────────────"
+      echo ""
+      echo "${comment_author} • ${comment_relative_time}"
+      echo ""
+      indent_text "$comment_body"
+    done
+  fi
+}
+
 main() {
   if [[ $# -eq 0 ]]; then
     show_help
@@ -646,6 +794,9 @@ main() {
     -h | --help)
       show_help
       exit 0
+      ;;
+    view)
+      cmd_view "$@"
       ;;
     pull)
       cmd_pull "$@"

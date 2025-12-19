@@ -38,6 +38,7 @@
       "Bash(gh search:*)",
       "Bash(gh-check-pr-review:*)",
       "Bash(gh-issue-agent pull:*)",
+      "Bash(gh-issue-agent view:*)",
       "Bash(ghq get:*)",
       "Bash(ghq list:*)",
       "Bash(git add:*)",
