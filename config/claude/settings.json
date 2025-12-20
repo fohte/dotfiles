@@ -83,6 +83,7 @@
       "Read(~/Dropbox)",
       "Read(~/Library/CloudStorage/Dropbox)",
       "Read(~/ghq/**)",
+      "Skill(check-pr-review)",
       "Skill(create-pr)",
       "Skill(github-issue)",
       "WebFetch",
