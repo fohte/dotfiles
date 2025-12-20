@@ -1,3 +1,8 @@
+---
+name: check-pr-review
+description: Use gh-check-pr-review to fetch and address PR review comments. Use this skill when checking PR review feedback, viewing unresolved threads, or addressing reviewer comments.
+---
+
 # Check PR Review Comments
 
 Fetch review comments for a PR and address any feedback.
