@@ -386,13 +386,12 @@ cmd_clean() {
     local path branch reason
     IFS='|' read -r path branch reason <<< "$entry"
 
-    # Force remove if submodules exist (git refuses to remove worktrees with submodules)
-    local remove_opts=()
+    # Remove worktree (force if submodules exist)
     if [ -f "$path/.gitmodules" ]; then
-      remove_opts+=(--force)
+      git worktree remove --force "$path"
+    else
+      git worktree remove "$path"
     fi
-
-    git worktree remove "${remove_opts[@]}" "$path"
     echo "Deleted: $path ($reason)"
 
     if [ -n "$branch" ]; then
@@ -486,14 +485,12 @@ cmd_delete() {
     fi
   fi
 
-  # Force remove if submodules exist (git refuses to remove worktrees with submodules)
-  local remove_opts=()
+  # Remove the worktree (force if submodules exist)
   if [ -f "$worktree_path/.gitmodules" ]; then
-    remove_opts+=(--force)
+    git worktree remove --force "$worktree_path"
+  else
+    git worktree remove "$worktree_path"
   fi
-
-  # Remove the worktree
-  git worktree remove "${remove_opts[@]}" "$worktree_path"
   echo "Worktree removed: $worktree_path"
 
   # Delete the branch if it exists
