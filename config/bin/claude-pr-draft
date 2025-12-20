@@ -192,8 +192,10 @@ WRAPPER_EOF
   # Mark as currently being reviewed
   touch "$lock_file"
 
-  # Use nohup to run in background without blocking
-  nohup wezterm start -- "$wrapper_script" "$filepath" > /dev/null 2>&1 &
+  # Use macOS open command to properly launch WezTerm as a GUI app
+  # -n: Open a new instance even if WezTerm is already running
+  # This ensures the window is focused and appears in app switchers (including AltTab)
+  open -n -a WezTerm --args start -- "$wrapper_script" "$filepath"
 }
 
 # Extract YAML frontmatter as raw YAML
