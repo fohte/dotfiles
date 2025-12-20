@@ -11,7 +11,7 @@ depends = [
 ]
 
 [tasks."refresh:pull"]
-description = "Pull latest dotfiles"
+description = "Pull latest dotfiles and update submodules"
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
@@ -25,6 +25,8 @@ else
   git pull
   git stash pop
 fi
+
+git submodule update --init --recursive
 '''
 
 [tasks."refresh:deploy"]
