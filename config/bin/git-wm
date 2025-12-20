@@ -386,6 +386,11 @@ cmd_clean() {
     local path branch reason
     IFS='|' read -r path branch reason <<< "$entry"
 
+    # Deinit submodules if any exist (required before removing worktree)
+    if [ -f "$path/.gitmodules" ]; then
+      git -C "$path" submodule deinit --all -f
+    fi
+
     git worktree remove "$path"
     echo "Deleted: $path ($reason)"
 
@@ -478,6 +483,11 @@ cmd_delete() {
         fi
       fi
     fi
+  fi
+
+  # Deinit submodules if any exist (required before removing worktree)
+  if [ -f "$worktree_path/.gitmodules" ]; then
+    git -C "$worktree_path" submodule deinit --all -f
   fi
 
   # Remove the worktree
