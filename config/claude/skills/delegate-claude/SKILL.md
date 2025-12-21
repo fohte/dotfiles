@@ -1,3 +1,8 @@
+---
+name: delegate-claude
+description: Use this skill to delegate tasks to another Claude Code instance in a separate worktree. Use when you want to offload work to run in parallel without blocking the current session.
+---
+
 # Delegate tasks to another Claude Code instance
 
 Use `git wm new --prompt` to delegate processing to another Claude Code instance in a separate worktree.
