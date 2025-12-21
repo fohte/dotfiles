@@ -30,6 +30,7 @@
   - PR レビューコメントの確認・対応時: `check-pr-review` Skill を使用すること
   - 別の Claude Code インスタンスにタスクを委任する時: `delegate-claude` Skill を使用すること
   - Renovate 設定のデバッグ・検証時: `debug-renovate` Skill を使用すること
+  - JavaScript/TypeScript プロジェクトでパッケージマネージャー操作時: `ni` Skill を使用すること (`npm`, `yarn`, `pnpm`, `bun` を直接使用しない)
 - GitHub アクセス: すべての GitHub 操作には `gh` コマンドを使用すること（`gh api` サブコマンドは避けること）。これには GitHub URL の処理も含まれる。他のリポジトリにアクセスする際は `-R` オプションを使用すること（目的: `gh` コマンドは安全な自動実行のため事前承認済み）
 - ファイル削除: 追跡されているファイルを削除する際は、削除を適切にステージングするため `rm` ではなく `git rm` を使用すること
 - 一時ファイル: 一時ファイルには `.z/` ディレクトリを使用すること（git で無視される）
