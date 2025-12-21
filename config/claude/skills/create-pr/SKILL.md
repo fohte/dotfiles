@@ -27,7 +27,7 @@ echo "## Why
 
 - **簡潔に**: 50 文字以内で変更内容を要約
 - **現在形の命令形**: 「Add ...」「Fix ...」「Update ...」など
-- **日本語で生成**: body と同様に日本語で書く（public repo の場合、翻訳はユーザーが `steps.translate: true` にした後に行う）
+- **日本語で生成**: body と同様に日本語で書く（public repo の場合、翻訳はユーザーが `steps.ready-for-translation: true` にした後に行う）
 
 #### release-please を使用しているリポジトリの場合
 
@@ -94,13 +94,13 @@ steps:
 ---
 title: "PRタイトル"
 steps:
-  translate: false
+  ready-for-translation: false
   submit: false
 ---
 ```
 
 - `title`: PR のタイトル（submit 時に使用される）
-- `steps.translate`: (public repo のみ) true にすると翻訳のトリガーになる
+- `steps.ready-for-translation`: (public repo のみ) ドラフト承認フラグ。true になったら翻訳を実行する。public repo では翻訳は**必須**であり、submit 時に日本語が含まれているとエラーになる
 - `steps.submit`: true にするとエディタ終了時にファイルのハッシュが保存される。submit 時にハッシュが一致しないと失敗する（改ざん防止）
 
 ### 注意事項
@@ -122,20 +122,18 @@ claude-pr-draft review <filepath>
 
 ## 3. ユーザーの指示に応じた対応
 
-ユーザーからの指示があったら、draft ファイルを読み込んで状態を確認し、以下のように対応する:
+ユーザーからの指示があったら、draft ファイルを読み込んで状態を確認し、以下のように対応する。
+
+**重要:** public repo では翻訳は**必須**である。`steps.ready-for-translation` は「翻訳するかしないか」の選択ではなく、「ドラフトの内容が承認され、翻訳の準備ができたか」を示すフラグ。
 
 ### 修正指示の場合（「fix」「修正」など）
 
 内容の修正のみを行う。**翻訳は行わない。**
 修正後は再度 `claude-pr-draft review <filepath>` を実行し、次の指示を待つ。
 
-### 翻訳トリガー（`steps.translate: true` かつ日本語含む）
+### ドラフト承認後の翻訳（`steps.ready-for-translation: true` かつ日本語含む）
 
-`steps.translate` キーが存在し、かつ:
-- `steps.translate: true` である
-- title または body に日本語が含まれている
-
-上記の条件を満たす場合のみ翻訳を実行する:
+ユーザーがドラフトの内容を承認し、`steps.ready-for-translation: true` に変更した場合:
 1. title と body を英語に翻訳する
 2. `steps.submit: false` に変更する（翻訳によりハッシュが無効になるため）
 3. ファイルを上書き保存する
@@ -144,7 +142,7 @@ claude-pr-draft review <filepath>
 
 **注意:** すでに英語に翻訳済み（日本語が含まれていない）の場合は、再翻訳しない。
 
-### Private repo の場合（`steps.translate` キーが存在しない）
+### Private repo の場合（`steps.ready-for-translation` キーが存在しない）
 
 翻訳は不要。ユーザーが `steps.submit: true` にしたら submit に進む。
 

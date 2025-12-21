@@ -42,18 +42,18 @@ Draft File Format:
   ---
   title: "PR title here"
   steps:
-    translate: false
+    ready-for-translation: false
     submit: false
   ---
 
   PR body content here...
 
   Frontmatter fields:
-    title             - PR title (required for submit)
-    steps.translate   - (public repos only) Set to true to trigger translation
-                        Claude translates when this is true AND body contains Japanese
-    steps.submit      - Set to true to approve; file hash is saved on editor exit
-                        Any modification after approval invalidates the hash
+    title                       - PR title (required for submit)
+    steps.ready-for-translation - (public repos only) Set to true when draft is approved
+                                  Claude translates when this is true AND body contains Japanese
+    steps.submit                - Set to true to approve; file hash is saved on editor exit
+                                  Any modification after approval invalidates the hash
 
 Examples:
   # Create a new draft file with title and content from stdin
@@ -128,7 +128,7 @@ new_draft() {
 ---
 title: "${title}"
 steps:
-  translate: false
+  ready-for-translation: false
   submit: false
 ---
 
@@ -278,10 +278,10 @@ submit_pr() {
   fi
 
   # Parse frontmatter
-  local title has_translate_step
+  local title has_translation_step
   title=$(get_frontmatter_value "$filepath" "title")
-  # Check if steps.translate key exists (public repo)
-  has_translate_step=$(get_frontmatter "$filepath" | yq -r 'has("steps") and .steps | has("translate")')
+  # Check if steps.ready-for-translation key exists (public repo)
+  has_translation_step=$(get_frontmatter "$filepath" | yq -r 'has("steps") and .steps | has("ready-for-translation")')
 
   # Validate title is not empty
   if [[ -z "$title" ]]; then
@@ -289,8 +289,8 @@ submit_pr() {
     exit 1
   fi
 
-  # Check for Japanese characters if steps.translate exists (public repo)
-  if [[ "$has_translate_step" == "true" ]]; then
+  # Check for Japanese characters if steps.ready-for-translation exists (public repo)
+  if [[ "$has_translation_step" == "true" ]]; then
     local body
     body=$(get_body_content "$filepath")
 
