@@ -30,25 +30,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 #### コミットメッセージフォーマット
 
-基本フォーマット:
-```
-<scope>: <description>
-```
+**重要:** コミット時は `/commit` skill を使用すること。詳細なフォーマットと例は skill を参照。
 
-**ルール:**
+基本ルール:
+- **必ず Why と What の両方を記述する** (一行だけの what コミットは禁止)
 - **スコープ**: 変更対象の設定ディレクトリを指定 (例: `zsh`, `nvim`, `tmux`, `bin`)
-  - 機能単位やスクリプト名で細分化可能 (例: `zsh/history`, `nvim/cmp`, `bin/tmux-session-fzf`)
-  - 複数スコープの場合は `, ` で区切る (例: `claude, bin`)
-- **説明**: 小文字で始まり、現在形の命令形を使用 (例: `add`, `fix`, `refactor`, `update`, `remove`)
-- **簡潔性**: 1 行で変更内容を明確に説明
-
-**例:**
-```
-zsh/history: refactor SQL query generation
-tmux: add visual distinction for inactive panes
-claude, bin: add claude-pr-draft command for PR body management
-git: set commit.verbose to true
-```
+- **Subject**: 問題を解決する場合は「何を直した」を書く (例: `fix EDITOR being set to "nvim not found"`)
 
 ## ツールバージョン管理
 
