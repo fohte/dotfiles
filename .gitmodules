@@ -1,6 +1,3 @@
 [submodule "config/tmux/plugins/tmux-better-mouse-mode"]
 	path = config/tmux/plugins/tmux-better-mouse-mode
 	url = https://github.com/nhdaly/tmux-better-mouse-mode
-[submodule "config/tmux/plugins/tmux-copycat"]
-	path = config/tmux/plugins/tmux-copycat
-	url = https://github.com/tmux-plugins/tmux-copycat
