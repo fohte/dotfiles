@@ -1,3 +1,8 @@
+---
+name: debug-renovate
+description: Use renovate-dryrun to test Renovate configuration locally. Use this skill when debugging or validating renovate.json5 changes.
+---
+
 # Debug Renovate Configuration
 
 Test Renovate configuration changes locally with the `renovate-dryrun` command. This wrapper script runs Renovate in dry-run mode against the current repository and displays a formatted summary of proposed updates.
