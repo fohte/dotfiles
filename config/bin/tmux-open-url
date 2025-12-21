@@ -1,0 +1,40 @@
+#!/bin/bash
+# Open URLs from tmux pane using display-menu
+# Solves: line-wrap issues and trailing parenthesis in URLs
+
+set -euo pipefail
+
+# Capture pane content (includes scrollback, preserves original line breaks)
+pane_content=$(tmux capture-pane -p -S -1000)
+
+# Extract URLs, excluding trailing parentheses/brackets
+# Pattern: match URL characters but exclude ) ] > from the character class entirely
+urls=$(echo "$pane_content" | grep -oE 'https?://[^][:space:])>]+' | awk '!seen[$0]++')
+
+if [[ -z "$urls" ]]; then
+  tmux display-message "No URLs found"
+  exit 0
+fi
+
+url_count=$(echo "$urls" | wc -l | tr -d ' ')
+
+if [[ "$url_count" -eq 1 ]]; then
+  # Single URL: open directly
+  open "$urls"
+  exit 0
+fi
+
+# Multiple URLs: build display-menu arguments
+menu_args=()
+index=1
+while IFS= read -r url; do
+  # Truncate long URLs for display
+  display_url="$url"
+  if [[ ${#display_url} -gt 60 ]]; then
+    display_url="${display_url:0:57}..."
+  fi
+  menu_args+=("$index: $display_url" "$index" "run-shell 'open \"$url\"'")
+  ((index++))
+done <<< "$urls"
+
+tmux display-menu -T "Open URL" "${menu_args[@]}"
