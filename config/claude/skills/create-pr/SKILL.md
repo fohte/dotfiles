@@ -27,7 +27,7 @@ echo "## Why
 
 - **簡潔に**: 50 文字以内で変更内容を要約
 - **現在形の命令形**: 「Add ...」「Fix ...」「Update ...」など
-- **日本語で生成**: body と同様に日本語で書く（翻訳はステップ 3 で行う）
+- **日本語で生成**: body と同様に日本語で書く（public repo の場合、翻訳はユーザーが `steps.translate: true` にした後に行う）
 
 #### release-please を使用しているリポジトリの場合
 
@@ -80,17 +80,28 @@ echo 'use `gh` command'
 
 作成されるファイルには以下の YAML frontmatter が含まれる:
 
+**Private repo の場合:**
 ```yaml
 ---
-title: "PRタイトル"  # --title オプションで指定した値
-english: true  # public repo なら true、private repo なら false
-approve: false
+title: "PRタイトル"
+steps:
+  submit: false
+---
+```
+
+**Public repo の場合:**
+```yaml
+---
+title: "PRタイトル"
+steps:
+  translate: false
+  submit: false
 ---
 ```
 
 - `title`: PR のタイトル（submit 時に使用される）
-- `english`: true の場合、title と body に日本語が含まれていると submit が失敗する
-- `approve`: true にするとエディタ終了時にファイルのハッシュが保存される。submit 時にハッシュが一致しないと失敗する（改ざん防止）
+- `steps.translate`: (public repo のみ) true にすると翻訳のトリガーになる
+- `steps.submit`: true にするとエディタ終了時にファイルのハッシュが保存される。submit 時にハッシュが一致しないと失敗する（改ざん防止）
 
 ### 注意事項
 
@@ -109,18 +120,33 @@ claude-pr-draft review <filepath>
 
 **重要:** このコマンドは非同期で実行されるため、コマンドが即座に完了してもユーザーはまだ編集中である。ユーザーがレビューを完了して明示的に指示するまで、次のステップには進まないこと。
 
-## 3. draft ファイルを翻訳（english: true の場合のみ）
+## 3. ユーザーの指示に応じた対応
 
-ユーザーがレビューを完了したら、draft ファイルを読み込んで frontmatter の `english` フィールドを確認する。
+ユーザーからの指示があったら、draft ファイルを読み込んで状態を確認し、以下のように対応する:
 
-`english: false` の場合はこのステップをスキップして、ステップ 4 に進む。
+### 修正指示の場合（「fix」「修正」など）
 
-`english: true` の場合:
+内容の修正のみを行う。**翻訳は行わない。**
+修正後は再度 `claude-pr-draft review <filepath>` を実行し、次の指示を待つ。
+
+### 翻訳トリガー（`steps.translate: true` かつ日本語含む）
+
+`steps.translate` キーが存在し、かつ:
+- `steps.translate: true` である
+- title または body に日本語が含まれている
+
+上記の条件を満たす場合のみ翻訳を実行する:
 1. title と body を英語に翻訳する
-2. `approve: false` に変更する（翻訳によりハッシュが無効になるため）
+2. `steps.submit: false` に変更する（翻訳によりハッシュが無効になるため）
 3. ファイルを上書き保存する
 4. 再度 `claude-pr-draft review <filepath>` を実行して、ユーザーに翻訳内容を確認してもらう
 5. ユーザーがレビューを完了して明示的に指示するまで待機する
+
+**注意:** すでに英語に翻訳済み（日本語が含まれていない）の場合は、再翻訳しない。
+
+### Private repo の場合（`steps.translate` キーが存在しない）
+
+翻訳は不要。ユーザーが `steps.submit: true` にしたら submit に進む。
 
 ## 4. `claude-pr-draft submit` で PR を作成
 
@@ -132,8 +158,9 @@ frontmatter の `title` が PR タイトルとして、body 部分が PR 本文�
 
 **注意:** submit は以下の条件をすべて満たす場合のみ成功する:
 - `.lock` ファイルがない（レビュー完了）
-- `.approve` ファイルがある（approve: true でエディタを終了した）
+- `.approve` ファイルがある（`steps.submit: true` でエディタを終了した）
 - ファイルのハッシュが `.approve` と一致する（承認後に改ざんされていない）
+- public repo の場合、title と body に日本語が含まれていない
 
 ## 5. CI 実行を監視
 

@@ -31,19 +31,29 @@ Commands:
 Draft File Format:
   The draft file uses YAML frontmatter to control PR creation:
 
+  # For private repos:
   ---
   title: "PR title here"
-  english: true
-  approve: false
+  steps:
+    submit: false
+  ---
+
+  # For public repos:
+  ---
+  title: "PR title here"
+  steps:
+    translate: false
+    submit: false
   ---
 
   PR body content here...
 
   Frontmatter fields:
-    title    - PR title (required for submit)
-    english  - If true, submit fails when title or body contains Japanese
-    approve  - Set to true to approve; file hash is saved on editor exit
-               Any modification after approval invalidates the hash
+    title             - PR title (required for submit)
+    steps.translate   - (public repos only) Set to true to trigger translation
+                        Claude translates when this is true AND body contains Japanese
+    steps.submit      - Set to true to approve; file hash is saved on editor exit
+                        Any modification after approval invalidates the hash
 
 Examples:
   # Create a new draft file with title and content from stdin
@@ -112,21 +122,27 @@ new_draft() {
   local draft_file
   draft_file=$(mktemp /tmp/pr-body-draft.XXXXXX.md)
 
-  # Determine english default based on repo visibility
-  local english_default="false"
+  # Write YAML frontmatter template based on repo visibility
   if is_public_repo; then
-    english_default="true"
-  fi
-
-  # Write YAML frontmatter template
-  cat > "$draft_file" << FRONTMATTER
+    cat > "$draft_file" << FRONTMATTER
 ---
 title: "${title}"
-english: ${english_default}
-approve: false
+steps:
+  translate: false
+  submit: false
 ---
 
 FRONTMATTER
+  else
+    cat > "$draft_file" << FRONTMATTER
+---
+title: "${title}"
+steps:
+  submit: false
+---
+
+FRONTMATTER
+  fi
 
   # If stdin is available, append content from stdin
   if [ ! -t 0 ]; then
@@ -171,17 +187,17 @@ approve_file="${filepath}.approve"
 
 nvim "$filepath"
 
-# Check approve value in frontmatter
-approve=$(sed -n '2,/^---$/p' "$filepath" | sed '$d' | yq -r '.approve // "false"')
+# Check steps.submit value in frontmatter
+submit=$(sed -n '2,/^---$/p' "$filepath" | sed '$d' | yq -r '.steps.submit // "false"')
 
-if [[ "$approve" == "true" ]]; then
+if [[ "$submit" == "true" ]]; then
   # Save hash of file content for verification
   shasum -a 256 "$filepath" | cut -d' ' -f1 > "$approve_file"
   echo "Approved. Hash saved."
 else
   # Remove approve file if exists (rejected)
   rm -f "$approve_file"
-  echo "Rejected or not approved."
+  echo "Not ready for submit."
 fi
 
 # Remove lock file (Neovim is closed)
@@ -247,7 +263,7 @@ submit_pr() {
 
   # Check if approve file exists (rejected if not)
   if [[ ! -f "$approve_file" ]]; then
-    echo "Error: PR was not approved. Please run 'review' and set 'approve: true'." >&2
+    echo "Error: PR was not approved. Please run 'review' and set 'steps.submit: true'." >&2
     exit 1
   fi
 
@@ -262,9 +278,10 @@ submit_pr() {
   fi
 
   # Parse frontmatter
-  local title english
+  local title has_translate_step
   title=$(get_frontmatter_value "$filepath" "title")
-  english=$(get_frontmatter_value "$filepath" "english")
+  # Check if steps.translate key exists (public repo)
+  has_translate_step=$(get_frontmatter "$filepath" | yq -r 'has("steps") and .steps | has("translate")')
 
   # Validate title is not empty
   if [[ -z "$title" ]]; then
@@ -272,20 +289,20 @@ submit_pr() {
     exit 1
   fi
 
-  # Check for Japanese characters if english: true
-  if [[ "$english" == "true" ]]; then
+  # Check for Japanese characters if steps.translate exists (public repo)
+  if [[ "$has_translate_step" == "true" ]]; then
     local body
     body=$(get_body_content "$filepath")
 
     if contains_japanese "$title"; then
-      echo "Error: Title contains Japanese characters but 'english: true' is set." >&2
-      echo "Please translate the title to English or set 'english: false'." >&2
+      echo "Error: Title contains Japanese characters but this is a public repo." >&2
+      echo "Please translate the title to English." >&2
       exit 1
     fi
 
     if contains_japanese "$body"; then
-      echo "Error: Body contains Japanese characters but 'english: true' is set." >&2
-      echo "Please translate the body to English or set 'english: false'." >&2
+      echo "Error: Body contains Japanese characters but this is a public repo." >&2
+      echo "Please translate the body to English." >&2
       exit 1
     fi
   fi
