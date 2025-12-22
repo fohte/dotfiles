@@ -42,7 +42,8 @@ Shows all reviews and threads with full details (legacy behavior).
 ## Workflow
 
 1. Run without options to get summary
-2. Identify reviews that need attention
-3. Use `--review N` to see details for each review
-4. Make necessary code changes
-5. Repeat for remaining reviews
+2. **Automatically** run `--review N` for each review that has unresolved comments (do NOT ask the user if they want to see details)
+3. Make necessary code changes based on the feedback
+4. Re-run to verify all comments have been addressed
+
+**Important**: After getting the summary, immediately proceed to fetch details for each review. Never ask the user "詳細を確認しますか?" or similar confirmation questions.
