@@ -76,6 +76,7 @@
       "Skill(check-pr-review)",
       "Skill(commit)",
       "Skill(create-pr)",
+      "Skill(delegate-claude)",
       "Skill(github-issue)",
       "Skill(ni)",
       "WebFetch",
