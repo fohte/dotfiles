@@ -12,6 +12,7 @@ description: Use this skill when committing changes. This skill enforces writing
 - **`git commit --amend` は禁止**: 履歴を直線的に保つため
 - **`git reset --soft|hard` は禁止**: 変更の巻き戻しは行わない
 - **一行だけの what コミットは禁止**: 必ず Why を記述する
+- **会話中に作業していない変更をコミットすることは禁止**: `git status` で表示された変更であっても、その会話セッション中に自分が行った変更のみをコミットすること。関係のない変更が存在する場合は無視する
 
 ## コミットの粒度
 
