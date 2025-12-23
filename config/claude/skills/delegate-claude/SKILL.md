@@ -33,6 +33,7 @@ This will:
 
 ## Important considerations for delegation
 
+- **Branch naming**: Do NOT include `/` in branch names. Use hyphens instead (e.g., `fix-login-bug` not `fix/login-bug`). The branch will be prefixed with `fohte/`, so `fix/...` would create `fohte/fix/...` which is redundant.
 - Write specific, self-contained instructions in the prompt
 - Include all necessary context so that a Claude Code instance with no prior knowledge can understand the task
 - The new instance will work in an isolated worktree, so changes won't conflict with your current work
