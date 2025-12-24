@@ -6,7 +6,7 @@ depends = [
   "refresh:update-skk",
   "refresh:nvim-restore",
   "refresh:mise-install",
-  "refresh:pre-commit",
+  "refresh:lefthook",
   "refresh:brew-upgrade",
 ]
 
@@ -48,21 +48,29 @@ description = "Install mise tools"
 depends = ["refresh:deploy"]
 run = "mise install"
 
-[tasks."refresh:pre-commit"]
-description = "Run pre-commit hooks"
+[tasks."refresh:lefthook"]
+description = "Run lefthook hooks"
 depends = ["refresh:deploy"]
-run = "pre-commit run"
+run = "lefthook run pre-commit"
 
 [tasks."refresh:brew-upgrade"]
 description = "Upgrade Homebrew packages"
 run = "brew upgrade"
 
 [tools]
-# Required for pre-commit
-"npm:bun" = "1.2.22"
-pre-commit = "4.2.0"
+# Required for lefthook
+lefthook = "2.0.12"
+bun = "1.3.5"
+"npm:prettier" = "3.7.4"
+actionlint = "1.7.9"
+# lefthook hooks
+"cargo:basefmt" = "0.1.0"
+# Linters
 shellcheck = "0.11.0"
 shfmt = "3.12.0"
 stylua = "2.1.0"
 go-jsonnet = "0.21.0"
 jq = "1.8.1"
+
+[settings]
+npm.bun = true

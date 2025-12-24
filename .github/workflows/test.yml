@@ -20,21 +20,38 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+          fetch-depth: 2
+
+      - name: Check if previous commit is auto-format by bot
+        id: check-prev
+        run: |
+          prev_commit_message=$(git log -1 --skip=1 --format=%s)
+          prev_commit_author=$(git log -1 --skip=1 --format=%an)
+          echo "Previous commit message: $prev_commit_message"
+          echo "Previous commit author: $prev_commit_author"
+
+          # Skip auto-format commit if previous commit is auto-format by a bot
+          if [ "$prev_commit_message" = "style: auto-format" ] && [[ "$prev_commit_author" == *"[bot]"* ]]; then
+            echo "skip_commit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip_commit=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: jdx/mise-action@v2
 
-      - name: Run pre-commit hooks
-        id: pre-commit
+      - name: Run lefthook
+        id: lefthook
         continue-on-error: true
-        run: mise x pre-commit -- pre-commit run --all-files
+        run: lefthook run pre-commit --all-files
 
       - name: Commit formatted files
+        if: ${{ !cancelled() && steps.check-prev.outputs.skip_commit != 'true' }}
         uses: suzuki-shunsuke/commit-action@v0.0.14
         with:
           commit_message: 'style: auto-format'
           workflow: deny
           github_token: ${{ steps.app-token.outputs.token }}
 
-      - name: Fail if pre-commit failed
-        if: steps.pre-commit.conclusion == 'failure'
+      - name: Fail if lefthook failed
+        if: steps.lefthook.outcome == 'failure'
         run: exit 1
