@@ -156,7 +156,8 @@ fetch_comments_data() {
   owner=$(echo "$repo" | cut -d/ -f1)
   repo_name=$(echo "$repo" | cut -d/ -f2)
 
-  # shellcheck disable=SC2016 -- $owner, $repo, $number are GraphQL variables, not shell variables
+  # $owner, $repo, $number are GraphQL variables, not shell variables
+  # shellcheck disable=SC2016
   gh api graphql -f query='
     query($owner: String!, $repo: String!, $number: Int!) {
       repository(owner: $owner, name: $repo) {
