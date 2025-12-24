@@ -21,6 +21,7 @@ renovate-dryrun --token $GH_TOKEN --raw > .z/renovate-debug.log
 ```
 
 The output displays proposed updates in this format:
+
 ```
 [renovate/aws-5.x] chore(deps): update terraform aws to v5.68.0 (automerge: true)
   depName: aws

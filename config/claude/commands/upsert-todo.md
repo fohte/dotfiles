@@ -19,15 +19,17 @@ Todo lists must store at `.z/todo.md`. `~/.z/` is gitignored, so no commits are 
 # Todo List
 
 ## Main Feature
+
 - [ ] Research existing implementation patterns
 - [ ] Design the architecture
-  - [ ] Define data models
-  - [ ] Plan API endpoints
+    - [ ] Define data models
+    - [ ] Plan API endpoints
 - [ ] Implement core functionality
 - [ ] Add tests
 - [ ] Update documentation
 
 ## Bug Fixes
+
 - [ ] Fix validation error in user input
 - [ ] Handle edge case for empty responses
 ```
