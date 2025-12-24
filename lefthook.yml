@@ -3,3 +3,15 @@ remotes:
     ref: v0.1.6 # renovate: datasource=github-tags depName=fohte/lefthook-config
     configs:
       - base.yml
+
+pre-commit:
+  commands:
+    # Exclude zsh function files without .zsh extension
+    # shellcheck/shfmt don't support zsh, and these files are detected
+    # by shebang (#!/usr/bin/env zsh) rather than file extension
+    shellcheck:
+      exclude:
+        - 'config/zsh/rc/functions/*'
+    shfmt:
+      exclude:
+        - 'config/zsh/rc/functions/*'
