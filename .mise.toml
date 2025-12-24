@@ -68,7 +68,6 @@ bun = "1.3.5"
 shellcheck = "0.11.0"
 shfmt = "3.12.0"
 
-# Repository-specific
 stylua = "2.1.0"
 go-jsonnet = "0.21.0"
 jq = "1.8.1"
