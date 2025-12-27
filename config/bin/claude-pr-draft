@@ -97,6 +97,16 @@ is_public_repo() {
   [[ "$visibility" == "false" ]]
 }
 
+# Get current repository name (owner/repo format)
+get_repo_name() {
+  gh repo view --json nameWithOwner -q '.nameWithOwner' 2>/dev/null || echo "unknown"
+}
+
+# Get current branch name
+get_branch_name() {
+  git branch --show-current 2>/dev/null || echo "unknown"
+}
+
 # Create a new temporary draft file
 new_draft() {
   local title=""
@@ -192,10 +202,13 @@ set -euo pipefail
 filepath="$1"
 original_tmux_target="$2"
 original_tmux_client="$3"
+window_title="$4"
 lock_file="${filepath}.lock"
 approve_file="${filepath}.approve"
 
-nvim "$filepath"
+# Set window title via Neovim's titlestring option (no config file changes needed)
+# Use let &titlestring to properly handle special characters
+nvim -c "let &titlestring = '$window_title'" "$filepath"
 
 # Check steps.submit value in frontmatter
 submit=$(sed -n '2,/^---$/p' "$filepath" | sed '$d' | yq -r '.steps.submit // "false"')
@@ -229,10 +242,20 @@ WRAPPER_EOF
   # Mark as currently being reviewed
   touch "$lock_file"
 
+  # Get repo and branch for window title
+  local repo branch window_title
+  repo=$(get_repo_name)
+  branch=$(get_branch_name)
+  window_title="PR: ${repo:-unknown} @ ${branch:-unknown}"
+
   # Use macOS open command to properly launch WezTerm as a GUI app
   # -n: Open a new instance even if WezTerm is already running
   # This ensures the window is focused and appears in app switchers (including AltTab)
-  open -n -a WezTerm --args start -- "$wrapper_script" "$filepath" "$original_tmux_target" "$original_tmux_client"
+  # --config: Show title bar for this window only
+  # Window title is set via OSC escape sequence in the wrapper script
+  open -n -a WezTerm --args \
+    --config 'window_decorations="TITLE | RESIZE"' \
+    start -- "$wrapper_script" "$filepath" "$original_tmux_target" "$original_tmux_client" "$window_title"
 }
 
 # Extract YAML frontmatter as raw YAML
