@@ -27,7 +27,7 @@ Directory Structure:
   ├── issue.md          # Issue body
   ├── metadata.json     # Title, labels, assignees, etc.
   └── comments/
-      ├── 001_<id>.md   # Comment files (sequence_ID.md)
+      ├── 001_comment_<id>.md   # Comment files (sequence_comment_databaseId.md)
       └── ...
 EOF
 }
@@ -230,7 +230,7 @@ save_comments() {
     created_at=$(echo "$comment" | jq -r '.createdAt')
     body=$(echo "$comment" | jq -r '.body')
 
-    local filename="${index}_${id}.md"
+    local filename="${index}_comment_${database_id}.md"
 
     cat > "${comments_dir}/${filename}" << EOF
 <!-- author: ${author} -->
