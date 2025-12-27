@@ -1,4 +1,7 @@
 #!/usr/bin/env zsh
+# shellcheck disable=all
+# ^ shellcheck doesn't support zsh. This file is a zsh autoload function
+# without .zsh extension (required for autoload to work).
 
 # usage: <json-stdin> | jqplay [jq-options]
 

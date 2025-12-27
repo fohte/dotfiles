@@ -47,3 +47,8 @@ indent_style = tab
 
 [*.diff]
 trim_trailing_whitespace = false
+
+# shfmt: ignore zsh files (shfmt doesn't support zsh)
+# Requires --apply-ignore flag in shfmt command
+[[zsh]]
+ignore = true
