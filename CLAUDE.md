@@ -45,7 +45,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 このリポジトリは mise を使用してツールバージョンを管理しています:
 
 - **グローバル設定**: `config/mise/config.toml` (Node、Python、Ruby、CLI ツールなど)
-- **リポジトリローカル設定**: `mise.toml` (pre-commit、shellcheck、shfmt など)
+- **リポジトリローカル設定**: `mise.toml` (lefthook、shellcheck、shfmt など)
 
 ## 設定の構造
 
