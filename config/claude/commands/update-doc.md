@@ -13,9 +13,11 @@ Note that updates are not necessary if no changes are deemed needed.
 # Documentation locations and purposes
 
 ## CLAUDE.md (Project root)
+
 Project-specific instructions for Claude Code following [Anthropic's best practices](https://www.anthropic.com/engineering/claude-code-best-practices).
 
 **Include:**
+
 - Bash commands specific to this project
 - Core file locations and purposes
 - Code style and naming conventions
@@ -25,6 +27,7 @@ Project-specific instructions for Claude Code following [Anthropic's best practi
 - Instructions to read directory READMEs
 
 **Avoid:**
+
 - Verbose explanations or tutorials
 - Generic best practices
 - Information already in README.md
@@ -32,13 +35,15 @@ Project-specific instructions for Claude Code following [Anthropic's best practi
 - Implementation details that don't affect daily development
 
 **Example:**
+
 ```markdown
 # Bash commands
 
 ## Build
+
 \`\`\`bash
-npm run build  # Build the project
-npm test       # Run tests
+npm run build # Build the project
+npm test # Run tests
 \`\`\`
 
 # Core files
@@ -59,13 +64,16 @@ npm test       # Run tests
 # Warnings
 
 ## Common build error
+
 If build fails with X error, check Y first.
 ```
 
 ## Root README.md
+
 Project overview, setup instructions, and general workflows.
 
 **Include:**
+
 - Project description and purpose
 - Directory structure overview
 - Setup and installation steps

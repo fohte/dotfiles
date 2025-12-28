@@ -31,12 +31,12 @@ description: Use this skill when committing changes. This skill enforces writing
 ### Subject line (1 行目)
 
 - **スコープ**: 変更対象の設定ディレクトリを指定 (例: `zsh`, `nvim`, `tmux`, `bin`)
-  - 機能単位やスクリプト名で細分化可能 (例: `zsh/history`, `nvim/cmp`, `bin/tmux-session-fzf`)
-  - 複数スコープの場合は `, ` で区切る (例: `claude, bin`)
+    - 機能単位やスクリプト名で細分化可能 (例: `zsh/history`, `nvim/cmp`, `bin/tmux-session-fzf`)
+    - 複数スコープの場合は `, ` で区切る (例: `claude, bin`)
 - **説明**: 小文字で始まり、現在形の命令形を使用 (例: `add`, `fix`, `refactor`, `update`, `remove`)
 - **問題を解決する場合**: 「何をした」ではなく「何を直した」を書く
-  - Good: `fix EDITOR being set to "nvim not found"`
-  - Bad: `simplify EDITOR to use nvim directly`
+    - Good: `fix EDITOR being set to "nvim not found"`
+    - Bad: `simplify EDITOR to use nvim directly`
 
 ### Body (2 行目以降)
 
@@ -75,16 +75,19 @@ interrupting the writing flow.
 ```
 zsh: simplify EDITOR to use nvim directly
 ```
+
 - 問題: Why がない。なぜ simplify が必要だったのか不明
 
 ```
 zsh: update vim.zsh
 ```
+
 - 問題: 何をしたのか分からない。body もない
 
 ```
 fix bug
 ```
+
 - 問題: scope がない。何のバグか分からない。body もない
 
 ## コミット手順
@@ -118,6 +121,7 @@ EOF
 ## セルフチェック
 
 コミット前に以下を確認:
+
 1. Why が書かれているか?
 2. Subject は「何を直した」になっているか? (問題解決の場合)
 3. 1 つの論理的なまとまりになっているか?

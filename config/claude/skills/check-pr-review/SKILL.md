@@ -26,12 +26,14 @@ gh-check-pr-review <pr-number> [-R <owner/repo>] [--all] [--review N] [--full]
 ### Default (Summary)
 
 Shows compact overview of all reviews with thread counts:
+
 - Review author, state, unresolved thread count
 - Thread locations (file:line) with first line of comment
 
 ### --review N
 
 Shows full details for a specific review:
+
 - Review body
 - All associated threads with diff context and full comments
 

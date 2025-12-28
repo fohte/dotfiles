@@ -65,6 +65,7 @@ The deployment system uses the [`symlinks`](./symlinks) bash script to define ho
 - Handle platform-specific paths with `is_macos`, `is_linux`, `is_wsl` functions
 
 For example:
+
 ```bash
 if match_tag nvim; then
   sym config/nvim ~/.config/nvim
@@ -76,18 +77,18 @@ fi
 The [`scripts/deploy`](./scripts/deploy) script reads the [`symlinks`](./symlinks) file and supports various options to customize the deployment process:
 
 - Deploy only specified configs:
-  ```bash
-  scripts/deploy -t nvim,zsh
-  ```
+    ```bash
+    scripts/deploy -t nvim,zsh
+    ```
 - Force deployment:
-  ```bash
-  scripts/deploy -f
-  ```
+    ```bash
+    scripts/deploy -f
+    ```
 - Dry run:
-  ```bash
-  scripts/deploy -f -t nvim -n
-  ```
+    ```bash
+    scripts/deploy -f -t nvim -n
+    ```
 - Enable debug mode:
-  ```bash
-  scripts/deploy --debug
-  ```
+    ```bash
+    scripts/deploy --debug
+    ```
