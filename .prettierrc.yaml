@@ -2,3 +2,8 @@ trailingComma: es5
 semi: false
 singleQuote: true
 proseWrap: preserve
+
+overrides:
+  - files: '*.bttpreset'
+    options:
+      parser: json
