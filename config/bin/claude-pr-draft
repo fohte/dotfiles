@@ -359,8 +359,9 @@ submit_pr() {
   local pr_url
   pr_url=$(gh pr create --title "$title" --body-file "$body_file" "$@")
 
-  # Clean up temporary body file
+  # Clean up temporary files
   rm -f "$body_file"
+  rm -f "$filepath" "$lock_file" "$approve_file"
 
   echo "$pr_url"
 
