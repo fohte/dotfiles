@@ -46,9 +46,9 @@ Shows all reviews and threads with full details (legacy behavior).
 1. Run without options to get summary
 2. **Automatically** run `--review N` for each review that has unresolved comments (do NOT ask the user if they want to see details)
 3. **Evaluate each comment** before making changes:
-   - Consider whether the feedback should be addressed or not
-   - If disagreeing with a comment, explain the reasoning to the user instead of making changes
-   - Only proceed with code changes for feedback you agree with
+    - Consider whether the feedback should be addressed or not
+    - If disagreeing with a comment, explain the reasoning to the user instead of making changes
+    - Only proceed with code changes for feedback you agree with
 4. Make necessary code changes based on the feedback
 5. Re-run to verify all comments have been addressed
 
