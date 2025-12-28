@@ -13,6 +13,7 @@ description: Use this skill when committing changes. This skill enforces writing
 - **`git reset --soft|hard` は禁止**: 変更の巻き戻しは行わない
 - **一行だけの what コミットは禁止**: 必ず Why を記述する
 - **会話中に作業していない変更をコミットすることは禁止**: `git status` で表示された変更であっても、その会話セッション中に自分が行った変更のみをコミットすること。関係のない変更が存在する場合は無視する
+- **GitHub の Issue/PR 参照は禁止**: `Closes #123`、`Fixes #123`、`https://github.com/.../issues/123`、`https://github.com/.../pull/123` などの issue/PR 参照は一切記載しない。OSS の issue や PR にリンクされることを避けるため
 
 ## コミットの粒度
 
