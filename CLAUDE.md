@@ -33,6 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **重要:** コミット時は `/commit` skill を使用すること。詳細なフォーマットと例は skill を参照。
 
 基本ルール:
+
 - **必ず Why と What の両方を記述する** (一行だけの what コミットは禁止)
 - **スコープ**: 変更対象の設定ディレクトリを指定 (例: `zsh`, `nvim`, `tmux`, `bin`)
 - **Subject**: 問題を解決する場合は「何を直した」を書く (例: `fix EDITOR being set to "nvim not found"`)

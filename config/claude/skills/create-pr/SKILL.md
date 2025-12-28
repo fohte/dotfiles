@@ -36,23 +36,24 @@ echo "## Why
 - **フォーマット**: `<type>(<scope>): <description>`
 - **type の選択**:
 
-  **バージョンが上がる type（リリースに含まれる）:**
-  - `feat`: 新機能追加 → **minor** バージョンアップ (例: 1.2.0 → 1.3.0)
-  - `fix`: バグ修正 → **patch** バージョンアップ (例: 1.2.0 → 1.2.1)
+    **バージョンが上がる type（リリースに含まれる）:**
+    - `feat`: 新機能追加 → **minor** バージョンアップ (例: 1.2.0 → 1.3.0)
+    - `fix`: バグ修正 → **patch** バージョンアップ (例: 1.2.0 → 1.2.1)
 
-  **バージョンが上がらない type（リリースに含まれない）:**
-  - `docs`: ドキュメントのみの変更
-  - `style`: フォーマットなど（機能変更なし）
-  - `refactor`: リファクタリング（機能変更なし）
-  - `perf`: パフォーマンス改善
-  - `test`: テストの追加・修正
-  - `chore`: ビルドプロセスやツールの変更
+    **バージョンが上がらない type（リリースに含まれない）:**
+    - `docs`: ドキュメントのみの変更
+    - `style`: フォーマットなど（機能変更なし）
+    - `refactor`: リファクタリング（機能変更なし）
+    - `perf`: パフォーマンス改善
+    - `test`: テストの追加・修正
+    - `chore`: ビルドプロセスやツールの変更
 
-  **判断の指針:** PR を作成する際は、この変更がユーザーに影響を与えるかどうかを考慮し、バージョンを上げるべきかどうかを明示的に判断すること。内部的なリファクタリングでもユーザーに見える改善がある場合は `fix` や `feat` を検討する
+    **判断の指針:** PR を作成する際は、この変更がユーザーに影響を与えるかどうかを考慮し、バージョンを上げるべきかどうかを明示的に判断すること。内部的なリファクタリングでもユーザーに見える改善がある場合は `fix` や `feat` を検討する
+
 - **例**:
-  - `feat(auth): ログイン機能を追加`
-  - `fix(api): レスポンスのエラーハンドリングを修正`
-  - `docs(readme): インストール手順を更新`
+    - `feat(auth): ログイン機能を追加`
+    - `fix(api): レスポンスのエラーハンドリングを修正`
+    - `docs(readme): インストール手順を更新`
 
 #### release-please を使用していないリポジトリの場合
 
@@ -60,9 +61,9 @@ echo "## Why
 
 - **フォーマット**: `<scope>: <description>`
 - **例**:
-  - 機能追加: `<scope>: <機能名>を追加`
-  - バグ修正: `<scope>: <問題>を修正`
-  - リファクタリング: `<scope>: <対象>をリファクタリング`
+    - 機能追加: `<scope>: <機能名>を追加`
+    - バグ修正: `<scope>: <問題>を修正`
+    - リファクタリング: `<scope>: <対象>をリファクタリング`
 
 注意: Markdown のコードブロックにバッククォートを含める場合、シェルのクォートの種類によってエスケープが必要。
 
@@ -81,21 +82,23 @@ echo 'use `gh` command'
 作成されるファイルには以下の YAML frontmatter が含まれる:
 
 **Private repo の場合:**
+
 ```yaml
 ---
-title: "PRタイトル"
+title: 'PRタイトル'
 steps:
-  submit: false
+    submit: false
 ---
 ```
 
 **Public repo の場合:**
+
 ```yaml
 ---
-title: "PRタイトル"
+title: 'PRタイトル'
 steps:
-  ready-for-translation: false
-  submit: false
+    ready-for-translation: false
+    submit: false
 ---
 ```
 
@@ -133,6 +136,7 @@ claude-pr-draft review <filepath>
 ### ドラフト承認後の翻訳（`steps.ready-for-translation: true` かつ日本語含む）
 
 ユーザーがドラフトの内容を承認し、`steps.ready-for-translation: true` に変更した場合:
+
 1. title と body を英語に翻訳する
 2. `steps.submit: false` に変更する（翻訳によりハッシュが無効になるため）
 3. ファイルを上書き保存する
@@ -154,6 +158,7 @@ claude-pr-draft submit <filepath> [--base main]
 frontmatter の `title` が PR タイトルとして、body 部分が PR 本文として使用される。
 
 **注意:** submit は以下の条件をすべて満たす場合のみ成功する:
+
 - `.lock` ファイルがない（レビュー完了）
 - `.approve` ファイルがある（`steps.submit: true` でエディタを終了した）
 - ファイルのハッシュが `.approve` と一致する（承認後に改ざんされていない）

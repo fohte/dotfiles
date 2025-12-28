@@ -27,6 +27,7 @@ cd ~/ghq/github.com/fohte/other-repo && git wm new feature-x --prompt "Implement
 ```
 
 This will:
+
 1. Create a new git worktree with the specified branch
 2. Open a new tmux window with Neovim and Claude Code
 3. Automatically send the prompt to Claude Code

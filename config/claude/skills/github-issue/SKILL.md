@@ -10,6 +10,7 @@ Use `gh-issue-agent` to manage GitHub Issues as local files. This provides bette
 ## When to Use
 
 Use this skill when:
+
 - Viewing GitHub Issue content (body, comments, metadata)
 - Editing Issue body, title, or labels
 - Adding or editing comments on Issues
@@ -25,6 +26,7 @@ gh-issue-agent view <issue-number> [-R <owner/repo>]
 Use this when you only need to **read** the issue content. No local cache is created.
 
 **When to use `view` vs `pull`:**
+
 - `view`: Just reading/viewing the issue (no editing needed)
 - `pull`: When you plan to edit the issue body, metadata, or comments
 
@@ -35,6 +37,7 @@ gh-issue-agent pull <issue-number> [-R <owner/repo>]
 ```
 
 This saves the issue to `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`:
+
 - `issue.md` - Issue body (editable)
 - `metadata.json` - Title, labels, assignees (editable)
 - `comments/` - Comment files (only your own comments are editable)
