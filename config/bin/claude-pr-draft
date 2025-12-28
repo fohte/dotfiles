@@ -228,13 +228,8 @@ rm -f "$lock_file"
 
 # Switch back to original tmux session/window/pane
 if [[ -n "$original_tmux_target" && -n "$original_tmux_client" ]]; then
-  session_window="${original_tmux_target%.*}"
-  session_name="${session_window%:*}"
-
-  # Switch the original client to the target session, then select window/pane
-  tmux switch-client -c "$original_tmux_client" -t "$session_name" 2>/dev/null || true
-  tmux select-window -t "$session_window" 2>/dev/null || true
-  tmux select-pane -t "$original_tmux_target" 2>/dev/null || true
+  # Switch the original client to the target session:window.pane
+  tmux switch-client -c "$original_tmux_client" -t "$original_tmux_target" 2>/dev/null || true
 fi
 WRAPPER_EOF
   chmod +x "$wrapper_script"
