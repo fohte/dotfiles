@@ -179,8 +179,12 @@ review_draft() {
     exit 1
   fi
 
-  # Skip if Neovim is already open for this file
+  # Skip if Neovim is already open for this file.
+  # This prevents launching multiple editor windows when `review` is called
+  # multiple times for the same file (e.g., Claude retrying the command).
+  # The lock file is created before launching Neovim and removed when it exits.
   if [[ -f "$lock_file" ]]; then
+    echo "Skipped: Neovim is already open for this file (lock file exists: $lock_file)" >&2
     return 0
   fi
 
