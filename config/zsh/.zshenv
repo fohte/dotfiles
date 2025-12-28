@@ -87,10 +87,6 @@ export GPG_TTY=$(tty)
 
 export BAT_THEME=1337
 
-# pre-commit
-# ignore pre-commit error when no .pre-commit-config.yaml is found
-export PRE_COMMIT_ALLOW_NO_CONFIG=1
-
 import_env 'homebrew.zsh'
 
 import_env 'go.zsh'
