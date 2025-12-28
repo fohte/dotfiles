@@ -99,12 +99,12 @@ is_public_repo() {
 
 # Get current repository name (owner/repo format)
 get_repo_name() {
-  gh repo view --json nameWithOwner -q '.nameWithOwner' 2>/dev/null || echo "unknown"
+  gh repo view --json nameWithOwner -q '.nameWithOwner' 2> /dev/null || echo "unknown"
 }
 
 # Get current branch name
 get_branch_name() {
-  git branch --show-current 2>/dev/null || echo "unknown"
+  git branch --show-current 2> /dev/null || echo "unknown"
 }
 
 # Create a new temporary draft file
