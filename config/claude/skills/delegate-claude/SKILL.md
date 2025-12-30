@@ -1,90 +1,90 @@
 ---
 name: delegate-claude
-description: Use this skill to delegate tasks to another Claude Code instance in a separate worktree. Use when you want to offload work to run in parallel without blocking the current session.
+description: 別の worktree で別の Claude Code インスタンスにタスクを委任する。現在のセッションをブロックせずに並列で作業を進めたいときに使用する。
 ---
 
-# Delegate tasks to another Claude Code instance
+# 別の Claude Code インスタンスにタスクを委任する
 
-Use `git wm new --prompt` to delegate processing to another Claude Code instance in a separate worktree.
+`git wm new --prompt` を使って、別の worktree で別の Claude Code インスタンスに処理を委任する。
 
-## How to use
+## 使い方
 
 ```bash
 git wm new <branch-name> --prompt "<instructions>"
 ```
 
-- `branch-name`: Name of the branch to create for the new environment
-- `--prompt`: Instructions for the new Claude Code instance
+- `branch-name`: 新しい環境用に作成するブランチ名
+- `--prompt`: 新しい Claude Code インスタンスへの指示
 
-### Examples
-
-```bash
-# Current repository
-git wm new feature-login --prompt "Implement login functionality with email/password authentication"
-
-# Different repository
-cd ~/ghq/github.com/fohte/other-repo && git wm new feature-x --prompt "Implement feature X"
-```
-
-This will:
-
-1. Create a new git worktree with the specified branch
-2. Open a new tmux window with Neovim and Claude Code
-3. Automatically send the prompt to Claude Code
-
-## Important considerations for delegation
-
-- **Branch naming**: Do NOT include `/` in branch names. Use hyphens instead (e.g., `fix-login-bug` not `fix/login-bug`). The branch will be prefixed with `fohte/`, so `fix/...` would create `fohte/fix/...` which is redundant.
-- The new instance will work in an isolated worktree, so changes won't conflict with your current work
-
-## Prompt structure (REQUIRED)
-
-The delegated Claude Code instance has **no prior knowledge** of the current conversation. You MUST include sufficient context in the prompt using the following structure:
-
-```
-## Background
-[Why this task is needed. What problem are we solving? What is the motivation?]
-
-## Current situation
-[What is the current state? Any relevant decisions already made? Related files or code?]
-
-## Task
-[Specific instructions for what to implement/fix/investigate]
-
-## Expected outcome
-[What should be the result? How to verify success?]
-
-## Constraints (if any)
-[Any limitations, dependencies, or requirements to be aware of]
-```
-
-### Example: Good prompt
+### 例
 
 ```bash
-git wm new fix-auth-timeout --prompt "## Background
-Users are experiencing session timeouts after 5 minutes of inactivity, but the expected timeout is 30 minutes.
+# 現在のリポジトリ
+git wm new feature-login --prompt "メール/パスワード認証によるログイン機能を実装"
 
-## Current situation
-- Authentication is handled in src/auth/session.ts
-- Session config is in config/auth.json
-- We recently migrated from JWT to session-based auth
-
-## Task
-1. Investigate why sessions expire after 5 minutes
-2. Fix the timeout configuration
-3. Add a test to verify 30-minute timeout
-
-## Expected outcome
-Sessions should persist for 30 minutes of inactivity. Tests should pass.
-
-## Constraints
-- Do not change the session storage mechanism (Redis)
-- Maintain backward compatibility with existing sessions"
+# 別のリポジトリ
+cd ~/ghq/github.com/fohte/other-repo && git wm new feature-x --prompt "機能 X を実装"
 ```
 
-### Example: Bad prompt (insufficient context)
+実行すると:
+
+1. 指定したブランチで新しい git worktree を作成
+2. Neovim と Claude Code を含む新しい tmux ウィンドウを開く
+3. Claude Code にプロンプトを自動送信
+
+## 委任時の注意事項
+
+- **ブランチ名**: ブランチ名に `/` を含めないこと。代わりにハイフンを使う (例: `fix/login-bug` ではなく `fix-login-bug`)。ブランチには `fohte/` がプレフィックスとして付くため、`fix/...` だと `fohte/fix/...` になり冗長
+- 新しいインスタンスは独立した worktree で作業するため、現在の作業と競合しない
+
+## プロンプト構造 (必須)
+
+委任先の Claude Code インスタンスは**現在の会話の事前知識を持っていない**。以下の構造を使って十分なコンテキストを含めること:
+
+```
+## 背景
+[なぜこのタスクが必要か。何の問題を解決するのか。動機は何か]
+
+## 現状
+[現在の状態は? すでに決まっていることは? 関連ファイルやコードは?]
+
+## タスク
+[実装/修正/調査する具体的な指示]
+
+## 期待する結果
+[何が結果として得られるべきか。成功をどう確認するか]
+
+## 制約 (あれば)
+[注意すべき制限、依存関係、要件]
+```
+
+### 良い例
 
 ```bash
-# DON'T do this - the new instance won't know what "the bug" or "as discussed" means
-git wm new fix-bug --prompt "Fix the bug we discussed earlier"
+git wm new fix-auth-timeout --prompt "## 背景
+ユーザーが 5 分間操作しないとセッションがタイムアウトするが、期待値は 30 分。
+
+## 現状
+- 認証は src/auth/session.ts で処理している
+- セッション設定は config/auth.json にある
+- 最近 JWT からセッションベース認証に移行した
+
+## タスク
+1. なぜ 5 分でセッションが切れるか調査
+2. タイムアウト設定を修正
+3. 30 分タイムアウトを検証するテストを追加
+
+## 期待する結果
+30 分間操作がなくてもセッションが維持される。テストが通る。
+
+## 制約
+- セッションストレージの仕組み (Redis) は変更しない
+- 既存セッションとの後方互換性を維持"
+```
+
+### 悪い例 (コンテキスト不足)
+
+```bash
+# これはダメ - 新しいインスタンスは「そのバグ」や「さっき話した」が何か分からない
+git wm new fix-bug --prompt "さっき話したバグを直して"
 ```
