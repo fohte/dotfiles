@@ -115,13 +115,12 @@ get_branch_name() {
 
 # Get deterministic draft file path based on repo and branch
 get_draft_file_path() {
-  local repo branch safe_repo safe_branch
+  local repo branch safe_repo
   repo=$(get_repo_name)
   branch=$(get_branch_name)
-  # Replace / with _ for safe file path
+  # Replace / with _ for repo name only (branch keeps / for directory structure)
   safe_repo="${repo//\//_}"
-  safe_branch="${branch//\//_}"
-  echo "/tmp/pr-body-draft/${safe_repo}/${safe_branch}.md"
+  echo "/tmp/pr-body-draft/${safe_repo}/${branch}.md"
 }
 
 # Create a new temporary draft file
