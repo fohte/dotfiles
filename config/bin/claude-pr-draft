@@ -31,7 +31,7 @@ Commands:
                                If filepath omitted, uses current repo/branch
 
 Draft File Location:
-  Files are stored at: /tmp/pr-body-draft/<owner_repo>/<branch>.md
+  Files are stored at: /tmp/pr-body-draft/<owner>/<repo>/<branch>.md
   This deterministic path allows commands to work without explicit filepath args.
 
 Draft File Format:
@@ -115,12 +115,10 @@ get_branch_name() {
 
 # Get deterministic draft file path based on repo and branch
 get_draft_file_path() {
-  local repo branch safe_repo
+  local repo branch
   repo=$(get_repo_name)
   branch=$(get_branch_name)
-  # Replace / with _ for repo name only (branch keeps / for directory structure)
-  safe_repo="${repo//\//_}"
-  echo "/tmp/pr-body-draft/${safe_repo}/${branch}.md"
+  echo "/tmp/pr-body-draft/${repo}/${branch}.md"
 }
 
 # Create a new temporary draft file

@@ -23,7 +23,7 @@ echo "## Why
 - この PR が merge されたら何が変わるのかを、個々のコミットではなく全体的な影響を現在形で記述" | claude-pr-draft new --title "PRタイトル"
 ```
 
-ドラフトファイルは `/tmp/pr-body-draft/<owner_repo>/<branch>.md` に自動的に作成される。以降のコマンドではファイルパスの指定は不要。
+ドラフトファイルは `/tmp/pr-body-draft/<owner>/<repo>/<branch>.md` に自動的に作成される。以降のコマンドではファイルパスの指定は不要。
 
 ### タイトルの生成ガイドライン
 
