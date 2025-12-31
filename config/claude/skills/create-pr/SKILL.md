@@ -23,6 +23,8 @@ echo "## Why
 - この PR が merge されたら何が変わるのかを、個々のコミットではなく全体的な影響を現在形で記述" | claude-pr-draft new --title "PRタイトル"
 ```
 
+ドラフトファイルは `/tmp/pr-body-draft/<owner_repo>/<branch>.md` に自動的に作成される。以降のコマンドではファイルパスの指定は不要。
+
 ### タイトルの生成ガイドライン
 
 - **簡潔に**: 50 文字以内で変更内容を要約
@@ -75,8 +77,6 @@ echo "use \`gh\` command"
 echo 'use `gh` command'
 ```
 
-コマンドは `/tmp` に YAML frontmatter 付きの一時ファイルを作成し、stdin から受け取った内容を追記して、ファイルパスを stdout に出力する（その結果を記憶して以降のステップで使用する）。
-
 ### Frontmatter について
 
 作成されるファイルには以下の YAML frontmatter が含まれる:
@@ -114,10 +114,10 @@ steps:
 
 ## 2. 人間に PR の説明をレビューしてもらう
 
-`claude-pr-draft review` コマンドを実行して、Wezterm の新しいウィンドウで Neovim を開き、ユーザーに直接編集してもらう（引数にはステップ 1 で取得したファイルパスを使用する）。
+`claude-pr-draft review` コマンドを実行して、Wezterm の新しいウィンドウで Neovim を開き、ユーザーに直接編集してもらう。
 
 ```bash
-claude-pr-draft review <filepath>
+claude-pr-draft review
 ```
 
 **重要:** このコマンドは非同期で実行されるため、コマンドが即座に完了してもユーザーはまだ編集中である。ユーザーがレビューを完了して明示的に指示するまで、次のステップには進まないこと。
@@ -131,7 +131,7 @@ claude-pr-draft review <filepath>
 ### 修正指示の場合（「fix」「修正」など）
 
 内容の修正のみを行う。**翻訳は行わない。**
-修正後は再度 `claude-pr-draft review <filepath>` を実行し、次の指示を待つ。
+修正後は再度 `claude-pr-draft review` を実行し、次の指示を待つ。
 
 ### ドラフト承認後の翻訳（`steps.ready-for-translation: true` かつ日本語含む）
 
@@ -140,7 +140,7 @@ claude-pr-draft review <filepath>
 1. title と body を英語に翻訳する
 2. `steps.submit: false` に変更する（翻訳によりハッシュが無効になるため）
 3. ファイルを上書き保存する
-4. 再度 `claude-pr-draft review <filepath>` を実行して、ユーザーに翻訳内容を確認してもらう
+4. 再度 `claude-pr-draft review` を実行して、ユーザーに翻訳内容を確認してもらう
 5. ユーザーがレビューを完了して明示的に指示するまで待機する
 
 **注意:** すでに英語に翻訳済み（日本語が含まれていない）の場合は、再翻訳しない。
@@ -152,7 +152,7 @@ claude-pr-draft review <filepath>
 ## 4. `claude-pr-draft submit` で PR を作成
 
 ```bash
-claude-pr-draft submit <filepath> [--base main]
+claude-pr-draft submit [--base main]
 ```
 
 frontmatter の `title` が PR タイトルとして、body 部分が PR 本文として使用される。

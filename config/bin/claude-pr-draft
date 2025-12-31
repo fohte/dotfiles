@@ -23,10 +23,16 @@ PR body draft management tool for Claude Code
 Usage: claude-pr-draft [--help] <command> [args]
 
 Commands:
-  new [--title "title"]        Create a new temporary draft file and output its path
+  new [--title "title"]        Create a new draft file (path based on repo/branch)
                                Accepts content from stdin if provided
-  review <filepath>            Open the draft file in Neovim (new Wezterm window)
-  submit <filepath> [options]  Create PR with the draft file as body
+  review [filepath]            Open the draft file in Neovim (new Wezterm window)
+                               If filepath omitted, uses current repo/branch
+  submit [filepath] [options]  Create PR with the draft file as body
+                               If filepath omitted, uses current repo/branch
+
+Draft File Location:
+  Files are stored at: /tmp/pr-body-draft/<owner_repo>/<branch>.md
+  This deterministic path allows commands to work without explicit filepath args.
 
 Draft File Format:
   The draft file uses YAML frontmatter to control PR creation:
@@ -59,11 +65,11 @@ Examples:
   # Create a new draft file with title and content from stdin
   echo "PR body content..." | claude-pr-draft new --title "Add new feature"
 
-  # Open draft file for user review
-  claude-pr-draft review /tmp/pr-body-draft.xxx.md
+  # Open draft file for user review (filepath auto-detected)
+  claude-pr-draft review
 
-  # Create PR after user approval (title is taken from frontmatter)
-  claude-pr-draft submit /tmp/pr-body-draft.xxx.md --base main
+  # Create PR after user approval (filepath auto-detected)
+  claude-pr-draft submit --base main
 EOF
 }
 
@@ -107,6 +113,17 @@ get_branch_name() {
   git branch --show-current 2> /dev/null || echo "unknown"
 }
 
+# Get deterministic draft file path based on repo and branch
+get_draft_file_path() {
+  local repo branch safe_repo safe_branch
+  repo=$(get_repo_name)
+  branch=$(get_branch_name)
+  # Replace / with _ for safe file path
+  safe_repo="${repo//\//_}"
+  safe_branch="${branch//\//_}"
+  echo "/tmp/pr-body-draft/${safe_repo}/${safe_branch}.md"
+}
+
 # Create a new temporary draft file
 new_draft() {
   local title=""
@@ -130,7 +147,8 @@ new_draft() {
   done
 
   local draft_file
-  draft_file=$(mktemp /tmp/pr-body-draft.XXXXXX.md)
+  draft_file=$(get_draft_file_path)
+  mkdir -p "$(dirname "$draft_file")"
 
   # Write YAML frontmatter template based on repo visibility
   if is_public_repo; then
@@ -159,7 +177,7 @@ FRONTMATTER
     cat >> "$draft_file"
   fi
 
-  echo "$draft_file"
+  echo "Draft file created." >&2
 }
 
 # Calculate hash of file content
@@ -375,16 +393,15 @@ case "$SUBCOMMAND" in
     new_draft "$@"
     ;;
   review)
-    if [[ $# -ne 1 ]]; then
-      echo "Error: review requires exactly 1 argument: <filepath>" >&2
-      exit 1
-    fi
-    review_draft "$1"
+    _filepath="${1:-$(get_draft_file_path)}"
+    review_draft "$_filepath"
     ;;
   submit)
-    if [[ $# -lt 1 ]]; then
-      echo "Error: submit requires at least 1 argument: <filepath> [gh pr create options...]" >&2
-      exit 1
+    if [[ $# -eq 0 ]]; then
+      set -- "$(get_draft_file_path)"
+    elif [[ ! -f "$1" && "$1" == --* ]]; then
+      # First arg is an option, not a filepath
+      set -- "$(get_draft_file_path)" "$@"
     fi
     submit_pr "$@"
     ;;
