@@ -12,6 +12,9 @@ local on_attach = function(client, buffer)
       group = augroup,
       buffer = buffer,
       callback = function()
+        if vim.b.disable_autoformat or vim.g.disable_autoformat then
+          return
+        end
         vim.lsp.buf.format()
       end,
     })
@@ -241,6 +244,10 @@ return {
       {
         '<F10>',
         function()
+          if vim.b.disable_autoformat or vim.g.disable_autoformat then
+            vim.notify('Autoformat is disabled. Use :FormatEnable to re-enable.', vim.log.levels.WARN)
+            return
+          end
           vim.lsp.buf.format()
         end,
       },

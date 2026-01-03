@@ -39,3 +39,21 @@ end, {})
 
 require('core.commands.git_remote')
 require('core.commands.llm_reference')
+
+-- :FormatDisable  -> disable autoformat for current buffer
+-- :FormatDisable! -> disable autoformat globally
+vim.api.nvim_create_user_command('FormatDisable', function(args)
+  if args.bang then
+    vim.g.disable_autoformat = true
+    vim.notify('Autoformat disabled globally', vim.log.levels.INFO)
+  else
+    vim.b.disable_autoformat = true
+    vim.notify('Autoformat disabled for this buffer', vim.log.levels.INFO)
+  end
+end, { bang = true, desc = 'Disable autoformat' })
+
+vim.api.nvim_create_user_command('FormatEnable', function()
+  vim.b.disable_autoformat = false
+  vim.g.disable_autoformat = false
+  vim.notify('Autoformat enabled', vim.log.levels.INFO)
+end, { desc = 'Enable autoformat' })
