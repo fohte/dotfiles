@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: Use this skill when creating a Pull Request. This skill provides the workflow for drafting, reviewing, and submitting PRs using claude-pr-draft command.
+description: Use this skill when creating a Pull Request. This skill provides the workflow for drafting, reviewing, and submitting PRs using a ai pr-draft command.
 ---
 
 # Create PR
@@ -9,7 +9,7 @@ description: Use this skill when creating a Pull Request. This skill provides th
 
 ## 1. PR body のドラフトファイルを作成する
 
-`echo` コマンドを使用して、PR の説明のドラフトを `claude-pr-draft new` コマンドに渡す。
+`echo` コマンドを使用して、PR の説明のドラフトを `a ai pr-draft new` コマンドに渡す。
 
 **重要:** このドラフトは **常に日本語で書くこと**（public repo、private repo に関わらず）。
 
@@ -20,7 +20,7 @@ echo "## Why
 
 ## What
 
-- この PR が merge されたら何が変わるのかを、個々のコミットではなく全体的な影響を現在形で記述" | claude-pr-draft new --title "PRタイトル"
+- この PR が merge されたら何が変わるのかを、個々のコミットではなく全体的な影響を現在形で記述" | a ai pr-draft new --title "PRタイトル"
 ```
 
 ドラフトファイルは `/tmp/pr-body-draft/<owner>/<repo>/<branch>.md` に自動的に作成される。以降のコマンドではファイルパスの指定は不要。
@@ -114,10 +114,10 @@ steps:
 
 ## 2. 人間に PR の説明をレビューしてもらう
 
-`claude-pr-draft review` コマンドを実行して、Wezterm の新しいウィンドウで Neovim を開き、ユーザーに直接編集してもらう。
+`a ai pr-draft review` コマンドを実行して、Wezterm の新しいウィンドウで Neovim を開き、ユーザーに直接編集してもらう。
 
 ```bash
-claude-pr-draft review
+a ai pr-draft review
 ```
 
 **重要:** このコマンドは非同期で実行されるため、コマンドが即座に完了してもユーザーはまだ編集中である。ユーザーがレビューを完了して明示的に指示するまで、次のステップには進まないこと。
@@ -131,7 +131,7 @@ claude-pr-draft review
 ### 修正指示の場合（「fix」「修正」など）
 
 内容の修正のみを行う。**翻訳は行わない。**
-修正後は再度 `claude-pr-draft review` を実行し、次の指示を待つ。
+修正後は再度 `a ai pr-draft review` を実行し、次の指示を待つ。
 
 ### ドラフト承認後の翻訳（`steps.ready-for-translation: true` かつ日本語含む）
 
@@ -140,7 +140,7 @@ claude-pr-draft review
 1. title と body を英語に翻訳する
 2. `steps.submit: false` に変更する（翻訳によりハッシュが無効になるため）
 3. ファイルを上書き保存する
-4. 再度 `claude-pr-draft review` を実行して、ユーザーに翻訳内容を確認してもらう
+4. 再度 `a ai pr-draft review` を実行して、ユーザーに翻訳内容を確認してもらう
 5. ユーザーがレビューを完了して明示的に指示するまで待機する
 
 **注意:** すでに英語に翻訳済み（日本語が含まれていない）の場合は、再翻訳しない。
@@ -149,10 +149,10 @@ claude-pr-draft review
 
 翻訳は不要。ユーザーが `steps.submit: true` にしたら submit に進む。
 
-## 4. `claude-pr-draft submit` で PR を作成
+## 4. `a ai pr-draft submit` で PR を作成
 
 ```bash
-claude-pr-draft submit [--base main]
+a ai pr-draft submit [--base main]
 ```
 
 frontmatter の `title` が PR タイトルとして、body 部分が PR 本文として使用される。
