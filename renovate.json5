@@ -24,12 +24,5 @@
         'patch',
       ],
     },
-    {
-      matchPackageNames: [
-        'eza-community/eza',
-      ],
-      matchNewValue: 'v0.21.4',
-      enabled: false,
-    },
   ],
 }
