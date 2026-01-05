@@ -1,5 +1,17 @@
 return {
   'sindrets/diffview.nvim',
+  keys = {
+    {
+      '<leader>dr',
+      '<cmd>DiffviewOpen origin/master...HEAD --imply-local<cr>',
+      desc = 'Diffview: PR review (merge-base)',
+    },
+    {
+      '<leader>do',
+      '<cmd>DiffviewOpen<cr>',
+      desc = 'Diffview: open',
+    },
+  },
   config = function()
     local diffview = require('diffview')
 

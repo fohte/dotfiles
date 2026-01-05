@@ -77,7 +77,7 @@ branch="${branch:-$(git rev-parse --abbrev-ref HEAD)}"
 token="${token:-$(gh-token)}"
 
 # assume the current working directory is inside the repo and follows the path pattern `**/<owner>/<repo>`
-root_path="$(git root)"
+root_path="$(git root -r)"
 repo_name="$(basename "$(dirname "$root_path")")/$(basename "$root_path")"
 
 dryrun() {

@@ -1,0 +1,53 @@
+# this home-config.toml is global config (~/.config/mise/config.toml), the repository specify config is in <dotfiles root>/mise.toml
+
+[tools]
+# Language versions
+node = "23.11.1"
+python = "3.13.7"
+ruby = "3.4.6"
+rust = "1.88.0"
+go = "1.24.5"
+lua = "5.4.8"
+
+# packages
+"npm:@devcontainers/cli" = "0.80.1"
+"pipx:neovim-remote" = "latest"
+"gem:rubocop" = "1.79.2"
+
+# CLI tools
+github-cli = "2.80.0"
+bat = "0.25.0"
+ghq = "1.7.1"
+fzf = "0.61.1"
+delta = "0.18.2"
+yq = "4.46.1"
+neovim = "0.11.2"
+eza = "0.21.3"
+starship = "1.23.0"
+ripgrep = "14.1.1"
+op = "2.30.0"
+difftastic = "0.63.0"
+uv = "0.7.19"
+jq = "1.7.1"
+lefthook = "2.0.12"
+bun = "1.2.22"
+shfmt = "3.12.0"
+shellcheck = "0.10.0"
+"npm:@antfu/ni" = "27.0.1"
+glow = "2.1.1"
+
+[settings]
+# disable the idiomatic version file such as Gemfile
+# this is the default behavior from the 2025.10.0 version
+idiomatic_version_file_enable_tools = ['terraform']
+
+# to use gem backend (gem backend is experimental)
+experimental = true
+
+# config files with these prefixes will be trusted by default
+trusted_config_paths = [
+  '~/ghq/github.com/fohte',
+]
+
+# Automatically install missing tools when running mise x, mise run, or as part of the 'not found' handler
+auto_install = true

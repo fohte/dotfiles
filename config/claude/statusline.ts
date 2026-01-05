@@ -94,7 +94,7 @@ async function main() {
   const tokensDisplay = formatTokens(totalTokens)
 
   process.stdout.write(
-    `${modelName} | Tokens: ${tokensDisplay} | ${color}Context: ${percentage}%\x1b[0m`
+    `${modelName} | Tokens: ${tokensDisplay} | ${color}Context: ${percentage}%\x1b[0m`,
   )
 }
 

@@ -88,10 +88,13 @@ return {
     -- make comment text brighter
     set_hl({ 'Comment', 'TSComment' }, { fg = '#777777' })
 
+    -- make inlay hints more visible
+    set_hl({ 'LspInlayHint' }, { link = 'Comment' })
+
     -- make selected text background brighter
     set_hl({ 'Visual' }, { link = 'IncSearch' })
 
-    -- make transparent background (use terminal bacgkground color)
+    -- make transparent background (use terminal background color)
     local transparent_targets = {
       'Normal',
       'NormalNC',

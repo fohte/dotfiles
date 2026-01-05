@@ -9,6 +9,10 @@ hs.hotkey.bind({ 'alt' }, '2', function()
   hs.application.launchOrFocus('/Applications/Arc.app')
 end)
 
+hs.hotkey.bind({ 'alt' }, '3', function()
+  hs.application.launchOrFocus('/Applications/Slack.app')
+end)
+
 hs.hotkey.bind({ 'alt' }, '5', function()
   hs.application.launchOrFocus('/Applications/ChatGPT.app')
 end)
@@ -28,36 +32,16 @@ end)
 ------------------------------
 --- Window Management
 ------------------------------
--- disable animation
-hs.window.animationDuration = 0
+local window = require('rc.window')
 
--- maximize/restore window size
-local windowSizes = {}
-hs.hotkey.bind({ 'ctrl', 'shift' }, 't', function()
-  local window = hs.window.focusedWindow()
-  local id = window:id()
-
-  if windowSizes[id] then -- restore window size
-    window:setFrame(windowSizes[id])
-    windowSizes[id] = nil
-  else -- maximize window size
-    windowSizes[id] = window:frame()
-    window:maximize()
-  end
+hs.hotkey.bind({ 'ctrl', 'shift' }, 't', window.toggleMaximize)
+hs.hotkey.bind({ 'ctrl', 'shift' }, 'Left', window.moveToLeftHalf)
+hs.hotkey.bind({ 'ctrl', 'shift' }, 'Right', window.moveToRightHalf)
+hs.hotkey.bind({ 'ctrl', 'shift', 'alt' }, 'Left', function()
+  window.moveThirdSplit('left')
 end)
-
--- left half
-hs.hotkey.bind({ 'ctrl', 'shift' }, 'Left', function()
-  local window = hs.window.focusedWindow()
-  local screen = window:screen()
-  local frame = screen:frame()
-  window:setFrame(hs.geometry.rect(frame.x, frame.y, frame.w / 2, frame.h))
+hs.hotkey.bind({ 'ctrl', 'shift', 'alt' }, 'Right', function()
+  window.moveThirdSplit('right')
 end)
-
--- right half
-hs.hotkey.bind({ 'ctrl', 'shift' }, 'Right', function()
-  local window = hs.window.focusedWindow()
-  local screen = window:screen()
-  local frame = screen:frame()
-  window:setFrame(hs.geometry.rect(frame.x + frame.w / 2, frame.y, frame.w / 2, frame.h))
-end)
+hs.hotkey.bind({ 'ctrl', 'shift' }, 'Up', window.moveToPreviousDisplay)
+hs.hotkey.bind({ 'ctrl', 'shift' }, 'Down', window.moveToNextDisplay)

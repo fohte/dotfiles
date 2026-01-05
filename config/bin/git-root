@@ -1,7 +1,69 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# git-root - Get the root directory of the current git repository
+#
+# Usage:
+#   git root [-r|--recursive] [-h]
+#
+#   Options:
+#     -r, --recursive  Get the root repository directory (not the worktree)
+#     -h               Show this help message
+#
+#   Examples:
+#     In main repository:
+#       git root     -> /path/to/repo
+#       git root -r  -> /path/to/repo
+#
+#     In worktree:
+#       git root     -> /path/to/repo/.worktrees/some-worktree
+#       git root -r  -> /path/to/repo
+#
+set -euo pipefail
 
-if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+usage() {
+  cat << EOF
+Usage: $(basename "$0") [-r|--recursive] [-h]
+
+Get the root directory of the current git repository.
+
+Options:
+  -r, --recursive  Get the root repository directory (not the worktree)
+  -h               Show this help message
+
+Without -r option, returns the current worktree's top-level directory.
+With -r option, returns the root repository directory even when inside a worktree.
+EOF
+}
+
+# Check if we're in a git repository
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  exit 1
+fi
+
+# Parse options
+recursive=false
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -r | --recursive)
+      recursive=true
+      shift
+      ;;
+    -h)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+if [[ "$recursive" == "true" ]]; then
+  # Return the root repository directory (not the worktree)
   git worktree list --porcelain | head -1 | awk '{ print $2 }'
 else
-  exit 1
+  # Return the current worktree's top-level directory
+  git rev-parse --show-toplevel
 fi

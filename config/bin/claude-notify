@@ -1,39 +1,49 @@
 #!/usr/bin/env bash
+#
+# claude-notify - Claude Code notification handler for macOS
+#
+# Reads JSON input from stdin and displays macOS push notification.
+# Clicking the notification will jump to the tmux session/window/pane.
+#
+# Requirements:
+#   - jq
+#   - terminal-notifier
+#   - tmux
+#
+# Usage:
+#   echo '{"title":"Test","message":"Hello"}' | claude-notify
 
 set -euo pipefail
-
-# Claude Code notification handler for macOS
-# Reads JSON input from stdin and displays macOS push notification
-
-# Check if jq is available
-if ! command -v jq &> /dev/null; then
-  echo "Error: jq is required but not installed" >&2
-  exit 1
-fi
 
 # Read JSON input from stdin
 json_input=$(cat)
 
 # Parse message and title from JSON using jq
-# Default to "Claude Code" if title is not provided
 title=$(echo "$json_input" | jq -r '.title // "Claude Code"')
 message=$(echo "$json_input" | jq -r '.message // "Notification"')
 
-# Get tmux session name if available in environment
-tmux_session=""
-if [ -n "${TMUX:-}" ]; then
-  tmux_session=$(tmux display-message -p '#S')
-fi
+# Get tmux session info
+tmux_session=$(tmux display-message -p '#S')
+tmux_window=$(tmux display-message -p '#I')
+tmux_pane=$(tmux display-message -p '#P')
 
-# Add tmux session to title if found
-if [ -n "$tmux_session" ]; then
-  title="$title [$tmux_session]"
-fi
+# Add tmux session to title
+title="$title [$tmux_session]"
 
-# Escape special characters for AppleScript
-# Use printf to handle escaping more reliably
-title_escaped=$(printf '%s' "$title" | sed 's/\\/\\\\/g; s/"/\\"/g')
-message_escaped=$(printf '%s' "$message" | sed 's/\\/\\\\/g; s/"/\\"/g')
+# Build the command to execute when notification is clicked
+click_command=$(
+  cat << EOF
+zsh -c "
+client_name=\\\$(tmux list-clients -F '#{client_name}' | head -n1)
+tmux switch-client -c \"\\\$client_name\" -t '$tmux_session:$tmux_window.$tmux_pane'
+open -a WezTerm
+"
+EOF
+)
 
-# Display notification using osascript with sound
-osascript -e "display notification \"$message_escaped\" with title \"$title_escaped\" sound name \"Glass\""
+# Use terminal-notifier with click action
+terminal-notifier \
+  -title "$title" \
+  -message "$message" \
+  -sound Glass \
+  -execute "$click_command"

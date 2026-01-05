@@ -4,7 +4,7 @@ Create and maintain a structured todo list for tracking task progress. The todo 
 
 ## Todo file location
 
-Todo lists must store at `.claude/tmp/todo.md`. `~/.claude/tmp/` is gitignored, so no commits are needed.
+Todo lists must store at `.z/todo.md`. `~/.z/` is gitignored, so no commits are needed.
 
 ## Creating the todo list
 
@@ -19,15 +19,17 @@ Todo lists must store at `.claude/tmp/todo.md`. `~/.claude/tmp/` is gitignored, 
 # Todo List
 
 ## Main Feature
+
 - [ ] Research existing implementation patterns
 - [ ] Design the architecture
-  - [ ] Define data models
-  - [ ] Plan API endpoints
+    - [ ] Define data models
+    - [ ] Plan API endpoints
 - [ ] Implement core functionality
 - [ ] Add tests
 - [ ] Update documentation
 
 ## Bug Fixes
+
 - [ ] Fix validation error in user input
 - [ ] Handle edge case for empty responses
 ```

@@ -1,0 +1,817 @@
+#!/bin/bash
+set -euo pipefail
+
+# gh-issue-agent: Manage GitHub Issues as local files for LLM agents
+
+get_cache_dir() {
+  echo "${XDG_CACHE_HOME:-$HOME/.cache}/gh-issue-agent"
+}
+
+show_help() {
+  cat << EOF
+gh-issue-agent - Manage GitHub Issues as local files for LLM agents
+
+Usage:
+  gh-issue-agent <command> [options]
+
+Commands:
+  view      View issue and comments (read-only, no local cache)
+  pull      Fetch issue and save locally (fails if local changes exist)
+  refresh   Discard local changes and fetch latest from GitHub
+  push      Push local changes to GitHub
+
+Run 'gh-issue-agent <command> --help' for more information on a command.
+
+Directory Structure:
+  ~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/
+  ├── issue.md          # Issue body
+  ├── metadata.json     # Title, labels, assignees, etc.
+  └── comments/
+      ├── 001_comment_<id>.md   # Comment files (sequence_comment_databaseId.md)
+      └── ...
+EOF
+}
+
+show_pull_help() {
+  cat << EOF
+Fetch issue and save locally
+
+Usage:
+  gh-issue-agent pull <issue-number> [options]
+
+Options:
+  -R <owner/repo>   Target repository (default: current repo)
+  -h, --help        Show this help
+
+Notes:
+  - Saves issue to ~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/
+  - Fails if local changes exist (use 'refresh' to discard and re-fetch)
+  - Only your own comments can be edited
+  - Create new comments as comments/new_<name>.md
+EOF
+}
+
+show_refresh_help() {
+  cat << EOF
+Discard local changes and fetch latest from GitHub
+
+Usage:
+  gh-issue-agent refresh <issue-number> [options]
+
+Options:
+  -R <owner/repo>   Target repository (default: current repo)
+  -h, --help        Show this help
+EOF
+}
+
+show_push_help() {
+  cat << EOF
+Push local changes to GitHub
+
+Usage:
+  gh-issue-agent push <issue-number> [options]
+
+Options:
+  -R <owner/repo>   Target repository (default: current repo)
+  --dry-run         Show what would be changed without applying
+  --force           Allow overwriting remote changes (like git push --force)
+  --edit-others     Allow editing other users' comments
+  -h, --help        Show this help
+
+Notes:
+  - Compares with latest GitHub state before applying
+  - Fails if remote has changed since pull (use --force to overwrite)
+  - Fails if you try to edit other users' comments (use --edit-others to allow)
+EOF
+}
+
+show_view_help() {
+  cat << EOF
+View issue and comments (read-only, no local cache)
+
+Usage:
+  gh-issue-agent view <issue-number> [options]
+
+Options:
+  -R <owner/repo>   Target repository (default: current repo)
+  -h, --help        Show this help
+
+Examples:
+  gh-issue-agent view 123
+  gh-issue-agent view 123 -R owner/repo
+EOF
+}
+
+die() {
+  echo "Error: $1" >&2
+  exit 1
+}
+
+get_current_user() {
+  gh api user --jq '.login'
+}
+
+get_repo_from_arg_or_current() {
+  local repo="$1"
+  if [[ -n "$repo" ]]; then
+    echo "$repo"
+  else
+    gh repo view --json nameWithOwner --jq '.nameWithOwner'
+  fi
+}
+
+get_issue_dir() {
+  local repo="$1"
+  local issue_number="$2"
+  local cache_dir
+  cache_dir=$(get_cache_dir)
+
+  echo "${cache_dir}/${repo}/${issue_number}"
+}
+
+gh_with_repo() {
+  local repo="$1"
+  shift
+
+  if [[ -n "$repo" ]]; then
+    gh "$@" -R "$repo"
+  else
+    gh "$@"
+  fi
+}
+
+fetch_issue_data() {
+  local repo="$1"
+  local issue_number="$2"
+
+  gh_with_repo "$repo" issue view "$issue_number" --json number,title,body,state,labels,assignees,milestone,author,createdAt,updatedAt
+}
+
+fetch_comments_data() {
+  local repo="$1"
+  local issue_number="$2"
+
+  # Use GraphQL to get both id (node ID) and databaseId (numeric ID for REST API)
+  local owner repo_name
+  owner=$(echo "$repo" | cut -d/ -f1)
+  repo_name=$(echo "$repo" | cut -d/ -f2)
+
+  # $owner, $repo, $number are GraphQL variables, not shell variables
+  # shellcheck disable=SC2016
+  gh api graphql -f query='
+    query($owner: String!, $repo: String!, $number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        issue(number: $number) {
+          comments(first: 100) {
+            nodes {
+              id
+              databaseId
+              author { login }
+              createdAt
+              body
+            }
+          }
+        }
+      }
+    }
+  ' -f owner="$owner" -f repo="$repo_name" -F number="$issue_number" \
+    --jq '.data.repository.issue.comments.nodes'
+}
+
+save_issue_body() {
+  local dir="$1"
+  local body="$2"
+
+  echo "$body" > "${dir}/issue.md"
+}
+
+save_metadata() {
+  local dir="$1"
+  local issue_data="$2"
+
+  echo "$issue_data" | jq '{
+    number: .number,
+    title: .title,
+    state: .state,
+    labels: [.labels[].name],
+    assignees: [.assignees[].login],
+    milestone: .milestone.title,
+    author: .author.login,
+    createdAt: .createdAt,
+    updatedAt: .updatedAt
+  }' > "${dir}/metadata.json"
+}
+
+save_comments() {
+  local dir="$1"
+  local comments_json="$2"
+
+  local comments_dir="${dir}/comments"
+  mkdir -p "$comments_dir"
+
+  if [[ "$comments_json" == "[]" ]] || [[ -z "$comments_json" ]]; then
+    return 0
+  fi
+
+  local count
+  count=$(echo "$comments_json" | jq 'length')
+
+  for ((i = 0; i < count; i++)); do
+    local index
+    index=$(printf "%03d" $((i + 1)))
+
+    local comment
+    comment=$(echo "$comments_json" | jq ".[$i]")
+
+    local id database_id author created_at body
+    id=$(echo "$comment" | jq -r '.id')
+    database_id=$(echo "$comment" | jq -r '.databaseId')
+    author=$(echo "$comment" | jq -r '.author.login // "unknown"')
+    created_at=$(echo "$comment" | jq -r '.createdAt')
+    body=$(echo "$comment" | jq -r '.body')
+
+    local filename="${index}_comment_${database_id}.md"
+
+    cat > "${comments_dir}/${filename}" << EOF
+<!-- author: ${author} -->
+<!-- createdAt: ${created_at} -->
+<!-- id: ${id} -->
+<!-- databaseId: ${database_id} -->
+
+${body}
+EOF
+  done
+}
+
+has_local_changes() {
+  local issue_dir="$1"
+  local remote_issue_data="$2"
+  local remote_comments_data="$3"
+
+  # Check issue body
+  if [[ -f "${issue_dir}/issue.md" ]]; then
+    local local_body remote_body
+    local_body=$(cat "${issue_dir}/issue.md")
+    remote_body=$(echo "$remote_issue_data" | jq -r '.body // ""')
+    if [[ "$local_body" != "$remote_body" ]]; then
+      return 0
+    fi
+  fi
+
+  # Check metadata (title only for simplicity)
+  if [[ -f "${issue_dir}/metadata.json" ]]; then
+    local local_title remote_title
+    local_title=$(jq -r '.title' "${issue_dir}/metadata.json")
+    remote_title=$(echo "$remote_issue_data" | jq -r '.title')
+    if [[ "$local_title" != "$remote_title" ]]; then
+      return 0
+    fi
+  fi
+
+  # Check comments
+  for local_file in "${issue_dir}/comments/"[0-9]*.md; do
+    [[ -f "$local_file" ]] || continue
+
+    local comment_id local_comment_body remote_comment_body
+    comment_id=$(grep -oP '(?<=<!-- id: )[^>]+(?= -->)' "$local_file" || echo "")
+    [[ -z "$comment_id" ]] && continue
+
+    local_comment_body=$(sed '/^<!-- .* -->$/d' "$local_file" | sed '/./,$!d')
+    remote_comment_body=$(echo "$remote_comments_data" | jq -r --arg id "$comment_id" '.[] | select(.id == $id) | .body // ""')
+
+    if [[ "$local_comment_body" != "$remote_comment_body" ]]; then
+      return 0
+    fi
+  done
+
+  # Check for new comments
+  for new_file in "${issue_dir}/comments/"new_*.md; do
+    if [[ -f "$new_file" ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+do_fetch_issue() {
+  local repo="$1"
+  local issue_number="$2"
+  local issue_dir="$3"
+
+  local issue_data
+  issue_data=$(fetch_issue_data "$repo" "$issue_number")
+
+  local comments_data
+  comments_data=$(fetch_comments_data "$repo" "$issue_number")
+
+  mkdir -p "${issue_dir}/comments"
+
+  local body
+  body=$(echo "$issue_data" | jq -r '.body // ""')
+  save_issue_body "$issue_dir" "$body"
+
+  save_metadata "$issue_dir" "$issue_data"
+
+  save_comments "$issue_dir" "$comments_data"
+
+  local title
+  title=$(echo "$issue_data" | jq -r '.title')
+
+  echo "Done! Issue #${issue_number} has been saved to ${issue_dir}/"
+  echo ""
+  echo "Title: ${title}"
+  echo ""
+  echo "Files:"
+  echo "  ${issue_dir}/issue.md          - Issue body (editable)"
+  echo "  ${issue_dir}/metadata.json     - Metadata (editable: title, labels, assignees)"
+  echo "  ${issue_dir}/comments/         - Comments (only your own comments are editable)"
+}
+
+cmd_pull() {
+  local repo=""
+  local issue_number=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help)
+        show_pull_help
+        exit 0
+        ;;
+      -R)
+        [[ $# -ge 2 ]] || die "-R requires a repository argument"
+        repo="$2"
+        shift 2
+        ;;
+      -*)
+        die "Unknown option: $1"
+        ;;
+      *)
+        if [[ -z "$issue_number" ]]; then
+          issue_number="$1"
+        else
+          die "Unexpected argument: $1"
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  [[ -n "$issue_number" ]] || die "Issue number is required"
+
+  repo=$(get_repo_from_arg_or_current "$repo")
+
+  local issue_dir
+  issue_dir=$(get_issue_dir "$repo" "$issue_number")
+
+  echo "Fetching issue #${issue_number} from ${repo}..."
+
+  # Check for local changes before overwriting
+  if [[ -d "$issue_dir" ]]; then
+    local issue_data comments_data
+    issue_data=$(fetch_issue_data "$repo" "$issue_number")
+    comments_data=$(fetch_comments_data "$repo" "$issue_number")
+
+    if has_local_changes "$issue_dir" "$issue_data" "$comments_data"; then
+      die "Local changes would be overwritten. Use 'refresh' to discard local changes."
+    fi
+  fi
+
+  do_fetch_issue "$repo" "$issue_number" "$issue_dir"
+}
+
+cmd_refresh() {
+  local repo=""
+  local issue_number=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help)
+        show_refresh_help
+        exit 0
+        ;;
+      -R)
+        [[ $# -ge 2 ]] || die "-R requires a repository argument"
+        repo="$2"
+        shift 2
+        ;;
+      -*)
+        die "Unknown option: $1"
+        ;;
+      *)
+        if [[ -z "$issue_number" ]]; then
+          issue_number="$1"
+        else
+          die "Unexpected argument: $1"
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  [[ -n "$issue_number" ]] || die "Issue number is required"
+
+  repo=$(get_repo_from_arg_or_current "$repo")
+
+  local issue_dir
+  issue_dir=$(get_issue_dir "$repo" "$issue_number")
+
+  echo "Refreshing issue #${issue_number} from ${repo}..."
+
+  do_fetch_issue "$repo" "$issue_number" "$issue_dir"
+}
+
+cmd_push() {
+  local repo=""
+  local issue_number=""
+  local dry_run=false
+  local force=false
+  local edit_others=false
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help)
+        show_push_help
+        exit 0
+        ;;
+      -R)
+        [[ $# -ge 2 ]] || die "-R requires a repository argument"
+        repo="$2"
+        shift 2
+        ;;
+      --dry-run)
+        dry_run=true
+        shift
+        ;;
+      --force)
+        force=true
+        shift
+        ;;
+      --edit-others)
+        edit_others=true
+        shift
+        ;;
+      -*)
+        die "Unknown option: $1"
+        ;;
+      *)
+        if [[ -z "$issue_number" ]]; then
+          issue_number="$1"
+        else
+          die "Unexpected argument: $1"
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  [[ -n "$issue_number" ]] || die "Issue number is required"
+
+  repo=$(get_repo_from_arg_or_current "$repo")
+
+  local issue_dir
+  issue_dir=$(get_issue_dir "$repo" "$issue_number")
+
+  [[ -d "$issue_dir" ]] || die "Issue #${issue_number} not found locally. Run 'gh-issue-agent pull ${issue_number}' first."
+
+  echo "Fetching latest from GitHub..."
+
+  local remote_issue_data
+  remote_issue_data=$(fetch_issue_data "$repo" "$issue_number")
+
+  local remote_comments_data
+  remote_comments_data=$(fetch_comments_data "$repo" "$issue_number")
+
+  # Check if remote has changed since pull
+  local local_updated_at remote_updated_at
+  local_updated_at=$(jq -r '.updatedAt // ""' "${issue_dir}/metadata.json")
+  remote_updated_at=$(echo "$remote_issue_data" | jq -r '.updatedAt // ""')
+
+  if [[ -n "$local_updated_at" && "$local_updated_at" != "$remote_updated_at" && "$force" != "true" ]]; then
+    echo ""
+    echo "Remote has changed since pull:"
+    echo "  Local:  ${local_updated_at}"
+    echo "  Remote: ${remote_updated_at}"
+    echo ""
+    die "Remote has changed. Use --force to overwrite, or 'refresh' to update local copy."
+  fi
+
+  local has_changes=false
+
+  # Compare issue body
+  local local_body remote_body
+  local_body=$(cat "${issue_dir}/issue.md")
+  remote_body=$(echo "$remote_issue_data" | jq -r '.body // ""')
+
+  if [[ "$local_body" != "$remote_body" ]]; then
+    echo ""
+    echo "=== Issue Body ==="
+    diff -u <(echo "$remote_body") <(echo "$local_body") || true
+    if [[ "$dry_run" == "false" ]]; then
+      echo ""
+      echo "Updating issue body..."
+      gh_with_repo "$repo" issue edit "$issue_number" --body "$local_body"
+    fi
+    has_changes=true
+  fi
+
+  # Compare metadata
+  local local_meta remote_title local_title
+  local_meta=$(cat "${issue_dir}/metadata.json")
+  remote_title=$(echo "$remote_issue_data" | jq -r '.title')
+  local_title=$(echo "$local_meta" | jq -r '.title')
+
+  if [[ "$local_title" != "$remote_title" ]]; then
+    echo ""
+    echo "=== Title ==="
+    echo "- ${remote_title}"
+    echo "+ ${local_title}"
+    if [[ "$dry_run" == "false" ]]; then
+      echo ""
+      echo "Updating title..."
+      gh_with_repo "$repo" issue edit "$issue_number" --title "$local_title"
+    fi
+    has_changes=true
+  fi
+
+  # Compare labels
+  local remote_labels local_labels
+  remote_labels=$(echo "$remote_issue_data" | jq -c '[.labels[].name] | sort')
+  local_labels=$(echo "$local_meta" | jq -c '.labels | sort')
+
+  if [[ "$local_labels" != "$remote_labels" ]]; then
+    echo ""
+    echo "=== Labels ==="
+    echo "- ${remote_labels}"
+    echo "+ ${local_labels}"
+    if [[ "$dry_run" == "false" ]]; then
+      echo ""
+      echo "Updating labels..."
+
+      local labels_to_remove labels_to_add
+      labels_to_remove=$(jq -r -n --argjson remote "$remote_labels" --argjson local "$local_labels" \
+        '$remote - $local | .[]')
+      labels_to_add=$(jq -r -n --argjson remote "$remote_labels" --argjson local "$local_labels" \
+        '$local - $remote | .[]')
+
+      for label in $labels_to_remove; do
+        gh_with_repo "$repo" issue edit "$issue_number" --remove-label "$label"
+      done
+
+      for label in $labels_to_add; do
+        gh_with_repo "$repo" issue edit "$issue_number" --add-label "$label"
+      done
+    fi
+    has_changes=true
+  fi
+
+  # Compare comments
+  local current_user
+  current_user=$(get_current_user)
+
+  for local_file in "${issue_dir}/comments/"[0-9]*.md; do
+    [[ -f "$local_file" ]] || continue
+
+    local filename comment_id database_id author local_comment_body
+    filename=$(basename "$local_file")
+    comment_id=$(grep -oP '(?<=<!-- id: )[^>]+(?= -->)' "$local_file" || echo "")
+    database_id=$(grep -oP '(?<=<!-- databaseId: )[^>]+(?= -->)' "$local_file" || echo "")
+    author=$(grep -oP '(?<=<!-- author: )[^>]+(?= -->)' "$local_file" || echo "")
+
+    if [[ -z "$comment_id" ]]; then
+      continue
+    fi
+
+    # Extract body without metadata lines
+    local_comment_body=$(sed '/^<!-- .* -->$/d' "$local_file" | sed '/./,$!d')
+
+    # Find remote comment
+    local remote_comment_body
+    remote_comment_body=$(echo "$remote_comments_data" | jq -r --arg id "$comment_id" '.[] | select(.id == $id) | .body // ""')
+
+    if [[ "$local_comment_body" != "$remote_comment_body" ]]; then
+      if [[ "$author" != "$current_user" && "$edit_others" != "true" ]]; then
+        die "Cannot edit other user's comment: ${filename} (author: ${author}). Use --edit-others to allow."
+      fi
+
+      echo ""
+      if [[ "$author" != "$current_user" ]]; then
+        echo "=== Comment: ${filename} (author: ${author}) ==="
+      else
+        echo "=== Comment: ${filename} ==="
+      fi
+      diff -u <(echo "$remote_comment_body") <(echo "$local_comment_body") || true
+      if [[ "$dry_run" == "false" ]]; then
+        echo ""
+        echo "Updating comment..."
+        # Use databaseId (numeric) for REST API, fallback to comment_id for backward compatibility
+        local api_comment_id="${database_id:-$comment_id}"
+        gh api -X PATCH "/repos/${repo}/issues/comments/${api_comment_id}" -f body="$local_comment_body"
+      fi
+      has_changes=true
+    fi
+  done
+
+  # New comments
+  for new_file in "${issue_dir}/comments/"new_*.md; do
+    [[ -f "$new_file" ]] || continue
+
+    local filename body
+    filename=$(basename "$new_file")
+    body=$(cat "$new_file")
+
+    echo ""
+    echo "=== New Comment: ${filename} ==="
+    echo "$body"
+    if [[ "$dry_run" == "false" ]]; then
+      echo ""
+      echo "Creating comment..."
+      gh_with_repo "$repo" issue comment "$issue_number" --body "$body"
+      rm "$new_file"
+    fi
+    has_changes=true
+  done
+
+  echo ""
+  if [[ "$dry_run" == "true" ]]; then
+    if [[ "$has_changes" == "true" ]]; then
+      echo "[dry-run] Changes detected. Run without --dry-run to apply."
+    else
+      echo "[dry-run] No changes detected."
+    fi
+  else
+    if [[ "$has_changes" == "true" ]]; then
+      # Update local updatedAt to match remote after successful push
+      local new_updated_at
+      new_updated_at=$(fetch_issue_data "$repo" "$issue_number" | jq -r '.updatedAt')
+      jq --arg ts "$new_updated_at" '.updatedAt = $ts' "${issue_dir}/metadata.json" > "${issue_dir}/metadata.json.tmp"
+      mv "${issue_dir}/metadata.json.tmp" "${issue_dir}/metadata.json"
+      echo "Done! Changes have been pushed to GitHub."
+    else
+      echo "No changes to push."
+    fi
+  fi
+}
+
+format_relative_time() {
+  local timestamp="$1"
+  local now diff
+
+  now=$(date +%s)
+  diff=$((now - $(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$timestamp" +%s 2> /dev/null || date -d "$timestamp" +%s 2> /dev/null || echo "$now")))
+
+  if [[ $diff -lt 60 ]]; then
+    echo "just now"
+  elif [[ $diff -lt 3600 ]]; then
+    echo "$((diff / 60)) minutes ago"
+  elif [[ $diff -lt 86400 ]]; then
+    echo "$((diff / 3600)) hours ago"
+  elif [[ $diff -lt 604800 ]]; then
+    echo "$((diff / 86400)) days ago"
+  else
+    echo "$((diff / 604800)) weeks ago"
+  fi
+}
+
+indent_text() {
+  local text="$1"
+  local indent="${2:-  }"
+  while IFS= read -r line; do
+    printf '%s%s\n' "$indent" "$line"
+  done <<< "$text"
+}
+
+cmd_view() {
+  local repo=""
+  local issue_number=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help)
+        show_view_help
+        exit 0
+        ;;
+      -R)
+        [[ $# -ge 2 ]] || die "-R requires a repository argument"
+        repo="$2"
+        shift 2
+        ;;
+      -*)
+        die "Unknown option: $1"
+        ;;
+      *)
+        if [[ -z "$issue_number" ]]; then
+          issue_number="$1"
+        else
+          die "Unexpected argument: $1"
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  [[ -n "$issue_number" ]] || die "Issue number is required"
+
+  repo=$(get_repo_from_arg_or_current "$repo")
+
+  local issue_data comments_data
+  issue_data=$(fetch_issue_data "$repo" "$issue_number")
+  comments_data=$(fetch_comments_data "$repo" "$issue_number")
+
+  local title state author created_at body
+  title=$(echo "$issue_data" | jq -r '.title')
+  state=$(echo "$issue_data" | jq -r '.state')
+  author=$(echo "$issue_data" | jq -r '.author.login')
+  created_at=$(echo "$issue_data" | jq -r '.createdAt')
+  body=$(echo "$issue_data" | jq -r '.body // ""')
+
+  local labels assignees
+  labels=$(echo "$issue_data" | jq -r '[.labels[].name] | join(", ")')
+  assignees=$(echo "$issue_data" | jq -r '[.assignees[].login] | join(", ")')
+
+  local comment_count
+  comment_count=$(echo "$comments_data" | jq 'length')
+
+  local relative_time
+  relative_time=$(format_relative_time "$created_at")
+
+  local state_display
+  if [[ "$state" == "OPEN" ]]; then
+    state_display="Open"
+  else
+    state_display="Closed"
+  fi
+
+  echo "${title} #${issue_number}"
+  echo ""
+  echo "${state_display} • ${author} opened ${relative_time} • ${comment_count} comments"
+
+  if [[ -n "$labels" ]]; then
+    echo "Labels: ${labels}"
+  fi
+  if [[ -n "$assignees" ]]; then
+    echo "Assignees: ${assignees}"
+  fi
+
+  echo ""
+  if [[ -n "$body" ]]; then
+    indent_text "$body"
+  else
+    echo "  No description provided."
+  fi
+
+  if [[ "$comment_count" -gt 0 ]]; then
+    local count
+    count=$(echo "$comments_data" | jq 'length')
+
+    for ((i = 0; i < count; i++)); do
+      local comment comment_author comment_created_at comment_body comment_relative_time
+      comment=$(echo "$comments_data" | jq ".[$i]")
+      comment_author=$(echo "$comment" | jq -r '.author.login // "unknown"')
+      comment_created_at=$(echo "$comment" | jq -r '.createdAt')
+      comment_body=$(echo "$comment" | jq -r '.body')
+      comment_relative_time=$(format_relative_time "$comment_created_at")
+
+      echo ""
+      echo "──────────────────────────────────────────────────────"
+      echo ""
+      echo "${comment_author} • ${comment_relative_time}"
+      echo ""
+      indent_text "$comment_body"
+    done
+  fi
+}
+
+main() {
+  if [[ $# -eq 0 ]]; then
+    show_help
+    exit 0
+  fi
+
+  local command="$1"
+  shift
+
+  case "$command" in
+    -h | --help)
+      show_help
+      exit 0
+      ;;
+    view)
+      cmd_view "$@"
+      ;;
+    pull)
+      cmd_pull "$@"
+      ;;
+    refresh)
+      cmd_refresh "$@"
+      ;;
+    push)
+      cmd_push "$@"
+      ;;
+    *)
+      die "Unknown command: $command. Run 'gh-issue-agent --help' for usage."
+      ;;
+  esac
+}
+
+main "$@"

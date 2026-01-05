@@ -98,10 +98,16 @@ if match_tag claude; then
   sym config/claude/_CLAUDE.md ~/.claude/CLAUDE.md
   sym config/claude/agents ~/.claude/agents
   sym config/claude/commands ~/.claude/commands
+  sym config/claude/skills ~/.claude/skills
   sym config/claude/settings.json ~/.claude/settings.json
   sym config/claude/statusline.ts ~/.claude/statusline.ts
 fi
 
+if match_tag codex; then
+  sym config/codex/AGENTS.md ~/.codex/AGENTS.md
+  sym config/codex/config.toml ~/.codex/config.toml
+fi
+
 if match_tag mise; then
-  sym config/mise ~/.config/mise
+  sym config/mise/home-config.toml ~/.config/mise/config.toml
 fi

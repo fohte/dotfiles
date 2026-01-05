@@ -1,0 +1,535 @@
+#!/bin/bash
+#
+# git wm - Git worktree manager
+#
+set -euo pipefail
+
+usage() {
+  cat << EOF
+Usage: git wm <command> [options]
+
+Commands:
+  list      List all worktrees
+  new       Create a new Git worktree for a branch
+  delete    Delete a Git worktree and its branch
+  clean     Delete all merged worktrees
+
+Run 'git wm <command> --help' for more information on a command.
+EOF
+  exit 1
+}
+
+usage_new() {
+  cat << EOF
+Usage: git wm new [options] [<name>]
+
+Create a new Git worktree for a branch.
+
+Options:
+  -h, --help        Show this help message
+  --from <branch>   Base branch for new branch creation (default: origin/main or origin/master)
+  --force           Force create new branch even if it already exists
+  --prompt <text>   Initial prompt to send to Claude Code
+
+Arguments:
+  <name>            Branch name (existing branch will be checked out,
+                    non-existing branch will be created with fohte/ prefix)
+EOF
+  exit 1
+}
+
+usage_delete() {
+  cat << EOF
+Usage: git wm delete [options] [<worktree>]
+
+Delete a Git worktree and its branch.
+
+Options:
+  -h, --help        Show this help message
+  -f, --force       Force delete without confirmation even if not merged
+
+Arguments:
+  <worktree>        Worktree path or name (default: current directory)
+EOF
+  exit 1
+}
+
+usage_list() {
+  cat << EOF
+Usage: git wm list [options]
+
+List all worktrees.
+
+Options:
+  -h, --help        Show this help message
+EOF
+  exit 1
+}
+
+usage_clean() {
+  cat << EOF
+Usage: git wm clean [options]
+
+Delete all merged worktrees.
+
+Options:
+  -h, --help        Show this help message
+  -n, --dry-run     Show what would be deleted without actually deleting
+EOF
+  exit 1
+}
+
+# Function to check if branch exists
+branch_exists() {
+  local branch="$1"
+  # Check local branch
+  if git show-ref --verify --quiet "refs/heads/$branch"; then
+    return 0
+  fi
+  # Check remote branch (with origin/ prefix)
+  if git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+    return 0
+  fi
+  # Check remote branch (as-is, in case it already has remote prefix)
+  if git show-ref --verify --quiet "refs/remotes/$branch"; then
+    return 0
+  fi
+  return 1
+}
+
+# Check if a branch is merged (via PR or git merge-base)
+# Sets global variables:
+#   MERGE_STATUS: "merged" or "not_merged"
+#   MERGE_REASON: human-readable reason
+# Returns 0 if merged, 1 if not merged
+get_merge_status() {
+  local branch_name="$1"
+  MERGE_STATUS="not_merged"
+  MERGE_REASON=""
+
+  # First, check if PR for this branch exists via gh command
+  local pr_json=""
+  if pr_json="$(gh pr view "$branch_name" --json state,url 2> /dev/null)"; then
+    local pr_state
+    local pr_url
+    pr_state="$(echo "$pr_json" | jq -r '.state')"
+    pr_url="$(echo "$pr_json" | jq -r '.url')"
+
+    if [ "$pr_state" = "MERGED" ]; then
+      MERGE_STATUS="merged"
+      MERGE_REASON="PR $pr_url merged"
+      return 0
+    elif [ "$pr_state" = "OPEN" ]; then
+      MERGE_REASON="PR $pr_url is open"
+      return 1
+    elif [ "$pr_state" = "CLOSED" ]; then
+      MERGE_REASON="PR $pr_url is closed (not merged)"
+      return 1
+    fi
+  fi
+
+  # Fallback: check if branch is merged using git merge-base --is-ancestor
+  # This detects regular merges but not squash merges
+  local base_branch
+  base_branch="origin/$(git main)"
+  if git merge-base --is-ancestor "$branch_name" "$base_branch" 2> /dev/null; then
+    MERGE_STATUS="merged"
+    MERGE_REASON="ancestor of $base_branch"
+    return 0
+  fi
+
+  MERGE_REASON="not merged (no PR found, not ancestor of base branch)"
+  return 1
+}
+
+# Wrapper for backward compatibility
+is_branch_merged() {
+  get_merge_status "$1"
+  [ "$MERGE_STATUS" = "merged" ]
+}
+
+cmd_list() {
+  while (($#)); do
+    case "$1" in
+      -h | --help)
+        usage_list
+        ;;
+      -*)
+        echo "Unknown option: $1" >&2
+        usage_list
+        ;;
+      *)
+        echo "Unknown argument: $1" >&2
+        usage_list
+        ;;
+    esac
+  done
+
+  git worktree list
+}
+
+cmd_new() {
+  local from_branch=""
+  local force_create=false
+  local name=""
+  local prompt=""
+
+  while (($#)); do
+    case "$1" in
+      -h | --help)
+        usage_new
+        ;;
+      --from)
+        [ $# -ge 2 ] || usage_new
+        from_branch="$2"
+        shift 2
+        ;;
+      --force)
+        force_create=true
+        shift
+        ;;
+      --prompt)
+        [ $# -ge 2 ] || usage_new
+        prompt="$2"
+        shift 2
+        ;;
+      -*)
+        echo "Unknown option: $1" >&2
+        usage_new
+        ;;
+      *)
+        # First non-option is treated as worktree name input
+        name="$1"
+        shift
+        ;;
+    esac
+  done
+
+  # Determine worktree directory name from branch name
+  # remove fohte/ prefix to avoid fohte/fohte/<name>
+  name_no_prefix="${name#fohte/}"
+  # replace slashes with dashes
+  worktree_name="${name_no_prefix//\//-}"
+  worktree_dir="$(git root -r)/.worktrees/${worktree_name}"
+
+  git fetch -p
+
+  # Determine action based on branch existence and flags
+  if [ "$force_create" = true ]; then
+    # Force create new branch with fohte/ prefix
+    base_branch="${from_branch:-origin/$(git main)}"
+    branch="fohte/${name_no_prefix}"
+    git worktree add "$worktree_dir" -B "$branch" "$base_branch"
+  elif branch_exists "$name"; then
+    # Branch exists with the exact name provided
+    # If local branch exists, use it as-is
+    if git show-ref --verify --quiet "refs/heads/$name"; then
+      git worktree add "$worktree_dir" "$name"
+    # If remote branch exists, create local tracking branch
+    elif git show-ref --verify --quiet "refs/remotes/origin/$name"; then
+      git worktree add "$worktree_dir" -b "$name" "origin/$name"
+    else
+      # Fallback: use as-is
+      git worktree add "$worktree_dir" "$name"
+    fi
+  elif branch_exists "fohte/${name_no_prefix}"; then
+    # Branch exists with fohte/ prefix
+    branch="fohte/${name_no_prefix}"
+    if git show-ref --verify --quiet "refs/heads/$branch"; then
+      git worktree add "$worktree_dir" "$branch"
+    elif git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+      git worktree add "$worktree_dir" -b "$branch" "origin/$branch"
+    else
+      git worktree add "$worktree_dir" "$branch"
+    fi
+  else
+    # Branch doesn't exist, create new one with fohte/ prefix
+    base_branch="${from_branch:-origin/$(git main)}"
+    branch="fohte/${name_no_prefix}"
+    git worktree add "$worktree_dir" -b "$branch" "$base_branch"
+  fi
+
+  # Build claude command with optional prompt
+  local claude_cmd="claude"
+  if [ -n "$prompt" ]; then
+    local prompt_file
+    prompt_file="$(mktemp)"
+    echo "$prompt" > "$prompt_file"
+    claude_cmd="claude \"\$(cat $prompt_file)\""
+  fi
+
+  # Determine target tmux session from repository root
+  local target_session
+  target_session="$(tmux-name session "$(git root -r)")"
+
+  # Create session if it doesn't exist
+  if ! tmux has-session -t "$target_session" 2> /dev/null; then
+    tmux new-session -ds "$target_session" -c "$(git root -r)"
+  fi
+
+  # create a tmux window in the target session with split layout
+  # left pane: neovim, right pane: claude code
+  tmux new-window -t "${target_session}" -c "${worktree_dir}" -n "${worktree_name}" \; \
+    split-window -h -c "${worktree_dir}" \; \
+    select-pane -t 1 \; \
+    send-keys "nvim" C-m \; \
+    select-pane -t 2 \; \
+    send-keys "$claude_cmd" C-m \; \
+    select-pane -t 1
+
+  # Switch to the target session if not already in it
+  if [ -n "${TMUX:-}" ]; then
+    local current_session
+    current_session="$(tmux display-message -p '#{session_name}')"
+    if [ "$current_session" != "$target_session" ]; then
+      tmux switch-client -t "$target_session"
+    fi
+  fi
+}
+
+cmd_clean() {
+  local dry_run=false
+
+  while (($#)); do
+    case "$1" in
+      -h | --help)
+        usage_clean
+        ;;
+      -n | --dry-run)
+        dry_run=true
+        shift
+        ;;
+      -*)
+        echo "Unknown option: $1" >&2
+        usage_clean
+        ;;
+      *)
+        echo "Unknown argument: $1" >&2
+        usage_clean
+        ;;
+    esac
+  done
+
+  git fetch -p
+
+  local repo_root
+  repo_root="$(git root -r)"
+
+  # Collect worktrees with their merge status
+  # Arrays: path|branch|reason
+  local to_delete=()
+  local to_skip=()
+  local worktree_path=""
+  local branch_name=""
+
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^worktree\ (.+)$ ]]; then
+      worktree_path="${BASH_REMATCH[1]}"
+    elif [[ "$line" =~ ^branch\ refs/heads/(.+)$ ]]; then
+      branch_name="${BASH_REMATCH[1]}"
+
+      # Skip main worktree (bare repository root)
+      if [ "$worktree_path" = "$repo_root" ]; then
+        continue
+      fi
+
+      # Check merge status
+      get_merge_status "$branch_name" || true
+      if [ "$MERGE_STATUS" = "merged" ]; then
+        to_delete+=("$worktree_path|$branch_name|$MERGE_REASON")
+      else
+        to_skip+=("$worktree_path|$branch_name|$MERGE_REASON")
+      fi
+    fi
+  done < <(git worktree list --porcelain)
+
+  # Display skipped worktrees
+  if [ ${#to_skip[@]} -gt 0 ]; then
+    echo "Worktrees to keep:"
+    for entry in "${to_skip[@]}"; do
+      local path branch reason
+      IFS='|' read -r path branch reason <<< "$entry"
+      echo "  $path ($reason)"
+    done
+    echo
+  fi
+
+  # Display worktrees to delete
+  if [ ${#to_delete[@]} -eq 0 ]; then
+    echo "No merged worktrees to delete."
+    return 0
+  fi
+
+  echo "Worktrees to delete:"
+  for entry in "${to_delete[@]}"; do
+    local path branch reason
+    IFS='|' read -r path branch reason <<< "$entry"
+    echo "  $path ($reason)"
+  done
+
+  if [ "$dry_run" = true ]; then
+    echo
+    echo "(dry-run mode, no changes made)"
+    return 0
+  fi
+
+  echo
+  read -p "Delete these worktrees? [y/N] " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Cancelled."
+    return 0
+  fi
+
+  echo
+  for entry in "${to_delete[@]}"; do
+    local path branch reason
+    IFS='|' read -r path branch reason <<< "$entry"
+
+    # Remove worktree (force if submodules exist)
+    if [ -f "$path/.gitmodules" ]; then
+      git worktree remove --force "$path"
+    else
+      git worktree remove "$path"
+    fi
+    echo "Deleted: $path ($reason)"
+
+    if [ -n "$branch" ]; then
+      if git show-ref --verify --quiet "refs/heads/$branch"; then
+        git branch -D "$branch" > /dev/null
+        echo "  Branch deleted: $branch"
+      fi
+    fi
+  done
+
+  echo
+  echo "Done. Deleted ${#to_delete[@]} worktree(s)."
+}
+
+cmd_delete() {
+  local worktree_arg=""
+  local worktree_path=""
+  local force_delete=false
+
+  while (($#)); do
+    case "$1" in
+      -h | --help)
+        usage_delete
+        ;;
+      -f | --force)
+        force_delete=true
+        shift
+        ;;
+      -*)
+        echo "Unknown option: $1" >&2
+        usage_delete
+        ;;
+      *)
+        worktree_arg="$1"
+        shift
+        ;;
+    esac
+  done
+
+  # If no worktree specified, use current directory
+  if [ -z "$worktree_arg" ]; then
+    worktree_path="$(pwd)"
+  else
+    # First, try to treat the argument as an existing path
+    if ! worktree_path="$(cd "$worktree_arg" 2> /dev/null && pwd)"; then
+      # Fall back to resolving the value as a branch/worktree name
+      local repo_root=""
+      repo_root="$(git root -r)"
+      local name_no_prefix="${worktree_arg#fohte/}"
+      local worktree_name="${name_no_prefix//\//-}"
+      local candidate_path="${repo_root}/.worktrees/${worktree_name}"
+      if ! worktree_path="$(cd "$candidate_path" 2> /dev/null && pwd)"; then
+        echo "Error: Invalid worktree path: $worktree_arg" >&2
+        exit 1
+      fi
+    fi
+  fi
+
+  # Verify this is actually a worktree
+  if ! git worktree list | grep -q "$worktree_path"; then
+    echo "Error: Not a valid worktree: $worktree_path" >&2
+    exit 1
+  fi
+
+  # Get the branch name associated with this worktree
+  local branch_name=""
+  branch_name="$(git worktree list --porcelain | grep -A 3 "^worktree $worktree_path$" | grep "^branch " | sed 's/^branch //' | sed 's|^refs/heads/||')"
+
+  # Check if we're in a tmux session and current pane is in the worktree
+  local target_window_id=""
+  if [ -n "${TMUX:-}" ]; then
+    current_pane_path="$(tmux display-message -p '#{pane_current_path}')"
+    if [[ "$current_pane_path" == "$worktree_path"* ]]; then
+      # Record the window ID to close later (in case user switches windows during deletion)
+      target_window_id="$(tmux display-message -p '#{window_id}')"
+    fi
+  fi
+
+  # Check if the branch can be safely deleted before deleting worktree
+  if [ -n "$branch_name" ]; then
+    if git show-ref --verify --quiet "refs/heads/$branch_name"; then
+      if ! is_branch_merged "$branch_name" && [ "$force_delete" = false ]; then
+        echo "Warning: Branch '$branch_name' is not merged (no merged PR found, not ancestor of base branch)" >&2
+        read -p "Delete anyway? [y/N] " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+          echo "Cancelled."
+          exit 0
+        fi
+      fi
+    fi
+  fi
+
+  # Remove the worktree (force if submodules exist)
+  if [ -f "$worktree_path/.gitmodules" ]; then
+    git worktree remove --force "$worktree_path"
+  else
+    git worktree remove "$worktree_path"
+  fi
+  echo "Worktree removed: $worktree_path"
+
+  # Delete the branch if it exists
+  if [ -n "$branch_name" ]; then
+    if git show-ref --verify --quiet "refs/heads/$branch_name"; then
+      git branch -D "$branch_name"
+      echo "Branch deleted: $branch_name"
+    fi
+  fi
+
+  # Close the original tmux window (identified by window ID)
+  if [ -n "$target_window_id" ]; then
+    tmux kill-window -t "$target_window_id"
+  fi
+}
+
+# Main command dispatcher
+case "${1:-}" in
+  list)
+    shift
+    cmd_list "$@"
+    ;;
+  new)
+    shift
+    cmd_new "$@"
+    ;;
+  delete)
+    shift
+    cmd_delete "$@"
+    ;;
+  clean)
+    shift
+    cmd_clean "$@"
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    echo "Error: Unknown command: ${1:-}" >&2
+    usage
+    ;;
+esac

@@ -80,3 +80,4 @@ context_portal/
 # Claude Code
 **/.claude/settings.local.json
 **/.claude/tmp/
+**/.z/

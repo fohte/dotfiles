@@ -21,6 +21,7 @@ return {
           'jsonnet',
           'lua',
           'markdown',
+          'markdown_inline',
           'python',
           'ruby',
           'tsx',

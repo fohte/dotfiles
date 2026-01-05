@@ -12,9 +12,22 @@ local on_attach = function(client, buffer)
       group = augroup,
       buffer = buffer,
       callback = function()
+        if vim.b.disable_autoformat or vim.g.disable_autoformat then
+          return
+        end
         vim.lsp.buf.format()
       end,
     })
+  end
+end
+
+-- Get capabilities with blink.cmp integration
+local function get_capabilities()
+  local ok, blink = pcall(require, 'blink.cmp')
+  if ok then
+    return blink.get_lsp_capabilities()
+  else
+    return vim.lsp.protocol.make_client_capabilities()
   end
 end
 
@@ -35,6 +48,7 @@ return {
       -- List of servers to ensure are installed
       local ensure_installed = {
         'bashls',
+        'copilot',
         'cssls',
         'efm',
         'emmet_language_server',
@@ -46,6 +60,7 @@ return {
         'mdx_analyzer',
         'pylsp',
         'pyright',
+        'rust_analyzer',
         'solargraph',
         'steep',
         'tailwindcss',
@@ -61,19 +76,28 @@ return {
         automatic_enable = false, -- Disable automatic enabling to use our custom configs
       })
 
+      -- Base configuration for all servers
+      local base_config = {
+        on_attach = on_attach,
+        capabilities = get_capabilities(),
+      }
+
+      -- Helper function to setup server with config
+      local function setup_server(server_name, config)
+        vim.lsp.config(server_name, vim.tbl_deep_extend('force', base_config, config or {}))
+        vim.lsp.enable(server_name)
+      end
+
       -- Manually set up servers with custom configurations
       local handlers = {
         -- Default handler for servers without custom configuration
         function(server_name)
-          require('lspconfig')[server_name].setup({
-            on_attach = on_attach,
-          })
+          setup_server(server_name)
         end,
 
         -- Custom handlers for specific servers
         ['tailwindcss'] = function()
-          require('lspconfig').tailwindcss.setup({
-            on_attach = on_attach,
+          setup_server('tailwindcss', {
             filetypes = {
               'javascript.jsx',
               'typescript.tsx',
@@ -87,8 +111,7 @@ return {
           })
         end,
         ['lua_ls'] = function()
-          require('lspconfig').lua_ls.setup({
-            on_attach = on_attach,
+          setup_server('lua_ls', {
             settings = {
               Lua = {
                 diagnostics = {
@@ -97,6 +120,40 @@ return {
                 -- use stylua
                 format = {
                   enable = false,
+                },
+              },
+            },
+          })
+        end,
+
+        ['copilot'] = function()
+          -- Do nothing - copilot-lsp plugin will handle copilot_ls server
+        end,
+
+        ['rust_analyzer'] = function()
+          setup_server('rust_analyzer', {
+            on_attach = function(client, buffer)
+              on_attach(client, buffer)
+
+              -- Enable inlay hints
+              vim.lsp.inlay_hint.enable(true, { bufnr = buffer })
+            end,
+
+            settings = {
+              ['rust-analyzer'] = {
+                check = {
+                  command = 'clippy',
+                },
+                inlayHints = {
+                  typeHints = {
+                    enable = true,
+                  },
+                  chainingHints = {
+                    enable = true,
+                  },
+                  parameterHints = {
+                    enable = true,
+                  },
                 },
               },
             },
@@ -140,10 +197,6 @@ return {
               formatters = { 'shfmt' },
             },
             {
-              languages = { 'hcl' },
-              formatters = { 'terraform' },
-            },
-            {
               languages = { 'yaml.actions' },
               linters = { 'actionlint' },
             },
@@ -158,7 +211,7 @@ return {
             },
           })
 
-          require('lspconfig').efm.setup({
+          vim.lsp.config('efm', {
             filetypes = efm_configs.filetypes,
             settings = {
               rootMarkers = { '.git/' },
@@ -169,7 +222,9 @@ return {
               documentRangeFormatting = true,
             },
             on_attach = on_attach,
+            capabilities = get_capabilities(),
           })
+          vim.lsp.enable('efm')
         end,
       }
 
@@ -189,6 +244,10 @@ return {
       {
         '<F10>',
         function()
+          if vim.b.disable_autoformat or vim.g.disable_autoformat then
+            vim.notify('Autoformat is disabled. Use :FormatEnable to re-enable.', vim.log.levels.WARN)
+            return
+          end
           vim.lsp.buf.format()
         end,
       },
@@ -219,7 +278,7 @@ return {
       {
         'K',
         function()
-          vim.lsp.buf.hover()
+          vim.lsp.buf.hover({ border = 'rounded' })
         end,
       },
       {
@@ -230,9 +289,8 @@ return {
       },
     },
     config = function()
-      local lspconfig = require('lspconfig')
-
-      require('lspconfig').rubocop.setup({ on_attach = on_attach })
+      vim.lsp.config('rubocop', { on_attach = on_attach })
+      vim.lsp.enable('rubocop')
     end,
   },
   {
@@ -250,6 +308,12 @@ return {
       })
 
       vim.keymap.set('n', '<Leader>ll', require('lsp_lines').toggle, { desc = 'Toggle lsp_lines' })
+    end,
+  },
+  {
+    'aznhe21/actions-preview.nvim',
+    config = function()
+      vim.keymap.set({ 'v', 'n' }, 'ga', require('actions-preview').code_actions)
     end,
   },
 }

@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+#
+# tmux-name - Generate tmux session/window names and display info
+#
+# Usage:
+#   tmux-name session [path]     Generate session name from path (default: cwd)
+#   tmux-name info <window-id>   Generate window display info (icon + name)
+#
+set -euo pipefail
+
+# Add mise shims to PATH for tools like ghq
+MISE_DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/mise"
+if [ -d "$MISE_DATA_DIR/shims" ]; then
+  export PATH="$MISE_DATA_DIR/shims:$PATH"
+fi
+
+show_help() {
+  cat << 'EOF'
+tmux-name - Generate tmux session/window names and display info
+
+Usage:
+  tmux-name session [path]     Generate session name from path (default: cwd)
+  tmux-name info <window-id>   Generate window display info (icon + name)
+
+Options:
+  -h, --help                   Show this help message
+
+Session name rules:
+  - For ghq repositories: <org>/<repo> with '.' replaced by '_'
+  - For other directories: directory name with '.' replaced by '_'
+
+Info output:
+  - Git worktree:  <worktree-name>
+  - Neovim running:
+  - Otherwise:
+EOF
+}
+
+#
+# Session name generation
+#
+cmd_session() {
+  local target_path="${1:-$(pwd)}"
+
+  # Resolve to absolute path
+  target_path="$(cd "$target_path" && pwd)"
+
+  local ghq_root
+  ghq_root="$(ghq root)"
+
+  local session_name
+
+  # Check if path is under ghq root
+  if [[ "$target_path" == "$ghq_root"/* ]]; then
+    # Extract org/repo from ghq path (e.g., ~/ghq/github.com/fohte/dotfiles -> fohte/dotfiles)
+    local repo_path="${target_path#"$ghq_root"/github.com/}"
+    # Handle worktrees: strip /.worktrees/<name> suffix
+    repo_path="${repo_path%%/.worktrees/*}"
+    session_name="$repo_path"
+  else
+    # Use directory name for non-ghq paths
+    session_name="$(basename "$target_path")"
+  fi
+
+  # Replace '.' with '_' (tmux session name convention)
+  echo "${session_name//\./_}"
+}
+
+#
+# Window info generation (formerly tmux-window-info)
+#
+cmd_info() {
+  if [ -z "${TMUX:-}" ]; then
+    echo "This command must be run in tmux" >&2
+    exit 1
+  fi
+
+  local window_id="${1:-}"
+  if [ -z "$window_id" ]; then
+    echo "Error: window-id is required" >&2
+    exit 1
+  fi
+
+  # Get session name
+  local session_name
+  session_name=$(tmux display-message -p '#S')
+
+  # For vibe session, just show window name
+  if [ "$session_name" = "vibe" ]; then
+    tmux display-message -p '#W'
+    exit 0
+  fi
+
+  # Get the current working directory of the active pane
+  local current_dir
+  current_dir=$(tmux list-panes -t "$window_id" -F '#{pane_current_path}' | head -1)
+
+  # Check if current directory is a git worktree
+  is_worktree() {
+    local dir="$1"
+    if [ -f "${dir}/.git" ]; then
+      # Check if .git is a file (worktree) rather than a directory
+      if head -1 "${dir}/.git" 2> /dev/null | grep -q "^gitdir:"; then
+        return 0
+      fi
+    fi
+    return 1
+  }
+
+  if is_worktree "$current_dir"; then
+    # use branch icon for git worktree and show worktree name (highest priority)
+    local worktree_name
+    worktree_name=$(basename "$current_dir")
+    echo -e "\ue725 $worktree_name"
+  else
+    case "$(tmux list-panes -t "$window_id" -F '#{pane_current_command}')" in
+      *'nvim'*)
+        # use vim icon instead of neovim icon (second priority)
+        # so HackGen35 Console NF doesn't have the neovim icon
+        echo -e '\ue7c5'
+        ;;
+      *)
+        # terminal icon (lowest priority)
+        echo -e '\uf120'
+        ;;
+    esac
+  fi
+}
+
+#
+# Main
+#
+case "${1:-}" in
+  session)
+    shift
+    cmd_session "$@"
+    ;;
+  info)
+    shift
+    cmd_info "$@"
+    ;;
+  -h | --help)
+    show_help
+    ;;
+  *)
+    echo "Error: Unknown command: ${1:-}" >&2
+    show_help
+    exit 1
+    ;;
+esac

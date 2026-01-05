@@ -20,9 +20,11 @@ has 'gawk' && alias awk='gawk'
 alias ....='cd ../../..'
 alias ...='cd ../..'
 alias ..='cd ..'
-alias /='cd $(git-root || echo $HOME)'
+alias /='cd $(git-root)'
+alias //='cd $(git-root -r)'
 alias u='cd -'
 alias ~='cd ~'
+alias q=exit
 
 has assh && alias ssh="assh wrapper ssh --"
 

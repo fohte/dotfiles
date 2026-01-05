@@ -6,7 +6,10 @@ formatters['eslint'] = require('efmls-configs.formatters.eslint_d')
 formatters['eslint'].formatCommand =
   string.format('%s %s', 'env ESLINT_USE_FLAT_CONFIG=true', formatters['eslint'].formatCommand)
 
-formatters['prettier'] = require('efmls-configs.formatters.prettier')
+-- Use project-local prettierrc if exists, otherwise use prettier defaults (ignore global config)
+formatters['prettier'] = vim.tbl_extend('force', require('efmls-configs.formatters.prettier'), {
+  formatCommand = [[sh -c 'if prettier --find-config-path "${INPUT}" >/dev/null 2>&1; then prettier --stdin-filepath "${INPUT}"; else prettier --stdin-filepath "${INPUT}" --no-config; fi']],
+})
 
 formatters['shfmt'] = require('efmls-configs.formatters.shfmt')
 

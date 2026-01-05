@@ -20,11 +20,23 @@ import_env() {
 
 # Calculate checksum of zsh config files
 calculate_zsh_config_checksum() {
-  find -L "$ZSH_CONFIG_HOME" -type f \( -name "*.zsh" -o -name ".zshenv" -o -name ".zshrc" \) -o -path "*/rc/functions/*" -type f \
+  local debug_mode=false
+
+  # Parse arguments
+  if [[ "$1" == "--debug" ]]; then
+    debug_mode=true
+  fi
+
+  local files=$(find -L "$ZSH_CONFIG_HOME" -type f \( -name "*.zsh" -o -name ".zshenv" -o -name ".zshrc" \) -o -path "*/rc/functions/*" -type f \
     ! -name ".zsh_history" \
     ! -name ".zsh_sessions" \
-    ! -path "*/.zsh_sessions/*" \
-    -exec cat {} \; 2>/dev/null | shasum -a 256 | cut -d' ' -f1
+    ! -path "*/.zsh_sessions/*" 2>/dev/null)
+
+  if $debug_mode; then
+    echo "$files" >&2
+  fi
+
+  echo "$files" | xargs cat 2>/dev/null | shasum -a 256 | cut -d' ' -f1
 }
 
 typeset -U path PATH fpath FPATH manpath MANPATH
@@ -40,8 +52,6 @@ setopt no_global_rcs
 
 path=(
   $HOME/.cabal/bin(N-/)
-  $HOME/.local/bin(N-/)
-  $HOME/bin(N-/)
   /usr/local/bin(N-/)
   /usr/bin(N-/)
   /bin(N-/)
@@ -75,13 +85,10 @@ export KEYTIMEOUT=1
 # gpg-agent
 export GPG_TTY=$(tty)
 
-# pre-commit
-# ignore pre-commit error when no .pre-commit-config.yaml is found
-export PRE_COMMIT_ALLOW_NO_CONFIG=1
+export BAT_THEME=1337
 
 import_env 'homebrew.zsh'
 
-import_env 'fzf.zsh'
 import_env 'go.zsh'
 import_env 'node.zsh'
 import_env 'python.zsh'
@@ -91,10 +98,20 @@ import_env 'vim.zsh'
 # priotize packages installed with mise
 import_env 'mise.zsh'
 
+# fzf is installed by mise, so fzf.zsh must be loaded after mise.zsh
+import_env 'fzf.zsh'
+
 # direnv hook must be loaded after homebrew.zsh because direnv is installed by homebrew
 has 'direnv' && eval "$(direnv hook zsh)"
 
 # Calculate initial checksum of zsh config files
 export ZSH_CONFIG_CHECKSUM=$(calculate_zsh_config_checksum)
+
+# prioritize user's local bin directories
+path=(
+  $HOME/.local/bin(N-/)
+  $HOME/bin(N-/)
+  $path
+)
 
 [ -f ~/.local/.zshenv ] && source ~/.local/.zshenv

@@ -1,0 +1,78 @@
+# this mise.toml is repository specific config, the global config is in config/mise/home-config.toml
+
+[tasks.refresh]
+description = "Refresh dotfiles and tools"
+depends = [
+  "refresh:update-skk",
+  "refresh:nvim-restore",
+  "refresh:mise-install",
+  "refresh:lefthook",
+  "refresh:brew-upgrade",
+]
+
+[tasks."refresh:pull"]
+description = "Pull latest dotfiles and update submodules"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(ghq list -p fohte/dotfiles)"
+
+if git diff --quiet; then
+  git pull
+else
+  git stash
+  git pull
+  git stash pop
+fi
+
+git submodule update --init --recursive
+'''
+
+[tasks."refresh:deploy"]
+description = "Deploy dotfiles symlinks"
+depends = ["refresh:pull"]
+run = "scripts/deploy"
+
+[tasks."refresh:update-skk"]
+description = "Update SKK dictionary"
+run = "update-skk-dictionary"
+
+[tasks."refresh:nvim-restore"]
+description = "Restore Neovim plugins"
+depends = ["refresh:deploy"]
+run = "nvim --headless -c 'Lazy! restore' +q"
+
+[tasks."refresh:mise-install"]
+description = "Install mise tools"
+depends = ["refresh:deploy"]
+run = "mise install"
+
+[tasks."refresh:lefthook"]
+description = "Run lefthook hooks"
+depends = ["refresh:deploy"]
+run = "lefthook run pre-commit"
+
+[tasks."refresh:brew-upgrade"]
+description = "Upgrade Homebrew packages"
+run = "brew upgrade"
+
+[tools]
+lefthook = "2.0.13"
+
+# lefthook hooks
+actionlint = "1.7.10"
+bun = "1.3.5"
+"cargo:basefmt" = "0.1.0"
+"npm:@commitlint/cli" = "20.2.0"
+"npm:prettier" = "3.7.4"
+shellcheck = "0.11.0"
+shfmt = "3.12.0"
+stylua = "2.1.0"
+
+# Build tools
+go-jsonnet = "0.21.0"
+jq = "1.8.1"
+
+[settings]
+npm.bun = true

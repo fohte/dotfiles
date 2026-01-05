@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# check-aws-sso-status - Check AWS SSO session status
+#
+# Exit codes:
+#   0: session is valid
+#   1: session is expired/invalid
+#   2: AWS SSO not configured
+
+set -euo pipefail
+
+# Find the most recent SSO cache file
+cache_dir="${HOME}/.aws/sso/cache"
+if [[ ! -d "$cache_dir" ]]; then
+  exit 2
+fi
+
+# Get the most recent cache file
+cache_file=$(find "$cache_dir" -name "*.json" -type f -print0 2> /dev/null | xargs -0 ls -t 2> /dev/null | head -1)
+if [[ -z "$cache_file" ]]; then
+  exit 1
+fi
+
+# Extract expiration time
+expires_at=$(jq -r '.expiresAt' "$cache_file" 2> /dev/null)
+if [[ "$expires_at" == "null" || -z "$expires_at" ]]; then
+  exit 1
+fi
+
+# Convert to epoch time using GNU date
+expires_epoch=$(date -d "$expires_at" "+%s" 2> /dev/null)
+current_epoch=$(date "+%s")
+
+# Calculate remaining time
+remaining=$((expires_epoch - current_epoch))
+
+if [[ $remaining -le 0 ]]; then
+  exit 1
+fi
+
+# Session is valid
+exit 0

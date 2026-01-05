@@ -1,0 +1,6 @@
+[submodule "config/tmux/plugins/tmux-better-mouse-mode"]
+	path = config/tmux/plugins/tmux-better-mouse-mode
+	url = https://github.com/nhdaly/tmux-better-mouse-mode
+[submodule "config/tmux/plugins/tmux-fzf-url"]
+	path = config/tmux/plugins/tmux-fzf-url
+	url = https://github.com/wfxr/tmux-fzf-url
