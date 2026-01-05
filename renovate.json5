@@ -4,23 +4,14 @@
   packageRules: [
     {
       groupName: 'fzf updates',
-      matchPackageNames: [
-        'junegunn/fzf',
-        'junegunn/fzf/fzf-tmux',
-      ],
+      matchPackageNames: ['junegunn/fzf', 'junegunn/fzf/fzf-tmux'],
     },
     {
       groupName: 'mise tools',
-      matchManagers: [
-        'mise',
-      ],
-      schedule: [
-        'after 9am on saturday',
-      ],
+      matchManagers: ['mise'],
+      schedule: ['after 9am on saturday'],
       automerge: true,
-      matchUpdateTypes: [
-        'patch',
-      ],
+      matchUpdateTypes: ['patch'],
     },
   ],
 }
