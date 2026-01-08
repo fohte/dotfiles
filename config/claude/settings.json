@@ -5,6 +5,8 @@
   "includeCoAuthoredBy": true,
   "permissions": {
     "allow": [
+      "Bash(* --help)",
+      "Bash(* --version)",
       "Bash(actionlint:*)",
       "Bash(bun pm ls:*)",
       "Bash(cargo build:*)",
