@@ -108,6 +108,10 @@ if match_tag codex; then
   sym config/codex/config.toml ~/.codex/config.toml
 fi
 
+if match_tag opencode; then
+  sym config/opencode ~/.config/opencode
+fi
+
 if match_tag mise; then
   sym config/mise/home-config.toml ~/.config/mise/config.toml
 fi
