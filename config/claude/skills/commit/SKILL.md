@@ -104,10 +104,6 @@ git commit -m "$(cat <<'EOF'
 <scope>: <subject>
 
 <body - Why と What を記述>
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 EOF
 )"
 ```
