@@ -11,12 +11,13 @@ vim.filetype.add({
     alloy = 'hcl',
   },
   filename = {
-    ['.babelrc'] = 'json',
+    ['.babelrc'] = 'jsonc',
     ['.envrc'] = 'bash',
-    ['.prettierrc'] = 'json',
+    ['.prettierrc'] = 'jsonc',
     ['.themisrc'] = 'vim',
     ['Jenkinsfile'] = 'groovy',
     ['Steepfile'] = 'ruby',
+    ['tsconfig.json'] = 'jsonc',
   },
   pattern = {
     -- `.env.*`
@@ -25,5 +26,7 @@ vim.filetype.add({
     ['Dockerfile%..*'] = 'dockerfile',
     -- `.github/workflows/*.yml`
     ['.*/%.github/workflows/.*%.yml'] = 'yaml.actions',
+    -- `tsconfig*.json`
+    ['tsconfig.*%.json'] = 'jsonc',
   },
 })

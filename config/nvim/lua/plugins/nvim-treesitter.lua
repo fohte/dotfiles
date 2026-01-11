@@ -18,6 +18,7 @@ return {
           'javascript',
           'json',
           'json5',
+          'jsonc',
           'jsonnet',
           'lua',
           'markdown',
