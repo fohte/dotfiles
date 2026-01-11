@@ -123,5 +123,6 @@
   "enabledPlugins": {
     "criticalthink@criticalthink": true
   },
-  "alwaysThinkingEnabled": false
+  "alwaysThinkingEnabled": false,
+  "promptSuggestionEnabled": false
 }
