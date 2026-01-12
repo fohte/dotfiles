@@ -22,10 +22,11 @@ json_input=$(cat)
 title=$(echo "$json_input" | jq -r '.title // "Claude Code"')
 message=$(echo "$json_input" | jq -r '.message // "Notification"')
 
-# Get tmux session info
-tmux_session=$(tmux display-message -p '#S')
-tmux_window=$(tmux display-message -p '#I')
-tmux_pane=$(tmux display-message -p '#P')
+# Get tmux session info from TMUX_PANE environment variable
+# Note: tmux display-message -p returns the currently focused pane,
+# so when running from a background pane (e.g., Claude Code in another window),
+# the restoration target would be wrong. Use TMUX_PANE directly instead.
+tmux_session=$(tmux display-message -p -t "$TMUX_PANE" '#S')
 
 # Add tmux session to title
 title="$title [$tmux_session]"
@@ -35,7 +36,7 @@ click_command=$(
   cat << EOF
 zsh -c "
 client_name=\\\$(tmux list-clients -F '#{client_name}' | head -n1)
-tmux switch-client -c \"\\\$client_name\" -t '$tmux_session:$tmux_window.$tmux_pane'
+tmux switch-client -c \"\\\$client_name\" -t '$TMUX_PANE'
 open -a WezTerm
 "
 EOF
