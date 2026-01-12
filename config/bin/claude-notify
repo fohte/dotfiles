@@ -27,10 +27,10 @@ message=$(echo "$json_input" | jq -r '.message // "Notification"')
 # so when running from a background pane (e.g., Claude Code in another window),
 # the restoration target would be wrong. Use TMUX_PANE directly instead.
 tmux_session=$(tmux display-message -p -t "$TMUX_PANE" '#S')
-tmux_window=$(tmux display-message -p -t "$TMUX_PANE" '#W')
+tmux_window_info=$(tmux-name info --no-icon "$TMUX_PANE")
 
 # Build subtitle from tmux info
-subtitle="\\[$tmux_session] $tmux_window"
+subtitle="\\[$tmux_session] $tmux_window_info"
 
 # Build the command to execute when notification is clicked
 click_command=$(

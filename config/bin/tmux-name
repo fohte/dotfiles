@@ -20,10 +20,11 @@ tmux-name - Generate tmux session/window names and display info
 
 Usage:
   tmux-name session [path]     Generate session name from path (default: cwd)
-  tmux-name info <window-id>   Generate window display info (icon + name)
+  tmux-name info [--no-icon] <window-id>   Generate window display info
 
 Options:
   -h, --help                   Show this help message
+  --no-icon                    Omit icon from info output (name only)
 
 Session name rules:
   - For ghq repositories: <org>/<repo> with '.' replaced by '_'
@@ -75,6 +76,12 @@ cmd_info() {
     exit 1
   fi
 
+  local show_icon=true
+  if [ "${1:-}" = "--no-icon" ]; then
+    show_icon=false
+    shift
+  fi
+
   local window_id="${1:-}"
   if [ -z "$window_id" ]; then
     echo "Error: window-id is required" >&2
@@ -111,19 +118,25 @@ cmd_info() {
     # use branch icon for git worktree and show worktree name (highest priority)
     local worktree_name
     worktree_name=$(basename "$current_dir")
-    echo -e "\ue725 $worktree_name"
+    if [ "$show_icon" = true ]; then
+      echo -e "\ue725 $worktree_name"
+    else
+      echo "$worktree_name"
+    fi
   else
-    case "$(tmux list-panes -t "$window_id" -F '#{pane_current_command}')" in
-      *'nvim'*)
-        # use vim icon instead of neovim icon (second priority)
-        # so HackGen35 Console NF doesn't have the neovim icon
-        echo -e '\ue7c5'
-        ;;
-      *)
-        # terminal icon (lowest priority)
-        echo -e '\uf120'
-        ;;
-    esac
+    if [ "$show_icon" = true ]; then
+      case "$(tmux list-panes -t "$window_id" -F '#{pane_current_command}')" in
+        *'nvim'*)
+          # use vim icon instead of neovim icon (second priority)
+          # so HackGen35 Console NF doesn't have the neovim icon
+          echo -e '\ue7c5'
+          ;;
+        *)
+          # terminal icon (lowest priority)
+          echo -e '\uf120'
+          ;;
+      esac
+    fi
   fi
 }
 
