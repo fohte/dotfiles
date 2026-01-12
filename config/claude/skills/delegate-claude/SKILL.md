@@ -5,12 +5,12 @@ description: 別の worktree で別の Claude Code インスタンスにタス�
 
 # 別の Claude Code インスタンスにタスクを委任する
 
-`git wm new --prompt` を使って、別の worktree で別の Claude Code インスタンスに処理を委任する。
+`a wm new --prompt` を使って、別の worktree で別の Claude Code インスタンスに処理を委任する。
 
 ## 使い方
 
 ```bash
-git wm new <branch-name> --prompt "<instructions>"
+a wm new <branch-name> --prompt "<instructions>"
 ```
 
 - `branch-name`: 新しい環境用に作成するブランチ名
@@ -20,10 +20,10 @@ git wm new <branch-name> --prompt "<instructions>"
 
 ```bash
 # 現在のリポジトリ
-git wm new feature-login --prompt "メール/パスワード認証によるログイン機能を実装"
+a wm new feature-login --prompt "メール/パスワード認証によるログイン機能を実装"
 
 # 別のリポジトリ
-cd ~/ghq/github.com/fohte/other-repo && git wm new feature-x --prompt "機能 X を実装"
+cd ~/ghq/github.com/fohte/other-repo && a wm new feature-x --prompt "機能 X を実装"
 ```
 
 実行すると:
@@ -61,7 +61,7 @@ cd ~/ghq/github.com/fohte/other-repo && git wm new feature-x --prompt "機能 X 
 ### 良い例
 
 ```bash
-git wm new fix-auth-timeout --prompt "## 背景
+a wm new fix-auth-timeout --prompt "## 背景
 ユーザーが 5 分間操作しないとセッションがタイムアウトするが、期待値は 30 分。
 
 ## 現状
@@ -86,5 +86,5 @@ git wm new fix-auth-timeout --prompt "## 背景
 
 ```bash
 # これはダメ - 新しいインスタンスは「そのバグ」や「さっき話した」が何か分からない
-git wm new fix-bug --prompt "さっき話したバグを直して"
+a wm new fix-bug --prompt "さっき話したバグを直して"
 ```

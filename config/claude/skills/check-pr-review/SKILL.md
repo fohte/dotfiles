@@ -1,6 +1,6 @@
 ---
 name: check-pr-review
-description: Use gh-check-pr-review to fetch and address PR review comments. Use this skill when checking PR review feedback, viewing unresolved threads, or addressing reviewer comments.
+description: Use `a gh check-pr-review` to fetch and address PR review comments. Use this skill when checking PR review feedback, viewing unresolved threads, or addressing reviewer comments.
 ---
 
 # Check PR Review Comments
@@ -10,7 +10,7 @@ Fetch review comments for a PR and address any feedback.
 ## Usage
 
 ```bash
-gh-check-pr-review <pr-number> [-R <owner/repo>] [--all] [--review N] [--full]
+a gh check-pr-review <pr-number> [-R <owner/repo>] [--all] [--review N] [--full]
 ```
 
 ## Options
