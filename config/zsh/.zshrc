@@ -13,9 +13,6 @@ import_rc() {
 
 autoload -Uz compinit && compinit -u
 autoload -Uz colors; colors
-autoload -U +X bashcompinit && bashcompinit
-complete -C "$(which aws_completer)" aws
-setopt completealiases
 
 if ! [ -d ~/.zinit ]; then
   import_rc 'install/zinit.zsh'
@@ -25,6 +22,7 @@ import_rc 'zinit.rc.zsh'
 
 import_rc 'alias.rc.zsh'
 import_rc 'bindkey.rc.zsh'
+import_rc 'completions.rc.zsh'
 import_rc 'prompt.rc.zsh'
 import_rc 'history.rc.zsh'
 import_rc 'misc.rc.zsh'
