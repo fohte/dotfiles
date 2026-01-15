@@ -55,9 +55,6 @@ Use this when you want to discard local changes and get the latest from GitHub.
 ### Push (apply changes to GitHub)
 
 ```bash
-# Preview changes (compares with latest GitHub state)
-gh-issue-agent push <issue-number> --dry-run
-
 # Apply changes
 gh-issue-agent push <issue-number>
 
@@ -67,6 +64,8 @@ gh-issue-agent push <issue-number> --force
 # Edit other users' comments
 gh-issue-agent push <issue-number> --edit-others
 ```
+
+**Workflow**: Before pushing, show the edited content to the user for review using the Read tool.
 
 ## Workflow
 
@@ -80,8 +79,10 @@ gh-issue-agent view 123
 
 1. Pull the issue: `gh-issue-agent pull 123`
 2. Read/Edit files in `~/.cache/gh-issue-agent/<owner>/<repo>/123/`
-3. Preview changes: `gh-issue-agent push 123 --dry-run`
-4. Apply changes: `gh-issue-agent push 123`
+3. Show the draft to user for review (use Read tool to display the edited content)
+4. After user approval, apply changes: `gh-issue-agent push 123`
+
+**Note**: Show the draft content to the user for review before pushing.
 
 ## Editing Comments
 
@@ -95,7 +96,7 @@ gh-issue-agent view 123
 - `pull` fails if local changes exist (use `refresh` to discard)
 - `push` fails if remote has changed since pull (use `--force` to overwrite)
 - `push` fails when editing other users' comments (use `--edit-others` to allow)
-- Use `--dry-run` to preview what will be changed
+- Always show edited content to user for review before pushing
 
 ## Notes
 
