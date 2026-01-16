@@ -79,7 +79,7 @@ gh-issue-agent view 123
 
 1. Pull the issue: `gh-issue-agent pull 123`
 2. Read/Edit files in `~/.cache/gh-issue-agent/<owner>/<repo>/123/`
-3. Show the draft to user for review (use Read tool to display the edited content)
+3. Show the draft file path to user for review
 4. After user approval, apply changes: `gh-issue-agent push 123`
 
 **Note**: Show the draft content to the user for review before pushing.
