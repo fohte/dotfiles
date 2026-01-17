@@ -223,5 +223,17 @@ frontmatter の `title` が PR タイトルとして、body 部分が PR 本文�
 
 ## 5. CI 実行を監視
 
-`gh pr checks --watch`コマンドを使用してCIチェックを監視します。
-CI が成功したら完了です。失敗した場合は、問題を調査・修正して再度プッシュしてください。
+`gh pr checks --watch` コマンドを使用して CI チェックを監視します。
+CI が成功したら次のステップに進みます。失敗した場合は、問題を調査・修正して再度プッシュしてください。
+
+## 6. Gemini Code Assist レビューを待機（fohte リポジトリのみ）
+
+**対象:** リポジトリの owner が `fohte` の場合のみこのステップを実行する。
+
+CI が成功したら、`a ai review wait` コマンドを使用して Gemini Code Assist のレビュー完了を待機します（初回レビューは PR 作成時に自動でリクエストされる）。
+
+```bash
+a ai review wait
+```
+
+レビューが完了したら、`check-pr-review` skill を使用してレビュー内容を確認し、指摘事項があれば対応してください。
