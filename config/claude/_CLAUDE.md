@@ -31,6 +31,7 @@
     - 別の Claude Code インスタンスにタスクを委任する時: `delegate-claude` Skill を使用すること
     - Renovate 設定のデバッグ・検証時: `debug-renovate` Skill を使用すること
     - JavaScript/TypeScript プロジェクトでパッケージマネージャー操作時: `ni` Skill を使用すること (`npm`, `yarn`, `pnpm`, `bun` を直接使用しない)
+    - 調査専用タスク時: `research` Skill を使用すること (ファイル変更なしで調査のみ実行)
 - GitHub アクセス: すべての GitHub 操作には `gh` コマンドを使用すること（`gh api` サブコマンドは避けること）。これには GitHub URL の処理も含まれる。他のリポジトリにアクセスする際は `-R` オプションを使用すること（目的: `gh` コマンドは安全な自動実行のため事前承認済み）
 - HTTP リクエスト: `curl` や `gh api` を使用する際は、`-X GET` のように HTTP メソッドを明示的に指定すること（目的: `-X GET` は自動許可されているため）
 - ファイル削除: 追跡されているファイルを削除する際は、削除を適切にステージングするため `rm` ではなく `git rm` を使用すること
