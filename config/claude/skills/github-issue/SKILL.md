@@ -1,11 +1,11 @@
 ---
 name: github-issue
-description: Use gh-issue-agent to view and edit GitHub Issues. Use this skill when working with GitHub Issues - viewing issue content, editing issue body/title/labels, or adding/editing comments.
+description: Use `a gh issue-agent` to view and edit GitHub Issues. Use this skill when working with GitHub Issues - viewing issue content, editing issue body/title/labels, or adding/editing comments.
 ---
 
 # GitHub Issue Management
 
-Use `gh-issue-agent` to manage GitHub Issues as local files. This provides better diff visibility and safer editing compared to direct `gh issue` commands.
+Use `a gh issue-agent` to manage GitHub Issues as local files. This provides better diff visibility and safer editing compared to direct `gh issue` commands.
 
 ## When to Use
 
@@ -20,7 +20,7 @@ Use this skill when:
 ### View (read-only)
 
 ```bash
-gh-issue-agent view <issue-number> [-R <owner/repo>]
+a gh issue-agent view <issue-number> [-R <owner/repo>]
 ```
 
 Use this when you only need to **read** the issue content. No local cache is created.
@@ -33,7 +33,7 @@ Use this when you only need to **read** the issue content. No local cache is cre
 ### Pull (fetch issue locally)
 
 ```bash
-gh-issue-agent pull <issue-number> [-R <owner/repo>]
+a gh issue-agent pull <issue-number> [-R <owner/repo>]
 ```
 
 This saves the issue to `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`:
@@ -47,7 +47,7 @@ This saves the issue to `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`
 ### Refresh (discard local changes and re-fetch)
 
 ```bash
-gh-issue-agent refresh <issue-number> [-R <owner/repo>]
+a gh issue-agent refresh <issue-number> [-R <owner/repo>]
 ```
 
 Use this when you want to discard local changes and get the latest from GitHub.
@@ -56,13 +56,16 @@ Use this when you want to discard local changes and get the latest from GitHub.
 
 ```bash
 # Apply changes
-gh-issue-agent push <issue-number>
+a gh issue-agent push <issue-number>
 
 # Force overwrite if remote has changed since pull
-gh-issue-agent push <issue-number> --force
+a gh issue-agent push <issue-number> --force
 
 # Edit other users' comments
-gh-issue-agent push <issue-number> --edit-others
+a gh issue-agent push <issue-number> --edit-others
+
+# Allow deleting comments from GitHub
+a gh issue-agent push <issue-number> --allow-delete
 ```
 
 ## Workflow
@@ -70,15 +73,15 @@ gh-issue-agent push <issue-number> --edit-others
 ### Viewing only (no edits)
 
 ```bash
-gh-issue-agent view 123
+a gh issue-agent view 123
 ```
 
 ### Editing
 
-1. Pull the issue: `gh-issue-agent pull 123`
+1. Pull the issue: `a gh issue-agent pull 123`
 2. Read/Edit files in `~/.cache/gh-issue-agent/<owner>/<repo>/123/`
 3. Show the draft file path to user for review
-4. After user approval, apply changes: `gh-issue-agent push 123`
+4. After user approval, apply changes: `a gh issue-agent push 123`
 
 **Note**: Show the draft content to the user for review before pushing.
 
@@ -94,7 +97,16 @@ gh-issue-agent view 123
 - `pull` fails if local changes exist (use `refresh` to discard)
 - `push` fails if remote has changed since pull (use `--force` to overwrite)
 - `push` fails when editing other users' comments (use `--edit-others` to allow)
+- `push` fails when deleting comments (use `--allow-delete` to allow)
 - Always show edited content to user for review before pushing
+
+## Writing Style
+
+Follow these guidelines when writing issues or comments:
+
+- Avoid unnecessary bold formatting
+- Do not start list items with a summary followed by a colon. Write normal sentences instead
+- When linking to external resources (e.g., other issues), explain why the link is relevant
 
 ## Notes
 
