@@ -65,8 +65,6 @@ gh-issue-agent push <issue-number> --force
 gh-issue-agent push <issue-number> --edit-others
 ```
 
-**Workflow**: Before pushing, show the edited content to the user for review using the Read tool.
-
 ## Workflow
 
 ### Viewing only (no edits)
