@@ -80,10 +80,8 @@ a gh issue-agent view 123
 
 1. Pull the issue: `a gh issue-agent pull 123`
 2. Read/Edit files in `~/.cache/gh-issue-agent/<owner>/<repo>/123/`
-3. Show the draft file path to user for review
-4. After user approval, apply changes: `a gh issue-agent push 123`
-
-**Note**: Show the draft content to the user for review before pushing.
+3. Run `a ai draft <file-path>` to open the edited file in WezTerm + Neovim for user review
+4. After user approval (user closes the editor), apply changes: `a gh issue-agent push 123`
 
 ## Editing Comments
 
@@ -98,7 +96,7 @@ a gh issue-agent view 123
 - `push` fails if remote has changed since pull (use `--force` to overwrite)
 - `push` fails when editing other users' comments (use `--edit-others` to allow)
 - `push` fails when deleting comments (use `--allow-delete` to allow)
-- Always show edited content to user for review before pushing
+- Always use `a ai draft <file-path>` to let user review edited content before pushing
 
 ## Writing Style
 
