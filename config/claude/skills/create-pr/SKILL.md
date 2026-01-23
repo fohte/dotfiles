@@ -7,7 +7,25 @@ description: Use this skill when creating a Pull Request. This skill provides th
 
 変更を push した後、以下の手順で PR を作成する。
 
+## 0. 状態確認時の注意
+
+**重要:** PR に含まれる変更を確認する際は、ローカルの `master` ブランチではなく、必ず `origin/master` と比較すること。
+
+```bash
+# 正しい (リモートの最新状態と比較)
+git diff origin/master...HEAD
+git log origin/master..HEAD
+
+# 間違い (ローカルの master が古いと不要な差分が含まれる)
+git diff master...HEAD
+git log master..HEAD
+```
+
+ローカルの master を pull していない場合、release-please が生成した CHANGELOG.md やバージョン更新のコミットが差分に含まれてしまうため。
+
 ## 1. PR body のドラフトファイルを作成する
+
+**まず [writing-guide.md](writing-guide.md) を読み込むこと。** タイトルと description の書き方ルールが定義されている。
 
 `echo` コマンドを使用して、PR の説明のドラフトを `a ai pr-draft new` コマンドに渡す。
 
@@ -26,100 +44,6 @@ echo "## Why
 ```
 
 ドラフトファイルは `/tmp/pr-body-draft/<owner>/<repo>/<branch>.md` に自動的に作成される。以降のコマンドではファイルパスの指定は不要。
-
-### タイトルの生成ガイドライン
-
-- **簡潔に**: 50 文字以内で変更内容を要約
-- **現在形の命令形**: 「Add ...」「Fix ...」「Update ...」など
-- **日本語で生成**: body と同様に日本語で書く（public repo の場合、翻訳はユーザーが `steps.ready-for-translation: true` にした後に行う）
-- **効果を書く、実装を書かない**: 「何をするか」ではなく「何が解決されるか/何ができるようになるか」を書く
-    - ❌ `minimumReleaseAge チェックをスキップする` (実装詳細)
-    - ✅ `lockFileMaintenance の automerge が動作するようにする` (効果)
-
-#### release-please を使用しているリポジトリの場合
-
-リポジトリに `release-please-config.json` または `.release-please-manifest.json` が存在する場合は、**Conventional Commits** 形式を使用する:
-
-- **フォーマット**: `<type>(<scope>): <description>`
-
-##### type 選択フロー（必須）
-
-**重要:** type を選択する前に、必ず以下のフローに従って判断すること。
-
-```
-Q1: この変更はエンドユーザー（ライブラリ利用者/アプリ利用者）に影響するか?
-    │
-    ├─ YES → Q2: 新機能か、既存機能の修正か?
-    │         ├─ 新機能 → feat (minor bump)
-    │         └─ 既存機能の修正 → fix (patch bump)
-    │
-    └─ NO → Q3: 何を変更したか?
-              ├─ テストのみ → test (bump なし)
-              ├─ ドキュメントのみ → docs (bump なし)
-              ├─ コードの内部構造（挙動変更なし）→ refactor (bump なし)
-              ├─ フォーマット/スタイルのみ → style (bump なし)
-              ├─ パフォーマンス改善（挙動変更なし）→ perf (bump なし)
-              ├─ ビルドシステム/依存関係 → build (bump なし)
-              ├─ CI 設定 → ci (bump なし)
-              └─ その他のツール設定 → chore (bump なし)
-```
-
-**よくある間違い:**
-
-- ❌ テストを「修正」したから `fix` → テストの修正はユーザーに影響しないので `test`
-- ❌ CI を「直した」から `fix` → CI/ビルドの修正はユーザーに影響しないので `chore`
-- ❌ リファクタリングで「バグを防いだ」から `fix` → 実際にバグが発生していなければ `refactor`
-- ❌ ドキュメントの「誤りを修正」したから `fix` → ドキュメントは `docs`
-
-**type 一覧:**
-
-| type       | バージョン | 用途                                     |
-| ---------- | ---------- | ---------------------------------------- |
-| `feat`     | minor bump | 新機能追加（ユーザーに新しい価値を提供） |
-| `fix`      | patch bump | バグ修正（ユーザーが遭遇する問題を解決） |
-| `docs`     | bump なし  | ドキュメントのみの変更                   |
-| `style`    | bump なし  | フォーマットなど（機能変更なし）         |
-| `refactor` | bump なし  | リファクタリング（機能変更なし）         |
-| `perf`     | bump なし  | パフォーマンス改善                       |
-| `test`     | bump なし  | テストの追加・修正                       |
-| `build`    | bump なし  | ビルドシステムや依存関係の変更           |
-| `ci`       | bump なし  | CI 設定の変更                            |
-| `chore`    | bump なし  | その他のツール設定・雑務                 |
-
-- **description の書き方**:
-    - **動詞形で書く**: 名詞形ではなく「〜する」「〜できるようにする」のような動詞形で書く
-    - **type との二重表現を避ける**: `fix` type なら「修正」、`feat` type なら「追加」を description に含めない
-        - Bad: `fix(api): エラーハンドリングを修正` (fix + 修正 = 二重表現)
-        - Good: `fix(api): エラーハンドリングが動作するようにする`
-    - **技術的に正確な表現を使う**: 冗長・意味不明な表現を避ける
-        - Bad: `tar.gz の gzip 解凍` (tar.gz は gzip 圧縮された tar なので冗長)
-        - Good: `gzip 解凍できるようにする`
-
-- **例**:
-    - `feat(auth): ログイン機能を実装する`
-    - `fix(api): エラーレスポンスが正しく返るようにする`
-    - `docs(readme): インストール手順を更新する`
-
-#### release-please を使用していないリポジトリの場合
-
-シンプルな形式を使用:
-
-- **フォーマット**: `<scope>: <description>`
-- **description は動詞形で書く** (上記の「description の書き方」を参照)
-- **例**:
-    - 機能追加: `auth: ログイン機能を実装する`
-    - バグ修正: `api: エラーレスポンスが正しく返るようにする`
-    - リファクタリング: `utils: ヘルパー関数を整理する`
-
-注意: Markdown のコードブロックにバッククォートを含める場合、シェルのクォートの種類によってエスケープが必要。
-
-```bash
-# double quote のときは \` でエスケープ
-echo "use \`gh\` command"
-
-# single quote のときは escape 不要
-echo 'use `gh` command'
-```
 
 ### Frontmatter について
 
@@ -150,53 +74,15 @@ steps:
 - `steps.ready-for-translation`: (public repo のみ) ドラフト承認フラグ。true になったら翻訳を実行する。public repo では翻訳は**必須**であり、submit 時に日本語が含まれているとエラーになる
 - `steps.submit`: true にするとエディタ終了時にファイルのハッシュが保存される。submit 時にハッシュが一致しないと失敗する（改ざん防止）
 
-### 注意事項
+注意: Markdown のコードブロックにバッククォートを含める場合、シェルのクォートの種類によってエスケープが必要。
 
-- **Why/What のみ記述**: それ以外のセクション (「期待される効果」「参考」など) は書かない
-- **コード要素はバッククォートで囲む**: ファイル名、関数名、変数名、コマンド名などは必ず `` ` `` で囲む
-    - Good: `config.json` を更新、`handleError` 関数を追加
-    - Bad: config.json を更新、handleError 関数を追加
+```bash
+# double quote のときは \` でエスケープ
+echo "use \`gh\` command"
 
-### Why セクションの書き方
-
-- **Issue リンクを先頭に**: `- from: <URL>` 形式で関連 Issue/PR へのリンクを記載 (あれば)
-- **問題/目的を最初に**: 「何が問題か」または「何を実現したいか」を最初の箇条書きで述べる
-- **根拠・背景はインデントで補足**: 問題の原因、背景、判断理由は子要素として記載
-- **根拠は引用文とリンクをセットで記載**: リンクだけでなく該当箇所を引用し、リンク先が変更されても追跡可能にする
-    - **引用は原文をそのまま使用する**: 勝手に要約・省略・変更してはならない。必ずドキュメントから正確にコピーすること
-    - 引用文が長い場合は、根拠として必要な部分を正確に抜粋する
-
-**引用の書式:**
-
-```markdown
-> 引用文 (原文をそのままコピー)
-> [ドキュメント名](URL)
+# single quote のときは escape 不要
+echo 'use `gh` command'
 ```
-
-### What セクションの書き方
-
-**原則: 「What (何を)」を書く。「How (どのように)」は diff で見えるので書かない。**
-
-- **Title と What の役割分担**: Title は効果を一言で、What は Title をもう少し具体的に説明する (ただし How ではない)
-- **「何が変わるか」を書く**: 変更の効果、ユーザー/システムへの影響
-- **「どこをどう変えたか」は書かない**: ファイルパス、行番号、具体的なコード変更
-
-**Title と What の例:**
-
-```markdown
-Title: lockFileMaintenance の automerge が動作するようにする
-
-## What
-
-- `lockFileMaintenance` に対して `minimumReleaseAge` のチェックを無効化し、リリースタイムスタンプが取得できない場合でも automerge が実行されるようにする
-```
-
-**抽象度の例:**
-
-| ✅ 適切 (What)                         | ❌ 詳細すぎ (How)                                       |
-| -------------------------------------- | ------------------------------------------------------- |
-| API レスポンスにページネーションを追加 | `getUsers` 関数の戻り値に `nextCursor` フィールドを追加 |
-| エラー時のリトライ処理を追加           | `fetch` を `while` ループで囲んで 3 回までリトライ      |
 
 ## 2. 人間に PR の説明をレビューしてもらう
 
@@ -229,20 +115,7 @@ a ai pr-draft review
 4. 再度 `a ai pr-draft review` を実行して、ユーザーに翻訳内容を確認してもらう
 5. ユーザーがレビューを完了して明示的に指示するまで待機する
 
-**翻訳時の注意:**
-
-- **日本語の意図を正確に反映する**: 直訳ではなく、意図を汲んだ自然な英語にする
-- **type との二重表現を英語でも避ける**: `fix: fix ...` のような表現にしない
-- **`fix` type の description では解決策を述べる**:
-    - `support` は新機能追加のニュアンスが強いので `fix` type では避ける
-    - 事実の列挙 (「〜が失敗していた」) ではなく、何を変えて解決したかを述べる
-    - Bad: `fix(wm): support \`wm new\` on macOS` (support は feat 向き)
-    - Bad: `fix(wm): \`wm new\` failing on macOS` (事実の列挙、解決策が見えない)
-    - Good: `fix(wm): use cache directory instead of state directory for macOS compatibility`
-- **`feat` type の description では「〜できるようにする」の訳し方に注意**:
-    - `enable` は「有効化する」のニュアンスが強いので避ける
-    - `support` や `allow` の方が「〜できるようにする」に近い
-    - 例: 「gzip 解凍できるようにする」→ `support gzip decompression`
+翻訳時の注意事項は [writing-guide.md](writing-guide.md) の「翻訳時の注意」セクションに従うこと。
 
 **注意:** すでに英語に翻訳済み（日本語が含まれていない）の場合は、再翻訳しない。
 

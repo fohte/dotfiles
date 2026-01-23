@@ -42,15 +42,7 @@ This saves the issue to `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`
 - `metadata.json` - Title, labels, assignees (editable)
 - `comments/` - Comment files (only your own comments are editable)
 
-**Note**: Fails if local changes exist. Use `refresh` to discard and re-fetch.
-
-### Refresh (discard local changes and re-fetch)
-
-```bash
-a gh issue-agent refresh <issue-number> [-R <owner/repo>]
-```
-
-Use this when you want to discard local changes and get the latest from GitHub.
+**Note**: Fails if local changes exist. Use `pull --force` to discard and re-fetch.
 
 ### Push (apply changes to GitHub)
 
@@ -92,7 +84,7 @@ a gh issue-agent view 123
 
 ## Safety Features
 
-- `pull` fails if local changes exist (use `refresh` to discard)
+- `pull` fails if local changes exist (use `--force` to discard)
 - `push` fails if remote has changed since pull (use `--force` to overwrite)
 - `push` fails when editing other users' comments (use `--edit-others` to allow)
 - `push` fails when deleting comments (use `--allow-delete` to allow)
