@@ -27,6 +27,8 @@ git log master..HEAD
 
 **まず [writing-guide.md](writing-guide.md) を読み込むこと。** タイトルと description の書き方ルールが定義されている。
 
+!`[ -f release-please-config.json ] || [ -f .release-please-manifest.json ] && echo "**また [release-please-guide.md](release-please-guide.md) も読み込むこと。** このリポジトリは release-please を使用しているため、Conventional Commits 形式を使用する必要がある。"`
+
 `echo` コマンドを使用して、PR の説明のドラフトを `a ai pr-draft new` コマンドに渡す。
 
 **重要:** このドラフトは **常に日本語で書くこと**（public repo、private repo に関わらず）。

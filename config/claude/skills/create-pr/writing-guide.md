@@ -18,8 +18,6 @@
     - ❌ `minimumReleaseAge チェックをスキップする` (実装詳細)
     - ✅ `lockFileMaintenance の automerge が動作するようにする` (効果)
 
-!`[ -f release-please-config.json ] || [ -f .release-please-manifest.json ] && cat ~/.claude/skills/create-pr/release-please-guide.md`
-
 ### release-please を使用していないリポジトリの場合
 
 シンプルな形式を使用:
