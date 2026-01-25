@@ -14,7 +14,7 @@
 #
 set -euo pipefail
 
-TIME_WINDOW="${TMUX_CYCLE_TIME_WINDOW:-1.5}" # seconds
+TIME_WINDOW="${TMUX_CYCLE_TIME_WINDOW:-10}" # seconds
 STATE_DIR="/tmp/tmux-session-cycle-${USER:-$(id -u)}"
 SNAPSHOT_FILE="$STATE_DIR/snapshot"
 INDEX_FILE="$STATE_DIR/index"
