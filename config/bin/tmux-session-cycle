@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+#
+# tmux-session-cycle - Cycle through sessions in MRU order with time window
+#
+# Usage:
+#   tmux-session-cycle next    # Move to next session in MRU order
+#   tmux-session-cycle prev    # Move to previous session in MRU order
+#
+# Behavior:
+#   - First invocation: snapshot MRU list and move to next session
+#   - Subsequent invocations within TIME_WINDOW: use snapshot, continue cycling
+#   - Each invocation resets the timeout (extends the window)
+#   - After TIME_WINDOW expires without invocation: reset snapshot on next call
+#
+set -euo pipefail
+
+TIME_WINDOW="${TMUX_CYCLE_TIME_WINDOW:-1.5}" # seconds
+STATE_DIR="/tmp/tmux-session-cycle-${USER:-$(id -u)}"
+SNAPSHOT_FILE="$STATE_DIR/snapshot"
+INDEX_FILE="$STATE_DIR/index"
+
+mkdir -p "$STATE_DIR"
+
+# Get sessions sorted by last attached time (MRU order)
+get_mru_sessions() {
+  tmux list-sessions -F "#{session_last_attached} #{session_name}" |
+    sort -rn |
+    cut -d' ' -f2-
+}
+
+# Check if snapshot is still valid (within time window)
+is_snapshot_valid() {
+  [[ -f "$SNAPSHOT_FILE" ]] || return 1
+
+  local now mtime age
+  now=$(date +%s.%N)
+  # macOS uses -f %m, Linux uses -c %Y
+  if stat -f %m "$SNAPSHOT_FILE" &> /dev/null; then
+    mtime=$(stat -f %m "$SNAPSHOT_FILE")
+  else
+    mtime=$(stat -c %Y "$SNAPSHOT_FILE")
+  fi
+  age=$(echo "$now - $mtime" | bc)
+
+  (($(echo "$age < $TIME_WINDOW" | bc -l)))
+}
+
+# Create new snapshot
+create_snapshot() {
+  get_mru_sessions > "$SNAPSHOT_FILE"
+  echo "0" > "$INDEX_FILE"
+}
+
+# Update timestamp to extend time window
+extend_time_window() {
+  touch "$SNAPSHOT_FILE"
+}
+
+# Main logic
+direction="${1:-next}"
+
+# Check if we need a new snapshot
+if ! is_snapshot_valid; then
+  create_snapshot
+fi
+
+# Read snapshot and current index
+mapfile -t sessions < "$SNAPSHOT_FILE"
+current_index=$(cat "$INDEX_FILE")
+count="${#sessions[@]}"
+
+# Handle edge case: no sessions or only one session
+if ((count <= 1)); then
+  exit 0
+fi
+
+# Calculate next index
+if [[ "$direction" == "next" ]]; then
+  next_index=$(((current_index + 1) % count))
+else
+  next_index=$(((current_index - 1 + count) % count))
+fi
+
+# Save new index and extend time window
+echo "$next_index" > "$INDEX_FILE"
+extend_time_window
+
+# Switch to session
+tmux switch-client -t "${sessions[$next_index]}"

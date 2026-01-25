@@ -21,12 +21,6 @@ config.keys = {
   -- disable Cmd+t to open new tab
   { key = 't', mods = 'CMD', action = wezterm.action.DisableDefaultAssignment },
 
-  {
-    key = 'Tab',
-    mods = 'CTRL',
-    action = wezterm.action.SendKey({ key = 'Tab', mods = 'CTRL' }),
-  },
-
   -- Send Ctrl+number to tmux for pane selection
   { key = '1', mods = 'CTRL', action = wezterm.action.SendKey({ key = '1', mods = 'CTRL' }) },
   { key = '2', mods = 'CTRL', action = wezterm.action.SendKey({ key = '2', mods = 'CTRL' }) },
