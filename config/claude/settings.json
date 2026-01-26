@@ -16,6 +16,7 @@
       "Bash(a gh issue-agent view:*)",
       "Bash(actionlint:*)",
       "Bash(bash -n:*)",
+      "Bash(bats:*)",
       "Bash(bun pm ls:*)",
       "Bash(cargo build:*)",
       "Bash(cargo check:*)",
