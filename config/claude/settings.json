@@ -90,7 +90,7 @@
       "Read(//tmp/**)",
       "Read(//var/folders/**/T/**)",
       "Read(~/.cache/gh-issue-agent/**)",
-      "Read(~/.claude/CLAUDE.md)",
+      "Read(~/.claude/**)",
       "Read(~/.local/share/nvim/lazy)",
       "Read(~/Dropbox)",
       "Read(~/Library/CloudStorage/Dropbox)",
