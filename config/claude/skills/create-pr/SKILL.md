@@ -25,9 +25,10 @@ git log master..HEAD
 
 ## 1. PR body のドラフトファイルを作成する
 
-**まず [writing-guide.md](writing-guide.md) を読み込むこと。** タイトルと description の書き方ルールが定義されている。
+**まず ~/.claude/skills/create-pr/writing-guide.md を読み込むこと。** タイトルと description の書き方ルールが定義されている。
 
-!`[ -f release-please-config.json ] || [ -f .release-please-manifest.json ] && echo "**また [release-please-guide.md](release-please-guide.md) も読み込むこと。** このリポジトリは release-please を使用しているため、Conventional Commits 形式を使用する必要がある。"`
+!`[ -f release-please-config.json -o -f .release-please-manifest.json ] && echo "**また ~/.claude/skills/create-pr/release-please-guide.md も読み込むこと。** このリポジトリは release-please を使用しているため、Conventional Commits 形式を使用する必要がある。" || true`
+!`[ -f release-please-config.json -o -f .release-please-manifest.json ] || echo "**また ~/.claude/skills/create-pr/simple-title-guide.md も読み込むこと。** このリポジトリは release-please を使用していないため、シンプルなタイトル形式を使用する。"`
 
 `echo` コマンドを使用して、PR の説明のドラフトを `a ai pr-draft new` コマンドに渡す。
 
@@ -117,7 +118,7 @@ a ai pr-draft review
 4. 再度 `a ai pr-draft review` を実行して、ユーザーに翻訳内容を確認してもらう
 5. ユーザーがレビューを完了して明示的に指示するまで待機する
 
-翻訳時の注意事項は [writing-guide.md](writing-guide.md) の「翻訳時の注意」セクションに従うこと。
+翻訳時の注意事項は ~/.claude/skills/create-pr/writing-guide.md の「翻訳時の注意」セクションに従うこと。
 
 **注意:** すでに英語に翻訳済み（日本語が含まれていない）の場合は、再翻訳しない。
 

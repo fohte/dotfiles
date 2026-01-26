@@ -18,17 +18,6 @@
     - ❌ `minimumReleaseAge チェックをスキップする` (実装詳細)
     - ✅ `lockFileMaintenance の automerge が動作するようにする` (効果)
 
-### release-please を使用していないリポジトリの場合
-
-シンプルな形式を使用:
-
-- **フォーマット**: `<scope>: <description>`
-- **description は動詞形で書く** (上記の「description の書き方」を参照)
-- **例**:
-    - 機能追加: `auth: ログイン機能を実装する`
-    - バグ修正: `api: エラーレスポンスが正しく返るようにする`
-    - リファクタリング: `utils: ヘルパー関数を整理する`
-
 ## Why セクションの書き方
 
 - **Issue リンクを先頭に**: `- from: <URL>` 形式で関連 Issue/PR へのリンクを記載 (あれば)
@@ -49,6 +38,9 @@
 
 **原則: 「What (何を)」を書く。「How (どのように)」は diff で見えるので書かない。**
 
+- **What は Why の回答になるように書く**: Why で述べた問題・目的に対して、この PR がどう解決/実現するかを説明する
+    - Why: 「並列実行時にセッション状態が把握しにくい」→ What: 「セッションの状態と所在を一覧で確認できるようにする」
+    - ❌ いきなりコマンドや機能を羅列しない (Why との繋がりが見えない)
 - **Title と What の役割分担**: Title は効果を一言で、What は Title をもう少し具体的に説明する (ただし How ではない)
 - **「何が変わるか」を書く**: 変更の効果、ユーザー/システムへの影響
 - **「どこをどう変えたか」は書かない**: ファイルパス、行番号、具体的なコード変更
@@ -76,18 +68,13 @@ Title: lockFileMaintenance の automerge が動作するようにする
 
 ### 文の始め方
 
-- **「Want to...」「Need to...」で文を始めない**: 命令形または能動態を使う
+- **前置きや条件から始めない**: 主語と結論を先に述べる
     - ❌ `Need to enforce proper error handling`
+    - ❌ `When using this library, memory leaks may occur`
+    - ❌ `Without the --all-targets option, clippy only checks library targets`
     - ✅ `Enforce proper error handling`
-- **「When ...」で始めるのは OK**: 状況を説明する副詞節として自然。ただし、問題を直接述べる方がより明快な場合もある
-    - OK: `When using this library, memory leaks may occur`
-    - より直接的: `This library causes memory leaks under certain conditions`
-
-### Why セクションでの書き方
-
-- **問題の主体を先に持ってくる**: 「When X happens, Y occurs」より「Y tends to occur (in X situations)」の方が明快
-    - ❌ `When writing code with AI tools, panic! tends to be used casually`
-    - ✅ `panic! and unwrap are often used casually in AI-generated code`
+    - ✅ `This library may cause memory leaks under certain conditions`
+    - ✅ `Clippy only checks library targets by default`
 
 ### 自然な英語表現
 
