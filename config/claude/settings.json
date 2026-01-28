@@ -156,10 +156,6 @@
           {
             "type": "command",
             "command": "a cc hook notification"
-          },
-          {
-            "type": "command",
-            "command": "claude-notify"
           }
         ]
       }
