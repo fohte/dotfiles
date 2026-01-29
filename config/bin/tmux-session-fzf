@@ -159,11 +159,14 @@ run_preview_mode() {
 
 # sort sessions by last used
 list_sorted_sessions() {
+  local current_session
+  current_session="$(tmux display-message -p '#S')"
+
   tmux list-sessions -F "#{session_last_attached} #{session_name}" |
     sort -rn |
     cut -d' ' -f2- |
     # ignore current session
-    tail -n +2
+    grep -vFx "$current_session"
 }
 
 print_list() {
