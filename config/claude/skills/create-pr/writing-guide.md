@@ -22,6 +22,11 @@
 
 - **Issue リンクを先頭に**: `- from: <URL>` 形式で関連 Issue/PR へのリンクを記載 (あれば)
 - **問題/目的を最初に**: 「何が問題か」または「何を実現したいか」を最初の箇条書きで述べる
+- **「〜とき」「〜ので」で始めない**: 条件や理由から始めず、問題点や目的を主語として述べる
+    - ❌ `macOS notifications for Claude Code session end only showed "Session stopped", making it unclear...`
+    - ❌ `When running multiple sessions...`
+    - ✅ `macOS notifications only show "Session stopped", providing insufficient context...`
+    - ✅ `Multiple parallel sessions cannot be distinguished from their notifications`
 - **技術的な原因は書かない**: Why には「何が起きていたか」(症状/影響) を書く。「なぜ起きていたか」(技術的原因) は What セクションに書く
     - ❌ `正規表現が v プレフィックスのみを考慮しており、semver 範囲指定子を抽出できなかった` (技術的原因)
     - ✅ `CI の sync ワークフローが変更を検出できず「Already in sync」と誤判定していた` (症状/影響)
@@ -81,12 +86,14 @@ Title: lockFileMaintenance の automerge が動作するようにする
 
 ### 文の始め方
 
-- **前置きや条件から始めない**: 主語と結論を先に述べる
+- **前置きや条件から始めない**: 主語と結論を先に述べる。特に `When`, `If`, `Since`, `Because`, `Without` などで文を始めない
     - ❌ `Need to enforce proper error handling`
     - ❌ `When using this library, memory leaks may occur`
+    - ❌ `When running multiple sessions in parallel, notifications did not provide enough context`
     - ❌ `Without the --all-targets option, clippy only checks library targets`
     - ✅ `Enforce proper error handling`
     - ✅ `This library may cause memory leaks under certain conditions`
+    - ✅ `Notifications did not provide enough context to distinguish multiple parallel sessions`
     - ✅ `Clippy only checks library targets by default`
 
 ### 自然な英語表現
