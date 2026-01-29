@@ -37,6 +37,7 @@ fi
 if match_tag zsh; then
   sym config/zsh/root_zshenv ~/.zshenv
   sym config/zsh ~/.config/zsh
+  sym config/zsh/starship.toml ~/.config/starship.toml
 fi
 
 if match_tag tmux; then
