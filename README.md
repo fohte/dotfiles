@@ -41,7 +41,7 @@
 Clone the repository and run `scripts/deploy`:
 
 ```bash
-git clone https://github.com/fohte/dotfiles ~/ghq/github.com/fohte/dotfiles && cd ~/ghq/github.com/fohte/dotfiles && scripts/deploy
+git clone https://github.com/fohte/dotfiles ~/ghq/github.com/fohte/dotfiles && cd ~/ghq/github.com/fohte/dotfiles && git submodule update --init && scripts/deploy
 ```
 
 ### ✨ Updating
