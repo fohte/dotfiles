@@ -160,6 +160,16 @@
         ]
       }
     ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "a cc hook permission-request"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
