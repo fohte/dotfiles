@@ -1,20 +1,20 @@
 {
-  $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["github>fohte/renovate-config:base.json5"],
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['github>fohte/renovate-config:base.json5'],
   mise: {
-    managerFilePatterns: ["/config/mise/home-config\\.toml/"],
+    managerFilePatterns: ['/config/mise/home-config\\.toml/'],
   },
   packageRules: [
     {
-      groupName: "fzf updates",
-      matchPackageNames: ["junegunn/fzf", "junegunn/fzf/fzf-tmux"],
+      groupName: 'fzf updates',
+      matchPackageNames: ['junegunn/fzf', 'junegunn/fzf/fzf-tmux'],
     },
     {
-      groupName: "mise tools",
-      matchManagers: ["mise"],
-      schedule: ["after 9am on saturday"],
+      groupName: 'mise tools',
+      matchManagers: ['mise'],
+      schedule: ['after 9am on saturday'],
       automerge: true,
-      matchUpdateTypes: ["patch"],
+      matchUpdateTypes: ['patch'],
     },
   ],
 }
