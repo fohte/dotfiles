@@ -1,6 +1,9 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: ['github>fohte/renovate-config:base.json5'],
+  mise: {
+    fileMatch: ['config/mise/home-config\\.toml'],
+  },
   packageRules: [
     {
       groupName: 'fzf updates',
