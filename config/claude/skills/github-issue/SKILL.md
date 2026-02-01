@@ -1,6 +1,6 @@
 ---
 name: github-issue
-description: Use `a gh issue-agent` to view and edit GitHub Issues. Use this skill when working with GitHub Issues - viewing issue content, editing issue body/title/labels, or adding/editing comments.
+description: Use `a gh issue-agent` to view, create, and edit GitHub Issues. Use this skill when working with GitHub Issues - viewing issue content, creating new issues, editing issue body/title/labels, or adding/editing comments.
 ---
 
 # GitHub Issue Management
@@ -11,7 +11,8 @@ Use `a gh issue-agent` to manage GitHub Issues as local files. This provides bet
 
 Use this skill when:
 
-- Viewing GitHub Issue content (body, comments, metadata)
+- Viewing GitHub Issue content (body, comments, metadata, timeline events)
+- Creating new GitHub Issues
 - Editing Issue body, title, or labels
 - Adding or editing comments on Issues
 
@@ -24,6 +25,12 @@ a gh issue-agent view <issue-number> [-R <owner/repo>]
 ```
 
 Use this when you only need to **read** the issue content. No local cache is created.
+
+The view command displays:
+
+- Issue body and metadata
+- Comments
+- Timeline events (label changes, assignments, cross-references from other issues/PRs)
 
 **When to use `view` vs `pull`:**
 
@@ -44,11 +51,48 @@ This saves the issue to `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`
 
 **Note**: Fails if local changes exist. Use `pull --force` to discard and re-fetch.
 
+### Init (create boilerplate)
+
+```bash
+# Create new issue boilerplate
+a gh issue-agent init issue [-R <owner/repo>]
+
+# Create new comment boilerplate for an existing issue
+a gh issue-agent init comment <issue-number> [--name <name>] [-R <owner/repo>]
+```
+
+The `init issue` command creates a boilerplate file at `~/.cache/gh-issue-agent/<owner>/<repo>/new/issue.md`:
+
+```markdown
+---
+labels: []
+assignees: []
+---
+
+# Title
+
+Body
+```
+
+### Diff (show changes)
+
+```bash
+a gh issue-agent diff <issue-number> [-R <owner/repo>]
+```
+
+Shows colored diff between local changes and remote state. Useful for reviewing changes before pushing.
+
 ### Push (apply changes to GitHub)
 
 ```bash
-# Apply changes
+# Update existing issue
 a gh issue-agent push <issue-number>
+
+# Create new issue (pass path instead of number)
+a gh issue-agent push <path-to-new-issue-dir>
+
+# Preview changes without applying
+a gh issue-agent push <issue-number> --dry-run
 
 # Force overwrite if remote has changed since pull
 a gh issue-agent push <issue-number> --force
@@ -60,7 +104,7 @@ a gh issue-agent push <issue-number> --edit-others
 a gh issue-agent push <issue-number> --allow-delete
 ```
 
-## Workflow
+## Workflows
 
 ### Viewing only (no edits)
 
@@ -68,18 +112,32 @@ a gh issue-agent push <issue-number> --allow-delete
 a gh issue-agent view 123
 ```
 
-### Editing
+### Creating a new issue
+
+1. Generate boilerplate: `a gh issue-agent init issue`
+2. Edit the file at `~/.cache/gh-issue-agent/<owner>/<repo>/new/issue.md`
+3. Run `a ai draft <file-path>` to open in WezTerm + Neovim for user review
+4. Create the issue: `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new`
+    - On success, the directory is renamed to `<issue-number>/`
+
+### Editing an existing issue
 
 1. Pull the issue: `a gh issue-agent pull 123`
 2. Read/Edit files in `~/.cache/gh-issue-agent/<owner>/<repo>/123/`
 3. Run `a ai draft <file-path>` to open the edited file in WezTerm + Neovim for user review
-4. After user approval (user closes the editor), apply changes: `a gh issue-agent push 123`
+4. After user approval, apply changes: `a gh issue-agent push 123`
+
+### Adding a comment
+
+1. Generate comment boilerplate: `a gh issue-agent init comment 123`
+2. Edit the generated file in `~/.cache/gh-issue-agent/<owner>/<repo>/123/comments/`
+3. Run `a ai draft <file-path>` for user review
+4. Push changes: `a gh issue-agent push 123`
 
 ## Editing Comments
 
 - Only your own comments can be edited by default
 - To edit other users' comments, use `--edit-others` flag
-- To add a new comment, create a file like `comments/new_<name>.md`
 - Comment files have metadata in HTML comments at the top (author, id, etc.)
 
 ## Safety Features
@@ -88,6 +146,7 @@ a gh issue-agent view 123
 - `push` fails if remote has changed since pull (use `--force` to overwrite)
 - `push` fails when editing other users' comments (use `--edit-others` to allow)
 - `push` fails when deleting comments (use `--allow-delete` to allow)
+- Before using `--force`, use `diff` or `push --dry-run` to verify what will be overwritten
 - Always use `a ai draft <file-path>` to let user review edited content before pushing
 
 ## Writing Style
