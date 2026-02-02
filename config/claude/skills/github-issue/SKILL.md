@@ -156,6 +156,9 @@ Follow these guidelines when writing issues or comments:
 - Avoid unnecessary bold formatting
 - Do not start list items with a summary followed by a colon. Write normal sentences instead
 - When linking to external resources (e.g., other issues), explain why the link is relevant
+- Use である調 (plain form), not ですます調 (polite form)
+- Do not make recommendations or suggestions - only present facts and findings
+- Place reference links inline where contextually relevant, not in a separate "References" section at the end
 
 ## Notes
 
