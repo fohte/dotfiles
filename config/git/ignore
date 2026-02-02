@@ -81,3 +81,7 @@ context_portal/
 **/.claude/settings.local.json
 **/.claude/tmp/
 **/.z/
+
+# cc-sdd
+**/.kiro/
+**/.kiro
