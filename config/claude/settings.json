@@ -12,6 +12,8 @@
       "Bash(a ai pr-draft:*)",
       "Bash(a ai review wait:*)",
       "Bash(a gh check-pr-review:*)",
+      "Bash(a gh issue-agent diff:*)",
+      "Bash(a gh issue-agent init:*)",
       "Bash(a gh issue-agent pull:*)",
       "Bash(a gh issue-agent view:*)",
       "Bash(actionlint:*)",
