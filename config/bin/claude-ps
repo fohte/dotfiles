@@ -1,0 +1,12 @@
+#!/bin/bash
+# Display Claude Code processes with CPU usage and tmux pane information
+
+set -uo pipefail
+
+tmp_ps=$(mktemp)
+tmp_panes=$(mktemp)
+trap 'rm -f "$tmp_ps" "$tmp_panes"' EXIT
+
+ps aux | awk '/[c]laude/ {print $7, $3, $2}' | sort -k1 > "$tmp_ps"
+tmux list-panes -a -F '#{pane_tty} #{session_name}:#{window_index}.#{pane_index}' 2> /dev/null | sed 's|/dev/tty||' | sort -k1 > "$tmp_panes"
+join "$tmp_ps" "$tmp_panes" | sort -t' ' -k2 -rn | awk '{printf "%5s%% | PID %6s | %s\n", $2, $3, $4}'
