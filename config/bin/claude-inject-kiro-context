@@ -1,0 +1,19 @@
+#!/bin/bash
+# Inject Kiro context for Claude Code SessionStart hook
+# Only outputs content if .kiro exists and repo is in fohte org
+
+set -euo pipefail
+
+# Check if .kiro directory exists in current directory
+if [[ ! -d .kiro ]]; then
+  exit 0
+fi
+
+# Check if this is a fohte org repository
+remote_url=$(git remote get-url origin 2> /dev/null || echo "")
+if [[ ! "$remote_url" =~ github\.com[:/]fohte/ ]]; then
+  exit 0
+fi
+
+# Output the Kiro context
+cat ~/.claude/contexts/kiro.md
