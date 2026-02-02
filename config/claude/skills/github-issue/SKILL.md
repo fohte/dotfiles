@@ -159,6 +159,10 @@ Follow these guidelines when writing issues or comments:
 - Use である調 (plain form), not ですます調 (polite form)
 - Do not make recommendations or suggestions - only present facts and findings
 - Place reference links inline where contextually relevant, not in a separate "References" section at the end
+- Use numbered lists only when order matters; otherwise use bullet points
+- Issue titles must be specific about the problem - avoid vague words like "improvement" or "fix" without context
+- When multiple problems share a root cause, consolidate them under that root cause rather than listing separately
+- The What section should include proposed solutions, not just problem descriptions
 
 ## Notes
 
