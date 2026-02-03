@@ -57,19 +57,34 @@ This saves the issue to `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`
 # Create new issue boilerplate
 a gh issue-agent init issue [-R <owner/repo>]
 
+# Use a specific issue template
+a gh issue-agent init issue --template <template-name>
+
+# List available issue templates
+a gh issue-agent init issue --list-templates
+
+# Skip templates and use default boilerplate
+a gh issue-agent init issue --no-template
+
 # Create new comment boilerplate for an existing issue
 a gh issue-agent init comment <issue-number> [--name <name>] [-R <owner/repo>]
 ```
+
+**Issue template behavior:**
+
+- If the repository has issue templates in `.github/ISSUE_TEMPLATE/`, they are automatically fetched
+- If only one template exists, it is auto-selected
+- If multiple templates exist, you must choose with `--template <name>` or `--no-template`
+- Use `--list-templates` to see available templates
 
 The `init issue` command creates a boilerplate file at `~/.cache/gh-issue-agent/<owner>/<repo>/new/issue.md`:
 
 ```markdown
 ---
+title: Title
 labels: []
 assignees: []
 ---
-
-# Title
 
 Body
 ```
@@ -143,7 +158,9 @@ a gh issue-agent view 123
 ## Safety Features
 
 - `pull` fails if local changes exist (use `--force` to discard)
-- `push` fails if remote has changed since pull (use `--force` to overwrite)
+- `push` uses field-level conflict detection: only fails if locally modified fields were also modified remotely
+    - e.g., adding a label remotely does NOT block body edits
+    - Use `--force` to overwrite remote changes when conflicts are detected
 - `push` fails when editing other users' comments (use `--edit-others` to allow)
 - `push` fails when deleting comments (use `--allow-delete` to allow)
 - Before using `--force`, use `diff` or `push --dry-run` to verify what will be overwritten
