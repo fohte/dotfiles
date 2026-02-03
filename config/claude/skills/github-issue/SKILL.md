@@ -129,10 +129,14 @@ a gh issue-agent view 123
 
 ### Creating a new issue
 
-1. Generate boilerplate: `a gh issue-agent init issue`
-2. Edit the file at `~/.cache/gh-issue-agent/<owner>/<repo>/new/issue.md`
-3. Run `a ai draft <file-path>` to open in WezTerm + Neovim for user review
-4. Create the issue: `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new`
+1. Check available templates: `a gh issue-agent init issue --list-templates [-R <owner/repo>]`
+2. Generate boilerplate with appropriate template:
+    - If templates exist, use: `a gh issue-agent init issue --template <template-name>`
+    - If no templates or user prefers blank: `a gh issue-agent init issue --no-template`
+    - **IMPORTANT**: Never assume `--no-template` without checking templates first
+3. Edit the file at `~/.cache/gh-issue-agent/<owner>/<repo>/new/issue.md`
+4. Run `a ai draft <file-path>` to open in WezTerm + Neovim for user review
+5. Create the issue: `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new`
     - On success, the directory is renamed to `<issue-number>/`
 
 ### Editing an existing issue
@@ -173,10 +177,16 @@ Follow these guidelines when writing issues or comments:
 - Avoid unnecessary bold formatting
 - Do not start list items with a summary followed by a colon. Write normal sentences instead
 - When linking to external resources (e.g., other issues), explain why the link is relevant
+- Use permalinks for GitHub source code links (include commit SHA instead of `main`/`master`)
+    - Bad: `github.com/org/repo/blob/main/path/file.ts#L10`
+    - Good: `github.com/org/repo/blob/abc123.../path/file.ts#L10`
+    - Get latest commit SHA: `gh api -X GET repos/org/repo/commits -F path=<file> -F per_page=1 --jq '.[0].sha'`
 - Use である調 (plain form), not ですます調 (polite form)
 - Do not make recommendations or suggestions - only present facts and findings
 - Place reference links inline where contextually relevant, not in a separate "References" section at the end
-- Use numbered lists only when order matters; otherwise use bullet points
+- Use numbered lists only when order matters (sequential steps, priority ranking); otherwise use bullet points
+    - Bad: `1. Option A 2. Option B 3. Option C` (options have no inherent order)
+    - Good: `- Option A - Option B - Option C`
 - Issue titles must be specific about the problem - avoid vague words like "improvement" or "fix" without context
 - When multiple problems share a root cause, consolidate them under that root cause rather than listing separately
 - The What section should include proposed solutions, not just problem descriptions
