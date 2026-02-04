@@ -26,7 +26,7 @@ Execute implementation tasks for feature **$1** using Test-Driven Development.
 
 **Read all necessary context**:
 
-- `.kiro/specs/$1/spec.json`, `requirements.md`, `design.md`, `tasks.md`
+- `.kiro/specs/$1/spec.json`, `requirements.md`, `design/` directory (all files), `tasks.md`
 - **Entire `.kiro/steering/` directory** for complete project memory
 
 **Validate approvals**:
@@ -74,7 +74,7 @@ For each selected task, follow Kent Beck's TDD cycle:
 - **Task Scope**: Implement only what the specific task requires
 - **Test Coverage**: All new code must have tests
 - **No Regressions**: Existing tests must continue to pass
-- **Design Alignment**: Implementation must follow design.md specifications
+- **Design Alignment**: Implementation must follow design/ directory specifications
   </instructions>
 
 ## Tool Guidance

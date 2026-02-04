@@ -26,7 +26,7 @@ Generate implementation tasks for feature **$1** based on approved requirements 
 
 **Read all necessary context**:
 
-- `.kiro/specs/$1/spec.json`, `requirements.md`, `design.md`
+- `.kiro/specs/$1/spec.json`, `requirements.md`, `design/` directory (all files)
 - `.kiro/specs/$1/tasks.md` (if exists, for merge mode)
 - **Entire `.kiro/steering/` directory** for complete project memory
 
@@ -113,7 +113,7 @@ Provide brief summary in the language specified in spec.json:
 **Missing Requirements or Design**:
 
 - **Stop Execution**: Both documents must exist
-- **User Message**: "Missing requirements.md or design.md at `.kiro/specs/$1/`"
+- **User Message**: "Missing requirements.md or design/ directory at `.kiro/specs/$1/`"
 - **Suggested Action**: "Complete requirements and design phases first"
 
 **Incomplete Requirements Coverage**:

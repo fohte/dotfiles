@@ -25,7 +25,7 @@ Interactive design quality review for feature **$1** based on approved requireme
 1. **Load Context**:
     - Read `.kiro/specs/$1/spec.json` for language and metadata
     - Read `.kiro/specs/$1/requirements.md` for requirements
-    - Read `.kiro/specs/$1/design.md` for design document
+    - Read `.kiro/specs/$1/design/` directory (all files) for design documents
     - **Load ALL steering context**: Read entire `.kiro/steering/` directory including:
         - Default files: `structure.md`, `tech.md`, `product.md`
         - All custom steering files (regardless of mode settings)
@@ -78,7 +78,7 @@ Provide output in the language specified in spec.json with:
 
 ### Error Scenarios
 
-- **Missing Design**: If design.md doesn't exist, stop with message: "Run `/kiro:spec-design $1` first to generate design document"
+- **Missing Design**: If design/ directory doesn't exist, stop with message: "Run `/kiro:spec-design $1` first to generate design documents"
 - **Design Not Generated**: If design phase not marked as generated in spec.json, warn but proceed with review
 - **Empty Steering Directory**: Warn user that project context is missing and may affect review quality
 - **Language Undefined**: Default to English (`en`) if spec.json doesn't specify language

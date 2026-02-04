@@ -26,9 +26,9 @@ Generate technical design document for feature **$1** based on approved requirem
 
 **Read all necessary context**:
 
-- `.kiro/specs/$1/spec.json`, `requirements.md`, `design.md` (if exists), `research/` directory or `research.md` (if exists)
+- `.kiro/specs/$1/spec.json`, `requirements.md`, `design/` directory (if exists), `research/` directory or `research.md` (if exists)
 - **Entire `.kiro/steering/` directory** for complete project memory
-- `.kiro/settings/templates/specs/design.md` for document structure
+- `.kiro/settings/templates/specs/design/` directory (`README.md` for overview and file index, per-concern files for each section)
 - `.kiro/settings/rules/design-principles.md` for design principles
 - `.kiro/settings/templates/specs/research/` directory (`README.md` for index, `_topic.md` for per-topic structure)
 
@@ -95,14 +95,23 @@ Generate technical design document for feature **$1** based on approved requirem
 
 1. **Load Design Template and Rules**:
 
-- Read `.kiro/settings/templates/specs/design.md` for structure
+- Read all files in `.kiro/settings/templates/specs/design/` directory for structure (`README.md`, `architecture.md`, `flows.md`, `components.md`, `data-models.md`, `errors.md`, `testing.md`, `optional.md`)
 - Read `.kiro/settings/rules/design-principles.md` for principles
 
-2. **Generate Design Document**:
+2. **Generate Design Documents**:
 
-- **Follow specs/design.md template structure and generation instructions strictly**
+- **Follow `specs/design/` template directory structure and generation instructions strictly**
+- Generate multiple files under `.kiro/specs/$1/design/` directory:
+    - `README.md` - Overview, Goals, Non-Goals, and document index
+    - `architecture.md` - Architecture section
+    - `flows.md` - System Flows (skip for simple CRUD)
+    - `components.md` - Requirements Traceability + Components and Interfaces
+    - `data-models.md` - Data Model section
+    - `errors.md` - Error Handling section
+    - `testing.md` - Testing Strategy section
+    - `optional.md` - Optional sections (only if relevant: Security, Performance, Migration, Supporting References)
 - **Integrate all discovery findings**: Use researched information (APIs, patterns, technologies) throughout component definitions, architecture decisions, and integration points
-- If existing design.md found in Step 1, use it as reference context (merge mode)
+- If existing design/ directory found in Step 1, use it as reference context (merge mode)
 - Apply design rules: Type Safety, Visual Communication, Formal Tone
 - Use language specified in spec.json
 - Ensure sections reflect updated headings ("Architecture Pattern & Boundary Map", "Technology Stack & Alignment", "Components & Interface Contracts") and reference supporting details from `research/` topic files
@@ -124,7 +133,7 @@ Generate technical design document for feature **$1** based on approved requirem
     - Document public interfaces and contracts clearly to ensure cross-component type safety.
 - **Latest Information**: Use WebSearch/WebFetch for external dependencies and best practices
 - **Steering Alignment**: Respect existing architecture patterns from steering context
-- **Template Adherence**: Follow specs/design.md template structure and generation instructions strictly
+- **Template Adherence**: Follow specs/design/ template directory structure and generation instructions strictly
 - **Design Focus**: Architecture and interfaces ONLY, no implementation code
 - **Requirements Traceability IDs**: Use numeric requirement IDs only (e.g. "1.1", "1.2", "3.1", "3.3") exactly as defined in requirements.md. Do not invent new IDs or use alphabetic labels.
   </instructions>
@@ -134,15 +143,15 @@ Generate technical design document for feature **$1** based on approved requirem
 - **Read first**: Load all context before taking action (specs, steering, templates, rules)
 - **Research when uncertain**: Use WebSearch/WebFetch for external dependencies, APIs, and latest best practices
 - **Analyze existing code**: Use Grep to find patterns and integration points in codebase
-- **Write last**: Generate design.md only after all research and analysis complete
+- **Write last**: Generate design/ directory files only after all research and analysis complete
 
 ## Output Description
 
-**Command execution output** (separate from design.md content):
+**Command execution output** (separate from design/ directory content):
 
 Provide brief summary in the language specified in spec.json:
 
-1. **Status**: Confirm design document generated at `.kiro/specs/$1/design.md`
+1. **Status**: Confirm design documents generated at `.kiro/specs/$1/design/` directory
 2. **Discovery Type**: Which discovery process was executed (full/light/minimal)
 3. **Key Findings**: 2-3 critical insights from `research/` topic files that shaped the design
 4. **Next Action**: Approval workflow guidance (see Safety & Fallback)
@@ -150,7 +159,7 @@ Provide brief summary in the language specified in spec.json:
 
 **Format**: Concise Markdown (under 200 words) - this is the command output, NOT the design document itself
 
-**Note**: The actual design document follows `.kiro/settings/templates/specs/design.md` structure.
+**Note**: The actual design documents follow `.kiro/settings/templates/specs/design/` directory structure.
 
 ## Safety & Fallback
 
@@ -170,8 +179,8 @@ Provide brief summary in the language specified in spec.json:
 
 **Template Missing**:
 
-- **User Message**: "Template file missing at `.kiro/settings/templates/specs/design.md`"
-- **Suggested Action**: "Check repository setup or restore template file"
+- **User Message**: "Template directory missing at `.kiro/settings/templates/specs/design/`"
+- **Suggested Action**: "Check repository setup or restore template directory"
 - **Fallback**: Use inline basic structure with warning
 
 **Steering Context Missing**:
@@ -190,7 +199,7 @@ Provide brief summary in the language specified in spec.json:
 
 **If Design Approved**:
 
-- Review generated design at `.kiro/specs/$1/design.md`
+- Review generated design at `.kiro/specs/$1/design/` directory
 - **Optional**: Run `/kiro:validate-design $1` for interactive quality review
 - Then `/kiro:spec-tasks $1 -y` to generate implementation tasks
 

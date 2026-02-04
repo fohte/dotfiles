@@ -24,7 +24,7 @@ Generate status report for feature **$1** showing progress across all phases.
 ### Step 1: Load Spec Context
 
 - Read `.kiro/specs/$1/spec.json` for metadata and phase status
-- Read existing files: `requirements.md`, `design.md`, `tasks.md` (if they exist)
+- Read existing files: `requirements.md`, `design/` directory (if exists), `tasks.md` (if they exist)
 - Check `.kiro/specs/$1/` directory for available files
 
 ### Step 2: Analyze Status

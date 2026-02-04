@@ -48,7 +48,7 @@ For each detected feature:
 
 - Read `.kiro/specs/<feature>/spec.json` for metadata
 - Read `.kiro/specs/<feature>/requirements.md` for requirements
-- Read `.kiro/specs/<feature>/design.md` for design structure
+- Read `.kiro/specs/<feature>/design/` directory (all files) for design structure
 - Read `.kiro/specs/<feature>/tasks.md` for task list
 - **Load ALL steering context**: Read entire `.kiro/steering/` directory including:
     - Default files: `structure.md`, `tech.md`, `product.md`
@@ -78,7 +78,7 @@ For each task, verify:
 
 #### Design Alignment
 
-- Check if design.md structure is reflected in implementation
+- Check if design/ directory structure is reflected in implementation
 - Verify key interfaces, components, and modules exist
 - Use Grep/LS to confirm file structure matches design
 - If misalignment found, flag as "Design deviation"
@@ -136,7 +136,7 @@ Provide output in the language specified in spec.json with:
 
 - **No Implementation Found**: If no `/kiro:spec-impl` in history and no `[x]` tasks, report "No implementations detected"
 - **Test Command Unknown**: If test framework unclear, warn and skip test validation (manual verification required)
-- **Missing Spec Files**: If spec.json/requirements.md/design.md missing, stop with error
+- **Missing Spec Files**: If spec.json/requirements.md/design/ directory missing, stop with error
 - **Language Undefined**: Default to English (`en`) if spec.json doesn't specify language
 
 ### Next Steps Guidance
