@@ -119,15 +119,36 @@ a gh issue-agent push <issue-number> --edit-others
 a gh issue-agent push <issue-number> --allow-delete
 ```
 
-## Workflows
+## Workflow: First Analyze, Then Act
 
-### Viewing only (no edits)
+**CRITICAL**: When editing an existing issue, ALWAYS start with `view` to understand the current state before deciding what to do.
+
+### Step 1: Analyze with `view`
 
 ```bash
-a gh issue-agent view 123
+a gh issue-agent view <issue-number> [-R <owner/repo>]
 ```
 
-### Creating a new issue
+Read the output carefully and identify:
+
+1. What content exists in the issue body?
+2. What comments already exist and what do they contain?
+3. Based on user's request, determine the action:
+    - Add content to issue body → Edit existing issue workflow
+    - Add content to an existing comment → Edit existing comment workflow
+    - Add a completely new comment → Add new comment workflow
+
+**DO NOT skip this step.** Without understanding the current state, you cannot make the correct decision.
+
+### Step 2: Choose the correct workflow
+
+Based on Step 1 analysis:
+
+#### Workflow A: Viewing only (no edits)
+
+If user only wants to read the issue, the `view` command output is sufficient. No further action needed.
+
+#### Workflow B: Creating a new issue
 
 1. Check available templates: `a gh issue-agent init issue --list-templates [-R <owner/repo>]`
 2. Generate boilerplate with appropriate template:
@@ -139,19 +160,38 @@ a gh issue-agent view 123
 5. Create the issue: `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new`
     - On success, the directory is renamed to `<issue-number>/`
 
-### Editing an existing issue
+#### Workflow C: Editing issue body/metadata
 
-1. Pull the issue: `a gh issue-agent pull 123`
-2. Read/Edit files in `~/.cache/gh-issue-agent/<owner>/<repo>/123/`
+1. Pull the issue: `a gh issue-agent pull <issue-number>`
+2. Edit `issue.md` or `metadata.json` in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`
 3. Run `a ai draft <file-path>` to open the edited file in WezTerm + Neovim for user review
-4. After user approval, apply changes: `a gh issue-agent push 123`
+4. After user approval, apply changes: `a gh issue-agent push <issue-number>`
 
-### Adding a comment
+#### Workflow D: Editing an EXISTING comment
 
-1. Generate comment boilerplate: `a gh issue-agent init comment 123`
-2. Edit the generated file in `~/.cache/gh-issue-agent/<owner>/<repo>/123/comments/`
-3. Run `a ai draft <file-path>` for user review
-4. Push changes: `a gh issue-agent push 123`
+Use this when the content should be added to or modified in an existing comment.
+
+1. Pull the issue: `a gh issue-agent pull <issue-number>`
+2. List comments: `ls ~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/comments/`
+3. Read the target comment file (identified from Step 1 analysis)
+4. Edit the comment file directly
+5. Run `a ai draft <file-path>` for user review
+6. Push changes: `a gh issue-agent push <issue-number>`
+
+**Comment file format:**
+- Named like `001_comment_<id>.md`, `002_comment_<id>.md`, etc.
+- Metadata headers show author, creation date
+- Only your own comments can be edited by default
+
+#### Workflow E: Adding a NEW comment
+
+Use this ONLY when a completely new, separate comment is needed. Do NOT use this when content should be added to an existing comment.
+
+1. Pull the issue first (if not already): `a gh issue-agent pull <issue-number>`
+2. Generate comment boilerplate: `a gh issue-agent init comment <issue-number>`
+3. Edit the generated file in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/comments/`
+4. Run `a ai draft <file-path>` for user review
+5. Push changes: `a gh issue-agent push <issue-number>`
 
 ## Editing Comments
 
