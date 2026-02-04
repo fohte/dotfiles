@@ -26,11 +26,11 @@ Generate technical design document for feature **$1** based on approved requirem
 
 **Read all necessary context**:
 
-- `.kiro/specs/$1/spec.json`, `requirements.md`, `design.md` (if exists)
+- `.kiro/specs/$1/spec.json`, `requirements.md`, `design.md` (if exists), `research/` directory or `research.md` (if exists)
 - **Entire `.kiro/steering/` directory** for complete project memory
 - `.kiro/settings/templates/specs/design.md` for document structure
 - `.kiro/settings/rules/design-principles.md` for design principles
-- `.kiro/settings/templates/specs/research.md` for discovery log structure
+- `.kiro/settings/templates/specs/research/` directory (`README.md` for index, `_topic.md` for per-topic structure)
 
 **Validate requirements approval**:
 
@@ -72,16 +72,24 @@ Generate technical design document for feature **$1** based on approved requirem
 - Existing patterns to follow or extend
 - Integration points and dependencies
 - Identified risks and mitigation strategies
-- Potential architecture patterns and boundary options (note details in `research.md`)
-- Parallelization considerations for future tasks (capture dependencies in `research.md`)
+- Potential architecture patterns and boundary options (note details in `research/` topic files)
+- Parallelization considerations for future tasks (capture dependencies in `research/` topic files)
 
 4. **Persist Findings to Research Log**:
 
-- Create or update `.kiro/specs/$1/research.md` using the shared template
-- Summarize discovery scope and key findings (Summary section)
-- Record investigations in Research Log topics with sources and implications
-- Document architecture pattern evaluation, design decisions, and risks using the template sections
-- Use the language specified in spec.json when writing or updating `research.md`
+- Create `.kiro/specs/$1/research/` directory if it does not exist
+- Create or update `research/README.md` using `.kiro/settings/templates/specs/research/README.md`:
+    - Summarize discovery scope and key findings
+    - Maintain topic index table listing all topic files
+    - Document architecture pattern evaluation and risks
+- For each investigation topic, create a separate file `research/<slug>.md` using `.kiro/settings/templates/specs/research/_topic.md`:
+    - File name: kebab-case slug reflecting the topic (e.g., `yaml-parser.md`, `shell-command-parsing.md`)
+    - Each file covers one coherent investigation topic (context, sources, findings, implications)
+    - Include design decisions in the same file when the decision is directly driven by that topic's findings
+    - Closely related topics that support the same design decision may be combined into one file
+    - If existing topic files exist, preserve their file names and update content
+- Use the language specified in spec.json
+- **Legacy fallback**: If `.kiro/specs/$1/research.md` exists (single-file format), read it as context but generate the new directory structure
 
 ### Step 3: Generate Design Document
 
@@ -97,7 +105,7 @@ Generate technical design document for feature **$1** based on approved requirem
 - If existing design.md found in Step 1, use it as reference context (merge mode)
 - Apply design rules: Type Safety, Visual Communication, Formal Tone
 - Use language specified in spec.json
-- Ensure sections reflect updated headings ("Architecture Pattern & Boundary Map", "Technology Stack & Alignment", "Components & Interface Contracts") and reference supporting details from `research.md`
+- Ensure sections reflect updated headings ("Architecture Pattern & Boundary Map", "Technology Stack & Alignment", "Components & Interface Contracts") and reference supporting details from `research/` topic files
 
 3. **Update Metadata** in spec.json:
 
@@ -136,9 +144,9 @@ Provide brief summary in the language specified in spec.json:
 
 1. **Status**: Confirm design document generated at `.kiro/specs/$1/design.md`
 2. **Discovery Type**: Which discovery process was executed (full/light/minimal)
-3. **Key Findings**: 2-3 critical insights from `research.md` that shaped the design
+3. **Key Findings**: 2-3 critical insights from `research/` topic files that shaped the design
 4. **Next Action**: Approval workflow guidance (see Safety & Fallback)
-5. **Research Log**: Confirm `research.md` updated with latest decisions
+5. **Research Log**: Confirm `research/` directory updated with topic files and index
 
 **Format**: Concise Markdown (under 200 words) - this is the command output, NOT the design document itself
 
