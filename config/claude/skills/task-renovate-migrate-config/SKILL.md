@@ -1,3 +1,8 @@
+---
+name: task-renovate-migrate-config
+description: Batch process Renovate migrate-config PRs
+---
+
 # Batch process Renovate migrate-config PRs
 
 Search for `renovate/migrate-config` branch PRs in fohte's GitHub repositories, filter those using `generic-boilerplate` (have `.copier-answers.yml`), and delegate migration work via delegate-claude.
