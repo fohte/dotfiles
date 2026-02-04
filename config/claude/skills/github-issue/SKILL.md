@@ -179,6 +179,7 @@ Use this when the content should be added to or modified in an existing comment.
 6. Push changes: `a gh issue-agent push <issue-number>`
 
 **Comment file format:**
+
 - Named like `001_comment_<id>.md`, `002_comment_<id>.md`, etc.
 - Metadata headers show author, creation date
 - Only your own comments can be edited by default
