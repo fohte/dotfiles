@@ -23,16 +23,9 @@
 
 ## ワークフロー
 
-- **Skill の優先使用**: タスクに合致する Skill が `available_skills` にある場合は、**必ず最初に** Skill ツールを呼び出すこと。直接 Bash コマンドを実行してはならない
-    - コミット時: `commit` Skill を使用すること (Why/What を必ず記述する)
-    - PR 作成時: `create-pr` Skill を使用すること (`gh pr create` を直接実行しない)
-    - GitHub Issue の閲覧・編集時: `github-issue` Skill を使用すること
-    - PR レビューコメントの確認・対応時: `check-pr-review` Skill を使用すること
-    - 別の Claude Code インスタンスにタスクを委任する時: `delegate-claude` Skill を使用すること
-    - Renovate 設定のデバッグ・検証時: `debug-renovate` Skill を使用すること
-    - JavaScript/TypeScript プロジェクトでパッケージマネージャー操作時: `ni` Skill を使用すること (`npm`, `yarn`, `pnpm`, `bun` を直接使用しない)
-    - 調査専用タスク時: `research` Skill を使用すること (ファイル変更なしで調査のみ実行)
-    - 設計専用タスク時: `design` Skill を使用すること (ファイル変更なしで設計案のみ作成)
+- **Skill の優先使用**: 作業を開始する前に、まず system-reminder に記載された利用可能な Skill を確認すること。タスクに合致する Skill がある場合は、**必ず最初に** Skill ツールを呼び出すこと。直接コマンドを実行してはならない
+    - 原則: Skill は特定のワークフローを標準化・最適化するために存在する。Skill を使わずに直接実行すると、品質基準やプロジェクト規約を満たせない可能性がある
+    - 判断基準: Skill の説明文 (description) を読み、現在のタスクが該当するかを判断すること
 - GitHub アクセス: すべての GitHub 操作には `gh` コマンドを使用すること（`gh api` サブコマンドは避けること）。これには GitHub URL の処理も含まれる。他のリポジトリにアクセスする際は `-R` オプションを使用すること（目的: `gh` コマンドは安全な自動実行のため事前承認済み）
 - HTTP リクエスト: `curl` や `gh api` を使用する際は、`-X GET` のように HTTP メソッドを明示的に指定すること（目的: `-X GET` は自動許可されているため）
 - ファイル削除: 追跡されているファイルを削除する際は、削除を適切にステージングするため `rm` ではなく `git rm` を使用すること
