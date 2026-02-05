@@ -73,6 +73,7 @@
       "Bash(head:*)",
       "Bash(jq:*)",
       "Bash(ls:*)",
+      "Bash(mise run test:*)",
       "Bash(mkdir:*)",
       "Bash(ni)",
       "Bash(npm view:*)",
