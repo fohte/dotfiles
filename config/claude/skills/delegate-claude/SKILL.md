@@ -16,6 +16,12 @@ a wm new <branch-name> --prompt "<instructions>"
 - `branch-name`: 新しい環境用に作成するブランチ名
 - `--prompt`: 新しい Claude Code インスタンスへの指示
 
+### オプション
+
+- `--from <ref>`: ベースとなる ref を指定 (デフォルト: main ブランチ)
+    - 例: `a wm new feature-x --from origin/develop --prompt "..."`
+    - Renovate の PR をテストする場合: `a wm new test-upgrade --from origin/renovate/some-branch --prompt "..."`
+
 ### 例
 
 ```bash
