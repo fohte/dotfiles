@@ -231,6 +231,17 @@ Follow these guidelines when writing issues or comments:
 - Issue titles must be specific about the problem - avoid vague words like "improvement" or "fix" without context
 - When multiple problems share a root cause, consolidate them under that root cause rather than listing separately
 - The What section should include proposed solutions, not just problem descriptions
+- Titles should be abstract and concise - describe the essence of the work, not internal jargon or specific problem names
+    - Bad: `Fix the "foobar bug" in config parser`
+    - Good: `Update config parser`
+- Check repository conventions before writing - use `view` on similar existing issues to match formatting (parent issue link placement, section structure, etc.)
+- The What section should describe the strategic intent, not step-by-step procedures
+    - Bad: `Remove line 42 from config.yaml`
+    - Good: `Use the canonical config from the upstream repository`
+- Completion criteria should describe the achieved state, not the work steps
+    - Bad: `Delete the invalid entry from the file`
+    - Good: `Changes are deployed to production`
+- Avoid information duplication - consolidate related links in one place (either `from:` at the top or a "Related" section at the bottom, not both)
 
 ## Notes
 
