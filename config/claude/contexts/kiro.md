@@ -4,21 +4,22 @@ Kiro-style Spec Driven Development.
 
 ### Paths
 
-- Steering: `.kiro/steering/`
-- Specs: `.kiro/specs/`
-
-Actual files are in `~/ghq/github.com/fohte/specs/<project>/.kiro/`, and each repository's `.kiro` is a symlink to it.
+- Working directory: `~/ghq/github.com/fohte/specs/`
+- Steering: `steering/<repo>/`
+- Features: `features/<feature>/`
+- Settings: `.shared/settings/`
+- Implementation repos: `~/ghq/github.com/fohte/<repo>`
 
 ### Steering vs Specification
 
-- **Steering** (`.kiro/steering/`): Project-wide rules and context
-- **Specs** (`.kiro/specs/`): Formalize the development process for individual features
+- **Steering** (`steering/<repo>/`): Repository-wide rules and context
+- **Features** (`features/<feature>/`): Formalize the development process for individual features
 
 ### Minimal Workflow
 
-1. Phase 0 (optional): `/kiro:steering`, `/kiro:steering-custom`
+1. Phase 0 (optional): `/kiro:steering <repo>`, `/kiro:steering-custom <repo> <name>`
 2. Phase 1 (Specification):
-    - `/kiro:spec-init "description"`
+    - `/kiro:spec-init <target-repo> "description"`
     - `/kiro:spec-requirements {feature}`
     - `/kiro:spec-design {feature} [-y]`
     - `/kiro:spec-tasks {feature} [-y]`
@@ -27,5 +28,7 @@ Actual files are in `~/ghq/github.com/fohte/specs/<project>/.kiro/`, and each re
 
 ### Development Rules
 
-- 3-phase approval workflow: Requirements → Design → Tasks → Implementation
+- 3-phase approval workflow: Requirements -> Design -> Tasks -> Implementation
 - Human review required each phase; use `-y` only for intentional fast-track
+- Always work in `~/ghq/github.com/fohte/specs/` directory
+- Implementation code is accessed at `~/ghq/github.com/fohte/<repo>`
