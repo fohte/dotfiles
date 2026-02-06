@@ -150,7 +150,7 @@
           },
           {
             "type": "command",
-            "command": "claude-inject-kiro-context"
+            "command": "cat ~/.claude/contexts/*.md 2>/dev/null || true"
           }
         ]
       }
