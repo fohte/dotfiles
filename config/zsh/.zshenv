@@ -110,8 +110,8 @@ export ZSH_CONFIG_CHECKSUM=$(calculate_zsh_config_checksum)
 
 # prioritize user's local bin directories
 path=(
-  $HOME/.local/bin(N-/)
   $HOME/bin(N-/)
+  $HOME/.local/bin(N-/)
   $path
 )
 
