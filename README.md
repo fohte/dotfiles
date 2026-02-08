@@ -13,7 +13,7 @@
 - 💻 **Shell & Terminal**
     - **[Zsh](https://www.zsh.org)** - Feature-rich shell ([config/zsh](./config/zsh))
     - **[tmux](https://github.com/tmux/tmux)** - Terminal multiplexer ([config/tmux](./config/tmux))
-    - **[WezTerm](https://wezfurlong.org/wezterm/)** - GPU-accelerated terminal ([config/wezterm](./config/wezterm))
+    - **[Ghostty](https://ghostty.org)** - GPU-accelerated terminal ([config/ghostty](./config/ghostty))
 - 🔧 **Development Tools**
     - **[Git](https://git-scm.com)** - Git configuration and ignore patterns ([config/git](./config/git))
     - **[tig](https://jonas.github.io/tig/)** - Text-based Git interface ([config/tig](./config/tig))

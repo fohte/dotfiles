@@ -32,7 +32,7 @@ export const NotificationPlugin = async ({ $, directory }) => {
           const message = 'Session completed'
 
           // Build the command to execute when notification is clicked
-          const clickCommand = `zsh -c "client_name=\\$(tmux list-clients -F '#{client_name}' | head -n1); tmux switch-client -c \\"\\$client_name\\" -t '${tmuxSession.trim()}:${tmuxWindow.trim()}.${tmuxPane.trim()}'; open -a WezTerm"`
+          const clickCommand = `zsh -c "client_name=\\$(tmux list-clients -F '#{client_name}' | head -n1); tmux switch-client -c \\"\\$client_name\\" -t '${tmuxSession.trim()}:${tmuxWindow.trim()}.${tmuxPane.trim()}'; open -a Ghostty"`
 
           await $`terminal-notifier -title ${title} -message ${message} -sound Glass -execute ${clickCommand}`
         } catch (error) {

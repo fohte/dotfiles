@@ -89,7 +89,7 @@ echo 'use `gh` command'
 
 ## 2. 人間に PR の説明をレビューしてもらう
 
-`a ai pr-draft review` コマンドを実行して、Wezterm の新しいウィンドウで Neovim を開き、ユーザーに直接編集してもらう。
+`a ai pr-draft review` コマンドを実行して、ターミナルの新しいウィンドウで Neovim を開き、ユーザーに直接編集してもらう。
 
 ```bash
 a ai pr-draft review

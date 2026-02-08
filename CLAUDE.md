@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## リポジトリ概要
 
-このリポジトリは macOS と Linux 環境用の個人用 dotfiles です。シンボリックリンクベースのデプロイシステムで、Neovim、Zsh、tmux、WezTerm などの様々な開発ツールの設定を管理しています。
+このリポジトリは macOS と Linux 環境用の個人用 dotfiles です。シンボリックリンクベースのデプロイシステムで、Neovim、Zsh、tmux、Ghostty などの様々な開発ツールの設定を管理しています。
 
 ## デプロイメントシステム
 
@@ -89,7 +89,7 @@ config/
 │
 ├── tmux/                    # tmux 設定
 ├── git/                     # Git グローバル設定と ignore パターン
-├── wezterm/                 # WezTerm 設定
+├── ghostty/                 # Ghostty 設定
 ├── hammerspoon/             # hammerspoon 設定
 ├── karabiner/               # Karabiner-Elements 設定
 ├── mise/                    # mise (グローバル) 設定

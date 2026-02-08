@@ -2,7 +2,7 @@
 --- Applications
 ------------------------------
 hs.hotkey.bind({ 'alt' }, '1', function()
-  hs.application.launchOrFocus('/Applications/WezTerm.app')
+  hs.application.launchOrFocus('/Applications/Ghostty.app')
 end)
 
 hs.hotkey.bind({ 'alt' }, '2', function()

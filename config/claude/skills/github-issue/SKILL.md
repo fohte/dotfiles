@@ -156,7 +156,7 @@ If user only wants to read the issue, the `view` command output is sufficient. N
     - If no templates or user prefers blank: `a gh issue-agent init issue --no-template`
     - **IMPORTANT**: Never assume `--no-template` without checking templates first
 3. Edit the file at `~/.cache/gh-issue-agent/<owner>/<repo>/new/issue.md`
-4. Run `a ai draft <file-path>` to open in WezTerm + Neovim for user review
+4. Run `a ai draft <file-path>` to open in terminal + Neovim for user review
 5. Create the issue: `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new`
     - On success, the directory is renamed to `<issue-number>/`
 
@@ -164,7 +164,7 @@ If user only wants to read the issue, the `view` command output is sufficient. N
 
 1. Pull the issue: `a gh issue-agent pull <issue-number>`
 2. Edit `issue.md` or `metadata.json` in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`
-3. Run `a ai draft <file-path>` to open the edited file in WezTerm + Neovim for user review
+3. Run `a ai draft <file-path>` to open the edited file in terminal + Neovim for user review
 4. After user approval, apply changes: `a gh issue-agent push <issue-number>`
 
 #### Workflow D: Editing an EXISTING comment
