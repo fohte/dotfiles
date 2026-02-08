@@ -1,0 +1,28 @@
+# Material Darker (base16) by Nate Peterson
+# https://github.com/ntpeters/base16-materialtheme-scheme
+
+background = #212121
+foreground = #EEFFFF
+cursor-color = #EEFFFF
+selection-background = #353535
+selection-foreground = #EEFFFF
+
+# Normal colors
+palette = 0=#212121
+palette = 1=#F07178
+palette = 2=#C3E88D
+palette = 3=#FFCB6B
+palette = 4=#82AAFF
+palette = 5=#C792EA
+palette = 6=#89DDFF
+palette = 7=#EEFFFF
+
+# Bright colors
+palette = 8=#4A4A4A
+palette = 9=#F07178
+palette = 10=#C3E88D
+palette = 11=#FFCB6B
+palette = 12=#82AAFF
+palette = 13=#C792EA
+palette = 14=#89DDFF
+palette = 15=#FFFFFF

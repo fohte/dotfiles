@@ -1,0 +1,45 @@
+font-family = HackGen35 Console NF
+font-size = 12
+
+# Half-width glyphs look too wide without this
+adjust-cell-width = -10%
+
+# Base16 variant of Material Darker. The built-in "Material Darker" theme
+# has different ANSI palette values (e.g. black=#000000 vs #212121).
+theme = material-darker-base16
+
+window-decoration = none
+command = zsh -c tmux-attach
+
+# Both Option keys act as Alt for tmux/neovim keybindings
+macos-option-as-alt = true
+
+# Disable default keybinds that conflict with tmux workflow
+keybind = ctrl+shift+equal=unbind
+keybind = ctrl+shift+minus=unbind
+keybind = alt+enter=unbind
+keybind = super+t=unbind
+
+# Ghostty defaults alt+arrow to word movement (esc:b/esc:f),
+# unbind so tmux receives them for pane navigation
+keybind = alt+arrow_left=unbind
+keybind = alt+arrow_right=unbind
+keybind = alt+arrow_up=unbind
+keybind = alt+arrow_down=unbind
+
+# Send CSI u sequences for ctrl+number keys (tmux pane selection).
+# unbind alone doesn't work because ctrl+number has no legacy escape sequence.
+keybind = ctrl+one=csi:49;5u
+keybind = ctrl+two=csi:50;5u
+keybind = ctrl+three=csi:51;5u
+keybind = ctrl+four=csi:52;5u
+keybind = ctrl+five=csi:53;5u
+keybind = ctrl+six=csi:54;5u
+keybind = ctrl+seven=csi:55;5u
+keybind = ctrl+eight=csi:56;5u
+keybind = ctrl+nine=csi:57;5u
+
+# Prevent AquaSKK mode-switch keys (sent by Karabiner-Elements) from
+# leaking into the terminal as literal characters.
+keybind = ctrl+apostrophe=ignore
+keybind = ctrl+j=ignore

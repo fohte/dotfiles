@@ -53,6 +53,10 @@ if match_tag wezterm; then
   fi
 fi
 
+if match_tag ghostty; then
+  sym config/ghostty ~/.config/ghostty
+fi
+
 if match_tag hammerspoon; then
   sym config/hammerspoon/init.lua ~/.hammerspoon/init.lua
   sym config/hammerspoon/lib ~/.hammerspoon/lib

@@ -3,12 +3,11 @@ return {
     '3rd/image.nvim',
     lazy = true,
     opts = {
-      -- WezTerm's kitty graphics protocol support is unofficial but mostly works.
-      -- Switch to 'sixel' if images break or performance is poor.
+      -- Not officially supported by image.nvim but works with Ghostty/WezTerm.
+      -- Switch to 'sixel' if images break.
       backend = 'kitty',
-      -- Use ImageMagick CLI instead of the magick luarock to avoid Lua 5.1 dependency
+      -- Use ImageMagick CLI to avoid luarocks Lua 5.1 dependency
       processor = 'magick_cli',
-      -- Prevent images from leaking into other tmux windows/panes
       tmux_show_only_in_active_window = true,
       editor_only_render_when_focused = true,
     },
