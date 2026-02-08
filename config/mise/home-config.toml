@@ -11,7 +11,7 @@ lua = "5.4.8"
 # packages
 "npm:@devcontainers/cli" = "0.80.1"
 "pipx:neovim-remote" = "latest"
-"gem:rubocop" = "1.82.1"
+"gem:rubocop" = "1.84.0"
 
 # CLI tools
 github-cli = "2.86.0"
