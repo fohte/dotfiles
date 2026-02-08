@@ -18,4 +18,9 @@ require('lazy').setup('plugins', {
   checker = {
     enable = false,
   },
+  -- luarocks integration requires Lua 5.1 but mise provides 5.4.
+  -- image.nvim uses magick_cli processor so the magick rock is unnecessary.
+  rocks = {
+    enabled = false,
+  },
 })
