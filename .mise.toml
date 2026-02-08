@@ -58,19 +58,11 @@ description = "Upgrade Homebrew packages"
 run = "brew upgrade"
 
 [tools]
-<<<<<<< before updating
-lefthook = "2.0.13"
-
-# lefthook hooks
-actionlint = "1.7.10"
-bun = "1.3.5"
-=======
 lefthook = "2.0.16"
 
 # lefthook hooks
 actionlint = "1.7.10"
 bun = "1.3.8"
->>>>>>> after updating
 "cargo:basefmt" = "0.1.0"
 "npm:@commitlint/cli" = "20.4.0"
 "npm:prettier" = "3.8.1"
