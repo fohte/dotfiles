@@ -34,6 +34,37 @@ return {
       end,
       mode = 'n',
     },
+    {
+      '<Leader>ed',
+      function()
+        local base_branch = vim.fn.system('git main'):gsub('%s+', '')
+        local base = vim.fn.system('git merge-base origin/' .. base_branch .. ' HEAD'):gsub('%s+', '')
+        if vim.v.shell_error ~= 0 then
+          vim.notify('Failed to get merge-base with origin/' .. base_branch, vim.log.levels.ERROR)
+          return
+        end
+        local diff_previewer = require('telescope.previewers').new_buffer_previewer({
+          title = 'Diff Preview',
+          define_preview = function(self, entry)
+            require('telescope.previewers.utils').job_maker(
+              { 'git', 'diff', base .. '...HEAD', '--', entry.value },
+              self.state.bufnr,
+              {
+                callback = function(bufnr)
+                  vim.bo[bufnr].filetype = 'diff'
+                end,
+              }
+            )
+          end,
+        })
+        require('telescope.builtin').find_files({
+          prompt_title = 'Diff files (origin/' .. base_branch .. '...HEAD)',
+          find_command = { 'git', 'diff', '--name-only', base .. '...HEAD' },
+          previewer = diff_previewer,
+        })
+      end,
+      mode = 'n',
+    },
   },
   config = function()
     require('telescope').setup({
