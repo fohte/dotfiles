@@ -1,0 +1,432 @@
+#!/usr/bin/env bash
+
+# Distill a Claude Code session JSONL into a lightweight Markdown digest.
+# Strips progress/snapshot data and truncates large tool I/O to produce
+# a compact output suitable for feeding into Claude's context window.
+#
+# Requirements:
+#   - jq (>= 1.7)
+#
+# Usage:
+#   claude-session-digest <session-id>
+#   claude-session-digest <session-id> --include-subagents
+#   claude-session-digest <path-to-jsonl>
+#   claude-session-digest --list [-p <project-path>]
+
+set -euo pipefail
+
+CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
+TRUNCATE_LIMIT=500
+INCLUDE_SUBAGENTS=false
+LIST_MODE=false
+PROJECT_PATH=""
+SESSION_ARG=""
+
+usage() {
+  cat << 'EOF' >&2
+Usage: claude-session-digest [options] <session-id | path-to-jsonl>
+       claude-session-digest --list [-p <project-path>]
+
+Distill a Claude Code session into a lightweight Markdown digest.
+
+Arguments:
+  <session-id>      Session UUID (prefix match supported, searches all projects)
+  <path-to-jsonl>   Direct path to a session JSONL file
+
+Options:
+  -p, --project <path>        Limit search to this project (default: search all)
+  -t, --truncate <chars>      Max chars for truncated fields (default: 500)
+  --include-subagents          Include subagent logs
+  --list                       List sessions for the project (requires -p or $PWD)
+  -h, --help                   Show this help
+EOF
+  exit 1
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h | --help) usage ;;
+    -p | --project)
+      PROJECT_PATH="$2"
+      shift 2
+      ;;
+    -t | --truncate)
+      TRUNCATE_LIMIT="$2"
+      shift 2
+      ;;
+    --include-subagents)
+      INCLUDE_SUBAGENTS=true
+      shift
+      ;;
+    --list)
+      LIST_MODE=true
+      shift
+      ;;
+    -*)
+      echo "error: unknown option: $1" >&2
+      usage
+      ;;
+    *)
+      SESSION_ARG="$1"
+      shift
+      ;;
+  esac
+done
+
+encode_project_path() {
+  local p
+  p="$(cd "$1" && pwd)"
+  # Claude Code replaces all non-alphanumeric chars (except -) with -
+  p="${p//[^a-zA-Z0-9-]/-}"
+  echo "$p"
+}
+
+resolve_project_dir() {
+  local project_path="${PROJECT_PATH:-$PWD}"
+  local encoded
+  encoded="$(encode_project_path "$project_path")"
+  local dir="${CLAUDE_DIR}/projects/${encoded}"
+  if [[ ! -d "$dir" ]]; then
+    echo "error: project directory not found: $dir" >&2
+    return 1
+  fi
+  echo "$dir"
+}
+
+# Search for a session JSONL across all project directories
+find_session_file_global() {
+  local session_id="$1"
+  local matches=()
+
+  while IFS= read -r -d '' f; do
+    matches+=("$f")
+  done < <(find "${CLAUDE_DIR}/projects" -maxdepth 2 -name "${session_id}*.jsonl" -not -path '*/subagents/*' -print0 2> /dev/null)
+
+  if [[ ${#matches[@]} -eq 1 ]]; then
+    echo "${matches[0]}"
+  elif [[ ${#matches[@]} -gt 1 ]]; then
+    # Deduplicate by session id (symlinked project dirs may point to the same file)
+    local unique_matches=()
+    local -A seen_sessions
+    for m in "${matches[@]}"; do
+      local sid
+      sid="$(basename "$m" .jsonl)"
+      if [[ -z "${seen_sessions[$sid]:-}" ]]; then
+        seen_sessions["$sid"]=1
+        unique_matches+=("$m")
+      fi
+    done
+
+    if [[ ${#unique_matches[@]} -eq 1 ]]; then
+      echo "${unique_matches[0]}"
+    else
+      echo "error: ambiguous session id '${session_id}', ${#unique_matches[@]} matches found:" >&2
+      for m in "${unique_matches[@]}"; do
+        echo "  $(basename "$m" .jsonl)  ($(dirname "$m" | xargs basename))" >&2
+      done
+      return 1
+    fi
+  else
+    echo "error: no session found for '${session_id}'" >&2
+    return 1
+  fi
+}
+
+find_session_file_in_project() {
+  local session_id="$1"
+  local project_dir="$2"
+
+  if [[ -f "${project_dir}/${session_id}.jsonl" ]]; then
+    echo "${project_dir}/${session_id}.jsonl"
+    return
+  fi
+
+  local matches=()
+  while IFS= read -r -d '' f; do
+    matches+=("$f")
+  done < <(find "$project_dir" -maxdepth 1 -name "${session_id}*.jsonl" -print0 2> /dev/null)
+
+  if [[ ${#matches[@]} -eq 1 ]]; then
+    echo "${matches[0]}"
+  elif [[ ${#matches[@]} -gt 1 ]]; then
+    echo "error: ambiguous session id '${session_id}', ${#matches[@]} matches found:" >&2
+    for m in "${matches[@]}"; do
+      echo "  $(basename "$m" .jsonl)" >&2
+    done
+    return 1
+  else
+    echo "error: no session found for '${session_id}'" >&2
+    return 1
+  fi
+}
+
+list_sessions() {
+  local project_dir="$1"
+  local f session_id size_bytes summary
+
+  for f in "${project_dir}"/*.jsonl; do
+    [[ -f "$f" ]] || continue
+    session_id="$(basename "$f" .jsonl)"
+    size_bytes="$(stat -f%z "$f" 2> /dev/null || stat -c%s "$f" 2> /dev/null)"
+
+    # Extract summary and first timestamp from first 20 lines
+    local meta_line
+    meta_line="$(head -20 "$f" | jq -r -s '
+      (map(select(.type == "summary")) | first // null) as $s |
+      ([.[] | select(.timestamp) | .timestamp] | first // null) as $ts |
+      [
+        (if $ts | type == "number" then ($ts / 1000 | floor | tostring)
+         elif $ts | type == "string" then $ts
+         else "0" end),
+        ($s.summary // "<no summary>")
+      ] | join("\t")
+    ' 2> /dev/null || echo "0	<no summary>")"
+    local ts_val="${meta_line%%	*}"
+    summary="${meta_line#*	}"
+
+    local size_human
+    if [[ $size_bytes -ge 1048576 ]]; then
+      size_human="$(awk "BEGIN {printf \"%.1fM\", $size_bytes/1048576}")"
+    elif [[ $size_bytes -ge 1024 ]]; then
+      size_human="$(awk "BEGIN {printf \"%.0fK\", $size_bytes/1024}")"
+    else
+      size_human="${size_bytes}B"
+    fi
+
+    local date_str="unknown"
+    if [[ "$ts_val" =~ ^[0-9]+$ ]] && [[ "$ts_val" != "0" ]]; then
+      date_str="$(date -r "$ts_val" '+%Y-%m-%d %H:%M' 2> /dev/null || echo "unknown")"
+    elif [[ "$ts_val" =~ ^[0-9]{4}- ]]; then
+      # ISO 8601 string - extract date portion
+      date_str="${ts_val:0:16}"
+      date_str="${date_str/T/ }"
+    fi
+
+    printf "%s  %s  %6s  %s\n" "$session_id" "$date_str" "$size_human" "$summary"
+  done | sort -k2
+}
+
+# Build the main jq filter
+build_jq_filter() {
+  cat << 'JQ'
+def truncate_str($limit):
+  if type == "string" and length > $limit then
+    .[0:$limit] + "... [truncated, total " + (length | tostring) + " chars]"
+  else . end;
+
+def truncate_tool_input($name; $limit):
+  if $name == "Edit" then
+    {
+      file_path,
+      old_string: (.old_string | truncate_str($limit)),
+      old_string_lines: (.old_string | split("\n") | length),
+      new_string: (.new_string | truncate_str($limit)),
+      new_string_lines: (.new_string | split("\n") | length),
+      replace_all: .replace_all
+    }
+  elif $name == "Write" then
+    {
+      file_path,
+      content: (.content | truncate_str($limit)),
+      content_lines: (.content | split("\n") | length)
+    }
+  elif $name == "Task" then
+    {
+      description,
+      subagent_type,
+      prompt: (.prompt | truncate_str($limit)),
+      model
+    }
+  else . end;
+
+def truncate_tool_result($limit):
+  if type == "string" then truncate_str($limit)
+  elif type == "array" then
+    [.[] |
+      if .type == "text" then .text |= truncate_str($limit)
+      else . end]
+  else . end;
+
+# Phase 1: Drop heavy types
+select(.type != "progress" and .type != "file-history-snapshot")
+
+# Phase 2: Strip common metadata
+| del(.uuid, .parentUuid, .version, .userType, .cwd, .gitBranch, .isSidechain, .requestId, .messageId, .isSnapshotUpdate, .snapshot)
+
+# Phase 3: Type-specific processing
+| if .type == "user" then
+    # Truncate toolUseResult
+    (if .toolUseResult != null then
+      if (.toolUseResult | type) == "string" then
+        .toolUseResult = (.toolUseResult | truncate_str($LIMIT))
+      else
+        .toolUseResult = {
+          status: (.toolUseResult.status // null),
+          _size: (.toolUseResult | tostring | length)
+        }
+      end
+    else . end)
+    # Truncate tool_result content
+    | if (.message.content | type) == "array" then
+        .message.content = [.message.content[] |
+          if .type == "tool_result" then
+            .content |= truncate_tool_result($LIMIT)
+          else . end]
+      else . end
+    | del(.slug, .sourceToolAssistantUUID)
+
+  elif .type == "assistant" then
+    .message.content = [.message.content[] |
+      if .type == "tool_use" then
+        .input |= truncate_tool_input(.name; $LIMIT)
+      else . end]
+    | del(.message.id, .message.stop_sequence, .message.type)
+
+  elif .type == "queue-operation" then
+    if .content then
+      .content |= (tostring | truncate_str($LIMIT))
+    else . end
+
+  elif .type == "system" then
+    del(.slug, .isMeta, .sessionId)
+
+  elif .type == "summary" then
+    del(.leafUuid)
+
+  else . end
+JQ
+}
+
+# Convert JSONL digest to Markdown
+jsonl_to_markdown() {
+  jq -rs '
+def render_tool_use:
+  "**Tool: " + .name + "**" +
+  (if .input.file_path then " `" + .input.file_path + "`"
+   elif .input.command then " `" + (.input.command | split("\n") | first) + (if (.input.command | split("\n") | length) > 1 then " ..." else "" end) + "`"
+   elif .input.pattern then " `" + .input.pattern + "`"
+   elif .input.description then " - " + .input.description
+   else "" end);
+
+def render_tool_result:
+  if .content == null then "_(no output)_"
+  elif (.content | type) == "string" then
+    if (.content | length) > 200 then
+      "`" + (.content | .[0:200]) + "...`"
+    else "`" + .content + "`" end
+  elif (.content | type) == "array" then
+    [.content[] | if .type == "text" then .text else "" end] | join("") |
+    if length > 200 then .[0:200] + "..." else . end |
+    "`" + . + "`"
+  else "_(complex)_" end;
+
+# Extract meta
+(.[0] | if ._meta then ._meta else null end) as $meta |
+(if $meta then .[1:] else . end) as $events |
+
+# Header
+"# Session Digest" +
+(if $meta then ": " + $meta.session_id else "" end) + "\n\n" +
+(if $meta then
+  "> Original: " + ($meta.original_bytes | . / 1048576 | . * 10 | floor / 10 | tostring) + " MB\n\n"
+else "" end) +
+
+# Summary
+($events | map(select(.type == "summary")) | if length > 0 then
+  "> **Summary**: " + (first.summary // "") + "\n\n---\n\n"
+else "---\n\n" end) +
+
+# Events
+($events | map(select(.type != "summary")) |
+  reduce .[] as $e (""; . +
+    if $e.type == "user" then
+      if ($e.message.content | type) == "string" then
+        "## User\n\n" + $e.message.content + "\n\n"
+      elif ($e.message.content | type) == "array" then
+        ($e.message.content | map(
+          if .type == "text" then
+            "## User\n\n" + .text + "\n\n"
+          elif .type == "tool_result" then
+            "> Tool result (" + .tool_use_id + "): " + (
+              if (.content | type) == "string" then
+                if (.content | length) > 100 then (.content | .[0:100] + "...") else .content end
+              else "_(complex)_" end
+            ) + "\n\n"
+          else "" end
+        ) | join(""))
+      else "" end
+
+    elif $e.type == "assistant" then
+      "## Assistant" +
+      (if $e.message.model then " (" + $e.message.model + ")" else "" end) + "\n\n" +
+      ($e.message.content | map(
+        if .type == "text" then
+          .text + "\n\n"
+        elif .type == "tool_use" then
+          render_tool_use + "\n\n"
+        else "" end
+      ) | join(""))
+
+    elif $e.type == "system" then
+      (if $e.subtype == "turn_duration" then
+        "> _Turn duration: " + (($e.durationMs // 0) / 1000 | . * 10 | floor / 10 | tostring) + "s_\n\n---\n\n"
+      else "" end)
+
+    else "" end
+  )
+)
+  '
+}
+
+# --- Main ---
+
+if $LIST_MODE; then
+  project_dir="$(resolve_project_dir)"
+  list_sessions "$project_dir"
+  exit 0
+fi
+
+if [[ -z "$SESSION_ARG" ]]; then
+  echo "error: session id or jsonl path is required" >&2
+  usage
+fi
+
+# Resolve input file
+if [[ -f "$SESSION_ARG" ]]; then
+  JSONL_FILE="$SESSION_ARG"
+elif [[ -n "$PROJECT_PATH" ]]; then
+  project_dir="$(resolve_project_dir)"
+  JSONL_FILE="$(find_session_file_in_project "$SESSION_ARG" "$project_dir")"
+else
+  JSONL_FILE="$(find_session_file_global "$SESSION_ARG")"
+fi
+
+ORIGINAL_BYTES="$(stat -f%z "$JSONL_FILE" 2> /dev/null || stat -c%s "$JSONL_FILE" 2> /dev/null)"
+SESSION_ID="$(basename "$JSONL_FILE" .jsonl)"
+
+JQ_FILTER="$(build_jq_filter)"
+
+# Build JSONL then convert to Markdown
+{
+  # Meta line
+  jq -n -c --arg sid "$SESSION_ID" --argjson size "$ORIGINAL_BYTES" \
+    '{"_meta":{"session_id":$sid,"original_bytes":$size}}'
+
+  # Main session
+  jq -c --argjson LIMIT "$TRUNCATE_LIMIT" "$JQ_FILTER" "$JSONL_FILE"
+
+  # Subagents
+  if $INCLUDE_SUBAGENTS; then
+    subagent_dir="${JSONL_FILE%.jsonl}/subagents"
+    if [[ -d "$subagent_dir" ]]; then
+      for agent_file in "$subagent_dir"/*.jsonl; do
+        [[ -f "$agent_file" ]] || continue
+        agent_id="$(basename "$agent_file" .jsonl)"
+        agent_bytes="$(stat -f%z "$agent_file" 2> /dev/null || stat -c%s "$agent_file" 2> /dev/null)"
+        jq -n -c --arg id "$agent_id" --argjson size "$agent_bytes" \
+          '{"_subagent":{"id":$id,"original_bytes":$size}}'
+        jq -c --argjson LIMIT "$TRUNCATE_LIMIT" "$JQ_FILTER" "$agent_file"
+      done
+    fi
+  fi
+} | jsonl_to_markdown
