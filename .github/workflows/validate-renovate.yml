@@ -10,7 +10,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       # Renovate v38+ only supports even-numbered (LTS) Node.js in its
       # engines field. Without this, npm silently falls back to v37.
       - uses: actions/setup-node@v6
