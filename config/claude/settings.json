@@ -154,7 +154,7 @@
           },
           {
             "type": "command",
-            "command": "cat ~/.claude/contexts/*.md 2>/dev/null || true"
+            "command": "claude-inject-context"
           }
         ]
       }
