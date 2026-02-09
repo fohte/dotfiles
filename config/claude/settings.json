@@ -36,6 +36,7 @@
       "Bash(cd:*)",
       "Bash(chmod +x:*)",
       "Bash(claude-session-digest:*)",
+      "Bash(claude-skill-check:*)",
       "Bash(col:*)",
       "Bash(curl -X GET:*)",
       "Bash(curl -s -X GET:*)",

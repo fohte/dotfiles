@@ -27,7 +27,7 @@ git log master..HEAD
 
 **まず ~/.claude/skills/create-pr/writing-guide.md を読み込むこと。** タイトルと description の書き方ルールが定義されている。
 
-!`[ "$(gh repo view --json visibility --jq .visibility 2>/dev/null)" = "PUBLIC" ] && echo "**また ~/.claude/skills/create-pr/public-repo-guide.md も読み込むこと。** このリポジトリは public であるため、英語ライティングガイドラインと翻訳ルールに従う必要がある。" || true`
+!`claude-skill-check is-public && echo "**また ~/.claude/skills/create-pr/public-repo-guide.md も読み込むこと。** このリポジトリは public であるため、英語ライティングガイドラインと翻訳ルールに従う必要がある。" || true`
 
 !`[ -f release-please-config.json -o -f .release-please-manifest.json ] && echo "**また ~/.claude/skills/create-pr/release-please-guide.md も読み込むこと。** このリポジトリは release-please を使用しているため、Conventional Commits 形式を使用する必要がある。" || true`
 !`[ -f release-please-config.json -o -f .release-please-manifest.json ] || echo "**また ~/.claude/skills/create-pr/simple-title-guide.md も読み込むこと。** このリポジトリは release-please を使用していないため、シンプルなタイトル形式を使用する。"`
@@ -54,35 +54,7 @@ echo "## Why
 
 作成されるファイルには以下の YAML frontmatter が含まれる:
 
-!`if [ "$(gh repo view --json visibility --jq .visibility 2>/dev/null)" = "PUBLIC" ]; then cat <<'EOF'
-
-```yaml
----
-title: 'PRタイトル'
-steps:
-    ready-for-translation: false
-    submit: false
----
-```
-
-- \`title\`: PR のタイトル（submit 時に使用される）
-- \`steps.ready-for-translation\`: ドラフト承認フラグ。true になったら翻訳を実行する。public repo では翻訳は**必須**であり、submit 時に日本語が含まれているとエラーになる
-- \`steps.submit\`: true にするとエディタ終了時にファイルのハッシュが保存される。submit 時にハッシュが一致しないと失敗する（改ざん防止）
-  EOF
-  else cat <<'EOF'
-
-```yaml
----
-title: 'PRタイトル'
-steps:
-    submit: false
----
-```
-
-- \`title\`: PR のタイトル（submit 時に使用される）
-- \`steps.submit\`: true にするとエディタ終了時にファイルのハッシュが保存される。submit 時にハッシュが一致しないと失敗する（改ざん防止）
-  EOF
-  fi`
+!`claude-skill-check is-public && cat ~/.claude/skills/create-pr/frontmatter-public.md || cat ~/.claude/skills/create-pr/frontmatter-private.md`
 
 注意: Markdown のコードブロックにバッククォートを含める場合、シェルのクォートの種類によってエスケープが必要。
 
@@ -113,33 +85,7 @@ a ai pr-draft review
 内容の修正のみを行う。**翻訳は行わない。**
 修正後は再度 `a ai pr-draft review` を実行し、次の指示を待つ。
 
-!`[ "$(gh repo view --json visibility --jq .visibility 2>/dev/null)" = "PUBLIC" ] && cat <<'PUBLIC_WORKFLOW'
-
-### ドラフト承認後の翻訳（`steps.ready-for-translation: true` かつ日本語含む）
-
-**重要:** public repo では翻訳は**必須**である。\`steps.ready-for-translation\` は「翻訳するかしないか」の選択ではなく、「ドラフトの内容が承認され、翻訳の準備ができたか」を示すフラグ。
-
-ユーザーがドラフトの内容を承認し、\`steps.ready-for-translation: true\` に変更した場合:
-
-1. title と body を英語に翻訳する
-2. \`steps.submit: false\` に変更する（翻訳によりハッシュが無効になるため）
-3. ファイルを上書き保存する
-4. 再度 \`a ai pr-draft review\` を実行して、ユーザーに翻訳内容を確認してもらう
-5. ユーザーがレビューを完了して明示的に指示するまで待機する
-
-翻訳時の注意事項は ~/.claude/skills/create-pr/public-repo-guide.md の「翻訳時の注意」セクションに従うこと。
-
-**注意:** すでに英語に翻訳済み（日本語が含まれていない）の場合は、再翻訳しない。
-PUBLIC_WORKFLOW
-true`
-
-!`[ "$(gh repo view --json visibility --jq .visibility 2>/dev/null)" != "PUBLIC" ] && cat <<'PRIVATE_WORKFLOW'
-
-### Submit への進め方
-
-翻訳は不要。ユーザーが \`steps.submit: true\` にしたら submit に進む。
-PRIVATE_WORKFLOW
-true`
+!`claude-skill-check is-public && cat ~/.claude/skills/create-pr/workflow-public.md || cat ~/.claude/skills/create-pr/workflow-private.md`
 
 ## 4. `a ai pr-draft submit` で PR を作成
 
@@ -154,23 +100,11 @@ frontmatter の `title` が PR タイトルとして、body 部分が PR 本文�
 - `.lock` ファイルがない（レビュー完了）
 - `.approve` ファイルがある（`steps.submit: true` でエディタを終了した）
 - ファイルのハッシュが `.approve` と一致する（承認後に改ざんされていない）
-  !`[ "$(gh repo view --json visibility --jq .visibility 2>/dev/null)" = "PUBLIC" ] && echo "- title と body に日本語が含まれていない" || true`
+  !`claude-skill-check is-public && echo "- title と body に日本語が含まれていない" || true`
 
 ## 5. CI 実行を監視
 
 `gh pr checks --watch` コマンドを使用して CI チェックを監視します。
 CI が成功したら次のステップに進みます。失敗した場合は、問題を調査・修正して再度プッシュしてください。
 
-!`[ "$(gh repo view --json owner --jq .owner.login 2>/dev/null)" = "fohte" ] && cat <<'GEMINI_REVIEW'
-
-## 6. Gemini Code Assist レビューを待機
-
-CI が成功したら、\`a ai review wait\` コマンドを使用して Gemini Code Assist のレビュー完了を待機します（初回レビューは PR 作成時に自動でリクエストされる）。
-
-\`\`\`bash
-a ai review wait
-\`\`\`
-
-レビューが完了したら、\`check-pr-review\` skill を使用してレビュー内容を確認し、指摘事項があれば対応してください。
-GEMINI_REVIEW
-true`
+!`claude-skill-check is-owner fohte && cat ~/.claude/skills/create-pr/gemini-review.md || true`
