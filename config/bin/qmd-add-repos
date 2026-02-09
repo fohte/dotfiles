@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+
+# Add git repositories under a directory to qmd index with auto-detected file masks.
+# Finds all git repositories (directories containing .git) and indexes each one.
+#
+# Usage:
+#   qmd-add-repos <path>   # e.g. qmd-add-repos ~/ghq/github.com/fohte
+
+set -euo pipefail
+
+# Extensions that are always included regardless of repo content
+ALWAYS_INCLUDE=(md json jsonc json5 yaml yml toml)
+
+# Extensions for binary/non-text files to exclude from detection
+BINARY_EXTENSIONS=(
+  png jpg jpeg gif bmp ico svg webp avif
+  woff woff2 ttf otf eot
+  pdf doc docx xls xlsx ppt pptx
+  zip tar gz bz2 xz 7z rar
+  mp3 mp4 wav avi mov mkv webm
+  exe dll so dylib o a
+  pyc pyo class
+  lock
+)
+
+# Build a set of binary extensions for fast lookup (once, not per-repo)
+declare -A binary_set
+for ext in "${BINARY_EXTENSIONS[@]}"; do
+  binary_set["$ext"]=1
+done
+
+usage() {
+  echo "Usage: qmd-add-repos <path>" >&2
+  echo "" >&2
+  echo "Find all git repositories under <path> and add each to qmd." >&2
+  echo "Collection names are derived from directory basenames." >&2
+  exit 1
+}
+
+# Index a single git repository.
+# Args: $1 = repo path, $2 = collection name
+index_repo() {
+  local repo_path="$1"
+  local name="$2"
+
+  declare -A ext_count=()
+  declare -A noext_names=()
+
+  while IFS= read -r file; do
+    local basename="${file##*/}"
+    if [[ "$basename" == *.* ]]; then
+      local ext="${basename##*.}"
+      ext="${ext,,}" # lowercase
+
+      if [[ -n "${binary_set[$ext]:-}" ]]; then
+        continue
+      fi
+
+      ext_count["$ext"]=$((${ext_count[$ext]:-0} + 1))
+    else
+      noext_names["$basename"]=1
+    fi
+  done < <(git -C "$repo_path" ls-files)
+
+  for ext in "${ALWAYS_INCLUDE[@]}"; do
+    ext_count["$ext"]=$((${ext_count[$ext]:-0} + 0))
+  done
+
+  local extensions=()
+  for ext in "${!ext_count[@]}"; do
+    extensions+=("$ext")
+  done
+  mapfile -t extensions < <(printf '%s\n' "${extensions[@]}" | sort)
+
+  local noext_list=()
+  for fname in "${!noext_names[@]}"; do
+    noext_list+=("$fname")
+  done
+  if [[ ${#noext_list[@]} -gt 0 ]]; then
+    mapfile -t noext_list < <(printf '%s\n' "${noext_list[@]}" | sort)
+  fi
+
+  if [[ ${#extensions[@]} -eq 0 ]] && [[ ${#noext_list[@]} -eq 0 ]]; then
+    echo "  Skipped: no indexable files" >&2
+    return
+  fi
+
+  local ext_part=""
+  if [[ ${#extensions[@]} -gt 0 ]]; then
+    ext_part="*.{$(
+      IFS=,
+      echo "${extensions[*]}"
+    )}"
+  fi
+
+  local noext_part=""
+  if [[ ${#noext_list[@]} -gt 0 ]]; then
+    noext_part="$(
+      IFS=,
+      echo "${noext_list[*]}"
+    )"
+  fi
+
+  local mask
+  if [[ -n "$ext_part" ]] && [[ -n "$noext_part" ]]; then
+    mask="**/{${ext_part},${noext_part}}"
+  elif [[ -n "$ext_part" ]]; then
+    mask="**/${ext_part}"
+  else
+    mask="**/{${noext_part}}"
+  fi
+
+  qmd collection add "$repo_path" --name "$name" --mask "$mask"
+}
+
+if [[ $# -eq 0 ]]; then
+  usage
+fi
+
+base_path="$1"
+base_path="$(cd "$base_path" && pwd)"
+
+# Collect git repos: directories that contain .git (directory, not file)
+# .git as a file indicates a worktree or submodule linked repo, which we skip.
+# Also verify the repo is a toplevel repo (not a submodule with a real .git dir).
+repos=()
+while IFS= read -r gitdir; do
+  repo="$(dirname "$gitdir")"
+  toplevel="$(git -C "$repo" rev-parse --show-toplevel 2> /dev/null)" || continue
+  # Skip if toplevel doesn't match (submodule nested inside another repo)
+  [[ "$toplevel" == "$repo" ]] || continue
+  repos+=("$repo")
+done < <(find "$base_path" -maxdepth 3 -name .git -type d 2> /dev/null | sort)
+
+if [[ ${#repos[@]} -eq 0 ]]; then
+  echo "No git repositories found under $base_path" >&2
+  exit 1
+fi
+
+echo "Found ${#repos[@]} repositories under $base_path"
+echo ""
+
+success=0
+skipped=0
+failed=0
+
+for repo in "${repos[@]}"; do
+  # Derive collection name: last two path components joined with "-"
+  # e.g. ~/ghq/github.com/fohte/dotfiles -> fohte-dotfiles
+  parent="$(basename "$(dirname "$repo")")"
+  base="$(basename "$repo")"
+  name="${parent}-${base}"
+
+  echo "[$name] Indexing $repo ..."
+  if index_repo "$repo" "$name" 2>&1; then
+    success=$((success + 1))
+  else
+    echo "  Failed to index $name" >&2
+    failed=$((failed + 1))
+  fi
+  echo ""
+done
+
+echo "Done: $success indexed, $skipped skipped, $failed failed"
