@@ -136,7 +136,9 @@
       "Bash(git push -f:*)",
       "Bash(rm -rf:*)",
       "NotebookEdit",
-      "Read(.envrc)"
+      "Read(.envrc)",
+      "mcp__qmd__query",
+      "mcp__qmd__vsearch"
     ],
     "defaultMode": "acceptEdits"
   },
