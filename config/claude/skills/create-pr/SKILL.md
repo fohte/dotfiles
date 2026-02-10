@@ -95,12 +95,8 @@ a ai pr-draft submit [--base main]
 
 frontmatter の `title` が PR タイトルとして、body 部分が PR 本文として使用される。
 
-**注意:** submit は以下の条件をすべて満たす場合のみ成功する:
-
-- `.lock` ファイルがない（レビュー完了）
-- `.approve` ファイルがある（`steps.submit: true` でエディタを終了した）
-- ファイルのハッシュが `.approve` と一致する（承認後に改ざんされていない）
-  !`claude-skill-check is-public && echo "- title と body に日本語が含まれていない" || true`
+**注意:** submit はユーザーがレビューを完了し承認済みの場合のみ成功する。失敗した場合はエラーメッセージをそのままユーザーに伝えること。
+!`claude-skill-check is-public && echo "- title と body に日本語が含まれていない" || true`
 
 ## 5. CI 実行を監視
 
