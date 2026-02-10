@@ -21,7 +21,10 @@ return {
     opts = {
       renderer_options = {
         mermaid = {
-          theme = 'dark',
+          -- Pass options via cli_args to avoid shell comment interpretation.
+          -- diagram.nvim builds the command as an unquoted string for jobstart,
+          -- so '#' in background color truncates all subsequent arguments.
+          cli_args = { '-t', 'dark', '-b', "'#000000'", '-s', '3' },
         },
       },
     },
