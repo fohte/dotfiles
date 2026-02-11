@@ -1,0 +1,5 @@
+variables:
+  repo: gh repo view --json name,visibility,owner --jq .
+  has_release_please: '[ -f release-please-config.json -o -f .release-please-manifest.json ] && echo true || echo false'
+
+template: template.md

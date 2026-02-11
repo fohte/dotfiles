@@ -105,6 +105,7 @@ if match_tag claude; then
   sym config/claude/commands ~/.claude/commands
   sym config/claude/contexts ~/.claude/contexts
   sym config/claude/skills ~/.claude/skills
+  sym config/claude/dynamic-skills ~/.claude/dynamic-skills
   sym config/claude/settings.json ~/.claude/settings.json
   sym config/claude/statusline.ts ~/.claude/statusline.ts
 fi
