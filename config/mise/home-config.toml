@@ -37,6 +37,7 @@ glow = "2.1.1"
 gomplate = "5.0.0"
 sccache = "0.13.0"
 "npm:@mermaid-js/mermaid-cli" = "latest"
+"cargo:ast-grep" = "0.40.5"
 
 [settings]
 # disable the idiomatic version file such as Gemfile
