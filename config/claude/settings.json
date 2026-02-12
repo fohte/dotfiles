@@ -44,7 +44,7 @@
       "Bash(find:*)",
       "Bash(gcloud * describe *)",
       "Bash(gcloud * list *)",
-      "Bash(gen-dynamic-skill:*)",
+      "Bash(gen-claude-template:*)",
       "Bash(gh * list *)",
       "Bash(gh * view *)",
       "Bash(gh api -X GET:*)",
@@ -158,7 +158,7 @@
           },
           {
             "type": "command",
-            "command": "claude-inject-context"
+            "command": "gen-claude-template context"
           }
         ]
       }

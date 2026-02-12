@@ -1,0 +1,81 @@
+#!/bin/bash
+# Dynamic template generator for Claude Code.
+# Reads a config.yaml with variables and a gomplate template,
+# evaluates variable commands, and renders the final Markdown to stdout.
+#
+# Usage:
+#   gen-claude-template skill <name>   - render a skill template
+#   gen-claude-template context <name> - render a single context template
+#   gen-claude-template context        - render all context templates
+#
+# Directory layout (~/.claude/contexts/):
+#   skill/<name>/config.yaml    - skill templates
+#   <name>/config.yaml          - context templates (everything except skill/)
+#
+# config.yaml format:
+#   variables:
+#     <name>: <shell command whose stdout becomes the variable value>
+#   template: <template file path relative to config.yaml>
+#
+# Variable values are passed to gomplate as a YAML datasource "vars".
+# In templates, access them via: {{ (ds "vars").<name> }}
+# If a command outputs JSON, it is accessible as nested objects.
+
+set -euo pipefail
+
+contexts_dir="${HOME}/.claude/contexts"
+
+render_template() {
+  local template_dir="$1"
+  local config="${template_dir}/config.yaml"
+
+  if [[ ! -f "$config" ]]; then
+    echo "Error: config not found: $config" >&2
+    return 1
+  fi
+
+  # Evaluate each variable command and build a YAML string
+  local vars_yaml=""
+  while IFS= read -r key; do
+    cmd=$(yq -r ".variables.\"$key\"" "$config")
+    value=$(eval "$cmd" 2> /dev/null || true)
+    # If value looks like JSON object/array, inline it as-is for YAML parsing
+    if [[ "$value" =~ ^[\{\[] ]]; then
+      vars_yaml+="${key}: ${value}"$'\n'
+    else
+      vars_yaml+="${key}: ${value}"$'\n'
+    fi
+  done < <(yq -r '.variables | keys[]' "$config")
+
+  local template
+  template=$(yq -r '.template' "$config")
+
+  echo "$vars_yaml" | gomplate \
+    -d "vars=stdin:///vars.yaml" \
+    -f "${template_dir}/${template}"
+}
+
+type="${1:?Usage: gen-claude-template <type> [<name>]}"
+
+case "$type" in
+  skill)
+    name="${2:?Usage: gen-claude-template skill <name>}"
+    render_template "${contexts_dir}/skill/${name}"
+    ;;
+  context)
+    if [[ -n "${2:-}" ]]; then
+      render_template "${contexts_dir}/${2}"
+    else
+      for dir in "${contexts_dir}"/*/; do
+        [[ -d "$dir" ]] || continue
+        # Skip the skill/ subdirectory
+        [[ "$(basename "$dir")" == "skill" ]] && continue
+        render_template "$dir"
+      done
+    fi
+    ;;
+  *)
+    echo "Error: unknown type '${type}'. Use 'skill' or 'context'." >&2
+    exit 1
+    ;;
+esac
