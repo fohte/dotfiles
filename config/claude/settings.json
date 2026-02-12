@@ -86,6 +86,8 @@
       "Bash(nr test:*)",
       "Bash(rg:*)",
       "Bash(ruby -c:*)",
+      "Bash(sg scan:*)",
+      "Bash(sg test:*)",
       "Bash(shellcheck:*)",
       "Bash(shfmt:*)",
       "Bash(sort:*)",
