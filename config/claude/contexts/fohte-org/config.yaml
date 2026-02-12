@@ -1,0 +1,3 @@
+variables:
+  remote: git remote get-url origin
+template: template.md
