@@ -297,80 +297,68 @@ select(.type != "progress" and .type != "file-history-snapshot")
 JQ
 }
 
-# Convert JSONL digest to Markdown
-jsonl_to_markdown() {
+# Convert JSONL digest to plain text
+jsonl_to_plaintext() {
   jq -rs '
 def render_tool_use:
-  "**Tool: " + .name + "**" +
-  (if .input.file_path then " `" + .input.file_path + "`"
-   elif .input.command then " `" + (.input.command | split("\n") | first) + (if (.input.command | split("\n") | length) > 1 then " ..." else "" end) + "`"
-   elif .input.pattern then " `" + .input.pattern + "`"
+  "Tool: " + .name +
+  (if .input.file_path then " " + .input.file_path
+   elif .input.command then " " + (.input.command | split("\n") | first) + (if (.input.command | split("\n") | length) > 1 then " ..." else "" end)
+   elif .input.pattern then " " + .input.pattern
    elif .input.description then " - " + .input.description
    else "" end);
 
 def render_tool_result:
-  if .content == null then "_(no output)_"
+  if .content == null then "(no output)"
   elif (.content | type) == "string" then
-    if (.content | length) > 200 then
-      "`" + (.content | .[0:200]) + "...`"
-    else "`" + .content + "`" end
+    if (.content | length) > 200 then (.content | .[0:200]) + "..."
+    else .content end
   elif (.content | type) == "array" then
     [.content[] | if .type == "text" then .text else "" end] | join("") |
-    if length > 200 then .[0:200] + "..." else . end |
-    "`" + . + "`"
-  else "_(complex)_" end;
+    if length > 200 then .[0:200] + "..." else . end
+  else "(complex)" end;
 
 # Extract meta
 (.[0] | if ._meta then ._meta else null end) as $meta |
 (if $meta then .[1:] else . end) as $events |
 
 # Header
-"# Session Digest" +
-(if $meta then ": " + $meta.session_id else "" end) + "\n\n" +
-(if $meta then
-  "> Original: " + ($meta.original_bytes | . / 1048576 | . * 10 | floor / 10 | tostring) + " MB\n\n"
-else "" end) +
+"[" + (if $meta then $meta.session_id else "unknown" end) + "]" +
+(if $meta and ($meta.cwd // "") != "" then " " + $meta.cwd else "" end) + "\n" +
 
 # Summary
 ($events | map(select(.type == "summary")) | if length > 0 then
-  "> **Summary**: " + (first.summary // "") + "\n\n---\n\n"
-else "---\n\n" end) +
+  (first.summary // "") + "\n"
+else "" end) +
 
 # Events
 ($events | map(select(.type != "summary")) |
   reduce .[] as $e (""; . +
     if $e.type == "user" then
       if ($e.message.content | type) == "string" then
-        "## User\n\n" + $e.message.content + "\n\n"
+        "\n--- user ---\n" + $e.message.content + "\n"
       elif ($e.message.content | type) == "array" then
+        "\n--- user ---\n" +
         ($e.message.content | map(
-          if .type == "text" then
-            "## User\n\n" + .text + "\n\n"
+          if .type == "text" then .text
           elif .type == "tool_result" then
-            "> Tool result (" + .tool_use_id + "): " + (
+            "Tool result (" + .tool_use_id + "): " + (
               if (.content | type) == "string" then
                 if (.content | length) > 100 then (.content | .[0:100] + "...") else .content end
-              else "_(complex)_" end
-            ) + "\n\n"
+              else "(complex)" end
+            )
           else "" end
-        ) | join(""))
+        ) | join("\n")) + "\n"
       else "" end
 
     elif $e.type == "assistant" then
-      "## Assistant" +
-      (if $e.message.model then " (" + $e.message.model + ")" else "" end) + "\n\n" +
+      "\n--- assistant" +
+      (if $e.message.model then " (" + $e.message.model + ")" else "" end) + " ---\n" +
       ($e.message.content | map(
-        if .type == "text" then
-          .text + "\n\n"
-        elif .type == "tool_use" then
-          render_tool_use + "\n\n"
+        if .type == "text" then .text
+        elif .type == "tool_use" then render_tool_use
         else "" end
-      ) | join(""))
-
-    elif $e.type == "system" then
-      (if $e.subtype == "turn_duration" then
-        "> _Turn duration: " + (($e.durationMs // 0) / 1000 | . * 10 | floor / 10 | tostring) + "s_\n\n---\n\n"
-      else "" end)
+      ) | join("\n")) + "\n"
 
     else "" end
   )
@@ -401,16 +389,18 @@ else
   JSONL_FILE="$(find_session_file_global "$SESSION_ARG")"
 fi
 
-ORIGINAL_BYTES="$(stat -f%z "$JSONL_FILE" 2> /dev/null || stat -c%s "$JSONL_FILE" 2> /dev/null)"
 SESSION_ID="$(basename "$JSONL_FILE" .jsonl)"
 
 JQ_FILTER="$(build_jq_filter)"
 
 # Build JSONL then convert to Markdown
+# Extract cwd from the first event that has it
+SESSION_CWD="$(jq -r 'select(.cwd != null) | .cwd' "$JSONL_FILE" | head -1)"
+
 {
   # Meta line
-  jq -n -c --arg sid "$SESSION_ID" --argjson size "$ORIGINAL_BYTES" \
-    '{"_meta":{"session_id":$sid,"original_bytes":$size}}'
+  jq -n -c --arg sid "$SESSION_ID" --arg cwd "$SESSION_CWD" \
+    '{"_meta":{"session_id":$sid,"cwd":$cwd}}'
 
   # Main session
   jq -c --argjson LIMIT "$TRUNCATE_LIMIT" "$JQ_FILTER" "$JSONL_FILE"
@@ -429,4 +419,4 @@ JQ_FILTER="$(build_jq_filter)"
       done
     fi
   fi
-} | jsonl_to_markdown
+} | jsonl_to_plaintext
