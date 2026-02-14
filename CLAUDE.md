@@ -83,9 +83,10 @@ config/
 │
 ├── bin/                     # カスタムスクリプト (PATH が通っている)
 │
-├── claude/                  # Claude Code 設定
+├── claude/                  # Claude Code 設定 (~/.claude/ に symlink)
 │   ├── _CLAUDE.md           # グローバルな CLAUDE.md (~/.claude/CLAUDE.md)
-│   └── settings.json        # Claude Code 設定
+│   ├── settings.json        # Claude Code 設定
+│   └── skills/              # カスタム skills (SKILL.md)
 │
 ├── tmux/                    # tmux 設定
 ├── git/                     # Git グローバル設定と ignore パターン
