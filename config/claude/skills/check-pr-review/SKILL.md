@@ -81,14 +81,13 @@ gh api -X POST "repos/{owner}/{repo}/pulls/{pr_number}/comments/{comment_id}/rep
 
 ### Reply content guidelines
 
-Replies are posted to bot reviewers, so keep them **concise and technical**.
+Replies are posted to bot reviewers (e.g., Gemini Code Assist).
 
-- Brief technical reason for not addressing the comment
-- Example: `Not applicable: executor_cmd comes from the user's config file, not external input, so command injection is not a threat here.`
-- Example: `Intentional: kill()/wait() are best-effort cleanup after timeout. Propagating their errors would replace the Timeout error with a less informative Spawn error.`
+- **Language**: Match the language of the PR (Japanese PR → Japanese reply, English PR → English reply)
+- **Tone**: Casual/plain style, no keigo (敬語). Bot reviewers don't need politeness
+- **Length**: 1-2 sentences. Concise but complete
+- Write **natural sentences** as a human would. No label prefixes like "Not applicable:", "対応不要:" at the start
+- When citing evidence (versions, URLs, etc.), integrate them naturally into the sentence so the reader understands why they are mentioned. Don't drop bare values without context
+- If the bot's claim is factually wrong, briefly explain **why** it is wrong, not just that it is wrong
 
-**Do NOT**:
-
-- Write long explanations
-- Include greetings or pleasantries
-- Quote the original comment back
+**Do NOT**: write long explanations, include greetings/pleasantries, or quote the original comment back
