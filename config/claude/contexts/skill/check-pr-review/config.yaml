@@ -1,0 +1,4 @@
+variables:
+  repo: gh repo view --json name,visibility,owner --jq .
+
+template: template.md
