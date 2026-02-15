@@ -14,9 +14,11 @@
 - **簡潔に**: 50 文字以内で変更内容を要約
 - **現在形の命令形**: 「Add ...」「Fix ...」「Update ...」など
 - **日本語で生成**: body と同様に日本語で書く（public repo の場合、翻訳はユーザーが `steps.ready-for-translation: true` にした後に行う）
-- **効果を書く、実装を書かない**: 「何をするか」ではなく「何が解決されるか/何ができるようになるか」を書く
-    - ❌ `minimumReleaseAge チェックをスキップする` (実装詳細)
-    - ✅ `lockFileMaintenance の automerge が動作するようにする` (効果)
+- **変更の要約を書く**: 変更内容を客観的に要約する。「〜するようにする」「〜が成功するようにする」のような未確証の結果を断定しない。設定や機能の変更であれば、何をどう変えたかを書く
+    - ❌ `ghcr.io への Docker イメージ push が成功するようにする` (結果を断定している。本当に成功するかはまだわからない)
+    - ❌ `minimumReleaseAge チェックをスキップする` (実装詳細すぎる。何の設定のどういう変更かがわからない)
+    - ✅ `build-push-action の provenance attestation を無効化する` (何をどう変えたかが客観的にわかる)
+    - ✅ `lockFileMaintenance の minimumReleaseAge チェックを無効化する` (設定変更の要約)
 
 ## Why セクションの書き方
 
@@ -78,7 +80,7 @@
 **Title と What の例:**
 
 ```markdown
-Title: lockFileMaintenance の automerge が動作するようにする
+Title: lockFileMaintenance の minimumReleaseAge チェックを無効化する
 
 ## What
 
