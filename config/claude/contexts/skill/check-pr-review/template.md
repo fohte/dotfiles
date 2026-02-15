@@ -51,7 +51,8 @@ Shows all reviews and threads with full details (legacy behavior).
 5. For "won't fix" comments, add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
 6. If code changes were made (steps 4-5), commit and push using the `/commit` skill, then `git push`
 7. **Reply to "won't fix" threads** on GitHub (see Reply to Review Threads below)
-8. Re-run to verify all comments have been addressed
+8. **Resolve all addressed threads** from bot reviewers (see Resolve Review Threads below)
+9. Re-run to verify all comments have been addressed
 
 **Important**: After getting the summary, immediately proceed to fetch details for each review. Never ask the user "詳細を確認しますか?" or similar confirmation questions.
 
@@ -92,5 +93,33 @@ Replies are posted to bot reviewers (e.g., Gemini Code Assist).
 - Write **natural sentences** as a human would. No label prefixes like "Not applicable:", "対応不要:" at the start
 - When citing evidence (versions, URLs, etc.), integrate them naturally into the sentence so the reader understands why they are mentioned. Don't drop bare values without context
 - If the bot's claim is factually wrong, briefly explain **why** it is wrong, not just that it is wrong
+- **Inline code formatting**: Always wrap code tokens, commands, file paths, and similar technical terms in backticks (e.g., `COPY . .`, `docker build`, `/usr/local/bin`). Never write them as bare text
 
 **Do NOT**: write long explanations, include greetings/pleasantries, or quote the original comment back
+
+## Resolve Review Threads (Gemini Code Assist)
+
+After addressing all comments (both code fixes and "won't fix" replies), **resolve every thread** from bot reviewers (e.g., Gemini Code Assist). Bot reviewers cannot resolve their own threads, so this must be done manually. Do NOT resolve threads from Devin, as Devin auto-resolves its own threads.
+
+Resolve threads for **both** cases:
+
+- Threads where code changes were made
+- Threads where a "won't fix" reply was posted
+
+**IMPORTANT**: Claude Code's Bash tool escapes `!` to `\!`, which breaks GraphQL's Non-Null type modifier (e.g., `String!` becomes `String\!`). Therefore, **never use GraphQL variables** (`$owner: String!`, etc.). Always inline literal values directly into the query string.
+
+### Step 1: Fetch unresolved thread IDs
+
+```bash
+gh api graphql -f query='query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {pr_number}) { reviewThreads(first: 100) { nodes { id isResolved comments(first: 1) { nodes { body author { login } } } } } } } }' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false) | {id, author: .comments.nodes[0].author.login, body: .comments.nodes[0].body[:80]}'
+```
+
+Filter to only Gemini Code Assist threads from the results.
+
+### Step 2: Resolve each thread
+
+```bash
+gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "{thread_id}"}) { thread { id isResolved } } }'
+```
+
+Resolve all Gemini threads that were addressed in this session. Do NOT resolve threads that were not reviewed.
