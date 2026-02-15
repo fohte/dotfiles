@@ -16,5 +16,13 @@
       automerge: true,
       matchUpdateTypes: ['patch'],
     },
+    // Prevent Renovate from pinning Node.js to an exact version in mise config.
+    // The current version (e.g., "23.11.1") is already precise enough, and
+    // Renovate's default 'pin' strategy would create unnecessary PRs.
+    {
+      matchManagers: ['mise'],
+      matchDatasources: ['node-version'],
+      rangeStrategy: 'bump',
+    },
   ],
 }
