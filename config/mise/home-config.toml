@@ -9,7 +9,7 @@ go = "1.25.6"
 lua = "5.4.8"
 
 # packages
-"npm:@devcontainers/cli" = "0.82.0"
+"npm:@devcontainers/cli" = "0.83.0"
 "pipx:neovim-remote" = "latest"
 "gem:rubocop" = "1.84.0"
 
