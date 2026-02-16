@@ -120,6 +120,7 @@ fi
 
 if match_tag armyknife; then
   sym config/armyknife/config.yaml ~/.config/armyknife/config.yaml
+  sym config/armyknife/hooks/post-worktree-create ~/.config/armyknife/hooks/post-worktree-create
 fi
 
 if match_tag mise; then

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Create .marksman.toml in new worktrees so that marksman LSP can detect the project root.
+# In worktrees, .git is a file (not a directory), which marksman's Directory.Exists() check
+# doesn't recognize. .marksman.toml serves as an alternative root marker.
+
+if [ -n "$ARMYKNIFE_WORKTREE_PATH" ] && [ ! -f "$ARMYKNIFE_WORKTREE_PATH/.marksman.toml" ]; then
+  touch "$ARMYKNIFE_WORKTREE_PATH/.marksman.toml"
+fi

@@ -82,6 +82,9 @@ context_portal/
 **/.claude/tmp/
 **/.z/
 
+# marksman (auto-created in worktrees for project root detection)
+.marksman.toml
+
 # cc-sdd
 **/.kiro/
 **/.kiro
