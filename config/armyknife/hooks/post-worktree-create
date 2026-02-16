@@ -1,8 +1,24 @@
-#!/bin/sh
+#!/bin/bash
+set -euo pipefail
+
+if [[ -z "${ARMYKNIFE_WORKTREE_PATH:-}" ]]; then
+  exit 0
+fi
+
 # Create .marksman.toml in new worktrees so that marksman LSP can detect the project root.
 # In worktrees, .git is a file (not a directory), which marksman's Directory.Exists() check
 # doesn't recognize. .marksman.toml serves as an alternative root marker.
-
-if [ -n "$ARMYKNIFE_WORKTREE_PATH" ] && [ ! -f "$ARMYKNIFE_WORKTREE_PATH/.marksman.toml" ]; then
+if [ ! -f "$ARMYKNIFE_WORKTREE_PATH/.marksman.toml" ]; then
   touch "$ARMYKNIFE_WORKTREE_PATH/.marksman.toml"
+fi
+
+# Register the worktree as a trusted project in Claude Code (~/.claude.json).
+# Without this, Claude Code prompts for trust confirmation on every new worktree.
+# Only trust worktrees under the user's own repositories.
+CLAUDE_JSON="$HOME/.claude.json"
+if [[ "$ARMYKNIFE_WORKTREE_PATH" == "$HOME/ghq/github.com/fohte/"* ]] &&
+  [[ -f "$CLAUDE_JSON" ]]; then
+  jq --arg path "$ARMYKNIFE_WORKTREE_PATH" \
+    '.projects[$path].hasTrustDialogAccepted = true' \
+    "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
 fi
