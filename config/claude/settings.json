@@ -18,6 +18,8 @@
       "Bash(a gh issue-agent pull:*)",
       "Bash(a gh issue-agent view:*)",
       "Bash(actionlint:*)",
+      "Bash(ast-grep scan:*)",
+      "Bash(ast-grep test:*)",
       "Bash(bash -n:*)",
       "Bash(bats:*)",
       "Bash(bun pm ls:*)",
