@@ -119,8 +119,7 @@ if match_tag opencode; then
 fi
 
 if match_tag armyknife; then
-  sym config/armyknife/config.yaml ~/.config/armyknife/config.yaml
-  sym config/armyknife/hooks/post-worktree-create ~/.config/armyknife/hooks/post-worktree-create
+  sym config/armyknife ~/.config/armyknife
 fi
 
 if match_tag mise; then
