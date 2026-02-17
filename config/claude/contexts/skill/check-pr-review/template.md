@@ -43,12 +43,13 @@ Shows all reviews and threads with full details (legacy behavior).
 
 1. Run without options to get summary
 2. **Automatically** run `--review N` for each review that has unresolved comments (do NOT ask the user if they want to see details)
-3. **Evaluate each comment** before making changes:
-    - Consider whether the feedback should be addressed or not
-    - If disagreeing with a comment, explain the reasoning to the user instead of making changes
-    - Only proceed with code changes for feedback you agree with
+3. **Evaluate each comment** with a **fix-by-default** mindset:
+    - **Default action is to fix**: Assume review feedback is valid and should be addressed unless there is clear evidence otherwise
+    - **"Won't fix" only for obvious false positives**: Only skip fixing when the reviewer's claim is factually incorrect (e.g., claims a version/API doesn't exist when it does, hallucinates non-existent issues, misreads the code logic)
+    - **When unsure, ask the user**: If you're uncertain whether a comment is valid or how to address it, ask the user rather than deciding "won't fix" on your own
+    - **Do NOT dismiss comments just because you disagree**: Reviewer suggestions about code style, safety, readability, or best practices should generally be followed even if the current code technically works
 4. Make necessary code changes based on the feedback
-5. For "won't fix" comments, add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
+5. For the rare "won't fix" comments (only obvious false positives — see step 3), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
 6. If code changes were made (steps 4-5), commit and push using the `/commit` skill, then `git push`
 7. **Reply to "won't fix" threads** on GitHub (see Reply to Review Threads below)
 8. **Resolve all addressed threads** from bot reviewers (see Resolve Review Threads below)
