@@ -117,10 +117,14 @@ gh api graphql -f query='query { repository(owner: "{owner}", name: "{repo}") { 
 
 Filter to only Gemini Code Assist threads from the results.
 
-### Step 2: Resolve each thread
+### Step 2: Resolve threads
+
+Use a `for` loop with the thread IDs from Step 1:
 
 ```bash
-gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "{thread_id}"}) { thread { id isResolved } } }'
+for thread_id in {thread_id_1} {thread_id_2} ...; do
+  gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "'"$thread_id"'"}) { thread { id } } }'
+done
 ```
 
-Resolve all Gemini threads that were addressed in this session. Do NOT resolve threads that were not reviewed.
+Replace `{thread_id_1} {thread_id_2} ...` with the actual thread IDs from Step 1. Only resolve threads that were addressed in this session.
