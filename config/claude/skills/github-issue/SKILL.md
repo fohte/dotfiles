@@ -241,7 +241,9 @@ Follow these guidelines when writing issues or comments:
 - Completion criteria should describe the achieved state, not the work steps
     - Bad: `Delete the invalid entry from the file`
     - Good: `Changes are deployed to production`
-- Avoid information duplication - consolidate related links in one place (either `from:` at the top or a "Related" section at the bottom, not both)
+- Parent issue references should be written as `- from <url>` list items within the Why section, not as a standalone `from:` line at the top of the issue body
+    - Bad: issue 本文冒頭に `from: #491, #510` と書く
+    - Good: Why セクション内で `- from #510` のようにリスト項目として書き、インデントで詳細を続ける
 
 ## Notes
 
