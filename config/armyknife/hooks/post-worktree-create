@@ -5,6 +5,13 @@ if [[ -z "${ARMYKNIFE_WORKTREE_PATH:-}" ]]; then
   exit 0
 fi
 
+# Run bootstrap script if present (e.g. mise install, dependency install).
+# --worktree skips lefthook install since worktrees share the parent's .git/hooks.
+bootstrap="$ARMYKNIFE_WORKTREE_PATH/scripts/bootstrap"
+if [[ -x "$bootstrap" ]]; then
+  "$bootstrap" --worktree
+fi
+
 # Create .marksman.toml in new worktrees so that marksman LSP can detect the project root.
 # In worktrees, .git is a file (not a directory), which marksman's Directory.Exists() check
 # doesn't recognize. .marksman.toml serves as an alternative root marker.
