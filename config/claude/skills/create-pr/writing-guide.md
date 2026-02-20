@@ -22,12 +22,12 @@
 
 ## Why セクションの書き方
 
-- **関連リンクは文脈の中に埋め込む**: リンク先を読まなくても意味がわかるように、説明文の中にリンクを配置する
-    - `- from: <URL>` は使わない。`from:` だけではそのリンクが「何の」from なのか読み手にはわからない
-    - リンクは「問題が発生した事例」「前提となる変更」など、そのリンクの役割を説明する文の中に埋め込むこと
-    - ❌ `- from: https://github.com/foo/bar/pull/123, https://github.com/foo/bar/pull/456` (リンクを列挙しただけで情報量がない)
-    - ✅ `- Renovate の automerge PR が CI 完了前にマージされてしまっていた (https://github.com/foo/bar/pull/123)`
-    - ✅ `- https://github.com/foo/bar/pull/456 でジョブ名をユニーク化したため、ルールセット側も追従する必要がある`
+- **関連 issue/PR は `from:` で冒頭に記載**: この PR の起点となった issue や PR がある場合、Why の最初の行に `- from: <URL>` で記載する。`from:` は「この PR が何に対するものか」を示す定型表現
+    - 複数ある場合はカンマ区切りで記載: `- from: <URL1>, <URL2>`
+    - `from:` に入れるのは起点リンクのみ。参考資料や根拠のリンクは説明文の中に埋め込む
+- **参考・根拠リンクは文脈の中に埋め込む**: リンク先を読まなくても意味がわかるように、説明文の中にリンクを配置する
+    - ❌ `- 参考: https://github.com/foo/bar/pull/456` (リンクだけで何の参考かわからない)
+    - ✅ `- 別リポジトリではこの問題が修正済み (https://github.com/foo/bar/pull/3)`
 - **変更の種類に応じて書き分ける**:
     - **バグ修正・改善の場合**: 「何が問題か」(症状/影響) を最初の箇条書きで述べる
     - **新規追加の場合**: 「何を実現したいか」(目的/動機) を最初の箇条書きで述べる
@@ -41,6 +41,7 @@
     - ❌ `When running multiple sessions...`
     - ✅ `macOS notifications only show "Session stopped", providing insufficient context...`
     - ✅ `Multiple parallel sessions cannot be distinguished from their notifications`
+- **変更の判断理由を書く**: なぜこのタイミングで/なぜこの方法で変更するのかの判断理由があれば、子要素として補足する
 - **技術的な原因は書かない**: Why には「何が起きていたか」(症状/影響) を書く。「なぜ起きていたか」(技術的原因) は What セクションに書く
     - ❌ `正規表現が v プレフィックスのみを考慮しており、semver 範囲指定子を抽出できなかった` (技術的原因)
     - ✅ `CI の sync ワークフローが変更を検出できず「Already in sync」と誤判定していた` (症状/影響)
