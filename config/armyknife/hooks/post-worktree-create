@@ -32,6 +32,20 @@ if [ ! -f "$ARMYKNIFE_WORKTREE_PATH/.marksman.toml" ]; then
   touch "$ARMYKNIFE_WORKTREE_PATH/.marksman.toml"
 fi
 
+# Copy git-ignored .env files from the original repo root to the new worktree.
+# Tracked .env files are already present via git worktree, so only ignored ones
+# (containing local secrets, overrides, etc.) need to be copied explicitly.
+if [[ -n "${ARMYKNIFE_REPO_ROOT:-}" ]]; then
+  for f in "$ARMYKNIFE_REPO_ROOT"/.env*; do
+    [[ -f "$f" ]] || continue
+    basename="$(basename "$f")"
+    # Skip if the file is tracked by git (not ignored)
+    if git -C "$ARMYKNIFE_REPO_ROOT" check-ignore -q "$f" 2> /dev/null; then
+      cp "$f" "$ARMYKNIFE_WORKTREE_PATH/$basename"
+    fi
+  done
+fi
+
 # Register the worktree as a trusted project in Claude Code (~/.claude.json).
 # Without this, Claude Code prompts for trust confirmation on every new worktree.
 # Only trust worktrees under the user's own repositories.
