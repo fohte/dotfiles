@@ -1,4 +1,17 @@
 #!/bin/bash
+# post-worktree-create hook for armyknife.
+# Called by `a wm new` after creating a git worktree.
+#
+# armyknife discovers this file at $XDG_CONFIG_HOME/armyknife/hooks/post-worktree-create
+# (defaults to ~/.config/armyknife/hooks/post-worktree-create).
+# See: https://github.com/fohte/armyknife/blob/main/src/shared/hooks.rs
+#
+# Environment variables set by armyknife:
+#   ARMYKNIFE_WORKTREE_PATH - absolute path to the newly created worktree
+#   ARMYKNIFE_BRANCH_NAME   - branch name associated with the worktree
+#   ARMYKNIFE_REPO_ROOT     - root path of the original git repository
+#
+# Hook errors are non-fatal; armyknife logs a warning and continues.
 set -euo pipefail
 
 if [[ -z "${ARMYKNIFE_WORKTREE_PATH:-}" ]]; then
