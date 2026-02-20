@@ -1,5 +1,6 @@
 {{- $v := ds "vars" -}}
-{{- $public := eq $v.repo.visibility "PUBLIC" -}}
+{{- $lang_override := eq $v.repo_language "ja" -}}
+{{- $public := and (eq $v.repo.visibility "PUBLIC") (not $lang_override) -}}
 {{- $owner_fohte := eq $v.repo.owner.login "fohte" -}}
 {{- $repo_specs := eq $v.repo.name "specs" -}}
 {{- $release_please := eq (conv.ToString $v.has_release_please) "true" -}}

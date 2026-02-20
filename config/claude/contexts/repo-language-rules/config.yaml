@@ -1,3 +1,4 @@
 variables:
   repo: gh repo view --json visibility --jq .
+  repo_language: a config get repo.language
 template: template.md

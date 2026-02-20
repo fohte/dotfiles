@@ -3,6 +3,10 @@
 editor:
   terminal: ghostty
 
+repos:
+  fohte/t-rader:
+    language: ja
+
 wm:
   layout:
     command: claude
