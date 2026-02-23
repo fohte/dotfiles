@@ -36,9 +36,10 @@ rules:
   - allow: ': *'
   - allow: 'cd *'
   - allow: 'echo *'
+  - allow: 'file'
+  - allow: 'sleep *'
   - allow: 'test *'
   - allow: 'true'
-  - allow: 'file'
   - allow: 'which *'
 
   # armyknife
