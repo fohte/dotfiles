@@ -1,0 +1,206 @@
+# runok global configuration
+# Equivalent to ~/.claude/settings.json Bash permission rules
+
+defaults:
+  action: ask
+
+rules:
+  # === deny rules ===
+  - deny: 'gh api * --paginate *'
+  - deny: 'gh repo set-default *'
+  - deny: 'git [-C *] commit --amend *'
+  - deny: 'git [-C *] push --force-with-lease *'
+  - deny: 'git [-C *] push --force *'
+  - deny: 'git [-C *] push -f *'
+  - deny: 'rm -rf *'
+
+  # === allow rules ===
+
+  # generic flags
+  - allow: '* --help'
+  - allow: '* --version'
+
+  # shell builtins
+  - allow: ': *'
+  - allow: 'true'
+  - allow: 'test *'
+  - allow: 'echo *'
+  - allow: 'cd *'
+
+  # armyknife
+  - allow: 'a ai draft *'
+  - allow: 'a ai pr-draft *'
+  - allow: 'a ai review wait *'
+  - allow: 'a gh check-pr-review *'
+  - allow: 'a gh issue-agent diff *'
+  - allow: 'a gh issue-agent init *'
+  - allow: 'a gh issue-agent pull *'
+  - allow: 'a gh issue-agent view *'
+
+  # linters and formatters
+  - allow: 'actionlint *'
+  - allow: 'ast-grep scan *'
+  - allow: 'ast-grep test *'
+  - allow: 'bash -n *'
+  - allow: 'shellcheck *'
+  - allow: 'shfmt *'
+
+  # test runners
+  - allow: 'bats *'
+
+  # package managers
+  - allow: 'bun pm ls *'
+  - allow: 'ni'
+  - allow: 'npm view *'
+  - allow: 'nr build *'
+  - allow: 'nr format *'
+  - allow: 'nr lint *'
+  - allow: 'nr test *'
+
+  # cargo / rust
+  - allow: 'cargo build *'
+  - allow: 'cargo check *'
+  - allow: 'cargo clippy *'
+  - allow: 'cargo doc *'
+  - allow: 'cargo fmt *'
+  - allow: 'cargo llvm-cov *'
+  - allow: 'cargo metadata *'
+  - allow: 'cargo search *'
+  - allow: 'cargo test *'
+  - allow: 'cargo tree *'
+
+  # file operations
+  - allow: 'cat *'
+  - allow: 'head *'
+  - allow: 'tail *'
+  - allow: 'sort *'
+  - allow: 'wc *'
+  - allow: 'col *'
+  - allow: 'xxd *'
+  - allow: 'chmod +x *'
+  - allow: 'mkdir *'
+  - allow: 'touch *'
+  - allow: 'ls *'
+  - allow: 'tree *'
+  - allow: 'find *'
+
+  # search
+  - allow: 'grep *'
+  - allow: 'rg *'
+
+  # network (read-only)
+  - allow: 'curl -X GET *'
+  - allow: 'curl -s -X GET *'
+
+  # date / time
+  - allow: 'date *'
+
+  # JSON
+  - allow: 'jq *'
+
+  # Claude Code
+  - allow: 'claude-session-digest *'
+  - allow: 'gen-claude-template *'
+
+  # gcloud (read-only)
+  - allow: 'gcloud * describe *'
+  - allow: 'gcloud * list *'
+
+  # gh (read-only)
+  - allow: 'gh * list *'
+  - allow: 'gh * view *'
+  - allow: 'gh api -X GET *'
+  - allow: 'gh browse *'
+  - allow: 'gh pr checks *'
+  - allow: 'gh pr diff *'
+  - allow: 'gh run watch *'
+  - allow: 'gh search *'
+
+  # ghq
+  - allow: 'ghq get *'
+  - allow: 'ghq list *'
+
+  # git
+  - allow: 'git [-C *] add *'
+  - allow: 'git [-C *] diff *'
+  - allow: 'git [-C *] checkout -- *'
+  - allow: 'git [-C *] commit -m *'
+  - allow: 'git [-C *] commit *'
+  - allow: 'git [-C *] fetch *'
+  - allow: 'git [-C *] grep *'
+  - allow: 'git [-C *] help *'
+  - allow: 'git [-C *] log *'
+  - allow: 'git [-C *] ls-tree *'
+  - allow: 'git [-C *] merge origin/main *'
+  - allow: 'git [-C *] merge origin/master *'
+  - allow: 'git [-C *] mv *'
+  - allow: 'git [-C *] pull *'
+  - allow: 'git [-C *] push *'
+  - allow: 'git [-C *] remote get-url *'
+  - allow: 'git [-C *] rev-parse *'
+  - allow: 'git [-C *] show *'
+  - allow: 'git [-C *] status *'
+
+  # ruby
+  - allow: 'ruby -c *'
+
+  # semgrep
+  - allow: 'sg scan *'
+  - allow: 'sg test *'
+
+  # git hooks
+  - allow: 'lefthook run *'
+
+  # mise
+  - allow: 'mise run test *'
+
+  # terraform
+  - allow: 'terraform fmt'
+  - allow: 'terraform fmt *'
+  - allow: 'terraform validate'
+
+  # task runner
+  - allow: 'task *'
+
+  # tmux (read-only)
+  - allow: 'tmux capture-pane *'
+  - allow: 'tmux display-message *'
+  - allow: 'tmux list-buffers *'
+  - allow: 'tmux list-clients *'
+  - allow: 'tmux list-commands *'
+  - allow: 'tmux list-keys *'
+  - allow: 'tmux list-panes *'
+  - allow: 'tmux list-sessions *'
+  - allow: 'tmux list-windows *'
+  - allow: 'tmux show-buffer *'
+  - allow: 'tmux show-environment *'
+  - allow: 'tmux show-hooks *'
+  - allow: 'tmux show-messages *'
+  - allow: 'tmux show-options *'
+  - allow: 'tmux show-window-options *'
+
+definitions:
+  paths:
+    sensitive:
+      - '.env'
+      - '.env.*'
+      - '.envrc'
+      - '~/.ssh/**'
+      - '~/.gnupg/**'
+      - '~/.aws/credentials'
+      - '~/.config/gh/hosts.yml'
+
+  sandbox:
+    default:
+      fs:
+        writable: [., /tmp]
+        deny:
+          - '<path:sensitive>'
+      network:
+        allow: true
+
+  wrappers:
+    - 'sudo <cmd>'
+    - 'bash -c <cmd>'
+    - 'sh -c <cmd>'
+    - 'xargs <cmd>'
