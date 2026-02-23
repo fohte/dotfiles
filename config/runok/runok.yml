@@ -3,16 +3,28 @@
 
 defaults:
   action: ask
+  sandbox: default
 
 rules:
   # === deny rules ===
   - deny: 'gh api * --paginate *'
+    message: 'Blocked to prevent excessive API rate limit consumption'
   - deny: 'gh repo set-default *'
+    message: 'Blocked to prevent unintended operations on wrong repository'
   - deny: 'git [-C *] commit --amend *'
+    message: 'Blocked to prevent rewriting previous commit which may destroy work'
+    fix_suggestion: 'git commit -m "fix: ..."'
   - deny: 'git [-C *] push --force-with-lease *'
+    message: 'Blocked to prevent rewriting remote history'
   - deny: 'git [-C *] push --force *'
+    message: 'Blocked to prevent rewriting remote history'
+    fix_suggestion: 'git push'
   - deny: 'git [-C *] push -f *'
+    message: 'Blocked to prevent rewriting remote history'
+    fix_suggestion: 'git push'
   - deny: 'rm -rf *'
+    message: 'Blocked because recursive forced deletion is irreversible'
+    fix_suggestion: 'rm -r'
 
   # === allow rules ===
 
@@ -22,10 +34,12 @@ rules:
 
   # shell builtins
   - allow: ': *'
-  - allow: 'true'
-  - allow: 'test *'
-  - allow: 'echo *'
   - allow: 'cd *'
+  - allow: 'echo *'
+  - allow: 'test *'
+  - allow: 'true'
+  - allow: 'file'
+  - allow: 'which *'
 
   # armyknife
   - allow: 'a ai draft *'
@@ -178,6 +192,8 @@ rules:
   - allow: 'tmux show-messages *'
   - allow: 'tmux show-options *'
   - allow: 'tmux show-window-options *'
+
+  - allow: 'runok check *'
 
 definitions:
   paths:
