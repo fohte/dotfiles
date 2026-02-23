@@ -196,6 +196,12 @@ rules:
 
   - allow: 'runok check *'
 
+  # interpreters (sandbox-only, read-only + no network)
+  - allow: 'node *'
+    sandbox: readonly
+  - allow: 'python3 *'
+    sandbox: readonly
+
 definitions:
   paths:
     sensitive:
@@ -215,6 +221,13 @@ definitions:
           - '<path:sensitive>'
       network:
         allow: true
+    readonly:
+      fs:
+        writable: []
+        deny:
+          - '<path:sensitive>'
+      network:
+        allow: false
 
   wrappers:
     - 'sudo <cmd>'
