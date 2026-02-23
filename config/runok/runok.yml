@@ -34,13 +34,26 @@ rules:
 
   # shell builtins
   - allow: ': *'
-  - allow: 'cd *'
+  - allow: 'basename *'
+  - allow: 'command *'
+  - allow: 'dirname *'
   - allow: 'echo *'
+  - allow: 'false'
   - allow: 'file'
+  - allow: 'id'
+  - allow: 'printf *'
+  - allow: 'pwd'
+  - allow: 'read *'
+  - allow: 'readlink *'
+  - allow: 'realpath *'
   - allow: 'sleep *'
+  - allow: 'strings'
   - allow: 'test *'
   - allow: 'true'
+  - allow: 'type *'
+  - allow: 'uname *'
   - allow: 'which *'
+  - allow: 'whoami'
 
   # armyknife
   - allow: 'a ai draft *'
@@ -86,18 +99,34 @@ rules:
 
   # file operations
   - allow: 'cat *'
-  - allow: 'head *'
-  - allow: 'tail *'
-  - allow: 'sort *'
-  - allow: 'wc *'
   - allow: 'col *'
+  - allow: 'cut *'
+  - allow: 'diff *'
+  - allow: 'du *'
+  - allow: 'head *'
+  - allow: 'less *'
+  - allow: 'ls *'
+  - allow: 'md5sum *'
+  - allow: 'sha256sum *'
+  - allow: 'sort *'
+  - allow: 'stat *'
+  - allow: 'tail *'
+  - allow: 'tr *'
+  - allow: 'tree *'
+  - allow: 'uniq *'
+  - allow: 'wc *'
   - allow: 'xxd *'
+  - allow: 'find *'
+
+  # file operations
   - allow: 'chmod +x *'
   - allow: 'mkdir *'
   - allow: 'touch *'
-  - allow: 'ls *'
-  - allow: 'tree *'
-  - allow: 'find *'
+
+  # text processing
+  - allow: 'awk *'
+    sandbox: readonly
+  - allow: 'sed *'
 
   # search
   - allow: 'grep *'
@@ -110,18 +139,19 @@ rules:
   # date / time
   - allow: 'date *'
 
-  # JSON
+  # data processing
   - allow: 'jq *'
+  - allow: 'yq *'
 
   # Claude Code
   - allow: 'claude-session-digest *'
   - allow: 'gen-claude-template *'
 
-  # gcloud (read-only)
+  # gcloud (readonly)
   - allow: 'gcloud * describe *'
   - allow: 'gcloud * list *'
 
-  # gh (read-only)
+  # gh
   - allow: 'gh * list *'
   - allow: 'gh * view *'
   - allow: 'gh api -X GET *'
@@ -200,6 +230,8 @@ rules:
   - allow: 'node *'
     sandbox: readonly
   - allow: 'python3 *'
+    sandbox: readonly
+  - allow: 'ruby *'
     sandbox: readonly
 
 definitions:
