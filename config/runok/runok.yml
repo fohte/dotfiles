@@ -165,15 +165,16 @@ rules:
 
   # git
   - allow: 'git [-C *] add *'
-  - allow: 'git [-C *] diff *'
   - allow: 'git [-C *] checkout -- *'
-  - allow: 'git [-C *] commit -m *'
   - allow: 'git [-C *] commit *'
+  - allow: 'git [-C *] commit -m *'
+  - allow: 'git [-C *] diff *'
   - allow: 'git [-C *] fetch *'
   - allow: 'git [-C *] grep *'
   - allow: 'git [-C *] help *'
   - allow: 'git [-C *] log *'
   - allow: 'git [-C *] ls-tree *'
+  - allow: 'git [-C *] ls-files *'
   - allow: 'git [-C *] merge origin/main *'
   - allow: 'git [-C *] merge origin/master *'
   - allow: 'git [-C *] mv *'
@@ -228,6 +229,8 @@ rules:
     sandbox: readonly
   - allow: 'ruby *'
     sandbox: readonly
+  - allow: 'jsonnet *'
+    sandbox: readonly
 
   - allow: 'npx @marp-team/marp-cli@latest *'
 
@@ -263,3 +266,4 @@ definitions:
     - 'bash -c <cmd>'
     - 'sh -c <cmd>'
     - 'xargs <cmd>'
+    - 'mise x|exec -- <cmd>'
