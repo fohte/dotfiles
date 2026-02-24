@@ -56,7 +56,7 @@
       {
         matcher: 'Bash',
         hooks: [
-          { type: 'command', command: 'runok check --format claude-code-hook' },
+          { type: 'command', command: 'runok check --input-format claude-code-hook' },
         ],
       },
       {
