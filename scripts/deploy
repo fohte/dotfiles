@@ -118,5 +118,13 @@ match_tag() {
   grep -q -F "$tag" <<< "$tags"
 }
 
+# Run build steps for matching tags that have a Makefile
+for dir in config/*/; do
+  tag="$(basename "$dir")"
+  if match_tag "$tag" && [ -f "$dir/Makefile" ]; then
+    log-exec make -C "$dir"
+  fi
+done
+
 # shellcheck disable=SC1091 # External file paths cannot be statically analyzed
 source symlinks
