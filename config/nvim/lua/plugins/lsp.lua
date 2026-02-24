@@ -126,6 +126,19 @@ return {
           })
         end,
 
+        ['yamlls'] = function()
+          setup_server('yamlls', {
+            settings = {
+              yaml = {
+                -- use prettier via EFM instead
+                format = {
+                  enable = false,
+                },
+              },
+            },
+          })
+        end,
+
         ['copilot'] = function()
           -- Do nothing - copilot-lsp plugin will handle copilot_ls server
         end,
