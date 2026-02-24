@@ -47,7 +47,9 @@ cd ~/ghq/github.com/fohte/other-repo && a wm new fix-api-timeout --agent --label
 
 ## 委任時の注意事項
 
-- **ブランチ名**: ブランチ名に `/` を含めないこと。代わりにハイフンを使う (例: `fix/login-bug` ではなく `fix-login-bug`)。ブランチには `fohte/` がプレフィックスとして付くため、`fix/...` だと `fohte/fix/...` になり冗長
+- **既存ブランチで作業する場合**: 既存のリモートブランチ (例: follow-up PR のブランチ) にそのまま commit したい場合は、ブランチ名をそのまま `<branch-name>` に指定する
+    - 例: `a wm new follow-up-123-terraform/foo --agent --label "..." --prompt "..."`
+- **ブランチ名**: 新規ブランチを作る場合、ブランチ名に `/` を含めないこと。代わりにハイフンを使う (例: `fix/login-bug` ではなく `fix-login-bug`)。ブランチには `fohte/` がプレフィックスとして付くため、`fix/...` だと `fohte/fix/...` になり冗長
 - **`--from` は独立した変更では使わない**: `--from` を省略すれば main ブランチからブランチが作られる。`--from` は「そのブランチの変更を前提として作業する必要がある場合」のみ指定すること。独立した変更を delegate する場合に現在の作業ブランチを `--from` に指定すると、関係のない変更が混入して別々の PR にできなくなる
 - 新しいインスタンスは独立した worktree で作業するため、現在の作業と競合しない
 
