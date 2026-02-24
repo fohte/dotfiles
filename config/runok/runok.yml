@@ -59,6 +59,40 @@ rules:
   - allow: 'which *'
   - allow: 'whoami'
 
+  # common commands
+  - allow: 'cat *'
+  - allow: 'col *'
+  - allow: 'cut *'
+  - allow: 'diff *'
+  - allow: 'du *'
+  - allow: 'head *'
+  - allow: 'less *'
+  - allow: 'ls *'
+  - allow: 'md5sum *'
+  - allow: 'sha256sum *'
+  - allow: 'sort *'
+  - allow: 'stat *'
+  - allow: 'tail *'
+  - allow: 'tr *'
+  - allow: 'tree *'
+  - allow: 'uniq *'
+  - allow: 'wc *'
+  - allow: 'xxd *'
+  - allow: 'find *'
+  - allow: 'chmod +x *'
+  - allow: 'mkdir *'
+  - allow: 'touch *'
+  - allow: 'awk *'
+    sandbox: readonly
+  - allow: 'sed *'
+  - allow: 'grep *'
+  - allow: 'rg *'
+  - allow: 'curl -X GET *'
+  - allow: 'curl -s -X GET *'
+  - allow: 'date *'
+  - allow: 'jq *'
+  - allow: 'yq *'
+
   # armyknife
   - allow: 'a ai draft *'
   - allow: 'a ai pr-draft *'
@@ -100,52 +134,6 @@ rules:
   - allow: 'cargo search *'
   - allow: 'cargo test *'
   - allow: 'cargo tree *'
-
-  # file operations
-  - allow: 'cat *'
-  - allow: 'col *'
-  - allow: 'cut *'
-  - allow: 'diff *'
-  - allow: 'du *'
-  - allow: 'head *'
-  - allow: 'less *'
-  - allow: 'ls *'
-  - allow: 'md5sum *'
-  - allow: 'sha256sum *'
-  - allow: 'sort *'
-  - allow: 'stat *'
-  - allow: 'tail *'
-  - allow: 'tr *'
-  - allow: 'tree *'
-  - allow: 'uniq *'
-  - allow: 'wc *'
-  - allow: 'xxd *'
-  - allow: 'find *'
-
-  # file operations
-  - allow: 'chmod +x *'
-  - allow: 'mkdir *'
-  - allow: 'touch *'
-
-  # text processing
-  - allow: 'awk *'
-    sandbox: readonly
-  - allow: 'sed *'
-
-  # search
-  - allow: 'grep *'
-  - allow: 'rg *'
-
-  # network (read-only)
-  - allow: 'curl -X GET *'
-  - allow: 'curl -s -X GET *'
-
-  # date / time
-  - allow: 'date *'
-
-  # data processing
-  - allow: 'jq *'
-  - allow: 'yq *'
 
   # Claude Code
   - allow: 'claude-session-digest *'
@@ -207,9 +195,6 @@ rules:
   - allow: 'terraform fmt'
   - allow: 'terraform fmt *'
   - allow: 'terraform validate'
-
-  # task runner
-  - allow: 'task *'
 
   # tmux (read-only)
   - allow: 'tmux capture-pane *'
