@@ -1,4 +1,5 @@
 # runok global configuration
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 # Equivalent to ~/.claude/settings.json Bash permission rules
 
 defaults:
@@ -93,11 +94,12 @@ rules:
   - allow: 'sed *'
   - allow: 'grep *'
   - allow: 'rg *'
-  - allow: 'curl -X GET *'
-  - allow: 'curl -s -X GET *'
+  - allow: 'curl [-s] [-X GET] *'
   - allow: 'date *'
   - allow: 'jq *'
   - allow: 'yq *'
+  - allow: 'bats *'
+  - allow: 'base64 *'
 
   # armyknife
   - allow: 'a ai draft *'
@@ -111,14 +113,10 @@ rules:
 
   # linters and formatters
   - allow: 'actionlint *'
-  - allow: 'ast-grep scan *'
-  - allow: 'ast-grep test *'
   - allow: 'bash -n *'
   - allow: 'shellcheck *'
   - allow: 'shfmt *'
-
-  # test runners
-  - allow: 'bats *'
+  - allow: 'prettier *'
 
   # package managers
   - allow: 'bun pm ls *'
@@ -175,27 +173,27 @@ rules:
   - allow: 'git [-C *] log *'
   - allow: 'git [-C *] ls-tree *'
   - allow: 'git [-C *] ls-files *'
-  - allow: 'git [-C *] merge origin/main *'
-  - allow: 'git [-C *] merge origin/master *'
+  - allow: 'git [-C *] merge origin/main|origin/master *'
+  - deny: 'git [-C *] rebase origin/main|origin/master *'
+    message: 'Blocked to prevent unintended rewriting of commit history'
+    fix_suggestion: 'git merge origin/main or origin/master'
   - allow: 'git [-C *] mv *'
   - allow: 'git [-C *] pull *'
+  - deny: 'git [-C *] pull --no-rebase'
+    message: 'Blocked to prevent unintended merge commits'
+    fix_suggestion: 'git pull --rebase'
   - allow: 'git [-C *] push *'
   - allow: 'git [-C *] remote get-url *'
   - allow: 'git [-C *] rev-parse *'
   - allow: 'git [-C *] show *'
   - allow: 'git [-C *] status *'
 
-  # ruby
-  - allow: 'ruby -c *'
-
   # semgrep
-  - allow: 'sg scan *'
-  - allow: 'sg test *'
+  - allow: 'sg|ast-grep scan *'
+  - allow: 'sg|ast-grep test *'
 
-  # git hooks
+  # workflow tools
   - allow: 'lefthook run *'
-
-  # mise
   - allow: 'mise run test *'
 
   # terraform
@@ -229,6 +227,7 @@ rules:
     sandbox: readonly
   - allow: 'ruby *'
     sandbox: readonly
+  - allow: 'ruby -c *' # typecheck
   - allow: 'jsonnet *'
     sandbox: readonly
 
