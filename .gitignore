@@ -12,3 +12,6 @@
 
 # Local overrides for jsonnet configs (machine-specific, may contain secrets)
 *.local.jsonnet
+
+# Build artifacts
+/config/claude/.settings.json.sha256

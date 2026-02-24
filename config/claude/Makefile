@@ -13,17 +13,20 @@ endef
 .PHONY: all
 all: settings.json mcp-servers.json
 
+SETTINGS_CHECKSUM := .settings.json.sha256
+
 settings.json: settings.jsonnet $(wildcard settings.local.jsonnet)
-	@if [ -f ~/.claude/settings.json ]; then \
-		expected=$$($(call jsonnet,settings.jsonnet) | jq -S .); \
-		actual=$$(jq -S . ~/.claude/settings.json); \
-		if [ "$$expected" != "$$actual" ]; then \
+	@if [ -f $(SETTINGS_CHECKSUM) ] && [ -f ~/.claude/settings.json ]; then \
+		actual=$$(jq -S . ~/.claude/settings.json | shasum -a 256 | cut -d' ' -f1); \
+		expected=$$(cat $(SETTINGS_CHECKSUM)); \
+		if [ "$$actual" != "$$expected" ]; then \
 			echo "error: ~/.claude/settings.json has been modified outside of jsonnet." >&2; \
-			echo "Run 'diff <(jq -S . ~/.claude/settings.json) <(make -C config/claude print-settings | jq -S .)' to inspect." >&2; \
+			echo "Diff: diff <(jq -S . ~/.claude/settings.json) <(make -C config/claude print-settings | jq -S .)" >&2; \
 			exit 1; \
 		fi; \
 	fi
 	$(call jsonnet,settings.jsonnet) > ~/.claude/settings.json
+	@jq -S . ~/.claude/settings.json | shasum -a 256 | cut -d' ' -f1 > $(SETTINGS_CHECKSUM)
 
 .PHONY: print-settings
 print-settings:
