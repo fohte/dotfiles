@@ -33,15 +33,18 @@ rules:
   - allow: '* --version'
 
   # shell builtins
-  - allow: 'cd *'
   - allow: ': *'
+  - allow: '[ *'
   - allow: 'basename *'
+  - allow: 'cd *'
   - allow: 'command *'
+  - allow: 'cp *'
   - allow: 'dirname *'
   - allow: 'echo *'
   - allow: 'false'
   - allow: 'file'
   - allow: 'id'
+  - allow: 'mv *'
   - allow: 'printf *'
   - allow: 'pwd'
   - allow: 'read *'
@@ -234,6 +237,8 @@ rules:
     sandbox: readonly
   - allow: 'ruby *'
     sandbox: readonly
+
+  - allow: 'npx @marp-team/marp-cli@latest *'
 
 definitions:
   paths:
