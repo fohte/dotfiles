@@ -49,6 +49,19 @@ install: $(BUILD_TARGETS) check-settings
 	jq --argjson mcp "$$(cat mcp-servers.json)" '.mcpServers = $$mcp' ~/.claude.json > ~/.claude.json.tmp \
 		&& mv ~/.claude.json.tmp ~/.claude.json
 
+LOCAL_JSONNET_FILES := settings.local.jsonnet mcp-servers.local.jsonnet
+
+.PHONY: init-local
+init-local:
+	@for f in $(LOCAL_JSONNET_FILES); do \
+		if [ -f "$$f" ]; then \
+			echo "$$f already exists, skipping"; \
+		else \
+			echo '{}' > "$$f"; \
+			echo "Created $$f"; \
+		fi; \
+	done
+
 .PHONY: clean
 clean:
 	rm -f settings.json settings.json.tmp mcp-servers.json mcp-servers.json.tmp
