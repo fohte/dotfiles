@@ -13,4 +13,16 @@ local env(name) = std.extVar(name);
     args: ['mcp'],
     env: {},
   },
+  codecov: {
+    type: 'stdio',
+    command: 'npx',
+    args: [
+      '-y', '@ivotoby/openapi-mcp-server',
+      '--api-base-url', 'https://api.codecov.io',
+      '--openapi-spec', 'https://api.codecov.io/api/v2/schema',
+      '--headers', 'Authorization:Bearer ' + env('CODECOV_TOKEN'),
+      '--tools', 'dynamic',
+    ],
+    env: {},
+  },
 }
