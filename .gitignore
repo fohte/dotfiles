@@ -14,4 +14,6 @@
 *.local.jsonnet
 
 # Build artifacts
-/config/claude/.settings.json.sha256
+/config/claude/settings.json
+/config/claude/mcp-servers.json
+/config/claude/.settings.json.installed
