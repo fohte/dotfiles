@@ -88,3 +88,5 @@ context_portal/
 # cc-sdd
 **/.kiro/
 **/.kiro
+
+runok.local.yml
