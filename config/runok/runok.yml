@@ -77,6 +77,7 @@ rules:
   - allow: 'ls *'
   - allow: 'md5sum *'
   - allow: 'sha256sum *'
+  - allow: 'shasum *'
   - allow: 'sort *'
   - allow: 'stat *'
   - allow: 'tail *'
@@ -100,6 +101,11 @@ rules:
   - allow: 'yq *'
   - allow: 'bats *'
   - allow: 'base64 *'
+  - allow: 'dig *'
+  - allow: 'ps *'
+  - allow: 'top *'
+  - allow: 'lsof *'
+  - allow: 'pgrep *'
 
   # armyknife
   - allow: 'a ai draft *'
@@ -162,6 +168,10 @@ rules:
   - allow: 'ghq list *'
 
   # git
+  - allow: 'git [-C *] branch'
+  - allow: 'git [-C *] branch [-a|--all] [-r|--remotes] [-v|--verbose] [--sort *] [-l|--list *]'
+  - allow: 'git [-C *] branch --show-current'
+  - allow: 'git [-C *] branch --contains|--merged|--no-merged *'
   - allow: 'git [-C *] add *'
   - allow: 'git [-C *] checkout -- *'
   - allow: 'git [-C *] commit *'
