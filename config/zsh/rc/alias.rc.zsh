@@ -1,5 +1,4 @@
 alias c='cat'
-alias cp='cp -i'
 
 alias l='ls -l'
 has eza && alias ls='eza -aF' || alias ls='ls -ACFG'
@@ -11,7 +10,6 @@ fi
 
 alias p='pbpaste'
 
-alias rm='rm -I'
 alias x='chmod +x'
 
 has 'gsed' && alias sed='gsed'
