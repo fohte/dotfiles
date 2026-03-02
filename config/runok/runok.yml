@@ -8,7 +8,7 @@ defaults:
 
 rules:
   # === deny rules ===
-  - deny: 'gh api * --paginate *'
+  - deny: 'gh [-R *] api * --paginate *'
     message: 'Blocked to prevent excessive API rate limit consumption'
   - deny: 'gh repo set-default *'
     message: 'Blocked to prevent unintended operations on wrong repository'
@@ -44,7 +44,6 @@ rules:
   - allow: '[ *'
   - allow: 'basename *'
   - allow: 'cd *'
-  - allow: 'command *'
   - allow: 'cp *'
   - allow: 'dirname *'
   - allow: 'echo *'
@@ -69,6 +68,7 @@ rules:
   # common commands
   - allow: 'cat *'
   - allow: 'col *'
+  - allow: 'ps *'
   - allow: 'cut *'
   - allow: 'diff *'
   - allow: 'du *'
@@ -123,6 +123,7 @@ rules:
   - allow: 'shellcheck *'
   - allow: 'shfmt *'
   - allow: 'prettier *'
+  - allow: 'xmllint *'
 
   # package managers
   - allow: 'bun pm ls *'
@@ -145,6 +146,8 @@ rules:
   - allow: 'cargo test *'
   - allow: 'cargo tree *'
 
+  - allow: 'go doc *'
+
   # Claude Code
   - allow: 'claude-session-digest *'
   - allow: 'gen-claude-template *'
@@ -154,14 +157,25 @@ rules:
   - allow: 'gcloud * list *'
 
   # gh
-  - allow: 'gh * list *'
-  - allow: 'gh * view *'
-  - allow: 'gh api -X GET *'
-  - allow: 'gh browse *'
-  - allow: 'gh pr checks *'
-  - allow: 'gh pr diff *'
-  - allow: 'gh run watch *'
-  - allow: 'gh search *'
+  - allow: 'gh [-R *] * list *'
+  - allow: 'gh [-R *] * view *'
+  - allow: 'gh [-R *] [-R *] api -X GET *'
+  - allow: 'gh [-R *] browse *'
+  - allow: 'gh [-R *] pr checks *'
+  - allow: 'gh [-R *] pr diff *'
+  - allow: 'gh [-R *] run watch *'
+  - allow: 'gh [-R *] search *'
+  - allow: 'gh [-R *] run download *'
+  - deny: 'gh repo clone'
+    message: 'Use ghq'
+
+  # aws
+  - allow: 'aws * get-*|list-*|describe-* *'
+  - deny: 'aws ssm get-* --with-decryption *'
+    message: 'Blocked to prevent accidental exposure of sensitive parameters'
+    fix_suggestion: 'aws ssm get-parameter --name <name> (no decryption)'
+  - allow: 'aws cloudtrail lookup-events *'
+  - allow: 'aws logs filter-log-events *'
 
   # ghq
   - allow: 'ghq get *'

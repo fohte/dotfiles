@@ -126,5 +126,5 @@ if match_tag mise; then
 fi
 
 if match_tag runok; then
-  sym config/runok/runok.yml ~/.config/runok/runok.yml
+  sym config/runok ~/.config/runok
 fi
