@@ -224,7 +224,10 @@ Follow these guidelines when writing issues or comments:
 - Section headings should summarize their content so that readers can grasp the overview by reading headings alone
     - Bad: `Investigation Results`, `Symptoms`, `Cause`
     - Good: `The 2 Pods returning 404 were in the proxy layer`, `Root cause is a cache mismatch halting config updates`
-- Avoid unnecessary bold formatting
+- Write conclusions first. The reader wants to know the answer, not the process. Background, methodology, and raw data come after
+- Prioritize information by importance. Conclusions and key findings go at the top level. Supporting details (test conditions, raw output, configuration) go in `<details>` blocks - do not put them at the same level as conclusions
+- Never use bold formatting. If text requires emphasis to be understandable, the structure or wording is the problem - fix that instead
+- Do not write "next actions", "TODO", or "proposed next steps" sections unless the user explicitly asks. The reader decides what to do next
 - Do not start list items with a summary followed by a colon. Write normal sentences instead
 - When linking to external resources (e.g., other issues), explain why the link is relevant
 - Use permalinks for GitHub source code links (include commit SHA instead of `main`/`master`)
