@@ -253,6 +253,7 @@ rules:
   - allow: 'tmux show-window-options *'
 
   - allow: 'runok check *'
+  - allow: npx --package renovate -c 'renovate-config-validator renovate.json5'
 
   # interpreters (sandbox-only, read-only + no network)
   - allow: 'node *'
