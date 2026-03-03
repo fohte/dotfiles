@@ -23,10 +23,10 @@ BUILD_TARGETS := settings.json mcp-servers.json
 all: $(BUILD_TARGETS) install
 
 settings.json: settings.jsonnet $(wildcard settings.local.jsonnet)
-	$(call jsonnet,settings.jsonnet) > $@.tmp && mv $@.tmp $@
+	$(call jsonnet,settings.jsonnet) | jq . > $@.tmp && mv $@.tmp $@
 
 mcp-servers.json: mcp-servers.jsonnet $(wildcard mcp-servers.local.jsonnet)
-	$(call jsonnet,mcp-servers.jsonnet) > $@.tmp && mv $@.tmp $@
+	$(call jsonnet,mcp-servers.jsonnet) | jq . > $@.tmp && mv $@.tmp $@
 
 # Detect if ~/.claude/settings.json was modified outside of jsonnet (e.g. by Claude Code).
 # Compares the last installed output against the current file.
