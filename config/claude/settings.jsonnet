@@ -111,6 +111,14 @@
     'gopls-lsp@claude-plugins-official': true,
     'frontend-design@claude-plugins-official': true,
   },
+  extraKnownMarketplaces: {
+    'runok-claude-code-plugin': {
+      source: {
+        repo: 'fohte/runok-claude-code-plugin',
+        source: 'github',
+      },
+    },
+  },
   alwaysThinkingEnabled: false,
   promptSuggestionEnabled: false,
   teammateMode: 'tmux',
