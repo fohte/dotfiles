@@ -106,6 +106,8 @@ rules:
   - allow: 'top *'
   - allow: 'lsof *'
   - allow: 'pgrep *'
+  - allow: 'strings *'
+  - allow: 'bc *'
 
   # armyknife
   - allow: 'a ai draft *'
@@ -147,6 +149,10 @@ rules:
   - allow: 'cargo tree *'
 
   - allow: 'go doc *'
+  - allow: 'go env *'
+
+  - allow: 'bundle show *'
+  - allow: 'bundle info *'
 
   # Claude Code
   - allow: 'claude-session-digest *'
@@ -159,7 +165,7 @@ rules:
   # gh
   - allow: 'gh [-R *] * list *'
   - allow: 'gh [-R *] * view *'
-  - allow: 'gh [-R *] [-R *] api -X GET *'
+  - allow: 'gh [-R *] api -X GET *'
   - allow: 'gh [-R *] browse *'
   - allow: 'gh [-R *] pr checks *'
   - allow: 'gh [-R *] pr diff *'
