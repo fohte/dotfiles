@@ -1,3 +1,5 @@
+SHELL := bash
+
 # Build a jsonnet file, merging with a .local.jsonnet overlay if it exists.
 # The local overlay can use +: syntax for deep merging (e.g. permissions+: { allow+: [...] }).
 # External variables referenced via env('VAR_NAME') are auto-detected from source files
@@ -35,7 +37,12 @@ check-settings: settings.json
 		actual=$$(jq -S . ~/.claude/settings.json | shasum -a 256 | cut -d' ' -f1); \
 		if [ "$$expected" != "$$actual" ]; then \
 			echo "error: ~/.claude/settings.json has been modified outside of jsonnet." >&2; \
-			echo "Inspect: diff <(jq -S . ~/.claude/settings.json) <(jq -S . config/claude/settings.json)" >&2; \
+			echo "" >&2; \
+			echo "--- .settings.json.installed (expected)" >&2; \
+			echo "+++ ~/.claude/settings.json (actual)" >&2; \
+			diff <(jq -S . .settings.json.installed) <(jq -S . ~/.claude/settings.json) >&2 || true; \
+			echo "" >&2; \
+			echo "To force overwrite, run: make -C config/claude clean install" >&2; \
 			exit 1; \
 		fi; \
 	fi
@@ -64,4 +71,4 @@ init-local:
 
 .PHONY: clean
 clean:
-	rm -f settings.json settings.json.tmp mcp-servers.json mcp-servers.json.tmp
+	rm -f settings.json settings.json.tmp mcp-servers.json mcp-servers.json.tmp .settings.json.installed
