@@ -220,6 +220,10 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 
 Follow these guidelines when writing issues or comments:
 
+- Issue body should only contain content aligned with the issue's purpose. For investigation issues, write "what to investigate", not the investigation results. Write results as separate comments
+- Section headings should summarize their content so that readers can grasp the overview by reading headings alone
+    - Bad: `Investigation Results`, `Symptoms`, `Cause`
+    - Good: `The 2 Pods returning 404 were in the proxy layer`, `Root cause is a cache mismatch halting config updates`
 - Avoid unnecessary bold formatting
 - Do not start list items with a summary followed by a colon. Write normal sentences instead
 - When linking to external resources (e.g., other issues), explain why the link is relevant
@@ -229,6 +233,9 @@ Follow these guidelines when writing issues or comments:
     - Get latest commit SHA: `gh api -X GET repos/org/repo/commits -F path=<file> -F per_page=1 --jq '.[0].sha'`
 - Use である調 (plain form), not ですます調 (polite form)
 - Do not make recommendations or suggestions - only present facts and findings
+- Do not write proposed solutions without verifying they actually work. For example, do not suggest "upgrade to a newer version" without confirming the issue is fixed in that version. Check upstream issues, release notes, and changelogs before proposing a fix
+- Distinguish symptoms from root causes. "X is slow" or "there is a lag in Y" describes a symptom, not a cause. If the root cause is uncertain, use hedging language (e.g., "believed to be caused by")
+- Do not include information unrelated to the issue's root cause in the proposed solutions or cause analysis, even if discovered during investigation
 - Place reference links inline where contextually relevant, not in a separate "References" section at the end
 - Use numbered lists only when order matters (sequential steps, priority ranking); otherwise use bullet points
     - Bad: `1. Option A 2. Option B 3. Option C` (options have no inherent order)
