@@ -221,11 +221,14 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 Follow these guidelines when writing issues or comments:
 
 - Issue body should only contain content aligned with the issue's purpose. For investigation issues, write "what to investigate", not the investigation results. Write results as separate comments
-- Section headings should summarize their content so that readers can grasp the overview by reading headings alone
-    - Bad: `Investigation Results`, `Symptoms`, `Cause`
-    - Good: `The 2 Pods returning 404 were in the proxy layer`, `Root cause is a cache mismatch halting config updates`
-- Write conclusions first. The reader wants to know the answer, not the process. Background, methodology, and raw data come after
-- Prioritize information by importance. Conclusions and key findings go at the top level. Supporting details (test conditions, raw output, configuration) go in `<details>` blocks - do not put them at the same level as conclusions
+- Section headings should be concise. If the conclusion fits in a short heading, use a summary heading. Otherwise, use a simple heading (e.g., `## Cause`) and write the conclusion as the first sentence of the body
+    - Bad: `Investigation Results`, `Symptoms` (too generic, says nothing about the content)
+    - Good: `The 2 Pods returning 404 were in the proxy layer` (summary heading) or `## Cause` followed immediately by a one-sentence conclusion
+- Write conclusions first. Put the conclusion as a single sentence immediately after the section heading. The reader wants to know the answer, not the process
+    - Bad: `## Cause` followed by paragraphs explaining the investigation process, then finally the conclusion
+    - Good: `## Cause` followed by `PR #123 introduced X, which caused Y.` as the first line, then supporting details below
+- Prioritize information by importance. Conclusions and key findings go at the top level. Supporting details (data tables, timelines, raw output) should be placed in subsections (e.g., `### (Details)`) or `<details>` blocks - do not put them at the same level as conclusions
+- Do not repeat information that is available at a link. If a PR or issue is linked, do not re-explain its contents in detail - the reader can follow the link. One-sentence summaries are sufficient
 - Never use bold formatting. If text requires emphasis to be understandable, the structure or wording is the problem - fix that instead
 - Do not write "next actions", "TODO", or "proposed next steps" sections unless the user explicitly asks. The reader decides what to do next
 - Do not start list items with a summary followed by a colon. Write normal sentences instead
@@ -239,6 +242,7 @@ Follow these guidelines when writing issues or comments:
 - Do not write proposed solutions without verifying they actually work. For example, do not suggest "upgrade to a newer version" without confirming the issue is fixed in that version. Check upstream issues, release notes, and changelogs before proposing a fix
 - Distinguish symptoms from root causes. "X is slow" or "there is a lag in Y" describes a symptom, not a cause. If the root cause is uncertain, use hedging language (e.g., "believed to be caused by")
 - Do not include information unrelated to the issue's root cause in the proposed solutions or cause analysis, even if discovered during investigation
+- Keep comments minimal. Only write what the reader needs to act on or understand the outcome. Do not add supplementary context that the reader can derive from the execution log or linked resources
 - Place reference links inline where contextually relevant, not in a separate "References" section at the end
 - Use numbered lists only when order matters (sequential steps, priority ranking); otherwise use bullet points
     - Bad: `1. Option A 2. Option B 3. Option C` (options have no inherent order)
