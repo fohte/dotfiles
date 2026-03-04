@@ -108,6 +108,8 @@ rules:
   - allow: 'pgrep *'
   - allow: 'strings *'
   - allow: 'bc *'
+  - allow: 'comm *'
+  - allow: 'paste *'
 
   # armyknife
   - allow: 'a ai draft *'
@@ -221,10 +223,8 @@ rules:
   - allow: 'git [-C *] rev-parse *'
   - allow: 'git [-C *] show *'
   - allow: 'git [-C *] status *'
-  - allow: 'git [-C *] tag'
-  - allow: 'git [-C *] tag -l|--list *'
-  - allow: 'git [-C *] tag -v|--verify *'
-  - allow: 'git [-C *] tag --contains|--no-contains|--merged|--no-merged|--points-at|--sort *'
+  - allow: 'git [-C *] merge-base *'
+  - allow: 'git [-C *] describe *'
 
   # semgrep
   - allow: 'sg|ast-grep scan *'
