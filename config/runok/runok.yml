@@ -85,6 +85,9 @@ rules:
   - allow: 'tree *'
   - allow: 'uniq *'
   - allow: 'wc *'
+  # xargs with no args just trims stdin whitespace (runs /bin/echo by default).
+  # The wrapper definition `xargs <cmd>` only matches when args are present.
+  - allow: 'xargs'
   - allow: 'xxd *'
   - allow: 'find *'
   - allow: 'chmod +x *'
