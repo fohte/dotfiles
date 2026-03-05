@@ -55,14 +55,10 @@
     ],
     PreToolUse: [
       {
-        matcher: 'Bash',
+        // Combined into a single hook to work around Claude Code #15897:
+        // updatedInput is silently dropped when multiple hooks match the same tool.
         hooks: [
-          { type: 'command', command: 'runok check --input-format claude-code-hook' },
-        ],
-      },
-      {
-        hooks: [
-          { type: 'command', command: 'a cc hook pre-tool-use' },
+          { type: 'command', command: '~/.claude/hooks/pre-tool-use.bash' },
         ],
       },
     ],

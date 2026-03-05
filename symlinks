@@ -106,6 +106,7 @@ if match_tag claude; then
   sym config/claude/contexts ~/.claude/contexts
   sym config/claude/skills ~/.claude/skills
   sym config/claude/statusline.ts ~/.claude/statusline.ts
+  sym config/claude/hooks ~/.claude/hooks
 fi
 
 if match_tag codex; then
