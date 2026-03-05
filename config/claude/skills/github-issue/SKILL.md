@@ -227,7 +227,10 @@ Follow these guidelines when writing issues or comments:
 - Write conclusions first. Put the conclusion as a single sentence immediately after the section heading. The reader wants to know the answer, not the process
     - Bad: `## Cause` followed by paragraphs explaining the investigation process, then finally the conclusion
     - Good: `## Cause` followed by `PR #123 introduced X, which caused Y.` as the first line, then supporting details below
-- Prioritize information by importance. Conclusions and key findings go at the top level. Supporting details (data tables, timelines, raw output) should be placed in subsections (e.g., `### (Details)`) or `<details>` blocks - do not put them at the same level as conclusions
+- Structure content around the conclusion. Every piece of information should either be the conclusion itself, or directly support the conclusion. Before writing each section, ask: "does the reader need this to understand or believe the conclusion?" If not, it does not belong at the top level
+    - Information that supports the conclusion (evidence, key data) → top level
+    - Information that explains how the conclusion was reached but is not needed to understand it (mechanism details, timelines, process descriptions) → `<details>` block
+    - Information the reader can derive from linked resources or execution logs → omit entirely
 - Do not repeat information that is available at a link. If a PR or issue is linked, do not re-explain its contents in detail - the reader can follow the link. One-sentence summaries are sufficient
 - Never use bold formatting. If text requires emphasis to be understandable, the structure or wording is the problem - fix that instead
 - Do not write "next actions", "TODO", or "proposed next steps" sections unless the user explicitly asks. The reader decides what to do next
