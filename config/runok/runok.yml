@@ -4,7 +4,6 @@
 
 defaults:
   action: ask
-  sandbox: default
 
 rules:
   # === deny rules ===
@@ -48,8 +47,8 @@ rules:
   - allow: 'dirname *'
   - allow: 'echo *'
   - allow: 'false'
-  - allow: 'file'
-  - allow: 'id'
+  - allow: 'file *'
+  - allow: 'id *'
   - allow: 'mv *'
   - allow: 'printf *'
   - allow: 'pwd'
@@ -177,8 +176,12 @@ rules:
   - allow: 'gh [-R *] run watch *'
   - allow: 'gh [-R *] search *'
   - allow: 'gh [-R *] run download *'
-  - deny: 'gh repo clone'
+  - deny: 'gh repo clone *'
     message: 'Use ghq'
+  - deny: 'gh log *'
+    message: 'Not a valid gh command, did you mean `gh run watch`?'
+  - deny: 'gh [-R *] issue comment *'
+    message: 'Use /github-issue skill'
 
   # aws
   - allow: 'aws * get-*|list-*|describe-* *'
