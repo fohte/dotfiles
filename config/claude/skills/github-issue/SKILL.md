@@ -231,6 +231,9 @@ Follow these guidelines when writing issues or comments:
     - Information that supports the conclusion (evidence, key data) → top level
     - Information that explains how the conclusion was reached but is not needed to understand it (mechanism details, timelines, process descriptions) → `<details>` block
     - Information the reader can derive from linked resources or execution logs → omit entirely
+- When the conclusion involves internal systems or components the reader may not know, provide the minimum background needed to understand the conclusion in the top-level text. Detailed architecture, process flows, and data pipelines belong in `<details>` blocks
+- When stating facts (e.g., frequency of errors, number of affected resources), include the evidence so the reader can verify or reproduce the finding (e.g., the query used, the dashboard link, the command run)
+- Keep top-level text short. If a comment has more than 3-4 paragraphs of top-level text, re-evaluate whether some content should be in `<details>` blocks
 - Do not repeat information that is available at a link. If a PR or issue is linked, do not re-explain its contents in detail - the reader can follow the link. One-sentence summaries are sufficient
 - Never use bold formatting. If text requires emphasis to be understandable, the structure or wording is the problem - fix that instead
 - Do not write "next actions", "TODO", or "proposed next steps" sections unless the user explicitly asks. The reader decides what to do next
