@@ -18,6 +18,7 @@
       'Read(~/Dropbox)',
       'Read(~/Library/Application Support/CleanShot)',
       'Read(~/Library/CloudStorage/Dropbox)',
+      'Read(~/Library/Application Support/gogcli)',
       'Read(~/ghq/**)',
       'Skill',
       'WebFetch',
@@ -107,9 +108,11 @@
   },
   enabledPlugins: {
     'criticalthink@criticalthink': true,
-    'rust-analyzer-lsp@claude-plugins-official': true,
-    'gopls-lsp@claude-plugins-official': true,
     'frontend-design@claude-plugins-official': true,
+    'gopls-lsp@claude-plugins-official': true,
+    'runok@runok-claude-code-plugin': true,
+    'rust-analyzer-lsp@claude-plugins-official': true,
+    'skill-creator@claude-plugins-official': true,
   },
   extraKnownMarketplaces: {
     'runok-claude-code-plugin': {

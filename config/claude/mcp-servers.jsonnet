@@ -4,7 +4,7 @@ local env(name) = std.extVar(name);
   context7: {
     type: 'stdio',
     command: 'npx',
-    args: ['-y', '@upstash/context7-mcp', '--api-key', env('CONTEXT7_API_KEY')],
+    args: ['-y', '@upstash/context7-mcp'],
     env: {},
   },
   qmd: {
