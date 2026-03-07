@@ -49,13 +49,14 @@ Shows all reviews and threads with full details (legacy behavior).
     - **"Won't fix" only for obvious false positives**: Only skip fixing when the reviewer's claim is factually incorrect (e.g., claims a version/API doesn't exist when it does, hallucinates non-existent issues, misreads the code logic)
     - **When unsure, ask the user**: If you're uncertain whether a comment is valid or how to address it, ask the user rather than deciding "won't fix" on your own
     - **Do NOT dismiss comments just because you disagree**: Reviewer suggestions about code style, safety, readability, or best practices should generally be followed even if the current code technically works
-4. Make necessary code changes based on the feedback
-5. **User confirmation for "won't fix"**: Before treating any comment as "won't fix", you MUST ask the user for confirmation using AskUserQuestion. Present the reviewer's comment, your reasoning for why it's a false positive, and let the user decide whether to fix it or skip it. Never autonomously decide "won't fix" without user approval.
-6. For confirmed "won't fix" comments (approved by the user in step 5), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
-7. If code changes were made (steps 4-6), commit and push using the `/commit` skill, then `git push`
-8. **Reply to "won't fix" threads** on GitHub (see Reply to Review Threads below)
-9. **Resolve all addressed threads** from bot reviewers (see Resolve Review Threads below)
-10. Re-run to verify all comments have been addressed
+4. **Bug reports require test-first fixing**: When a review comment points out a bug (incorrect behavior, edge case failure, race condition, etc.), you MUST first write a test that reproduces the bug before fixing it. This ensures the bug is real and the fix is correct. Only after the test fails as expected, apply the code fix and confirm the test passes
+5. Make necessary code changes based on the feedback
+6. **User confirmation for "won't fix"**: Before treating any comment as "won't fix", you MUST ask the user for confirmation using AskUserQuestion. Present the reviewer's comment, your reasoning for why it's a false positive, and let the user decide whether to fix it or skip it. Never autonomously decide "won't fix" without user approval.
+7. For confirmed "won't fix" comments (approved by the user in step 6), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
+8. If code changes were made (steps 4-7), commit and push using the `/commit` skill, then `git push`
+9. **Reply to "won't fix" threads** on GitHub (see Reply to Review Threads below)
+10. **Resolve all addressed threads** from bot reviewers (see Resolve Review Threads below)
+11. Re-run to verify all comments have been addressed
 
 **Important**: After getting the summary, immediately proceed to fetch details for each review. Never ask the user "詳細を確認しますか?" or similar confirmation questions.
 
