@@ -1,6 +1,6 @@
 ---
 name: delegate-claude
-description: 別の worktree で別の Claude Code インスタンスにタスクを委任する。現在のセッションをブロックせずに並列で作業を進めたいときに使用する。
+description: Delegate tasks to a separate Claude Code instance in its own git worktree. Use this skill when the user says "delegate", "/delegate-claude", asks to run a task in parallel in another worktree, wants to spawn a child Claude session, or needs to offload implementation work to an independent Claude Code instance. Also trigger when the user wants to start work on a different repository without leaving the current session, or when breaking down a large task into parallel sub-tasks each handled by separate Claude instances.
 ---
 
 # 別の Claude Code インスタンスにタスクを委任する
