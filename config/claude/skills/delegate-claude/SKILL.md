@@ -28,6 +28,8 @@ a wm new <branch-name> --agent --label "<title>" --prompt "<instructions>"
 - `--from <ref>`: ベースとなる ref を指定 (デフォルト: main ブランチ)
     - 例: `a wm new feature-x --agent --label "..." --from origin/develop --prompt "..."`
     - Renovate の PR をテストする場合: `a wm new test-upgrade --agent --label "..." --from origin/renovate/some-branch --prompt "..."`
+- `-R <path>` / `--repo <path>`: 対象リポジトリのパスを指定。指定するとカレントディレクトリに関係なく、そのリポジトリ上で worktree を作成する
+    - 例: `a wm new fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "..." --prompt "..."`
 
 ### 例
 
@@ -35,8 +37,8 @@ a wm new <branch-name> --agent --label "<title>" --prompt "<instructions>"
 # 現在のリポジトリ
 a wm new feature-login --agent --label "メール認証ログイン実装" --prompt "メール/パスワード認証によるログイン機能を実装"
 
-# 別のリポジトリ
-cd ~/ghq/github.com/fohte/other-repo && a wm new fix-api-timeout --agent --label "API タイムアウト修正" --prompt "API のタイムアウト設定を修正"
+# 別のリポジトリ (-R オプション)
+a wm new fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "API タイムアウト修正" --prompt "API のタイムアウト設定を修正"
 ```
 
 実行すると:
