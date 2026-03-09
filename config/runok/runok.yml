@@ -94,7 +94,7 @@ rules:
   - allow: 'touch *'
   - allow: 'awk *'
     sandbox: readonly
-  - allow: 'sed *'
+  - allow: 'sed|gsed *'
   - allow: 'grep *'
   - allow: 'rg *'
   - allow: 'curl [-s] [-X GET] *'
@@ -112,6 +112,8 @@ rules:
   - allow: 'bc *'
   - allow: 'comm *'
   - allow: 'paste *'
+  - allow: 'man *'
+  - allow: 'mktemp *'
 
   # armyknife
   - allow: 'a ai draft *'
@@ -135,6 +137,7 @@ rules:
   - allow: 'bun pm ls *'
   - allow: 'ni'
   - allow: 'npm view *'
+  - allow: 'npm info *'
   - allow: 'nr build *'
   - allow: 'nr format *'
   - allow: 'nr lint *'
@@ -263,6 +266,8 @@ rules:
   - allow: 'tmux show-window-options *'
 
   - allow: 'runok check *'
+  - allow: 'runok exec *'
+
   - allow: npx --package renovate -c 'renovate-config-validator renovate.json5'
 
   # interpreters (sandbox-only, read-only + no network)
