@@ -1,6 +1,4 @@
-# runok global configuration
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
-# Equivalent to ~/.claude/settings.json Bash permission rules
 
 defaults:
   action: ask
