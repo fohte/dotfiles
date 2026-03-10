@@ -1,5 +1,8 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
+extends:
+  - 'github:fohte/runok-presets/base'
+
 defaults:
   action: ask
 
@@ -32,86 +35,22 @@ rules:
 
   # === allow rules ===
 
-  # generic flags
-  - allow: '* --help'
-  - allow: '* --version'
-
-  # shell builtins
-  - allow: ': *'
-  - allow: '[ *'
-  - allow: 'basename *'
-  - allow: 'cd *'
+  # common commands (not covered by preset)
   - allow: 'cp *'
-  - allow: 'dirname *'
-  - allow: 'echo *'
-  - allow: 'false'
-  - allow: 'file *'
-  - allow: 'id *'
   - allow: 'mv *'
-  - allow: 'printf *'
-  - allow: 'pwd'
-  - allow: 'read *'
-  - allow: 'readlink *'
-  - allow: 'realpath *'
-  - allow: 'sleep *'
-  - allow: 'strings'
-  - allow: 'test *'
-  - allow: 'true'
-  - allow: 'type *'
-  - allow: 'uname *'
-  - allow: 'which *'
-  - allow: 'whoami'
-
-  # common commands
-  - allow: 'cat *'
-  - allow: 'col *'
-  - allow: 'ps *'
-  - allow: 'cut *'
-  - allow: 'diff *'
-  - allow: 'du *'
-  - allow: 'head *'
-  - allow: 'less *'
-  - allow: 'ls *'
-  - allow: 'md5sum *'
-  - allow: 'sha256sum *'
-  - allow: 'shasum *'
-  - allow: 'sort *'
-  - allow: 'stat *'
-  - allow: 'tail *'
-  - allow: 'tr *'
-  - allow: 'tree *'
-  - allow: 'uniq *'
-  - allow: 'wc *'
-  # xargs with no args just trims stdin whitespace (runs /bin/echo by default).
-  # The wrapper definition `xargs <cmd>` only matches when args are present.
-  - allow: 'xargs'
-  - allow: 'xxd *'
-  - allow: 'find *'
   - allow: 'chmod +x *'
   - allow: 'mkdir *'
   - allow: 'touch *'
+  - allow: 'gsed *'
   - allow: 'awk *'
     sandbox: readonly
-  - allow: 'sed|gsed *'
-  - allow: 'grep *'
-  - allow: 'rg *'
   - allow: 'curl [-s] [-X GET] *'
-  - allow: 'date *'
-  - allow: 'jq *'
-  - allow: 'yq *'
   - allow: 'bats *'
-  - allow: 'base64 *'
-  - allow: 'dig *'
-  - allow: 'ps *'
-  - allow: 'top *'
-  - allow: 'lsof *'
-  - allow: 'pgrep *'
-  - allow: 'strings *'
   - allow: 'bc *'
-  - allow: 'comm *'
-  - allow: 'paste *'
-  - allow: 'man *'
   - allow: 'mktemp *'
+
+  - allow: brew search *
+  - allow: brew info *
 
   # armyknife
   - allow: 'a ai draft *'
@@ -196,26 +135,12 @@ rules:
   - allow: 'ghq get *'
   - allow: 'ghq list *'
 
-  # git
-  - allow: 'git [-C *] branch'
-  - allow: 'git [-C *] branch [-a|--all] [-r|--remotes] [-v|--verbose] [--sort *] [-l|--list *]'
-  - allow: 'git [-C *] branch --show-current'
-  - allow: 'git [-C *] branch --contains|--merged|--no-merged *'
-  - allow: 'git [-C *] tag'
-  - allow: 'git [-C *] tag [-n *] [-l|--list] *'
-  - allow: 'git [-C *] tag -v|--verify *'
-  - allow: 'git [-C *] tag --contains|--merged|--no-merged *'
+  # git (write operations not covered by preset)
   - allow: 'git [-C *] add *'
   - allow: 'git [-C *] checkout -- *'
   - allow: 'git [-C *] commit *'
   - allow: 'git [-C *] commit -m *'
-  - allow: 'git [-C *] diff *'
   - allow: 'git [-C *] fetch *'
-  - allow: 'git [-C *] grep *'
-  - allow: 'git [-C *] help *'
-  - allow: 'git [-C *] log *'
-  - allow: 'git [-C *] ls-tree *'
-  - allow: 'git [-C *] ls-files *'
   - allow: 'git [-C *] merge origin/main|origin/master *'
   - deny: 'git [-C *] rebase origin/main|origin/master *'
     message: 'Blocked to prevent unintended rewriting of commit history'
@@ -226,12 +151,6 @@ rules:
     message: 'Blocked to prevent unintended merge commits'
     fix_suggestion: 'git pull --rebase'
   - allow: 'git [-C *] push *'
-  - allow: 'git [-C *] remote get-url *'
-  - allow: 'git [-C *] rev-parse *'
-  - allow: 'git [-C *] show *'
-  - allow: 'git [-C *] status *'
-  - allow: 'git [-C *] merge-base *'
-  - allow: 'git [-C *] describe *'
 
   # semgrep
   - allow: 'sg|ast-grep scan *'
@@ -309,8 +228,4 @@ definitions:
         allow: false
 
   wrappers:
-    - 'sudo <cmd>'
-    - 'bash -c <cmd>'
-    - 'sh -c <cmd>'
-    - 'xargs <cmd>'
     - 'mise x|exec -- <cmd>'
