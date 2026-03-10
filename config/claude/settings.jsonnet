@@ -111,7 +111,6 @@
     command: '~/.claude/statusline.ts',
   },
   enabledPlugins: {
-    'criticalthink@criticalthink': true,
     'frontend-design@claude-plugins-official': true,
     'gopls-lsp@claude-plugins-official': true,
     'runok@runok-claude-code-plugin': true,
