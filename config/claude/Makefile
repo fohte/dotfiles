@@ -29,20 +29,24 @@ mcp-servers.json: mcp-servers.jsonnet $(wildcard mcp-servers.local.jsonnet)
 	$(call jsonnet,mcp-servers.jsonnet) | jq . > $@.tmp && mv $@.tmp $@
 
 # Detect if ~/.claude/settings.json was modified outside of jsonnet (e.g. by Claude Code).
-# Compares the last installed output against the current file.
+# Compares the newly built settings.json against the current file.
+# If the build output matches, the change has been reflected in jsonnet, so install proceeds.
 .PHONY: check-settings
 check-settings: settings.json
-	@if [ -f ~/.claude/settings.json ] && [ -f .settings.json.installed ]; then \
-		expected=$$(jq -S . .settings.json.installed | shasum -a 256 | cut -d' ' -f1); \
-		actual=$$(jq -S . ~/.claude/settings.json | shasum -a 256 | cut -d' ' -f1); \
+	@# Deep-sort: sort object keys (-S) and recursively sort arrays so that
+	@# element ordering differences don't cause false positives.
+	@deep_sort='def sort_deep: if type == "array" then [.[] | sort_deep] | sort_by(tostring) elif type == "object" then to_entries | map(.value |= sort_deep) | from_entries else . end; sort_deep'; \
+	if [ -f ~/.claude/settings.json ]; then \
+		expected=$$(jq -S "$$deep_sort" settings.json | shasum -a 256 | cut -d' ' -f1); \
+		actual=$$(jq -S "$$deep_sort" ~/.claude/settings.json | shasum -a 256 | cut -d' ' -f1); \
 		if [ "$$expected" != "$$actual" ]; then \
 			echo "error: ~/.claude/settings.json has been modified outside of jsonnet." >&2; \
 			echo "" >&2; \
-			echo "--- .settings.json.installed (expected)" >&2; \
+			echo "--- settings.json (built from jsonnet)" >&2; \
 			echo "+++ ~/.claude/settings.json (actual)" >&2; \
-			diff <(jq -S . .settings.json.installed) <(jq -S . ~/.claude/settings.json) >&2 || true; \
+			diff <(jq -S "$$deep_sort" settings.json) <(jq -S "$$deep_sort" ~/.claude/settings.json) >&2 || true; \
 			echo "" >&2; \
-			echo "To force overwrite, run: make -C config/claude clean install" >&2; \
+			echo "Reflect the changes in settings.jsonnet, or run: make -C config/claude clean install" >&2; \
 			exit 1; \
 		fi; \
 	fi
@@ -52,7 +56,6 @@ check-settings: settings.json
 .PHONY: install
 install: $(BUILD_TARGETS) check-settings
 	cp settings.json ~/.claude/settings.json
-	cp settings.json .settings.json.installed
 	jq --argjson mcp "$$(cat mcp-servers.json)" '.mcpServers = $$mcp' ~/.claude.json > ~/.claude.json.tmp \
 		&& mv ~/.claude.json.tmp ~/.claude.json
 
@@ -71,4 +74,4 @@ init-local:
 
 .PHONY: clean
 clean:
-	rm -f settings.json settings.json.tmp mcp-servers.json mcp-servers.json.tmp .settings.json.installed
+	rm -f settings.json settings.json.tmp mcp-servers.json mcp-servers.json.tmp
