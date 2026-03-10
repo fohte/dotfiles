@@ -3,26 +3,33 @@
     CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY: '1',
     CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1',
   },
+
   includeCoAuthoredBy: true,
+
   permissions: {
     allow: [
       'Bash(runok exec:*)',
+
       'Edit(//tmp/**)',
       'Edit(//var/folders/**/T/**)',
       'Edit(~/.cache/gh-issue-agent/**)',
+
       'Read(//tmp/**)',
       'Read(//var/folders/**/T/**)',
       'Read(~/.cache/gh-issue-agent/**)',
       'Read(~/.claude/**)',
+      'Read(~/.config/**)',
       'Read(~/.local/share/nvim/lazy)',
       'Read(~/Dropbox)',
       'Read(~/Library/Application Support/CleanShot)',
-      'Read(~/Library/CloudStorage/Dropbox)',
       'Read(~/Library/Application Support/gogcli)',
+      'Read(~/Library/CloudStorage/Dropbox)',
       'Read(~/ghq/**)',
+
       'Skill',
       'WebFetch',
       'WebSearch',
+
       'mcp__context7',
       'mcp__qmd',
     ],
@@ -36,6 +43,7 @@
     ],
     defaultMode: 'acceptEdits',
   },
+
   model: 'opus',
   hooks: {
     SessionStart: [
