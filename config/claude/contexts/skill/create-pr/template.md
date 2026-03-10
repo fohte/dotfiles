@@ -153,6 +153,8 @@ a ai pr-draft review
 
 ### 修正指示の場合（「fix」「修正」など）
 
+**修正前に必ず ~/.claude/skills/create-pr/writing-guide.md を再読すること。** ドラフト新規作成時に読んでいても、修正時にはルールを忘れている可能性がある。
+
 内容の修正のみを行う。**翻訳は行わない。**
 修正後は再度 `a ai pr-draft review` を実行し、次の指示を待つ。
 {{- if $public }}
