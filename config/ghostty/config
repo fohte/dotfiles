@@ -2,7 +2,7 @@ font-family = HackGen35 Console NF
 font-size = 12
 
 # Half-width glyphs look too wide without this
-adjust-cell-width = -10%
+adjust-cell-width = -7%
 
 # Base16 variant of Material Darker. The built-in "Material Darker" theme
 # has different ANSI palette values (e.g. black=#000000 vs #212121).
