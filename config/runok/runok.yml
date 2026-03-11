@@ -116,6 +116,9 @@ rules:
   - allow: 'gh [-R *] run watch *'
   - allow: 'gh [-R *] search *'
   - allow: 'gh [-R *] run download *'
+  - allow: 'gh [-R *] project item-*|field-list *'
+  - ask: 'gh [-R *] project item-delete *'
+
   - deny: 'gh repo clone *'
     message: 'Use ghq'
   - deny: 'gh log *'
