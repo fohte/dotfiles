@@ -46,8 +46,10 @@ a gh issue-agent pull <issue-number> [-R <owner/repo>]
 This saves the issue to `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`:
 
 - `issue.md` - Issue body (editable)
-- `metadata.json` - Title, labels, assignees (editable)
+- `metadata.json` - Title, labels, assignees, sub-issues, parent issue (editable)
 - `comments/` - Comment files (only your own comments are editable)
+
+Sub-issues are automatically fetched via the GitHub Sub-issues REST API during `pull`.
 
 **Note**: Fails if local changes exist. Use `pull --force` to discard and re-fetch.
 
@@ -89,6 +91,8 @@ assignees: []
 Body
 ```
 
+Sub-issues and parent issue can also be specified in the frontmatter (see "Sub-issues and Parent Issue" section below).
+
 ### Diff (show changes)
 
 ```bash
@@ -117,6 +121,69 @@ a gh issue-agent push <issue-number> --edit-others
 
 # Allow deleting comments from GitHub
 a gh issue-agent push <issue-number> --allow-delete
+```
+
+## Sub-issues and Parent Issue
+
+`a gh issue-agent` supports managing GitHub Sub-issues via the [Sub-issues API](https://docs.github.com/en/rest/issues/sub-issues). Sub-issues and parent issue relationships are managed through `metadata.json` frontmatter fields.
+
+### Frontmatter fields
+
+When you `pull` an issue, `metadata.json` includes:
+
+- `sub_issues`: array of issue references that are sub-issues of this issue
+- `parent_issue`: the parent issue reference if this issue is a sub-issue
+
+Reference format: `owner/repo#number` (e.g., `org/my-repo#42`)
+
+Example `metadata.json` with sub-issues:
+
+```json
+{
+  "title": "Parent task",
+  "labels": [],
+  "sub_issues": ["org/repo#10", "org/repo#20"],
+  "parent_issue": "org/repo#5",
+  "readonly": { ... }
+}
+```
+
+### How it works
+
+- **pull**: Sub-issues are automatically fetched via REST API (`GET /repos/{owner}/{repo}/issues/{number}/sub_issues`). Parent issue is fetched via GraphQL (`parent` field).
+- **push**: Diffs are computed between local and remote state. Changes are applied via the Sub-issues API:
+    - Adding a sub-issue: `POST /repos/{owner}/{repo}/issues/{parent_number}/sub_issues` with `{ "sub_issue_id": <id> }`
+    - Removing a sub-issue: `DELETE /repos/{owner}/{repo}/issues/{parent_number}/sub_issue` with `{ "sub_issue_id": <id> }`
+    - Changing parent issue: removes from old parent, adds to new parent (by manipulating the parent's sub-issue list)
+- The API uses internal issue IDs (not issue numbers). `a gh issue-agent` resolves issue numbers to IDs automatically via `GET /repos/{owner}/{repo}/issues/{number}`.
+
+### Usage examples
+
+**Add a sub-issue to an existing issue:**
+
+1. `a gh issue-agent pull 100`
+2. Edit `metadata.json`: add `"org/repo#42"` to the `sub_issues` array
+3. Review and push as usual
+
+**Set a parent issue:**
+
+1. `a gh issue-agent pull 42`
+2. Edit `metadata.json`: set `"parent_issue": "org/repo#100"`
+3. Review and push as usual
+
+**Create an issue with sub-issues:**
+
+In the `issue.md` frontmatter for a new issue, include:
+
+```markdown
+---
+title: Parent task
+labels: []
+assignees: []
+sub_issues:
+    - org/repo#10
+    - org/repo#20
+---
 ```
 
 ## Absolute Rules
