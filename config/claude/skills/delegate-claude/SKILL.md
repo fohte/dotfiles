@@ -7,6 +7,11 @@ description: Delegate tasks to a separate Claude Code instance in its own git wo
 
 `a wm new --prompt` を使って、別の worktree で別の Claude Code インスタンスに処理を委任する。
 
+## 絶対禁止事項
+
+- **自分で実装作業をしない**: このスキルが発動したら、ファイル編集・コード変更・調査を自分で行ってはならない。唯一の仕事はプロンプトを構成して `a wm new` コマンドを実行すること
+- **委任前にファイルを編集しない**: 「先に少し直してから委任しよう」は禁止。未コミットの変更がある状態で worktree を作ると、委任先にその変更が反映されない
+
 ## 使い方
 
 ```bash
