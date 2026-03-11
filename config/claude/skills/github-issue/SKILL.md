@@ -119,6 +119,28 @@ a gh issue-agent push <issue-number> --edit-others
 a gh issue-agent push <issue-number> --allow-delete
 ```
 
+## Absolute Rules
+
+These rules MUST NEVER be violated, regardless of context or convenience.
+
+1. NEVER call `a gh issue-agent push` without first running `a ai draft` on every changed file and receiving explicit user approval via AskUserQuestion. No exceptions - not even when "continuing from a previous session", "the content was already reviewed", or "the changes are minor". If `a ai draft` was not run in the current conversation turn, the content has NOT been reviewed.
+2. NEVER put flow information (investigation results, root cause analysis, data tables, timeline of events, action items, options/choices) in the issue body. The issue body is for static, structural content only: WHY (motivation, severity, risk) and WHAT (strategic intent, completion criteria). All flow information goes in comments.
+3. NEVER push issue body changes and new comments in the same `push` command. Each must be reviewed (`a ai draft` + AskUserQuestion) and pushed separately. Edit the issue body first, get approval, push it, then create the comment, get approval, push it.
+
+### Issue Body vs Comment Decision Guide
+
+Before writing anything, classify each piece of information:
+
+| Content type      | Where it belongs | Examples                                                                                                      |
+| ----------------- | ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| Static/structural | Issue body       | Why this issue exists, what the goal is, completion criteria, severity/urgency                                |
+| Flow/temporal     | Comment          | Investigation results, root cause findings, data analysis, proposed options, progress updates, decisions made |
+
+The test: "Will this content change as work progresses?" If yes → comment. If no → issue body.
+
+- Bad: Issue body contains `## 原因` or `## 調査結果` or `## 対応方針の選択肢`
+- Good: Issue body contains only WHY + WHAT. Investigation results posted as a separate comment
+
 ## Workflow: First Analyze, Then Act
 
 **CRITICAL**: When editing an existing issue, ALWAYS start with `view` to understand the current state before deciding what to do.
