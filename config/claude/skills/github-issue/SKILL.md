@@ -172,6 +172,25 @@ If user only wants to read the issue, the `view` command output is sufficient. N
 
 #### Workflow B: Creating a new issue
 
+**Phase 1: Gather information before writing**
+
+Before writing anything, complete all necessary research. The goal is to write a high-quality draft on the first attempt, minimizing review rounds.
+
+1. Extract from the user's description:
+    - The priority/emphasis the user places on each topic (reflect this in section ordering)
+    - Issue numbers or URLs the user explicitly mentions as related
+    - Facts the user states without linking to specific issues (do not invent links for these)
+2. Research external services/tools mentioned in the issue:
+    - If the issue references features of an external service (e.g., a SaaS plan's capabilities), fetch the official documentation BEFORE writing the draft
+    - Include specific feature names, API endpoints, or capability descriptions from the docs
+3. Verify related issues:
+    - For issues the user explicitly mentioned: confirm they exist with `gh issue view`
+    - Do NOT proactively search for and add issue links the user did not mention. If you believe an issue is relevant, ask the user first rather than including it in the draft
+    - If you do add an issue link, you MUST read the issue body (via `view`) to confirm it is actually relevant. Never link based on title alone
+4. Check repository conventions: use `view` on a similar existing issue to match formatting
+
+**Phase 2: Create and review**
+
 1. Check available templates: `a gh issue-agent init issue --list-templates [-R <owner/repo>]`
 2. Generate boilerplate with appropriate template:
     - If templates exist, use: `a gh issue-agent init issue --template <template-name>`
