@@ -1,6 +1,6 @@
 ---
 name: github-issue
-description: Use `a gh issue-agent` to view, create, and edit GitHub Issues. Use this skill when working with GitHub Issues - viewing issue content, creating new issues, editing issue body/title/labels, or adding/editing comments.
+description: Use `a gh issue-agent` to view, create, and edit GitHub Issues. Use this skill when working with GitHub Issues - viewing issue content, creating new issues, editing issue body/title/labels, or adding/editing comments. IMPORTANT - This skill MUST be used instead of running `gh issue create`, `gh issue edit`, or `gh issue comment` directly. Any GitHub Issue operation (create, view, edit, comment) must go through this skill.
 ---
 
 # GitHub Issue Management
