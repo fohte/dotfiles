@@ -357,6 +357,9 @@ Follow these guidelines when writing issues or comments:
 - Distinguish symptoms from root causes. "X is slow" or "there is a lag in Y" describes a symptom, not a cause. If the root cause is uncertain, use hedging language (e.g., "believed to be caused by")
 - Do not include information unrelated to the issue's root cause in the proposed solutions or cause analysis, even if discovered during investigation
 - Keep comments minimal. Only write what the reader needs to act on or understand the outcome. Do not add supplementary context that the reader can derive from the execution log or linked resources
+- When placing a URL inside parentheses, always use Markdown link syntax to prevent GitHub from misinterpreting the link boundary
+    - Bad: `問題が発覚した (https://github.com/org/repo/issues/123)。次の文。` — GitHub may include `。` in the URL
+    - Good: `問題が発覚した ([#123](https://github.com/org/repo/issues/123))。次の文。`
 - Place reference links inline where contextually relevant, not in a separate "References" section at the end
 - Use numbered lists only when order matters (sequential steps, priority ranking); otherwise use bullet points
     - Bad: `1. Option A 2. Option B 3. Option C` (options have no inherent order)
