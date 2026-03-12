@@ -190,7 +190,7 @@ sub_issues:
 
 These rules MUST NEVER be violated, regardless of context or convenience.
 
-1. NEVER call `a gh issue-agent push` without first running `a ai draft` on every changed file and receiving explicit user approval via AskUserQuestion. No exceptions - not even when "continuing from a previous session", "the content was already reviewed", or "the changes are minor". If `a ai draft` was not run in the current conversation turn, the content has NOT been reviewed.
+1. NEVER call `a gh issue-agent push` without first running `a gh issue-agent push <number-or-path> --dry-run` and reviewing the output. The dry-run shows exactly which files will be created, updated, or deleted. If unexpected changes appear (e.g., stale comment files from earlier edits), remove or fix them before the real push. After confirming the dry-run output is correct, proceed with `a ai draft` on every changed file and receive explicit user approval via AskUserQuestion. No exceptions - not even when "continuing from a previous session", "the content was already reviewed", or "the changes are minor". If `a ai draft` was not run in the current conversation turn, the content has NOT been reviewed.
 2. NEVER put flow information (investigation results, root cause analysis, data tables, timeline of events, action items, options/choices) in the issue body. The issue body is for static, structural content only: WHY (motivation, severity, risk) and WHAT (strategic intent, completion criteria). All flow information goes in comments.
 3. NEVER push issue body changes and new comments in the same `push` command. Each must be reviewed (`a ai draft` + AskUserQuestion) and pushed separately. Edit the issue body first, get approval, push it, then create the comment, get approval, push it.
 
@@ -266,7 +266,8 @@ Before writing anything, complete all necessary research. The goal is to write a
 3. Edit the file at `~/.cache/gh-issue-agent/<owner>/<repo>/new/issue.md`
 4. Run `a ai draft <file-path>` to open in terminal + Neovim for user review
 5. **STOP and wait for user approval.** Do NOT proceed to push until the user explicitly confirms. After `a ai draft`, use AskUserQuestion to ask the user if the content is ready to push. Never assume the user has finished reviewing just because the draft command returned.
-6. Create the issue: `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new`
+6. Run `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new --dry-run` to verify exactly what will be pushed. If unexpected files appear, fix before proceeding.
+7. Create the issue: `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new`
     - On success, the directory is renamed to `<issue-number>/`
 
 #### Workflow C: Editing issue body/metadata
@@ -275,7 +276,8 @@ Before writing anything, complete all necessary research. The goal is to write a
 2. Edit `issue.md` or `metadata.json` in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`
 3. Run `a ai draft <file-path>` to open the edited file in terminal + Neovim for user review
 4. **STOP and wait for user approval.** Do NOT proceed to push until the user explicitly confirms. After `a ai draft`, use AskUserQuestion to ask the user if the content is ready to push. Never assume the user has finished reviewing just because the draft command returned.
-5. After user approval, apply changes: `a gh issue-agent push <issue-number>`
+5. Run `a gh issue-agent push <issue-number> --dry-run` to verify exactly what will be pushed. If unexpected files appear, fix before proceeding.
+6. After user approval, apply changes: `a gh issue-agent push <issue-number>`
 
 #### Workflow D: Editing an EXISTING comment
 
@@ -287,7 +289,8 @@ Use this when the content should be added to or modified in an existing comment.
 4. Edit the comment file directly
 5. Run `a ai draft <file-path>` for user review
 6. **STOP and wait for user approval.** Do NOT proceed to push until the user explicitly confirms. After `a ai draft`, use AskUserQuestion to ask the user if the content is ready to push. Never assume the user has finished reviewing just because the draft command returned.
-7. Push changes: `a gh issue-agent push <issue-number>`
+7. Run `a gh issue-agent push <issue-number> --dry-run` to verify exactly what will be pushed. If unexpected files appear, fix before proceeding.
+8. Push changes: `a gh issue-agent push <issue-number>`
 
 **Comment file format:**
 
@@ -304,7 +307,8 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 3. Edit the generated file in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/comments/`
 4. Run `a ai draft <file-path>` for user review
 5. **STOP and wait for user approval.** Do NOT proceed to push until the user explicitly confirms. After `a ai draft`, use AskUserQuestion to ask the user if the content is ready to push. Never assume the user has finished reviewing just because the draft command returned.
-6. Push changes: `a gh issue-agent push <issue-number>`
+6. Run `a gh issue-agent push <issue-number> --dry-run` to verify exactly what will be pushed. If unexpected files appear (e.g., stale comment files from earlier edits), remove them before proceeding.
+7. Push changes: `a gh issue-agent push <issue-number>`
 
 ## Editing Comments
 

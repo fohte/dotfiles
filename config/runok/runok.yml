@@ -61,6 +61,7 @@ rules:
   - allow: 'a gh issue-agent init *'
   - allow: 'a gh issue-agent pull *'
   - allow: 'a gh issue-agent view *'
+  - allow: 'a gh issue-agent push --dry-run *'
 
   # linters and formatters
   - allow: 'actionlint *'
