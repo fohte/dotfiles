@@ -329,10 +329,11 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 - `pull` fails if local changes exist (use `--force` to discard)
 - `push` uses field-level conflict detection: only fails if locally modified fields were also modified remotely
     - e.g., adding a label remotely does NOT block body edits
-    - Use `--force` to overwrite remote changes when conflicts are detected
+    - When a conflict occurs, `pull --force` to re-fetch the latest state, re-apply edits, and push again. NEVER use `push --force`
+- **NEVER use `push --force`**. `push --force` blindly overwrites remote changes without merging. If `push` fails due to a conflict, always resolve by `pull --force` → re-edit → push
 - `push` fails when editing other users' comments (use `--edit-others` to allow)
 - `push` fails when deleting comments (use `--allow-delete` to allow)
-- Before using `--force`, use `diff` or `push --dry-run` to verify what will be overwritten
+- Before using `--force` on `pull`, use `diff` or `push --dry-run` to verify what local changes will be lost
 - Always use `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) to let user review edited content before pushing. The user approves by setting `submit: true` in the frontmatter within Neovim. The `push` command verifies `.approve` files exist for all changed files and rejects the push if any file is unapproved.
 - **CRITICAL: After running `a gh issue-agent review` in background, STOP and wait for the background command to complete.** Do NOT proceed to `push` until the command finishes. Exit code 0 means approved, exit code 1 means cancelled.
 
