@@ -94,6 +94,13 @@ return {
     -- make selected text background brighter
     set_hl({ 'Visual' }, { link = 'IncSearch' })
 
+    -- PR review thread highlights
+    set_hl({ 'prReviewThreadHeader' }, { fg = colors.base0D, bold = true }) -- blue, bold
+    set_hl({ 'prReviewCommentDelim' }, { fg = '#555555' }) -- dim gray
+    set_hl({ 'prReviewDiffDelim' }, { fg = '#555555' }) -- dim gray
+    set_hl({ 'prReviewUnresolved' }, { fg = colors.base09, bold = true }) -- orange, bold
+    set_hl({ 'prReviewResolved' }, { fg = colors.base0B }) -- green
+
     -- make transparent background (use terminal background color)
     local transparent_targets = {
       'Normal',

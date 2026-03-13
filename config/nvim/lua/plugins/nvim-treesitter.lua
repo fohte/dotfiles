@@ -42,6 +42,9 @@ return {
 
       -- use treesitter markdown parser with Octo.nvim buffers
       vim.treesitter.language.register('markdown', 'octo')
+
+      -- use treesitter markdown parser with PR review thread buffers
+      vim.treesitter.language.register('markdown', 'pr_review')
     end,
   },
 }
