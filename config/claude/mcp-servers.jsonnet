@@ -13,4 +13,9 @@ local env(name) = std.extVar(name);
     args: ['mcp'],
     env: {},
   },
+  pencil: {
+    command: '/Applications/Pencil.app/Contents/Resources/app.asar.unpacked/out/mcp-server-darwin-arm64',
+    args: ['--app', 'desktop'],
+    env: {},
+  },
 }

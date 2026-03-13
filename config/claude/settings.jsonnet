@@ -32,6 +32,7 @@
 
       'mcp__context7',
       'mcp__qmd',
+      'mcp__pencil',
     ],
     deny: [
       'NotebookEdit',
