@@ -141,7 +141,7 @@ rules:
 
   # git (write operations not covered by preset)
   - allow: 'git [-C *] add *'
-  - allow: 'git [-C *] checkout -- *'
+  - allow: 'git [-C *] checkout * -- *'
   - allow: 'git [-C *] commit *'
   - allow: 'git [-C *] commit -m *'
   - allow: 'git [-C *] fetch *'
