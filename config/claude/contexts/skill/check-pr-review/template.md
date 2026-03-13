@@ -54,9 +54,16 @@ Shows all reviews and threads with full details (legacy behavior).
 6. **User confirmation for "won't fix"**: Before treating any comment as "won't fix", you MUST ask the user for confirmation using AskUserQuestion. Present the reviewer's comment, your reasoning for why it's a false positive, and let the user decide whether to fix it or skip it. Never autonomously decide "won't fix" without user approval.
 7. For confirmed "won't fix" comments (approved by the user in step 6), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
 8. If code changes were made (steps 4-7), commit and push using the `/commit` skill, then `git push`
-9. **Reply to "won't fix" threads** on GitHub (see Reply to Review Threads below)
-10. **Resolve all addressed threads** from bot reviewers (see Resolve Review Threads below)
-11. Re-run to verify all comments have been addressed
+   {{- if eq $v.repo.owner.login "fohte" }}
+9. **Wait for Devin review after push**: After pushing, wait for Devin's review CI check to complete using `gh pr checks --watch`. Once the check passes, re-run `check-pr-review` to review Devin's feedback and address any new comments (repeat from step 1)
+10. **Reply to "won't fix" threads** on GitHub (see Reply to Review Threads below)
+11. **Resolve all addressed threads** from bot reviewers (see Resolve Review Threads below)
+12. Re-run to verify all comments have been addressed
+    {{- else }}
+13. **Reply to "won't fix" threads** on GitHub (see Reply to Review Threads below)
+14. **Resolve all addressed threads** from bot reviewers (see Resolve Review Threads below)
+15. Re-run to verify all comments have been addressed
+    {{- end }}
 
 **Important**: After getting the summary, immediately proceed to fetch details for each review. Never ask the user "詳細を確認しますか?" or similar confirmation questions.
 
