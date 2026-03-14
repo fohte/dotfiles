@@ -1,21 +1,165 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
 rules:
-  - allow: 'bun pm ls *'
+  # install (use ni)
   - allow: 'ni'
     tests:
       - allow: 'ni'
-  - allow: 'npm view *'
-  - allow: 'npm info *'
+      - ask: 'ni -D typescript'
+
+  - deny: 'npm install *'
+    message: 'Use ni instead of npm install. See /ni skill for details'
+    fix_suggestion: 'ni'
+    tests:
+      - deny: 'npm install axios'
+      - deny: 'npm install -D typescript'
+  - deny: 'yarn add *'
+    message: 'Use ni instead of yarn add. See /ni skill for details'
+    fix_suggestion: 'ni <pkg>'
+    tests:
+      - deny: 'yarn add axios'
+  - deny: 'yarn install *'
+    message: 'Use ni instead of yarn install. See /ni skill for details'
+    fix_suggestion: 'ni'
+    tests:
+      - deny: 'yarn install'
+  - deny: 'pnpm install *'
+    message: 'Use ni instead of pnpm install. See /ni skill for details'
+    fix_suggestion: 'ni'
+    tests:
+      - deny: 'pnpm install'
+  - deny: 'pnpm add *'
+    message: 'Use ni instead of pnpm add. See /ni skill for details'
+    fix_suggestion: 'ni <pkg>'
+    tests:
+      - deny: 'pnpm add axios'
+  - deny: 'bun install *'
+    message: 'Use ni instead of bun install. See /ni skill for details'
+    fix_suggestion: 'ni'
+    tests:
+      - deny: 'bun install'
+  - deny: 'bun add *'
+    message: 'Use ni instead of bun add. See /ni skill for details'
+    fix_suggestion: 'ni <pkg>'
+    tests:
+      - deny: 'bun add axios'
+
+  # run scripts (use nr)
   - allow: 'nr build *'
   - allow: 'nr format *'
   - allow: 'nr lint *'
   - allow: 'nr test *'
     tests:
       - allow: 'nr test'
+
+  - deny: 'npm run *'
+    message: 'Use nr instead of npm run. See /ni skill for details'
+    fix_suggestion: 'nr <script>'
+    tests:
+      - deny: 'npm run build'
+      - deny: 'npm run test'
+  - deny: 'yarn run *'
+    message: 'Use nr instead of yarn run. See /ni skill for details'
+    fix_suggestion: 'nr <script>'
+    tests:
+      - deny: 'yarn run build'
+  - deny: 'pnpm run *'
+    message: 'Use nr instead of pnpm run. See /ni skill for details'
+    fix_suggestion: 'nr <script>'
+    tests:
+      - deny: 'pnpm run build'
+  - deny: 'bun run *'
+    message: 'Use nr instead of bun run. See /ni skill for details'
+    fix_suggestion: 'nr <script>'
+    tests:
+      - deny: 'bun run build'
+
+  # execute packages (use nlx)
+  - deny: 'npx *'
+    message: 'Use nlx instead of npx. See /ni skill for details'
+    fix_suggestion: 'nlx <pkg>'
+    tests:
+      - deny: 'npx eslint --fix .'
+  - deny: 'yarn dlx *'
+    message: 'Use nlx instead of yarn dlx. See /ni skill for details'
+    fix_suggestion: 'nlx <pkg>'
+    tests:
+      - deny: 'yarn dlx eslint --fix .'
+  - deny: 'pnpm dlx *'
+    message: 'Use nlx instead of pnpm dlx. See /ni skill for details'
+    fix_suggestion: 'nlx <pkg>'
+    tests:
+      - deny: 'pnpm dlx eslint --fix .'
+  - deny: 'bunx *'
+    message: 'Use nlx instead of bunx. See /ni skill for details'
+    fix_suggestion: 'nlx <pkg>'
+    tests:
+      - deny: 'bunx eslint --fix .'
+
+  # clean install (use nci)
+  - deny: 'npm ci *'
+    message: 'Use nci instead of npm ci. See /ni skill for details'
+    fix_suggestion: 'nci'
+    tests:
+      - deny: 'npm ci'
+
+  # uninstall (use nun)
+  - deny: 'npm uninstall *'
+    message: 'Use nun instead of npm uninstall. See /ni skill for details'
+    fix_suggestion: 'nun <pkg>'
+    tests:
+      - deny: 'npm uninstall lodash'
+  - deny: 'yarn remove *'
+    message: 'Use nun instead of yarn remove. See /ni skill for details'
+    fix_suggestion: 'nun <pkg>'
+    tests:
+      - deny: 'yarn remove lodash'
+  - deny: 'pnpm remove *'
+    message: 'Use nun instead of pnpm remove. See /ni skill for details'
+    fix_suggestion: 'nun <pkg>'
+    tests:
+      - deny: 'pnpm remove lodash'
+  - deny: 'bun remove *'
+    message: 'Use nun instead of bun remove. See /ni skill for details'
+    fix_suggestion: 'nun <pkg>'
+    tests:
+      - deny: 'bun remove lodash'
+
+  # update (use nu)
+  - deny: 'npm update *'
+    message: 'Use nu instead of npm update. See /ni skill for details'
+    fix_suggestion: 'nu'
+    tests:
+      - deny: 'npm update'
+  - deny: 'pnpm update *'
+    message: 'Use nu instead of pnpm update. See /ni skill for details'
+    fix_suggestion: 'nu'
+    tests:
+      - deny: 'pnpm update'
+  - deny: 'bun update *'
+    message: 'Use nu instead of bun update. See /ni skill for details'
+    fix_suggestion: 'nu'
+    tests:
+      - deny: 'bun update'
+
+  # read-only commands (no ni equivalent)
+  - allow: 'npm view *'
+  - allow: 'npm info *'
+  - allow: 'npm ls *'
+  - allow: 'npm outdated *'
+  - allow: 'npm audit *'
+  - allow: 'npm search *'
+  - allow: 'yarn info *'
+  - allow: 'yarn why *'
+  - allow: 'yarn audit *'
+  - allow: 'pnpm ls *'
+  - allow: 'pnpm outdated *'
+  - allow: 'pnpm audit *'
+  - allow: 'pnpm why *'
+  - allow: 'bun pm ls *'
+  - allow: 'bun pm outdated *'
+
   - allow: 'node *'
     sandbox: readonly
     tests:
       - allow: 'node -e "console.log(1)"'
-  - allow: 'npx @marp-team/marp-cli@latest *'
-  - allow: npx --package renovate -c 'renovate-config-validator renovate.json5'
