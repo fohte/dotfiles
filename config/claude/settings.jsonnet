@@ -45,7 +45,6 @@
     defaultMode: 'acceptEdits',
   },
 
-  model: 'opus',
   hooks: {
     SessionStart: [
       {
