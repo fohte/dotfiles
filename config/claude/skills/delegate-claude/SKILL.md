@@ -110,7 +110,7 @@ a wm new fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "A
 ## ゴール
 [最終的に何が達成されていればよいか。成功条件]
 
-commit して PR を作成するところまで完了させること。
+`/commit` skill で commit し、`/create-pr` skill で PR を作成するところまで完了させること。
 ```
 
 ### 書き方のルール
