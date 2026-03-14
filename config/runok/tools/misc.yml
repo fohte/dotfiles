@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  # armyknife
+  - allow: 'a ai draft *'
+  - allow: 'a ai pr-draft *'
+  - allow: 'a ai review wait *'
+  - allow: 'a gh check-pr-review *'
+  - allow: 'a gh pr-review check *'
+  - allow: 'a gh pr-review reply pull *'
+  - allow: 'a gh pr-review reply push --dry-run *'
+  - allow: 'a gh issue-agent init|diff|pull|view *'
+  - allow: 'a gh issue-agent push --dry-run *'
+
+  # Claude Code
+  - allow: 'claude-session-digest *'
+  - allow: 'gen-claude-template *'
+
+  # semgrep
+  - allow: 'sg|ast-grep scan *'
+  - allow: 'sg|ast-grep test *'
+
+  # workflow tools
+  - allow: 'lefthook run *'
+    tests:
+      - allow: 'lefthook run pre-commit'
+  - allow: 'mise run test *'
+
+  # tmux (read-only)
+  - allow: 'tmux capture-pane *'
+  - allow: 'tmux display-message *'
+  - allow: 'tmux list-*|show-* *'
+    tests:
+      - allow: 'tmux list-sessions'
+      - allow: 'tmux show-options'
+
+  # runok
+  - allow: 'runok check *'
+  - allow: 'runok exec *'

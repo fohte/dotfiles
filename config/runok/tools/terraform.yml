@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - allow: 'terraform fmt'
+  - allow: 'terraform fmt *'
+    tests:
+      - allow: 'terraform fmt'
+      - allow: 'terraform fmt -check'
+  - allow: 'terraform validate'
+    tests:
+      - allow: 'terraform validate'

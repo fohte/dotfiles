@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - allow: 'gcloud * describe *'
+    tests:
+      - allow: 'gcloud compute instances describe my-instance'
+  - allow: 'gcloud * list *'
+    tests:
+      - allow: 'gcloud compute instances list'

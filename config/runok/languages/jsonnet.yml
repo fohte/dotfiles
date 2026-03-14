@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - allow: 'jsonnet *'
+    sandbox: readonly
+    tests:
+      - allow: 'jsonnet foo.jsonnet'

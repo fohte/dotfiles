@@ -1,0 +1,116 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  # deny rules
+  - deny: 'git [-C *] commit --amend *'
+    message: 'Blocked to prevent rewriting previous commit which may destroy work'
+    fix_suggestion: 'git commit -m "fix: ..."'
+    tests:
+      - deny: 'git commit --amend'
+      - deny: 'git -C /tmp commit --amend --no-edit'
+  - deny: 'git [-C *] commit --no-gpg-sign *'
+    message: 'Blocked to ensure commits are always GPG signed'
+    fix_suggestion: 'git commit -m "..."'
+    tests:
+      - deny: 'git commit --no-gpg-sign -m "test"'
+  - deny: 'git [-C *] commit -n|--no-verify *'
+    message: 'Blocked to ensure pre-commit hooks always run'
+    fix_suggestion: 'git commit -m "..."'
+    tests:
+      - deny: 'git commit --no-verify -m "test"'
+      - deny: 'git commit -n -m "test"'
+  - deny: 'git [-C *] push --force-with-lease *'
+    message: 'Blocked to prevent rewriting remote history'
+    tests:
+      - deny: 'git push --force-with-lease origin main'
+  - deny: 'git [-C *] push --force *'
+    message: 'Blocked to prevent rewriting remote history'
+    fix_suggestion: 'git push'
+    tests:
+      - deny: 'git push --force origin main'
+  - deny: 'git [-C *] push -f *'
+    message: 'Blocked to prevent rewriting remote history'
+    fix_suggestion: 'git push'
+    tests:
+      - deny: 'git push -f origin main'
+  - deny: 'git [-C *] rebase origin/main|origin/master *'
+    message: 'Blocked to prevent unintended rewriting of commit history'
+    fix_suggestion: 'git merge origin/main or origin/master'
+    tests:
+      - deny: 'git rebase origin/main'
+      - deny: 'git rebase origin/master'
+  - deny: 'git [-C *] pull --no-rebase'
+    message: 'Blocked to prevent unintended merge commits'
+    fix_suggestion: 'git pull --rebase'
+    tests:
+      - deny: 'git pull --no-rebase'
+
+  # allow rules
+  - allow: 'git [-C *] add *'
+    tests:
+      - allow: 'git add .'
+      - allow: 'git add -A'
+  - allow: 'git [-C *] checkout * -- *'
+    tests:
+      - allow: 'git checkout main -- file.txt'
+  - allow: 'git [-C *] commit *'
+    tests:
+      - allow: 'git commit -m "feat: add feature"'
+  - allow: 'git [-C *] commit -m *'
+  - allow: 'git [-C *] fetch *'
+    tests:
+      - allow: 'git fetch origin'
+  - allow: 'git [-C *] merge origin/main|origin/master *'
+    tests:
+      - allow: 'git merge origin/main'
+      - allow: 'git merge origin/master'
+  - allow: 'git [-C *] mv *'
+  - allow: 'git [-C *] pull *'
+    tests:
+      - allow: 'git pull'
+      - allow: 'git pull --rebase'
+  - allow: 'git [-C *] push *'
+    tests:
+      - allow: 'git push origin main'
+
+  # gh
+  - deny: 'gh [-R *] api * --paginate *'
+    message: 'Blocked to prevent excessive API rate limit consumption'
+    tests:
+      - deny: 'gh api /repos --paginate'
+      - deny: 'gh -R foo/bar api /repos --paginate'
+  - deny: 'gh repo set-default *'
+    message: 'Blocked to prevent unintended operations on wrong repository'
+    tests:
+      - deny: 'gh repo set-default foo/bar'
+  - deny: 'gh repo clone *'
+    message: 'Use ghq'
+    tests:
+      - deny: 'gh repo clone foo/bar'
+  - deny: 'gh log *'
+    message: 'Not a valid gh command, did you mean `gh run watch`?'
+  - deny: 'gh [-R *] issue comment *'
+    message: 'Use /github-issue skill'
+    tests:
+      - deny: 'gh issue comment 123'
+
+  - allow: 'gh [-R *] * list *'
+  - allow: 'gh [-R *] * view *'
+  - allow: 'gh [-R *] api -X GET *'
+    tests:
+      - allow: 'gh api -X GET /repos'
+      - allow: 'gh -R foo/bar api -X GET /repos'
+  - allow: 'gh [-R *] browse *'
+  - allow: 'gh [-R *] pr checks *'
+  - allow: 'gh [-R *] pr diff *'
+  - allow: 'gh [-R *] run watch *'
+  - allow: 'gh [-R *] search *'
+  - allow: 'gh [-R *] run download *'
+  - allow: 'gh [-R *] project item-*|field-list *'
+  - ask: 'gh [-R *] project item-delete *'
+    tests:
+      - ask: 'gh project item-delete 123'
+
+  # ghq
+  - allow: 'ghq get *'
+  - allow: 'ghq list *'

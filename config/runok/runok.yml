@@ -2,195 +2,22 @@
 
 extends:
   - 'github:fohte/runok-presets/base'
+  - './common.yml'
+  - './git.yml'
+  - './languages/rust.yml'
+  - './languages/go.yml'
+  - './languages/node.yml'
+  - './languages/ruby.yml'
+  - './languages/python.yml'
+  - './languages/jsonnet.yml'
+  - './tools/aws.yml'
+  - './tools/gcloud.yml'
+  - './tools/linters.yml'
+  - './tools/terraform.yml'
+  - './tools/misc.yml'
 
 defaults:
   action: ask
-
-rules:
-  # === deny rules ===
-  - deny: 'gh [-R *] api * --paginate *'
-    message: 'Blocked to prevent excessive API rate limit consumption'
-  - deny: 'gh repo set-default *'
-    message: 'Blocked to prevent unintended operations on wrong repository'
-  - deny: 'git [-C *] commit --amend *'
-    message: 'Blocked to prevent rewriting previous commit which may destroy work'
-    fix_suggestion: 'git commit -m "fix: ..."'
-  - deny: 'git [-C *] commit --no-gpg-sign *'
-    message: 'Blocked to ensure commits are always GPG signed'
-    fix_suggestion: 'git commit -m "..."'
-  - deny: 'git [-C *] commit -n|--no-verify *'
-    message: 'Blocked to ensure pre-commit hooks always run'
-    fix_suggestion: 'git commit -m "..."'
-  - deny: 'git [-C *] push --force-with-lease *'
-    message: 'Blocked to prevent rewriting remote history'
-  - deny: 'git [-C *] push --force *'
-    message: 'Blocked to prevent rewriting remote history'
-    fix_suggestion: 'git push'
-  - deny: 'git [-C *] push -f *'
-    message: 'Blocked to prevent rewriting remote history'
-    fix_suggestion: 'git push'
-  - deny: 'rm -rf *'
-    message: 'Blocked because recursive forced deletion is irreversible'
-    fix_suggestion: 'rm -r'
-
-  # === allow rules ===
-
-  # common commands (not covered by preset)
-  - allow: 'cp *'
-  - allow: 'mv *'
-  - allow: 'chmod +x *'
-  - allow: 'mkdir *'
-  - allow: 'touch *'
-  - allow: 'gsed *'
-  - allow: 'awk *'
-    sandbox: readonly
-  - allow: 'curl [-s] [-X GET] *'
-  - allow: 'bats *'
-  - allow: 'bc *'
-  - allow: 'mktemp *'
-
-  - allow: brew search *
-  - allow: brew info *
-
-  # armyknife
-  - allow: 'a ai draft *'
-  - allow: 'a ai pr-draft *'
-  - allow: 'a ai review wait *'
-  - allow: 'a gh check-pr-review *'
-  - allow: 'a gh pr-review check *'
-  - allow: 'a gh pr-review reply pull *'
-  - allow: 'a gh pr-review reply push --dry-run *'
-  - allow: 'a gh issue-agent init|diff|pull|view *'
-  - allow: 'a gh issue-agent push --dry-run *'
-
-  # linters and formatters
-  - allow: 'actionlint *'
-  - allow: 'bash -n *'
-  - allow: 'shellcheck *'
-  - allow: 'shfmt *'
-  - allow: 'prettier *'
-  - allow: 'xmllint *'
-
-  # package managers
-  - allow: 'bun pm ls *'
-  - allow: 'ni'
-  - allow: 'npm view *'
-  - allow: 'npm info *'
-  - allow: 'nr build *'
-  - allow: 'nr format *'
-  - allow: 'nr lint *'
-  - allow: 'nr test *'
-
-  # cargo / rust
-  - allow: 'cargo build *'
-  - allow: 'cargo check *'
-  - allow: 'cargo clippy *'
-  - allow: 'cargo doc *'
-  - allow: 'cargo fmt *'
-  - allow: 'cargo llvm-cov *'
-  - allow: 'cargo metadata *'
-  - allow: 'cargo search *'
-  - allow: 'cargo test *'
-  - allow: 'cargo tree *'
-
-  - allow: 'go doc *'
-  - allow: 'go env *'
-
-  - allow: 'bundle show *'
-  - allow: 'bundle info *'
-
-  # Claude Code
-  - allow: 'claude-session-digest *'
-  - allow: 'gen-claude-template *'
-
-  # gcloud (readonly)
-  - allow: 'gcloud * describe *'
-  - allow: 'gcloud * list *'
-
-  # gh
-  - allow: 'gh [-R *] * list *'
-  - allow: 'gh [-R *] * view *'
-  - allow: 'gh [-R *] api -X GET *'
-  - allow: 'gh [-R *] browse *'
-  - allow: 'gh [-R *] pr checks *'
-  - allow: 'gh [-R *] pr diff *'
-  - allow: 'gh [-R *] run watch *'
-  - allow: 'gh [-R *] search *'
-  - allow: 'gh [-R *] run download *'
-  - allow: 'gh [-R *] project item-*|field-list *'
-  - ask: 'gh [-R *] project item-delete *'
-
-  - deny: 'gh repo clone *'
-    message: 'Use ghq'
-  - deny: 'gh log *'
-    message: 'Not a valid gh command, did you mean `gh run watch`?'
-  - deny: 'gh [-R *] issue comment *'
-    message: 'Use /github-issue skill'
-
-  # aws
-  - allow: 'aws * get-*|list-*|describe-* *'
-  - deny: 'aws ssm get-* --with-decryption *'
-    message: 'Blocked to prevent accidental exposure of sensitive parameters'
-    fix_suggestion: 'aws ssm get-parameter --name <name> (no decryption)'
-  - allow: 'aws cloudtrail lookup-events *'
-  - allow: 'aws logs filter-log-events *'
-
-  # ghq
-  - allow: 'ghq get *'
-  - allow: 'ghq list *'
-
-  # git (write operations not covered by preset)
-  - allow: 'git [-C *] add *'
-  - allow: 'git [-C *] checkout * -- *'
-  - allow: 'git [-C *] commit *'
-  - allow: 'git [-C *] commit -m *'
-  - allow: 'git [-C *] fetch *'
-  - allow: 'git [-C *] merge origin/main|origin/master *'
-  - deny: 'git [-C *] rebase origin/main|origin/master *'
-    message: 'Blocked to prevent unintended rewriting of commit history'
-    fix_suggestion: 'git merge origin/main or origin/master'
-  - allow: 'git [-C *] mv *'
-  - allow: 'git [-C *] pull *'
-  - deny: 'git [-C *] pull --no-rebase'
-    message: 'Blocked to prevent unintended merge commits'
-    fix_suggestion: 'git pull --rebase'
-  - allow: 'git [-C *] push *'
-
-  # semgrep
-  - allow: 'sg|ast-grep scan *'
-  - allow: 'sg|ast-grep test *'
-
-  # workflow tools
-  - allow: 'lefthook run *'
-  - allow: 'mise run test *'
-
-  # terraform
-  - allow: 'terraform fmt'
-  - allow: 'terraform fmt *'
-  - allow: 'terraform validate'
-
-  # tmux (read-only)
-  - allow: 'tmux capture-pane *'
-  - allow: 'tmux display-message *'
-  - allow: 'tmux list-*|show-* *'
-
-  - allow: 'runok check *'
-  - allow: 'runok exec *'
-
-  - allow: npx --package renovate -c 'renovate-config-validator renovate.json5'
-
-  # interpreters (sandbox-only, read-only + no network)
-  - allow: 'node *'
-    sandbox: readonly
-  - allow: 'python3 *'
-    sandbox: readonly
-  - allow: 'ruby *'
-    sandbox: readonly
-  - allow: 'ruby -c *' # typecheck
-  - allow: 'jsonnet *'
-    sandbox: readonly
-
-  - allow: 'npx @marp-team/marp-cli@latest *'
 
 definitions:
   paths:

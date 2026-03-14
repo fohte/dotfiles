@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - allow: 'cargo build *'
+    tests:
+      - allow: 'cargo build --release'
+  - allow: 'cargo check *'
+  - allow: 'cargo clippy *'
+  - allow: 'cargo doc *'
+  - allow: 'cargo fmt *'
+  - allow: 'cargo llvm-cov *'
+  - allow: 'cargo metadata *'
+  - allow: 'cargo search *'
+  - allow: 'cargo test *'
+    tests:
+      - allow: 'cargo test'
+      - allow: 'cargo test --lib'
+  - allow: 'cargo tree *'

@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - allow: 'aws * get-*|list-*|describe-* *'
+    tests:
+      - allow: 'aws s3 list-buckets'
+      - allow: 'aws ec2 describe-instances'
+  - deny: 'aws ssm get-* --with-decryption *'
+    message: 'Blocked to prevent accidental exposure of sensitive parameters'
+    fix_suggestion: 'aws ssm get-parameter --name <name> (no decryption)'
+    tests:
+      - deny: 'aws ssm get-parameter --with-decryption --name foo'
+  - allow: 'aws cloudtrail lookup-events *'
+  - allow: 'aws logs filter-log-events *'

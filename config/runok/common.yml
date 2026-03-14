@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - deny: 'rm -rf *'
+    message: 'Blocked because recursive forced deletion is irreversible'
+    fix_suggestion: 'rm -r'
+    tests:
+      - deny: 'rm -rf /tmp/foo'
+      - ask: 'rm -r /tmp/foo'
+
+  - allow: 'cp *'
+    tests:
+      - allow: 'cp foo bar'
+  - allow: 'mv *'
+    tests:
+      - allow: 'mv foo bar'
+  - allow: 'chmod +x *'
+    tests:
+      - allow: 'chmod +x script.sh'
+  - allow: 'mkdir *'
+    tests:
+      - allow: 'mkdir -p /tmp/test'
+  - allow: 'touch *'
+    tests:
+      - allow: 'touch file.txt'
+  - allow: 'gsed *'
+  - allow: 'awk *'
+    sandbox: readonly
+  - allow: 'curl [-s] [-X GET] *'
+    tests:
+      - allow: 'curl https://example.com'
+      - allow: 'curl -s https://example.com'
+      - allow: 'curl -s -X GET https://example.com'
+  - allow: 'bats *'
+  - allow: 'bc *'
+  - allow: 'mktemp *'
+
+  - allow: brew search *
+  - allow: brew info *

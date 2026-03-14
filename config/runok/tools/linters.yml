@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - allow: 'actionlint *'
+  - allow: 'bash -n *'
+    tests:
+      - allow: 'bash -n script.sh'
+  - allow: 'shellcheck *'
+    tests:
+      - allow: 'shellcheck script.sh'
+  - allow: 'shfmt *'
+  - allow: 'prettier *'
+  - allow: 'xmllint *'

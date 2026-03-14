@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - allow: 'bundle show *'
+  - allow: 'bundle info *'
+  - allow: 'ruby *'
+    sandbox: readonly
+  - allow: 'ruby -c *'
+    tests:
+      - allow: 'ruby -c script.rb'

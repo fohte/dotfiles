@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - allow: 'bun pm ls *'
+  - allow: 'ni'
+    tests:
+      - allow: 'ni'
+  - allow: 'npm view *'
+  - allow: 'npm info *'
+  - allow: 'nr build *'
+  - allow: 'nr format *'
+  - allow: 'nr lint *'
+  - allow: 'nr test *'
+    tests:
+      - allow: 'nr test'
+  - allow: 'node *'
+    sandbox: readonly
+    tests:
+      - allow: 'node -e "console.log(1)"'
+  - allow: 'npx @marp-team/marp-cli@latest *'
+  - allow: npx --package renovate -c 'renovate-config-validator renovate.json5'
