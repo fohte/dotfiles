@@ -81,16 +81,16 @@ This fetches all unresolved threads to a local Markdown file at `$XDG_CACHE_HOME
 
 The file contains threads in the following format:
 
+<!-- prettier-ignore -->
 ```markdown
 <!-- thread: RT_abc123 path: src/main.rs:42 -->
-
 - [ ] resolve
-    <!-- diff -->
-    ...
-    <!-- /diff -->
-    <!-- comment: @reviewer 2024-01-15T10:30:00Z -->
-    Review comment body
-    <!-- /comment -->
+<!-- diff -->
+...
+<!-- /diff -->
+<!-- comment: @reviewer 2024-01-15T10:30:00Z -->
+Review comment body
+<!-- /comment -->
 ```
 
 For each thread:
