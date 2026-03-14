@@ -12,11 +12,11 @@
 
       'Edit(//tmp/**)',
       'Edit(//var/folders/**/T/**)',
-      'Edit(~/.cache/gh-issue-agent/**)',
+      'Edit(~/.cache/armyknife/**)',
 
       'Read(//tmp/**)',
       'Read(//var/folders/**/T/**)',
-      'Read(~/.cache/gh-issue-agent/**)',
+      'Read(~/.cache/armyknife/**)',
       'Read(~/.claude/**)',
       'Read(~/.config/**)',
       'Read(~/.local/share/nvim/lazy)',

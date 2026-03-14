@@ -57,7 +57,9 @@ rules:
   - allow: 'a ai pr-draft *'
   - allow: 'a ai review wait *'
   - allow: 'a gh check-pr-review *'
-  - allow: 'a gh pr-review check|pull *'
+  - allow: 'a gh pr-review check *'
+  - allow: 'a gh pr-review reply pull *'
+  - allow: 'a gh pr-review reply push --dry-run *'
   - allow: 'a gh issue-agent init|diff|pull|view *'
   - allow: 'a gh issue-agent push --dry-run *'
 
