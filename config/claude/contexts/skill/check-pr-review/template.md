@@ -9,7 +9,7 @@ Fetch review comments for a PR and address any feedback.
 ## Usage
 
 ```bash
-a gh check-pr-review <pr-number> [-R <owner/repo>] [--all] [--review N] [--full]
+a gh pr-review check <pr-number> [-R <owner/repo>] [--all] [--review N] [--full]
 ```
 
 ## Options
@@ -55,39 +55,58 @@ Shows all reviews and threads with full details (legacy behavior).
 7. For confirmed "won't fix" comments (approved by the user in step 6), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
 8. If code changes were made (steps 4-7), commit and push using the `/commit` skill, then `git push`
    {{- if eq $v.repo.owner.login "fohte" }}
-9. **Wait for Devin review after push**: After pushing, wait for Devin's review CI check to complete using `gh pr checks --watch`. Once the check passes, re-run `check-pr-review` to review Devin's feedback and address any new comments (repeat from step 1)
-10. **Reply to "won't fix" threads** on GitHub (see Reply to Review Threads below)
-11. **Resolve all addressed threads** from bot reviewers (see Resolve Review Threads below)
-12. Re-run to verify all comments have been addressed
+9. **Wait for Devin review after push**: After pushing, wait for Devin's review CI check to complete using `gh pr checks --watch`. Once the check passes, re-run `a gh pr-review check` to review Devin's feedback and address any new comments (repeat from step 1)
+10. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below)
+11. Re-run to verify all comments have been addressed
     {{- else }}
-13. **Reply to "won't fix" threads** on GitHub (see Reply to Review Threads below)
-14. **Resolve all addressed threads** from bot reviewers (see Resolve Review Threads below)
-15. Re-run to verify all comments have been addressed
+12. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below)
+13. Re-run to verify all comments have been addressed
     {{- end }}
 
 **Important**: After getting the summary, immediately proceed to fetch details for each review. Never ask the user "詳細を確認しますか?" or similar confirmation questions.
 
-## Reply to Review Threads
+## Reply and Resolve Threads
 
-After evaluating all comments and making code changes (if any), reply to each thread that was deemed **"won't fix" / not applicable**. Do NOT ask the user before replying. Do NOT reply to threads that were addressed with code changes.
+After evaluating all comments and making code changes (if any), use `a gh pr-review reply pull`/`push` to reply to "won't fix" threads and resolve all addressed threads in a single workflow. Do NOT ask the user before replying. Do NOT reply to threads that were addressed with code changes.
 
-### Step 1: Fetch comment IDs
-
-The `a gh check-pr-review` output does not include comment IDs. Fetch them separately:
+### Step 1: Pull threads to local Markdown file
 
 ```bash
-gh api -X GET "repos/{owner}/{repo}/pulls/{pr_number}/comments" --jq '.[] | {id, path, line, body: .body[:80], in_reply_to_id, user: .user.login}'
+a gh pr-review reply pull <pr-number> [--include-resolved] [--force]
 ```
 
-Match each "won't fix" thread (by file path, line number, and comment body) to its comment ID. Reply to the **root comment** of each thread (the one without `in_reply_to_id`).
+This fetches all unresolved threads to a local Markdown file at `$XDG_CACHE_HOME/gh-pr-review/<owner>/<repo>/<pr>/threads.md`.
 
-### Step 2: Post replies
+### Step 2: Edit the Markdown file
+
+The file contains threads in the following format:
+
+```markdown
+<!-- thread: RT_abc123 path: src/main.rs:42 -->
+
+- [ ] resolve
+    <!-- diff -->
+    ...
+    <!-- /diff -->
+    <!-- comment: @reviewer 2024-01-15T10:30:00Z -->
+    Review comment body
+    <!-- /comment -->
+```
+
+For each thread:
+
+- **Threads addressed with code changes**: Change `- [ ] resolve` to `- [x] resolve`. Do NOT add a draft reply.
+- **"Won't fix" threads**: Add a draft reply as plain text after the last `<!-- /comment -->` line, AND change `- [ ] resolve` to `- [x] resolve`.
+- **Threads that should remain open**: Leave as-is.
+- Do NOT resolve threads from Devin (Devin auto-resolves its own threads).
+
+### Step 3: Push replies and resolutions to GitHub
 
 ```bash
-gh api -X POST "repos/{owner}/{repo}/pulls/{pr_number}/comments/{comment_id}/replies" -f body="reply text"
+a gh pr-review reply push <pr-number> [--dry-run] [--force]
 ```
 
-**CRITICAL**: The API path MUST include `pulls/{pr_number}`. The shorter path `repos/{owner}/{repo}/pulls/comments/{comment_id}/replies` returns 404.
+Use `--dry-run` first to preview changes, then run without it to apply.
 
 ### Reply content guidelines
 
@@ -107,34 +126,3 @@ Replies are posted to bot reviewers (e.g., Gemini Code Assist).
 - **Inline code formatting**: Always wrap code tokens, commands, file paths, and similar technical terms in backticks (e.g., `COPY . .`, `docker build`, `/usr/local/bin`). Never write them as bare text
 
 **Do NOT**: write long explanations, include greetings/pleasantries, or quote the original comment back
-
-## Resolve Review Threads (Gemini Code Assist)
-
-After addressing all comments (both code fixes and "won't fix" replies), **resolve every thread** from bot reviewers (e.g., Gemini Code Assist). Bot reviewers cannot resolve their own threads, so this must be done manually. Do NOT resolve threads from Devin, as Devin auto-resolves its own threads.
-
-Resolve threads for **both** cases:
-
-- Threads where code changes were made
-- Threads where a "won't fix" reply was posted
-
-**IMPORTANT**: Claude Code's Bash tool escapes `!` to `\!`, which breaks GraphQL's Non-Null type modifier (e.g., `String!` becomes `String\!`). Therefore, **never use GraphQL variables** (`$owner: String!`, etc.). Always inline literal values directly into the query string.
-
-### Step 1: Fetch unresolved thread IDs
-
-```bash
-gh api graphql -f query='query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {pr_number}) { reviewThreads(first: 100) { nodes { id isResolved comments(first: 1) { nodes { body author { login } } } } } } } }' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false) | {id, author: .comments.nodes[0].author.login, body: .comments.nodes[0].body[:80]}'
-```
-
-Filter to only Gemini Code Assist threads from the results.
-
-### Step 2: Resolve threads
-
-Use a `for` loop with the thread IDs from Step 1:
-
-```bash
-for thread_id in {thread_id_1} {thread_id_2} ...; do
-  gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "'"$thread_id"'"}) { thread { id } } }'
-done
-```
-
-Replace `{thread_id_1} {thread_id_2} ...` with the actual thread IDs from Step 1. Only resolve threads that were addressed in this session.
