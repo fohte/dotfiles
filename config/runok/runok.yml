@@ -57,10 +57,8 @@ rules:
   - allow: 'a ai pr-draft *'
   - allow: 'a ai review wait *'
   - allow: 'a gh check-pr-review *'
-  - allow: 'a gh issue-agent diff *'
-  - allow: 'a gh issue-agent init *'
-  - allow: 'a gh issue-agent pull *'
-  - allow: 'a gh issue-agent view *'
+  - allow: 'a gh pr-review check|pull *'
+  - allow: 'a gh issue-agent init|diff|pull|view *'
   - allow: 'a gh issue-agent push --dry-run *'
 
   # linters and formatters
