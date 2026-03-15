@@ -49,6 +49,7 @@ Shows all reviews and threads with full details (legacy behavior).
     - **"Won't fix" only for obvious false positives**: Only skip fixing when the reviewer's claim is factually incorrect (e.g., claims a version/API doesn't exist when it does, hallucinates non-existent issues, misreads the code logic)
     - **When unsure, ask the user**: If you're uncertain whether a comment is valid or how to address it, ask the user rather than deciding "won't fix" on your own
     - **Do NOT dismiss comments just because you disagree**: Reviewer suggestions about code style, safety, readability, or best practices should generally be followed even if the current code technically works
+    - **NEVER autonomously decide "won't fix"**: Even if you believe a comment is a false positive, you MUST ask the user first. Do not skip this step under any circumstances. This is the most common mistake — always err on the side of asking
 4. **Bug reports require test-first fixing**: When a review comment points out a bug (incorrect behavior, edge case failure, race condition, etc.), you MUST first write a test that reproduces the bug before fixing it. This ensures the bug is real and the fix is correct. Only after the test fails as expected, apply the code fix and confirm the test passes
 5. Make necessary code changes based on the feedback
 6. **User confirmation for "won't fix"**: Before treating any comment as "won't fix", you MUST ask the user for confirmation using AskUserQuestion. Present the reviewer's comment, your reasoning for why it's a false positive, and let the user decide whether to fix it or skip it. Never autonomously decide "won't fix" without user approval.
@@ -125,4 +126,4 @@ Replies are posted to bot reviewers (e.g., Gemini Code Assist).
 - If the bot's claim is factually wrong, briefly explain **why** it is wrong, not just that it is wrong
 - **Inline code formatting**: Always wrap code tokens, commands, file paths, and similar technical terms in backticks (e.g., `COPY . .`, `docker build`, `/usr/local/bin`). Never write them as bare text
 
-**Do NOT**: write long explanations, include greetings/pleasantries, or quote the original comment back
+**Do NOT**: write long explanations, include greetings/pleasantries, quote the original comment back, or include links to external issues/PRs/URLs that the user did not explicitly ask to reference
