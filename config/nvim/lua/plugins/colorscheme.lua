@@ -100,6 +100,8 @@ return {
     set_hl({ 'prReviewDiffDelim' }, { fg = '#555555' }) -- dim gray
     set_hl({ 'prReviewUnresolved' }, { fg = colors.base09, bold = true }) -- orange, bold
     set_hl({ 'prReviewResolved' }, { fg = colors.base0B }) -- green
+    set_hl({ 'prReviewCommentBody' }, { fg = '#888888' }) -- dim existing comments
+    set_hl({ 'prReviewCommentBorder' }, { fg = '#666666' }) -- left border line
 
     -- make transparent background (use terminal background color)
     local transparent_targets = {

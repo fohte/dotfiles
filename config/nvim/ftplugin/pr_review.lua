@@ -17,13 +17,40 @@ local function apply_highlights(bufnr)
   vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local in_comment = false
+
   for i, line in ipairs(lines) do
+    -- track comment regions for border and dimming
+    if line:match('^<!%-%- comment:.+%-%->$') then
+      in_comment = true
+    end
+
+    if in_comment then
+      -- dim the entire line (existing comment content)
+      vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
+        end_col = #line,
+        hl_group = 'prReviewCommentBody',
+        priority = 200,
+      })
+      -- left border
+      vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
+        sign_text = '│',
+        sign_hl_group = 'prReviewCommentBorder',
+        priority = 200,
+      })
+    end
+
+    if line:match('^<!%-%- /comment %-%->$') then
+      in_comment = false
+    end
+
+    -- apply line-level patterns (thread header, delimiters, etc.)
     for _, p in ipairs(patterns) do
       if line:match(p.pattern) then
         vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
           end_col = #line,
           hl_group = p.hl,
-          priority = 200, -- higher than treesitter (100)
+          priority = 210, -- above comment body dimming
         })
         break
       end
