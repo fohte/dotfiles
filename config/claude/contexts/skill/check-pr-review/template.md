@@ -101,7 +101,13 @@ For each thread:
 - **Threads that should remain open**: Leave as-is.
 - Do NOT resolve threads from Devin (Devin auto-resolves its own threads).
 
-### Step 3: Push replies and resolutions to GitHub
+### Step 3: Review the edited file
+
+Run `a ai review <file-path>` to open the threads file in terminal + Neovim for user review.
+
+**STOP and wait for user approval.** Do NOT proceed to push until the user explicitly confirms. After `a ai review`, use AskUserQuestion to ask the user if the content is ready to push. Never assume the user has finished reviewing just because the command returned.
+
+### Step 4: Push replies and resolutions to GitHub
 
 ```bash
 a gh pr-review reply push <pr-number> [--dry-run] [--force]
