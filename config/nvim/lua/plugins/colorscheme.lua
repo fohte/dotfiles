@@ -102,6 +102,8 @@ return {
     set_hl({ 'prReviewResolved' }, { fg = colors.base0B }) -- green
     set_hl({ 'prReviewCommentBody' }, { fg = '#888888' }) -- dim existing comments
     set_hl({ 'prReviewCommentBorder' }, { fg = '#666666' }) -- left border line
+    set_hl({ 'prReviewDiffAdd' }, { bg = '#1a3a1a' }) -- green background for added lines
+    set_hl({ 'prReviewDiffDelete' }, { bg = '#3a1a1a' }) -- red background for deleted lines
 
     -- make transparent background (use terminal background color)
     local transparent_targets = {
