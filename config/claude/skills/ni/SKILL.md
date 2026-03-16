@@ -50,6 +50,12 @@ nun lodash
 nci
 ```
 
+## 重要: nr を優先して使うこと
+
+- `npx vite build` や `nlx eslint --fix .` のようにパッケージを直接実行する前に、まず `package.json` の `scripts` に対応するスクリプトがないか確認すること
+- 対応するスクリプトがあれば `nr build`, `nr lint` など `nr <script>` を使うこと
+- `nlx` は `package.json` の `scripts` に対応するものがない場合にのみ使用すること
+
 ## 注意事項
 
 - `ni` は mise でグローバルインストール済み (`config/mise/home-config.toml`)
