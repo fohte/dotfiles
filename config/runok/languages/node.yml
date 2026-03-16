@@ -48,9 +48,10 @@ rules:
   - allow: 'nr build *'
   - allow: 'nr format *'
   - allow: 'nr lint *'
-  - allow: 'nr test *'
+  - allow: 'nr test|test:* *'
     tests:
       - allow: 'nr test'
+      - allow: 'nr test:type'
 
   - deny: 'npm run *'
     message: 'BLOCKED: Use /ni skill. Run: nr <script>'
