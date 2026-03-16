@@ -1,5 +1,10 @@
 vim.opt_local.wrap = true
 vim.opt_local.conceallevel = 0
+vim.opt_local.foldmethod = 'expr'
+vim.opt_local.foldenable = true
+vim.opt_local.foldlevel = 0
+vim.opt_local.foldexpr = 'v:lua.require("user.pr_review_fold").foldexpr(v:lnum)'
+vim.opt_local.foldtext = 'v:lua.require("user.pr_review_fold").foldtext()'
 
 local ns = vim.api.nvim_create_namespace('pr_review_highlight')
 local ns_diff = vim.api.nvim_create_namespace('pr_review_diff_highlight')
