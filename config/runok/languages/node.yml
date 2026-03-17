@@ -11,7 +11,7 @@ rules:
   - allow: 'ni -E *'
     when: "env.PWD.startsWith('/Users/fohte/ghq/github.com/fohte/')"
   - deny: 'ni !-E *'
-    when: "env.PWD.startsWith('/Users/fohte/ghq/github.com/fohte/')"
+    when: "env.PWD.startsWith('/Users/fohte/ghq/github.com/fohte/') && size(args) > 0"
     message: 'BLOCKED: Use ni -E to pin exact versions in fohte repos.'
     fix_suggestion: 'ni -E <pkg>'
 
