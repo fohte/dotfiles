@@ -7,6 +7,14 @@ rules:
       - allow: 'ni'
       - ask: 'ni -D typescript'
 
+  # enforce ni -E (exact pinning) in fohte's repos
+  - allow: 'ni -E *'
+    when: "env.PWD.startsWith('/Users/fohte/ghq/github.com/fohte/')"
+  - deny: 'ni !-E *'
+    when: "env.PWD.startsWith('/Users/fohte/ghq/github.com/fohte/')"
+    message: 'BLOCKED: Use ni -E to pin exact versions in fohte repos.'
+    fix_suggestion: 'ni -E <pkg>'
+
   - deny: 'npm install *'
     message: 'BLOCKED: Use /ni skill. Run: ni <pkg>'
     fix_suggestion: 'ni'
