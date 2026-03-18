@@ -42,7 +42,7 @@
     - ✅ `macOS notifications only show "Session stopped", providing insufficient context...`
     - ✅ `Multiple parallel sessions cannot be distinguished from their notifications`
 - **変更の判断理由を書く**: なぜこのタイミングで/なぜこの方法で変更するのかの判断理由があれば、子要素として補足する
-- **技術的な原因は書かない**: Why には「何が起きていたか」(症状/影響) を書く。「なぜ起きていたか」(技術的原因) は What セクションに書く
+- **技術的な原因は書かない**: Why には「何が起きていたか」(症状/影響) だけを書く。「なぜ起きていたか」(技術的原因) は What セクションの子要素に書く。原因が複数あっても Why の子要素に列挙しない
     - ❌ `正規表現が v プレフィックスのみを考慮しており、semver 範囲指定子を抽出できなかった` (技術的原因)
     - ✅ `CI の sync ワークフローが変更を検出できず「Already in sync」と誤判定していた` (症状/影響)
 - **根拠・背景はインデントで補足**: 判断の根拠や背景情報は子要素として記載 (ただし技術的原因は What へ)
