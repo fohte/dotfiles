@@ -12,6 +12,7 @@ description: Use this skill when creating or updating skill files (SKILL.md). Pr
 - **プライベート情報の記載禁止**: プライベートリポジトリ名、社内サービス名、社内 URL、組織名、チーム名をスキルに含めない
 - **具体的すぎる例の禁止**: 例を書く場合は汎用的な名前に置き換える (例: `my-app`, `example-service`, `example.com`)
 - **スキルに関するルールはそのスキルファイルに書く**: 特定のスキルの使い方に関するルールは、そのスキルの SKILL.md に追加する。CLAUDE.md や auto memory に書かない。CLAUDE.md は全セッション共通の規約のみ
+- **memory に逃げない**: スキルの改善が必要な場合は、memory ではなくスキルファイル自体を更新する。memory はスキルの代替にならない
 
 ## スキルファイルの場所
 
