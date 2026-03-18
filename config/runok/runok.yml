@@ -31,13 +31,6 @@ definitions:
       - '~/.config/gh/hosts.yml'
 
   sandbox:
-    default:
-      fs:
-        writable: [., /tmp]
-        deny:
-          - '<path:sensitive>'
-      network:
-        allow: true
     readonly:
       fs:
         writable: []
