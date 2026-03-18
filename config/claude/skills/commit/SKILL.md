@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Use this skill when committing changes. This skill enforces writing meaningful commit messages with both Why and What sections, and provides Git workflow guidelines.
+description: Use this skill when committing changes. This skill enforces writing meaningful commit messages with structured contextual action lines, and provides Git workflow guidelines.
 ---
 
 # Commit
@@ -11,7 +11,7 @@ description: Use this skill when committing changes. This skill enforces writing
 
 - **`git commit --amend` は禁止**: 履歴を直線的に保つため
 - **`git reset --soft|hard` は禁止**: 変更の巻き戻しは行わない
-- **一行だけの what コミットは禁止**: 必ず Why を記述する
+- **コンテキストのないコミットは禁止**: 必ず body に action line を 1 つ以上記述する
 - **会話中に作業していない変更をコミットすることは禁止**: `git status` で表示された変更であっても、その会話セッション中に自分が行った変更のみをコミットすること。関係のない変更が存在する場合は無視する
 - **GitHub の Issue/PR 参照は禁止**: `Closes #123`、`Fixes #123`、`https://github.com/.../issues/123`、`https://github.com/.../pull/123` などの issue/PR 参照は一切記載しない。OSS の issue や PR にリンクされることを避けるため
 
@@ -41,34 +41,54 @@ description: Use this skill when committing changes. This skill enforces writing
 
 ### Body (2 行目以降)
 
-**必須**。空行を挟んで Why と What を記述する。
+**必須**。空行を挟んで、contextual action lines を使って変更のコンテキストを記述する。
 
-- **Why**: なぜこの変更が必要なのか。問題の原因、背景、動機を説明
-- **What** (任意): 変更内容の詳細。subject だけで十分に説明できている場合は省略可
+action line のフォーマット:
+
+```
+<action-type>(<scope>): <content>
+```
+
+利用可能な action type:
+
+| type         | 用途                             | 例                                                                       |
+| ------------ | -------------------------------- | ------------------------------------------------------------------------ |
+| `intent`     | 変更の目的・動機                 | `intent(auth): reduce session token size to stay under 4KB cookie limit` |
+| `decision`   | 選択したアプローチと理由         | `decision(cache): Redis over Memcached for pub/sub support`              |
+| `rejected`   | 却下した選択肢と理由             | `rejected(cache): in-memory store — doesn't survive process restart`     |
+| `constraint` | 選択を制約した条件・限界         | `constraint(api): max 30s timeout enforced by upstream gateway`          |
+| `learned`    | 調査・試行で判明した非自明な挙動 | `learned(puppeteer): requires --no-sandbox flag inside Docker`           |
+
+ルール:
+
+- **`intent` は必須**。変更の目的が subject から自明でない限り必ず書く
+- その他の action type は**該当する場合のみ**書く (additive — 全部埋めなくてよい)
+- **diff から読み取れる情報は書かない** — action line はコードに現れないコンテキストを記録するためのもの
+- `scope` は subject の scope と同じで構わない。省略不可
 
 ## 良い例
 
 ```
 zsh: fix EDITOR being set to "nvim not found"
 
-`$(which nvim)` was executed before mise initialized PATH, causing
-`which nvim` to output "nvim not found" which was then set as EDITOR.
-This broke git rebase -i by opening "not" and "found" as files.
+intent(zsh): ensure EDITOR is set to a valid nvim path
+learned(zsh): `$(which nvim)` runs before mise initializes PATH,
+  causing `which nvim` to output "nvim not found" which was then
+  set as EDITOR — broke git rebase -i by opening "not"/"found" as files
 ```
 
 ```
 tmux: add visual distinction for inactive panes
 
-In multi-pane layouts, it was difficult to identify which pane was
-active. Add dimmed styling to inactive panes to make the active pane
-more obvious.
+intent(tmux): make it easier to identify the active pane in multi-pane layouts
+decision(tmux): dim inactive panes over using a border highlight — subtler and
+  works across all terminal color schemes
 ```
 
 ```
 nvim/cmp: disable completion in comment contexts
 
-Autocompletion in comments was triggering unnecessarily and
-interrupting the writing flow.
+intent(nvim/cmp): stop autocompletion from triggering in comments
 ```
 
 ## 悪い例
@@ -77,7 +97,7 @@ interrupting the writing flow.
 zsh: simplify EDITOR to use nvim directly
 ```
 
-- 問題: Why がない。なぜ simplify が必要だったのか不明
+- 問題: body がない。なぜ simplify が必要だったのか不明
 
 ```
 zsh: update vim.zsh
@@ -103,7 +123,11 @@ git add <files>
 git commit -m "$(cat <<'EOF'
 <scope>: <subject>
 
-<body - Why と What を記述>
+intent(<scope>): <purpose>
+decision(<scope>): <chosen approach and reason>  # 該当する場合のみ
+rejected(<scope>): <discarded option — reason>   # 該当する場合のみ
+constraint(<scope>): <hard limit or boundary>    # 該当する場合のみ
+learned(<scope>): <non-obvious behavior found>   # 該当する場合のみ
 EOF
 )"
 ```
@@ -119,6 +143,7 @@ EOF
 
 コミット前に以下を確認:
 
-1. Why が書かれているか?
+1. `intent` action line が書かれているか?
 2. Subject は「何を直した」になっているか? (問題解決の場合)
 3. 1 つの論理的なまとまりになっているか?
+4. diff から読み取れる情報を action line に重複して書いていないか?
