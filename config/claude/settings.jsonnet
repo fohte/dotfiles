@@ -31,6 +31,24 @@
       'WebFetch',
       'WebSearch',
 
+      // Chrome DevTools MCP
+      // read-only
+      'mcp__chrome-devtools__get_console_message',
+      'mcp__chrome-devtools__get_network_request',
+      'mcp__chrome-devtools__list_console_messages',
+      'mcp__chrome-devtools__list_network_requests',
+      'mcp__chrome-devtools__list_pages',
+      'mcp__chrome-devtools__take_screenshot',
+      'mcp__chrome-devtools__take_snapshot',
+      // page control (relatively safe)
+      'mcp__chrome-devtools__close_page',
+      'mcp__chrome-devtools__emulate',
+      'mcp__chrome-devtools__navigate_page',
+      'mcp__chrome-devtools__new_page',
+      'mcp__chrome-devtools__resize_page',
+      'mcp__chrome-devtools__select_page',
+      'mcp__chrome-devtools__wait_for',
+
       'mcp__context7',
       'mcp__qmd',
       'mcp__pencil',
