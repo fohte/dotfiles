@@ -11,6 +11,7 @@ extends:
   - './languages/python.yml'
   - './languages/jsonnet.yml'
   - './tools/aws.yml'
+  - './tools/docker.yml'
   - './tools/gcloud.yml'
   - './tools/linters.yml'
   - './tools/terraform.yml'
