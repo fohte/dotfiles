@@ -33,9 +33,10 @@ definitions:
   sandbox:
     readonly:
       fs:
-        writable: []
-        deny:
-          - '<path:sensitive>'
+        write:
+          allow: []
+          deny:
+            - '<path:sensitive>'
       network:
         allow: false
 
