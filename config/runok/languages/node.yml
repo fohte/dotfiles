@@ -53,10 +53,10 @@ rules:
       - deny: 'bun add axios'
 
   # run scripts (use nr)
-  - allow: 'nr build *'
-  - allow: 'nr format *'
-  - allow: 'nr lint *'
-  - allow: 'nr test|test:* *'
+  - allow: 'nr [-C *] build|build:*|build-* *'
+  - allow: 'nr [-C *] format *'
+  - allow: 'nr [-C *] lint *'
+  - allow: 'nr [-C *] test|test:*|typecheck *'
     tests:
       - allow: 'nr test'
       - allow: 'nr test:type'
@@ -134,21 +134,13 @@ rules:
     tests:
       - deny: 'bun remove lodash'
 
-  # update (use nu)
-  - deny: 'npm update *'
-    message: 'BLOCKED: Use /ni skill. Run: nu'
-    fix_suggestion: 'nu'
+  # update (use nup)
+  - deny: 'npm|pnpm|bun update *'
+    message: 'BLOCKED: Use /ni skill. Run: nup'
+    fix_suggestion: 'nup'
     tests:
       - deny: 'npm update'
-  - deny: 'pnpm update *'
-    message: 'BLOCKED: Use /ni skill. Run: nu'
-    fix_suggestion: 'nu'
-    tests:
       - deny: 'pnpm update'
-  - deny: 'bun update *'
-    message: 'BLOCKED: Use /ni skill. Run: nu'
-    fix_suggestion: 'nu'
-    tests:
       - deny: 'bun update'
 
   # read-only commands (no ni equivalent)
