@@ -17,6 +17,7 @@
       'Read(//tmp/**)',
       'Read(//var/folders/**/T/**)',
       'Read(~/.cache/armyknife/**)',
+      'Read(~/.cargo/registry)',
       'Read(~/.claude/**)',
       'Read(~/.config/**)',
       'Read(~/.local/share/nvim/lazy)',
