@@ -1,7 +1,26 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
 rules:
+  # docker
   - allow: docker inspect *
+  - allow: docker logs *
+  - allow: docker ps *
+  - allow: docker images *
+  - allow: docker stats *
+  - allow: docker top *
+  - allow: docker port *
+  - allow: docker diff *
+  - allow: docker history *
+  - allow: docker version
+  - allow: docker info
+  - allow: docker network ls|inspect *
+  - allow: docker volume ls|inspect *
+
+  # docker compose
   - allow: docker compose up *
   - allow: docker compose logs *
-  - allow: docker logs *
+  - allow: docker compose ps *
+  - allow: docker compose config *
+  - allow: docker compose images *
+  - allow: docker compose top *
+  - allow: docker compose ls *
