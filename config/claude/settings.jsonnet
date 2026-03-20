@@ -124,6 +124,7 @@
         repo: 'fohte/runok-claude-code-plugin',
         source: 'github',
       },
+      autoUpdate: true,
     },
   },
   alwaysThinkingEnabled: false,
