@@ -1,6 +1,6 @@
 ---
 name: ni
-description: Use ni (@antfu/ni) for package manager operations. Use this skill when installing dependencies, running scripts, or executing packages in JavaScript/TypeScript projects.
+description: 'Use ni (@antfu/ni) for package manager operations. IMPORTANT: This skill MUST be used whenever you are about to run npm, yarn, pnpm, bun, npx, or any package manager command in a JavaScript/TypeScript project. This includes: installing dependencies (npm install, yarn add, pnpm add), running scripts (npm run, yarn run), executing packages (npx, pnpm dlx, bunx), updating or removing packages, or running CI installs. Also trigger when the user asks to add a package, run a build/test/lint script, or execute any Node.js tooling. Never run npm/yarn/pnpm/bun/npx directly - always consult this skill first to use the ni equivalent.'
 ---
 
 # ni - Package Manager Agnostic Commands
