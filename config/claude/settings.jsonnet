@@ -148,4 +148,8 @@
   alwaysThinkingEnabled: false,
   promptSuggestionEnabled: false,
   teammateMode: 'tmux',
+
+  // use skills and CLAUDE.md instead of memory
+  autoMemoryEnabled: false,
+  autoDreamEnabled: false,
 }
