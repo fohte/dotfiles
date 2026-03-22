@@ -13,7 +13,7 @@ description: Use this skill when committing changes. This skill enforces writing
 - **`git reset --soft|hard` は禁止**: 変更の巻き戻しは行わない
 - **コンテキストのないコミットは禁止**: 必ず body に action line を 1 つ以上記述する
 - **会話中に作業していない変更をコミットすることは禁止**: `git status` で表示された変更であっても、その会話セッション中に自分が行った変更のみをコミットすること。関係のない変更が存在する場合は無視する
-- **GitHub の Issue/PR 参照は禁止**: `Closes #123`、`Fixes #123`、`https://github.com/.../issues/123`、`https://github.com/.../pull/123` などの issue/PR 参照は一切記載しない。OSS の issue や PR にリンクされることを避けるため
+- **GitHub の Issue/PR 参照は禁止**: `#123`、`PR #123`、`Closes #123`、`Fixes #123`、`https://github.com/.../issues/123`、`https://github.com/.../pull/123` などの issue/PR 番号への参照は一切記載しない。`#数字` はコミット先リポジトリの issue にリンクされてしまうため、たとえ別リポジトリの PR/issue を意図していても使用禁止。代わりに自然言語で記述する (例: `PR #616 のマージ完了` → `API Token 権限拡張のマージ完了`)
 
 ## コミットの粒度
 
