@@ -132,4 +132,4 @@ Replies are posted to bot reviewers (e.g., Gemini Code Assist).
 - If the bot's claim is factually wrong, briefly explain **why** it is wrong, not just that it is wrong
 - **Inline code formatting**: Always wrap code tokens, commands, file paths, and similar technical terms in backticks (e.g., `COPY . .`, `docker build`, `/usr/local/bin`). Never write them as bare text
 
-**Do NOT**: write long explanations, include greetings/pleasantries, quote the original comment back, or include links to external issues/PRs/URLs that the user did not explicitly ask to reference
+**Do NOT**: write long explanations, include greetings/pleasantries, praise the reviewer (e.g., "Good catch!", "Great suggestion!", "Thanks for pointing this out!"), quote the original comment back, or include links to external issues/PRs/URLs that the user did not explicitly ask to reference. Reviewers are bots — complimenting them is meaningless and looks unnatural
