@@ -68,7 +68,7 @@ Shows all reviews and threads with full details (legacy behavior).
 
 ## Reply and Resolve Threads
 
-After evaluating all comments and making code changes (if any), use `a gh pr-review reply pull`/`push` to reply to "won't fix" threads and resolve all addressed threads in a single workflow. Do NOT ask the user before replying. Do NOT reply to threads that were addressed with code changes.
+After evaluating all comments and making code changes (if any), use `a gh pr-review reply pull`/`push` to reply to all threads and resolve them in a single workflow. Do NOT ask the user before replying.
 
 ### Step 1: Pull threads to local Markdown file
 
@@ -96,7 +96,7 @@ Review comment body
 
 For each thread:
 
-- **Threads addressed with code changes**: Change `- [ ] resolve` to `- [x] resolve`. Do NOT add a draft reply.
+- **Threads addressed with code changes**: Change `- [ ] resolve` to `- [x] resolve`. Add a draft reply: `Fixed in <commit-hash>.` where `<commit-hash>` is the short hash of the commit that addressed the comment. If the fix involved additional context worth mentioning, append a brief explanation after the period (e.g., `Fixed in abc1234. Switched to using X instead of Y as suggested.`).
 - **"Won't fix" threads**: Add a draft reply as plain text after the last `<!-- /comment -->` line, AND change `- [ ] resolve` to `- [x] resolve`.
 - **Threads that should remain open**: Leave as-is.
 - Do NOT resolve threads from Devin (Devin auto-resolves its own threads).
