@@ -103,9 +103,9 @@ For each thread:
 
 ### Step 3: Review the edited file
 
-Run `a ai draft <file-path>` to open the threads file in terminal + Neovim for user review.
+Run `a ai draft <file-path>` **in background** (`run_in_background: true`) to open the threads file in terminal + Neovim for user review. This command blocks until the user closes the editor, so it will complete when the user finishes reviewing.
 
-**STOP and wait for user approval.** Do NOT proceed to push until the user explicitly confirms. After `a ai draft`, use AskUserQuestion to ask the user if the content is ready to push. Never assume the user has finished reviewing just because the command returned.
+**STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved the draft, exit code 1 means the user cancelled. If cancelled, ask the user what to change.
 
 ### Step 4: Push replies and resolutions to GitHub
 

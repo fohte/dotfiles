@@ -139,13 +139,13 @@ echo 'use `gh` command'
 
 ## 2. 人間に PR の説明をレビューしてもらう
 
-`a ai pr-draft review` コマンドを実行して、ターミナルの新しいウィンドウで Neovim を開き、ユーザーに直接編集してもらう。
+`a ai pr-draft review` コマンドを **バックグラウンドで** (`run_in_background: true`) 実行して、ターミナルの新しいウィンドウで Neovim を開き、ユーザーに直接編集してもらう。このコマンドはエディタが閉じるまでブロックするため、完了通知が届いた時点でユーザーのレビューが終わったことを意味する。
 
 ```bash
 a ai pr-draft review
 ```
 
-**重要:** このコマンドは非同期で実行されるため、コマンドが即座に完了してもユーザーはまだ編集中である。ユーザーがレビューを完了して明示的に指示するまで、次のステップには進まないこと。
+**重要:** バックグラウンドコマンドの完了を待つこと。完了したら exit code を確認する: exit code 0 はユーザーが承認したことを示し、exit code 1 はキャンセルを示す。
 
 ## 3. ユーザーの指示に応じた対応
 
@@ -156,7 +156,7 @@ a ai pr-draft review
 **修正前に必ず ~/.claude/skills/create-pr/writing-guide.md を再読すること。** ドラフト新規作成時に読んでいても、修正時にはルールを忘れている可能性がある。
 
 内容の修正のみを行う。**翻訳は行わない。**
-修正後は再度 `a ai pr-draft review` を実行し、次の指示を待つ。
+修正後は再度 `a ai pr-draft review` をバックグラウンドで (`run_in_background: true`) 実行し、完了を待つ。
 {{- if $public }}
 
 ### ドラフト承認後の翻訳（`steps.ready-for-translation: true` かつ日本語含む）
@@ -168,8 +168,8 @@ a ai pr-draft review
 1. title と body を英語に翻訳する
 2. `steps.submit: false` に変更する（翻訳によりハッシュが無効になるため）
 3. ファイルを上書き保存する
-4. 再度 `a ai pr-draft review` を実行して、ユーザーに翻訳内容を確認してもらう
-5. ユーザーがレビューを完了して明示的に指示するまで待機する
+4. 再度 `a ai pr-draft review` をバックグラウンドで (`run_in_background: true`) 実行して、ユーザーに翻訳内容を確認してもらう
+5. コマンドの完了を待つ (exit code 0 = 承認、exit code 1 = キャンセル)
 
 翻訳時の注意事項は ~/.claude/skills/create-pr/public-repo-guide.md の「翻訳時の注意」セクションに従うこと。
 
