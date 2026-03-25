@@ -101,7 +101,7 @@ a gh issue-agent review <file-path>
 
 Opens a file in an editor (via tmux) for user review. The user must set `submit: true` in the frontmatter to approve. For files without YAML frontmatter (e.g., comment files with HTML comment metadata), a temporary `submit: false` frontmatter is prepended and stripped after review.
 
-Run this **in background** (`run_in_background: true`). The command blocks until the user closes the editor. Exit code 0 means approved, exit code 1 means cancelled.
+Run this **in background** (`run_in_background: true`). The command blocks until the user closes the editor. Exit code 0 means approved, exit code 1 means not approved (user closed without approving), exit code 2 means the editor is already open for this file.
 
 The `push` command verifies `.approve` files exist for all changed files and rejects the push if any file is unapproved.
 
@@ -280,7 +280,7 @@ Before writing anything, complete all necessary research. The goal is to write a
     - **IMPORTANT**: Never assume `--no-template` without checking templates first
 3. Edit the file at `~/.cache/gh-issue-agent/<owner>/<repo>/new/issue.md`
 4. Run `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) to open in terminal + Neovim for user review. This command blocks until the user closes the editor, so it will complete when the user finishes reviewing.
-5. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved the draft (set `submit: true` in frontmatter), exit code 1 means the user cancelled. If cancelled, ask the user what to change.
+5. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved the draft (set `submit: true` in frontmatter), exit code 1 means the user did not approve (closed without approving), exit code 2 means the editor is already open. If not approved, ask the user what to change. If already open (exit code 2), inform the user and wait for them to finish the existing review session.
 6. Create the issue: `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new` (the push command verifies `.approve` files exist for all changed files)
     - On success, the directory is renamed to `<issue-number>/`
 
@@ -289,7 +289,7 @@ Before writing anything, complete all necessary research. The goal is to write a
 1. Pull the issue: `a gh issue-agent pull <issue-number>`
 2. Edit `issue.md` or `metadata.json` in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`
 3. Run `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) to open the edited file in terminal + Neovim for user review. This command blocks until the user closes the editor.
-4. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved, exit code 1 means cancelled. If cancelled, ask the user what to change.
+4. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved, exit code 1 means not approved, exit code 2 means the editor is already open. If not approved, ask the user what to change. If already open (exit code 2), inform the user and wait for them to finish the existing review session.
 5. Apply changes: `a gh issue-agent push <issue-number>` (the push command verifies `.approve` files exist for all changed files)
 
 #### Workflow D: Editing an EXISTING comment
@@ -301,7 +301,7 @@ Use this when the content should be added to or modified in an existing comment.
 3. Read the target comment file (identified from Step 1 analysis)
 4. Edit the comment file directly
 5. Run `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) for user review. This command blocks until the user closes the editor.
-6. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means approved, exit code 1 means cancelled. If cancelled, ask the user what to change.
+6. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means approved, exit code 1 means not approved, exit code 2 means the editor is already open. If not approved, ask the user what to change. If already open (exit code 2), inform the user and wait for them to finish the existing review session.
 7. Push changes: `a gh issue-agent push <issue-number>` (the push command verifies `.approve` files exist)
 
 **Comment file format:**
@@ -318,7 +318,7 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 2. Generate comment boilerplate: `a gh issue-agent init comment <issue-number>`
 3. Edit the generated file in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/comments/`
 4. Run `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) for user review. This command blocks until the user closes the editor.
-5. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means approved, exit code 1 means cancelled. If cancelled, ask the user what to change.
+5. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means approved, exit code 1 means not approved, exit code 2 means the editor is already open. If not approved, ask the user what to change. If already open (exit code 2), inform the user and wait for them to finish the existing review session.
 6. Push changes: `a gh issue-agent push <issue-number>` (the push command verifies `.approve` files exist)
 
 ## Editing Comments
@@ -338,7 +338,7 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 - `push` fails when deleting comments (use `--allow-delete` to allow)
 - Before using `--force` on `pull`, use `diff` or `push --dry-run` to verify what local changes will be lost
 - Always use `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) to let user review edited content before pushing. The user approves by setting `submit: true` in the frontmatter within Neovim. The `push` command verifies `.approve` files exist for all changed files and rejects the push if any file is unapproved.
-- **CRITICAL: After running `a gh issue-agent review` in background, STOP and wait for the background command to complete.** Do NOT proceed to `push` until the command finishes. Exit code 0 means approved, exit code 1 means cancelled.
+- **CRITICAL: After running `a gh issue-agent review` in background, STOP and wait for the background command to complete.** Do NOT proceed to `push` until the command finishes. Exit code 0 means approved, exit code 1 means not approved, exit code 2 means the editor is already open.
 
 ## Writing Style
 
