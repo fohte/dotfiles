@@ -342,60 +342,7 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 
 ## Writing Style
 
-Follow these guidelines when writing issues or comments:
-
-- Issue body should only contain content aligned with the issue's purpose. For investigation issues, write "what to investigate", not the investigation results. Write results as separate comments
-- Section headings should be concise. If the conclusion fits in a short heading, use a summary heading. Otherwise, use a simple heading (e.g., `## Cause`) and write the conclusion as the first sentence of the body
-    - Bad: `Investigation Results`, `Symptoms` (too generic, says nothing about the content)
-    - Good: `The 2 Pods returning 404 were in the proxy layer` (summary heading) or `## Cause` followed immediately by a one-sentence conclusion
-- Write conclusions first. Put the conclusion as a single sentence immediately after the section heading. The reader wants to know the answer, not the process
-    - Bad: `## Cause` followed by paragraphs explaining the investigation process, then finally the conclusion
-    - Good: `## Cause` followed by `PR #123 introduced X, which caused Y.` as the first line, then supporting details below
-- Structure content around the conclusion. Every piece of information should either be the conclusion itself, or directly support the conclusion. Before writing each section, ask: "does the reader need this to understand or believe the conclusion?" If not, it does not belong at the top level
-    - Information that supports the conclusion (evidence, key data) → top level
-    - Information that explains how the conclusion was reached but is not needed to understand it (mechanism details, timelines, process descriptions) → `<details>` block
-    - Information the reader can derive from linked resources or execution logs → omit entirely
-- When the conclusion involves internal systems or components the reader may not know, provide the minimum background needed to understand the conclusion in the top-level text. Detailed architecture, process flows, and data pipelines belong in `<details>` blocks
-- When stating facts (e.g., frequency of errors, number of affected resources), include the evidence so the reader can verify or reproduce the finding (e.g., the query used, the dashboard link, the command run)
-- Keep top-level text short. If a comment has more than 3-4 paragraphs of top-level text, re-evaluate whether some content should be in `<details>` blocks
-- Do not repeat information that is available at a link. If a PR or issue is linked, do not re-explain its contents in detail - the reader can follow the link. One-sentence summaries are sufficient
-- Never use bold formatting. If text requires emphasis to be understandable, the structure or wording is the problem - fix that instead
-- Do not write "next actions", "TODO", or "proposed next steps" sections unless the user explicitly asks. The reader decides what to do next
-- Do not start list items with a summary followed by a colon. Write normal sentences instead
-- When linking to external resources (e.g., other issues), explain why the link is relevant
-- Use permalinks for GitHub source code links (include commit SHA instead of `main`/`master`)
-    - Bad: `github.com/org/repo/blob/main/path/file.ts#L10`
-    - Good: `github.com/org/repo/blob/abc123.../path/file.ts#L10`
-    - Get latest commit SHA: `gh api -X GET repos/org/repo/commits -F path=<file> -F per_page=1 --jq '.[0].sha'`
-- Use である調 (plain form), not ですます調 (polite form)
-- Do not make recommendations or suggestions - only present facts and findings
-- Do not write proposed solutions without verifying they actually work. For example, do not suggest "upgrade to a newer version" without confirming the issue is fixed in that version. Check upstream issues, release notes, and changelogs before proposing a fix
-- Distinguish symptoms from root causes. "X is slow" or "there is a lag in Y" describes a symptom, not a cause. If the root cause is uncertain, use hedging language (e.g., "believed to be caused by")
-- Do not include information unrelated to the issue's root cause in the proposed solutions or cause analysis, even if discovered during investigation
-- Keep comments minimal. Only write what the reader needs to act on or understand the outcome. Do not add supplementary context that the reader can derive from the execution log or linked resources
-- When placing a URL inside parentheses, always use Markdown link syntax to prevent GitHub from misinterpreting the link boundary
-    - Bad: `問題が発覚した (https://github.com/org/repo/issues/123)。次の文。` — GitHub may include `。` in the URL
-    - Good: `問題が発覚した ([#123](https://github.com/org/repo/issues/123))。次の文。`
-- Place reference links inline where contextually relevant, not in a separate "References" section at the end
-- Use numbered lists only when order matters (sequential steps, priority ranking); otherwise use bullet points
-    - Bad: `1. Option A 2. Option B 3. Option C` (options have no inherent order)
-    - Good: `- Option A - Option B - Option C`
-- Issue titles must be specific about the problem - avoid vague words like "improvement" or "fix" without context
-- When multiple problems share a root cause, consolidate them under that root cause rather than listing separately
-- The What section should include proposed solutions, not just problem descriptions
-- Titles should be abstract and concise - describe the essence of the work, not internal jargon or specific problem names
-    - Bad: `Fix the "foobar bug" in config parser`
-    - Good: `Update config parser`
-- Check repository conventions before writing - use `view` on similar existing issues to match formatting (parent issue link placement, section structure, etc.)
-- The What section should describe the strategic intent, not step-by-step procedures
-    - Bad: `Remove line 42 from config.yaml`
-    - Good: `Use the canonical config from the upstream repository`
-- Completion criteria should describe the achieved state, not the work steps
-    - Bad: `Delete the invalid entry from the file`
-    - Good: `Changes are deployed to production`
-- Parent issue references should be written as `- from <url>` list items within the Why section, not as a standalone `from:` line at the top of the issue body
-    - Bad: issue 本文冒頭に `from: #491, #510` と書く
-    - Good: Why セクション内で `- from #510` のようにリスト項目として書き、インデントで詳細を続ける
+**まず ~/.claude/skills/github-issue/writing-guide.md を読み込むこと。** Issue 本文とコメントの書き方ルールが定義されている。
 
 ## Notes
 
