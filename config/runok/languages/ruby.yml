@@ -8,3 +8,6 @@ rules:
   - allow: 'ruby -c *'
     tests:
       - allow: 'ruby -c script.rb'
+  - allow: 'bundle install *'
+  - allow: 'bundle exec rspec *'
+  - allow: 'bundle exec rubocop *'
