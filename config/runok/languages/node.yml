@@ -53,10 +53,10 @@ rules:
       - deny: 'bun add axios'
 
   # run scripts (use nr)
-  - allow: 'nr [-C *] build|build:*|build-* *'
-  - allow: 'nr [-C *] format|format:* *'
-  - allow: 'nr [-C *] lint|lint:* *'
-  - allow: 'nr [-C *] test|test:*|typecheck *'
+  - allow: 'nr [-C|--filter *] build|build:*|build-* *'
+  - allow: 'nr [-C|--filter *] format|format:* *'
+  - allow: 'nr [-C|--filter *] lint|lint:* *'
+  - allow: 'nr [-C|--filter *] test|test:*|typecheck *'
     tests:
       - allow: 'nr test'
       - allow: 'nr test:type'
