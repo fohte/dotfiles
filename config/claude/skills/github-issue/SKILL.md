@@ -93,6 +93,18 @@ Body
 
 Sub-issues and parent issue can also be specified in the frontmatter (see "Sub-issues and Parent Issue" section below).
 
+### Review (approve before push)
+
+```bash
+a gh issue-agent review <file-path>
+```
+
+Opens a file in an editor (via tmux) for user review. The user must set `submit: true` in the frontmatter to approve. For files without YAML frontmatter (e.g., comment files with HTML comment metadata), a temporary `submit: false` frontmatter is prepended and stripped after review.
+
+Run this **in background** (`run_in_background: true`). The command blocks until the user closes the editor. Exit code 0 means approved, exit code 1 means cancelled.
+
+The `push` command verifies `.approve` files exist for all changed files and rejects the push if any file is unapproved.
+
 ### Diff (show changes)
 
 ```bash
@@ -190,9 +202,9 @@ sub_issues:
 
 These rules MUST NEVER be violated, regardless of context or convenience.
 
-1. NEVER call `a gh issue-agent push` without first running `a gh issue-agent push <number-or-path> --dry-run` and reviewing the output. The dry-run shows exactly which files will be created, updated, or deleted. If unexpected changes appear (e.g., stale comment files from earlier edits), remove or fix them before the real push. After confirming the dry-run output is correct, proceed with `a ai draft` on every changed file and receive explicit user approval via AskUserQuestion. No exceptions - not even when "continuing from a previous session", "the content was already reviewed", or "the changes are minor". If `a ai draft` was not run in the current conversation turn, the content has NOT been reviewed.
+1. NEVER call `a gh issue-agent push` without first running `a gh issue-agent review` on every changed file and having the user approve each one (by setting `submit: true` in the frontmatter). The `push` command verifies `.approve` files exist for all changed files and will reject the push if any file is unapproved. No exceptions - not even when "continuing from a previous session", "the content was already reviewed", or "the changes are minor". If `a gh issue-agent review` was not run in the current conversation turn, the content has NOT been reviewed.
 2. NEVER put flow information (investigation results, root cause analysis, data tables, timeline of events, action items, options/choices) in the issue body. The issue body is for static, structural content only: WHY (motivation, severity, risk) and WHAT (strategic intent, completion criteria). All flow information goes in comments.
-3. NEVER push issue body changes and new comments in the same `push` command. Each must be reviewed (`a ai draft` + AskUserQuestion) and pushed separately. Edit the issue body first, get approval, push it, then create the comment, get approval, push it.
+3. NEVER push issue body changes and new comments in the same `push` command. Each must be reviewed (`a gh issue-agent review` with `submit: true`) and pushed separately. Edit the issue body first, get approval, push it, then create the comment, get approval, push it.
 
 ### Issue Body vs Comment Decision Guide
 
@@ -264,20 +276,18 @@ Before writing anything, complete all necessary research. The goal is to write a
     - If no templates or user prefers blank: `a gh issue-agent init issue --no-template`
     - **IMPORTANT**: Never assume `--no-template` without checking templates first
 3. Edit the file at `~/.cache/gh-issue-agent/<owner>/<repo>/new/issue.md`
-4. Run `a ai draft <file-path>` to open in terminal + Neovim for user review
-5. **STOP and wait for user approval.** Do NOT proceed to push until the user explicitly confirms. After `a ai draft`, use AskUserQuestion to ask the user if the content is ready to push. Never assume the user has finished reviewing just because the draft command returned.
-6. Run `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new --dry-run` to verify exactly what will be pushed. If unexpected files appear, fix before proceeding.
-7. Create the issue: `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new`
+4. Run `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) to open in terminal + Neovim for user review. This command blocks until the user closes the editor, so it will complete when the user finishes reviewing.
+5. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved the draft (set `submit: true` in frontmatter), exit code 1 means the user cancelled. If cancelled, ask the user what to change.
+6. Create the issue: `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new` (the push command verifies `.approve` files exist for all changed files)
     - On success, the directory is renamed to `<issue-number>/`
 
 #### Workflow C: Editing issue body/metadata
 
 1. Pull the issue: `a gh issue-agent pull <issue-number>`
 2. Edit `issue.md` or `metadata.json` in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`
-3. Run `a ai draft <file-path>` to open the edited file in terminal + Neovim for user review
-4. **STOP and wait for user approval.** Do NOT proceed to push until the user explicitly confirms. After `a ai draft`, use AskUserQuestion to ask the user if the content is ready to push. Never assume the user has finished reviewing just because the draft command returned.
-5. Run `a gh issue-agent push <issue-number> --dry-run` to verify exactly what will be pushed. If unexpected files appear, fix before proceeding.
-6. After user approval, apply changes: `a gh issue-agent push <issue-number>`
+3. Run `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) to open the edited file in terminal + Neovim for user review. This command blocks until the user closes the editor.
+4. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved, exit code 1 means cancelled. If cancelled, ask the user what to change.
+5. Apply changes: `a gh issue-agent push <issue-number>` (the push command verifies `.approve` files exist for all changed files)
 
 #### Workflow D: Editing an EXISTING comment
 
@@ -287,10 +297,9 @@ Use this when the content should be added to or modified in an existing comment.
 2. List comments: `ls ~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/comments/`
 3. Read the target comment file (identified from Step 1 analysis)
 4. Edit the comment file directly
-5. Run `a ai draft <file-path>` for user review
-6. **STOP and wait for user approval.** Do NOT proceed to push until the user explicitly confirms. After `a ai draft`, use AskUserQuestion to ask the user if the content is ready to push. Never assume the user has finished reviewing just because the draft command returned.
-7. Run `a gh issue-agent push <issue-number> --dry-run` to verify exactly what will be pushed. If unexpected files appear, fix before proceeding.
-8. Push changes: `a gh issue-agent push <issue-number>`
+5. Run `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) for user review. This command blocks until the user closes the editor.
+6. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means approved, exit code 1 means cancelled. If cancelled, ask the user what to change.
+7. Push changes: `a gh issue-agent push <issue-number>` (the push command verifies `.approve` files exist)
 
 **Comment file format:**
 
@@ -305,10 +314,9 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 1. Pull the issue first (if not already): `a gh issue-agent pull <issue-number>`
 2. Generate comment boilerplate: `a gh issue-agent init comment <issue-number>`
 3. Edit the generated file in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/comments/`
-4. Run `a ai draft <file-path>` for user review
-5. **STOP and wait for user approval.** Do NOT proceed to push until the user explicitly confirms. After `a ai draft`, use AskUserQuestion to ask the user if the content is ready to push. Never assume the user has finished reviewing just because the draft command returned.
-6. Run `a gh issue-agent push <issue-number> --dry-run` to verify exactly what will be pushed. If unexpected files appear (e.g., stale comment files from earlier edits), remove them before proceeding.
-7. Push changes: `a gh issue-agent push <issue-number>`
+4. Run `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) for user review. This command blocks until the user closes the editor.
+5. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means approved, exit code 1 means cancelled. If cancelled, ask the user what to change.
+6. Push changes: `a gh issue-agent push <issue-number>` (the push command verifies `.approve` files exist)
 
 ## Editing Comments
 
@@ -325,8 +333,8 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 - `push` fails when editing other users' comments (use `--edit-others` to allow)
 - `push` fails when deleting comments (use `--allow-delete` to allow)
 - Before using `--force`, use `diff` or `push --dry-run` to verify what will be overwritten
-- Always use `a ai draft <file-path>` to let user review edited content before pushing
-- **CRITICAL: After `a ai draft`, you MUST use AskUserQuestion to ask the user if the content is ready to push. NEVER proceed to `push` without explicit user confirmation.** The `a ai draft` command opens a file in Neovim for the user to review and edit. The command returning does NOT mean the user has finished reviewing. You must always ask and wait.
+- Always use `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) to let user review edited content before pushing. The user approves by setting `submit: true` in the frontmatter within Neovim. The `push` command verifies `.approve` files exist for all changed files and rejects the push if any file is unapproved.
+- **CRITICAL: After running `a gh issue-agent review` in background, STOP and wait for the background command to complete.** Do NOT proceed to `push` until the command finishes. Exit code 0 means approved, exit code 1 means cancelled.
 
 ## Writing Style
 
