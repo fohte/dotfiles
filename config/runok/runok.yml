@@ -13,6 +13,7 @@ extends:
   - './tools/aws.yml'
   - './tools/docker.yml'
   - './tools/gcloud.yml'
+  - './tools/k8s.yml'
   - './tools/linters.yml'
   - './tools/terraform.yml'
   - './tools/misc.yml'

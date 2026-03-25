@@ -34,6 +34,7 @@ rules:
   - allow: 'bats *'
   - allow: 'bc *'
   - allow: 'mktemp *'
+  - allow: 'unset *'
 
   - allow: brew search *
   - allow: brew info *

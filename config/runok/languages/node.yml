@@ -54,12 +54,18 @@ rules:
 
   # run scripts (use nr)
   - allow: 'nr [-C *] build|build:*|build-* *'
-  - allow: 'nr [-C *] format *'
-  - allow: 'nr [-C *] lint *'
+  - allow: 'nr [-C *] format|format:* *'
+  - allow: 'nr [-C *] lint|lint:* *'
   - allow: 'nr [-C *] test|test:*|typecheck *'
     tests:
       - allow: 'nr test'
       - allow: 'nr test:type'
+  - deny: 'nlx tsc *'
+    message: 'Use nr'
+  - deny: 'nlx vitest run *'
+    message: 'Use nr'
+  - deny: 'pnpm [-C|--filter *] test|test:*|test-*'
+    message: 'BLOCKED: Use /ni skill. Run: nr <script>'
 
   - deny: 'npm run *'
     message: 'BLOCKED: Use /ni skill. Run: nr <script>'
@@ -72,7 +78,7 @@ rules:
     fix_suggestion: 'nr <script>'
     tests:
       - deny: 'yarn run build'
-  - deny: 'pnpm run *'
+  - deny: 'pnpm [--filter *] run *'
     message: 'BLOCKED: Use /ni skill. Run: nr <script>'
     fix_suggestion: 'nr <script>'
     tests:
