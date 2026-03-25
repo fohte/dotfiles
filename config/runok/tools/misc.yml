@@ -10,7 +10,7 @@ rules:
   - allow: 'a gh pr-review reply pull *'
   - allow: 'a gh pr-review reply push *'
   - allow: 'a gh pr-review reply review *'
-  - allow: 'a gh issue-agent init|diff|pull|view *'
+  - allow: 'a gh issue-agent init|diff|pull|view|review *'
   - allow: 'a gh issue-agent push !--force !--allow-delete *'
     tests:
       - allow: a gh issue-agent push 123
