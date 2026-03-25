@@ -105,7 +105,7 @@ For each thread:
 
 Run `a gh pr-review reply review <pr-number>` **in background** (`run_in_background: true`) to open the threads file in terminal + Neovim for user review. This command blocks until the user closes the editor, so it will complete when the user finishes reviewing.
 
-**STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved the draft, exit code 1 means the user cancelled. If cancelled, ask the user what to change.
+**STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved the draft, exit code 1 means not approved (user closed without approving), exit code 2 means the editor is already open. If not approved, ask the user what to change. If already open (exit code 2), inform the user and wait for them to finish the existing review session.
 
 ### Step 4: Push replies and resolutions to GitHub
 

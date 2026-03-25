@@ -145,7 +145,7 @@ echo 'use `gh` command'
 a ai pr-draft review
 ```
 
-**重要:** バックグラウンドコマンドの完了を待つこと。完了したら exit code を確認する: exit code 0 はユーザーが承認したことを示し、exit code 1 はキャンセルを示す。
+**重要:** バックグラウンドコマンドの完了を待つこと。完了したら exit code を確認する: exit code 0 はユーザーが承認したことを示し、exit code 1 は未承認 (エディタを承認せず閉じた) を示し、exit code 2 はエディタが既に開いていることを示す。未承認の場合はユーザーに何を変更するか確認する。exit code 2 の場合は既存のレビューセッションが終わるまで待つようユーザーに伝える。
 
 ## 3. ユーザーの指示に応じた対応
 
@@ -169,7 +169,7 @@ a ai pr-draft review
 2. `steps.submit: false` に変更する（翻訳によりハッシュが無効になるため）
 3. ファイルを上書き保存する
 4. 再度 `a ai pr-draft review` をバックグラウンドで (`run_in_background: true`) 実行して、ユーザーに翻訳内容を確認してもらう
-5. コマンドの完了を待つ (exit code 0 = 承認、exit code 1 = キャンセル)
+5. コマンドの完了を待つ (exit code 0 = 承認、exit code 1 = 未承認、exit code 2 = エディタが既に開いている)
 
 翻訳時の注意事項は ~/.claude/skills/create-pr/public-repo-guide.md の「翻訳時の注意」セクションに従うこと。
 
