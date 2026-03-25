@@ -11,7 +11,11 @@ rules:
   - allow: 'a gh pr-review reply push *'
   - allow: 'a gh pr-review reply review *'
   - allow: 'a gh issue-agent init|diff|pull|view *'
-  - allow: 'a gh issue-agent push --dry-run *'
+  - allow: 'a gh issue-agent push !--force !--allow-delete *'
+    tests:
+      - allow: a gh issue-agent push 123
+      - ask: a gh issue-agent push --force 123
+      - ask: a gh issue-agent push --allow-delete 123
 
   # Claude Code
   - allow: 'claude-session-digest *'
