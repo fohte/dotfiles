@@ -49,6 +49,7 @@
       'mcp__chrome-devtools__select_page',
       'mcp__chrome-devtools__wait_for',
 
+      'mcp__google-analytics',
       'mcp__context7',
       'mcp__qmd',
       'mcp__pencil',
