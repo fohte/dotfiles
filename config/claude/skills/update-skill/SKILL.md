@@ -18,6 +18,8 @@ description: Use this skill when creating or updating skill files (SKILL.md). Pr
 
 ### グローバルスキル (全プロジェクト共通)
 
+グローバルスキル (`/commit`, `/create-pr`, `/delegate-claude` など) は dotfiles リポジトリの `config/claude/skills/` で Git 管理されている。デプロイ時に `~/.claude/skills/` へ symlink されることで、全プロジェクトで利用可能になる。
+
 - **編集先**: `~/ghq/github.com/fohte/dotfiles/config/claude/skills/<skill-name>/SKILL.md`
 - **symlink 先**: `~/.claude/skills/<skill-name>/SKILL.md`
 - `~/.claude/skills/` は dotfiles リポジトリの symlink。**編集は必ず dotfiles リポジトリ側 (`config/claude/skills/`) で行うこと**
