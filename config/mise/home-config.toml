@@ -36,7 +36,7 @@
 "aqua:hairyhenderson/gomplate" = "5.0.0"
 "aqua:mozilla/sccache" = "0.13.0"
 "npm:@mermaid-js/mermaid-cli" = "latest"
-"cargo:ast-grep" = "0.40.5"
+"cargo:ast-grep" = "0.42.0"
 
 [settings]
 # disable the idiomatic version file such as Gemfile
