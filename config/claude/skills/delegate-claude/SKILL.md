@@ -11,6 +11,7 @@ description: Delegate tasks to a separate Claude Code instance in its own git wo
 
 - **自分で実装作業をしない**: このスキルが発動したら、ファイル編集・コード変更・調査を自分で行ってはならない。唯一の仕事はプロンプトを構成して `a wm new` コマンドを実行すること
 - **委任前にファイルを編集しない**: 「先に少し直してから委任しよう」は禁止。未コミットの変更がある状態で worktree を作ると、委任先にその変更が反映されない
+- **SendMessage で委任先に追加指示を送らない**: `/delegate-claude` で起動したインスタンスは独立した tmux セッションの別プロセスであり、SendMessage は届かない。追加指示が必要な場合は worktree を消して委任し直すこと
 
 ## 使い方
 
