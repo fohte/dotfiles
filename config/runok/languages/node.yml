@@ -64,9 +64,12 @@ rules:
     message: 'Use nr'
   - deny: 'nlx vitest run *'
     message: 'Use nr'
+  - deny: 'nlx eslint *'
+    message: 'Use nr'
   - deny: 'pnpm [-C|--filter *] test|test:*|test-*'
     message: 'BLOCKED: Use /ni skill. Run: nr <script>'
-
+  - deny: 'pnpm [-C|--filter *] exec *'
+    message: 'BLOCKED: Use /ni skill. Run: nr <script>'
   - deny: 'npm run *'
     message: 'BLOCKED: Use /ni skill. Run: nr <script>'
     fix_suggestion: 'nr <script>'
