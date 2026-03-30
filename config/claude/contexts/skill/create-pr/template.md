@@ -181,13 +181,15 @@ a ai pr-draft review
 翻訳は不要。ユーザーが `steps.submit: true` にしたら submit に進む。
 {{- end }}
 
-## 4. `a ai pr-draft submit` で PR を作成
+## 4. `a ai pr-draft submit` で PR を作成・更新
 
 ```bash
 a ai pr-draft submit [--base main]
 ```
 
 frontmatter の `title` が PR タイトルとして、body 部分が PR 本文として使用される。
+
+同じブランチに既存の PR がある場合、`submit` は新規作成ではなく既存 PR の title と body を更新する。既存 PR の更新時もこのコマンドをそのまま使用すること。
 
 **注意:** submit はユーザーがレビューを完了し承認済みの場合のみ成功する。失敗した場合はエラーメッセージをそのままユーザーに伝えること。
 {{- if $public }}
