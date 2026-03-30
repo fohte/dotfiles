@@ -42,3 +42,5 @@ rules:
   # runok
   - allow: 'runok check *'
   - allow: 'runok exec *'
+
+  - allow: nlx @marp-team/marp-cli@latest *
