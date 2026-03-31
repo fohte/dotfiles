@@ -1,5 +1,5 @@
 ---
-name: debug
+name: debug-flow
 description: Debug (バグ原因特定→修正モード). Use this skill when fixing bugs, investigating errors, or troubleshooting issues. Covers the full cycle from hypothesis-driven root cause analysis to fix implementation.
 ---
 
