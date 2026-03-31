@@ -38,3 +38,28 @@ rules:
 
   - allow: brew search *
   - allow: brew info *
+
+  # find is prohibited; use rg, Glob tool, or Grep tool instead
+  - deny: 'find *'
+    message: 'find is prohibited. Use rg, Glob tool, or Grep tool instead.'
+    fix_suggestion: 'rg --files -g "*.js" or use the Glob/Grep tool'
+    tests:
+      - deny: 'find . -name "*.ts"'
+      - deny: 'find ~ -name "*.js"'
+
+  # Block rg/fd on home directory (~ or $HOME)
+  - deny: 'rg|fd * ~'
+    message: 'Searching from home directory is extremely slow. Narrow the search to a specific subdirectory.'
+    fix_suggestion: 'Specify a project directory, e.g., rg pattern ./src'
+    tests:
+      - deny: 'rg pattern ~'
+      - deny: 'fd "*.ts" ~'
+  - deny: 'rg|fd *'
+    when: 'args[size(args)-1] == env.HOME'
+    message: 'Searching from home directory is extremely slow. Narrow the search to a specific subdirectory.'
+    fix_suggestion: 'Specify a project directory, e.g., rg pattern ./src'
+    tests:
+      - deny: 'rg pattern /Users/fohte'
+      - allow: 'rg pattern /Users/fohte/ghq'
+      - allow: 'rg pattern ./src'
+      - allow: 'rg /Users/fohte ./src'
