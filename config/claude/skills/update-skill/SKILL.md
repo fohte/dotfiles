@@ -30,7 +30,7 @@ description: Use this skill when creating or updating skill files (SKILL.md). Pr
 一部のスキルは SKILL.md 内で `!` + バッククォートによるコマンド実行でテンプレートから内容を動的に生成する。この場合、SKILL.md 自体ではなくテンプレートファイルを編集すること。
 
 - **テンプレート置き場**: `~/ghq/github.com/fohte/dotfiles/config/claude/contexts/skill/<skill-name>/template.md`
-- **判定方法**: SKILL.md の本文が `` !`runok exec -- gen-claude-template ...` `` のようなコマンド実行のみの場合、テンプレート生成型である
+- **判定方法**: SKILL.md の本文が `!` + `` `runok exec -- gen-claude-template <type> <name>` `` のようなコマンド実行のみの場合、テンプレート生成型である
 - **編集先**: SKILL.md ではなく `config/claude/contexts/skill/<skill-name>/template.md`
 
 ### プロジェクトローカルスキル (特定プロジェクト専用)
