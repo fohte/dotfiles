@@ -16,6 +16,7 @@ extends:
   - './tools/k8s.yml'
   - './tools/linters.yml'
   - './tools/terraform.yml'
+  - './tools/macos.yml'
   - './tools/misc.yml'
 
 defaults:
