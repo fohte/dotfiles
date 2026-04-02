@@ -93,37 +93,26 @@ apply NSGlobalDomain com.apple.keyboard.fnState -bool true
 # Disable "Move focus to next window" (Cmd+@)
 # On JIS keyboards, this shortcut conflicts with Cmd+[ in many apps.
 # See: https://aotamasaki.hatenablog.com/entry/command_with_open_bracket_is_unavailable
-disable_symbolic_hotkey() {
-  local hotkey_id="$1"
-  local current
-  current="$(defaults read com.apple.symbolichotkeys AppleSymbolicHotKeys | grep -A 1 "$hotkey_id =" | grep enabled | tr -d ' ;' | cut -d= -f2)"
+apply_symbolic_hotkey() {
+  local hotkey_id="$1" desired="$2"
+  local plist="$HOME/Library/Preferences/com.apple.symbolichotkeys.plist"
+  local key_path=":AppleSymbolicHotKeys:${hotkey_id}:enabled"
 
-  if [[ "$current" != "0" ]]; then
+  local current
+  current="$(/usr/libexec/PlistBuddy -c "Print ${key_path}" "$plist" 2> /dev/null || echo "")"
+
+  if [[ "$current" != "$desired" ]]; then
     if [[ -n "$DRYRUN" ]]; then
-      echo "  [dryrun] com.apple.symbolichotkeys hotkey $hotkey_id: enabled -> disabled"
+      echo "  [dryrun] symbolic hotkey $hotkey_id: '$current' -> '$desired'"
       return
     fi
-    echo "  com.apple.symbolichotkeys hotkey $hotkey_id: enabled -> disabled"
-    defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add "$hotkey_id" '
-<dict>
-  <key>enabled</key>
-  <false/>
-  <key>value</key>
-  <dict>
-    <key>parameters</key>
-    <array>
-      <integer>64</integer>
-      <integer>33</integer>
-      <integer>1048576</integer>
-    </array>
-    <key>type</key>
-    <string>standard</string>
-  </dict>
-</dict>'
+    echo "  symbolic hotkey $hotkey_id: '$current' -> '$desired'"
+    /usr/libexec/PlistBuddy -c "Set ${key_path} ${desired}" "$plist"
   fi
 }
 
-disable_symbolic_hotkey 27
+# 27 = "Move focus to next window" (Cmd+@)
+apply_symbolic_hotkey 27 false
 
 # -- Appearance --
 
