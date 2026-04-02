@@ -88,6 +88,43 @@ apply NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
 # Use F1, F2, etc. as standard function keys
 apply NSGlobalDomain com.apple.keyboard.fnState -bool true
 
+# -- Keyboard Shortcuts --
+
+# Disable "Move focus to next window" (Cmd+@)
+# On JIS keyboards, this shortcut conflicts with Cmd+[ in many apps.
+# See: https://aotamasaki.hatenablog.com/entry/command_with_open_bracket_is_unavailable
+disable_symbolic_hotkey() {
+  local hotkey_id="$1"
+  local current
+  current="$(defaults read com.apple.symbolichotkeys AppleSymbolicHotKeys | grep -A 1 "$hotkey_id =" | grep enabled | tr -d ' ;' | cut -d= -f2)"
+
+  if [[ "$current" != "0" ]]; then
+    if [[ -n "$DRYRUN" ]]; then
+      echo "  [dryrun] com.apple.symbolichotkeys hotkey $hotkey_id: enabled -> disabled"
+      return
+    fi
+    echo "  com.apple.symbolichotkeys hotkey $hotkey_id: enabled -> disabled"
+    defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add "$hotkey_id" '
+<dict>
+  <key>enabled</key>
+  <false/>
+  <key>value</key>
+  <dict>
+    <key>parameters</key>
+    <array>
+      <integer>64</integer>
+      <integer>33</integer>
+      <integer>1048576</integer>
+    </array>
+    <key>type</key>
+    <string>standard</string>
+  </dict>
+</dict>'
+  fi
+}
+
+disable_symbolic_hotkey 27
+
 # -- Appearance --
 
 # Dark mode
