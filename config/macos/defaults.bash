@@ -90,9 +90,6 @@ apply NSGlobalDomain com.apple.keyboard.fnState -bool true
 
 # -- Keyboard Shortcuts --
 
-# Disable "Move focus to next window" (Cmd+@)
-# On JIS keyboards, this shortcut conflicts with Cmd+[ in many apps.
-# See: https://aotamasaki.hatenablog.com/entry/command_with_open_bracket_is_unavailable
 apply_symbolic_hotkey() {
   local hotkey_id="$1" desired="$2"
   local plist="$HOME/Library/Preferences/com.apple.symbolichotkeys.plist"
@@ -111,8 +108,10 @@ apply_symbolic_hotkey() {
   fi
 }
 
-# 27 = "Move focus to next window" (Cmd+@)
-apply_symbolic_hotkey 27 false
+# Disable "Move focus to next window" (Cmd+@)
+# On JIS keyboards, this shortcut conflicts with Cmd+[ in many apps.
+# See: https://aotamasaki.hatenablog.com/entry/command_with_open_bracket_is_unavailable
+apply_symbolic_hotkey 27 false # 27 = "Move focus to next window"
 
 # -- Appearance --
 
