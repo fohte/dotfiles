@@ -1,6 +1,11 @@
 # this home-config.toml is global config (~/.config/mise/config.toml), the repository specify config is in <dotfiles root>/mise.toml
 
 [tools]
+# Use explicit backend prefixes (e.g. "aqua:sharkdp/bat") instead of short aliases (e.g. "bat") because:
+# - Renovate cannot interpret mise's built-in registry, so short names prevent automatic version update PRs
+# - mise registry migrations (e.g. neovim/op moved from aqua to vfox) can silently switch backends
+# To find the full backend-qualified name for a tool, run: mise registry <tool-name>
+#
 # Language versions
 "core:node" = "23.11.1"
 "core:python" = "3.14.2"
