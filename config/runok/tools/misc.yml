@@ -44,3 +44,11 @@ rules:
   - allow: 'runok exec *'
 
   - allow: nlx @marp-team/marp-cli@latest *
+
+  # obsidian
+  - allow: obsidian search *
+  - allow: obsidian read *
+  - allow: obsidian create *
+  - allow: obsidian help *
+  - deny: obsidian append *
+    message: 'Use write/update tool'
