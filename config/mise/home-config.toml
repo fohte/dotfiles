@@ -14,7 +14,7 @@
 "gem:rubocop" = "1.84.0"
 
 # CLI tools
-"aqua:cli/cli" = "2.86.0"
+"aqua:cli/cli" = "2.89.0"
 "aqua:sharkdp/bat" = "0.25.0"
 "aqua:x-motemen/ghq" = "1.7.1"
 "aqua:junegunn/fzf" = "0.61.1"
