@@ -58,21 +58,18 @@ description = "Upgrade Homebrew packages"
 run = "brew upgrade"
 
 [tools]
-"aqua:evilmartians/lefthook" = "2.1.3"
+"aqua:evilmartians/lefthook" = "2.1.4"
 
 # lefthook hooks
 "aqua:rhysd/actionlint" = "1.7.11"
-"core:bun" = "1.3.10"
+node = "24.14.0"
 "github:fohte/basefmt" = "0.1.0"
-"npm:@commitlint/cli" = "20.4.3"
+"npm:@commitlint/cli" = "20.5.0"
 "npm:prettier" = "3.8.1"
 "aqua:koalaman/shellcheck" = "0.11.0"
-"aqua:mvdan/sh" = "3.12.0"
+"aqua:mvdan/sh" = "3.13.0"
 "aqua:JohnnyMorganz/StyLua" = "2.1.0"
 
 # Build tools
 "aqua:google/go-jsonnet" = "0.21.0"
 "aqua:jqlang/jq" = "1.8.1"
-
-[settings]
-npm.bun = true
