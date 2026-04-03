@@ -61,7 +61,27 @@ gh pr diff <number> -R fohte/<repo>
     - 各リポジトリのテンプレート構成 (copier-answers.yml の設定) によって適用される変更は異なる。構成に応じて「含まれるべき変更」と「対象外の変更」を判断する
     - テンプレート由来でない変更 (リポジトリ固有のカスタマイズ) が壊れていないか
 
-### 3b. CI 状態の確認
+### 3b. 実ファイルレベルでのテンプレート伝搬確認 (必須)
+
+diff だけでなく、PR ブランチ上の実ファイル内容を確認して、テンプレート変更が正しく反映されているかを検証する。diff に現れない変更 (既に別の経路で更新済みなど) が本当に最新かは、実ファイルを見ないとわからない。
+
+```bash
+# PR ブランチ名を取得
+branch=$(gh pr view <number> -R fohte/<repo> --json headRefName -q .headRefName)
+
+# 各ファイルの内容を確認
+gh api repos/fohte/<repo>/contents/<file-path>?ref=$branch -q .content | base64 -d
+```
+
+確認すべきチェック項目 (テンプレート変更に応じて毎回リストを作成する):
+
+- GitHub Actions のバージョン (例: `actions/create-github-app-token`, `jdx/mise-action`)
+- ツールバージョン (例: `.mise.toml` 内の lefthook, shfmt, commitlint, node 等)
+- テンプレート構造の変更 (例: bun→pnpm 移行、corepack enable の追加)
+- ワークフローロジックの変更 (例: auto-format skip の判定方式)
+- 新規ファイルの追加/削除 (例: pr-title-check.yml)
+
+### 3c. CI 状態の確認
 
 ```bash
 gh pr view <number> -R fohte/<repo> \
@@ -82,6 +102,18 @@ CI が失敗している場合はログを確認して原因を特定する。
 ## Step 5: コンフリクト解消
 
 コンフリクトがある PR は `/delegate-claude` スキルで解消を委任する。
+
+### ブランチ名の取得 (必須)
+
+`/delegate-claude` に渡すブランチ名は、**必ず PR から正確に取得する**。推測してはならない。
+
+```bash
+gh pr view <number> -R fohte/<repo> --json headRefName -q .headRefName
+```
+
+取得した値をそのまま `a wm new` の `<branch-name>` に使う。
+
+### 委任時のプロンプト
 
 委任時のプロンプトには以下を含める:
 
