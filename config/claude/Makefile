@@ -1,5 +1,7 @@
 SHELL := bash
 
+export OBSIDIAN_VAULT_PATH := $(shell obsidian vault name=obsidian-v2 info=path)
+
 # Build a jsonnet file, merging with a .local.jsonnet overlay if it exists.
 # The local overlay can use +: syntax for deep merging (e.g. permissions+: { allow+: [...] }).
 # External variables referenced via env('VAR_NAME') are auto-detected from source files

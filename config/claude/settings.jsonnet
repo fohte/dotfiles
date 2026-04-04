@@ -1,3 +1,5 @@
+local env(name) = std.extVar(name);
+
 {
   env: {
     CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY: '1',
@@ -13,6 +15,7 @@
       'Edit(//tmp/**)',
       'Edit(//var/folders/**/T/**)',
       'Edit(~/.cache/armyknife/**)',
+      'Edit(' + env('OBSIDIAN_VAULT_PATH') + '/**)',
 
       'Read(//tmp/**)',
       'Read(//var/folders/**/T/**)',
