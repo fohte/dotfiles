@@ -9,43 +9,23 @@
 
 変更を push した後、以下の手順で PR を作成する。
 
-## 0. 状態確認時の注意
+**重要:** diff の確認には必ず `origin/master` と比較すること (`git diff origin/master...HEAD`)。ローカルの `master` は古い可能性がある。
 
-**重要:** PR に含まれる変更を確認する際は、ローカルの `master` ブランチではなく、必ず `origin/master` と比較すること。
+ワークフローの詳細 (Frontmatter、エスケープ、exit code 等) は `~/.claude/skills/create-pr/rules/pr-draft-workflow.md` を参照。
 
-```bash
-# 正しい (リモートの最新状態と比較)
-git diff origin/master...HEAD
-git log origin/master..HEAD
+## 1. PR body のドラフトを作成する
 
-# 間違い (ローカルの master が古いと不要な差分が含まれる)
-git diff master...HEAD
-git log master..HEAD
-```
-
-ローカルの master を pull していない場合、release-please が生成した CHANGELOG.md やバージョン更新のコミットが差分に含まれてしまうため。
-{{- if $repo_specs }}
-
-## 1. PR を作成する
-
-**まず ~/.claude/skills/create-pr/writing-guide.md を読み込むこと。** タイトルと description の書き方ルールが定義されている。
+**まず ~/.claude/skills/create-pr/writing-guide.md を読み込むこと。** ルール一覧に従い、違反しそうなルールは `rules/<ルール名>.md` で詳細を確認。
 {{- if $release_please }}
-
-**また ~/.claude/skills/create-pr/release-please-guide.md も読み込むこと。** このリポジトリは release-please を使用しているため、Conventional Commits 形式を使用する必要がある。
+**また `~/.claude/skills/create-pr/rules/title-conventional-commits.md` も読み込むこと。** このリポジトリは release-please を使用しているため、Conventional Commits 形式を使用する。
 {{- else }}
-
-**また ~/.claude/skills/create-pr/simple-title-guide.md も読み込むこと。** このリポジトリは release-please を使用していないため、シンプルなタイトル形式を使用する。
+**また `~/.claude/skills/create-pr/rules/title-simple-format.md` も読み込むこと。** このリポジトリは release-please を使用していないため、シンプルなタイトル形式を使用する。
 {{- end }}
 
-**重要:** このドラフトは **常に日本語で書くこと**。
+ドラフトは **常に日本語で書くこと**。
+{{- if $repo_specs }}
 
-`gh pr create` コマンドを使用して PR を直接作成する。body は雑でよい。完璧さより速度を優先する。
-
-**body のルール:**
-
-- Why/What を各 1-2 行で簡潔に書く
-- 日本語で書く
-- コード要素は `` ` `` で囲む
+`gh pr create` で PR を直接作成する。body は雑でよい。完璧さより速度を優先。
 
 ```bash
 gh pr create --title "タイトル" --body "$(cat <<'EOF'
@@ -60,126 +40,45 @@ EOF
 )"
 ```
 
-PR URL を表示したら、次のステップに進む。
 {{- else }}
-
-## 1. PR body のドラフトファイルを作成する
-
-**まず ~/.claude/skills/create-pr/writing-guide.md を読み込むこと。** タイトルと description の書き方ルールが定義されている。
-{{- if $public }}
-
-**また ~/.claude/skills/create-pr/public-repo-guide.md も読み込むこと。** このリポジトリは public であるため、英語ライティングガイドラインと翻訳ルールに従う必要がある。
-{{- end }}
-{{- if $release_please }}
-
-**また ~/.claude/skills/create-pr/release-please-guide.md も読み込むこと。** このリポジトリは release-please を使用しているため、Conventional Commits 形式を使用する必要がある。
-{{- else }}
-
-**また ~/.claude/skills/create-pr/simple-title-guide.md も読み込むこと。** このリポジトリは release-please を使用していないため、シンプルなタイトル形式を使用する。
-{{- end }}
-
-`echo` コマンドを使用して、PR の説明のドラフトを `a ai pr-draft new` コマンドに渡す。
-
-**重要:** このドラフトは **常に日本語で書くこと**（public repo、private repo に関わらず）。
-
-**Why/What を書く際の必須ルール:**
-
-- **Why には症状のみを簡潔に書く**: 技術的な原因 (「〜が〜していたため」「〜をチェックしており」など) は書かない。症状/影響だけを述べる
-- **技術的原因は What の子要素に書く**: バグ修正の場合、What の 1 行目に解決策を書き、子要素として技術的原因を補足する
-- **実装の詳細を列挙しない**: ファイル名、テストカテゴリ、設定キーなど diff でわかる内訳を並べない
-- **簡潔に**: Why は 1-2 行、What も 1-2 行で書く。詳しすぎる説明は不要
 
 ```bash
 echo "## Why
 
-- <修正系: 何が問題か (症状/影響のみ) / 新規追加: 何を実現したいか (目的)>
+- <修正系: 症状/影響のみ / 新規追加: 目的>
 
 ## What
 
-- <変更によって何が変わるか (効果を簡潔に)>
+- <変更の効果を簡潔に>
   - <技術的原因があれば子要素として補足>" | a ai pr-draft new --title "PRタイトル"
 ```
 
-ドラフトファイルは `/tmp/pr-body-draft/<owner>/<repo>/<branch>.md` に自動的に作成される。以降のコマンドではファイルパスの指定は不要。
+ドラフトは `/tmp/pr-body-draft/<owner>/<repo>/<branch>.md` に作成される。以降のコマンドではパス指定不要。
 
-### Frontmatter について
+## 2. レビュー
 
-作成されるファイルには以下の YAML frontmatter が含まれる:
-{{- if $public }}
-
-```yaml
----
-title: 'PRタイトル'
-steps:
-    ready-for-translation: false
-    submit: false
----
-```
-
-- `title`: PR のタイトル（submit 時に使用される）
-- `steps.ready-for-translation`: ドラフト承認フラグ。true になったら翻訳を実行する。public repo では翻訳は**必須**であり、submit 時に日本語が含まれているとエラーになる
-- `steps.submit`: true にするとエディタ終了時にファイルのハッシュが保存される。submit 時にハッシュが一致しないと失敗する（改ざん防止）
-  {{- else }}
-
-```yaml
----
-title: 'PRタイトル'
-steps:
-    submit: false
----
-```
-
-- `title`: PR のタイトル（submit 時に使用される）
-- `steps.submit`: true にするとエディタ終了時にファイルのハッシュが保存される。submit 時にハッシュが一致しないと失敗する（改ざん防止）
-  {{- end }}
-
-注意: Markdown のコードブロックにバッククォートを含める場合、シェルのクォートの種類によってエスケープが必要。
-
-```bash
-# double quote のときは \` でエスケープ
-echo "use \`gh\` command"
-
-# single quote のときは escape 不要
-echo 'use `gh` command'
-```
-
-## 2. 人間に PR の説明をレビューしてもらう
-
-`a ai pr-draft review` コマンドを **バックグラウンドで** (`run_in_background: true`) 実行して、ターミナルの新しいウィンドウで Neovim を開き、ユーザーに直接編集してもらう。このコマンドはエディタが閉じるまでブロックするため、完了通知が届いた時点でユーザーのレビューが終わったことを意味する。
-
-```bash
-a ai pr-draft review
-```
-
-**重要:** バックグラウンドコマンドの完了を待つこと。完了したら exit code を確認する: exit code 0 はユーザーが承認したことを示し、exit code 1 は未承認 (エディタを承認せず閉じた) を示し、exit code 2 はエディタが既に開いていることを示す。未承認の場合はユーザーに何を変更するか確認する。exit code 2 の場合はエディタが既に開いているので追加アクションは不要 — ユーザーにエディタ上でファイルを読み込み直すよう伝えるだけでよい (例: Neovim なら `:e`)。再度 review コマンドを実行したり、エディタを閉じるよう促してはならない。
+`a ai pr-draft review` を **バックグラウンドで** (`run_in_background: true`) 実行。完了を待ち、exit code で判断 (詳細は `rules/pr-draft-workflow.md`)。
 
 ## 3. ユーザーの指示に応じた対応
 
-ユーザーからの指示があったら、draft ファイルを読み込んで状態を確認し、以下のように対応する。
+draft ファイルを読み込んで状態を確認し、以下のように対応する。
 
-### 修正指示の場合（「fix」「修正」など）
+### 修正指示の場合
 
-**修正前に必ず ~/.claude/skills/create-pr/writing-guide.md を再読すること。** ドラフト新規作成時に読んでいても、修正時にはルールを忘れている可能性がある。
+**~/.claude/skills/create-pr/writing-guide.md を再読すること。** 修正対象のルールに該当する `rules/<ルール名>.md` も読んで詳細を確認。
 
-内容の修正のみを行う。**翻訳は行わない。**
-修正後は再度 `a ai pr-draft review` をバックグラウンドで (`run_in_background: true`) 実行し、完了を待つ。
+修正のみ行い、**翻訳は行わない**。修正後は再度 `a ai pr-draft review` をバックグラウンドで実行し、完了を待つ。
 {{- if $public }}
 
-### ドラフト承認後の翻訳（`steps.ready-for-translation: true` かつ日本語含む）
+### ドラフト承認後の翻訳 (`steps.ready-for-translation: true` かつ日本語含む)
 
-**重要:** public repo では翻訳は**必須**である。`steps.ready-for-translation` は「翻訳するかしないか」の選択ではなく、「ドラフトの内容が承認され、翻訳の準備ができたか」を示すフラグ。
+public repo では翻訳は**必須**。`steps.ready-for-translation: true` になったら:
 
-ユーザーがドラフトの内容を承認し、`steps.ready-for-translation: true` に変更した場合:
+1. `rules/translation.md` と `rules/english-writing.md` を読む
+2. title と body を英語に翻訳し、`steps.submit: false` に変更して保存
+3. `a ai pr-draft review` をバックグラウンドで実行し、完了を待つ
 
-1. title と body を英語に翻訳する
-2. `steps.submit: false` に変更する（翻訳によりハッシュが無効になるため）
-3. ファイルを上書き保存する
-4. 再度 `a ai pr-draft review` をバックグラウンドで (`run_in_background: true`) 実行して、ユーザーに翻訳内容を確認してもらう
-5. コマンドの完了を待つ (exit code 0 = 承認、exit code 1 = 未承認、exit code 2 = エディタが既に開いているので追加アクション不要。エディタで `:e` 等でファイルを読み込み直すよう伝え、リトライしない)
-
-翻訳時の注意事項は ~/.claude/skills/create-pr/public-repo-guide.md の「翻訳時の注意」セクションに従うこと。
-
-**注意:** すでに英語に翻訳済み（日本語が含まれていない）の場合は、再翻訳しない。
+すでに英語に翻訳済みの場合は再翻訳しない。
 {{- else }}
 
 ### Submit への進め方
@@ -187,36 +86,24 @@ a ai pr-draft review
 翻訳は不要。ユーザーが `steps.submit: true` にしたら submit に進む。
 {{- end }}
 
-## 4. `a ai pr-draft submit` で PR を作成・更新
+## 4. Submit
 
 ```bash
 a ai pr-draft submit [--base main]
 ```
 
-frontmatter の `title` が PR タイトルとして、body 部分が PR 本文として使用される。
-
-同じブランチに既存の PR がある場合、`submit` は新規作成ではなく既存 PR の title と body を更新する。既存 PR の更新時もこのコマンドをそのまま使用すること。
-
-**注意:** submit はユーザーがレビューを完了し承認済みの場合のみ成功する。失敗した場合はエラーメッセージをそのままユーザーに伝えること。
+既存 PR がある場合は title と body を更新する。submit はユーザーが承認済みの場合のみ成功する。
 {{- if $public }}
-
-- title と body に日本語が含まれていない
-  {{- end }}
-  {{- end }}
+title と body に日本語が含まれていないこと。
+{{- end }}
+{{- end }}
 
 ## {{ if $repo_specs }}2{{ else }}5{{ end }}. CI 実行を監視
 
-`gh pr checks --watch` コマンドを使用して CI チェックを監視します。
-CI が成功したら次のステップに進みます。失敗した場合は、問題を調査・修正して再度プッシュしてください。
+`gh pr checks --watch` で CI を監視。失敗した場合は調査・修正して再 push。
 {{- if $owner_fohte }}
 
 ## {{ if $repo_specs }}3{{ else }}6{{ end }}. Gemini Code Assist レビューを待機
 
-CI が成功したら、`a ai review wait` コマンドを使用して Gemini Code Assist のレビュー完了を待機します（初回レビューは PR 作成時に自動でリクエストされる）。
-
-```bash
-a ai review wait
-```
-
-レビューが完了したら、`check-pr-review` skill を使用してレビュー内容を確認し、指摘事項があれば対応してください。
+`a ai review wait` でレビュー完了を待機し、`check-pr-review` skill で指摘事項に対応。
 {{- end }}
