@@ -1,6 +1,6 @@
 ---
 name: pencil-design
-description: 'Guide for working with .pen files using the Pencil MCP server. Use this skill whenever designing, editing, or reviewing .pen files, working with the Pencil desktop app, or when the user mentions pencil, .pen files, or canvas design tasks. Also use when a .pen file is open in the editor or referenced in the conversation.'
+description: 'Guide for working with .pen files using the Pencil MCP server. TRIGGER when: about to call any mcp__pencil__* tool, designing/editing/reviewing .pen files, working with the Pencil desktop app, user mentions pencil/.pen files/canvas design tasks, or a .pen file is open in the editor or referenced in the conversation. IMPORTANT: This skill MUST be loaded BEFORE calling any mcp__pencil__* tool.'
 ---
 
 # Pencil Design
