@@ -59,7 +59,19 @@ local env(name) = std.extVar(name);
       'mcp__chrome-devtools__select_page',
       'mcp__chrome-devtools__wait_for',
 
+      // Google Analytics MCP
       'mcp__google-analytics',
+
+      // Google Search Console MCP
+      // read-only
+      'mcp__gsc__list_sites',
+      'mcp__gsc__search_analytics',
+      'mcp__gsc__enhanced_search_analytics',
+      'mcp__gsc__detect_quick_wins',
+      'mcp__gsc__list_sitemaps',
+      'mcp__gsc__get_sitemap',
+      'mcp__gsc__index_inspect',
+
       'mcp__context7',
       'mcp__qmd',
       'mcp__pencil',
