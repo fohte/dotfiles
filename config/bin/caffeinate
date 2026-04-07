@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# no-op caffeinate wrapper to prevent battery drain (workaround for https://github.com/anthropics/claude-code/issues/21432)
+
+echo "[caffeinate no-op]" >&2
+echo "Suppressed: caffeinate $*" >&2
+echo "" >&2
+echo "Why?" >&2
+echo "Claude Code spawns caffeinate to prevent sleep during tool execution," >&2
+echo "but this causes significant battery drain when multiple sessions are left running." >&2
+echo "See https://github.com/anthropics/claude-code/issues/21432" >&2
+
+exit 1
