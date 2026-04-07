@@ -7,6 +7,24 @@ mcpServers:
           command: uvx
           args:
               - analytics-mcp
+    # ahonn/mcp-server-gsc (npm package)
+    - gsc:
+          type: stdio
+          # sh -c to expand $HOME (MCP env doesn't do shell expansion)
+          command: sh
+          args:
+              - -c
+              # mcp-server-gsc requires GOOGLE_APPLICATION_CREDENTIALS explicitly
+              # (unlike analytics-mcp which falls back to ADC via google.auth.default())
+              #
+              # Setup:
+              #   1. Download OAuth 2.0 client secret JSON from:
+              #      Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs
+              #   2. Generate ADC with required scopes:
+              #      gcloud auth application-default login \
+              #        --scopes="https://www.googleapis.com/auth/analytics.readonly,https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/webmasters.readonly" \
+              #        --client-id-file=<path-to-client-secret.json>
+              - GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/gcloud/application_default_credentials.json npx -y mcp-server-gsc
 ---
 
 あなたは Google Analytics データの分析を行うエージェントです。
