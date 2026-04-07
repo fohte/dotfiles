@@ -34,24 +34,24 @@ render_template() {
     return 1
   fi
 
-  # Evaluate each variable command and build a YAML string
-  local vars_yaml=""
+  # Evaluate each variable command and build a JSON document
+  local vars_json="{}"
   while IFS= read -r key; do
     cmd=$(yq -r ".variables.\"$key\"" "$config")
     value=$(eval "$cmd" 2> /dev/null || true)
-    # If value looks like JSON object/array, inline it as-is for YAML parsing
+    # Parse JSON objects/arrays as structured data; keep everything else as strings
     if [[ "$value" =~ ^[\{\[] ]]; then
-      vars_yaml+="${key}: ${value}"$'\n'
+      vars_json=$(jq --arg k "$key" --argjson v "$value" '.[$k] = $v' <<< "$vars_json")
     else
-      vars_yaml+="${key}: ${value}"$'\n'
+      vars_json=$(jq --arg k "$key" --arg v "$value" '.[$k] = $v' <<< "$vars_json")
     fi
   done < <(yq -r '.variables | keys[]' "$config")
 
   local template
   template=$(yq -r '.template' "$config")
 
-  echo "$vars_yaml" | gomplate \
-    -d "vars=stdin:///vars.yaml" \
+  echo "$vars_json" | gomplate \
+    -d "vars=stdin:///vars.json" \
     -f "${template_dir}/${template}"
 }
 
@@ -66,10 +66,16 @@ case "$type" in
     if [[ -n "${2:-}" ]]; then
       render_template "${contexts_dir}/${2}"
     else
+      first=true
       for dir in "${contexts_dir}"/*/; do
         [[ -d "$dir" ]] || continue
         # Skip the skill/ subdirectory
         [[ "$(basename "$dir")" == "skill" ]] && continue
+        if [[ "$first" == true ]]; then
+          first=false
+        else
+          echo
+        fi
         render_template "$dir"
       done
     fi
