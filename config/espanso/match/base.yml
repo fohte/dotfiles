@@ -22,6 +22,9 @@ matches:
   - trigger: intsall
     replace: install
 
+  - trigger: calude
+    replace: claude
+
   # insert date the format such like `2024-01-01 (Sun)`
   # if clipboard has a date-like string, use it as a base date
   # otherwise, use today's date
