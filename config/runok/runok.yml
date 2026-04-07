@@ -4,6 +4,7 @@ extends:
   - 'github:fohte/runok-presets/base'
   - './common.yml'
   - './git.yml'
+  - './macos.yml'
   - './languages/rust.yml'
   - './languages/go.yml'
   - './languages/node.yml'
@@ -16,7 +17,6 @@ extends:
   - './tools/k8s.yml'
   - './tools/linters.yml'
   - './tools/terraform.yml'
-  - './tools/macos.yml'
   - './tools/misc.yml'
 
 defaults:
