@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Resolve dotfiles directory from this script's location, following symlinks.
+# This works even before `dot` is on PATH (initial deployment via `config/bin/dot deploy`).
+_dot_src="${BASH_SOURCE[0]}"
+while [ -L "$_dot_src" ]; do
+  _dot_dir="$(cd -P "$(dirname "$_dot_src")" && pwd)"
+  _dot_src="$(readlink "$_dot_src")"
+  [[ $_dot_src != /* ]] && _dot_src="$_dot_dir/$_dot_src"
+done
+_dot_bin_dir="$(cd -P "$(dirname "$_dot_src")" && pwd)"
+# dot lives at <DOTFILES_DIR>/config/bin/dot
+DOTFILES_DIR="$(cd -P "$_dot_bin_dir/../.." && pwd)"
+unset _dot_src _dot_dir
+
+# shellcheck source=config/bin/lib/deploy.bash disable=SC1091
+source "$_dot_bin_dir/lib/deploy.bash"
+
+usage() {
+  cat << EOS
+Usage: dot <command> [options...]
+
+Commands:
+    deploy    Deploy dotfiles symlinks
+    refresh   Refresh dotfiles and tools (pull, deploy, install, etc.)
+    path      Print the dotfiles directory path
+    help      Show this help message
+
+Deploy options:
+    --dry-run, -n    Show the commands to create symlinks
+    --force, -f      Re-deploy symlinks even if they already exist
+    --tags, -t       Deploy only the specified comma-separated tags (e.g. nvim,git)
+    --debug, -d      Enable debug output (set -x)
+EOS
+}
+
+cmd_deploy() {
+  # These variables are consumed by helpers in lib/deploy.bash and `symlinks`.
+  # shellcheck disable=SC2034
+  local tags="" DRYRUN="" FORCE=""
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --debug | -d)
+        set -x
+        shift
+        ;;
+      --dry-run | -n)
+        DRYRUN=1
+        shift
+        ;;
+      --force | -f)
+        FORCE=1
+        shift
+        ;;
+      --tags | -t)
+        tags="$(tr ',' '\n' <<< "$2")"
+        shift 2
+        ;;
+      -*)
+        echo "Error: invalid option '$1'" >&2
+        usage
+        exit 1
+        ;;
+    esac
+  done
+
+  cd "$DOTFILES_DIR"
+
+  # Run build steps for matching tags that have a Makefile
+  for dir in config/*/; do
+    tag="$(basename "$dir")"
+    if match_tag "$tag" && [ -f "$dir/Makefile" ]; then
+      log-exec make -C "$dir"
+    fi
+  done
+
+  # shellcheck disable=SC1091
+  source symlinks
+}
+
+cmd_refresh() {
+  cd "$DOTFILES_DIR"
+  mise run refresh "$@"
+}
+
+cmd_path() {
+  echo "$DOTFILES_DIR"
+}
+
+# --- main ---
+
+if [[ $# -eq 0 ]]; then
+  usage
+  exit 1
+fi
+
+command="$1"
+shift
+
+case "$command" in
+  deploy) cmd_deploy "$@" ;;
+  refresh) cmd_refresh "$@" ;;
+  path) cmd_path "$@" ;;
+  help | --help | -h) usage ;;
+  *)
+    echo "Error: unknown command '$command'" >&2
+    usage
+    exit 1
+    ;;
+esac

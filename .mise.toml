@@ -32,7 +32,7 @@ git submodule update --init --recursive
 [tasks."refresh:deploy"]
 description = "Deploy dotfiles symlinks"
 depends = ["refresh:pull"]
-run = "scripts/deploy"
+run = "dot deploy"
 
 [tasks."refresh:update-skk"]
 description = "Update SKK dictionary"

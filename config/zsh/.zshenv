@@ -62,7 +62,7 @@ path=(
   $path
 )
 
-export DOTPATH="$(dotpath)"
+export DOTPATH="$(dot path)"
 
 # `-R`: display ANSI color escape sequences in "raw" form
 # `-S`: disable line wrapping (Side-scroll to see long lines)

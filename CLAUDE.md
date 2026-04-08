@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### コアコンセプト
 
 - **シンボリックリンク管理**: `symlinks` ファイルが設定ソース (`config/*`) からシステムの宛先へのマッピングを定義
-- **タグベースデプロイ**: `scripts/deploy` スクリプトが `-t` オプションで選択的なデプロイをサポート
+- **タグベースデプロイ**: `dot deploy` コマンドが `-t` オプションで選択的なデプロイをサポート
 
 ### ファイルを追加・変更する際の注意
 

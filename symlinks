@@ -1,6 +1,6 @@
 #!/bin/bash
-# This script is called by `scripts/deploy` to create symlinks for configuration files.
-# Helper functions (`sym`, `match_tag`, etc.) are provided by `scripts/deploy`.
+# This script is sourced by `dot deploy` to create symlinks for configuration files.
+# Helper functions (`sym`, `match_tag`, etc.) are provided by the `dot` command.
 
 if match_tag bin; then
   sym config/bin ~/bin

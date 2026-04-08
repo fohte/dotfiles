@@ -38,18 +38,20 @@
 
 ## 🚀 Installation
 
-Clone the repository and run `scripts/deploy`:
+Clone the repository and run the `dot` command:
 
 ```bash
-git clone https://github.com/fohte/dotfiles ~/ghq/github.com/fohte/dotfiles && cd ~/ghq/github.com/fohte/dotfiles && git submodule update --init && scripts/deploy
+git clone https://github.com/fohte/dotfiles ~/ghq/github.com/fohte/dotfiles && cd ~/ghq/github.com/fohte/dotfiles && git submodule update --init && config/bin/dot deploy
 ```
+
+After the initial deployment, `dot` will be available on your `PATH` (via the `bin` symlink to `~/bin`).
 
 ### ✨ Updating
 
-Run the `refresh` command to update the dotfiles and upgrade packages:
+Run `dot refresh` to update the dotfiles and upgrade packages:
 
 ```bash
-refresh
+dot refresh
 ```
 
 This command automatically updates the SKK dictionary, Neovim plugins, mise tools, and more.
@@ -74,21 +76,21 @@ fi
 
 ### Deploy Script Options
 
-The [`scripts/deploy`](./scripts/deploy) script reads the [`symlinks`](./symlinks) file and supports various options to customize the deployment process:
+The `dot deploy` command reads the [`symlinks`](./symlinks) file and supports various options to customize the deployment process:
 
 - Deploy only specified configs:
     ```bash
-    scripts/deploy -t nvim,zsh
+    dot deploy -t nvim,zsh
     ```
 - Force deployment:
     ```bash
-    scripts/deploy -f
+    dot deploy -f
     ```
 - Dry run:
     ```bash
-    scripts/deploy -f -t nvim -n
+    dot deploy -f -t nvim -n
     ```
 - Enable debug mode:
     ```bash
-    scripts/deploy --debug
+    dot deploy --debug
     ```
