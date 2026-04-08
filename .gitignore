@@ -13,6 +13,9 @@
 # Local overrides for jsonnet configs (machine-specific, may contain secrets)
 *.local.jsonnet
 
+# Machine role (private or work). Managed via `dot role set`.
+/.role
+
 # Build artifacts
 /config/claude/settings.json
 /config/claude/mcp-servers.json

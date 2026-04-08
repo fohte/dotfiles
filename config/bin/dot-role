@@ -1,0 +1,238 @@
+#!/usr/bin/env bash
+# `dot role` - manage the machine role used to resolve overlay files.
+#
+# .role file format (single line, at the repository root):
+#   private
+#   work repo=fohte/wantedly-internal-settings
+#
+# Overlay resolution:
+#   private  -> <DOTFILES_DIR>/config/<tool>/<file>.private<ext>
+#   work     -> ~/ghq/github.com/<repo>/config-overlays/<tool>/<file>
+
+set -euo pipefail
+
+# Resolve DOTFILES_DIR from this script's location, following symlinks.
+_src="${BASH_SOURCE[0]}"
+while [ -L "$_src" ]; do
+  _dir="$(cd -P "$(dirname "$_src")" && pwd)"
+  _src="$(readlink "$_src")"
+  [[ $_src != /* ]] && _src="$_dir/$_src"
+done
+_bin_dir="$(cd -P "$(dirname "$_src")" && pwd)"
+# This script lives at <DOTFILES_DIR>/config/bin/dot-role
+DOTFILES_DIR="$(cd -P "$_bin_dir/../.." && pwd)"
+unset _src _dir _bin_dir
+
+ROLE_FILE="$DOTFILES_DIR/.role"
+
+usage() {
+  cat << EOS
+Usage: dot role <subcommand> [args...]
+
+Subcommands:
+    get [field]               Print the role name (default) or 'repo'
+    set <role> [repo=<r>]     Write .role (role: private | work)
+    overlay <path>            Print the overlay path for a dotfiles file (if any)
+
+Examples:
+    dot role set private
+    dot role set work repo=fohte/wantedly-internal-settings
+    dot role get
+    dot role get repo
+    dot role overlay config/zsh/.zshrc
+EOS
+}
+
+# Read .role into ROLE_NAME and ROLE_REPO. Returns 1 if missing/invalid.
+load_role() {
+  ROLE_NAME=""
+  ROLE_REPO=""
+
+  if [ ! -f "$ROLE_FILE" ]; then
+    return 1
+  fi
+
+  # Read the first non-empty, non-comment line.
+  local line
+  line="$(grep -v -E '^[[:space:]]*(#|$)' "$ROLE_FILE" | head -n 1)"
+
+  # shellcheck disable=SC2086
+  set -- $line
+  ROLE_NAME="${1:-}"
+  shift || true
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      repo=*) ROLE_REPO="${1#repo=}" ;;
+      *)
+        echo "error: unknown role field '$1' in $ROLE_FILE" >&2
+        return 1
+        ;;
+    esac
+    shift
+  done
+
+  case "$ROLE_NAME" in
+    private)
+      if [ -n "$ROLE_REPO" ]; then
+        echo "error: 'private' role does not accept repo=" >&2
+        return 1
+      fi
+      ;;
+    work)
+      if [ -z "$ROLE_REPO" ]; then
+        echo "error: 'work' role requires repo=<owner>/<name>" >&2
+        return 1
+      fi
+      ;;
+    "")
+      echo "error: $ROLE_FILE is empty" >&2
+      return 1
+      ;;
+    *)
+      echo "error: unknown role '$ROLE_NAME' in $ROLE_FILE" >&2
+      return 1
+      ;;
+  esac
+}
+
+cmd_get() {
+  local field="${1:-name}"
+  load_role
+  case "$field" in
+    name) echo "$ROLE_NAME" ;;
+    repo)
+      if [ -z "$ROLE_REPO" ]; then
+        return 1
+      fi
+      echo "$ROLE_REPO"
+      ;;
+    *)
+      echo "error: unknown field '$field' (expected: name, repo)" >&2
+      return 2
+      ;;
+  esac
+}
+
+cmd_set() {
+  local name="${1:-}"
+  shift || true
+
+  if [ -z "$name" ]; then
+    echo "error: role name is required" >&2
+    echo "usage: dot role set <private|work> [repo=<owner>/<name>]" >&2
+    return 2
+  fi
+
+  local repo=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      repo=*) repo="${1#repo=}" ;;
+      *)
+        echo "error: unknown argument '$1'" >&2
+        return 2
+        ;;
+    esac
+    shift
+  done
+
+  case "$name" in
+    private)
+      if [ -n "$repo" ]; then
+        echo "error: 'private' role does not accept repo=" >&2
+        return 2
+      fi
+      echo "private" > "$ROLE_FILE"
+      ;;
+    work)
+      if [ -z "$repo" ]; then
+        echo "error: 'work' role requires repo=<owner>/<name>" >&2
+        return 2
+      fi
+      echo "work repo=$repo" > "$ROLE_FILE"
+      ;;
+    *)
+      echo "error: unknown role '$name' (expected: private, work)" >&2
+      return 2
+      ;;
+  esac
+
+  echo "wrote $ROLE_FILE"
+}
+
+cmd_overlay() {
+  local input="${1:-}"
+  if [ -z "$input" ]; then
+    echo "error: overlay requires a path argument" >&2
+    return 2
+  fi
+
+  load_role
+
+  # Normalize input to a DOTFILES_DIR-relative path.
+  local rel
+  if [[ "$input" = /* ]]; then
+    case "$input" in
+      "$DOTFILES_DIR"/*) rel="${input#"$DOTFILES_DIR"/}" ;;
+      *)
+        echo "error: path '$input' is not under \$DOTFILES_DIR" >&2
+        return 2
+        ;;
+    esac
+  else
+    rel="$input"
+  fi
+
+  local overlay
+  case "$ROLE_NAME" in
+    private)
+      # foo/bar.ext -> foo/bar.private.ext
+      # Files starting with a dot (e.g. .zshrc) are treated as having no extension.
+      local dir base ext stem
+      dir="$(dirname "$rel")"
+      base="$(basename "$rel")"
+      if [[ "$base" == .* ]] || [[ "$base" != *.* ]]; then
+        stem="$base"
+        ext=""
+      else
+        stem="${base%.*}"
+        ext=".${base##*.}"
+      fi
+      if [ "$dir" = "." ]; then
+        overlay="$DOTFILES_DIR/${stem}.private${ext}"
+      else
+        overlay="$DOTFILES_DIR/$dir/${stem}.private${ext}"
+      fi
+      ;;
+    work)
+      overlay="$HOME/ghq/github.com/$ROLE_REPO/config-overlays/${rel#config/}"
+      ;;
+  esac
+
+  if [ -f "$overlay" ]; then
+    echo "$overlay"
+    return 0
+  fi
+  return 1
+}
+
+# --- main ---
+
+if [ $# -eq 0 ]; then
+  usage
+  exit 0
+fi
+
+sub="$1"
+shift
+case "$sub" in
+  get) cmd_get "$@" ;;
+  set) cmd_set "$@" ;;
+  overlay) cmd_overlay "$@" ;;
+  help | --help | -h) usage ;;
+  *)
+    echo "error: unknown subcommand '$sub'" >&2
+    usage >&2
+    exit 1
+    ;;
+esac

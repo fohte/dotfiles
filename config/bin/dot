@@ -24,6 +24,7 @@ Usage: dot <command> [options...]
 Commands:
     deploy    Deploy dotfiles symlinks
     refresh   Refresh dotfiles and tools (pull, deploy, install, etc.)
+    role      Manage the machine role (private/work) used to resolve overlays
     path      Print the dotfiles directory path
     help      Show this help message
 
@@ -37,7 +38,6 @@ EOS
 
 cmd_deploy() {
   # These variables are consumed by helpers in lib/deploy.bash and `symlinks`.
-  # shellcheck disable=SC2034
   local tags="" DRYRUN="" FORCE=""
 
   while [ $# -gt 0 ]; do
@@ -65,8 +65,20 @@ cmd_deploy() {
         ;;
     esac
   done
+  # shellcheck disable=SC2034  # consumed by lib/deploy.bash and `symlinks`
+  : "$tags" "$DRYRUN" "$FORCE"
 
   cd "$DOTFILES_DIR"
+
+  # Require .role to be set so overlay-aware tools (zsh, jsonnet builds, etc.) know
+  # which machine role to apply.
+  if ! "$_dot_bin_dir/dot-role" get > /dev/null 2>&1; then
+    echo "Error: machine role is not set." >&2
+    echo "Run one of the following before deploying:" >&2
+    echo "    dot role set private" >&2
+    echo "    dot role set work repo=<owner>/<name>" >&2
+    exit 1
+  fi
 
   # Run build steps for matching tags that have a Makefile
   for dir in config/*/; do
@@ -83,6 +95,10 @@ cmd_deploy() {
 cmd_refresh() {
   cd "$DOTFILES_DIR"
   mise run refresh "$@"
+}
+
+cmd_role() {
+  exec "$_dot_bin_dir/dot-role" "$@"
 }
 
 cmd_path() {
@@ -102,6 +118,7 @@ shift
 case "$command" in
   deploy) cmd_deploy "$@" ;;
   refresh) cmd_refresh "$@" ;;
+  role) cmd_role "$@" ;;
   path) cmd_path "$@" ;;
   help | --help | -h) usage ;;
   *)

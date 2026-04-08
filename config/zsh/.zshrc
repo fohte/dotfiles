@@ -27,6 +27,12 @@ import_rc 'prompt.rc.zsh'
 import_rc 'history.rc.zsh'
 import_rc 'misc.rc.zsh'
 
+# Role-specific overlay (private: in-repo, work: external repo). See `dot role`.
+if _zshrc_overlay="$(dot role overlay "$ZDOTDIR/.zshrc" 2> /dev/null)"; then
+  source "$_zshrc_overlay"
+fi
+unset _zshrc_overlay
+
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
 
 eval "$(starship init zsh)"

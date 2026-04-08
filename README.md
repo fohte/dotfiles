@@ -38,13 +38,42 @@
 
 ## 🚀 Installation
 
-Clone the repository and run the `dot` command:
+Clone the repository, set the machine role, and run the `dot` command:
 
 ```bash
-git clone https://github.com/fohte/dotfiles ~/ghq/github.com/fohte/dotfiles && cd ~/ghq/github.com/fohte/dotfiles && git submodule update --init && config/bin/dot deploy
+git clone https://github.com/fohte/dotfiles ~/ghq/github.com/fohte/dotfiles
+cd ~/ghq/github.com/fohte/dotfiles
+git submodule update --init
+config/bin/dot role set private   # or: dot role set work repo=<owner>/<name>
+config/bin/dot deploy
 ```
 
 After the initial deployment, `dot` will be available on your `PATH` (via the `bin` symlink to `~/bin`).
+
+### 🎭 Machine Roles
+
+`dot deploy` requires a machine role to be set so that overlay files (e.g. extra MCP
+servers, role-specific zsh tweaks) are merged into the right configs. The role is stored
+in the gitignored `.role` file at the repository root.
+
+| Role      | Overlay source                                                                  |
+| --------- | ------------------------------------------------------------------------------- |
+| `private` | `config/<tool>/<file>.private.<ext>` (in this repo, git-tracked)                |
+| `work`    | `~/ghq/github.com/<owner>/<name>/config-overlays/<tool>/<file>` (external repo) |
+
+```bash
+dot role set private
+dot role set work repo=<owner>/<name>
+
+dot role get          # print the current role
+dot role get repo     # print the repo (work only)
+dot role overlay config/zsh/.zshrc   # print the overlay path for a given file
+```
+
+Tools that consume the role:
+
+- `config/zsh/.zshenv` and `.zshrc` source `dot role overlay` outputs at the end.
+- `config/claude/Makefile` merges role overlays into `settings.json` / `mcp-servers.json`.
 
 ### ✨ Updating
 

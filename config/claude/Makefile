@@ -4,20 +4,27 @@ SHELL := bash
 # internally while leaving permission patterns as-is, so patterns must also be NFC.
 export OBSIDIAN_VAULT_PATH := $(shell obsidian vault name=obsidian-v2 info=path | iconv -f UTF-8-MAC -t UTF-8 | sed "s|^$$HOME|~|")
 
-# Build a jsonnet file, merging with a .local.jsonnet overlay if it exists.
-# The local overlay can use +: syntax for deep merging (e.g. permissions+: { allow+: [...] }).
-# External variables referenced via env('VAR_NAME') are auto-detected from source files
+# Build a jsonnet file, merging role and local overlays if they exist.
+# Layers (each can use +: syntax for deep merging, e.g. permissions+: { allow+: [...] }):
+#   1. base (the .jsonnet file passed as argument)
+#   2. role overlay (resolved via `dot role overlay`):
+#      - private: <DOTFILES_DIR>/config/claude/<file>.private.jsonnet
+#      - work:    ~/ghq/github.com/<repo>/config-overlays/claude/<file>.jsonnet
+#   3. local overlay: <file>.local.jsonnet (gitignored, for secrets/machine-only tweaks)
+# External variables referenced via env('VAR_NAME') are auto-detected from all layers
 # and passed as --ext-str flags (jsonnet reads them from environment variables).
 # usage: $(call jsonnet,<base.jsonnet>)
 define jsonnet
 $(strip \
+	role_overlay=$$(dot role overlay $(CURDIR)/$(1) 2>/dev/null || true); \
+	local_overlay=$(wildcard $(basename $(1)).local.jsonnet); \
+	import_expr='(import "$(1)")'; \
+	[ -n "$$role_overlay" ] && import_expr="$$import_expr"' + (import "'"$$role_overlay"'")'; \
+	[ -n "$$local_overlay" ] && import_expr="$$import_expr"' + (import "'"$$local_overlay"'")'; \
 	mise x -- jsonnet \
-		$$(grep -oh "env('[^']*')" $(1) $(wildcard $(basename $(1)).local.jsonnet) \
+		$$(grep -oh "env('[^']*')" $(1) $$role_overlay $$local_overlay 2>/dev/null \
 			| sort -u | sed "s/env('\\(.*\\)')/--ext-str \\1/") \
-		$(if $(wildcard $(basename $(1)).local.jsonnet), \
-			-e '(import "$(1)") + (import "$(basename $(1)).local.jsonnet")', \
-			$(1) \
-		) \
+		-e "$$import_expr" \
 )
 endef
 
