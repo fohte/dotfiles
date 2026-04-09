@@ -122,19 +122,50 @@ EOF
 
 ### 直接マージの場合
 
-マージ前に `gh pr checks` で CI が全て通っていることを確認する。CI が通っていない PR は絶対にマージしない。
+マージ前に `gh pr checks --watch --fail-fast` で CI が全て通るのを待つ。CI が通っていない PR は絶対にマージしない。
 
 ```bash
-gh pr checks <number>
+gh pr checks <number> --watch --fail-fast
 ```
 
-CI が通っていれば squash merge する。複数 PR をマージする場合は 1 つずつ順番にマージする (前の PR のマージで conflict が発生する可能性があるため)。
+CI が通っていれば squash merge する。fohte org のリポジトリでは branch protection により `--auto` が必須なので、最初から `--auto` を付けて実行すること。`--auto` なしで `gh pr merge` を呼ぶと "the base branch policy prohibits the merge" で失敗する。
 
 ```bash
-gh pr merge <number> --squash
+gh pr merge <number> --squash --auto
 ```
 
-マージ後、**main ブランチの CI が全て通ることを確認**してから次の PR のマージに進む (`gh run watch` で待機する)。base が変わったことで Renovate がリベースする場合は、リベース完了と PR の CI パスも待つ。
+`--auto` を指定すると、必要な checks が満たされた瞬間に自動でマージされる。直前に `gh pr checks --watch` で待機しているので即座にマージが完了するはず。マージ後は `gh pr view <number> --json state,mergedAt` で `MERGED` を確認する。
+
+複数 PR をマージする場合は 1 つずつ順番にマージする (前の PR のマージで conflict が発生する可能性があるため)。
+
+マージ後、**main ブランチの CI が全て通ることを確認**してから次の PR のマージに進む。
+
+```bash
+# main の最新 Test ワークフローを取得して watch
+gh run list --branch main --limit 3 --workflow Test --json databaseId,status,conclusion \
+  --jq '.[] | "\(.databaseId)\t\(.status)\t\(.conclusion // "-")"'
+gh run watch <run-id> --exit-status --interval 10
+```
+
+#### Renovate のリベース待ち (重要)
+
+base ブランチが進むと、その PR が触っているファイル (例: `pnpm-lock.yaml`, `Cargo.lock`) と競合して `gh pr view --json mergeable,mergeStateStatus` が `CONFLICTING` / `DIRTY` を返すことがある。
+
+**この時点で慌てて手動操作してはならない。** Renovate は base 更新を webhook で検知し、通常 1-2 分以内に自動的にリベースして新しい commit を push する。以下の手順で待つこと:
+
+1. mergeable 状態を一度確認する: `gh pr view <number> --json mergeable,mergeStateStatus`
+2. `CONFLICTING` / `DIRTY` だった場合は、何もせず 60-120 秒待ってからもう一度確認する
+3. `MERGEABLE` / `CLEAN` になったら次の手順 (`gh pr checks --watch --fail-fast`) に進む
+4. リベース後は新しい commit に対して CI が走り直すので、改めて `--watch` で完了を待つ
+
+**禁止事項** (やりがちな雑な対応):
+
+- `@renovatebot rebase` メンションコメントを付ける (Renovate が反応する保証がない上、自動リベースが既に進行中なら無駄)
+- PR body の `<!-- rebase-check -->` チェックボックスを手動でチェックする
+- `git rebase` してローカルから force push する (Renovate との関連が壊れる)
+- `--admin` フラグでマージを強行する
+
+`gh pr view` は GitHub の mergeability チェックがまだ走っていないと `UNKNOWN` を返すことがある。その場合は数秒待ってもう一度呼ぶこと。
 
 ### 委任の場合 (コード修正が必要 / 複数 PR の統合)
 
@@ -147,3 +178,4 @@ gh pr merge <number> --squash
 - **Renovate ブランチで直接作業する**: 新しいブランチを作ると Renovate PR との関連が切れる
 - **CI 確認を必ず行う**: push 後に CI が通ることを確認してから merge する
 - **PR 間の依存関係を考慮した順序で処理する**: 例えば、ベースライブラリを先に merge してから plugin を merge する
+- **conflict を見ても手動操作しない**: 上の「Renovate のリベース待ち」セクションを参照。Renovate に任せて待つ
