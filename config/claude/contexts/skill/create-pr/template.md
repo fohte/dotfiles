@@ -59,6 +59,8 @@ echo "## Why
 
 `a ai pr-draft review` を **バックグラウンドで** (`run_in_background: true`) 実行。完了を待ち、exit code で判断 (詳細は `rules/pr-draft-workflow.md`)。
 
+**polling 禁止**: バックグラウンドで起動した後は `<task-notification>` の完了通知が届くまで何もしないこと。`while` ループ・`sleep` ループ・出力ファイルの繰り返し読み取りで進捗を確認してはならない。通知が届いてから出力ファイルを 1 回だけ読む。これは `a ai pr-draft review` だけでなく、`a ai review wait` や `gh pr checks --watch` など本スキル内のすべてのバックグラウンドコマンドに共通するルール。
+
 ## 3. ユーザーの指示に応じた対応
 
 draft ファイルを読み込んで状態を確認し、以下のように対応する。
