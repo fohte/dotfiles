@@ -39,7 +39,7 @@ rules:
     tests:
       - deny: 'git rebase origin/main'
       - deny: 'git rebase origin/master'
-  - deny: 'git [-C *] pull --no-rebase'
+  - deny: 'git [-C *] pull --no-rebase *'
     message: 'Blocked to prevent unintended merge commits'
     fix_suggestion: 'git pull --rebase'
     tests:
