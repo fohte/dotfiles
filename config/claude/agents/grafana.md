@@ -1,6 +1,6 @@
 ---
 name: grafana
-description: Grafana のダッシュボード、メトリクス (Prometheus/Loki/ClickHouse/CloudWatch/Elasticsearch)、ログ、Pyroscope プロファイル、On-Call、Incident、Sift 調査などを横断して読み取り・分析する。本番監視やトラブルシューティング時に使用。
+description: Grafana MCP (mcp-grafana) 経由でダッシュボード、メトリクス (Prometheus/Loki/ClickHouse/CloudWatch/Elasticsearch)、ログ、Pyroscope、On-Call、Incident、Sift 調査などを読み取り・分析する。親セッションに Grafana MCP が見えなくてもこの agent 経由で利用可能。
 mcpServers:
     - grafana:
           # https://github.com/grafana/mcp-grafana

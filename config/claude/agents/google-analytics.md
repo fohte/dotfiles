@@ -1,6 +1,6 @@
 ---
 name: google-analytics
-description: Google Analytics のデータを分析する。GA4 のレポート実行、リアルタイムデータ取得、アカウント情報の確認などに使用。
+description: Google Analytics MCP (analytics-mcp) と Google Search Console MCP (mcp-server-gsc) 経由で GA4 レポート・リアルタイムデータ・GSC のパフォーマンスデータを取得・分析する。親セッションに GA / GSC MCP が見えなくてもこの agent 経由で利用可能。
 mcpServers:
     - google-analytics:
           type: stdio
