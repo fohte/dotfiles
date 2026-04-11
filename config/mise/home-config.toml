@@ -42,6 +42,7 @@
 "aqua:mozilla/sccache" = "0.13.0"
 "npm:@mermaid-js/mermaid-cli" = "latest"
 "github:ast-grep/ast-grep" = "0.42.0"
+"aqua:suzuki-shunsuke/pinact" = "3.9.0"
 
 [settings]
 # disable the idiomatic version file such as Gemfile
