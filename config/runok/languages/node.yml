@@ -56,7 +56,7 @@ rules:
   - allow: 'nr [-C|--filter *] build|build:*|build-* *'
   - allow: 'nr [-C|--filter *] format|format:* *'
   - allow: 'nr [-C|--filter *] lint|lint:* *'
-  - allow: 'nr [-C|--filter *] test|test:*|typecheck *'
+  - allow: 'nr [-C|--filter *] vitest|test|test:*|typecheck *'
     tests:
       - allow: 'nr test'
       - allow: 'nr test:type'

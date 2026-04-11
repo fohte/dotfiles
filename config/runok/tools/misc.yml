@@ -53,3 +53,11 @@ rules:
 
   - deny: obsidian append *
     message: 'Use write/update tool'
+
+  - allow: pinact run *
+
+  - allow: mise ls|where|which *
+  - allow: mise config get *
+
+  - allow: conftest verify *
+  - allow: conftest test *
