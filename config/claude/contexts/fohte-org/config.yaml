@@ -1,5 +1,5 @@
 variables:
   remote: git remote get-url origin
   repo_name: git remote get-url origin | sed 's#.*/##; s#\.git$##'
-  repo_note: repo_name=$(git remote get-url origin | sed 's#.*/##; s#\.git$##') && obsidian files vault=obsidian-v2 2>/dev/null | grep -qx "notes/inbox/${repo_name}.md" && obsidian read file="$repo_name" vault=obsidian-v2 2>/dev/null | sed '/^---$/,/^---$/d' || true
+  repo_note: repo_name=$(git remote get-url origin | sed 's#.*/##; s#\.git$##') && out=$(obsidian vault=obsidian-v2 read file="$repo_name" 2>/dev/null) && [[ "$out" != Error:* ]] && printf '%s\n' "$out" | sed '/^---$/,/^---$/d' || true
 template: template.md
