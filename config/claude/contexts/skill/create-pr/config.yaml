@@ -2,5 +2,19 @@ variables:
   repo: gh repo view --json name,visibility,owner --jq .
   has_release_please: 'root=$(git rev-parse --show-toplevel) && [ -f "$root/release-please-config.json" -o -f "$root/.release-please-manifest.json" ] && echo true || echo false'
   repo_language: a config get repo.language
+  pr_template: |
+    root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+    for p in \
+      ".github/PULL_REQUEST_TEMPLATE.md" \
+      ".github/pull_request_template.md" \
+      "PULL_REQUEST_TEMPLATE.md" \
+      "pull_request_template.md" \
+      "docs/PULL_REQUEST_TEMPLATE.md" \
+      "docs/pull_request_template.md"; do
+      if [ -f "$root/$p" ]; then
+        cat "$root/$p"
+        exit 0
+      fi
+    done
 
 template: template.md

@@ -4,6 +4,7 @@
 {{- $owner_fohte := eq $v.repo.owner.login "fohte" -}}
 {{- $repo_specs := eq $v.repo.name "specs" -}}
 {{- $release_please := eq (conv.ToString $v.has_release_please) "true" -}}
+{{- $has_pr_template := ne (conv.ToString $v.pr_template) "" -}}
 
 # Create PR
 
@@ -41,6 +42,27 @@ EOF
 ```
 
 {{- else }}
+{{- if $has_pr_template }}
+
+**以下の PR template のセクション構造に従うこと。**
+
+```markdown
+{{ $v.pr_template }}
+```
+
+ルール:
+
+- 上記 template の見出し構造をそのまま踏襲し、各セクションを埋める
+- コメント指示 (`<!-- ... -->`) はドラフトから削除する
+- writing-guide.md の **基本ルールとセクション内部の書き方** (コードはバッククォート、根拠には引用+出典、What not How、具体例の提示など) は template の全セクションに適用する。Why/What の見出し固定や「Why/What のみ記述」といったセクション構造に関するルールは template の構造に置き換わる
+
+```bash
+cat <<'EOF' | a ai pr-draft new --title "PRタイトル"
+<template の構造に従ったドラフト本文>
+EOF
+```
+
+{{- else }}
 
 ```bash
 echo "## Why
@@ -52,6 +74,8 @@ echo "## Why
 - <変更の効果を簡潔に>
   - <技術的原因があれば子要素として補足>" | a ai pr-draft new --title "PRタイトル"
 ```
+
+{{- end }}
 
 ドラフトは `/tmp/pr-body-draft/<owner>/<repo>/<branch>.md` に作成される。以降のコマンドではパス指定不要。
 
