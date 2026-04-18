@@ -2,9 +2,10 @@
 
 rules:
   # install (use ni)
-  - allow: 'ni'
+  - allow: 'ni [--frozen-lockfile]'
     tests:
       - allow: 'ni'
+      - allow: 'ni --frozen-lockfile'
       - ask: 'ni -D typescript'
 
   # enforce ni -E (exact pinning) in fohte's repos
