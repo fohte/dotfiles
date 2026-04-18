@@ -1,0 +1,74 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+definitions:
+  vars:
+    obsidian-readonly:
+      values:
+        - read
+        - file
+        - files
+        - folder
+        - folders
+        - backlinks
+        - links
+        - orphans
+        - deadends
+        - unresolved
+        - tag
+        - tags
+        - aliases
+        - properties
+        - outline
+        - tasks
+        - bookmarks
+        - recents
+        - diff
+        - plugin
+        - plugins
+        - theme
+        - themes
+        - snippets
+        - templates
+        - vault
+        - vaults
+        - workspace
+        - tabs
+        - commands
+        - hotkey
+        - hotkeys
+        - bases
+        - version
+        - help
+
+rules:
+  - allow: obsidian vault=* <var:obsidian-readonly> *
+    tests:
+      - allow: obsidian vault=obsidian-v2 read note.md
+      - allow: obsidian vault=obsidian-v2 tasks
+      - allow: obsidian vault=obsidian-v2 plugins
+      - ask: obsidian vault=obsidian-v2 plugin:enable id=x
+
+  # readonly suffix patterns (e.g. property:read, daily:path, base:views)
+  - allow: obsidian vault=* *:read|*:list|*:path|*:views|*:query|*:context|*:enabled *
+    tests:
+      - allow: obsidian vault=obsidian-v2 property:read name=x
+      - allow: obsidian vault=obsidian-v2 daily:read
+      - allow: obsidian vault=obsidian-v2 history:list
+      - allow: obsidian vault=obsidian-v2 daily:path
+      - allow: obsidian vault=obsidian-v2 base:views
+      - allow: obsidian vault=obsidian-v2 base:query
+      - allow: obsidian vault=obsidian-v2 search:context query=x
+      - allow: obsidian vault=obsidian-v2 plugins:enabled
+      - ask: obsidian vault=obsidian-v2 daily:append content=x
+
+  - allow: obsidian vault=* search|search:* *
+    tests:
+      - allow: obsidian vault=obsidian-v2 search foo
+      - deny: obsidian search foo
+
+  - allow: obsidian vault=* create *
+
+  - deny: obsidian append *
+    message: 'Use write/update tool'
+  - deny: obsidian !vault=* !help *
+    message: 'Specify vault=<name> as the first argument'

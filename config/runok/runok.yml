@@ -16,6 +16,7 @@ extends:
   - './tools/gcloud.yml'
   - './tools/k8s.yml'
   - './tools/linters.yml'
+  - './tools/obsidian.yml'
   - './tools/terraform.yml'
   - './tools/misc.yml'
 

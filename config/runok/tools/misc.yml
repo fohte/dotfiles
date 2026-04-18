@@ -45,23 +45,6 @@ rules:
 
   - allow: nlx @marp-team/marp-cli@latest *
 
-  # obsidian
-  - allow: obsidian vault=* search|search:* *
-    tests:
-      - allow: obsidian vault=obsidian-v2 search foo
-      - ask: obsidian search foo
-  - allow: obsidian vault=* read|backlinks|links|tag|tags|vault|files *
-    tests:
-      - allow: obsidian vault=obsidian-v2 read note.md
-      - ask: obsidian read note.md
-  - allow: obsidian vault=* create *
-  - allow: obsidian help *
-
-  - deny: obsidian append *
-    message: 'Use write/update tool'
-  - deny: obsidian !vault=* !help *
-    message: 'Specify vault=<name> as the first argument'
-
   - allow: pinact run *
 
   - allow: mise ls|where|which *
