@@ -16,12 +16,19 @@
 
 ## 1. PR body のドラフトを作成する
 
-**まず ~/.claude/skills/create-pr/writing-guide.md を読み込むこと。** ルール一覧に従い、違反しそうなルールは `rules/<ルール名>.md` で詳細を確認。
-{{- if $release_please }}
-**また `~/.claude/skills/create-pr/rules/title-conventional-commits.md` も読み込むこと。** このリポジトリは release-please を使用しているため、Conventional Commits 形式を使用する。
-{{- else }}
-**また `~/.claude/skills/create-pr/rules/title-simple-format.md` も読み込むこと。** このリポジトリは release-please を使用していないため、シンプルなタイトル形式を使用する。
-{{- end }}
+**ドラフトを書き始める前に、以下のファイルを必ず全て読むこと。** 「違反しそうなものだけ」「概要だけ」で済ませてはならない。概要表からは、どのルールが今回の変更に効いてくるかを事前に判断することはできない (自分で違反に気づけないからルール集が存在する)。ルールを読まずに書いたドラフトは、ユーザーから「ながすぎ」「内訳が多い」等の差し戻しを受けてから読み直すことになり、ユーザーに同じ指摘を繰り返し書かせる結果になる。
+
+必読ファイル:
+
+- `~/.claude/skills/create-pr/writing-guide.md` (概要表)
+- writing-guide.md の「Why セクション」「What セクション」の表に列挙されている `rules/<ルール名>.md` を**全て**
+  {{- if $release_please }}
+- `~/.claude/skills/create-pr/rules/title-conventional-commits.md` (このリポジトリは release-please を使用しているため、Conventional Commits 形式を使用する)
+  {{- else }}
+- `~/.claude/skills/create-pr/rules/title-simple-format.md` (このリポジトリは release-please を使用していないため、シンプルなタイトル形式を使用する)
+  {{- end }}
+
+**効率化のため、これらは並列で Read すること。** writing-guide.md を読んでから個別ルールを読むのではなく、writing-guide.md に列挙されているルール名は既知なので、最初から全ファイルを一括で並列読み込みする。
 
 ドラフトは **常に日本語で書くこと**。
 {{- if $repo_specs }}
@@ -97,7 +104,7 @@ echo "## Why
 
 ### 修正指示の場合
 
-**~/.claude/skills/create-pr/writing-guide.md を再読すること。** 修正対象のルールに該当する `rules/<ルール名>.md` も読んで詳細を確認。
+**~/.claude/skills/create-pr/writing-guide.md と、そこに列挙されている Why/What の全 `rules/<ルール名>.md` を再読すること。** 差し戻しは「自分が事前に違反に気づけなかったルール」に起因している可能性が高く、指摘対象と思い込んだルールだけ読むと別のルール違反を見逃す。Step 1 と同様、最初から全ファイルを並列読み込みすること。
 
 修正のみ行い、**翻訳は行わない**。ユーザーが本文に書き込んだコメント行は、対応後に削除してから保存する。修正後は再度 `a ai pr-draft review` をバックグラウンドで実行し、完了を待つ。
 {{- if $public }}
