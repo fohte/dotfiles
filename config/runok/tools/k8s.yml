@@ -5,3 +5,29 @@ rules:
   - ask: 'kubectl get secrets *'
 
   - allow: 'helm get|show|list *'
+
+  - allow: 'helmfile [-l|--selector *] [-f|--file *] [-e|--environment *] [-n|--namespace *] [--kube-context *] [--kubeconfig *] build|deps|diff|fetch|lint|list|print-env|repos|show-dag|status|template|version *'
+    tests:
+      - allow: 'helmfile template'
+      - allow: 'helmfile diff'
+      - allow: 'helmfile deps'
+      - allow: 'helmfile lint'
+      - allow: 'helmfile list'
+      - allow: 'helmfile status'
+      - allow: 'helmfile version'
+      - allow: 'helmfile --selector name=alloy template'
+      - allow: 'helmfile --selector name=github-exporter template --skip-deps'
+      - allow: 'helmfile -f kubernetes/helmfile.yaml --selector name=alloy template'
+      - allow: 'helmfile --selector name=alloy diff'
+      - allow: 'helmfile --debug template'
+      # `apply` / `sync` / `destroy` mutate the cluster.
+      - ask: 'helmfile apply'
+      - ask: 'helmfile --selector name=alloy apply'
+      - ask: 'helmfile sync'
+      - ask: 'helmfile destroy'
+      # `init` installs helm plugins locally.
+      - ask: 'helmfile init'
+      # `test` runs test pods on the cluster (not read-only).
+      - ask: 'helmfile test'
+      # `write-values` writes values files to arbitrary paths.
+      - ask: 'helmfile write-values'
