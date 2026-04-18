@@ -96,10 +96,26 @@ Review comment body
 
 For each thread:
 
-- **Threads addressed with code changes**: Change `- [ ] resolve` to `- [x] resolve`. Add a draft reply: `Fixed in <commit-hash>.` where `<commit-hash>` is the short hash of the commit that addressed the comment. If the fix involved additional context worth mentioning, append a brief explanation after the period (e.g., `Fixed in abc1234. Switched to using X instead of Y as suggested.`).
-- **"Won't fix" threads**: Add a draft reply as plain text after the last `<!-- /comment -->` line, AND change `- [ ] resolve` to `- [x] resolve`.
+- **Reply position (applies to every thread type below)**: Draft replies MUST be written as plain text on a new line **after the thread's last `<!-- /comment -->` line**. Never insert the reply between `<!-- thread: ... -->` and `<!-- diff -->`, or directly under the `- [ ] resolve` / `- [x] resolve` line — that position belongs to the checkbox only and the reply will not be picked up correctly.
+- **Threads addressed with code changes**: Change `- [ ] resolve` to `- [x] resolve`, then append a draft reply `Fixed in <commit-hash>.` after the last `<!-- /comment -->` line, where `<commit-hash>` is the short hash of the commit that addressed the comment. If the fix involved additional context worth mentioning, append a brief explanation after the period (e.g., `Fixed in abc1234. Switched to using X instead of Y as suggested.`).
+- **"Won't fix" threads**: Change `- [ ] resolve` to `- [x] resolve`, then append a draft reply after the last `<!-- /comment -->` line explaining why the concern does not apply.
 - **Threads that should remain open**: Leave as-is.
 - Do NOT resolve threads from Devin (Devin auto-resolves its own threads).
+
+Example of the correct reply position:
+
+<!-- prettier-ignore -->
+```markdown
+<!-- thread: RT_abc123 path: src/main.rs:42 -->
+- [x] resolve
+<!-- diff -->
+...
+<!-- /diff -->
+<!-- comment: @reviewer 2024-01-15T10:30:00Z -->
+Review comment body
+<!-- /comment -->
+Fixed in abc1234. Switched to using X as suggested.
+```
 
 ### Step 3: Review the edited file
 
