@@ -86,6 +86,8 @@ echo "## Why
 
 ドラフトは `/tmp/pr-body-draft/<owner>/<repo>/<branch>.md` に作成される。以降のコマンドではパス指定不要。
 
+**書き終えたら `a ai pr-draft new` 実行前にセルフチェックを必ず行うこと。** writing-guide.md と `rules/<ルール名>.md` を開き、自分の書いたドラフトの各行がどのルールに違反していないか 1 行ずつ照合する。特に `what-no-implementation-breakdown` (内訳の列挙)、`why-symptoms-only` (技術的原因の混入)、サブバレットによる詳細補足は違反を見逃しやすい。「ルールを読んだ = 違反していない」ではない。書いた後に照合しないと、事前に読んだルールが頭から抜けた状態でそのまま提出してしまう。
+
 ## 2. レビュー
 
 `a ai pr-draft review` を **バックグラウンドで** (`run_in_background: true`) 実行。完了を待ち、exit code で判断 (詳細は `rules/pr-draft-workflow.md`)。
