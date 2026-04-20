@@ -127,9 +127,15 @@ title と body に日本語が含まれていないこと。
 ## {{ if $repo_specs }}2{{ else }}5{{ end }}. CI 実行を監視
 
 `gh pr checks --watch` で CI を監視。失敗した場合は調査・修正して再 push。
-{{- if $owner_fohte }}
+{{ if $owner_fohte }}
 
 ## {{ if $repo_specs }}3{{ else }}6{{ end }}. Gemini Code Assist レビューを待機
 
-`a ai review wait` でレビュー完了を待機し、`check-pr-review` skill で指摘事項に対応。
-{{- end }}
+`a ai review wait` でレビュー完了を待機する。
+{{ end }}
+
+## {{ if $repo_specs }}{{ if $owner_fohte }}4{{ else }}3{{ end }}{{ else }}{{ if $owner_fohte }}7{{ else }}6{{ end }}{{ end }}. レビューコメントを確認して対応する
+
+**CI や bot のチェックが `pass` でも、レビューコメントが付いていることがある。CI pass = レビュー指摘なし ではない。** submit 後は必ず `/check-pr-review` skill を実行し、CodeRabbit / Devin / Gemini Code Assist 等の自動レビュー、および人間のレビュアーからのコメントを確認して対応すること。
+
+`check-pr-review` skill の中断・省略は禁止。「指摘がなさそうだから」「CI が通ったから」といった判断で skip してはならない。
