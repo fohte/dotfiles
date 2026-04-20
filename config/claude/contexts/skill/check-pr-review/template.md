@@ -107,6 +107,8 @@ Run `a gh pr-review reply review <pr-number>` **in background** (`run_in_backgro
 
 **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved the draft, exit code 1 means not approved (user closed without approving), exit code 2 means the editor is already open. If not approved, ask the user what to change. If already open (exit code 2), inform the user that the editor is already open and they can reload the file in their editor (e.g., `:e` in Neovim). Do NOT retry the command.
 
+**NEVER edit the `submit:` frontmatter field yourself.** The `submit: true` flag represents the human reviewer's approval of the drafted replies. It MUST only be set by the user via the `reply review` workflow (Step 3). Do not flip `submit: false` to `submit: true` to bypass the editor step, even if `push` fails with "File has been modified after approval". If approval is invalidated, re-run `reply review` and let the user re-approve — never edit the frontmatter to shortcut the flow.
+
 ### Step 4: Push replies and resolutions to GitHub
 
 ```bash
