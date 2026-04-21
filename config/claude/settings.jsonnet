@@ -74,93 +74,9 @@ local env(name) = std.extVar(name);
 
       // Grafana MCP (used by the `grafana` subagent)
       // https://github.com/grafana/mcp-grafana
-      // Allowed: read-only operations, dashboard/annotation writes (recoverable),
-      // and Sift investigation kicks (no production side effects).
-      // NOT allowed (left to per-call confirmation): create_incident,
-      // add_activity_to_incident, alerting_manage_rules, alerting_manage_routing.
-      // admin (read)
-      'mcp__grafana__list_teams',
-      'mcp__grafana__list_users_by_org',
-      'mcp__grafana__list_all_roles',
-      'mcp__grafana__get_role_details',
-      'mcp__grafana__get_role_assignments',
-      'mcp__grafana__list_user_roles',
-      'mcp__grafana__list_team_roles',
-      'mcp__grafana__get_resource_permissions',
-      'mcp__grafana__get_resource_description',
-      // search / dashboards
-      'mcp__grafana__search_dashboards',
-      'mcp__grafana__get_dashboard_by_uid',
-      'mcp__grafana__get_dashboard_panel_queries',
-      'mcp__grafana__get_dashboard_property',
-      'mcp__grafana__get_dashboard_summary',
-      'mcp__grafana__run_panel_query',
-      'mcp__grafana__update_dashboard',
-      'mcp__grafana__patch_dashboard',
-      // datasources (read)
-      'mcp__grafana__list_datasources',
-      'mcp__grafana__get_datasource',
-      'mcp__grafana__get_query_examples',
-      // prometheus
-      'mcp__grafana__query_prometheus',
-      'mcp__grafana__query_prometheus_histogram',
-      'mcp__grafana__list_prometheus_metric_metadata',
-      'mcp__grafana__list_prometheus_metric_names',
-      'mcp__grafana__list_prometheus_label_names',
-      'mcp__grafana__list_prometheus_label_values',
-      // loki
-      'mcp__grafana__query_loki_logs',
-      'mcp__grafana__query_loki_stats',
-      'mcp__grafana__query_loki_patterns',
-      'mcp__grafana__list_loki_label_names',
-      'mcp__grafana__list_loki_label_values',
-      // clickhouse
-      'mcp__grafana__list_clickhouse_tables',
-      'mcp__grafana__describe_clickhouse_table',
-      'mcp__grafana__query_clickhouse',
-      // cloudwatch
-      'mcp__grafana__list_cloudwatch_namespaces',
-      'mcp__grafana__list_cloudwatch_metrics',
-      'mcp__grafana__list_cloudwatch_dimensions',
-      'mcp__grafana__query_cloudwatch',
-      // elasticsearch
-      'mcp__grafana__query_elasticsearch',
-      // logs (search)
-      'mcp__grafana__search_logs',
-      // incident (read)
-      'mcp__grafana__list_incidents',
-      'mcp__grafana__get_incident',
-      // sift (read + safe writes that just kick off an investigation job)
-      'mcp__grafana__list_sift_investigations',
-      'mcp__grafana__get_sift_investigation',
-      'mcp__grafana__get_sift_analysis',
-      'mcp__grafana__find_error_pattern_logs',
-      'mcp__grafana__find_slow_requests',
-      // oncall (read)
-      'mcp__grafana__list_oncall_schedules',
-      'mcp__grafana__get_oncall_shift',
-      'mcp__grafana__get_current_oncall_users',
-      'mcp__grafana__list_oncall_teams',
-      'mcp__grafana__list_oncall_users',
-      'mcp__grafana__list_alert_groups',
-      'mcp__grafana__get_alert_group',
-      // pyroscope
-      'mcp__grafana__list_pyroscope_label_names',
-      'mcp__grafana__list_pyroscope_label_values',
-      'mcp__grafana__list_pyroscope_profile_types',
-      'mcp__grafana__fetch_pyroscope_profile',
-      // asserts
-      'mcp__grafana__get_assertions',
-      // navigation
-      'mcp__grafana__generate_deeplink',
-      // annotations
-      'mcp__grafana__get_annotations',
-      'mcp__grafana__get_annotation_tags',
-      'mcp__grafana__create_annotation',
-      'mcp__grafana__update_annotation',
-      'mcp__grafana__patch_annotation',
-      // rendering
-      'mcp__grafana__get_panel_image',
+      // Service account is Viewer role, so write operations are blocked at the
+      // Grafana API level regardless of MCP tool permissions.
+      'mcp__grafana',
 
       'mcp__context7',
       'mcp__qmd',
