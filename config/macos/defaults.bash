@@ -76,6 +76,9 @@ apply com.apple.dock tilesize -int 1
 # Auto-hide
 apply com.apple.dock autohide -bool true
 
+# Disable bouncing animation on notifications
+apply com.apple.dock no-bouncing -bool true
+
 # -- Keyboard --
 
 # Fastest key repeat
