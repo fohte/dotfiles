@@ -137,66 +137,63 @@ a gh issue-agent push <issue-number> --allow-delete
 
 ## Sub-issues and Parent Issue
 
-`a gh issue-agent` supports managing GitHub Sub-issues via the [Sub-issues API](https://docs.github.com/en/rest/issues/sub-issues). Sub-issues and parent issue relationships are managed through `metadata.json` frontmatter fields.
+`a gh issue-agent` supports managing GitHub Sub-issues via the [Sub-issues API](https://docs.github.com/en/rest/issues/sub-issues). Sub-issues and parent issue relationships are expressed via frontmatter fields in `issue.md`.
 
 ### Frontmatter fields
 
-When you `pull` an issue, `metadata.json` includes:
+The keys are camelCase (NOT snake_case):
 
-- `sub_issues`: array of issue references that are sub-issues of this issue
-- `parent_issue`: the parent issue reference if this issue is a sub-issue
+- `subIssues`: array of issue references that are sub-issues of this issue
+- `parentIssue`: the parent issue reference if this issue is a sub-issue
 
-Reference format: `owner/repo#number` (e.g., `org/my-repo#42`)
+Reference format: `owner/repo#number` (e.g., `org/my-repo#42`). Using wrong-cased keys like `parent_issue` or `sub_issues` in `issue.md` frontmatter is silently ignored on push.
 
-Example `metadata.json` with sub-issues:
+Frontmatter lives in `issue.md` (YAML), not in `metadata.json`. A `metadata.json` file may also exist but is not the source of truth for these fields.
 
-```json
-{
-  "title": "Parent task",
-  "labels": [],
-  "sub_issues": ["org/repo#10", "org/repo#20"],
-  "parent_issue": "org/repo#5",
-  "readonly": { ... }
-}
+Example `issue.md` frontmatter with a parent issue:
+
+```yaml
+---
+title: Sub-task
+labels: []
+assignees: []
+parentIssue: org/repo#5
+---
 ```
+
+### Known limitation: `init issue` does not include sub-issue / parent-issue keys
+
+The boilerplate produced by `a gh issue-agent init issue` omits `subIssues` and `parentIssue`. Adding `parentIssue` there does NOT currently attach the new issue to its parent on push (it may be silently dropped, depending on the tool version). Do not rely on `init issue` frontmatter to set the parent link on creation.
+
+### Recommended workflow for linking sub-issues
+
+Because creation-time linking is unreliable, link after creation by editing the PARENT issue:
+
+1. Create the sub-issue normally (without `parentIssue` in `init issue` frontmatter).
+2. `a gh issue-agent pull <parent-number>`.
+3. Edit `issue.md` frontmatter of the parent: add the new sub-issue reference to `subIssues`.
+4. Review and push the parent.
+
+This is the only reliably working path observed so far.
 
 ### How it works
 
 - **pull**: Sub-issues are automatically fetched via REST API (`GET /repos/{owner}/{repo}/issues/{number}/sub_issues`). Parent issue is fetched via GraphQL (`parent` field).
-- **push**: Diffs are computed between local and remote state. Changes are applied via the Sub-issues API:
+- **push**: Diffs are computed between local and remote state for `subIssues` / `parentIssue`. Changes are applied via the Sub-issues API:
     - Adding a sub-issue: `POST /repos/{owner}/{repo}/issues/{parent_number}/sub_issues` with `{ "sub_issue_id": <id> }`
     - Removing a sub-issue: `DELETE /repos/{owner}/{repo}/issues/{parent_number}/sub_issue` with `{ "sub_issue_id": <id> }`
     - Changing parent issue: removes from old parent, adds to new parent (by manipulating the parent's sub-issue list)
 - The API uses internal issue IDs (not issue numbers). `a gh issue-agent` resolves issue numbers to IDs automatically via `GET /repos/{owner}/{repo}/issues/{number}`.
 
-### Usage examples
+### Verification
 
-**Add a sub-issue to an existing issue:**
+After pushing a parent/child link, verify it actually landed:
 
-1. `a gh issue-agent pull 100`
-2. Edit `metadata.json`: add `"org/repo#42"` to the `sub_issues` array
-3. Review and push as usual
-
-**Set a parent issue:**
-
-1. `a gh issue-agent pull 42`
-2. Edit `metadata.json`: set `"parent_issue": "org/repo#100"`
-3. Review and push as usual
-
-**Create an issue with sub-issues:**
-
-In the `issue.md` frontmatter for a new issue, include:
-
-```markdown
----
-title: Parent task
-labels: []
-assignees: []
-sub_issues:
-    - org/repo#10
-    - org/repo#20
----
+```bash
+gh api "repos/<owner>/<repo>/issues/<parent-number>/sub_issues" --jq '.[] | {number, title, state}'
 ```
+
+An empty result means the link was not created, even if `push` reported success.
 
 ## Absolute Rules
 
