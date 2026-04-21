@@ -102,6 +102,7 @@ config/
 ├── editorconfig/            # EditorConfig 設定
 ├── gnupg/                   # GnuPG 設定
 ├── ime/                     # IME の汎用的な設定
+├── macos/                   # macOS defaults 一括適用スクリプト (Dock、Trackpad、Keyboard など)
 ├── prettier/                # Prettier 設定
 ├── rg/                      # ripgrep 設定
 ├── rubocop/                 # RuboCop 設定
