@@ -1,9 +1,14 @@
 return {
   'numToStr/Comment.nvim',
   event = { 'BufReadPost', 'BufNewFile' },
-  requires = {
+  dependencies = {
     'JoosepAlviste/nvim-ts-context-commentstring',
   },
+  init = function()
+    -- Skip context-commentstring's backwards-compat autocommand that expects
+    -- nvim-treesitter's module system (removed on the main branch).
+    vim.g.skip_ts_context_commentstring_module = true
+  end,
   config = function()
     require('Comment').setup({
       pre_hook = function()
