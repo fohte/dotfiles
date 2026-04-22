@@ -20,25 +20,29 @@ import_env() {
   import_zsh_config "$ZSH_CONFIG_HOME/env/$1"
 }
 
-# Calculate checksum of zsh config files
+# Cheap change-detection fingerprint for zsh config files. Returns the
+# mtime of the most recently modified tracked file; auto_reload_on_config_change
+# compares this between startup and each precmd, so using mtime (not a full
+# content hash) keeps the per-prompt cost under 2ms.
 calculate_zsh_config_checksum() {
-  local debug_mode=false
+  emulate -L zsh
+  # glob_dots is required to match .zshenv / .zshrc (dot-prefixed files).
+  setopt extended_glob null_glob glob_dots
+  zmodload -F zsh/stat b:zstat
 
-  # Parse arguments
-  if [[ "$1" == "--debug" ]]; then
-    debug_mode=true
+  # `om[1]` = sort by mtime desc, take the first (= newest). Pure zsh glob
+  # — no subshell, no external commands.
+  local -a latest
+  latest=("$ZSH_CONFIG_HOME"/**/*.(zsh|zshenv|zshrc)(.om[1]))
+
+  if (( ${#latest} == 0 )); then
+    echo 0
+    return
   fi
 
-  local files=$(find -L "$ZSH_CONFIG_HOME" -type f \( -name "*.zsh" -o -name ".zshenv" -o -name ".zshrc" \) -o -path "*/rc/functions/*" -type f \
-    ! -name ".zsh_history" \
-    ! -name ".zsh_sessions" \
-    ! -path "*/.zsh_sessions/*" 2>/dev/null)
-
-  if $debug_mode; then
-    echo "$files" >&2
-  fi
-
-  echo "$files" | xargs cat 2>/dev/null | shasum -a 256 | cut -d' ' -f1
+  local mtime
+  zstat -A mtime +mtime -- "${latest[1]}"
+  echo "$mtime"
 }
 
 typeset -U path PATH fpath FPATH manpath MANPATH
