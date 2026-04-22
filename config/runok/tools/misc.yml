@@ -1,5 +1,14 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
+definitions:
+  wrappers:
+    # Treat `nlx --package <pkg> -c '<shell-string>'` as a wrapper so the
+    # shell string inside the quotes is recursively evaluated against the
+    # normal rules. Without this, the quoted token is opaque and a single
+    # glob in the allow pattern would swallow arbitrary shell metacharacters
+    # (e.g. `;`, `&&`), turning the rule into an RCE.
+    - 'nlx --package * -c <cmd>'
+
 rules:
   # armyknife
   - allow: 'a ai draft *'
@@ -52,3 +61,21 @@ rules:
 
   - allow: conftest verify *
   - allow: conftest test *
+
+  # Renovate (debug-renovate skill).
+  # `nlx --package renovate -c '<cmd>'` is routed through the
+  # `nlx --package * -c <cmd>` wrapper above, so the shell string inside the
+  # quotes is recursively evaluated as a normal command.
+  - allow: 'renovate-dryrun *'
+    tests:
+      - allow: 'renovate-dryrun'
+      - allow: 'renovate-dryrun --branch feature/x'
+      - allow: 'renovate-dryrun --raw'
+  - allow: 'renovate-config-validator *'
+    tests:
+      - allow: 'renovate-config-validator renovate.json5'
+      - allow: "nlx --package renovate -c 'renovate-config-validator renovate.json5'"
+      # Wrapper expands the quoted shell string, so command injection in `-c`
+      # falls through to the `rm -rf *` deny rule in common.yml.
+      - deny: "nlx --package renovate -c 'rm -rf /'"
+      - deny: "nlx --package renovate -c 'renovate-config-validator renovate.json5; rm -rf /'"
