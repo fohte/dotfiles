@@ -43,6 +43,7 @@
 "npm:@mermaid-js/mermaid-cli" = "latest"
 "github:ast-grep/ast-grep" = "0.42.0"
 "aqua:suzuki-shunsuke/pinact" = "3.9.0"
+"aqua:tree-sitter/tree-sitter" = "0.26.8"
 
 [settings]
 # disable the idiomatic version file such as Gemfile
