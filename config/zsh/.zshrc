@@ -11,7 +11,17 @@ import_rc() {
   import_zsh_config "$ZSH_CONFIG_HOME/rc/$1"
 }
 
-autoload -Uz compinit && compinit -u
+# Skip fpath rescan if .zcompdump was updated within the last 24h
+autoload -Uz compinit
+() {
+  setopt local_options extended_glob
+  local zcompdump="${ZDOTDIR:-$HOME}/.zcompdump"
+  if [[ -f $zcompdump && -z $zcompdump(#qN.mh+24) ]]; then
+    compinit -C -u -d "$zcompdump"
+  else
+    compinit -u -d "$zcompdump"
+  fi
+}
 autoload -Uz colors; colors
 
 if ! [ -d ~/.zinit ]; then
