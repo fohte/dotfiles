@@ -22,7 +22,8 @@ zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
 zinit ice wait'0c' lucid atinit'zicompinit; zicdreplay'
 zinit light zsh-users/zsh-syntax-highlighting
 
-# zsh-vimode-visual: must load before vimode.rc.zsh binds keys to `vivis` keymap
+# zsh-vimode-visual: deferred; `vivis` keymap bindings are applied via atload'
+zinit ice wait'1' lucid atload'source $ZSHRC_ROOT/bindkey/vimode-visual.rc.zsh'
 zinit light b4b4r07/zsh-vimode-visual
 
 zinit ice wait'1' lucid pick'*.plugin.zsh'

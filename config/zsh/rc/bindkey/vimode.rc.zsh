@@ -27,8 +27,5 @@ for m in visual viopp; do
   done
 done
 
-bindkey -M vivis 'sa ' vi-visual-surround-space
-bindkey -M vivis 'sa"' vi-visual-surround-dquote
-bindkey -M vivis "sa'" vi-visual-surround-squote
-bindkey -M vivis 'sa(' vi-visual-surround-parenthesis
-bindkey -M vivis 'sa)' vi-visual-surround-parenthesis
+# `vivis` keymap bindings live in bindkey/vimode-visual.rc.zsh — loaded
+# via zinit's atload' ice after zsh-vimode-visual finishes deferred load.
