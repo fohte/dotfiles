@@ -1,16 +1,27 @@
-# for Linuxbrew (Homebrew on Linux)
-if [ -d "$HOME/.linuxbrew" ]; then
-  eval "$("$HOME/.linuxbrew/bin/brew" shellenv)"
-fi
+# Cache `brew shellenv` output to avoid spawning brew on every shell start.
+# Invalidated when the brew binary is newer than the cache.
+() {
+  local brew_bin
+  if [[ -f /opt/homebrew/bin/brew ]]; then
+    brew_bin=/opt/homebrew/bin/brew
+  elif [[ -x "$HOME/.linuxbrew/bin/brew" ]]; then
+    brew_bin="$HOME/.linuxbrew/bin/brew"
+  else
+    return
+  fi
 
-# for Homebrew (macOS)
-if [ -f /opt/homebrew/bin/brew ]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/brew-shellenv.zsh"
+  if [[ ! -s $cache || $brew_bin -nt $cache ]]; then
+    mkdir -p "${cache:h}"
+    "$brew_bin" shellenv > "$cache"
+  fi
+  source "$cache"
+}
 
 ! has brew && return 0
 
-brew_prefix="$(brew --prefix)"
+# HOMEBREW_PREFIX is exported by `brew shellenv`; avoid spawning `brew --prefix`
+brew_prefix="${HOMEBREW_PREFIX:-$(brew --prefix)}"
 
 fpath=(
   "$ZSH_CONFIG_HOME"/rc/functions(N-/)
