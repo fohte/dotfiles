@@ -34,12 +34,14 @@ end
 return {
   {
     'williamboman/mason.nvim',
+    cmd = { 'Mason', 'MasonInstall', 'MasonUpdate', 'MasonUninstall', 'MasonLog' },
     config = function()
       require('mason').setup()
     end,
   },
   {
     'williamboman/mason-lspconfig.nvim',
+    event = { 'BufReadPre', 'BufNewFile' },
     dependencies = {
       { 'williamboman/mason.nvim' },
       { 'neovim/nvim-lspconfig' },
@@ -312,6 +314,7 @@ return {
   },
   {
     'https://git.sr.ht/~whynothugo/lsp_lines.nvim',
+    event = 'LspAttach',
     config = function()
       require('lsp_lines').setup()
 
@@ -325,8 +328,14 @@ return {
   },
   {
     'aznhe21/actions-preview.nvim',
-    config = function()
-      vim.keymap.set({ 'v', 'n' }, 'ga', require('actions-preview').code_actions)
-    end,
+    keys = {
+      {
+        'ga',
+        function()
+          require('actions-preview').code_actions()
+        end,
+        mode = { 'n', 'v' },
+      },
+    },
   },
 }

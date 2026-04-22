@@ -1,6 +1,7 @@
 return {
   'fohte/octo.nvim',
   branch = 'fohte/conceallevel',
+  cmd = 'Octo',
   config = function()
     require('octo').setup({
       mappings_disable_default = true,

@@ -1,5 +1,5 @@
 return {
-  { 'kana/vim-textobj-user' },
+  { 'kana/vim-textobj-user', lazy = true },
   {
     'rhysd/vim-textobj-ruby',
     dependencies = { 'kana/vim-textobj-user' },
@@ -8,6 +8,12 @@ return {
   {
     'kana/vim-textobj-indent',
     dependencies = { 'kana/vim-textobj-user' },
+    keys = {
+      { 'ai', mode = { 'o', 'x' } },
+      { 'ii', mode = { 'o', 'x' } },
+      { 'aI', mode = { 'o', 'x' } },
+      { 'iI', mode = { 'o', 'x' } },
+    },
   },
   {
     'glts/vim-textobj-comment',
@@ -28,10 +34,15 @@ return {
   {
     'osyo-manga/vim-textobj-blockwise',
     dependencies = { 'kana/vim-textobj-user' },
+    event = 'VeryLazy',
   },
   {
     'sgur/vim-textobj-parameter',
     dependencies = { 'kana/vim-textobj-user' },
+    keys = {
+      { 'i,', mode = { 'o', 'x' } },
+      { 'a,', mode = { 'o', 'x' } },
+    },
   },
   {
     'thinca/vim-textobj-between',

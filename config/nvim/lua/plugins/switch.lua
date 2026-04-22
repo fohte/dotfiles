@@ -1,5 +1,6 @@
 return {
   'AndrewRadev/switch.vim',
+  keys = { { '_', mode = 'n' } },
   init = function()
     vim.g.switch_mapping = '_'
 

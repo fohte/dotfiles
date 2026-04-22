@@ -1,5 +1,6 @@
 return {
   'mvllow/modes.nvim',
+  event = 'VeryLazy',
   dependencies = {
     'RRethy/nvim-base16',
   },

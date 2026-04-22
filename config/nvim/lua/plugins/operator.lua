@@ -1,5 +1,5 @@
 return {
-  { 'kana/vim-operator-user' },
+  { 'kana/vim-operator-user', lazy = true },
   {
     'kana/vim-operator-replace',
     dependencies = { 'kana/vim-operator-user' },
