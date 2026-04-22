@@ -25,7 +25,7 @@
 "aqua:junegunn/fzf" = "0.61.1"
 "aqua:dandavison/delta" = "0.18.2"
 "aqua:mikefarah/yq" = "4.52.2"
-"vfox:mise-plugins/vfox-neovim" = "0.11.2"
+"vfox:mise-plugins/vfox-neovim" = "0.12.1"
 "asdf:mise-plugins/mise-eza" = "0.23.4"
 "aqua:starship/starship" = "1.23.0"
 "aqua:BurntSushi/ripgrep" = "14.1.1"
