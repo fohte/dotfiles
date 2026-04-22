@@ -80,10 +80,15 @@ cmd_deploy() {
     exit 1
   fi
 
-  # Run build steps for matching tags that have a Makefile
+  # Run build steps for matching tags that have a Makefile.
+  # With --force, run `make clean` first so the build starts from a clean state
+  # (e.g. bypassing drift checks that compare against previously-installed artifacts).
   for dir in config/*/; do
     tag="$(basename "$dir")"
     if match_tag "$tag" && [ -f "$dir/Makefile" ]; then
+      if is_force && make -C "$dir" -n clean > /dev/null 2>&1; then
+        log-exec make -C "$dir" clean
+      fi
       log-exec make -C "$dir"
     fi
   done
