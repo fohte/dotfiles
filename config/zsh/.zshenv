@@ -3,6 +3,8 @@
 export ZSH_CONFIG_HOME="$HOME/.config/zsh"
 export ZSHRC_ROOT="$ZSH_CONFIG_HOME/rc"
 
+source "$ZSH_CONFIG_HOME/lib/cache.zsh"
+
 import_zsh_config() {
   local source_file="$1"
 
@@ -105,7 +107,11 @@ import_env 'mise.zsh'
 import_env 'fzf.zsh'
 
 # direnv hook must be loaded after homebrew.zsh because direnv is installed by homebrew
-has 'direnv' && eval "$(direnv hook zsh)"
+() {
+  local direnv_bin
+  direnv_bin="$(command -v direnv)" || return
+  cache_source direnv-hook "$direnv_bin" -- "$direnv_bin" hook zsh
+}
 
 # Calculate initial checksum of zsh config files
 export ZSH_CONFIG_CHECKSUM=$(calculate_zsh_config_checksum)

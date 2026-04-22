@@ -6,4 +6,8 @@ autoload -U +X bashcompinit && bashcompinit
 complete -C "$(which aws_completer)" aws
 
 # armyknife (a command)
-eval "$(a completions zsh)"
+() {
+  local a_bin
+  a_bin="$(command -v a)" || return
+  cache_source a-completions "$a_bin" -- "$a_bin" completions zsh
+}

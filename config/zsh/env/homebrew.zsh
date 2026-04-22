@@ -10,12 +10,7 @@
     return
   fi
 
-  local cache="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/brew-shellenv.zsh"
-  if [[ ! -s $cache || $brew_bin -nt $cache ]]; then
-    mkdir -p "${cache:h}"
-    "$brew_bin" shellenv > "$cache"
-  fi
-  source "$cache"
+  cache_source brew-shellenv "$brew_bin" -- "$brew_bin" shellenv
 }
 
 ! has brew && return 0

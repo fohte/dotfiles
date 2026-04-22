@@ -45,4 +45,8 @@ unset _zshrc_overlay
 
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
 
-eval "$(starship init zsh)"
+() {
+  local starship_bin
+  starship_bin="$(command -v starship)" || return
+  cache_source starship-init "$starship_bin" -- "$starship_bin" init zsh
+}
