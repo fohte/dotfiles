@@ -15,4 +15,8 @@ if [ -n "$TMUX" ]; then
 fi
 
 
-source <(fzf --zsh)
+() {
+  local fzf_bin
+  fzf_bin="$(command -v fzf)" || return
+  cache_source fzf-zsh "$fzf_bin" -- "$fzf_bin" --zsh
+}
