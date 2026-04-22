@@ -72,7 +72,9 @@ dot role overlay config/zsh/.zshrc   # print the overlay path for a given file
 
 Tools that consume the role:
 
-- `config/zsh/.zshenv` and `.zshrc` source `dot role overlay` outputs at the end.
+- `config/zsh/.zshenv` and `.zshrc` source role overlays via symlinks at
+  `~/.config/zsh/.zshenv.overlay` / `~/.config/zsh/.zshrc.overlay`. The
+  symlinks are created by `dot deploy`, so re-run it after changing the role.
 - `config/claude/Makefile` merges role overlays into `settings.json` / `mcp-servers.json`.
 
 ### ✨ Updating

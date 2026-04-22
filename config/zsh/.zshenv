@@ -109,10 +109,8 @@ import_env 'fzf.zsh'
 # Calculate initial checksum of zsh config files
 export ZSH_CONFIG_CHECKSUM=$(calculate_zsh_config_checksum)
 
-# Role-specific overlay (private: in-repo, work: external repo). See `dot role`.
-if _zshenv_overlay="$(dot role overlay "$ZSH_CONFIG_HOME/.zshenv" 2> /dev/null)"; then
-  source "$_zshenv_overlay"
-fi
-unset _zshenv_overlay
+# Role-specific overlay (private: in-repo, work: external repo). The symlink
+# is pre-resolved by `dot deploy` to avoid shelling out to `dot role` here.
+[ -f "$ZSH_CONFIG_HOME/.zshenv.overlay" ] && source "$ZSH_CONFIG_HOME/.zshenv.overlay"
 
 [ -f ~/.local/.zshenv ] && source ~/.local/.zshenv

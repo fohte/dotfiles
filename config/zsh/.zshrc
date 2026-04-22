@@ -37,11 +37,9 @@ import_rc 'prompt.rc.zsh'
 import_rc 'history.rc.zsh'
 import_rc 'misc.rc.zsh'
 
-# Role-specific overlay (private: in-repo, work: external repo). See `dot role`.
-if _zshrc_overlay="$(dot role overlay "$ZDOTDIR/.zshrc" 2> /dev/null)"; then
-  source "$_zshrc_overlay"
-fi
-unset _zshrc_overlay
+# Role-specific overlay (private: in-repo, work: external repo). The symlink
+# is pre-resolved by `dot deploy` to avoid shelling out to `dot role` here.
+[ -f "$ZDOTDIR/.zshrc.overlay" ] && source "$ZDOTDIR/.zshrc.overlay"
 
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
 

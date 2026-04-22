@@ -70,3 +70,19 @@ match_tag() {
 
   grep -q -F "$tag" <<< "$tags"
 }
+
+# Resolve a role overlay for <src> and symlink it at <dst>, so runtime
+# consumers can `source <dst>` instead of spawning `dot role overlay`.
+# If no overlay is defined for the current role, <dst> is removed so a
+# stale symlink from a previous role doesn't linger.
+sym_role_overlay() {
+  local src="$1"
+  local dst="$2"
+  local overlay
+
+  if overlay="$("$DOTFILES_DIR/config/bin/dot-role" overlay "$DOTFILES_DIR/$src" 2> /dev/null)"; then
+    sym "$overlay" "$dst"
+  elif [ -L "$dst" ] || [ -e "$dst" ]; then
+    log-exec rm -f "$dst"
+  fi
+}

@@ -38,6 +38,11 @@ if match_tag zsh; then
   sym config/zsh/root_zshenv ~/.zshenv
   sym config/zsh ~/.config/zsh
   sym config/zsh/starship.toml ~/.config/starship.toml
+
+  # Pre-resolve role overlays at deploy time so shell startup doesn't
+  # shell out to `dot role overlay` (~15-20ms per invocation).
+  sym_role_overlay config/zsh/.zshenv ~/.config/zsh/.zshenv.overlay
+  sym_role_overlay config/zsh/.zshrc ~/.config/zsh/.zshrc.overlay
 fi
 
 if match_tag tmux; then
