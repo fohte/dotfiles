@@ -10,14 +10,17 @@ Test Renovate configuration changes locally with the `renovate-dryrun` command. 
 ## Usage
 
 ```bash
+# Allocate a unique log path first so parallel sessions don't clobber each other
+LOG=$(mktemp /tmp/renovate-dryrun.XXXXXX.log)
+
 # Basic usage (token is optional; falls back to gh-token command)
-renovate-dryrun > .z/renovate-dryrun.log
+renovate-dryrun > "$LOG"
 
 # Test specific branch (defaults to current branch)
-renovate-dryrun --branch feature/update-deps > .z/renovate-dryrun.log
+renovate-dryrun --branch feature/update-deps > "$LOG"
 
 # Debug mode with raw Renovate output
-renovate-dryrun --raw > .z/renovate-debug.log
+renovate-dryrun --raw > "$LOG"
 ```
 
 The output displays proposed updates in this format:
@@ -37,6 +40,6 @@ The output displays proposed updates in this format:
     # Validate renovate.json5 in current directory
     npx --package renovate -c 'renovate-config-validator renovate.json5'
     ```
-- You SHOULD save output to `.z/` since the command takes time and produces extensive output.
+- You SHOULD save output to a unique path under `/tmp/` (e.g. `mktemp /tmp/renovate-dryrun.XXXXXX.log`) since the command takes time and produces extensive output. Do not use a fixed filename — parallel sessions would overwrite each other.
 - Token is optional. The script falls back to the `gh-token` command automatically. Do NOT require `--token` or `$GH_TOKEN` unless the user explicitly provides one.
 - Push is NOT required before running dry-run. The command reads the local `renovate.json5` directly.
