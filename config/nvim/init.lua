@@ -7,25 +7,21 @@
 --                        \/            \/    @Fohte
 ------------------------------------------------------------
 
+-- Enable the Lua module bytecode cache (:help vim.loader.enable()). Must be
+-- called before any require() so plugin loads hit the cache on warm starts.
+vim.loader.enable()
+
 if vim.fn.has('vim_starting') == 0 and vim.opt.encoding ~= 'utf-8' then
   vim.opt.encoding = 'utf-8'
 end
 
--- disable python2
-vim.g.python_host_prog = ''
-
-if vim.fn.executable('mise') == 1 then
-  -- Use a stable python for neovim, not a project-specific one. This avoids
-  -- issues where pynvim is not installed for a project's python version.
-  -- We mimic the old pyenv logic by finding the latest installed python version
-  -- and forcing mise to use it for Neovim's python host.
-  local latest_python =
-    vim.fn.trim(vim.fn.system('mise ls python --installed | grep "^  python" | awk \'{print $2}\' | sort -V | tail -1'))
-  if vim.v.shell_error == 0 and latest_python ~= '' then
-    vim.env.MISE_PYTHON_VERSION = latest_python
-  end
-  vim.g.python3_host_prog = vim.fn.trim(vim.fn.system('mise which python'))
-end
+-- Remote plugin providers are disabled: pynvim / neovim-node are not installed
+-- and no active plugin uses them. Re-enable by removing the relevant line and
+-- installing the corresponding host package (e.g. `pip install pynvim`).
+vim.g.loaded_python3_provider = 0
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_node_provider = 0
 
 vim.env.CACHE = vim.fn.expand('~/.cache')
 if vim.fn.isdirectory(vim.env.CACHE) == 0 then
