@@ -106,13 +106,6 @@ import_env 'mise.zsh'
 # fzf is installed by mise, so fzf.zsh must be loaded after mise.zsh
 import_env 'fzf.zsh'
 
-# direnv hook must be loaded after homebrew.zsh because direnv is installed by homebrew
-() {
-  local direnv_bin
-  direnv_bin="$(command -v direnv)" || return
-  cache_source direnv-hook "$direnv_bin" -- "$direnv_bin" hook zsh
-}
-
 # Calculate initial checksum of zsh config files
 export ZSH_CONFIG_CHECKSUM=$(calculate_zsh_config_checksum)
 
