@@ -51,10 +51,8 @@ definitions:
 
 tests:
   cases:
-    # Existing form: `mise x -- <cmd>` with no TOOL@VERSION args.
     - allow: 'mise x -- ls /tmp'
     - allow: 'mise exec -- ls /tmp'
-    # New form: `mise x TOOL@VERSION... -- <cmd>` with tool args before `--`.
     - allow: 'mise x jq -- ls /tmp'
     - allow: 'mise exec jq -- ls /tmp'
     - allow: 'mise x node@20 -- ls /tmp'
