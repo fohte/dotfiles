@@ -38,6 +38,9 @@ rules:
   - allow: 'lefthook run *'
     tests:
       - allow: 'lefthook run pre-commit'
+  - allow: 'lefthook validate'
+    tests:
+      - allow: 'lefthook validate'
   - allow: 'mise run test *'
 
   # tmux (read-only)

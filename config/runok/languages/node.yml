@@ -8,6 +8,11 @@ rules:
       - allow: 'ni --frozen-lockfile'
       - ask: 'ni -D typescript'
 
+  # clean install (use nci)
+  - allow: 'nci'
+    tests:
+      - allow: 'nci'
+
   # enforce ni -E (exact pinning) in fohte's repos
   - allow: 'ni -E *'
     when: "env.PWD.startsWith('/Users/fohte/ghq/github.com/fohte/')"
