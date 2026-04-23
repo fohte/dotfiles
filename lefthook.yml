@@ -1,20 +1,3 @@
-<<<<<<< before updating
-remotes:
-  - git_url: https://github.com/fohte/lefthook-config.git
-    ref: v0.1.16 # renovate: datasource=github-tags depName=fohte/lefthook-config
-    configs:
-      - base.yml
-
-pre-commit:
-  commands:
-    stylua:
-      glob: '*.lua'
-      run: mise x stylua -- stylua {staged_files} && git add {staged_files}
-
-    generate-dvorakjp-rule:
-      glob: 'config/aquaskk/romaji.jsonnet'
-      run: make -C config/aquaskk && git add -u
-=======
 pre-commit:
   commands:
     format:
@@ -71,8 +54,15 @@ pre-commit:
           esac
         done
 
+    stylua:
+      glob: '*.lua'
+      run: mise x stylua -- stylua {staged_files} && git add {staged_files}
+
+    generate-dvorakjp-rule:
+      glob: 'config/aquaskk/romaji.jsonnet'
+      run: make -C config/aquaskk && git add -u
+
 commit-msg:
   commands:
     commitlint:
       run: mise x -- commitlint --edit {1}
->>>>>>> after updating
