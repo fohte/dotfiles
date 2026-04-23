@@ -45,4 +45,17 @@ definitions:
         allow: false
 
   wrappers:
-    - 'mise x|exec -- <cmd>'
+    # `*` consumes 0+ TOOL@VERSION args so both `mise x -- <cmd>` and
+    # `mise x jq node@20 -- <cmd>` route through the wrapper.
+    - 'mise x|exec * -- <cmd>'
+
+tests:
+  cases:
+    # Existing form: `mise x -- <cmd>` with no TOOL@VERSION args.
+    - allow: 'mise x -- ls /tmp'
+    - allow: 'mise exec -- ls /tmp'
+    # New form: `mise x TOOL@VERSION... -- <cmd>` with tool args before `--`.
+    - allow: 'mise x jq -- ls /tmp'
+    - allow: 'mise exec jq -- ls /tmp'
+    - allow: 'mise x node@20 -- ls /tmp'
+    - allow: 'mise x node@20 python@3.11 -- ls /tmp'
