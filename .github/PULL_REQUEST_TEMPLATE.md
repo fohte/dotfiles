@@ -1,13 +1,13 @@
 <!--
-以下のセクションを埋めてください。該当しない任意セクションは見出しごと削除してください。
+Fill in the sections below. Remove any optional section (and its heading) that does not apply to this PR.
 -->
 
 ## Purpose
 
 <!--
-この PR を出す目的。バグ修正なら症状、新規追加なら達成したいこと、依存更新でも具体的な理由 (EOL 対応、脆弱性対応、新機能利用など) を書くこと。
+Why this PR exists. For bug fixes, describe the symptom. For new features, describe what you want to achieve. For dependency updates, give a concrete reason (EOL, security fix, new API you need, etc.).
 
-箇条書き (`-`) で書く。1 項目 1 行を基本とし、補足は子要素の箇条書きでつなげる。散文の段落では書かない。
+Use a bullet list (`-`). One bullet per point; use nested bullets for supporting detail. Do not write prose paragraphs.
 -->
 
 -
@@ -15,7 +15,7 @@
 ### Reproduction steps
 
 <!--
-バグ修正のみ。バグの再現手順を番号付きで書く。バグ修正でなければこのセクション (見出しごと) を削除してよい。
+Bug fixes only. Numbered steps to reproduce the bug. Delete this entire subsection (heading included) if the PR is not a bug fix.
 
 1. ...
 2. ...
@@ -25,9 +25,9 @@
 ## Approach
 
 <!--
-Purpose を達成するためにどう実装したかの要旨を書く。変更箇所の網羅列挙は書かない (diff に委ねる)。実装詳細ではなく方針の本質を書くこと。
+How you implemented the Purpose. Describe the essence of the approach, not a file-by-file walkthrough — the diff already shows what changed.
 
-箇条書き (`-`) で書く。1 項目 1 行を基本とし、補足は子要素の箇条書きでつなげる。散文の段落では書かない。
+Use a bullet list (`-`). One bullet per point; use nested bullets for supporting detail. Do not write prose paragraphs.
 -->
 
 -
@@ -36,20 +36,20 @@ Purpose を達成するためにどう実装したかの要旨を書く。変更
 <summary>Design decisions</summary>
 
 <!--
-判断軸ごとに H4 見出しで分け、採用案と却下案を表形式で並べる。軸が 1 つでも見出しは必須。Pros / Cons は両方必ず書くこと。書けないときは設計判断として浅すぎるサイン。却下案が複数ある場合は「却下」行を複数書く。却下案がない trivial な PR (typo 修正など) ではセクションごと削除してよい。
+Group by decision axis. Use one H4 per axis, even if there is only one axis. Each axis has a table with the chosen design and the rejected alternatives. Both Pros and Cons are required for every row. If you cannot fill them in, the decision is too shallow — think again before writing. Delete this entire subsection only for trivial PRs where no alternative was considered (e.g., typo fixes).
 -->
 
-#### <判断軸>
+#### <Decision axis>
 
 | Decision | Design | Pros | Cons |
 | -------- | ------ | ---- | ---- |
-| 採用     |        |      |      |
-| 却下     |        |      |      |
+| Chosen   |        |      |      |
+| Rejected |        |      |      |
 
 </details>
 
 ### Breaking changes
 
 <!--
-互換性を壊す変更を含むときのみ。非互換の内容と、利用者が取るべき対応を書く。breaking change がなければこのセクション (見出しごと) を削除。
+Include only when this PR breaks compatibility. State what breaks and what consumers need to do to adapt. Delete this entire subsection if there are no breaking changes.
 -->
