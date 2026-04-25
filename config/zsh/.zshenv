@@ -97,6 +97,7 @@ export BAT_THEME=1337
 
 import_env 'homebrew.zsh'
 
+import_env 'gcloud.zsh'
 import_env 'go.zsh'
 import_env 'node.zsh'
 import_env 'python.zsh'
