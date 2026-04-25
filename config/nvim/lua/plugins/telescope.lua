@@ -23,7 +23,9 @@ return {
     {
       '<Leader>eg',
       function()
-        require('telescope').extensions.egrepify.egrepify({})
+        require('telescope').extensions.egrepify.egrepify({
+          prompt_title = 'rg (#ext >dir &file)',
+        })
       end,
       mode = 'n',
     },
