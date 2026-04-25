@@ -36,6 +36,7 @@ import_rc 'completions.rc.zsh'
 import_rc 'prompt.rc.zsh'
 import_rc 'history.rc.zsh'
 import_rc 'misc.rc.zsh'
+import_rc 'tmux.rc.zsh'
 
 # Role-specific overlay (private: in-repo, work: external repo). The symlink
 # is pre-resolved by `dot deploy` to avoid shelling out to `dot role` here.
