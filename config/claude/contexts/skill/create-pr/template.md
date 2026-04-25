@@ -102,6 +102,8 @@ echo "## Why
 - `why-symptoms-only`: 症状に続けて技術的原因 (「〜が〜していたため」) を混入させてしまう
 - `what-not-how`: 具体的な設定値や SDK 名を What に書いてしまう
 - 「〇〇は残す」という現状維持の言及 (レビュアーは diff で見えないもの = 言及不要)
+- `why-cite-with-quote` の関連リンク: タスク指示や issue で言及されている関連 PR/Issue を本文に貼り忘れる
+- `design-decisions-honest`: 検討していない anti-pattern を「却下案」として並べる (テーブルを埋めるための後付け禁止)
 
 ## 2. レビュー
 
