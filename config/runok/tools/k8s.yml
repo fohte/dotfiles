@@ -1,56 +1,73 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
+# kubectl global flags that take a value: each rule below allows them as
+# optional groups so `kubectl --context foo <subcommand>` matches the same way
+# `kubectl --context=foo <subcommand>` does. `--token` and `--password` are
+# intentionally omitted so secret-bearing invocations fall through to ask.
 rules:
-  - allow: 'kubectl [-n|--namespace *] get|describe|logs *'
-  - ask: 'kubectl [-n|--namespace *] get secrets *'
+  - allow: 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *] get|describe|logs *'
+    tests:
+      - allow: 'kubectl get pods'
+      - allow: 'kubectl --context foo get pods'
+      - allow: 'kubectl --context=foo get pods'
+      - allow: 'kubectl --kubeconfig ~/.kube/work --context prod get pods -A'
+      - allow: 'kubectl -n default --context foo describe pod bar'
+  - ask: 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *] get secrets *'
 
   # Read-only info subcommands (no cluster mutation, no secret leakage).
   # `cluster-info dump` is excluded because it aggregates pod logs / ConfigMaps
   # that may contain secrets.
-  - allow: 'kubectl version|api-resources|api-versions|explain *'
+  - allow: 'kubectl [--context *] [--cluster *] [--user *] [--kubeconfig *] version|api-resources|api-versions|explain *'
     tests:
       - allow: 'kubectl version'
       - allow: 'kubectl version --short'
       - allow: 'kubectl api-resources'
       - allow: 'kubectl api-versions'
       - allow: 'kubectl explain pod'
-  - allow: 'kubectl cluster-info'
+      - allow: 'kubectl --context foo api-resources'
+  - allow: 'kubectl [--context *] [--cluster *] [--user *] [--kubeconfig *] cluster-info'
     tests:
       - allow: 'kubectl cluster-info'
+      - allow: 'kubectl --context foo cluster-info'
 
-  - allow: 'kubectl top node|pod|nodes|pods *'
+  - allow: 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *] top node|pod|nodes|pods *'
     tests:
       - allow: 'kubectl top nodes'
       - allow: 'kubectl top pod -A'
+      - allow: 'kubectl --context foo top nodes'
 
   # `auth reconcile` mutates RBAC, so it is excluded.
-  - allow: 'kubectl auth can-i|whoami *'
+  - allow: 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *] auth can-i|whoami *'
     tests:
       - allow: 'kubectl auth can-i list pods'
       - allow: 'kubectl auth whoami'
+      - allow: 'kubectl --context foo auth whoami'
 
-  - allow: 'kubectl [-n|--namespace *] diff|wait *'
+  - allow: 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *] diff|wait *'
     tests:
       - allow: 'kubectl diff -f manifest.yaml'
       - allow: 'kubectl wait --for=condition=Ready pod/foo'
 
   # `kubectl config` read-only subcommands that only emit names.
-  - allow: 'kubectl config current-context|get-contexts|get-clusters|get-users'
+  - allow: 'kubectl [--kubeconfig *] [--context *] config current-context|get-contexts|get-clusters|get-users'
     tests:
       - allow: 'kubectl config current-context'
       - allow: 'kubectl config get-contexts'
       - allow: 'kubectl config get-clusters'
       - allow: 'kubectl config get-users'
+      - allow: 'kubectl --kubeconfig ~/.kube/work config current-context'
+      - allow: 'kubectl --context foo config current-context'
   # `kubectl config view` defaults to `--raw=false`, which redacts
   # client-certificate-data / token / password fields. `--raw` disables that
   # redaction, and `-o jsonpath=...` can extract `users[].user.token` directly,
   # so allow only the redacted form without custom output formatting.
-  - allow: 'kubectl config view [--minify] [--flatten]'
+  - allow: 'kubectl [--kubeconfig *] [--context *] config view [--minify] [--flatten]'
     tests:
       - allow: 'kubectl config view'
       - allow: 'kubectl config view --minify'
       - allow: 'kubectl config view --flatten'
       - allow: 'kubectl config view --minify --flatten'
+      - allow: 'kubectl --kubeconfig ~/.kube/work config view --minify'
 
   - allow: 'helm completion|diff|help|history|lint|list|search|show|status|template|verify|version *'
     tests:
