@@ -69,3 +69,5 @@ rules:
       - allow: 'rg pattern /Users/fohte/ghq'
       - allow: 'rg pattern ./src'
       - allow: 'rg /Users/fohte ./src'
+
+  - allow: wait *

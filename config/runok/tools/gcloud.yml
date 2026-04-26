@@ -7,3 +7,4 @@ rules:
   - allow: 'gcloud * list *'
     tests:
       - allow: 'gcloud compute instances list'
+  - allow: 'gcloud logging read *'

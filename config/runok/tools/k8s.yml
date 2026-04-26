@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
 rules:
-  - allow: 'kubectl get|describe|logs *'
-  - ask: 'kubectl get secrets *'
+  - allow: 'kubectl [-n|--namespace *] get|describe|logs *'
+  - ask: 'kubectl [-n|--namespace *] get secrets *'
 
   - allow: 'helm get|show|list *'
 
