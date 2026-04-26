@@ -4,7 +4,44 @@ rules:
   - allow: 'kubectl [-n|--namespace *] get|describe|logs *'
   - ask: 'kubectl [-n|--namespace *] get secrets *'
 
-  - allow: 'helm get|show|list *'
+  - allow: 'helm completion|diff|help|history|lint|list|search|show|status|template|verify|version *'
+    tests:
+      - allow: 'helm version'
+      - allow: 'helm version --short'
+      - allow: 'helm search repo cnpg/cloudnative-pg --versions'
+      - allow: 'helm template cnpg-cluster ./manifests/cnpg-cluster'
+      - allow: 'helm template foo ./chart --set roles[0].password=dummy'
+      - allow: 'helm lint ./chart'
+      - allow: 'helm history myrelease'
+      - allow: 'helm list -A'
+      # `install` / `upgrade` / `uninstall` / `rollback` mutate the cluster.
+      - ask: 'helm install foo ./chart'
+      - ask: 'helm upgrade foo ./chart'
+      - ask: 'helm uninstall foo'
+      - ask: 'helm rollback foo 1'
+      # `test` runs test pods on the cluster.
+      - ask: 'helm test myrelease'
+      # `env` reveals KUBECONFIG path and other secrets-adjacent state.
+      - ask: 'helm env'
+  - allow: 'helm get hooks|metadata|notes *'
+    tests:
+      - allow: 'helm get notes myrelease'
+      - allow: 'helm get hooks myrelease'
+      - allow: 'helm get metadata myrelease'
+  # `get values|manifest|all` exposes Secret resources and credentials embedded in values.
+  - ask: 'helm get values|manifest|all *'
+    tests:
+      - ask: 'helm get values myrelease'
+      - ask: 'helm get manifest myrelease'
+      - ask: 'helm get all myrelease'
+  - allow: 'helm repo add|index|list|update *'
+    tests:
+      - allow: 'helm repo add cnpg https://cloudnative-pg.github.io/charts'
+      - allow: 'helm repo update cnpg'
+      - allow: 'helm repo update'
+      - allow: 'helm repo list'
+      # `repo remove` is destructive; let it fall through to ask.
+      - ask: 'helm repo remove cnpg'
 
   - allow: 'helmfile [-l|--selector *] [-f|--file *] [-e|--environment *] [-n|--namespace *] [--kube-context *] [--kubeconfig *] build|deps|diff|fetch|lint|list|print-env|repos|show-dag|status|template|version *'
     tests:
