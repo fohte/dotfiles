@@ -4,6 +4,54 @@ rules:
   - allow: 'kubectl [-n|--namespace *] get|describe|logs *'
   - ask: 'kubectl [-n|--namespace *] get secrets *'
 
+  # Read-only info subcommands (no cluster mutation, no secret leakage).
+  # `cluster-info dump` is excluded because it aggregates pod logs / ConfigMaps
+  # that may contain secrets.
+  - allow: 'kubectl version|api-resources|api-versions|explain *'
+    tests:
+      - allow: 'kubectl version'
+      - allow: 'kubectl version --short'
+      - allow: 'kubectl api-resources'
+      - allow: 'kubectl api-versions'
+      - allow: 'kubectl explain pod'
+  - allow: 'kubectl cluster-info'
+    tests:
+      - allow: 'kubectl cluster-info'
+
+  - allow: 'kubectl top node|pod|nodes|pods *'
+    tests:
+      - allow: 'kubectl top nodes'
+      - allow: 'kubectl top pod -A'
+
+  # `auth reconcile` mutates RBAC, so it is excluded.
+  - allow: 'kubectl auth can-i|whoami *'
+    tests:
+      - allow: 'kubectl auth can-i list pods'
+      - allow: 'kubectl auth whoami'
+
+  - allow: 'kubectl [-n|--namespace *] diff|wait *'
+    tests:
+      - allow: 'kubectl diff -f manifest.yaml'
+      - allow: 'kubectl wait --for=condition=Ready pod/foo'
+
+  # `kubectl config` read-only subcommands that only emit names.
+  - allow: 'kubectl config current-context|get-contexts|get-clusters|get-users'
+    tests:
+      - allow: 'kubectl config current-context'
+      - allow: 'kubectl config get-contexts'
+      - allow: 'kubectl config get-clusters'
+      - allow: 'kubectl config get-users'
+  # `kubectl config view` defaults to `--raw=false`, which redacts
+  # client-certificate-data / token / password fields. `--raw` disables that
+  # redaction, and `-o jsonpath=...` can extract `users[].user.token` directly,
+  # so allow only the redacted form without custom output formatting.
+  - allow: 'kubectl config view [--minify] [--flatten]'
+    tests:
+      - allow: 'kubectl config view'
+      - allow: 'kubectl config view --minify'
+      - allow: 'kubectl config view --flatten'
+      - allow: 'kubectl config view --minify --flatten'
+
   - allow: 'helm completion|diff|help|history|lint|list|search|show|status|template|verify|version *'
     tests:
       - allow: 'helm version'
