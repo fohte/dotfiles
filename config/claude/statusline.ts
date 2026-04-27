@@ -16,6 +16,9 @@ interface SessionData {
     seven_day?: RateLimitWindow
     seven_day_opus?: RateLimitWindow
   }
+  context_window?: {
+    context_window_size?: number
+  }
 }
 
 interface RateLimitWindow {
@@ -135,8 +138,9 @@ async function main() {
     }
   }
 
-  // Auto-compact threshold is 80% of 200K tokens
-  const autoCompactThreshold = 160_000
+  // Auto-compact threshold is 80% of the model's context window
+  const contextWindow = data.context_window?.context_window_size ?? 200_000
+  const autoCompactThreshold = contextWindow * 0.8
   const percentage = Math.round((totalTokens / autoCompactThreshold) * 100)
   const color = getColorForPercentage(percentage)
 
