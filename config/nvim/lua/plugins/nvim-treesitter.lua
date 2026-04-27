@@ -27,10 +27,6 @@ return {
     dependencies = {
       -- automatically close end statements (e.g. end in ruby/lua, fi in bash)
       { 'RRethy/nvim-treesitter-endwise' },
-
-      -- automatically set the commentstring based on the current context
-      -- this plugin is used to determine the comment character in comment.nvim
-      { 'JoosepAlviste/nvim-ts-context-commentstring' },
     },
     config = function()
       require('nvim-treesitter').install(ensure_installed)
