@@ -181,4 +181,7 @@ local env(name) = std.extVar(name);
   // use skills and CLAUDE.md instead of memory
   autoMemoryEnabled: false,
   autoDreamEnabled: false,
+
+  model: 'opus[1m]',
+  advisorModel: 'opus',
 }
