@@ -90,9 +90,50 @@ function formatRemaining(epochSeconds: number): string {
   return `${minutes}m`
 }
 
+const WINDOW_DURATION_SEC = {
+  five_hour: 5 * 3600,
+  seven_day: 7 * 86400,
+} as const
+
+// pace_ratio = 使用率 / 経過率。1.0 超なら現ペースで窓終了前に上限到達する
+// 窓開始からの経過が短いと値が暴れるため、最低経過率に達するまで undefined を返す
+function computePaceRatio(
+  window: RateLimitWindow,
+  windowDurationSec: number,
+): number | undefined {
+  if (window.used_percentage === undefined || window.resets_at === undefined) {
+    return undefined
+  }
+  const remainingSec = window.resets_at - Math.floor(Date.now() / 1000)
+  const elapsedSec = windowDurationSec - remainingSec
+  const elapsedRatio = elapsedSec / windowDurationSec
+  // 経過 5% 未満は分母が小さすぎて不安定なので算出しない
+  if (elapsedRatio < 0.05) {
+    return undefined
+  }
+  const usedRatio = window.used_percentage / 100
+  return usedRatio / elapsedRatio
+}
+
+function formatPace(ratio: number | undefined): string {
+  if (ratio === undefined) {
+    return ''
+  }
+  // 基準ペース 100% として N% で表示。<100% は dim、100-150% は黄、150% 以上は赤
+  const pct = Math.round(ratio * 100)
+  if (ratio < 1.0) {
+    return ` \x1b[90m✓ ${pct}%\x1b[0m`
+  }
+  if (ratio < 1.5) {
+    return ` \x1b[33m⚠ ${pct}%\x1b[0m`
+  }
+  return ` \x1b[31m🔥 ${pct}%\x1b[0m`
+}
+
 function formatRateLimit(
   label: string,
   window: RateLimitWindow | undefined,
+  windowDurationSec: number,
 ): string | null {
   if (!window || window.used_percentage === undefined) {
     return null
@@ -102,7 +143,8 @@ function formatRateLimit(
   const remaining = window.resets_at
     ? ` \x1b[90m(${formatRemaining(window.resets_at)})\x1b[0m`
     : ''
-  return `${label}: ${color}${pct}%\x1b[0m${remaining}`
+  const pace = formatPace(computePaceRatio(window, windowDurationSec))
+  return `${label}: ${color}${pct}%\x1b[0m${remaining}${pace}`
 }
 
 async function main() {
@@ -165,8 +207,16 @@ async function main() {
   parts.push(`${modelColor}${modelName}${contextLabel}${reset}`)
   parts.push(`${tokensDisplay} tok (${color}${percentage}%${reset})`)
 
-  const sessionPart = formatRateLimit('5h', data.rate_limits?.five_hour)
-  const weekPart = formatRateLimit('7d', data.rate_limits?.seven_day)
+  const sessionPart = formatRateLimit(
+    '5h',
+    data.rate_limits?.five_hour,
+    WINDOW_DURATION_SEC.five_hour,
+  )
+  const weekPart = formatRateLimit(
+    '7d',
+    data.rate_limits?.seven_day,
+    WINDOW_DURATION_SEC.seven_day,
+  )
   const limitParts = [sessionPart, weekPart].filter(
     (p): p is string => p !== null,
   )
