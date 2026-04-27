@@ -47,6 +47,23 @@ function formatTokens(tokens: number): string {
   return tokens.toString()
 }
 
+// モデル名と context window サイズに応じた表示色を返す
+// Opus は紫系、Sonnet は緑系、1M context のときは明るめのトーンにする
+function getModelColor(displayName: string, contextWindow: number): string {
+  const is1M = contextWindow >= 1_000_000
+  const lower = displayName.toLowerCase()
+  if (lower.includes('opus')) {
+    return is1M ? '\x1b[38;5;177m' : '\x1b[38;5;141m'
+  }
+  if (lower.includes('sonnet')) {
+    return is1M ? '\x1b[38;5;120m' : '\x1b[38;5;71m'
+  }
+  if (lower.includes('haiku')) {
+    return '\x1b[38;5;215m'
+  }
+  return '\x1b[38;5;215m'
+}
+
 function getColorForPercentage(percentage: number): string {
   if (percentage < 70) {
     return '\x1b[32m' // Green
@@ -57,30 +74,20 @@ function getColorForPercentage(percentage: number): string {
   }
 }
 
-// Unix epoch (秒) を Asia/Tokyo の "HH:mm" または "Ddd HH:mm" にフォーマット
-// 24 時間以内なら時刻のみ、それ以上なら曜日を付ける
-function formatResetTime(epochSeconds: number): string {
-  const date = new Date(epochSeconds * 1000)
-  const now = new Date()
-  const diffMs = date.getTime() - now.getTime()
-  const within24h = diffMs < 24 * 60 * 60 * 1000
+// 現在時刻からの残り秒数を "Xh Ym" / "XdYh" / "Ym" 形式にフォーマット
+function formatRemaining(epochSeconds: number): string {
+  const diffSec = Math.max(0, epochSeconds - Math.floor(Date.now() / 1000))
+  const days = Math.floor(diffSec / 86400)
+  const hours = Math.floor((diffSec % 86400) / 3600)
+  const minutes = Math.floor((diffSec % 3600) / 60)
 
-  const time = date.toLocaleTimeString('en-GB', {
-    timeZone: 'Asia/Tokyo',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })
-
-  if (within24h) {
-    return time
+  if (days > 0) {
+    return `${days}d${hours}h`
   }
-
-  const weekday = date.toLocaleDateString('en-US', {
-    timeZone: 'Asia/Tokyo',
-    weekday: 'short',
-  })
-  return `${weekday} ${time}`
+  if (hours > 0) {
+    return `${hours}h${minutes.toString().padStart(2, '0')}m`
+  }
+  return `${minutes}m`
 }
 
 function formatRateLimit(
@@ -92,10 +99,10 @@ function formatRateLimit(
   }
   const pct = Math.round(window.used_percentage)
   const color = getColorForPercentage(pct)
-  const reset = window.resets_at
-    ? ` (→${formatResetTime(window.resets_at)})`
+  const remaining = window.resets_at
+    ? ` \x1b[90m(${formatRemaining(window.resets_at)})\x1b[0m`
     : ''
-  return `${color}${label} ${pct}%${reset}\x1b[0m`
+  return `${label}: ${color}${pct}%\x1b[0m${remaining}`
 }
 
 async function main() {
@@ -144,21 +151,32 @@ async function main() {
   const percentage = Math.round((totalTokens / autoCompactThreshold) * 100)
   const color = getColorForPercentage(percentage)
 
-  // Format output: Opus 4.1 | Tokens: 1.0k | Context: 10% | Session 33% (→15:30) | Week 6%
+  // Format output: Opus 4.7 [1M] | 1.0k tok (10%) | 5h: 33% (4h50m) / 7d: 6% (1d17h) | v2.1.119 (Claude Code)
+  const reset = '\x1b[0m'
+  const dim = '\x1b[90m'
+
   const modelName = data.model?.display_name || 'Unknown'
+  const modelColor = getModelColor(modelName, contextWindow)
+  const is1M = contextWindow >= 1_000_000
+  const contextLabel = is1M && !/1m/i.test(modelName) ? ' [1M]' : ''
   const tokensDisplay = formatTokens(totalTokens)
 
-  const parts = [
-    modelName,
-    `Tokens: ${tokensDisplay}`,
-    `${color}Context: ${percentage}%\x1b[0m`,
-  ]
+  const parts: string[] = []
+  parts.push(`${modelColor}${modelName}${contextLabel}${reset}`)
+  parts.push(`${tokensDisplay} tok (${color}${percentage}%${reset})`)
 
-  const sessionPart = formatRateLimit('Session', data.rate_limits?.five_hour)
-  if (sessionPart) parts.push(sessionPart)
+  const sessionPart = formatRateLimit('5h', data.rate_limits?.five_hour)
+  const weekPart = formatRateLimit('7d', data.rate_limits?.seven_day)
+  const limitParts = [sessionPart, weekPart].filter(
+    (p): p is string => p !== null,
+  )
+  if (limitParts.length > 0) {
+    parts.push(limitParts.join(' / '))
+  }
 
-  const weekPart = formatRateLimit('Week', data.rate_limits?.seven_day)
-  if (weekPart) parts.push(weekPart)
+  if (data.version) {
+    parts.push(`${dim}v${data.version} (Claude Code)${reset}`)
+  }
 
   process.stdout.write(parts.join(' | '))
 }
