@@ -11,6 +11,16 @@ interface SessionData {
   session_id?: string
   cwd?: string
   version?: string
+  rate_limits?: {
+    five_hour?: RateLimitWindow
+    seven_day?: RateLimitWindow
+    seven_day_opus?: RateLimitWindow
+  }
+}
+
+interface RateLimitWindow {
+  used_percentage?: number
+  resets_at?: number // Unix epoch seconds
 }
 
 interface TranscriptEntry {
@@ -42,6 +52,47 @@ function getColorForPercentage(percentage: number): string {
   } else {
     return '\x1b[31m' // Red
   }
+}
+
+// Unix epoch (秒) を Asia/Tokyo の "HH:mm" または "Ddd HH:mm" にフォーマット
+// 24 時間以内なら時刻のみ、それ以上なら曜日を付ける
+function formatResetTime(epochSeconds: number): string {
+  const date = new Date(epochSeconds * 1000)
+  const now = new Date()
+  const diffMs = date.getTime() - now.getTime()
+  const within24h = diffMs < 24 * 60 * 60 * 1000
+
+  const time = date.toLocaleTimeString('en-GB', {
+    timeZone: 'Asia/Tokyo',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+
+  if (within24h) {
+    return time
+  }
+
+  const weekday = date.toLocaleDateString('en-US', {
+    timeZone: 'Asia/Tokyo',
+    weekday: 'short',
+  })
+  return `${weekday} ${time}`
+}
+
+function formatRateLimit(
+  label: string,
+  window: RateLimitWindow | undefined,
+): string | null {
+  if (!window || window.used_percentage === undefined) {
+    return null
+  }
+  const pct = Math.round(window.used_percentage)
+  const color = getColorForPercentage(pct)
+  const reset = window.resets_at
+    ? ` (→${formatResetTime(window.resets_at)})`
+    : ''
+  return `${color}${label} ${pct}%${reset}\x1b[0m`
 }
 
 async function main() {
@@ -89,13 +140,23 @@ async function main() {
   const percentage = Math.round((totalTokens / autoCompactThreshold) * 100)
   const color = getColorForPercentage(percentage)
 
-  // Format output: Opus 4.1 | Tokens: 1.0k | Context: 10%
+  // Format output: Opus 4.1 | Tokens: 1.0k | Context: 10% | Session 33% (→15:30) | Week 6%
   const modelName = data.model?.display_name || 'Unknown'
   const tokensDisplay = formatTokens(totalTokens)
 
-  process.stdout.write(
-    `${modelName} | Tokens: ${tokensDisplay} | ${color}Context: ${percentage}%\x1b[0m`,
-  )
+  const parts = [
+    modelName,
+    `Tokens: ${tokensDisplay}`,
+    `${color}Context: ${percentage}%\x1b[0m`,
+  ]
+
+  const sessionPart = formatRateLimit('Session', data.rate_limits?.five_hour)
+  if (sessionPart) parts.push(sessionPart)
+
+  const weekPart = formatRateLimit('Week', data.rate_limits?.seven_day)
+  if (weekPart) parts.push(weekPart)
+
+  process.stdout.write(parts.join(' | '))
 }
 
 main().catch(console.error)
