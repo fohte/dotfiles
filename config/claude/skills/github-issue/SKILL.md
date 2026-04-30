@@ -83,15 +83,18 @@ The `init issue` command creates a boilerplate file at `~/.cache/gh-issue-agent/
 
 ```markdown
 ---
-title: Title
+title: ''
 labels: []
 assignees: []
+# parentIssue: owner/repo#1
+# subIssues:
+#   - owner/repo#2
 ---
 
 Body
 ```
 
-Sub-issues and parent issue can also be specified in the frontmatter (see "Sub-issues and Parent Issue" section below).
+`parentIssue` / `subIssues` are commented out by default; uncomment and fill them to link the new issue on creation. See "Sub-issues and Parent Issue" below for details.
 
 ### Review (approve before push)
 
@@ -146,7 +149,7 @@ The keys are camelCase (NOT snake_case):
 - `subIssues`: array of issue references that are sub-issues of this issue
 - `parentIssue`: the parent issue reference if this issue is a sub-issue
 
-Reference format: `owner/repo#number` (e.g., `org/my-repo#42`). Using wrong-cased keys like `parent_issue` or `sub_issues` in `issue.md` frontmatter is silently ignored on push.
+Reference format: `owner/repo#number` (e.g., `org/my-repo#42`). Unknown frontmatter keys (e.g., `parent_issue` / `sub_issues` in snake_case, or typos like `parentIssues`) are rejected with an error on parse, so a typo will not silently lose the link.
 
 Frontmatter lives in `issue.md` (YAML), not in `metadata.json`. A `metadata.json` file may also exist but is not the source of truth for these fields.
 
@@ -161,20 +164,22 @@ parentIssue: org/repo#5
 ---
 ```
 
-### Known limitation: `init issue` does not include sub-issue / parent-issue keys
+### Linking on creation
 
-The boilerplate produced by `a gh issue-agent init issue` omits `subIssues` and `parentIssue`. Adding `parentIssue` there does NOT currently attach the new issue to its parent on push (it may be silently dropped, depending on the tool version). Do not rely on `init issue` frontmatter to set the parent link on creation.
+Both `subIssues` and `parentIssue` are honored when `a gh issue-agent push <new-dir>` creates a new issue. Add them directly to the `init issue` frontmatter:
 
-### Recommended workflow for linking sub-issues
+```yaml
+---
+title: Child Issue
+labels: []
+assignees: []
+parentIssue: org/repo#1
+subIssues:
+    - org/repo#10
+---
+```
 
-Because creation-time linking is unreliable, link after creation by editing the PARENT issue:
-
-1. Create the sub-issue normally (without `parentIssue` in `init issue` frontmatter).
-2. `a gh issue-agent pull <parent-number>`.
-3. Edit `issue.md` frontmatter of the parent: add the new sub-issue reference to `subIssues`.
-4. Review and push the parent.
-
-This is the only reliably working path observed so far.
+The issue is created first, then the Sub-issues API is called to apply the parent/child links in the same `push`. No separate "pull parent → add child → push" workaround is needed.
 
 ### How it works
 
