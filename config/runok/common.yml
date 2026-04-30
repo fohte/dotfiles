@@ -29,6 +29,10 @@ rules:
   - allow: 'touch *'
     tests:
       - allow: 'touch file.txt'
+  - allow: 'tee *'
+    tests:
+      - allow: 'tee /tmp/foo.json'
+      - allow: 'tee -a /tmp/foo.log'
   - allow: 'gsed *'
   - allow: 'awk *'
     sandbox: readonly
