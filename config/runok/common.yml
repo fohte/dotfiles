@@ -41,6 +41,10 @@ rules:
   - allow: 'bc *'
   - allow: 'mktemp *'
   - allow: 'unset *'
+  - allow: 'export *'
+    tests:
+      - allow: 'export AWS_PAGER='
+      - allow: 'export FOO=bar'
 
   - allow: brew search *
   - allow: brew info *
