@@ -177,6 +177,8 @@ local env(name) = std.extVar(name);
   alwaysThinkingEnabled: false,
   promptSuggestionEnabled: false,
   teammateMode: 'tmux',
+  agentPushNotifEnabled: false,
+  editorMode: 'vim',
 
   // use skills and CLAUDE.md instead of memory
   autoMemoryEnabled: false,
