@@ -42,23 +42,32 @@ mcp-servers.json: mcp-servers.jsonnet $(wildcard mcp-servers.local.jsonnet)
 # Detect if ~/.claude/settings.json has untracked drift (like terraform detecting drift).
 # Three-way comparison using .settings.json.installed (state), settings.json (desired),
 # and ~/.claude/settings.json (actual).
-# - Drift that is already reflected in the jsonnet build output is allowed.
-# - Drift that exists only in the actual file (not in the build output) is an error.
+# Drift = paths where actual differs from state. Drift is allowed if every drifted
+# path is already reflected in desired (i.e. desired matches actual at that path).
+# Detected by: diff(actual, state) ∖ diff(actual, desired) — paths drifted from state
+# but not yet adopted in desired.
 .PHONY: check-settings
 check-settings: settings.json
-	@deep_sort='def sort_deep: if type == "array" then [.[] | sort_deep] | sort_by(tostring) elif type == "object" then to_entries | map(.value |= sort_deep) | from_entries else . end; sort_deep'; \
-	if [ -f ~/.claude/settings.json ] && [ -f .settings.json.installed ]; then \
-		state=$$(jq -S "$$deep_sort" .settings.json.installed | shasum -a 256 | cut -d' ' -f1); \
-		actual=$$(jq -S "$$deep_sort" ~/.claude/settings.json | shasum -a 256 | cut -d' ' -f1); \
-		desired=$$(jq -S "$$deep_sort" settings.json | shasum -a 256 | cut -d' ' -f1); \
-		if [ "$$state" != "$$actual" ] && [ "$$desired" != "$$actual" ]; then \
+	@if [ -f ~/.claude/settings.json ] && [ -f .settings.json.installed ]; then \
+		undadopted=$$(jq -n \
+			--slurpfile state .settings.json.installed \
+			--slurpfile actual ~/.claude/settings.json \
+			--slurpfile desired settings.json \
+			'def all_paths: [paths] + [[]] | unique; \
+			 ($$state[0]) as $$s | ($$actual[0]) as $$a | ($$desired[0]) as $$d | \
+			 (($$s | all_paths) + ($$a | all_paths)) | unique | \
+			 map(select((($$s | getpath(.)?) != ($$a | getpath(.)?)) and (($$d | getpath(.)?) != ($$a | getpath(.)?))))'); \
+		if [ "$$undadopted" != "[]" ]; then \
 			echo "error: ~/.claude/settings.json has changes not reflected in jsonnet." >&2; \
+			echo "" >&2; \
+			echo "Drifted paths not adopted in settings.jsonnet:" >&2; \
+			echo "$$undadopted" | jq . >&2; \
 			echo "" >&2; \
 			echo "--- settings.json (built from jsonnet)" >&2; \
 			echo "+++ ~/.claude/settings.json (actual)" >&2; \
-			diff <(jq -S "$$deep_sort" settings.json) <(jq -S "$$deep_sort" ~/.claude/settings.json) >&2 || true; \
+			diff <(jq -S . settings.json) <(jq -S . ~/.claude/settings.json) >&2 || true; \
 			echo "" >&2; \
-			echo "Reflect the changes in settings.jsonnet, or run: make -C config/claude clean install" >&2; \
+			echo "Reflect the changes in settings.jsonnet to adopt the drift." >&2; \
 			exit 1; \
 		fi; \
 	fi
