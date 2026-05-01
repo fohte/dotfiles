@@ -203,8 +203,12 @@ async function main() {
   const contextLabel = is1M && !/1m/i.test(modelName) ? ' [1M]' : ''
   const tokensDisplay = formatTokens(totalTokens)
 
+  // Prefix a cloud icon in AWS orange when routed through Bedrock
+  const isBedrock = process.env.CLAUDE_CODE_USE_BEDROCK === '1'
+  const bedrockBadge = isBedrock ? '\x1b[38;5;208m\x1b[0m ' : ''
+
   const parts: string[] = []
-  parts.push(`${modelColor}${modelName}${contextLabel}${reset}`)
+  parts.push(`${bedrockBadge}${modelColor}${modelName}${contextLabel}${reset}`)
   parts.push(`${tokensDisplay} tok (${color}${percentage}%${reset})`)
 
   const sessionPart = formatRateLimit(
