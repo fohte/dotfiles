@@ -47,8 +47,8 @@ function formatTokens(tokens: number): string {
   return tokens.toString()
 }
 
-// モデル名と context window サイズに応じた表示色を返す
-// Opus は紫系、Sonnet は緑系、1M context のときは明るめのトーンにする
+// Return a display color based on model name and context window size.
+// Opus uses purple tones, Sonnet uses green tones, and 1M context uses brighter shades.
 function getModelColor(displayName: string, contextWindow: number): string {
   const is1M = contextWindow >= 1_000_000
   const lower = displayName.toLowerCase()
@@ -74,7 +74,7 @@ function getColorForPercentage(percentage: number): string {
   }
 }
 
-// 現在時刻からの残り秒数を "Xh Ym" / "XdYh" / "Ym" 形式にフォーマット
+// Format the seconds remaining from now as "Xh Ym" / "XdYh" / "Ym".
 function formatRemaining(epochSeconds: number): string {
   const diffSec = Math.max(0, epochSeconds - Math.floor(Date.now() / 1000))
   const days = Math.floor(diffSec / 86400)
@@ -95,8 +95,8 @@ const WINDOW_DURATION_SEC = {
   seven_day: 7 * 86400,
 } as const
 
-// pace_ratio = 使用率 / 経過率。1.0 超なら現ペースで窓終了前に上限到達する
-// 窓開始からの経過が短いと値が暴れるため、最低経過率に達するまで undefined を返す
+// pace_ratio = used ratio / elapsed ratio. Above 1.0 means the cap will be hit before the window ends at the current pace.
+// The value is unstable when the window has just started, so return undefined until a minimum elapsed ratio is reached.
 function computePaceRatio(
   window: RateLimitWindow,
   windowDurationSec: number,
@@ -107,7 +107,7 @@ function computePaceRatio(
   const remainingSec = window.resets_at - Math.floor(Date.now() / 1000)
   const elapsedSec = windowDurationSec - remainingSec
   const elapsedRatio = elapsedSec / windowDurationSec
-  // 経過 5% 未満は分母が小さすぎて不安定なので算出しない
+  // Skip calculation below 5% elapsed since the denominator is too small to be stable.
   if (elapsedRatio < 0.05) {
     return undefined
   }
@@ -119,7 +119,7 @@ function formatPace(ratio: number | undefined): string {
   if (ratio === undefined) {
     return ''
   }
-  // 基準ペース 100% として N% で表示。<100% は dim、100-150% は黄、150% 以上は赤
+  // Show as N% against a 100% baseline pace. <100% is dim, 100-150% is yellow, >=150% is red.
   const pct = Math.round(ratio * 100)
   if (ratio < 1.0) {
     return ` \x1b[90m✓ ${pct}%\x1b[0m`
