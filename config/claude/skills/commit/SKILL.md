@@ -116,10 +116,11 @@ fix bug
 1. `git status` で変更内容を確認
 2. `git diff` でステージング前の差分を確認
 3. `git log --oneline -5` で最近のコミットスタイルを確認
-4. 変更を add してコミット (HEREDOC を使用してフォーマットを保持):
+4. 変更を `git add` でステージング (この時点ではコミットしない)
+5. **`reviewer` agent でレビュー**: `git diff --cached` の差分を `reviewer` subagent (Task ツール) に渡してレビューさせる。🔴 Critical の指摘があれば修正して step 4 から再実行する。🟡 Warning は内容を判断し、修正するか無視するかを決める
+6. コミット (HEREDOC を使用してフォーマットを保持):
 
 ```bash
-git add <files>
 git commit -m "$(cat <<'EOF'
 <scope>: <subject>
 
@@ -132,7 +133,7 @@ EOF
 )"
 ```
 
-5. `git status` で成功を確認
+7. `git status` で成功を確認
 
 ## pre-commit フック
 
