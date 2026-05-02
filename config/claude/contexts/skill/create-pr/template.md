@@ -8,11 +8,29 @@
 
 # Create PR
 
-変更を push した後、以下の手順で PR を作成する。
+以下の手順で PR を作成する。
 
 **重要:** diff の確認には必ず `origin/master` と比較すること (`git diff origin/master...HEAD`)。ローカルの `master` は古い可能性がある。
 
 ワークフローの詳細 (Frontmatter、エスケープ、exit code 等) は `~/.claude/skills/create-pr/rules/pr-draft-workflow.md` を参照。
+
+## 0. push 前レビュー (必須)
+
+`git push` を実行する前に、push に含まれる全コミットの差分を `reviewer` subagent (Task ツール) でレビューする。これは `commit` skill の「レビューのタイミング」セクションで定義された必須ステップ。
+
+```bash
+git diff @{u}..HEAD
+# upstream が未設定の場合
+git diff origin/master..HEAD
+```
+
+この差分を `reviewer` subagent に渡し、結果を確認する:
+
+- 🔴 Critical: push せず、追加コミットで修正してから再レビュー
+- 🟡 Warning: 内容を判断して修正するか無視するか決める
+- コミット単位レビュー済みでも、push 前レビューは必ず実行する。複数コミットをまたぐ整合性 (ある commit で追加した API の呼び出し漏れが別 commit にある等) は単一コミットでは見えない
+
+レビューが通ったら `git push` を実行する。レビュー後に修正コミットを追加した場合は、再 push 前に追加分を再度レビューする。
 
 ## 1. PR body のドラフトを作成する
 
