@@ -134,3 +134,10 @@ fi
 if match_tag runok; then
   sym config/runok ~/.config/runok
 fi
+
+if match_tag rtk; then
+  is_linux && rtk_config_path="$HOME/.config/rtk/config.toml"
+  is_macos && rtk_config_path="$HOME/Library/Application Support/rtk/config.toml"
+
+  ! is_wsl && sym config/rtk/config.toml "$rtk_config_path"
+fi
