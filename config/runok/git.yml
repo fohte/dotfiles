@@ -45,7 +45,8 @@ rules:
     tests:
       - deny: 'git pull --no-rebase'
   - deny: 'git [-C *] checkout !--'
-    message: 'Blocked because `git checkout <branch>` has side effects on the working tree'
+    message: 'Blocked because `git checkout <branch>` has side effects on the working tree. To restore files, use `git checkout -- <path>` instead.'
+    fix_suggestion: 'git checkout -- <path>'
     tests:
       - deny: 'git checkout main'
       - deny: 'git checkout HEAD~1'
