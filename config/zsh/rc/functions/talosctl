@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+# shellcheck disable=all
+# ^ shellcheck doesn't support zsh. This file is a zsh autoload function
+# without .zsh extension (required for autoload to work).
+
+# usage: talosctl <args>...
+#
+# Avoid keeping talosconfig (which contains Talos machine API client cert/key)
+# as a plain file on disk. The config is stored in macOS Keychain as a hex
+# blob and passed to talosctl via process substitution. If the Keychain entry
+# is missing, this function fetches it from 1Password and registers it
+# automatically (requires `op` CLI signed in to the relevant account).
+#
+# 1Password item: "talosconfig home-k8s" / Personal vault / document type.
+
+local config_hex
+if ! config_hex=$(security find-generic-password -a "$USER" -s talosconfig-home-k8s -w 2> /dev/null); then
+  echo "talosconfig not in Keychain, fetching from 1Password..." >&2
+  config_hex=$(op document get 'talosconfig home-k8s' --vault Personal | xxd -p | tr -d '\n') || return 1
+  security add-generic-password -a "$USER" -s talosconfig-home-k8s -X "$config_hex" || return 1
+fi
+
+command talosctl --talosconfig <(printf '%s' "$config_hex" | xxd -r -p) "$@"
