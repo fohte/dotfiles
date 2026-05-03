@@ -89,6 +89,15 @@ local env(name) = std.extVar(name);
       'Read(.envrc)',
       'mcp__qmd__query',
       'mcp__qmd__vsearch',
+
+      // Block self-scheduling tools. Claude sometimes defers the current task
+      // by scheduling itself ("I'll check this again later") instead of doing
+      // it now, or schedules a "follow-up check" a day out when the right
+      // answer is to act immediately. Removing the tools forecloses that path.
+      'ScheduleWakeup',
+      'CronCreate',
+      'CronDelete',
+      'CronList',
     ],
     defaultMode: 'acceptEdits',
   },
