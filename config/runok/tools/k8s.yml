@@ -133,3 +133,87 @@ rules:
       - ask: 'helmfile test'
       # `write-values` writes values files to arbitrary paths.
       - ask: 'helmfile write-values'
+
+  # `-i/--insecure` makes talosctl talk to the maintenance API without auth,
+  # so any subcommand using it must fall through to ask. This `ask` rule wins
+  # over the allow rules below (Explicit Deny/Ask Wins).
+  - ask: 'talosctl * -i|--insecure *'
+    tests:
+      - ask: 'talosctl -i get members'
+      - ask: 'talosctl --insecure get members'
+      - ask: 'talosctl get members --insecure'
+      - ask: 'talosctl get members -i'
+
+  # talosctl global flags that take a value: `-n|--nodes`, `-e|--endpoints`,
+  # `-c|--cluster`, `--context`, `--talosconfig`, `--siderov1-keys-dir`. They
+  # are listed as optional groups so the same rule matches both space- and
+  # `=`-joined forms.
+  - allow: 'talosctl [-n|--nodes *] [-e|--endpoints *] [-c|--cluster *] [--context *] [--talosconfig *] [--siderov1-keys-dir *] get|list|ls|dmesg|events|containers|cgroups|processes|memory|mounts|netstat|stats|time|usage|version|health|inspect|dashboard|completion *'
+    tests:
+      - allow: 'talosctl get members'
+      - allow: 'talosctl --nodes 10.0.0.1 get members'
+      - allow: 'talosctl --context foo get members'
+      - allow: 'talosctl --talosconfig ~/.talos/config --context prod get nodes'
+      - allow: 'talosctl -n 10.0.0.1 dmesg'
+      - allow: 'talosctl list /etc'
+      - allow: 'talosctl ls /etc'
+      - allow: 'talosctl version'
+      - allow: 'talosctl health'
+      - allow: 'talosctl containers -k'
+      - allow: 'talosctl processes'
+
+  # `service` / `services` without arguments lists services. `service <id>
+  # status` is the explicit read action. `service <id>` (action omitted) and
+  # `service <id> start|stop|restart` mutate or risk mutating state, so they
+  # must fall through to ask. Negation `!start|stop|restart` constrains the
+  # ID position to a single token that is not a state-changing action.
+  - allow: 'talosctl [-n|--nodes *] [-e|--endpoints *] [-c|--cluster *] [--context *] [--talosconfig *] [--siderov1-keys-dir *] service|services'
+    tests:
+      - allow: 'talosctl services'
+      - allow: 'talosctl service'
+  - allow: 'talosctl [-n|--nodes *] [-e|--endpoints *] [-c|--cluster *] [--context *] [--talosconfig *] [--siderov1-keys-dir *] service|services !start|stop|restart status'
+    tests:
+      - allow: 'talosctl service kubelet status'
+      - allow: 'talosctl --nodes 10.0.0.1 service kubelet status'
+      - ask: 'talosctl service kubelet restart'
+      - ask: 'talosctl service kubelet start'
+      - ask: 'talosctl service kubelet stop'
+      - ask: 'talosctl service kubelet stop status'
+      - ask: 'talosctl service kubelet'
+
+  # `talosctl config` read-only subcommands. `add`, `new`, `merge`, `endpoint`,
+  # `node`, `context`, `remove` mutate the local talosconfig, so they are
+  # excluded.
+  - allow: 'talosctl [--talosconfig *] [--context *] [-c|--cluster *] config contexts|info'
+    tests:
+      - allow: 'talosctl config contexts'
+      - allow: 'talosctl config info'
+      - allow: 'talosctl --talosconfig ~/.talos/config config contexts'
+      - ask: 'talosctl config context foo'
+      - ask: 'talosctl config new'
+      - ask: 'talosctl config add foo'
+      - ask: 'talosctl config merge ./other'
+      - ask: 'talosctl config endpoint 10.0.0.1'
+      - ask: 'talosctl config node 10.0.0.1'
+      - ask: 'talosctl config remove foo'
+
+  # `etcd status` / `etcd members` are read-only. `etcd snapshot` is excluded
+  # because it dumps the full etcd state (including all Kubernetes Secrets).
+  - allow: 'talosctl [-n|--nodes *] [-e|--endpoints *] [-c|--cluster *] [--context *] [--talosconfig *] [--siderov1-keys-dir *] etcd status|members'
+    tests:
+      - allow: 'talosctl etcd status'
+      - allow: 'talosctl etcd members'
+      - allow: 'talosctl --nodes 10.0.0.1 etcd status'
+      - ask: 'talosctl etcd snapshot /tmp/snap.db'
+      - ask: 'talosctl etcd defrag'
+      - ask: 'talosctl etcd leave'
+      - ask: 'talosctl etcd remove-member node-1'
+
+  # The following reads are credential-adjacent and intentionally fall through
+  # to ask:
+  #   - `kubeconfig`: downloads cluster-admin credentials.
+  #   - `read`: reads arbitrary files on the node (e.g. /etc/kubernetes/...).
+  #   - `copy`: pulls arbitrary data out of the node.
+  #   - `logs`: Talos service logs may include tokens / kubelet internals.
+  #   - `pcap` / `tcpdump`: packet capture can expose plaintext creds.
+  #   - `support`: debug bundle aggregates logs and resources.
