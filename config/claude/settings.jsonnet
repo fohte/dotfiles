@@ -194,5 +194,4 @@ local env(name) = std.extVar(name);
   autoDreamEnabled: false,
 
   model: 'opus[1m]',
-  advisorModel: 'opus',
 }
