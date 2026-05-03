@@ -44,6 +44,13 @@ rules:
     fix_suggestion: 'git pull --rebase'
     tests:
       - deny: 'git pull --no-rebase'
+  - deny: 'git [-C *] checkout !--'
+    message: 'Blocked because `git checkout <branch>` has side effects on the working tree'
+    tests:
+      - deny: 'git checkout main'
+      - deny: 'git checkout HEAD~1'
+      - deny: 'git checkout v1.0.0'
+      - deny: 'git -C /tmp checkout main'
 
   # allow rules
   - allow: 'git [-C *] add *'
