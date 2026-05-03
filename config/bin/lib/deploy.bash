@@ -86,3 +86,22 @@ sym_role_overlay() {
     log-exec rm -f "$dst"
   fi
 }
+
+# Symlink a file from the work role's private repository at <dst>. Unlike
+# sym_role_overlay (which replaces a base file), this is for tools that
+# merge an additional file alongside the base (e.g. armyknife reads every
+# YAML under its config dir). On non-work roles, <dst> is removed so a
+# stale symlink doesn't linger.
+sym_role_file() {
+  local src="$1"
+  local dst="$2"
+  local role_name role_repo
+
+  role_name="$("$DOTFILES_DIR/config/bin/dot-role" get name 2> /dev/null)" || role_name=""
+  if [ "$role_name" = work ]; then
+    role_repo="$("$DOTFILES_DIR/config/bin/dot-role" get repo)"
+    sym "$HOME/ghq/github.com/$role_repo/$src" "$dst"
+  elif [ -L "$dst" ] || [ -e "$dst" ]; then
+    log-exec rm -f "$dst"
+  fi
+}
