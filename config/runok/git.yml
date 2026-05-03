@@ -52,6 +52,16 @@ rules:
       - deny: 'git checkout HEAD~1'
       - deny: 'git checkout v1.0.0'
       - deny: 'git -C /tmp checkout main'
+  - deny: 'git [-C *] reset *'
+    message: 'Blocked to prevent rewriting commit history or destroying work. To unstage files, use `git restore --staged <path>` instead.'
+    fix_suggestion: 'git restore --staged <path>'
+    tests:
+      - deny: 'git reset --hard HEAD~1'
+      - deny: 'git reset --soft HEAD~1'
+      - deny: 'git reset --mixed HEAD~1'
+      - deny: 'git reset --hard'
+      - deny: 'git reset HEAD file.txt'
+      - deny: 'git -C /tmp reset --hard HEAD~1'
 
   # allow rules
   - allow: 'git [-C *] add *'
@@ -80,6 +90,11 @@ rules:
   - allow: 'git [-C *] push *'
     tests:
       - allow: 'git push origin main'
+  - allow: 'git [-C *] restore --staged *'
+    tests:
+      - allow: 'git restore --staged file.txt'
+      - allow: 'git restore --staged .'
+      - allow: 'git -C /tmp restore --staged file.txt'
 
   # gh
   - deny: 'gh [-R *] api * --paginate *'
