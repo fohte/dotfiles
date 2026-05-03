@@ -3,6 +3,12 @@
 editor:
   terminal: ghostty
 
+orgs:
+  fohte:
+    ai:
+      review:
+        reviewers: [gemini]
+
 repos:
   fohte/t-rader:
     language: ja
