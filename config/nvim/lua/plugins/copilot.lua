@@ -4,7 +4,6 @@ return {
     event = 'InsertEnter',
     init = function()
       vim.g.copilot_nes_debounce = 100 -- Reduce debounce from 500ms to 100ms
-      vim.lsp.enable('copilot_ls')
     end,
     config = function()
       require('copilot-lsp').setup({
@@ -12,6 +11,7 @@ return {
           move_count_threshold = 2, -- Reduce from 3 to 2 for faster clearing
         },
       })
+      vim.lsp.enable('copilot_ls')
 
       vim.keymap.set('n', '<tab>', function()
         local bufnr = vim.api.nvim_get_current_buf()
