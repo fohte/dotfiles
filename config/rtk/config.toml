@@ -32,4 +32,7 @@ max_file_size = 1048576
 enabled = false
 
 [hooks]
-exclude_commands = []
+# rg (ripgrep) gets rewritten to `rtk grep` (a GNU grep wrapper), but ripgrep
+# and GNU grep are not CLI-compatible (regex dialect, default-recursive,
+# .gitignore handling, --type, etc.). The rewrite changes semantics.
+exclude_commands = ["rg"]
