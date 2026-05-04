@@ -48,6 +48,7 @@ definitions:
     # `*` consumes 0+ TOOL@VERSION args so both `mise x -- <cmd>` and
     # `mise x jq node@20 -- <cmd>` route through the wrapper.
     - 'mise x|exec * -- <cmd>'
+    - 'rtk proxy <cmd>'
 
 tests:
   cases:
@@ -57,3 +58,5 @@ tests:
     - allow: 'mise exec jq -- ls /tmp'
     - allow: 'mise x node@20 -- ls /tmp'
     - allow: 'mise x node@20 python@3.11 -- ls /tmp'
+    - allow: 'rtk proxy ls /tmp'
+    - allow: 'rtk proxy git status'
