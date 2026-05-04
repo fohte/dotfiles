@@ -62,6 +62,11 @@ rules:
       - deny: 'git reset --hard'
       - deny: 'git reset HEAD file.txt'
       - deny: 'git -C /tmp reset --hard HEAD~1'
+  - deny: 'git clone *'
+    message: 'Use ghq for fohte-owned repos, or opensrc for third-party code reading.'
+    tests:
+      - deny: 'git clone https://github.com/sindresorhus/ky'
+      - deny: 'git clone git@github.com:fohte/dotfiles.git'
 
   # allow rules
   - allow: 'git [-C *] add *'
@@ -107,7 +112,7 @@ rules:
     tests:
       - deny: 'gh repo set-default foo/bar'
   - deny: 'gh repo clone *'
-    message: 'Use ghq'
+    message: 'Use ghq for fohte-owned repos, or opensrc for third-party code reading.'
     tests:
       - deny: 'gh repo clone foo/bar'
   - deny: 'gh log *'

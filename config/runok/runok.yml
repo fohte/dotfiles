@@ -5,6 +5,7 @@ extends:
   - './common.yml'
   - './git.yml'
   - './macos.yml'
+  - './opensrc.yml'
   - './languages/rust.yml'
   - './languages/go.yml'
   - './languages/node.yml'

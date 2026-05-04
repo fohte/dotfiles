@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - deny: 'npm pack *'
+    message: 'Use opensrc to read third-party package source.'
+    fix_suggestion: 'opensrc path <pkg>'
+    tests:
+      - deny: 'npm pack zod'
+      - deny: 'npm pack zod@3.22.0'
+
+  - deny: 'pip download *'
+    message: 'Use opensrc to read third-party package source.'
+    fix_suggestion: 'opensrc path pypi:<pkg>'
+    tests:
+      - deny: 'pip download requests'
+
+  - deny: 'cargo download *'
+    message: 'Use opensrc to read third-party package source.'
+    fix_suggestion: 'opensrc path crates:<pkg>'
+    tests:
+      - deny: 'cargo download serde'
