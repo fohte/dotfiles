@@ -118,6 +118,15 @@ local env(name) = std.extVar(name);
           { type: 'command', command: 'gen-claude-template context' },
         ],
       },
+      {
+        // Reminds the agent to call codebase-memory-mcp tools before falling
+        // back to grep/read. Fires on startup/resume/clear/compact so the hint
+        // survives context clears and compaction.
+        matcher: 'startup|resume|clear|compact',
+        hooks: [
+          { type: 'command', command: '~/.claude/hooks/cbm-session-reminder' },
+        ],
+      },
     ],
     UserPromptSubmit: [
       {

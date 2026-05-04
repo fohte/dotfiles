@@ -26,7 +26,11 @@ local env(name) = std.extVar(name);
   },
   'codebase-memory': {
     type: 'stdio',
-    command: 'codebase-memory-mcp',
+    // Launched via wrapper that cd's to the main repo when inside a worktree —
+    // the server keys its index by CWD, so a bare `codebase-memory-mcp` would
+    // build a separate graph per worktree. MCP clients exec `command` directly
+    // without shell expansion, so the path must be absolute.
+    command: env('HOME') + '/.claude/hooks/cbm-mcp-launcher.bash',
     args: [],
     env: {},
   },

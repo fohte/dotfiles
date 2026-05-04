@@ -8,6 +8,16 @@ input=$(cat)
 echo "$input" | a cc hook pre-tool-use > /dev/null
 
 tool_name=$(echo "$input" | jq -r .tool_name)
+
+# codebase-memory-mcp code-discovery gate: block the first Grep/Glob/Read in a
+# session and nudge the agent toward the knowledge graph. Subsequent calls
+# pass through (gate file in /tmp keyed on PPID).
+case "$tool_name" in
+  Grep | Glob | Read | Search)
+    exec ~/.claude/hooks/cbm-code-discovery-gate
+    ;;
+esac
+
 if [ "$tool_name" != "Bash" ]; then
   exit 0
 fi
