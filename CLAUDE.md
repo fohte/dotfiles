@@ -127,6 +127,7 @@ config/
 ├── prettier/                # Prettier 設定
 ├── rg/                      # ripgrep 設定
 ├── rubocop/                 # RuboCop 設定
+├── runok/                   # runok 設定 (~/.config/runok/ に symlink、コマンド実行ルール)
 └── tig/                     # tig 設定
 ```
 
