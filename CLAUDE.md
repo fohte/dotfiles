@@ -36,7 +36,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`_CLAUDE.md`** → `~/.claude/CLAUDE.md`: グローバルな Claude 向け指示
 - **`skills/<name>/SKILL.md`**: 特定タスク用の skill。`description` で trigger 条件を書く
 - **`contexts/<name>/{config.yaml,template.md}`**: SessionStart hook (`gen-claude-template context`) で動的にレンダされてセッション冒頭に注入される。`config.yaml` の `variables` に shell コマンドを書き、`template.md` (gomplate) でレンダする。マシン依存・gitignored な値 (例: `dot role get repo`) を public repo に書かずに Claude へ渡したいときに使う
-- **`settings.jsonnet`**: 権限・hook・MCP サーバ設定。base + role overlay + local の 3 層 jsonnet マージ。`~/.claude/settings.json` に反映するにはビルドが要るので `dot deploy -t claude` を使う (`_CLAUDE.md` や `skills/`、`contexts/` は symlink なので編集だけで反映される)
+- **`settings.jsonnet`**: 権限・hook 設定 (`~/.claude/settings.json` にビルド)
+- **`mcp-servers.jsonnet`**: MCP サーバ定義 (`~/.claude.json` の `mcpServers` にマージ install)
+- 上記 2 つの jsonnet は base + role overlay + local の 3 層マージで、ビルドが要るので変更後は `dot deploy -t claude`。`_CLAUDE.md`、`skills/`、`contexts/` は symlink なので編集だけで反映される
 
 ## Git ワークフロー
 
