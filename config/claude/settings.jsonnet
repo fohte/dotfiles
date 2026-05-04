@@ -29,6 +29,7 @@ local env(name) = std.extVar(name);
       'Read(~/.cache/armyknife/**)',
       'Read(~/.cargo/registry)',
       'Read(~/.claude/**)',
+      'Read(~/.opensrc/**)',
       'Read(~/.config/**)',
       'Read(~/.local/share/nvim/lazy)',
       'Read(~/Dropbox)',
