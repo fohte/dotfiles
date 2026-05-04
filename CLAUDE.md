@@ -12,12 +12,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **シンボリックリンク管理**: `symlinks` ファイルが設定ソース (`config/*`) からシステムの宛先へのマッピングを定義
 - **タグベースデプロイ**: `dot deploy` コマンドが `-t` オプションで選択的なデプロイをサポート
+- **role overlay**: マシンの役割 (`private` / `work`) に応じて 3 層 (base + role overlay + local) で設定を合成する。詳細は `config/bin/dot-role` 参照
 
 ### ファイルを追加・変更する際の注意
 
 1. 新しい設定ファイルを追加する場合は `symlinks` ファイルを更新すること
 2. 設定は `config/<tool-name>/` ディレクトリに配置すること
 3. タグベースのデプロイをサポートするため、`symlinks` に適切な `match_tag` ブロックを追加すること
+
+### 設定の反映
+
+設定ファイルを変更した後は、対応するタグで `dot deploy` を実行して反映する:
+
+```bash
+dot deploy -t <tag>     # 例: dot deploy -t claude
+```
+
+`make -C config/<tool>` を直接叩かないこと。`dot deploy` は symlink 配置と Makefile 実行 (jsonnet ビルド・install など) を一括で行う。
+
+## Claude Code 設定
+
+`config/claude/` 配下は symlink で `~/.claude/` に展開される。主要な拡張ポイント:
+
+- **`_CLAUDE.md`** → `~/.claude/CLAUDE.md`: グローバルな Claude 向け指示
+- **`skills/<name>/SKILL.md`**: 特定タスク用の skill。`description` で trigger 条件を書く
+- **`contexts/<name>/{config.yaml,template.md}`**: SessionStart hook (`gen-claude-template context`) で動的にレンダされてセッション冒頭に注入される。`config.yaml` の `variables` に shell コマンドを書き、`template.md` (gomplate) でレンダする。マシン依存・gitignored な値 (例: `dot role get repo`) を public repo に書かずに Claude へ渡したいときに使う
+- **`settings.jsonnet`**: 権限・hook・MCP サーバ設定。base + role overlay + local の 3 層 jsonnet マージ。変更後は `dot deploy -t claude` でビルドと install を行う
 
 ## Git ワークフロー
 
