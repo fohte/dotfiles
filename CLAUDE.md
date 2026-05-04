@@ -22,13 +22,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 設定の反映
 
-設定ファイルを変更した後は、対応するタグで `dot deploy` を実行して反映する:
+ほとんどの設定は symlink 経由なのでファイル編集だけで反映される。再 deploy が必要なのは以下:
 
-```bash
-dot deploy -t <tag>     # 例: dot deploy -t claude
-```
+- 新規ファイル追加で `symlinks` を更新したとき
+- ビルドが要る tool (例: `config/claude/` の jsonnet → `~/.claude/settings.json`) を変更したとき
 
-`make -C config/<tool>` を直接叩かないこと。`dot deploy` は symlink 配置と Makefile 実行 (jsonnet ビルド・install など) を一括で行う。
+その場合はタグで限定して `dot deploy -t <tag>` を実行する (`dot deploy -t claude` など)。`make -C config/<tool>` を直接叩かず `dot deploy` 経由にすること (symlink 配置とビルド・install が揃うため)。
 
 ## Claude Code 設定
 
@@ -37,7 +36,7 @@ dot deploy -t <tag>     # 例: dot deploy -t claude
 - **`_CLAUDE.md`** → `~/.claude/CLAUDE.md`: グローバルな Claude 向け指示
 - **`skills/<name>/SKILL.md`**: 特定タスク用の skill。`description` で trigger 条件を書く
 - **`contexts/<name>/{config.yaml,template.md}`**: SessionStart hook (`gen-claude-template context`) で動的にレンダされてセッション冒頭に注入される。`config.yaml` の `variables` に shell コマンドを書き、`template.md` (gomplate) でレンダする。マシン依存・gitignored な値 (例: `dot role get repo`) を public repo に書かずに Claude へ渡したいときに使う
-- **`settings.jsonnet`**: 権限・hook・MCP サーバ設定。base + role overlay + local の 3 層 jsonnet マージ。変更後は `dot deploy -t claude` でビルドと install を行う
+- **`settings.jsonnet`**: 権限・hook・MCP サーバ設定。base + role overlay + local の 3 層 jsonnet マージ。`~/.claude/settings.json` に反映するにはビルドが要るので `dot deploy -t claude` を使う (`_CLAUDE.md` や `skills/`、`contexts/` は symlink なので編集だけで反映される)
 
 ## Git ワークフロー
 
