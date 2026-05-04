@@ -35,6 +35,7 @@ rules:
       - allow: 'tee -a /tmp/foo.log'
   - allow: 'gsed *'
   - deny: 'sed *'
+    when: 'os == "macos"'
     message: 'BSD sed (macOS default) has incompatible flags with GNU sed. Use gsed for portable behavior.'
     fix_suggestion: 'gsed ...'
     tests:
@@ -42,6 +43,7 @@ rules:
       - allow: 'gsed -i "s/foo/bar/" file.txt'
   - allow: 'gdate *'
   - deny: 'date *'
+    when: 'os == "macos"'
     message: 'BSD date (macOS default) has incompatible flags with GNU date (e.g., -d). Use gdate for portable behavior.'
     fix_suggestion: 'gdate ...'
     tests:
@@ -49,6 +51,7 @@ rules:
       - allow: 'gdate -d "2025-01-01"'
   - allow: 'gstat *'
   - deny: 'stat *'
+    when: 'os == "macos"'
     message: 'BSD stat (macOS default) has incompatible flags with GNU stat (e.g., -c, --format). Use gstat for portable behavior.'
     fix_suggestion: 'gstat ...'
     tests:
