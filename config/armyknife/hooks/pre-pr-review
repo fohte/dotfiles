@@ -1,0 +1,113 @@
+#!/bin/bash
+# pre-pr-review / pre-pr-submit hook for armyknife.
+# Called by `a ai pr-draft review` (before opening the editor) and
+# `a ai pr-draft submit` (before creating/updating the PR on GitHub).
+#
+# armyknife discovers this file at $XDG_CONFIG_HOME/armyknife/hooks/<hook-name>
+# (defaults to ~/.config/armyknife/hooks/<hook-name>).
+# `pre-pr-submit` is a symlink to this file so the same check fires at both points.
+# See: https://github.com/fohte/armyknife/blob/master/docs/hooks.md
+#
+# Environment variables set by armyknife (subset used here):
+#   ARMYKNIFE_PR_BODY_FILE - path to a temp file containing the draft PR body
+#   ARMYKNIFE_PR_OWNER     - target repository owner
+#
+# Enforces the create-pr skill rule "外部 org の PR/Issue へのリンクは
+# cross-reference されないようにする" (skills/create-pr/rules/why-cite-with-quote.md):
+# any reference that GitHub turns into a cross-reference toward another org
+# must instead go through redirect.github.com so the foreign thread's Timeline
+# is not polluted. Two reference forms generate cross-references:
+#   1. Full URL:  https://github.com/<owner>/<repo>/(issues|pull|discussions)/<n>
+#   2. Shorthand: <owner>/<repo>#<n>          (same-repo `#<n>` is in-org, ignored)
+#
+# A non-zero exit aborts the calling armyknife command.
+set -euo pipefail
+
+if [[ -z "${ARMYKNIFE_PR_BODY_FILE:-}" ]] || [[ ! -f "$ARMYKNIFE_PR_BODY_FILE" ]]; then
+  exit 0
+fi
+
+# Allowed orgs: PR target owner + every org the user owns.
+# Owned orgs come from the same source as contexts/repo-access (fohte hardcoded,
+# work overlay org from `dot role get repo`), so the hook agrees with the rule
+# the skill prose teaches Claude.
+collected_orgs=()
+[[ -n "${ARMYKNIFE_PR_OWNER:-}" ]] && collected_orgs+=("$ARMYKNIFE_PR_OWNER")
+collected_orgs+=("fohte")
+if work_repo="$(dot role get repo 2> /dev/null)" && [[ -n "$work_repo" ]]; then
+  collected_orgs+=("${work_repo%%/*}")
+fi
+
+# Deduplicate. Avoid `mapfile` since macOS still ships bash 3.2 which lacks it.
+allowed_orgs=()
+while IFS= read -r org; do
+  allowed_orgs+=("$org")
+done < <(printf '%s\n' "${collected_orgs[@]}" | awk 'NF && !seen[$0]++')
+
+# Escape regex metacharacters before splicing org names into the alternation.
+# GitHub's owner naming rules disallow these characters today, but defending
+# against an unexpected value (`.` would match any char, `|` would broaden the
+# alternation) is cheap and keeps the allow check tight.
+escape_regex() { printf '%s' "$1" | sed -E 's#[][\.^$*+?(){}|/\\]#\\&#g'; }
+escaped_orgs=()
+for org in "${allowed_orgs[@]}"; do
+  escaped_orgs+=("$(escape_regex "$org")")
+done
+
+# Read the body once. For the shorthand pass, strip
+#   1. full Markdown links `[label](url)` — the label may legitimately read
+#      `other-org/repo#n` while the url goes through redirect.github.com, in
+#      which case GitHub creates no cross-reference. Dropping the whole
+#      construct avoids false positives on the label.
+#   2. bare URLs — so `<owner>/<repo>` segments inside a URL we already checked
+#      in the URL pass do not get re-detected as shorthand.
+body="$(cat "$ARMYKNIFE_PR_BODY_FILE")"
+body_no_urls="$(
+  printf '%s' "$body" |
+    sed -E 's#\[[^]]*\]\([^)]*\)##g' |
+    sed -E 's#https?://[^[:space:])>"]+##g'
+)"
+
+allow_alternation="$(
+  IFS='|'
+  echo "${escaped_orgs[*]}"
+)"
+
+# Form 1: full GitHub URLs to issues / PRs / discussions in a non-allowed org.
+url_violations="$(
+  printf '%s\n' "$body" |
+    grep -oE 'https?://github\.com/[^/[:space:])>"]+/[^/[:space:])>"]+/(issues|pull|discussions)/[0-9]+' |
+    grep -vE "^https?://github\.com/(${allow_alternation})/" ||
+    true
+)"
+
+# Form 2: shorthand `<owner>/<repo>#<n>` in a non-allowed org.
+# Owner / repo character classes follow GitHub's rules. The leading `[^A-Za-z0-9_/-]`
+# anchor prevents matching mid-token (e.g. inside `path/to/foo/bar#123`). `grep -oP`
+# would be cleaner but BSD grep on macOS lacks `-P`, so we use a leading guard char
+# and strip it afterwards.
+shorthand_violations="$(
+  printf '%s\n' "$body_no_urls" |
+    grep -oE '(^|[^A-Za-z0-9_/-])[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+#[0-9]+' |
+    sed -E 's#^[^A-Za-z0-9]+##' |
+    grep -vE "^(${allow_alternation})/" ||
+    true
+)"
+
+violations="$(printf '%s\n%s\n' "$url_violations" "$shorthand_violations" | awk 'NF' | sort -u)"
+
+if [[ -n "$violations" ]]; then
+  {
+    echo "pre-pr hook: cross-org GitHub references found in PR body."
+    echo "Route them through redirect.github.com so GitHub does not create a"
+    echo "cross-reference in the foreign thread"
+    echo "(see skills/create-pr/rules/why-cite-with-quote.md)."
+    echo
+    echo "Offending references:"
+    # Prefix each line with "  - " using parameter expansion (SC2001) instead of `sed`.
+    echo "  - ${violations//$'\n'/$'\n'  - }"
+    echo
+    echo "Allowed orgs: ${allowed_orgs[*]}"
+  } >&2
+  exit 1
+fi
