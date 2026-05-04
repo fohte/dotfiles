@@ -57,6 +57,16 @@ rules:
 
   - allow: nlx @marp-team/marp-cli@latest *
 
+  # opensrc (read-only and idempotent fetch). remove/clean fall through to default ask.
+  - allow: 'opensrc path|list|fetch *'
+    tests:
+      - allow: 'opensrc path zod'
+      - allow: 'opensrc path zod@3.22.0'
+      - allow: 'opensrc list'
+      - allow: 'opensrc fetch react'
+      - ask: 'opensrc remove zod'
+      - ask: 'opensrc clean'
+
   - allow: pinact run *
 
   - allow: mise ls|where|which *
