@@ -10,6 +10,15 @@
 
 関連性は自分で判断すること。タスク指示や issue に PR/Issue の URL が出てきても、それだけで「関連がある」と決めつけて貼ってはいけない。リンク先を読んで、この PR との関係を自分で確認したうえで貼るかを決める。関連するか判断がつかないものは、貼る前にユーザーに確認する。
 
+### 外部 org の PR/Issue へのリンクは cross-reference されないようにする
+
+別 org のリポジトリにある PR/Issue を本文で参照すると、GitHub が双方向の cross-reference を作り、相手側スレッドの Timeline に「この PR からメンションされた」イベントが追加される。外部 org のスレッドを自分のリンクで汚さないため、外部 org の URL は `redirect.github.com` 経由にする。`redirect.github.com` は GitHub の外部リンク用ドメインで、踏むと本来の URL に転送されるが、GitHub のリンクパーサからは外部リンク扱いになり cross-reference は生成されない。
+
+- ❌ `[other-org/repo#123](https://github.com/other-org/repo/issues/123)` (相手リポジトリに逆参照が付く)
+- ✅ `[other-org/repo#123](https://redirect.github.com/other-org/repo/issues/123)` (リンクは機能するが逆参照は付かない)
+
+適用範囲: PR を出すリポジトリと **異なる org** の URL のみ。自分の org 内 (同 org の別リポジトリを含む) の参照は通常通り `#数字` や直 URL でよい。`#数字` 形式は同一リポジトリ内の issue にのみリンクするため、別リポジトリを参照したいときはフルパス (`org/repo#数字` または直 URL) を使うこと。
+
 ## from: 表記
 
 この PR の起点となった issue や PR がある場合、Why の最初の行に `- from: <URL>` で記載する。複数ある場合はカンマ区切り。`from:` に入れるのは起点リンクのみ。参考資料や根拠のリンクは説明文の中に埋め込む。
