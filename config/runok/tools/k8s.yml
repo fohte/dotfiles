@@ -148,7 +148,7 @@ rules:
   # `-c|--cluster`, `--context`, `--talosconfig`, `--siderov1-keys-dir`. They
   # are listed as optional groups so the same rule matches both space- and
   # `=`-joined forms.
-  - allow: 'talosctl [-n|--nodes *] [-e|--endpoints *] [-c|--cluster *] [--context *] [--talosconfig *] [--siderov1-keys-dir *] get|list|ls|dmesg|events|containers|cgroups|processes|memory|mounts|netstat|stats|time|usage|version|health|inspect|dashboard|completion *'
+  - allow: 'talosctl [-n|--nodes *] [-e|--endpoints *] [-c|--cluster *] [--context *] [--talosconfig *] [--siderov1-keys-dir *] get|list|ls|dmesg|events|containers|cgroups|processes|memory|mounts|netstat|stats|time|usage|version|health|inspect|dashboard|completion|disks|interfaces|routes *'
     tests:
       - allow: 'talosctl get members'
       - allow: 'talosctl --nodes 10.0.0.1 get members'
@@ -161,6 +161,24 @@ rules:
       - allow: 'talosctl health'
       - allow: 'talosctl containers -k'
       - allow: 'talosctl processes'
+      - allow: 'talosctl disks'
+      - allow: 'talosctl --nodes 10.0.0.1 disks'
+      - allow: 'talosctl interfaces'
+      - allow: 'talosctl routes'
+
+  # `image list|k8s-bundle|talos-bundle` are read-only. `pull`, `remove`,
+  # `cache-create`, `cache-serve`, `cache-cert-gen` mutate node or local state
+  # and must fall through to ask.
+  - allow: 'talosctl [-n|--nodes *] [-e|--endpoints *] [-c|--cluster *] [--context *] [--talosconfig *] [--siderov1-keys-dir *] image|images list|k8s-bundle|talos-bundle *'
+    tests:
+      - allow: 'talosctl image list'
+      - allow: 'talosctl images list'
+      - allow: 'talosctl --nodes 10.0.0.1 image list'
+      - allow: 'talosctl image k8s-bundle'
+      - allow: 'talosctl image talos-bundle'
+      - ask: 'talosctl image pull ghcr.io/foo:bar'
+      - ask: 'talosctl image remove ghcr.io/foo:bar'
+      - ask: 'talosctl image cache-create --image-layer-cache /tmp/cache'
 
   # `service` / `services` without arguments lists services. `service <id>
   # status` is the explicit read action. `service <id>` (action omitted) and
