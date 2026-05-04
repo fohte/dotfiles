@@ -3,6 +3,11 @@
 ------------------------------
 require('hs.ipc')
 
+local cliPrefix = hs.fs.attributes('/opt/homebrew') and '/opt/homebrew' or '/usr/local'
+if not hs.ipc.cliStatus(cliPrefix) then
+  hs.ipc.cliInstall(cliPrefix)
+end
+
 ------------------------------
 --- Applications
 ------------------------------
