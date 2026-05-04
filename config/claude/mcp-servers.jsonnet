@@ -24,4 +24,10 @@ local env(name) = std.extVar(name);
     args: ['-y', 'chrome-devtools-mcp@latest'],
     env: {},
   },
+  'codebase-memory': {
+    type: 'stdio',
+    command: 'codebase-memory-mcp',
+    args: [],
+    env: {},
+  },
 }

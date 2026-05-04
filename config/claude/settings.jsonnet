@@ -81,6 +81,10 @@ local env(name) = std.extVar(name);
       'mcp__context7',
       'mcp__qmd',
       'mcp__pencil',
+
+      // Allow all codebase-memory-mcp tools — index/query/trace are read-only
+      // against a local SQLite cache. Destructive operations are denied below.
+      'mcp__codebase-memory',
     ],
     deny: [
       'NotebookEdit',
@@ -89,6 +93,10 @@ local env(name) = std.extVar(name);
       'Read(.envrc)',
       'mcp__qmd__query',
       'mcp__qmd__vsearch',
+
+      // Wipes the indexed project from the local SQLite cache. Reversible only
+      // by re-indexing, but accidental drops cost minutes of rebuild time.
+      'mcp__codebase-memory__delete_project',
 
       // Block self-scheduling tools. Claude sometimes defers the current task
       // by scheduling itself ("I'll check this again later") instead of doing

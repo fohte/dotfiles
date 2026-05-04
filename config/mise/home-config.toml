@@ -46,6 +46,7 @@
 "aqua:suzuki-shunsuke/pinact" = "3.9.0"
 "aqua:tree-sitter/tree-sitter" = "0.26.8"
 "aqua:hashicorp/terraform" = "1.15.0"
+"github:DeusData/codebase-memory-mcp" = "0.6.0"
 
 [settings]
 # disable the idiomatic version file such as Gemfile
