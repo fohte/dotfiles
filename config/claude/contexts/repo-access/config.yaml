@@ -1,0 +1,3 @@
+variables:
+  work_org: dot role get repo 2>/dev/null | cut -d/ -f1 || true
+template: template.md
