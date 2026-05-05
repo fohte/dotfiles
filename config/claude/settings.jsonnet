@@ -35,6 +35,7 @@ local env(name) = std.extVar(name);
       'Read(~/Dropbox)',
       'Read(~/Library/Application Support/CleanShot)',
       'Read(~/Library/Application Support/gogcli)',
+      'Read(~/Library/Application Support/rtk/**)',
       'Read(~/Library/CloudStorage/Dropbox)',
       'Read(~/ghq/**)',
 
