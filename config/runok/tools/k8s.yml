@@ -49,10 +49,11 @@ rules:
       - allow: 'kubectl wait --for=condition=Ready pod/foo'
 
   # `kubectl config` read-only subcommands that only emit names.
-  - allow: 'kubectl [--kubeconfig *] [--context *] config current-context|get-contexts|get-clusters|get-users'
+  - allow: 'kubectl [--kubeconfig *] [--context *] config current-context|get-contexts|get-clusters|get-users *'
     tests:
       - allow: 'kubectl config current-context'
       - allow: 'kubectl config get-contexts'
+      - allow: 'kubectl config get-contexts -o name'
       - allow: 'kubectl config get-clusters'
       - allow: 'kubectl config get-users'
       - allow: 'kubectl --kubeconfig ~/.kube/work config current-context'
