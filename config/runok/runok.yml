@@ -51,6 +51,17 @@ definitions:
     - 'mise x|exec * -- <cmd>'
     - 'rtk proxy <cmd>'
 
+rules:
+  # `rtk <cmd>` strips boilerplate from the inner command's stdout. Any other
+  # rtk subcommand should go through `rtk proxy <cmd>`, which is registered
+  # as a wrapper above so the inner command is evaluated against normal rules.
+  - deny: 'rtk !proxy *'
+    message: 'Bare `rtk <cmd>` truncates output. Use `rtk proxy <cmd>` so the inner command is evaluated by runok rules.'
+    fix_suggestion: 'rtk proxy <cmd>'
+    tests:
+      - deny: 'rtk git diff'
+      - deny: 'rtk ls /tmp'
+
 tests:
   cases:
     - allow: 'mise x -- ls /tmp'
