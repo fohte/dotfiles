@@ -57,6 +57,18 @@ rules:
     tests:
       - deny: 'stat -c %s file.txt'
       - allow: 'gstat -c %s file.txt'
+
+  # GNU coreutils on macOS (Homebrew installs them with a `g` prefix).
+  # Only readonly commands are listed; gsed/gdate/gstat are handled above.
+  - allow: 'gcat|gtac|gnl|ghead|gtail|gwc|gcut|gsort|guniq|gtr|gfold|gexpand|gpaste|gcomm|gjoin|gbase64|gmd5sum|gsha1sum|gsha224sum|gsha256sum|gsha384sum|gsha512sum|gls|gdu|gdf|gtee *'
+    tests:
+      - allow: 'gwc -l /tmp/foo'
+      - allow: 'gtail -n 50 /tmp/foo'
+      - allow: 'ghead -n 10 /tmp/foo'
+      - allow: 'gcat /tmp/foo'
+      - allow: 'gsort /tmp/foo'
+      - allow: 'gtee /tmp/foo.log'
+      - allow: 'gls -la /tmp'
   - allow: 'awk *'
     sandbox: readonly
   - allow: 'curl [-s] [-X GET] *'
