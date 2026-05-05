@@ -40,25 +40,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`mcp-servers.jsonnet`**: MCP サーバ定義 (`~/.claude.json` の `mcpServers` にマージ install)
 - 上記 2 つの jsonnet は base + role overlay + local の 3 層マージで、ビルドが要るので変更後は `dot deploy -t claude`。`_CLAUDE.md`、`skills/`、`contexts/` は symlink なので編集だけで反映される
 
-## Git ワークフロー
-
-### コミットメッセージと Pull Request
-
-#### 言語
-
-- **コミットメッセージと Pull Request**: 英語で記述すること
-- **理由**: オープンソースプロジェクトとの一貫性を保ち、国際的な可読性を確保するため
-
-#### コミットメッセージフォーマット
-
-**重要:** コミット時は `/commit` skill を使用すること。詳細なフォーマットと例は skill を参照。
-
-基本ルール:
-
-- **必ず Why と What の両方を記述する** (一行だけの what コミットは禁止)
-- **スコープ**: 変更対象の設定ディレクトリを指定 (例: `zsh`, `nvim`, `tmux`, `bin`)
-- **Subject**: 問題を解決する場合は「何を直した」を書く (例: `fix EDITOR being set to "nvim not found"`)
-
 ## ツールバージョン管理
 
 ### mise
