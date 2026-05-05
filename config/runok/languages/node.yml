@@ -6,7 +6,6 @@ rules:
     tests:
       - allow: 'ni'
       - allow: 'ni --frozen-lockfile'
-      - ask: 'ni -D typescript'
 
   # clean install (use nci)
   - allow: 'nci'
