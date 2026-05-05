@@ -9,76 +9,46 @@ Fetch review comments for a PR and address any feedback.
 ## Usage
 
 ```bash
-a gh pr-review check <pr-number> [-R <owner/repo>] [--all] [--review N] [--full]
+a gh pr-review reply pull <pr-number> [-R <owner/repo>] [--include-resolved] [--force]
 ```
+
+This pulls all review threads (and review bodies like "LGTM!") to a local Markdown file at `$XDG_CACHE_HOME/armyknife/gh-pr-review/<owner>/<repo>/<pr>/threads.md`. Read that file directly to see review feedback. Diff hunks are auto-compressed (commented line + 5 before / 3 after) and `<details>` blocks are folded by default.
 
 ## Options
 
 - `-R <owner/repo>`: Target repository (default: current repo)
-- `-a, --all`: Include resolved comments (default: only unresolved)
-- `-r, --review N`: Show details for review number N
-- `-f, --full`: Show all details (original behavior)
-- `-d, --open-details`: Expand `<details>` blocks (default: collapsed)
-
-## Output Modes
-
-### Default (Summary)
-
-Shows compact overview of all reviews with thread counts:
-
-- Review author, state, unresolved thread count
-- Thread locations (file:line) with first line of comment
-
-### --review N
-
-Shows full details for a specific review:
-
-- Review body
-- All associated threads with diff context and full comments
-
-### --full
-
-Shows all reviews and threads with full details (legacy behavior).
+- `--include-resolved`: Include resolved threads (default: only unresolved)
+- `--force`: Overwrite local edits without confirmation
+- `-d, --open-details`: Expand `<details>` blocks (default: folded)
 
 ## Workflow
 
-1. Run without options to get summary
-2. **Automatically** run `--review N` for each review that has unresolved comments (do NOT ask the user if they want to see details)
-3. **Evaluate each comment** with a **fix-by-default** mindset:
+1. Run `a gh pr-review reply pull <pr>` and Read the resulting file
+2. **Evaluate each comment** with a **fix-by-default** mindset:
     - **Default action is to fix**: Assume review feedback is valid and should be addressed unless there is clear evidence otherwise
     - **"Won't fix" only for obvious false positives**: Only skip fixing when the reviewer's claim is factually incorrect (e.g., claims a version/API doesn't exist when it does, hallucinates non-existent issues, misreads the code logic)
     - **When unsure, ask the user**: If you're uncertain whether a comment is valid or how to address it, ask the user rather than deciding "won't fix" on your own
     - **Do NOT dismiss comments just because you disagree**: Reviewer suggestions about code style, safety, readability, or best practices should generally be followed even if the current code technically works
     - **NEVER autonomously decide "won't fix"**: Even if you believe a comment is a false positive, you MUST ask the user first. Do not skip this step under any circumstances. This is the most common mistake — always err on the side of asking
-4. **Bug reports require test-first fixing**: When a review comment points out a bug (incorrect behavior, edge case failure, race condition, etc.), you MUST first write a test that reproduces the bug before fixing it. This ensures the bug is real and the fix is correct. Only after the test fails as expected, apply the code fix and confirm the test passes
-5. Make necessary code changes based on the feedback
-6. **User confirmation for "won't fix"**: Before treating any comment as "won't fix", you MUST ask the user for confirmation using AskUserQuestion. Present the reviewer's comment, your reasoning for why it's a false positive, and let the user decide whether to fix it or skip it. Never autonomously decide "won't fix" without user approval.
-7. For confirmed "won't fix" comments (approved by the user in step 6), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
-8. If code changes were made (steps 4-7), commit and push using the `/commit` skill, then `git push`
+3. **Bug reports require test-first fixing**: When a review comment points out a bug (incorrect behavior, edge case failure, race condition, etc.), you MUST first write a test that reproduces the bug before fixing it. This ensures the bug is real and the fix is correct. Only after the test fails as expected, apply the code fix and confirm the test passes
+4. Make necessary code changes based on the feedback
+5. **User confirmation for "won't fix"**: Before treating any comment as "won't fix", you MUST ask the user for confirmation using AskUserQuestion. Present the reviewer's comment, your reasoning for why it's a false positive, and let the user decide whether to fix it or skip it. Never autonomously decide "won't fix" without user approval.
+6. For confirmed "won't fix" comments (approved by the user in step 5), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
+7. If code changes were made (steps 3-6), commit and push using the `/commit` skill, then `git push`
    {{- if eq $v.repo.owner.login "fohte" }}
-9. **Wait for Devin review after push**: After pushing, wait for Devin's review CI check to complete using `gh pr checks --watch`. Once the check passes, re-run `a gh pr-review check` to review Devin's feedback and address any new comments (repeat from step 1)
-10. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below)
-11. Re-run to verify all comments have been addressed
+8. **Wait for Devin review after push**: After pushing, wait for Devin's review CI check to complete using `gh pr checks --watch`. Once the check passes, re-run `a gh pr-review reply pull` (with `--force` to overwrite local edits) and re-Read the file to review Devin's feedback (repeat from step 1)
+9. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below)
+10. Re-run from step 1 to verify all comments have been addressed
     {{- else }}
-12. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below)
-13. Re-run to verify all comments have been addressed
+11. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below)
+12. Re-run from step 1 to verify all comments have been addressed
     {{- end }}
-
-**Important**: After getting the summary, immediately proceed to fetch details for each review. Never ask the user "詳細を確認しますか?" or similar confirmation questions.
 
 ## Reply and Resolve Threads
 
-After evaluating all comments and making code changes (if any), use `a gh pr-review reply pull`/`push` to reply to all threads and resolve them in a single workflow. Do NOT ask the user before replying.
+After evaluating all comments and making code changes (if any), edit the threads file pulled in step 1, then submit the replies. Do NOT ask the user before replying.
 
-### Step 1: Pull threads to local Markdown file
-
-```bash
-a gh pr-review reply pull <pr-number> [--include-resolved] [--force]
-```
-
-This fetches all unresolved threads to a local Markdown file at `$XDG_CACHE_HOME/gh-pr-review/<owner>/<repo>/<pr>/threads.md`.
-
-### Step 2: Edit the Markdown file
+### Step 1: Edit the Markdown file
 
 The file contains threads in the following format:
 
@@ -117,15 +87,17 @@ Review comment body
 Fixed in abc1234. Switched to using X as suggested.
 ```
 
-### Step 3: Review the edited file
+### Step 2: Review the edited file
 
 Run `a gh pr-review reply review <pr-number>` **in background** (`run_in_background: true`) to open the threads file in terminal + Neovim for user review. This command blocks until the user closes the editor, so it will complete when the user finishes reviewing.
 
 **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved the draft, exit code 1 means not approved (user closed without approving), exit code 2 means the editor is already open. If not approved, ask the user what to change. If already open (exit code 2), inform the user that the editor is already open and they can reload the file in their editor (e.g., `:e` in Neovim). Do NOT retry the command.
 
-**NEVER edit the `submit:` frontmatter field yourself.** The `submit: true` flag represents the human reviewer's approval of the drafted replies. It MUST only be set by the user via the `reply review` workflow (Step 3). Do not flip `submit: false` to `submit: true` to bypass the editor step, even if `push` fails with "File has been modified after approval". If approval is invalidated, re-run `reply review` and let the user re-approve — never edit the frontmatter to shortcut the flow.
+**On exit, the command writes a unified diff of any user edits to stdout.** Read that diff directly to see what the user changed — do NOT re-Read the threads file to find the changes.
 
-### Step 4: Push replies and resolutions to GitHub
+**NEVER edit the `submit:` frontmatter field yourself.** The `submit: true` flag represents the human reviewer's approval of the drafted replies. It MUST only be set by the user via the `reply review` workflow (Step 2). Do not flip `submit: false` to `submit: true` to bypass the editor step, even if `push` fails with "File has been modified after approval". If approval is invalidated, re-run `reply review` and let the user re-approve — never edit the frontmatter to shortcut the flow.
+
+### Step 3: Push replies and resolutions to GitHub
 
 ```bash
 a gh pr-review reply push <pr-number> [--dry-run] [--force]
