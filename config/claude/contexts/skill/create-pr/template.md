@@ -228,9 +228,7 @@ echo "## Why
 
 ## 4. ユーザーの指示に応じた対応
 
-`a ai pr-draft review` が exit code 0 以外で完了したら、**まず draft ファイルを最初から最後まで全行読むこと**。frontmatter の `steps` だけ見て判断すると、ユーザーが本文中に書き込んだコメント (例: 「ここながすぎ」) を見逃して同じ指摘を繰り返し書かせる。
-
-frontmatter と本文の両方を踏まえて以下に振り分ける。
+`a ai pr-draft review` の stdout (frontmatter と本文中のユーザーコメントを含む) を踏まえて以下に振り分ける。
 
 ### 修正指示の場合
 
