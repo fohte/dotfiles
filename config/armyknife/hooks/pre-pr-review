@@ -12,8 +12,8 @@
 #   ARMYKNIFE_PR_BODY_FILE - path to a temp file containing the draft PR body
 #   ARMYKNIFE_PR_OWNER     - target repository owner
 #
-# Enforces the create-pr skill rule "外部 org の PR/Issue へのリンクは
-# cross-reference されないようにする" (skills/create-pr/rules/why-cite-with-quote.md):
+# Enforces the create-pr skill rule "外部 org の cross-reference 防止"
+# (see the "Why / 起点リンクと関連リンク" section of the create-pr skill):
 # any reference that GitHub turns into a cross-reference toward another org
 # must instead go through redirect.github.com so the foreign thread's Timeline
 # is not polluted. Two reference forms generate cross-references:
@@ -101,7 +101,7 @@ if [[ -n "$violations" ]]; then
     echo "pre-pr hook: cross-org GitHub references found in PR body."
     echo "Route them through redirect.github.com so GitHub does not create a"
     echo "cross-reference in the foreign thread"
-    echo "(see skills/create-pr/rules/why-cite-with-quote.md)."
+    echo "(see the create-pr skill: \"外部 org の cross-reference 防止\" rule)."
     echo
     echo "Offending references:"
     # Prefix each line with "  - " using parameter expansion (SC2001) instead of `sed`.
