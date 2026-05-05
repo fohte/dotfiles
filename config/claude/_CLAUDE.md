@@ -33,7 +33,7 @@
 - 一時ファイル: `/tmp` 下に置く
 - search: prefer `rg` over `find`/`grep`; never search `~` (too heavy)
 - json: use `jq`, not `python3 -c 'import json'`
-- coreutils: use `gsed` / `gdate` / `gawk` (GNU) instead of BSD tools
+- coreutils: use `gsed` / `gdate` / `gstat` (GNU) instead of BSD tools
 - `rtk`: a PreToolUse hook auto-rewrites commands to `rtk <cmd>` to save tokens. Use `rtk proxy <cmd>` only when truncation hurts.
 
 ## コードスタイル
