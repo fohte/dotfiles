@@ -25,24 +25,17 @@
 
 ### タスクフロー選択
 
-タスクを受けたら、最終的な目的に基づいて以下のどのフローに該当するかを判断し、対応するスキルを呼び出すこと:
+タスクを受けたら、最終的な目的に基づいて `/research`, `/debug-flow`, `/development` のいずれかを呼び出すこと。
 
-1. **Research** (`/research`): 情報を知りたい。技術調査、ベストプラクティス調査、比較検討など
-2. **Debug** (`/debug-flow`): 問題を直したい。バグの原因特定→修正まで一貫して行う
-3. **Development** (`/development`): 機能を作りたい・変えたい。設計→実装→コミットまで一貫して行う
+### コマンド
 
-判断に迷う場合はユーザーに確認すること。
-
-- **Skill の優先使用**: 作業を開始する前に、まず system-reminder に記載された利用可能な Skill を確認すること。タスクに合致する Skill がある場合は、**必ず最初に** Skill ツールを呼び出すこと。直接コマンドを実行してはならない
-    - 原則: Skill は特定のワークフローを標準化・最適化するために存在する。Skill を使わずに直接実行すると、品質基準やプロジェクト規約を満たせない可能性がある
-    - 判断基準: Skill の説明文 (description) を読み、現在のタスクが該当するかを判断すること
-- GitHub: `gh` コマンドを使う (URL 処理含む)
-- ファイル削除: 追跡ファイルは `rm` ではなく `git rm`
+- GitHub: use `gh` (e.g., `gh issue view` for issue URLs)
+- rm: prefer `git rm` for tracked files; never pass `-f`
 - 一時ファイル: `/tmp` 下に置く
-- 広範囲検索の禁止: `~` 以下の検索 (`find ~`, `~/**/*`, Grep `path: ~` 等) は禁止。作業中のリポジトリやパスが判明しているディレクトリに限定する
-- `jq`: JSON パースに使う (`python3 -c 'import json; ...'` は禁止)
-- `gsed` / `gdate` / `gawk` 等: macOS の BSD 版ではなく GNU coreutils (`g` プレフィックス) を使う
-- `rtk proxy <cmd>`: 出力が truncate されて困る時に素の出力を取得する (通常時は PreToolUse hook が自動で `rtk <cmd>` に書き換えてトークン削減している)
+- search: prefer `rg` over `find`/`grep`; never search `~` (too heavy)
+- json: use `jq`, not `python3 -c 'import json'`
+- coreutils: use `gsed` / `gdate` / `gawk` (GNU) instead of BSD tools
+- `rtk`: a PreToolUse hook auto-rewrites commands to `rtk <cmd>` to save tokens. Use `rtk proxy <cmd>` only when truncation hurts.
 
 ## コードスタイル
 
@@ -60,4 +53,3 @@
 - 半角英数字と全角文字の間には半角スペースを入れること
 - 英語で技術文書を書くときは以下を守ること
     - 「Want to...」「Need to...」で文を始めない。代わりに動詞の命令形 ("Enable...", "Add...") や受動態 ("Automatic restoration is enabled...") を使うこと
-- AA（アスキーアート）やボックス装飾 (`┌─┐`, `└─┘`, `│` など) は使用しないこと。代わりにプレーンテキスト、Markdown のリスト、コードブロック、テーブルを使うこと
