@@ -12,7 +12,15 @@ rules:
       - allow: 'kubectl --context=foo get pods'
       - allow: 'kubectl --kubeconfig ~/.kube/work --context prod get pods -A'
       - allow: 'kubectl -n default --context foo describe pod bar'
-  - ask: 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *] get secrets *'
+  # kubectl accepts `secret`, `secrets`, and the API-qualified
+  # `secret(s).v1[.]` forms, so glob every spelling that resolves to the
+  # Secret resource.
+  - ask: 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *] get secret* *'
+    tests:
+      - ask: 'kubectl get secret foo'
+      - ask: 'kubectl get secrets foo'
+      - ask: 'kubectl -n databases get secret cnpg-main-backup-b2 -o jsonpath={.data.ACCESS_KEY_ID}'
+      - ask: 'kubectl --context prod -n default get secrets'
 
   # Read-only info subcommands (no cluster mutation, no secret leakage).
   # `cluster-info dump` is excluded because it aggregates pod logs / ConfigMaps
