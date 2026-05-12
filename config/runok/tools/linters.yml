@@ -10,4 +10,5 @@ rules:
       - allow: 'shellcheck script.sh'
   - allow: 'shfmt *'
   - allow: 'prettier *'
+  - allow: 'tflint *'
   - allow: 'xmllint *'
