@@ -115,9 +115,9 @@ Replies are posted to bot reviewers (e.g., Gemini Code Assist).
   {{- else -}}
 - **Language**: Always reply in Japanese
   {{- end }}
-- **Tone**: Casual/plain style, no keigo (敬語). Bot reviewers don't need politeness
+- **Tone**: Bot reviewers don't need politeness, so skip keigo (敬語). Japanese replies must use 常体 (だ・である調) in written-language register. Spoken-language contractions and casual sentence-end particles (e.g., 「含まれてる」「思う」「だよ」「〜ね」「〜じゃん」) are forbidden — they read as sloppy in a written technical context. Use the dictionary form instead: 「含まれている」「と思われる」「である」
 - **Length**: 1-2 sentences. Concise but complete
-- Write **natural sentences** as a human would. No label prefixes like "Not applicable:", "対応不要:" at the start
+- Write **natural sentences** as a human would, but treat the reply as written technical prose, not chat. No label prefixes like "Not applicable:", "対応不要:" at the start
 - When citing evidence (versions, URLs, etc.), integrate them naturally into the sentence so the reader understands why they are mentioned. Don't drop bare values without context
 - If the bot's claim is factually wrong, briefly explain **why** it is wrong, not just that it is wrong
 - **Inline code formatting**: Always wrap code tokens, commands, file paths, and similar technical terms in backticks (e.g., `COPY . .`, `docker build`, `/usr/local/bin`). Never write them as bare text
