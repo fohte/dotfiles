@@ -84,7 +84,7 @@ dryrun() {
   env LOG_LEVEL=debug \
     RENOVATE_CONFIG_FILE="$config_file" \
     RENOVATE_BASE_BRANCHES="$branch" \
-    npx -y renovate \
+    mise x node@lts -- npx -y renovate@latest \
     --token="$token" \
     --schedule="" \
     --require-config=ignored \
