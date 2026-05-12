@@ -81,10 +81,17 @@ root_path="$(git root -r)"
 repo_name="$(basename "$(dirname "$root_path")")/$(basename "$root_path")"
 
 dryrun() {
+  # `mise x node@lts --` leaves homebrew's node winning in PATH on macOS, so
+  # Renovate v43+ fails its engines.node check and exits 1. Prepend the actual
+  # mise install path explicitly so `node`/`npx` resolve to the LTS build.
+  mise install -y node@lts > /dev/null
+  local node_bin
+  node_bin="$(mise where node@lts)/bin"
   env LOG_LEVEL=debug \
     RENOVATE_CONFIG_FILE="$config_file" \
     RENOVATE_BASE_BRANCHES="$branch" \
-    mise x node@lts -- npx -y renovate@latest \
+    PATH="$node_bin:$PATH" \
+    npx -y renovate@latest \
     --token="$token" \
     --schedule="" \
     --require-config=ignored \
