@@ -157,37 +157,50 @@ run_preview_mode() {
 # Switch mode functions
 #
 
-# sort sessions by last used
-list_sorted_sessions() {
-  local current_session
-  current_session="$(tmux display-message -p '#S')"
+# Each `tmux` invocation from a non-client process opens a fresh socket
+# (~75ms on macOS) which dominates startup latency. The caller is expected to
+# pass session data pre-expanded via tmux format strings so this function does
+# zero tmux IPC. `ghq list` runs in parallel with the (trivial) parsing.
+#
+# Args:
+#   $1: current session name (skips `tmux display-message`)
+#   $2: raw session list, formatted as "<last_attached>|<name>;<last_attached>|<name>;..."
+#       (produced by tmux format `#{S:#{session_last_attached}|#{session_name};}`)
+print_list() {
+  local current_session="${1:-$(tmux display-message -p '#S')}"
+  local raw_sessions="${2:-}"
+  if [ -z "$raw_sessions" ]; then
+    raw_sessions="$(tmux list-sessions -F "#{session_last_attached}|#{session_name};" | tr -d '\n')"
+  fi
 
-  tmux list-sessions -F "#{session_last_attached} #{session_name}" |
+  local ghq_out
+  ghq_out="$(mktemp)"
+  ghq list > "$ghq_out" &
+  local ghq_pid=$!
+
+  # "ts|name;ts|name;" → "ts name\nts name\n..."
+  local all_sessions
+  all_sessions="$(echo "$raw_sessions" | tr ';' '\n' | tr '|' ' ' | grep -v '^[[:space:]]*$')"
+
+  echo "$all_sessions" |
     sort -rn |
     cut -d' ' -f2- |
-    # ignore current session
-    grep -vFx "$current_session"
-}
+    grep -vFx "$current_session" |
+    sed "s/^/$EXISTING_PREFIX/"
 
-print_list() {
-  sessions="$(list_sorted_sessions)"
-  # sed is used to add prefix to each line
-  # shellcheck disable=SC2001
-  echo "$sessions" | sed "s/^/$EXISTING_PREFIX/"
+  wait "$ghq_pid"
 
-  repos="$(ghq list | cut -d/ -f2-3)"
-
-  # Filter out repos that already have a session
-  # Note: session name uses '_' instead of '.' (see tmux-name session)
-  echo "$repos" |
-    grep -vFxf <(tmux list-sessions -F "#{session_name}" | tr '_' '.') |
+  # session names use '_' instead of '.' (see tmux-name session)
+  cut -d/ -f2-3 "$ghq_out" |
+    grep -vFxf <(echo "$all_sessions" | cut -d' ' -f2- | tr '_' '.') |
     sed "s/^/$NEW_PREFIX/"
+  rm -f "$ghq_out"
 
   echo "$KILL_PREFIX kill session"
 }
 
 run_switch_mode() {
-  fzf_result="$(run_fzf_selector "$(print_list)" --print-query)"
+  fzf_result="$(run_fzf_selector "$(print_list "${1:-}" "${2:-}")" --print-query)"
   selected="$(echo "$fzf_result" | sed -n 2p)"
 
   # if no selection, do nothing
@@ -249,7 +262,7 @@ case "$MODE" in
     run_preview_mode "$@"
     ;;
   switch)
-    run_switch_mode
+    run_switch_mode "$@"
     ;;
   kill)
     run_kill_mode
