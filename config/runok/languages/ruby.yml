@@ -1,5 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
+definitions:
+  wrappers:
+    - 'bundle exec <cmd>'
+
 rules:
   - allow: 'bundle show *'
   - allow: 'bundle info *'
@@ -14,5 +18,11 @@ rules:
     tests:
       - allow: 'ruby -c script.rb'
   - allow: 'bundle install *'
-  - allow: 'bundle exec rspec *'
-  - allow: 'bundle exec rubocop *'
+  - allow: 'rspec *'
+    tests:
+      - allow: 'rspec spec/foo_spec.rb'
+      - allow: 'bundle exec rspec spec/foo_spec.rb'
+  - allow: 'rubocop *'
+    tests:
+      - allow: 'rubocop lib'
+      - allow: 'bundle exec rubocop lib'
