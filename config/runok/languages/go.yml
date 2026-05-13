@@ -5,3 +5,13 @@ rules:
     tests:
       - allow: 'go doc fmt'
   - allow: 'go env *'
+  - allow: 'go version *'
+  - allow: 'go build|test|vet|list *'
+  - allow: 'go mod why|graph|verify|download *'
+  - allow: 'go tool *'
+  - allow: 'gotest *'
+  - allow: 'gofmt *'
+  - allow: 'goimports *'
+  - allow: 'golangci-lint *'
+  - allow: 'staticcheck *'
+  - allow: 'errcheck *'
