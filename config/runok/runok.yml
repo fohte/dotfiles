@@ -62,6 +62,16 @@ rules:
       - deny: 'rtk git diff'
       - deny: 'rtk ls /tmp'
 
+  # Absolute-path invocation makes existing rule patterns (e.g. `rg *`) miss
+  # and skips PATH-based wrappers. Call the command by its bare name; if
+  # output truncation is a real problem, wrap it with `rtk proxy <cmd>`.
+  - deny: '/* *'
+    message: 'Call the command by its bare name (e.g. `rg`), not by absolute path. If you actually need raw output, use `rtk proxy <cmd>`.'
+    tests:
+      - deny: '/opt/homebrew/bin/rg foo'
+      - deny: '/usr/bin/ls'
+      - deny: '/bin/sh -c "echo hi"'
+
 tests:
   cases:
     - allow: 'mise x -- ls /tmp'
