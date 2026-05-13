@@ -7,7 +7,7 @@ rules:
   - allow: 'go env *'
   - allow: 'go version *'
   - allow: 'go build|test|vet|list *'
-  - allow: 'go mod why|graph|verify|download *'
+  - allow: 'go mod why|graph|verify|download|tidy *'
   - allow: 'go tool *'
   - allow: 'gotest *'
   - allow: 'gofmt *'
