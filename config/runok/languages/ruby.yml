@@ -3,6 +3,11 @@
 rules:
   - allow: 'bundle show *'
   - allow: 'bundle info *'
+  - allow: 'bundle list *'
+  - allow: 'bundle env'
+  - allow: 'bundle config'
+  - allow: 'bundle config get *'
+  - allow: 'bundle config list'
   - allow: 'ruby *'
     sandbox: readonly
   - allow: 'ruby -c *'
