@@ -80,7 +80,10 @@ run_fzf_selector() {
   local input="$1"
   shift
 
-  echo "$input" | fzf --tmux 90%,90% \
+  # Invoked from `display-popup -E` (tmux.conf M-s binding), so fzf takes
+  # over the popup's tty directly — no `--tmux` flag needed. This avoids the
+  # fzf-tmux proxy double-launch (proxy.go fifo + sh + second fzf process).
+  echo "$input" | fzf \
     --preview "$0 preview {}" \
     --preview-window 'right:70%' \
     "$@" || true
