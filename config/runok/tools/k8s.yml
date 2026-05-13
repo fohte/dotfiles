@@ -1,5 +1,15 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
+definitions:
+  vars:
+    # Node paths that `talosctl read` can return without exposing
+    # credentials. `/proc` holds kernel/process metadata only. Declared as
+    # a pattern-typed var so the inner `*` keeps its glob semantics.
+    talos-readable:
+      type: pattern
+      values:
+        - '/proc/*'
+
 # kubectl global flags that take a value: each rule below allows them as
 # optional groups so `kubectl --context foo <subcommand>` matches the same way
 # `kubectl --context=foo <subcommand>` does. `--token` and `--password` are
@@ -236,11 +246,29 @@ rules:
       - ask: 'talosctl etcd leave'
       - ask: 'talosctl etcd remove-member node-1'
 
+  # `read` exposes arbitrary node files. Limit allowed targets to
+  # `definitions.vars.talos-readable` so credential paths (`/etc/kubernetes`,
+  # `/system/secrets`, `/var/lib/kubelet`) keep falling through to ask.
+  - allow: 'talosctl [-n|--nodes *] [-e|--endpoints *] [-c|--cluster *] [--context *] [--talosconfig *] [--siderov1-keys-dir *] read <var:talos-readable>'
+    tests:
+      - allow: 'talosctl read /proc/uptime'
+      - allow: 'talosctl --nodes 10.0.0.1 read /proc/1/cmdline'
+      - ask: 'talosctl read /etc/kubernetes/pki/ca.key'
+      - ask: 'talosctl read /system/secrets/encryption-config.yaml'
+      - ask: 'talosctl read /var/lib/kubelet/pki/kubelet.key'
+
+  # `logs` reads Talos service or Kubernetes container logs. Default
+  # klog/zap output does not include bearer tokens or Secret values, so
+  # treat them as readable like `kubectl logs`.
+  - allow: 'talosctl [-n|--nodes *] [-e|--endpoints *] [-c|--cluster *] [--context *] [--talosconfig *] [--siderov1-keys-dir *] logs *'
+    tests:
+      - allow: 'talosctl logs kubelet'
+      - allow: 'talosctl logs -k kube-apiserver'
+      - allow: 'talosctl --nodes 10.0.0.1 logs k8s.io/kube-system/kube-apiserver-xxx'
+
   # The following reads are credential-adjacent and intentionally fall through
   # to ask:
   #   - `kubeconfig`: downloads cluster-admin credentials.
-  #   - `read`: reads arbitrary files on the node (e.g. /etc/kubernetes/...).
   #   - `copy`: pulls arbitrary data out of the node.
-  #   - `logs`: Talos service logs may include tokens / kubelet internals.
   #   - `pcap` / `tcpdump`: packet capture can expose plaintext creds.
   #   - `support`: debug bundle aggregates logs and resources.
