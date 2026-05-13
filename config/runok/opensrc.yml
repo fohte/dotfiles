@@ -19,3 +19,10 @@ rules:
     fix_suggestion: 'opensrc path crates:<pkg>'
     tests:
       - deny: 'cargo download serde'
+
+  - deny: 'gem fetch *'
+    message: 'Use opensrc to read third-party package source.'
+    fix_suggestion: 'opensrc path rubygems:<pkg>'
+    tests:
+      - deny: 'gem fetch rails'
+      - deny: 'gem fetch rails -v 7.0.0'
