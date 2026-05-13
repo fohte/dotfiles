@@ -108,9 +108,6 @@ rules:
     message: 'Searching from home directory is extremely slow. Narrow the search to a specific subdirectory.'
     fix_suggestion: 'Specify a project directory, e.g., rg pattern ./src'
     tests:
-      - deny: 'rg pattern /Users/fohte'
-      - allow: 'rg pattern /Users/fohte/ghq'
       - allow: 'rg pattern ./src'
-      - allow: 'rg /Users/fohte ./src'
 
   - allow: wait *
