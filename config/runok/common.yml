@@ -111,3 +111,23 @@ rules:
       - allow: 'rg pattern ./src'
 
   - allow: wait *
+
+  # env / printenv without KEY=VALUE args dump environment variables and may
+  # leak secrets. `env FOO=a cmd ...` form is allowed since it only sets vars
+  # for a child command.
+  - deny: 'env *'
+    when: '!args.exists(a, a.contains("="))'
+    message: 'Dumping environment variables risks leaking secrets.'
+    fix_suggestion: 'Reference the specific variable directly (echo "$VAR"), or use `env FOO=a <cmd>` to set vars for a child command.'
+    tests:
+      - deny: 'env'
+      - deny: 'env | grep FOO'
+      - allow: 'env FOO=a ls /tmp'
+      - allow: 'env FOO=a BAR=b ls'
+  - deny: 'printenv *'
+    message: 'printenv exposes environment variables that may contain secrets.'
+    fix_suggestion: 'Reference the specific variable directly, e.g., echo "$VAR".'
+    tests:
+      - deny: 'printenv'
+      - deny: 'printenv PATH'
+      - deny: 'printenv HOME USER'
