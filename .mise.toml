@@ -72,5 +72,5 @@ pinact = "3.9.0"
 "aqua:JohnnyMorganz/StyLua" = "2.1.0"
 
 # Build tools
-"aqua:google/go-jsonnet" = "0.21.0"
+"aqua:google/go-jsonnet" = "0.22.0"
 "aqua:jqlang/jq" = "1.8.1"
