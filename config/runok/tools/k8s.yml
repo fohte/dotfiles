@@ -2,6 +2,16 @@
 
 definitions:
   vars:
+    # Reusable command-prefix pattern that bundles kubectl with its
+    # value-taking global flags. Optional groups let each rule match both
+    # space- and `=`-joined flag forms without repeating the list.
+    # `--token` and `--password` are intentionally omitted so secret-bearing
+    # invocations fall through to ask.
+    kubectl:
+      type: pattern
+      values:
+        - 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *]'
+
     # Reusable command-prefix pattern that bundles talosctl with its
     # value-taking global flags. Optional groups let each rule match both
     # space- and `=`-joined flag forms without repeating the list.
@@ -18,12 +28,8 @@ definitions:
       values:
         - '/proc/*'
 
-# kubectl global flags that take a value: each rule below allows them as
-# optional groups so `kubectl --context foo <subcommand>` matches the same way
-# `kubectl --context=foo <subcommand>` does. `--token` and `--password` are
-# intentionally omitted so secret-bearing invocations fall through to ask.
 rules:
-  - allow: 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *] get|describe|logs *'
+  - allow: '<var:kubectl> get|describe|logs *'
     tests:
       - allow: 'kubectl get pods'
       - allow: 'kubectl --context foo get pods'
@@ -37,7 +43,7 @@ rules:
   # `o`), so the `when` clause matches the flag by key prefix to also catch
   # `-oyaml`/`-ojson`. kubectl spells the resource `secret`, `secrets`, or
   # `secret(s).v1[.]`, so glob every form.
-  - ask: 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *] get * secret* *'
+  - ask: '<var:kubectl> get * secret* *'
     when: "flags.exists(k, k.startsWith('o'))"
     tests:
       - allow: 'kubectl get secret'
@@ -53,7 +59,7 @@ rules:
   # Read-only info subcommands (no cluster mutation, no secret leakage).
   # `cluster-info dump` is excluded because it aggregates pod logs / ConfigMaps
   # that may contain secrets.
-  - allow: 'kubectl [--context *] [--cluster *] [--user *] [--kubeconfig *] version|api-resources|api-versions|explain *'
+  - allow: '<var:kubectl> version|api-resources|api-versions|explain *'
     tests:
       - allow: 'kubectl version'
       - allow: 'kubectl version --short'
@@ -61,31 +67,31 @@ rules:
       - allow: 'kubectl api-versions'
       - allow: 'kubectl explain pod'
       - allow: 'kubectl --context foo api-resources'
-  - allow: 'kubectl [--context *] [--cluster *] [--user *] [--kubeconfig *] cluster-info'
+  - allow: '<var:kubectl> cluster-info'
     tests:
       - allow: 'kubectl cluster-info'
       - allow: 'kubectl --context foo cluster-info'
 
-  - allow: 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *] top node|pod|nodes|pods *'
+  - allow: '<var:kubectl> top node|pod|nodes|pods *'
     tests:
       - allow: 'kubectl top nodes'
       - allow: 'kubectl top pod -A'
       - allow: 'kubectl --context foo top nodes'
 
   # `auth reconcile` mutates RBAC, so it is excluded.
-  - allow: 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *] auth can-i|whoami *'
+  - allow: '<var:kubectl> auth can-i|whoami *'
     tests:
       - allow: 'kubectl auth can-i list pods'
       - allow: 'kubectl auth whoami'
       - allow: 'kubectl --context foo auth whoami'
 
-  - allow: 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *] diff|wait *'
+  - allow: '<var:kubectl> diff|wait *'
     tests:
       - allow: 'kubectl diff -f manifest.yaml'
       - allow: 'kubectl wait --for=condition=Ready pod/foo'
 
   # `kubectl config` read-only subcommands that only emit names.
-  - allow: 'kubectl [--kubeconfig *] [--context *] config current-context|get-contexts|get-clusters|get-users *'
+  - allow: '<var:kubectl> config current-context|get-contexts|get-clusters|get-users *'
     tests:
       - allow: 'kubectl config current-context'
       - allow: 'kubectl config get-contexts'
@@ -98,7 +104,7 @@ rules:
   # client-certificate-data / token / password fields. `--raw` disables that
   # redaction, and `-o jsonpath=...` can extract `users[].user.token` directly,
   # so allow only the redacted form without custom output formatting.
-  - allow: 'kubectl [--kubeconfig *] [--context *] config view [--minify] [--flatten]'
+  - allow: '<var:kubectl> config view [--minify] [--flatten]'
     tests:
       - allow: 'kubectl config view'
       - allow: 'kubectl config view --minify'
