@@ -214,4 +214,7 @@ local env(name) = std.extVar(name);
   autoDreamEnabled: false,
 
   model: 'opus[1m]',
+
+  // opus + xhigh is too slow
+  effortLevel: 'medium',
 }
