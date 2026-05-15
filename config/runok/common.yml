@@ -137,7 +137,7 @@ rules:
   - deny: '*'
     when: 'redirects.exists(r, r.descriptor == 2 && r.target == "/dev/null")'
     message: 'Redirecting stderr to /dev/null hides error messages and causes wasted trial-and-error debugging.'
-    fix_suggestion: 'Keep stderr visible, or redirect it to a log file (e.g. `2>/tmp/err.log`).'
+    fix_suggestion: 'Do not redirect stderr — let error messages reach the terminal. Redirecting to a log file just hides them somewhere else and is not a fix.'
     tests:
       - deny: 'echo hi 2>/dev/null'
       - deny: 'curl https://example.com 2>>/dev/null'
