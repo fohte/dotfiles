@@ -30,13 +30,19 @@ endef
 
 BUILD_TARGETS := settings.json mcp-servers.json
 
+# Resolve role overlays at parse time so make tracks them as prerequisites.
+# Without this, edits to the role overlay don't trigger a rebuild and `install`
+# ends up copying a stale json.
+SETTINGS_ROLE_OVERLAY := $(shell dot role overlay $(CURDIR)/settings.jsonnet 2>/dev/null)
+MCP_SERVERS_ROLE_OVERLAY := $(shell dot role overlay $(CURDIR)/mcp-servers.jsonnet 2>/dev/null)
+
 .PHONY: all
 all: $(BUILD_TARGETS) install
 
-settings.json: settings.jsonnet $(wildcard settings.local.jsonnet)
+settings.json: settings.jsonnet $(wildcard settings.local.jsonnet) $(SETTINGS_ROLE_OVERLAY)
 	$(call jsonnet,settings.jsonnet) | jq . > $@.tmp && mv $@.tmp $@
 
-mcp-servers.json: mcp-servers.jsonnet $(wildcard mcp-servers.local.jsonnet)
+mcp-servers.json: mcp-servers.jsonnet $(wildcard mcp-servers.local.jsonnet) $(MCP_SERVERS_ROLE_OVERLAY)
 	$(call jsonnet,mcp-servers.jsonnet) | jq . > $@.tmp && mv $@.tmp $@
 
 # Detect if ~/.claude/settings.json has untracked drift (like terraform detecting drift).
