@@ -131,3 +131,15 @@ rules:
       - deny: 'printenv'
       - deny: 'printenv PATH'
       - deny: 'printenv HOME USER'
+
+  # Discarding stderr hides error messages and leads to wasted trial-and-error
+  # debugging. There is rarely a real reason to throw stderr away.
+  - deny: '*'
+    when: 'redirects.exists(r, r.descriptor == 2 && r.target == "/dev/null")'
+    message: 'Redirecting stderr to /dev/null hides error messages and causes wasted trial-and-error debugging.'
+    fix_suggestion: 'Keep stderr visible, or redirect it to a log file (e.g. `2>/tmp/err.log`).'
+    tests:
+      - deny: 'echo hi 2>/dev/null'
+      - deny: 'curl https://example.com 2>>/dev/null'
+      - allow: 'echo hi 2>/tmp/err.log'
+      - allow: 'echo hi >/dev/null'
