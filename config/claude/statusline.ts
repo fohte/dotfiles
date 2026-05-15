@@ -1,5 +1,8 @@
 #!/usr/bin/env bun
 
+import { readFileSync, realpathSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+
 interface SessionData {
   model: {
     display_name: string
@@ -95,18 +98,67 @@ const WINDOW_DURATION_SEC = {
   seven_day: 7 * 86400,
 } as const
 
+// Resolve the active role from the dotfiles `.role` file. Returns null on any failure.
+function getRole(): string | null {
+  try {
+    // statusline.ts is symlinked from <DOTFILES_DIR>/config/claude/statusline.ts;
+    // resolve the symlink so we can read .role at the dotfiles root.
+    const scriptPath = realpathSync(import.meta.path)
+    const dotfilesDir = resolve(dirname(scriptPath), '..', '..')
+    const content = readFileSync(`${dotfilesDir}/.role`, 'utf8')
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith('#')) continue
+      return trimmed.split(/\s+/)[0] || null
+    }
+  } catch {
+    // No .role, unreadable, or unexpected layout: behave as if role is unset.
+  }
+  return null
+}
+
+// Sum of seconds within Mon-Fri (local time) over [startSec, endSec).
+function weekdaySeconds(startSec: number, endSec: number): number {
+  if (endSec <= startSec) return 0
+  let total = 0
+  let cursor = startSec
+  while (cursor < endSec) {
+    const d = new Date(cursor * 1000)
+    const nextMidnightSec = Math.floor(
+      new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime() / 1000,
+    )
+    const segEnd = Math.min(nextMidnightSec, endSec)
+    const dow = d.getDay()
+    if (dow >= 1 && dow <= 5) {
+      total += segEnd - cursor
+    }
+    cursor = segEnd
+  }
+  return total
+}
+
 // pace_ratio = used ratio / elapsed ratio. Above 1.0 means the cap will be hit before the window ends at the current pace.
 // The value is unstable when the window has just started, so return undefined until a minimum elapsed ratio is reached.
+// When excludeWeekends is true, both elapsed and total are restricted to weekday seconds, so weekend idleness no longer dilutes the pace.
 function computePaceRatio(
   window: RateLimitWindow,
   windowDurationSec: number,
+  excludeWeekends = false,
 ): number | undefined {
   if (window.used_percentage === undefined || window.resets_at === undefined) {
     return undefined
   }
-  const remainingSec = window.resets_at - Math.floor(Date.now() / 1000)
-  const elapsedSec = windowDurationSec - remainingSec
-  const elapsedRatio = elapsedSec / windowDurationSec
+  const now = Math.floor(Date.now() / 1000)
+  let elapsedRatio: number
+  if (excludeWeekends) {
+    const windowStart = window.resets_at - windowDurationSec
+    const activeTotal = weekdaySeconds(windowStart, window.resets_at)
+    if (activeTotal <= 0) return undefined
+    elapsedRatio = weekdaySeconds(windowStart, now) / activeTotal
+  } else {
+    const remainingSec = window.resets_at - now
+    elapsedRatio = (windowDurationSec - remainingSec) / windowDurationSec
+  }
   // Skip calculation below 5% elapsed since the denominator is too small to be stable.
   if (elapsedRatio < 0.05) {
     return undefined
@@ -134,6 +186,7 @@ function formatRateLimit(
   label: string,
   window: RateLimitWindow | undefined,
   windowDurationSec: number,
+  excludeWeekends = false,
 ): string | null {
   if (!window || window.used_percentage === undefined) {
     return null
@@ -143,7 +196,9 @@ function formatRateLimit(
   const remaining = window.resets_at
     ? ` \x1b[90m(${formatRemaining(window.resets_at)})\x1b[0m`
     : ''
-  const pace = formatPace(computePaceRatio(window, windowDurationSec))
+  const pace = formatPace(
+    computePaceRatio(window, windowDurationSec, excludeWeekends),
+  )
   return `${label}: ${color}${pct}%\x1b[0m${remaining}${pace}`
 }
 
@@ -211,6 +266,10 @@ async function main() {
   parts.push(`${bedrockBadge}${modelColor}${modelName}${contextLabel}${reset}`)
   parts.push(`${tokensDisplay} tok (${color}${percentage}%${reset})`)
 
+  // In the work role, treat weekends as non-active so the 7d pace projection
+  // matches the realistic Mon-Fri usage pattern instead of assuming uniform 7-day consumption.
+  const isWorkRole = getRole() === 'work'
+
   const sessionPart = formatRateLimit(
     '5h',
     data.rate_limits?.five_hour,
@@ -220,6 +279,7 @@ async function main() {
     '7d',
     data.rate_limits?.seven_day,
     WINDOW_DURATION_SEC.seven_day,
+    isWorkRole,
   )
   const limitParts = [sessionPart, weekPart].filter(
     (p): p is string => p !== null,
