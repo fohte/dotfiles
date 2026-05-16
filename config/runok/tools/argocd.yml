@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  # `--auth-token` carries a bearer token on the command line
+  - ask: 'argocd --auth-token *'
+    message: '`--auth-token` exposes a bearer token on the command line.'
+    tests:
+      - ask: 'argocd app get myapp --auth-token abc123'
+      - ask: 'argocd app get myapp --auth-token=abc123'
+
+  # Read-only `app` subcommands. `manifests` is excluded because it renders
+  # full manifests that can embed Secret resources. Mutating subcommands
+  # (`create`, `set`, `sync`, `delete`, `rollback`, `patch`, ...) fall
+  # through to ask.
+  - allow: 'argocd app get|list|history|diff|resources|logs|wait *'
+    tests:
+      - allow: 'argocd app list'
+      - allow: 'argocd app get myapp'
+      - allow: 'argocd app get myapp -o yaml'
+      - allow: 'argocd app history myapp'
+      - allow: 'argocd app diff myapp'
+      - allow: 'argocd app resources myapp'
+      - allow: 'argocd app logs myapp'
+      - allow: 'argocd app wait myapp'
+      - ask: 'argocd app manifests myapp'
+      - ask: 'argocd app sync myapp'
+      - ask: 'argocd app delete myapp'
+      - ask: 'argocd app set myapp -p foo=bar'
+
+  - allow: 'argocd appset get|list *'
+    tests:
+      - allow: 'argocd appset list'
+      - allow: 'argocd appset get myset'
+      - ask: 'argocd appset create ./appset.yaml'
+      - ask: 'argocd appset delete myset'
+
+  - allow: 'argocd cluster get|list *'
+    tests:
+      - allow: 'argocd cluster list'
+      - allow: 'argocd cluster get https://kubernetes.default.svc'
+      - ask: 'argocd cluster add my-context'
+      - ask: 'argocd cluster rm https://kubernetes.default.svc'
+
+  - allow: 'argocd proj get|list *'
+    tests:
+      - allow: 'argocd proj list'
+      - allow: 'argocd proj get default'
+      - ask: 'argocd proj create myproj'
+      - ask: 'argocd proj delete myproj'
+
+  - allow: 'argocd repo get|list *'
+    tests:
+      - allow: 'argocd repo list'
+      - allow: 'argocd repo get https://github.com/foo/bar'
+      - ask: 'argocd repo add https://github.com/foo/bar'
+      - ask: 'argocd repo rm https://github.com/foo/bar'
+
+  - allow: 'argocd cert list *'
+    tests:
+      - allow: 'argocd cert list'
+      - ask: 'argocd cert add-tls example.com'
+
+  - allow: 'argocd gpg get|list *'
+    tests:
+      - allow: 'argocd gpg list'
+      - allow: 'argocd gpg get KEYID'
+      - ask: 'argocd gpg add --from key.asc'
+
+  # Read-only `account` subcommands. `update-password`, `generate-token`,
+  # and `delete-token` mutate credentials and fall through to ask.
+  - allow: 'argocd account get|list|get-user-info|can-i *'
+    tests:
+      - allow: 'argocd account list'
+      - allow: 'argocd account get --account myuser'
+      - allow: 'argocd account get-user-info'
+      - allow: 'argocd account can-i sync applications "*/*"'
+      - ask: 'argocd account update-password'
+      - ask: 'argocd account generate-token --account myuser'
+
+  - allow: 'argocd version *'
+    tests:
+      - allow: 'argocd version'
+      - allow: 'argocd version --client'
+      - allow: 'argocd version --short'

@@ -12,6 +12,7 @@ extends:
   - './languages/ruby.yml'
   - './languages/python.yml'
   - './languages/jsonnet.yml'
+  - './tools/argocd.yml'
   - './tools/aws.yml'
   - './tools/docker.yml'
   - './tools/gcloud.yml'
