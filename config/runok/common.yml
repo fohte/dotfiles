@@ -143,3 +143,14 @@ rules:
       - deny: 'curl https://example.com 2>>/dev/null'
       - allow: 'echo hi 2>/tmp/err.log'
       - allow: 'echo hi >/dev/null'
+
+  # while/until loops are almost always busy-wait polling, which is fragile and
+  # wastes time. for loops are left alone since they iterate a fixed list.
+  - deny: '*'
+    when: 'shell.loop_kind in ["while", "until"]'
+    message: 'while/until loops are fragile busy-wait polling.'
+    fix_suggestion: 'Use a native --watch/wait flag (gh pr checks --watch, kubectl wait, ...) or a deterministic polling command instead.'
+    tests:
+      - deny: 'while true; do sleep 1; done'
+      - deny: 'until curl -sf https://example.com; do sleep 1; done'
+      - allow: 'for i in 1 2 3; do echo $i; done'
