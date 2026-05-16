@@ -100,6 +100,18 @@ rules:
       - allow: 'git restore --staged file.txt'
       - allow: 'git restore --staged .'
       - allow: 'git -C /tmp restore --staged file.txt'
+  - allow: 'git [-C *] rm *'
+    # -f/--force discards uncommitted modifications, so exclude it from allow.
+    # -rf and similar clusters are single flag keys, hence the substring match.
+    when: '!flags.exists(k, k.contains("f"))'
+    tests:
+      - allow: 'git rm file.txt'
+      - allow: 'git rm -r dir'
+      - allow: 'git rm --cached file.txt'
+      - ask: 'git rm -f file.txt'
+      - ask: 'git rm --force file.txt'
+      - ask: 'git rm -rf dir'
+      - ask: 'git -C /tmp rm -f file.txt'
 
   # gh
   - deny: 'gh [-R *] api * --paginate *'
