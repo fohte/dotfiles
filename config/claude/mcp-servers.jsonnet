@@ -33,5 +33,9 @@ local env(name) = std.extVar(name);
     command: env('HOME') + '/.claude/hooks/cbm-mcp-launcher.bash',
     args: [],
     env: {},
+    // Exempt from tool-search deferral so search_graph / trace_path / etc. are
+    // callable without a ToolSearch step, which otherwise makes Grep/Read the
+    // cheaper path and starves cbm of use.
+    alwaysLoad: true,
   },
 }
