@@ -108,6 +108,9 @@ local env(name) = std.extVar(name);
       'CronCreate',
       'CronDelete',
       'CronList',
+
+      // Monitor is busy-wait polling, which is fragile and wastes time.
+      'Monitor',
     ],
     defaultMode: 'acceptEdits',
   },
