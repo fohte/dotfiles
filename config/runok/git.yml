@@ -154,3 +154,4 @@ rules:
   # ghq
   - allow: 'ghq get *'
   - allow: 'ghq list *'
+  - allow: 'ghq root'
