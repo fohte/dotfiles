@@ -135,6 +135,7 @@ fi
 
 if match_tag runok; then
   sym config/runok ~/.config/runok
+  sym_role_file --stub-on-fallback config-overlays/runok/work.yml ~/.config/runok/work.yml
 fi
 
 if match_tag rtk; then
