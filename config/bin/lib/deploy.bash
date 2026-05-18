@@ -92,15 +92,41 @@ sym_role_overlay() {
 # merge an additional file alongside the base (e.g. armyknife reads every
 # YAML under its config dir). On non-work roles, <dst> is removed so a
 # stale symlink doesn't linger.
+#
+# With --stub-on-fallback, an empty file is deployed at <dst> on non-work
+# roles instead of removing it. Use this when a consumer (e.g. runok
+# `extends:`) requires the file to exist regardless of role.
 sym_role_file() {
+  local stub_on_fallback=false
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --stub-on-fallback)
+        stub_on_fallback=true
+        shift
+        ;;
+      *) break ;;
+    esac
+  done
+
   local src="$1"
   local dst="$2"
-  local role_name role_repo
+  local role_name role_repo dst_dir
 
   role_name="$("$DOTFILES_DIR/config/bin/dot-role" get name 2> /dev/null)" || role_name=""
   if [ "$role_name" = work ]; then
     role_repo="$("$DOTFILES_DIR/config/bin/dot-role" get repo)"
     sym "$HOME/ghq/github.com/$role_repo/$src" "$dst"
+  elif [ "$stub_on_fallback" = true ]; then
+    dst_dir="$(dirname "$dst")"
+    if [ ! -d "$dst_dir" ]; then
+      log-exec mkdir -p "$dst_dir"
+    fi
+    if [ -L "$dst" ]; then
+      log-exec rm -f "$dst"
+    fi
+    if is_force || [ ! -e "$dst" ]; then
+      log-exec touch "$dst"
+    fi
   elif [ -L "$dst" ] || [ -e "$dst" ]; then
     log-exec rm -f "$dst"
   fi
