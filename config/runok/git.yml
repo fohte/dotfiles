@@ -52,13 +52,10 @@ rules:
       - deny: 'git checkout HEAD~1'
       - deny: 'git checkout v1.0.0'
       - deny: 'git -C /tmp checkout main'
-  # `!-c` excludes branch creation so it matches only the rule below,
-  # making the deny message deterministic.
-  - deny: 'git [-C *] switch !-c *'
+  - deny: 'git [-C *] switch *'
     message: 'Blocked because `git switch` changes the current branch and has side effects on the working tree.'
     tests:
       - deny: 'git switch main'
-      - deny: 'git switch -C new-branch'
       - deny: 'git -C /tmp switch main'
   - deny: 'git [-C *] checkout -b|-B *'
     message: 'Blocked because creating a branch should go through the `/delegate-claude` skill, which runs the work in an isolated worktree.'
@@ -67,15 +64,22 @@ rules:
       - deny: 'git checkout -b new-branch'
       - deny: 'git checkout -B new-branch'
       - deny: 'git -C /tmp checkout -b new-branch'
-  # `-C` (force-create) is omitted: it collides with git's global `-C <dir>`
-  # flag under runok's order-independent flag matching. It is still blocked by
-  # the general `git switch` deny above, just without the /delegate-claude hint.
-  - deny: 'git [-C *] switch -c *'
+  # Branch creation routes to /delegate-claude. Two patterns are needed:
+  # an optional `git [-C <dir>]` group would capture switch's own `-C`
+  # (force-create) flag, so the bare form and the `git -C <dir>` form are
+  # kept separate.
+  - deny: 'git switch -c|-C *'
     message: 'Blocked because creating a branch should go through the `/delegate-claude` skill, which runs the work in an isolated worktree.'
     fix_suggestion: '/delegate-claude'
     tests:
       - deny: 'git switch -c new-branch'
+      - deny: 'git switch -C new-branch'
+  - deny: 'git -C * switch -c|-C *'
+    message: 'Blocked because creating a branch should go through the `/delegate-claude` skill, which runs the work in an isolated worktree.'
+    fix_suggestion: '/delegate-claude'
+    tests:
       - deny: 'git -C /tmp switch -c new-branch'
+      - deny: 'git -C /tmp switch -C new-branch'
   - deny: 'git [-C *] worktree add *'
     message: 'Blocked because creating a worktree should go through the `/delegate-claude` skill.'
     fix_suggestion: '/delegate-claude'
