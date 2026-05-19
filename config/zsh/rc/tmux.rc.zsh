@@ -19,7 +19,7 @@ _set_tmux_window_dir_info() {
   if [[ -f .git ]]; then
     local gitline
     read -r gitline < .git
-    [[ "$gitline" == gitdir:* ]] && info=" ${PWD:t}"
+    [[ "$gitline" == gitdir:* ]] && info=" ${PWD:t}"
   fi
   tmux set-option -w @window-dir-info "$info"
 }
