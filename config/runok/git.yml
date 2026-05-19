@@ -101,6 +101,11 @@ rules:
     tests:
       - deny: 'git clone https://github.com/sindresorhus/ky'
       - deny: 'git clone git@github.com:fohte/dotfiles.git'
+  - deny: 'git -c * *'
+    message: 'Blocked because `git -c <key>=<value>` overrides config inline and almost always causes unintended behavior. Run the command without `-c`.'
+    tests:
+      - deny: 'git -c user.name=foo commit -m "test"'
+      - deny: 'git -c commit.gpgsign=false commit -m "test"'
 
   # allow rules
   - allow: 'git [-C *] add *'
