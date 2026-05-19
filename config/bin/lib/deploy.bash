@@ -71,6 +71,11 @@ match_tag() {
   grep -q -F "$tag" <<< "$tags"
 }
 
+# True when the current machine role (see `dot role`) equals <role>.
+match_role() {
+  [ "$("$DOTFILES_DIR/config/bin/dot-role" get name 2> /dev/null)" = "$1" ]
+}
+
 # Resolve a role overlay for <src> and symlink it at <dst>, so runtime
 # consumers can `source <dst>` instead of spawning `dot role overlay`.
 # If no overlay is defined for the current role, <dst> is removed so a

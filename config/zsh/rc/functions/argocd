@@ -1,0 +1,29 @@
+#!/usr/bin/env zsh
+# shellcheck disable=all
+# ^ shellcheck doesn't support zsh. This file is a zsh autoload function
+# without .zsh extension (required for autoload to work).
+
+# usage: argocd <args>...
+#
+# Argo CD runs in "core" mode: the CLI talks straight to the Kubernetes API
+# instead of an argocd-server (see ~/.config/argocd/config). Core mode reads
+# the Argo CD install namespace from the current kube context, but the `home`
+# context pins no namespace, so `argocd-cm` is looked up in `default` and the
+# CLI dies with `configmap "argocd-cm" not found`.
+#
+# This wrapper hands argocd a kubeconfig whose `home` context namespace is
+# pinned to `argocd`, leaving the on-disk kubeconfig (and kubectl's own
+# default namespace) untouched. A temp file is used rather than process
+# substitution because argocd reads the kubeconfig more than once and a FIFO
+# would hit EOF on the second read.
+
+local kubeconfig
+kubeconfig=$(mktemp -t argocd-kubeconfig.XXXXXX) || return 1
+# zsh runs a function-local EXIT trap when the function returns; INT/TERM are
+# caught too so an interrupted argocd does not leak the temp kubeconfig.
+trap "rm -f '$kubeconfig'" EXIT INT TERM
+
+kubectl config view --raw --flatten --minify --context home |
+  yq '.contexts[].context.namespace = "argocd"' > "$kubeconfig" || return 1
+
+KUBECONFIG="$kubeconfig" command argocd "$@"

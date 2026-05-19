@@ -1,0 +1,10 @@
+# Tools installed only on the private-role machine. mise merges every
+# conf.d/*.toml into the global config; <repo>/symlinks links this file here
+# only when `dot role` is `private`. Add private-machine-only tools below.
+
+[tools]
+# argocd is also pinned in fohte/infra/.mise.toml for use inside that repo;
+# pinning it here makes the CLI resolvable from any directory on the private
+# machine, not just under fohte/infra. Explicit backend prefix lets Renovate
+# raise version-bump PRs (see the rationale in home-config.toml).
+"aqua:argoproj/argo-cd" = "3.4.2"

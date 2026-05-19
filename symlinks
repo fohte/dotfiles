@@ -131,6 +131,14 @@ fi
 
 if match_tag mise; then
   sym config/mise/home-config.toml ~/.config/mise/config.toml
+
+  # mise merges conf.d/*.toml into the global config; install private-only
+  # tools via this file and drop the link on non-private roles.
+  if match_role private; then
+    sym config/mise/conf.d/private.toml ~/.config/mise/conf.d/private.toml
+  else
+    log-exec rm -f ~/.config/mise/conf.d/private.toml
+  fi
 fi
 
 if match_tag runok; then

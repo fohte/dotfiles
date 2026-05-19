@@ -45,3 +45,4 @@ precmd_functions+=(auto_reload_on_config_change)
 # Load custom functions
 autoload -Uz jqplay
 autoload -Uz talosctl
+autoload -Uz argocd
