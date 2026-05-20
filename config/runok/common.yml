@@ -69,7 +69,7 @@ rules:
       - allow: 'gsort /tmp/foo'
       - allow: 'gtee /tmp/foo.log'
       - allow: 'gls -la /tmp'
-  - allow: 'awk *'
+  - allow: 'awk|gawk *'
     sandbox: readonly
   - allow: 'curl [-s] [-X GET] *'
     tests:
