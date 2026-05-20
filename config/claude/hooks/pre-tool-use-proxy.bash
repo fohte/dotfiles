@@ -1,18 +1,17 @@
 #!/bin/bash
-# PreToolUse dispatcher.
+# PreToolUse proxy: the single PreToolUse entry that fans out to everything
+# else internally.
 #
-# This file is a DISPATCHER, not a place to add new hook logic.
-# Claude Code #15897 silently drops `updatedInput` when multiple hooks match
-# the same tool, so all PreToolUse work must funnel through one entry point.
-# The job of this script is limited to:
-#   1. Forward stdin to side-effect hooks (`a cc hook pre-tool-use`).
-#   2. `exec` a per-tool handler script for tools that need their own logic.
-#   3. Run the Bash-specific pipeline (runok check → rtk rewrite).
+# Claude Code #15897: when settings.json registers more than one PreToolUse
+# entry that matches the same tool, `updatedInput` returned by one hook is
+# silently dropped. This previously caused runok's sandbox rewrite to be
+# discarded whenever the Bash-matcher entry and the unscoped entry both hit
+# the same Bash call. The workaround is to keep exactly one PreToolUse entry
+# in settings.jsonnet and route everything through this proxy.
 #
-# DO NOT add new judgment logic here. To add a new PreToolUse guard:
-#   - Create a standalone script under ~/.claude/hooks/<name>
-#   - Add a `case` branch below that `exec`s it
-# See `cbm-code-discovery-gate` for an example.
+# DO NOT add another PreToolUse entry to settings.jsonnet. New per-tool guards
+# belong in their own ~/.claude/hooks/<name> script, invoked from the `case`
+# below. See `cbm-code-discovery-gate` / `default-branch-edit-guard`.
 input=$(cat)
 
 # Run side-effect hook (ignore stdout, let stderr pass through)
