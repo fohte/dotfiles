@@ -23,7 +23,7 @@ This pulls all review threads (and review bodies like "LGTM!") to a local Markdo
 
 ## Workflow
 
-1. **Wait for bot reviewers and CI to finish before pulling**: Right after creating or pushing to a PR, automated reviewers (CodeRabbit, Gemini Code Assist, Devin, etc.) and CI checks have not yet run. Pulling immediately will return zero threads and miss feedback. Run `gh pr checks <pr> --watch` in the background (`run_in_background: true`) and wait for the `<task-notification>` completion event before proceeding. Do NOT poll the output file or sleep — only the completion notification is allowed. Skip this wait only when the user is asking to re-check a PR that has been idle for some time (i.e., bot reviews already finished in a previous turn).
+1. **Wait for bot reviewers to finish before pulling**: Right after creating or pushing to a PR, automated reviewers (CodeRabbit, Gemini Code Assist, Devin, etc.) have not yet posted comments. Pulling immediately will return zero threads and miss feedback. Run `a ai review wait <pr>` in the background (`run_in_background: true`) and wait for the `<task-notification>` completion event before proceeding. Do NOT poll the output file or sleep — only the completion notification is allowed. Skip this wait only when the user is asking to re-check a PR that has been idle for some time (i.e., bot reviews already finished in a previous turn).
 2. Run `a gh pr-review reply pull <pr>` (use `--force` when overwriting prior local edits) and Read the resulting file
 3. **Evaluate each comment** with a **fix-by-default** mindset:
     - **Default action is to fix**: Assume review feedback is valid and should be addressed unless there is clear evidence otherwise
