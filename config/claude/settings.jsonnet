@@ -142,10 +142,11 @@ local env(name) = std.extVar(name);
     ],
     PreToolUse: [
       {
-        // Combined into a single hook to work around Claude Code #15897:
-        // updatedInput is silently dropped when multiple hooks match the same tool.
+        // Funnelled through a single dispatcher to work around Claude Code
+        // #15897: updatedInput is silently dropped when multiple hooks match
+        // the same tool. Add new per-tool guards inside the dispatcher.
         hooks: [
-          { type: 'command', command: '~/.claude/hooks/pre-tool-use.bash' },
+          { type: 'command', command: '~/.claude/hooks/pre-tool-use-dispatcher.bash' },
         ],
       },
     ],

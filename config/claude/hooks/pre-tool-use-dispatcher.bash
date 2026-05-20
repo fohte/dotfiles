@@ -1,7 +1,18 @@
 #!/bin/bash
-# Combined PreToolUse hook for all tools.
-# Bundles a cc hook, runok, and rtk rewrite into a single hook to avoid Claude Code #15897
-# (updatedInput silently dropped when multiple hooks match the same tool).
+# PreToolUse dispatcher.
+#
+# This file is a DISPATCHER, not a place to add new hook logic.
+# Claude Code #15897 silently drops `updatedInput` when multiple hooks match
+# the same tool, so all PreToolUse work must funnel through one entry point.
+# The job of this script is limited to:
+#   1. Forward stdin to side-effect hooks (`a cc hook pre-tool-use`).
+#   2. `exec` a per-tool handler script for tools that need their own logic.
+#   3. Run the Bash-specific pipeline (runok check → rtk rewrite).
+#
+# DO NOT add new judgment logic here. To add a new PreToolUse guard:
+#   - Create a standalone script under ~/.claude/hooks/<name>
+#   - Add a `case` branch below that `exec`s it
+# See `cbm-code-discovery-gate` for an example.
 input=$(cat)
 
 # Run side-effect hook (ignore stdout, let stderr pass through)
