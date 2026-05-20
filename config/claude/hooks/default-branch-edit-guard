@@ -1,0 +1,35 @@
+#!/bin/bash
+# Block Edit/Write/MultiEdit on the repo's default branch unless armyknife
+# config explicitly opts in via `repos.<owner>/<repo>.direct_commit: true`.
+#
+# Invoked from pre-tool-use-dispatcher.bash; receives the original PreToolUse
+# JSON payload on stdin.
+input=$(cat)
+
+file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
+[ -z "$file_path" ] && exit 0
+
+dir=$(dirname -- "$file_path")
+repo_root=$(git -C "$dir" rev-parse --show-toplevel 2> /dev/null) || exit 0
+
+branch=$(git -C "$repo_root" branch --show-current)
+# Detached HEAD: no branch to protect.
+[ -z "$branch" ] && exit 0
+
+default=$(git -C "$repo_root" symbolic-ref --short refs/remotes/origin/HEAD 2> /dev/null | sed 's|^origin/||')
+# No remote / origin/HEAD not set: cannot determine default branch, fall through.
+[ -z "$default" ] && exit 0
+[ "$branch" != "$default" ] && exit 0
+
+command -v a > /dev/null 2>&1 || exit 0
+
+allowed=$(cd "$repo_root" && a config get repo.direct_commit)
+[ "$allowed" = "true" ] && exit 0
+
+jq -n --arg b "$branch" '{
+  hookSpecificOutput: {
+    hookEventName: "PreToolUse",
+    permissionDecision: "deny",
+    permissionDecisionReason: ("Direct edit on the default branch \"" + $b + "\" is blocked. Switch to a feature branch before editing.")
+  }
+}'

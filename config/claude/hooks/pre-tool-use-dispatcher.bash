@@ -27,6 +27,9 @@ case "$tool_name" in
   Grep | Glob | Read | Search)
     exec ~/.claude/hooks/cbm-code-discovery-gate
     ;;
+  Edit | Write | MultiEdit)
+    exec ~/.claude/hooks/default-branch-edit-guard <<< "$input"
+    ;;
 esac
 
 if [ "$tool_name" != "Bash" ]; then

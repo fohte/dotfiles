@@ -10,6 +10,9 @@ orgs:
         reviewers: [gemini]
 
 repos:
+  fohte/dotfiles:
+    # dotfiles is operated directly on the default branch.
+    direct_commit: true
   fohte/t-rader:
     language: ja
 
