@@ -23,26 +23,21 @@ This pulls all review threads (and review bodies like "LGTM!") to a local Markdo
 
 ## Workflow
 
-1. Run `a gh pr-review reply pull <pr>` and Read the resulting file
-2. **Evaluate each comment** with a **fix-by-default** mindset:
+1. **Wait for bot reviewers and CI to finish before pulling**: Right after creating or pushing to a PR, automated reviewers (CodeRabbit, Gemini Code Assist, Devin, etc.) and CI checks have not yet run. Pulling immediately will return zero threads and miss feedback. Run `gh pr checks <pr> --watch` in the background (`run_in_background: true`) and wait for the `<task-notification>` completion event before proceeding. Do NOT poll the output file or sleep — only the completion notification is allowed. Skip this wait only when the user is asking to re-check a PR that has been idle for some time (i.e., bot reviews already finished in a previous turn).
+2. Run `a gh pr-review reply pull <pr>` (use `--force` when overwriting prior local edits) and Read the resulting file
+3. **Evaluate each comment** with a **fix-by-default** mindset:
     - **Default action is to fix**: Assume review feedback is valid and should be addressed unless there is clear evidence otherwise
     - **"Won't fix" only for obvious false positives**: Only skip fixing when the reviewer's claim is factually incorrect (e.g., claims a version/API doesn't exist when it does, hallucinates non-existent issues, misreads the code logic)
     - **When unsure, ask the user**: If you're uncertain whether a comment is valid or how to address it, ask the user rather than deciding "won't fix" on your own
     - **Do NOT dismiss comments just because you disagree**: Reviewer suggestions about code style, safety, readability, or best practices should generally be followed even if the current code technically works
     - **NEVER autonomously decide "won't fix"**: Even if you believe a comment is a false positive, you MUST ask the user first. Do not skip this step under any circumstances. This is the most common mistake — always err on the side of asking
-3. **Bug reports require test-first fixing**: When a review comment points out a bug (incorrect behavior, edge case failure, race condition, etc.), you MUST first write a test that reproduces the bug before fixing it. This ensures the bug is real and the fix is correct. Only after the test fails as expected, apply the code fix and confirm the test passes
-4. Make necessary code changes based on the feedback
-5. **User confirmation for "won't fix"**: Before treating any comment as "won't fix", you MUST ask the user for confirmation using AskUserQuestion. Present the reviewer's comment, your reasoning for why it's a false positive, and let the user decide whether to fix it or skip it. Never autonomously decide "won't fix" without user approval.
-6. For confirmed "won't fix" comments (approved by the user in step 5), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
-7. If code changes were made (steps 3-6), commit and push using the `/commit` skill, then `git push`
-   {{- if eq $v.repo.owner.login "fohte" }}
-8. **Wait for Devin review after push**: After pushing, wait for Devin's review CI check to complete using `gh pr checks --watch`. Once the check passes, re-run `a gh pr-review reply pull` (with `--force` to overwrite local edits) and re-Read the file to review Devin's feedback (repeat from step 1)
+4. **Bug reports require test-first fixing**: When a review comment points out a bug (incorrect behavior, edge case failure, race condition, etc.), you MUST first write a test that reproduces the bug before fixing it. This ensures the bug is real and the fix is correct. Only after the test fails as expected, apply the code fix and confirm the test passes
+5. Make necessary code changes based on the feedback
+6. **User confirmation for "won't fix"**: Before treating any comment as "won't fix", you MUST ask the user for confirmation using AskUserQuestion. Present the reviewer's comment, your reasoning for why it's a false positive, and let the user decide whether to fix it or skip it. Never autonomously decide "won't fix" without user approval.
+7. For confirmed "won't fix" comments (approved by the user in step 6), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
+8. If code changes were made (steps 4-7), commit and push using the `/commit` skill, then `git push`
 9. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below)
-10. Re-run from step 1 to verify all comments have been addressed
-    {{- else }}
-11. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below)
-12. Re-run from step 1 to verify all comments have been addressed
-    {{- end }}
+10. Re-run from step 1 to verify all comments have been addressed (step 1's wait covers the post-push reviewer round-trip as well)
 
 ## Reply and Resolve Threads
 
