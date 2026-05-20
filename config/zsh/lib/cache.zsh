@@ -40,8 +40,17 @@ cache_source() {
   fi
 
   if (( need_regen )); then
+    # Atomic write: redirecting directly to $cache truncates it, so two
+    # shells starting in parallel can interleave their output. Write to a
+    # per-PID tmp file and rename — same-FS rename is atomic.
     mkdir -p "${cache:h}"
-    "$@" > "$cache"
+    local tmp="${cache}.$$.tmp"
+    if "$@" > "$tmp"; then
+      mv -f "$tmp" "$cache"
+    else
+      rm -f "$tmp"
+      return 1
+    fi
   fi
   source "$cache"
 }
