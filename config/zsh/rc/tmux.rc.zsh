@@ -21,7 +21,8 @@ _set_tmux_window_dir_info() {
     read -r gitline < .git
     [[ "$gitline" == gitdir:* ]] && info=" ${PWD:t}"
   fi
-  tmux set-option -w @window-dir-info "$info"
+  [[ -z "$TMUX_PANE" ]] && return
+  tmux set-option -w -t "$TMUX_PANE" @window-dir-info "$info"
 }
 chpwd_functions+=(_set_tmux_window_dir_info)
 _set_tmux_window_dir_info
