@@ -47,7 +47,10 @@ rules:
   # `!--` is the first token (the branch/ref), so it never matches `--` and
   # leaves `git checkout -- <path>` (file restore) out of this deny. Trailing
   # `<opts>` absorbs flags like `--quiet` so they do not slip the rule.
+  # `--theirs` / `--ours` are conflict-resolution flags for the file-restore
+  # form (no branch side effects), so the `when` clause exempts them.
   - deny: 'git [-C *] checkout !-- <opts>'
+    when: '!has(flags.theirs) && !has(flags.ours)'
     message: 'Blocked because `git checkout <branch>` has side effects on the working tree. To restore files, use `git checkout -- <path>` instead.'
     fix_suggestion: 'git checkout -- <path>'
     tests:
@@ -59,6 +62,8 @@ rules:
       - deny: 'git -C /tmp checkout main'
       - allow: 'git checkout main -- file.txt'
       - allow: 'git checkout -- file.txt'
+      - allow: 'git checkout --theirs file.txt'
+      - allow: 'git checkout --ours file.txt'
   - deny: 'git [-C *] switch *'
     message: 'Blocked because `git switch` changes the current branch and has side effects on the working tree.'
     tests:
@@ -122,6 +127,11 @@ rules:
   - allow: 'git [-C *] checkout * -- *'
     tests:
       - allow: 'git checkout main -- file.txt'
+  - allow: 'git [-C *] checkout *'
+    when: 'has(flags.theirs) || has(flags.ours)'
+    tests:
+      - allow: 'git checkout --theirs file.txt'
+      - allow: 'git checkout --ours file.txt'
   - allow: 'git [-C *] commit *'
     tests:
       - allow: 'git commit -m "feat: add feature"'
