@@ -68,7 +68,9 @@ rules:
 
   - allow: obsidian vault=* create *
 
-  - deny: obsidian append *
-    message: 'Use write/update tool'
+  - deny: obsidian vault=* append *
+    message: 'Use the Edit tool to append to the note file directly'
+    tests:
+      - deny: obsidian vault=obsidian-v2 append note.md content=x
   - deny: obsidian !vault=* !help *
     message: 'Specify vault=<name> as the first argument'
