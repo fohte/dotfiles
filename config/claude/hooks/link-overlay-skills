@@ -1,0 +1,19 @@
+#!/bin/bash
+# SessionStart hook: symlink role overlay skill directories into ~/.claude/skills/.
+#
+# Claude Code only discovers personal skills at the flat path
+# ~/.claude/skills/<skill-name>/SKILL.md. To make role overlay skills under
+# config-overlays/claude/skills/*/ available, link each skill directory in flat
+# at session start. Hook is idempotent: re-running leaves links pointing at the
+# same target via `ln -sfn`.
+set -eu
+
+overlay_dir=$(dot role overlay config/claude/skills 2> /dev/null || true)
+[ -z "$overlay_dir" ] && exit 0
+[ -d "$overlay_dir" ] || exit 0
+
+mkdir -p "$HOME/.claude/skills"
+for d in "$overlay_dir"/*/; do
+  [ -d "$d" ] || continue
+  ln -sfn "$d" "$HOME/.claude/skills/$(basename "$d")"
+done

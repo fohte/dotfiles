@@ -132,6 +132,14 @@ local env(name) = std.extVar(name);
           { type: 'command', command: '~/.claude/hooks/cbm-session-reminder' },
         ],
       },
+      {
+        // Symlink role overlay skill directories (config-overlays/claude/skills/*)
+        // into ~/.claude/skills/ flat, since Claude Code only discovers personal
+        // skills at the top level.
+        hooks: [
+          { type: 'command', command: '~/.claude/hooks/link-overlay-skills' },
+        ],
+      },
     ],
     UserPromptSubmit: [
       {

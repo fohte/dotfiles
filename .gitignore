@@ -28,3 +28,10 @@
 /config/claude/settings.json
 /config/claude/mcp-servers.json
 /config/claude/.settings.json.installed
+
+# ~/.claude/skills is a dir-symlink to /config/claude/skills, so per-skill
+# symlinks created by work overlay SessionStart hooks materialize here.
+# Ignore those (git treats symlinks as files) and only track real base skill
+# directories.
+/config/claude/skills/*
+!/config/claude/skills/*/
