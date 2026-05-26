@@ -70,3 +70,8 @@ pinact = "3.9.0"
 "aqua:koalaman/shellcheck" = "0.11.0"
 "aqua:mvdan/sh" = "3.13.0"
 "aqua:JohnnyMorganz/StyLua" = "2.1.0"
+
+# Used by CI (lefthook in .github/workflows/test.yml → config/aquaskk/Makefile).
+# Must stay repo-local: mise-action does not load the global config.
+"aqua:google/go-jsonnet" = "0.21.0"
+"aqua:jqlang/jq" = "1.8.1"
