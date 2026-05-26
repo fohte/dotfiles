@@ -209,7 +209,7 @@ cmd_overlay() {
       ;;
   esac
 
-  if [ -f "$overlay" ]; then
+  if [ -e "$overlay" ]; then
     echo "$overlay"
     return 0
   fi
