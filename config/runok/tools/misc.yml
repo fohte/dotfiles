@@ -8,6 +8,12 @@ definitions:
     # glob in the allow pattern would swallow arbitrary shell metacharacters
     # (e.g. `;`, `&&`), turning the rule into an RCE.
     - 'nlx --package * -c <cmd>'
+    # Bare form: `nlx -p|--package <pkg> [--prefer-online] <inner-cmd> ...`.
+    # No `-c`, so the inner command is parsed as tokens (not a shell string)
+    # and recursively evaluated against the normal rules. Wrapper patterns
+    # don't support optional groups, so list each variant explicitly.
+    - 'nlx -p|--package * <cmd>'
+    - 'nlx -p|--package * --prefer-online <cmd>'
 
 rules:
   # armyknife
@@ -88,6 +94,8 @@ rules:
     tests:
       - allow: 'renovate-config-validator renovate.json5'
       - allow: "nlx --package renovate -c 'renovate-config-validator renovate.json5'"
+      - allow: 'nlx -p renovate renovate-config-validator renovate.json5'
+      - allow: 'nlx -p renovate --prefer-online renovate-config-validator renovate.json5'
       # Wrapper expands the quoted shell string, so command injection in `-c`
       # falls through to the `rm -rf *` deny rule in common.yml.
       - deny: "nlx --package renovate -c 'rm -rf /'"
