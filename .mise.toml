@@ -58,17 +58,17 @@ description = "Upgrade Homebrew packages"
 run = "brew upgrade"
 
 [tools]
-"aqua:evilmartians/lefthook" = "2.1.4"
+"aqua:evilmartians/lefthook" = "2.1.8"
 
 # lefthook hooks
 actionlint = "1.7.12"
-node = "24.14.1"
-pinact = "3.9.0"
+node = "24.15.0"
+pinact = "3.10.1"
 "github:fohte/basefmt" = "0.1.0"
-"npm:@commitlint/cli" = "20.5.0"
-"npm:prettier" = "3.8.1"
+"npm:@commitlint/cli" = "21.0.1"
+"npm:prettier" = "3.8.3"
 "aqua:koalaman/shellcheck" = "0.11.0"
-"aqua:mvdan/sh" = "3.13.0"
+"aqua:mvdan/sh" = "3.13.1"
 "aqua:JohnnyMorganz/StyLua" = "2.1.0"
 
 # Used by CI (lefthook in .github/workflows/test.yml → config/aquaskk/Makefile).
