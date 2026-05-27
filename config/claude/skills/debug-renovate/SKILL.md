@@ -36,6 +36,7 @@ The output displays proposed updates in this format:
 ## Important Notes
 
 - Validate `renovate.json5` with:
+
     ```bash
     container run --rm -v "$PWD:/repo" -w /repo \
       ghcr.io/renovatebot/renovate:latest \
@@ -44,6 +45,7 @@ The output displays proposed updates in this format:
 
     - Without `--no-global`, repo-config-only fields (e.g. `customManagers[].managerFilePatterns`) pass silently because the file is treated as global config
     - Pin the image to `:latest`. Do not use `:slim` or `npx renovate`
+
 - You SHOULD save output to a unique path under `/tmp/` (e.g. `mktemp /tmp/renovate-dryrun.XXXXXX.log`) since the command takes time and produces extensive output. Do not use a fixed filename — parallel sessions would overwrite each other.
 - Token is optional. The script falls back to the `gh-token` command automatically. Do NOT require `--token` or `$GH_TOKEN` unless the user explicitly provides one.
 - Push is NOT required before running dry-run. The command reads the local `renovate.json5` directly.
