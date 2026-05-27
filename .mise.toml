@@ -58,13 +58,18 @@ description = "Upgrade Homebrew packages"
 run = "brew upgrade"
 
 [tools]
+<<<<<<< before updating
 "aqua:evilmartians/lefthook" = "2.1.4"
+=======
+lefthook = "2.1.8"
+>>>>>>> after updating
 
 # lefthook hooks
 actionlint = "1.7.12"
-node = "24.14.1"
-pinact = "3.9.0"
+node = "24.15.0"
+pinact = "3.10.1"
 "github:fohte/basefmt" = "0.1.0"
+<<<<<<< before updating
 "npm:@commitlint/cli" = "20.5.0"
 "npm:prettier" = "3.8.1"
 "aqua:koalaman/shellcheck" = "0.11.0"
@@ -75,3 +80,9 @@ pinact = "3.9.0"
 # Must stay repo-local: mise-action does not load the global config.
 "aqua:google/go-jsonnet" = "0.21.0"
 "aqua:jqlang/jq" = "1.8.1"
+=======
+"npm:@commitlint/cli" = "21.0.1"
+"npm:prettier" = "3.8.3"
+shellcheck = "0.11.0"
+shfmt = "3.13.1"
+>>>>>>> after updating
