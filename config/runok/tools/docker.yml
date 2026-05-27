@@ -16,6 +16,12 @@ rules:
   - allow: docker network ls|inspect *
   - allow: docker volume ls|inspect *
 
+  # Apple container CLI: validate Renovate config via the official image.
+  # Used by the debug-renovate skill.
+  - allow: 'container run --rm -v * -w * ghcr.io/renovatebot/renovate:* renovate-config-validator *'
+    tests:
+      - allow: 'container run --rm -v /repo:/repo -w /repo ghcr.io/renovatebot/renovate:latest renovate-config-validator --strict --no-global renovate.json5'
+
   # docker compose
   - allow: docker compose up *
   - allow: docker compose logs *
