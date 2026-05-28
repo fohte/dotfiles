@@ -73,5 +73,5 @@ pinact = "3.10.1"
 
 # Used by CI (lefthook in .github/workflows/test.yml → config/aquaskk/Makefile).
 # Must stay repo-local: mise-action does not load the global config.
-"aqua:google/go-jsonnet" = "0.21.0"
+"aqua:google/go-jsonnet" = "0.22.0"
 "aqua:jqlang/jq" = "1.8.1"
