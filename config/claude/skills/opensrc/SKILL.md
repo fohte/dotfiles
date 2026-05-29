@@ -20,14 +20,32 @@ Do NOT use for:
 
 ## Spec format
 
-| Source        | Spec                              |
-| ------------- | --------------------------------- |
-| npm (default) | `zod`, `zod@3.22.0`               |
-| PyPI          | `pypi:requests`                   |
-| crates.io     | `crates:serde`                    |
-| GitHub        | `owner/repo`, `github:owner/repo` |
-| GitLab        | `gitlab:owner/repo`               |
-| Bitbucket     | `bitbucket:owner/repo`            |
+| Source        | Spec                                                  |
+| ------------- | ----------------------------------------------------- |
+| npm (default) | `zod`, `zod@3.22.0`                                   |
+| PyPI          | `pypi:requests`, `pypi:requests@2.31.0`               |
+| crates.io     | `crates:serde`, `crates:serde@1.0.0`                  |
+| GitHub        | `owner/repo`, `owner/repo@<ref>`, `github:owner/repo` |
+| GitLab        | `gitlab:owner/repo`, `gitlab:owner/repo@<ref>`        |
+| Bitbucket     | `bitbucket:owner/repo`, `bitbucket:owner/repo@<ref>`  |
+
+`<ref>` accepts a tag, branch, or commit SHA. Defaults to the repo's default branch.
+
+## Always pin the ref/version in the spec
+
+To read a different ref or version, do NOT `git checkout`, `git switch`, or otherwise mutate the cache directory. The cache is keyed per ref (`.../<repo>/<ref>/`); checking out inside it corrupts the cached state for that ref.
+
+Instead, append `@<ref>` to the spec and call `opensrc path` again. A cache miss triggers a fresh fetch automatically.
+
+```bash
+# OK: pin the ref in the spec
+rg 'parse' "$(opensrc path 'colinhacks/zod@v4.0.0')"
+rg 'parse' "$(opensrc path 'colinhacks/zod@main')"
+rg 'parse' "$(opensrc path 'colinhacks/zod@abc1234')"
+
+# NG: do not checkout/switch inside the cache
+cd "$(opensrc path zod)" && git checkout v4.0.0   # don't
+```
 
 ## Common commands
 
