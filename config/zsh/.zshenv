@@ -95,9 +95,6 @@ export GPG_TTY=$(tty)
 
 export BAT_THEME=1337
 
-# Quiet lefthook: print nothing on success, only the failed step's output on failure.
-export LEFTHOOK_OUTPUT='failure'
-
 import_env 'homebrew.zsh'
 
 import_env 'gcloud.zsh'
