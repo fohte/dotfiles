@@ -43,6 +43,18 @@ a wm new <branch-name> --agent --label "<title>" --prompt "<instructions>"
     - Renovate の PR をテストする場合: `a wm new test-upgrade --agent --label "..." --from origin/renovate/some-branch --prompt "..."`
 - `-R <path>` / `--repo <path>`: 対象リポジトリのパスを指定。指定するとカレントディレクトリに関係なく、そのリポジトリ上で worktree を作成する
     - 例: `a wm new fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "..." --prompt "..."`
+- `--skip-hooks`: post-worktree-create hook をスキップする。hook 自体が壊れていて worktree 内で直す必要がある場合に使う
+
+#### post-worktree-create hook 失敗時のリトライ
+
+`a wm new` が `Error: hook '...post-worktree-create' exited with status 1` で失敗した場合、worktree とプロンプトは作成済みだが Claude Code セッションが起動していない。これは hook 内のツール (例: チェックアウトしたブランチの設定ファイルがパースエラーで処理できない) が原因で、委任タスク自体とは無関係なことが多い。
+
+この場合は以下の手順でリトライする:
+
+1. 中途半端に作成された worktree を削除する (`git worktree remove --force <path>`)
+2. 同じコマンドに `--skip-hooks` を付けて再実行する
+
+委任先で conflict 解決などにより設定ファイルが正常化すれば、hook が参照するツールも再び使えるようになる。プロンプトにはこの背景 (`--skip-hooks` で作成したこと、設定ファイルが一時的に壊れている理由) を一言添えておくとよい。
 
 ### 例
 
