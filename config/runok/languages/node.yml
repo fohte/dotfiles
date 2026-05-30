@@ -71,6 +71,13 @@ rules:
     message: 'Use nr'
   - deny: 'nlx eslint *'
     message: 'Use nr'
+  # prettier is a safe formatter/checker; no nr indirection needed.
+  # `prettier@*` also matches version-pinned runs (e.g. prettier@3.8.3).
+  - allow: 'nlx prettier|prettier@* *'
+    tests:
+      - allow: 'nlx prettier --check config/karabiner/karabiner.json'
+      - allow: 'nlx prettier --write src/index.ts'
+      - allow: 'nlx prettier@3.8.3 --check check.json'
   - deny: 'pnpm [-C|--filter *] test|test:*|test-*'
     message: 'BLOCKED: Use /ni skill. Run: nr <script>'
   - deny: 'pnpm [-C|--filter *] exec *'
