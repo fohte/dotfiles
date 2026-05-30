@@ -225,7 +225,8 @@ local env(name) = std.extVar(name);
   autoMemoryEnabled: false,
   autoDreamEnabled: false,
 
-  model: 'opus[1m]',
+  // Opus 4.8 is useless https://social.fohte.net/@fohte/116662248363818647
+  model: 'claude-opus-4-7[1m]',
 
   // opus + xhigh is too slow
   effortLevel: 'medium',
