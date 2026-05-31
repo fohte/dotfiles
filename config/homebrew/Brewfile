@@ -6,10 +6,292 @@
 # Detect drift: brew bundle cleanup             (installed but not declared; no --force = list only)
 # Check:        brew bundle check --verbose     (declared but not installed)
 
-# tap "homebrew/cask-fonts"
-
-# brew "git"
-# cask "ghostty"
+tap "1password/tap"
+tap "aquaproj/aqua"
+tap "cloudentity/tap"
+tap "cloudflare/cloudflare"
+tap "dagger/tap"
+tap "dimentium/autoraise"
+tap "espanso/espanso"
+tap "felixkratz/formulae"
+tap "fohte/tap"
+tap "hashicorp/tap"
+tap "homebrew/bundle"
+tap "homebrew/cask-fonts"
+tap "homebrew/services"
+tap "koekeishiya/formulae"
+tap "openclaw/tap"
+tap "oven-sh/bun"
+tap "planetscale/tap"
+tap "raine/claude-history"
+tap "rhysd/hgrep", "https://github.com/rhysd/hgrep"
+tap "siderolabs/tap"
+tap "sinzin91/tap"
+tap "steipete/tap"
+tap "suzuki-shunsuke/github-comment"
+tap "xorpse/formulae"
+tap "yakitrak/yakitrak"
+# Static analysis and lint tool, for (ba)sh scripts
+brew "shellcheck"
+# Static checker for GitHub Actions workflow files
+brew "actionlint"
+# Simple, modern, secure file encryption
+brew "age"
+# Asciicast to GIF converter
+brew "agg"
+# Codec library for encoding and decoding AV1 video streams
+brew "aom"
+# Record and share terminal sessions
+brew "asciinema"
+# Zstandard is a real-time compression algorithm
+brew "zstd"
+# Core application library for C
+brew "glib"
+# Container runtimes on MacOS (and Linux) with minimal setup
+brew "colima"
+# Test your configuration files using Open Policy Agent
+brew "conftest"
+# Create and run Linux containers using lightweight virtual machines
+brew "container"
+# GNU File, Shell, and Text utilities
+brew "coreutils"
+# Cryptographic recipes and primitives for Python
+brew "cryptography"
+# Color management engine supporting ICC profiles
+brew "little-cms2"
+# Load/unload environment variables based on $PWD
+brew "direnv"
+# Pack, ship and run any application as a lightweight container
+brew "docker"
+# Docker CLI plugin for extended build capabilities with BuildKit
+brew "docker-buildx"
+# Isolated development environments using Docker
+brew "docker-compose"
+# Collection of reusable C++ library artifacts developed at Facebook
+brew "folly"
+# C++14 implementation of the TLS-1.3 standard
+brew "fizz"
+# Modular, composable client/server abstractions framework
+brew "wangle"
+# Facebook's branch of Apache Thrift, including a new C++ server
+brew "fbthrift"
+# Thrift functions for querying information from a service
+brew "fb303"
+# Shared library for Watchman and Eden projects
+brew "edencommon"
+# General purpose Language Server
+brew "efm-langserver"
+# Simple, fast and user-friendly alternative to find
+brew "fd"
+# Play, record, convert, and stream select audio and video codecs
+brew "ffmpeg"
+# Collection of GNU find, xargs, and locate
+brew "findutils"
+# Monitor a directory for changes and run a shell command
+brew "fswatch"
+# GNU compiler collection
+brew "gcc"
+# OpenType text shaping engine
+brew "harfbuzz"
+# Image format providing lossless and lossy compression for web images
+brew "webp"
+# OCR (Optical Character Recognition) engine
+brew "tesseract"
+# Interpreter for PostScript and PDF
+brew "ghostscript"
+# Access GitHub's .gitignore boilerplates
+brew "gibo"
+# Distributed revision control system
+brew "git"
+# Prevents you from committing sensitive information to a git repo
+brew "git-secrets"
+# Render markdown on the CLI
+brew "glow"
+# GNU implementation of the famous stream editor
+brew "gnu-sed"
+# GNU version of the tar archiving utility
+brew "gnu-tar"
+# GNU implementation of time utility
+brew "gnu-time"
+# Validating, recursive, caching DNS resolver
+brew "unbound"
+# GNU Transport Layer Security (TLS) Library
+brew "gnutls"
+# GNU Privacy Guard (OpenPGP)
+brew "gnupg"
+# Open source programming language to build simple/reliable/efficient software
+brew "go"
+# Generate introspection data for GObject libraries
+brew "gobject-introspection"
+# GNU grep, egrep and fgrep
+brew "grep"
+# GNU Ubiquitous Intelligent Language for Extensions
+brew "guile"
+# New file format for still image compression
+brew "jpeg-xl"
+# ISO/IEC 23008-12:2017 HEIF file format decoder and encoder
+brew "libheif"
+# C/C++ seam carving library
+brew "liblqr"
+# Library for reading RAW files from digital photo cameras
+brew "libraw"
+# Tools and libraries to manipulate images in many formats
+brew "imagemagick-full", link: true
+# Kubernetes command-line interface
+brew "kubernetes-cli"
+# C library implementing the SSH2 protocol
+brew "libssh2"
+# C library of Git core methods that is re-entrant and linkable
+brew "libgit2"
+# Library for complex text layout
+brew "libraqm"
+# Unified display of technical and tag data for audio/video
+brew "media-info"
+# Collection of tools that nobody wrote when UNIX was young
+brew "moreutils"
+# QUIC transport protocol implementation
+brew "mvfst"
+# Open source relational database management system
+brew "mysql"
+# Open source relational database management system
+brew "mysql-client"
+# HTTP/2 C Library
+brew "nghttp2"
+# Network Kanji code conversion Filter (NKF)
+brew "nkf"
+# Install NodeJS versions
+brew "node-build"
+# Node.js version manager
+brew "nodenv"
+# Optimized BLAS library
+brew "openblas"
+# Package for scientific computing with Python
+brew "numpy"
+# Create, run, and share large language models (LLMs)
+brew "ollama", link: false
+# AI coding agent, built for the terminal
+brew "opencode"
+# PAM module for reattaching to the user's GUI (Aqua) session
+brew "pam-reattach"
+# Friendly PIL fork (Python Imaging Library)
+brew "pillow"
+# Source code analyzer for Java, JavaScript, and more
+brew "pmd"
+# PDF rendering library (based on the xpdf-3.0 code base)
+brew "poppler"
+# Python version management
+brew "pyenv"
+# Interpreted, interactive, object-oriented programming language
+brew "python@3.10"
+# Interpreted, interactive, object-oriented programming language
+brew "python@3.9"
+# Install various Ruby versions and implementations
+brew "ruby-build"
+# Ruby version manager
+brew "rbenv"
+# Package Management Solution for Python
+brew "rye"
+# Editor of encrypted files
+brew "sops"
+# Easiest, most secure way to use WireGuard and 2FA
+brew "tailscale"
+# Configuration helper for talos clusters
+brew "talhelper"
+# Send macOS User Notifications from the command-line
+brew "terminal-notifier"
+# Text interface for Git repositories
+brew "tig"
+# Terminal multiplexer
+brew "tmux"
+# Executes a program periodically, showing output fullscreen
+brew "watch"
+# Watch files and take action when they change
+brew "watchman"
+# Download YouTube videos from the command-line
+brew "youtube-dl"
+# Feature-rich command-line audio/video downloader
+brew "yt-dlp"
+# Suite of barcodes-reading tools
+brew "zbar"
+# Focus-follows-mouse for MacOS
+brew "dimentium/autoraise/autoraise"
+# A window border system for macOS
+brew "felixkratz/formulae/borders"
+# Custom macOS statusbar with shell plugin, interaction and graph support
+brew "felixkratz/formulae/sketchybar"
+# Command execution permission framework for LLM agents
+brew "fohte/tap/runok"
+# Terraform Language Server
+brew "hashicorp/tap/terraform-ls"
+# Simple hotkey-daemon for macOS.
+brew "koekeishiya/formulae/skhd"
+# Google CLI for Gmail, Calendar, Drive, Docs, Sheets, and more
+brew "openclaw/tap/gogcli"
+# Fuzzy-search Claude Code conversation history from the terminal
+brew "raine/claude-history/claude-history"
+# CLI for out-of-band management of Kubernetes nodes created by Talos
+brew "siderolabs/tap/talosctl"
+# Fast CLI to search across Claude Code and OpenClaw session history
+brew "sinzin91/tap/search-sessions"
+# CLI to create and hide GitHub comments
+brew "suzuki-shunsuke/github-comment/github-comment"
+brew "yakitrak/yakitrak/obsidian-cli"
+# Command-line interface for 1Password
+cask "1password-cli"
+# Input method without morphological analysis
+cask "aquaskk"
+# Japanese input method
+cask "azookey"
+# Utility to export your existing Cloudflare resources as Terraform resources
+cask "cf-terraforming"
+# Screen capturing tool
+cask "cleanshot"
+# OpenAI's coding agent that runs in your terminal
+cask "codex"
+# Menu bar usage monitor for Codex and Claude
+cask "steipete/tap/codexbar"
+# Containerized environments for coding agents
+cask "dagger/tap/container-use"
+# Write, edit, and chat about your code with AI
+cask "cursor"
+# Cross-platform Text Expander written in Rust
+cask "espanso"
+cask "font-hackgen-nerd"
+cask "font-inconsolata"
+# Set of tools to manage resources and applications hosted on Google Cloud
+cask "gcloud-cli"
+# Terminal emulator that uses platform-native UI and GPU acceleration
+cask "ghostty"
+# Desktop automation application
+cask "hammerspoon"
+# Terminal emulator as alternative to Apple's Terminal app
+cask "iterm2"
+# Menu bar manager
+cask "jordanbaird-ice"
+# Open-source keystroke visualiser
+cask "keycastr"
+# GPU-based terminal emulator
+cask "kitty"
+# Privacy-first, open-source platform for knowledge sharing and management
+cask "logseq"
+# Knowledge base that works on top of a local folder of plain text Markdown files
+cask "obsidian"
+# Menu bar dashboard for GitHub repository health
+cask "steipete/tap/repobar"
+# PDF reader and note-taking application
+cask "skim"
+# Team communication and collaboration software
+cask "slack"
+# System monitor for the menu bar
+cask "stats"
+# Menu bar customization tool
+cask "swiftbar"
+# To-do & task list manager
+cask "ticktick"
+# GPU-accelerated cross-platform terminal emulator and multiplexer
+cask "wezterm"
+# Network protocol analyzer
+cask "wireshark-app"
 
 # --- role overlay ---
 # `brew bundle` sanitizes PATH, so invoke `dot` by absolute path.
@@ -17,5 +299,5 @@
 # repo; __dir__ would not, so do not let rubocop fold this into __dir__.
 brewfile_real = File.realpath(__FILE__) # rubocop:disable Style/ExpandPathArguments
 dotfiles_dir = File.expand_path('../../..', brewfile_real)
-overlay = `#{dotfiles_dir}/config/bin/dot role overlay config/homebrew/Brewfile`.strip
+overlay = `#{'#'}{dotfiles_dir}/config/bin/dot role overlay config/homebrew/Brewfile`.strip
 instance_eval(File.read(overlay), overlay) if !overlay.empty? && File.exist?(overlay)
