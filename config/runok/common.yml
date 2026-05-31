@@ -100,10 +100,6 @@ rules:
     tests:
       - allow: 'rmdir foo'
       - allow: 'rmdir -p a/b/c'
-  - allow: 'perl *'
-    tests:
-      - allow: 'perl -i -pe "s/foo/bar/" file.txt'
-      - allow: 'perl -e "print 1"'
   - allow: 'unset *'
   - allow: 'export *'
     tests:
