@@ -31,7 +31,15 @@ description: Triage `runok audit` ask entries and convert recurring ones into al
 取得した生コマンド列から、自分で以下を判断する:
 
 - 同じ argv 前置きを持つコマンドをグルーピング (例: `gh pr view 1`, `gh pr view 2` → `gh pr view`)
-- 適切な runok パターンを設計 (`gh pr *` / `gh pr view *` / `cargo run --quiet -- doctor` のような literal、など)
+- **候補ごとに事前検査を行う (3 つすべて)**:
+    1. **既存ルール突き合わせ**: 代表的な元コマンドを `runok check '<cmd>'` に通す。既に allow になっているなら提案不要 (提案しても重複)。`ask` と出るものだけを提案候補にする
+    2. **コマンドの実在確認**: `command -v <cmd>` 等で実行可能か確認する。audit log は「実行が試みられた」記録であって「成功した」記録ではない。typo (`grpe`)、未インストール (`terraform-docs`)、過去のみ存在したコマンドを allow 化しても無意味で、過剰権限になる
+    3. **risk profile 評価**: そのパターンが allow されたとき「何が任意に実行可能になるか」を言語化する。以下は global allow を避けるべき代表例:
+        - **任意コード実行系**: `cargo run *`, `npx *`, `bash -c *`, `sh -c *`, `eval *`, `python -c *`, `node -e *` 等。cwd や引数次第で任意のコードが走る
+        - **任意 HTTP 書き込み系**: `gh api -X POST|PUT|PATCH|DELETE *`, `curl -X POST *` 等。リモートリソースを変更できる
+        - **広域 destructive**: `rm` の `/tmp` 外、`git push --force *` 等
+        - これらは「cwd / target を信頼する」前提無しに global allow にしない。狭い literal (`cargo run --quiet -- doctor` だけ等) か、ask 維持を選ぶ
+- 適切な runok パターンを設計 (`gh pr view *` / `cargo run --quiet -- doctor` のような literal、など)
     - 広げすぎると意図せず危険なサブコマンドまで通る。`gh *` のような全許可は避け、サブコマンド粒度で止める
     - 1 回しか出ていないものは無理に allow 化せず、提案に含めるかをコスト感で判断
 - 書き込み先 yml を選ぶ
@@ -40,6 +48,15 @@ description: Triage `runok audit` ask entries and convert recurring ones into al
     - `opensrc *` → `opensrc.yml`
     - work ロール固有 → `work.yml`
     - それ以外の汎用コマンド → `common.yml`
+
+### 2.5. 安全に allow できない候補の扱い
+
+risk profile 評価で「安全な global allow パターンが書けない」と判断した候補について、すぐ「ask 維持」で諦めず、以下の打ち手を検討してからユーザーに提示する:
+
+- **runok の機能不足が原因**: 「cwd で絞れれば安全に書けるが CEL に `cwd` が無い」「alias 機能があれば dev build 経由の起動を installed コマンドと同じルールで扱える」等、runok 側に機能を足せば解決する場合は **runok への feature 追加** を選択肢として挙げる。runok は user-owned なので変更可能
+- **user-owned ツール一般**: 同じ原則が armyknife などの user 自身が owner のツールにも当てはまる。「ツールの現状の表現力だけで考えない、ツール側を直す案も視野に入れる」
+
+提示は「ask 維持」「狭い literal で部分許可」「ツール側に機能追加」を並べて、ユーザーに選ばせる。
 
 ### 3. ユーザーへの提案
 
