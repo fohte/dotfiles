@@ -3,6 +3,11 @@
 editor:
   terminal: ghostty
 
+cc:
+  # quota has headroom; losing conversation context hurts more than it saves
+  auto_compact:
+    enabled: false
+
 orgs:
   fohte:
     ai:
