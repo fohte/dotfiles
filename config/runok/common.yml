@@ -96,6 +96,14 @@ rules:
   - allow: 'bats *'
   - allow: 'bc *'
   - allow: 'mktemp *'
+  - allow: 'rmdir *'
+    tests:
+      - allow: 'rmdir foo'
+      - allow: 'rmdir -p a/b/c'
+  - allow: 'perl *'
+    tests:
+      - allow: 'perl -i -pe "s/foo/bar/" file.txt'
+      - allow: 'perl -e "print 1"'
   - allow: 'unset *'
   - allow: 'export *'
     tests:
@@ -104,6 +112,27 @@ rules:
 
   - allow: brew search *
   - allow: brew info *
+  - allow: 'brew list *'
+  - allow: 'brew leaves'
+  - allow: 'brew tap-info *'
+
+  - allow: 'tar *'
+    tests:
+      - allow: 'tar tzf foo.tgz'
+      - allow: 'tar xf foo.tgz'
+  - allow: 'man *'
+  - allow: 'tmux source-file *'
+  - allow: 'tmux ls'
+
+  - allow: 'dot role *'
+    tests:
+      - allow: 'dot role get'
+      - allow: 'dot role overlay'
+
+  - allow: 'mise current'
+  - allow: 'mise ls-remote *'
+  - allow: 'mise registry *'
+  - allow: 'mise env *'
 
   # find is prohibited; use rg, Glob tool, or Grep tool instead
   - deny: 'find *'

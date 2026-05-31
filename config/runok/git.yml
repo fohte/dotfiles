@@ -189,6 +189,17 @@ rules:
     message: 'Use /github-issue skill'
     tests:
       - deny: 'gh issue comment 123'
+  - deny: 'gh [-R *] pr edit *'
+    when: '!env.PWD.startsWith(env.HOME + "/ghq/github.com/fohte/specs")'
+    message: 'Use /create-pr skill to edit PR title/body. fohte/specs grants its own allow rule.'
+    tests:
+      - deny: 'gh pr edit 285 --title "foo"'
+      - deny: 'gh -R fohte/runok pr edit 285 --title "foo"'
+  - deny: 'gh [-R *] pr merge *'
+    message: 'PR merge is a human-only operation.'
+    tests:
+      - deny: 'gh pr merge 304 --squash --auto'
+      - deny: 'gh -R fohte/runok pr merge 304 --squash'
 
   - allow: 'gh [-R *] * list *'
   - allow: 'gh [-R *] * view *'

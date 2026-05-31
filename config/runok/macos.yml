@@ -5,3 +5,6 @@ rules:
   - allow: 'pmset -g *'
   - allow: 'log show *'
   - allow: 'mdfind *'
+  - allow: 'sw_vers'
+  - allow: 'pkgutil --check-signature *'
+  - allow: 'launchctl list *'
