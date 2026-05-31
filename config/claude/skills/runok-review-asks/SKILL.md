@@ -68,11 +68,11 @@ description: Drive `runok-pending-asks` output to zero by converting each pendin
 
 全件 (allow 候補・ignore 候補ともに) を 1 つの表で出す。disposition 列を必ず含める:
 
-| #   | disposition | 提案内容                      | 書き込み先 | 元コマンド (頻度)                          |
-| --- | ----------- | ----------------------------- | ---------- | ------------------------------------------ | ------------------------- |
-| 1   | allow       | `gh pr view *`                | common.yml | `gh pr view 123` (5), `gh pr view 456` (2) |
-| 2   | allow       | `cargo run --quiet -- doctor` | common.yml | 同 (3)                                     |
-| 3   | ignore      | `^cargo run(                  | $)`        | IGNORE                                     | `cargo run --bin foo` (1) |
+| #   | disposition | 提案内容                        | 書き込み先 | 元コマンド (頻度)                          |
+| --- | ----------- | ------------------------------- | ---------- | ------------------------------------------ |
+| 1   | allow       | `gh pr view *`                  | common.yml | `gh pr view 123` (5), `gh pr view 456` (2) |
+| 2   | allow       | `cargo run --quiet -- doctor`   | common.yml | 同 (3)                                     |
+| 3   | ignore      | `^cargo run( \| $)` (IGNORE へ) | -          | `cargo run --bin foo` (1)                  |
 
 採否は番号指定 (`1,3 だけ採用`、`2 は gh pr * に広げて`、`全部 OK` 等) で受ける。**「保留」と言われた候補は ignore に回す** (= 出力から除外する)。ユーザーが明示的に allow に変えない限り、保留は ignore と同じ扱いとして処理する。
 
