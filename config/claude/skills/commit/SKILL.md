@@ -117,7 +117,7 @@ fix bug
 2. `git diff` でステージング前の差分を確認
 3. `git log --oneline -5` で最近のコミットスタイルを確認
 4. 変更を `git add` でステージング (この時点ではコミットしない)
-5. **`reviewer` agent でレビュー (推奨)**: `git diff --cached` の差分を `reviewer` subagent (Task ツール) に渡してレビューさせる。実施可否の判断基準と、🔴 Critical / 🟡 Warning への対応方針は下記「レビューのタイミング」を参照
+5. **`self-review` skill でレビュー (推奨)**: `git diff --cached` の差分を `self-review` skill に渡してレビューさせる (3 観点グループの subagent が並列実行される)。実施可否の判断基準と、🔴 Critical / 🟡 Warning への対応方針は下記「レビューのタイミング」を参照
 6. コミット (HEREDOC を使用してフォーマットを保持):
 
 ```bash
@@ -137,11 +137,11 @@ EOF
 
 ## レビューのタイミング
 
-`reviewer` agent でのレビューは以下の 2 段階で行う。
+`self-review` skill でのレビューは以下の 2 段階で行う。skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、13 観点の統合レポートを返す。
 
 ### コミット単位 (推奨)
 
-step 5 で `git diff --cached` をレビュー。
+step 5 で `git diff --cached` を `self-review` skill に渡す。
 
 - 必須ではない: 些細な変更や、ユーザーから明示的にスキップ指示がある場合は省略してよい
 - 推奨される場面: ロジックの追加・変更、新しいファイルの作成、設定値の変更、コメント・ドキュメントの大幅な修正
@@ -150,7 +150,7 @@ step 5 で `git diff --cached` をレビュー。
 
 ### push 前 (必須)
 
-`git push` の前に、その push に含まれる全コミットをまとめて `reviewer` agent でレビューする。
+`git push` の前に、その push に含まれる全コミットをまとめて `self-review` skill でレビューする。
 
 ```bash
 # push に含まれる差分を取得
@@ -159,7 +159,7 @@ git diff @{u}..HEAD
 git diff origin/master..HEAD
 ```
 
-この差分を `reviewer` subagent に渡す。
+この差分を `self-review` skill に渡す。
 
 - 🔴 Critical があれば push せず、追加コミットで修正してから再レビュー
 - 🟡 Warning は判断 (修正コミットを足す / そのまま push する)

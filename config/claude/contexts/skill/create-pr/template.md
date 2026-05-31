@@ -17,7 +17,7 @@
 
 ## 0. push 前レビュー (必須)
 
-`git push` の前に、push に含まれる全コミットの差分を `reviewer` subagent (Task ツール) でレビューする (`commit` skill の必須ステップ)。
+`git push` の前に、push に含まれる全コミットの差分を `self-review` skill でレビューする (`commit` skill の必須ステップ)。skill 側で 3 グループの subagent を並列起動し統合レポートを返す。
 
 ```bash
 git diff @{u}..HEAD
