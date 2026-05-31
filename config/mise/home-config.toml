@@ -36,6 +36,7 @@
 "aqua:evilmartians/lefthook" = "2.1.4"
 "aqua:mvdan/sh" = "3.12.0"
 "aqua:koalaman/shellcheck" = "0.10.0"
+"aqua:rhysd/actionlint" = "1.7.11"
 "npm:@antfu/ni" = "28.3.0"
 "npm:opensrc" = "0.7.2"
 "aqua:charmbracelet/glow" = "2.1.1"
