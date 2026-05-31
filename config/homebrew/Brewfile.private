@@ -1,0 +1,2 @@
+# Brewfile overlay for the `private` role.
+# Loaded via instance_eval from config/homebrew/Brewfile.

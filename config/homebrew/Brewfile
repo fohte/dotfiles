@@ -1,0 +1,21 @@
+# frozen_string_literal: true
+
+# Homebrew bundle manifest.
+#
+# Apply:        brew bundle
+# Detect drift: brew bundle cleanup             (installed but not declared; no --force = list only)
+# Check:        brew bundle check --verbose     (declared but not installed)
+
+# tap "homebrew/cask-fonts"
+
+# brew "git"
+# cask "ghostty"
+
+# --- role overlay ---
+# `brew bundle` sanitizes PATH, so invoke `dot` by absolute path.
+# realpath resolves the ~/.config/homebrew/Brewfile symlink to the dotfiles
+# repo; __dir__ would not, so do not let rubocop fold this into __dir__.
+brewfile_real = File.realpath(__FILE__) # rubocop:disable Style/ExpandPathArguments
+dotfiles_dir = File.expand_path('../../..', brewfile_real)
+overlay = `#{dotfiles_dir}/config/bin/dot role overlay config/homebrew/Brewfile`.strip
+instance_eval(File.read(overlay), overlay) if !overlay.empty? && File.exist?(overlay)
