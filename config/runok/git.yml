@@ -195,11 +195,6 @@ rules:
     tests:
       - deny: 'gh pr edit 285 --title "foo"'
       - deny: 'gh -R fohte/runok pr edit 285 --title "foo"'
-  - deny: 'gh [-R *] pr merge *'
-    message: 'PR merge is a human-only operation.'
-    tests:
-      - deny: 'gh pr merge 304 --squash --auto'
-      - deny: 'gh -R fohte/runok pr merge 304 --squash'
 
   - allow: 'gh [-R *] * list *'
   - allow: 'gh [-R *] * view *'
