@@ -36,6 +36,13 @@ description: Triage `runok audit` ask entries and convert recurring ones into al
     - **任意 HTTP 書き込み系**: `gh api -X POST|PUT|PATCH|DELETE *`, `curl -X POST *` 等。リモートリソースを変更できる
     - **広域 destructive**: `rm` の `/tmp` 外、`git push --force *` 等
     - これらは「cwd / target を信頼する」前提無しに global allow にしない。狭い literal (`cargo run --quiet -- doctor` だけ等) か、ask 維持を選ぶ
+- **安全に allow できない候補は「ask 維持」で諦めない**: 以下を選択肢に並べてユーザーに提示する
+    - ask 維持
+    - 狭い literal で部分許可
+    - **ツール側に機能追加**: runok / その他 user-owned ツールは変更可能。「現状の表現力だけで考えない」。runok 側の機能拡張で解決する代表例:
+        - cwd で絞れれば安全に書ける (CEL `when` に `cwd` 変数が無い) → cwd 変数追加
+        - dev build 経由の起動を installed コマンドと同じルールで扱いたい → alias 機能追加
+        - 失敗 / 未インストールのコマンドが ask として履歴に残る → 存在しないコマンドの auto-deny
 - 適切な runok パターンを設計 (`gh pr view *` / `cargo run --quiet -- doctor` のような literal、など)
     - 広げすぎると意図せず危険なサブコマンドまで通る。`gh *` のような全許可は避け、サブコマンド粒度で止める
     - 1 回しか出ていないものは無理に allow 化せず、提案に含めるかをコスト感で判断
@@ -45,18 +52,6 @@ description: Triage `runok audit` ask entries and convert recurring ones into al
     - `opensrc *` → `opensrc.yml`
     - work ロール固有 → `work.yml`
     - それ以外の汎用コマンド → `common.yml`
-
-### 2.5. 安全に allow できない候補の扱い
-
-risk profile 評価で「安全な global allow パターンが書けない」と判断した候補について、すぐ「ask 維持」で諦めず、以下の打ち手を検討してからユーザーに提示する:
-
-- **runok の機能不足が原因**: 以下のような runok 側の機能拡張で解決するケースは、ルール追加でなく **runok への feature 追加** を選択肢として挙げる。runok は user-owned なので変更可能
-    - cwd で絞れれば安全に書ける (CEL `when` に `cwd` 変数が無い) → cwd 変数追加
-    - dev build 経由の起動を installed コマンドと同じルールで扱いたい → alias 機能追加
-    - 失敗 / 未インストールのコマンドが ask として履歴に残る → 存在しないコマンドの auto-deny
-- **user-owned ツール一般**: 同じ原則が armyknife などの user 自身が owner のツールにも当てはまる。「ツールの現状の表現力だけで考えない、ツール側を直す案も視野に入れる」
-
-提示は「ask 維持」「狭い literal で部分許可」「ツール側に機能追加」を並べて、ユーザーに選ばせる。
 
 ### 3. ユーザーへの提案
 
