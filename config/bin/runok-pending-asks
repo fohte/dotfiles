@@ -1,23 +1,17 @@
 #!/bin/bash
 #
-# List `runok audit` entries whose commands are still `ask` under the current
-# rules. Designed to be consumed by the `runok-review-asks` Claude skill.
+# Pass `runok audit --json` output through, dropping entries that are no longer
+# `ask` under the current ruleset or that match an IGNORE_COMMANDS regex.
+# Designed to be consumed by the `runok-review-asks` Claude skill.
 #
-# Filtering pipeline:
-#   1. `runok audit --json` (defaults to `--action ask`; user args override).
-#   2. Explode each entry into per-sub-command records, keeping only those
-#      whose action was `ask`.
-#   3. Drop entries whose command matches any IGNORE_COMMANDS regex.
-#   4. Re-check each remaining command with `runok check`; keep only those
-#      still resolving to `ask` (rules may have changed since the audit).
-#
-# Output: JSONL, one record per still-ask command, with the original timestamp
-# and cwd preserved for context.
+# Output: the original `runok audit --json` JSONL, unmodified, with non-matching
+# entries omitted. The script does not reshape, dedupe, or aggregate — that is
+# the LLM's job.
 
 set -euo pipefail
 
-# Extended regular expressions matched against the command string.
-# Matching commands are never proposed for allow-listing.
+# Extended regular expressions matched against the top-level `.command` field.
+# Matching entries are never proposed for allow-listing.
 IGNORE_COMMANDS=(
   '^a wm new'
 )
@@ -40,17 +34,10 @@ fi
 audit_args+=("$@")
 
 runok audit --json "${audit_args[@]}" |
-  jq -c --arg ignore "$ignore_regex" '
-      . as $e
-      | ($e.command_evaluations // [{command: $e.command, action: $e.action}])
-      | map(select(.action.type == "ask"))
-      | .[]
-      | {command, timestamp: $e.timestamp, cwd: $e.metadata.cwd}
-      | select((.command | test($ignore)) | not)
-    ' |
+  jq -c --arg ignore "$ignore_regex" 'select((.command | test($ignore)) | not)' |
   while IFS= read -r line; do
     cmd=$(jq -r '.command' <<< "$line")
-    decision=$(printf '%s\n' "$cmd" | runok check --output-format json 2> /dev/null | jq -r '.decision // "error"')
+    decision=$(printf '%s\n' "$cmd" | runok check --output-format json | jq -r '.decision // "error"')
     if [[ "$decision" == "ask" ]]; then
       printf '%s\n' "$line"
     fi

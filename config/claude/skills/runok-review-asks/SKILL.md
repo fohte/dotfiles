@@ -10,7 +10,7 @@ description: Triage `runok audit` ask entries and convert recurring ones into al
 ## 前提
 
 - スクリプト: `config/bin/runok-pending-asks` (PATH 済)
-    - JSONL 出力。1 行 = `{command, timestamp, cwd}`
+    - 出力は `runok audit --json` 生 JSONL そのまま (整形なし)。各エントリの `.command` は実行された compound 全体 (例: `cd foo && cargo new --bin tree-check`)、`.command_evaluations[]` に分解後の各サブコマンドと判定がある
     - `--action ask` がデフォルト。`--since` / `--limit` 等は素の `runok audit` と同じフラグを受け付ける
     - 現在 allow / deny に変わっているコマンドと、内部 `IGNORE_COMMANDS` 正規表現にマッチするコマンドは出力から除外済
 - 書き込み先候補: `config/runok/{common,git,macos,opensrc,work}.yml`
