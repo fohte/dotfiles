@@ -10,5 +10,10 @@ rules:
       - allow: 'shellcheck script.sh'
   - allow: 'shfmt *'
   - allow: 'prettier *'
+  - allow: 'similarity-rs|similarity-ts|similarity-py *'
+    tests:
+      - allow: 'similarity-rs src/'
+      - allow: 'similarity-ts src/ --threshold 0.8'
+      - allow: 'similarity-py path/to/mod.py'
   - allow: 'tflint *'
   - allow: 'xmllint *'
