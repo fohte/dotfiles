@@ -129,6 +129,12 @@ rules:
 
   - allow: wait *
 
+  - allow: 'runok-pending-asks *'
+    tests:
+      - allow: 'runok-pending-asks'
+      - allow: 'runok-pending-asks --since 7d'
+      - allow: 'runok-pending-asks --limit 200'
+
   # env / printenv without KEY=VALUE args dump environment variables and may
   # leak secrets. `env FOO=a cmd ...` form is allowed since it only sets vars
   # for a child command.
