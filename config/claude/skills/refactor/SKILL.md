@@ -22,6 +22,42 @@ Use this skill when:
 
 ---
 
+## Finding Refactoring Targets with `similarity`
+
+Use [mizchi/similarity](https://github.com/mizchi/similarity) to surface duplicated / near-duplicated functions automatically. Run it early when scoping a refactor — it pinpoints copy-paste smells and parameterizable test cases that are easy to miss by eye.
+
+Per-language CLIs (install via `cargo install` / mise):
+
+- Rust: `similarity-rs <paths>`
+- TypeScript / JavaScript: `similarity-ts <paths>`
+- Python: `similarity-py <paths>`
+
+Common usage:
+
+```bash
+# Default: threshold 0.85
+similarity-rs src/
+
+# Lower threshold to catch looser matches
+similarity-ts src/ --threshold 0.80
+
+# Skip tests when hunting production duplication only
+similarity-rs src/ --skip-test
+
+# Scope to a single file or directory you just changed
+similarity-py path/to/changed_module.py
+```
+
+How to read the output:
+
+- **Production duplicates** → real refactor target (extract helper, share logic).
+- **Test duplicates** → usually a parameterization opportunity (`#[rstest]` / `pytest.mark.parametrize` / `it.each`). Check the project's test conventions first.
+- **Tiny functions at high similarity** → often false positives (early-return shape, simple loop scaffolding). Read both before acting.
+
+Always read the flagged functions before refactoring — the score measures structural similarity, not semantic equivalence.
+
+---
+
 ## Refactoring Principles
 
 ### The Golden Rules
