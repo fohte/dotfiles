@@ -5,14 +5,25 @@ rules:
     tests:
       - allow: 'cargo build --release'
   - allow: 'cargo check *'
+  - allow: 'cargo clean *'
+    tests:
+      - allow: 'cargo clean'
+      - allow: 'cargo clean -p armyknife'
   - allow: 'cargo clippy *'
   - allow: 'cargo doc *'
   - allow: 'cargo fmt *'
   - allow: 'cargo llvm-cov *'
   - allow: 'cargo metadata *'
+  - allow: 'cargo new *'
+    tests:
+      - allow: 'cargo new --bin tree-check'
   - allow: 'cargo search *'
   - allow: 'cargo test *'
     tests:
       - allow: 'cargo test'
       - allow: 'cargo test --lib'
   - allow: 'cargo tree *'
+  - allow: 'cargo update *'
+    tests:
+      - allow: 'cargo update --workspace --offline'
+      - allow: 'cargo update -p armyknife --offline'
