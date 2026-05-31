@@ -14,6 +14,7 @@ set -euo pipefail
 # Matching entries are never proposed for allow-listing.
 IGNORE_COMMANDS=(
   '^a wm new'
+  '^gh (-R [^ ]+ |--repo [^ ]+ )?pr review .* --approve'
 )
 
 ignore_regex=$(printf '|%s' "${IGNORE_COMMANDS[@]}")
@@ -37,7 +38,9 @@ runok audit --json "${audit_args[@]}" |
   jq -c --arg ignore "$ignore_regex" 'select((.command | test($ignore)) | not)' |
   while IFS= read -r line; do
     cmd=$(jq -r '.command' <<< "$line")
-    decision=$(printf '%s\n' "$cmd" | runok check --output-format json | jq -r '.decision // "error"')
+    # On parse error in `runok check`, treat the entry as still-ask so it
+    # surfaces for manual review instead of being silently dropped.
+    decision=$(printf '%s\n' "$cmd" | runok check --output-format json 2> /dev/null | jq -r '.decision // "ask"' 2> /dev/null || echo ask)
     if [[ "$decision" == "ask" ]]; then
       printf '%s\n' "$line"
     fi
