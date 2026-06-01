@@ -37,7 +37,32 @@ description: 差分に対する self-review を 3 つの専門観点グループ
     ```
 
 3. **規約パスの特定**: `CLAUDE.md` (root + 対象サブディレクトリ) と `.gemini/styleguide.md` (存在すれば) のパスをリストアップする。**ここでは読み込まない** — 各 subagent が自分で読む。
-4. **subagent を 3 並列起動**: Task ツールを **単一の function_calls ブロックに 3 件まとめて** 呼び出す (subagent_type は指定しない = general-purpose)。逐次呼び出しは禁止 — 並列化が本 skill の目的。プロンプトテンプレ:
+4. **subagent を 3 並列 background 起動**: Agent ツールを **単一のアシスタントメッセージ内に 3 件まとめて記述** し、**全件 `run_in_background: true`** で起動する。subagent_type は指定しない (= general-purpose)。次のいずれも禁止:
+    - 1 件起動して結果を待ってから次を起動する逐次パターン
+    - `run_in_background` を省略 / `false` にして foreground で起動する (foreground だと最初の Agent の結果が返るまで他の Agent を起動するメッセージを送れない = 直列と同じになる)
+    - 2 件まとめて起動した後に 1 件追加で起動するような分割パターン (1 ラウンドで 3 件揃える)
+
+    具体的な起動形 (単一メッセージ内に 3 ブロック並べる):
+
+    ```
+    Agent({
+      description: "behavior review",
+      run_in_background: true,
+      prompt: "<下記テンプレに behavior を埋めたもの>"
+    })
+    Agent({
+      description: "structure review",
+      run_in_background: true,
+      prompt: "<下記テンプレに structure を埋めたもの>"
+    })
+    Agent({
+      description: "convention review",
+      run_in_background: true,
+      prompt: "<下記テンプレに convention を埋めたもの>"
+    })
+    ```
+
+    各 Agent に渡すプロンプトテンプレ:
 
     ```
     あなたは <group> 観点担当のコードレビュアーです。
@@ -54,12 +79,13 @@ description: 差分に対する self-review を 3 つの専門観点グループ
 
     `<group>` には `behavior` / `structure` / `convention` のいずれかが入る。
 
-5. **結果集約**: 3 subagent の出力を以下のルールで統合する:
+5. **完了通知を待つ**: 3 件すべての `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止 — 通知のみが完了の根拠。**3 件のうち 1 件でも未完了なら他の作業はせず通知を待つ**。
+6. **結果集約**: 全通知到着後、各 Agent の最終出力を踏まえて以下のルールで統合する:
     - 観点別評価: 13 件を通し番号順に並べる
     - 指摘詳細: 重要度順 (Critical → Warning) に並べる
     - 重複指摘のマージは下記「Dedup ルール」に従う
-    - **subagent 失敗時 fallback**: いずれかの subagent が空応答・エラー・タイムアウトした場合、該当 group の観点を `⚠️ 未評価 (subagent 失敗)` とマークし、その group だけ単独で再起動する。再起動も失敗するなら最終出力でその旨を明示する。
-6. **最終出力**: 下記「出力形式」セクションに従い、3 セクション構造で出す。
+    - **subagent 失敗時 fallback**: いずれかの subagent が空応答・エラー・タイムアウトした場合、該当 group の観点を `⚠️ 未評価 (subagent 失敗)` とマークし、その group だけ単独で再起動する (これも `run_in_background: true`)。再起動も失敗するなら最終出力でその旨を明示する。
+7. **最終出力**: 下記「出力形式」セクションに従い、3 セクション構造で出す。
 
 ## Dedup ルール
 
