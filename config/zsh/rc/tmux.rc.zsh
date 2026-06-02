@@ -14,6 +14,7 @@ precmd_functions+=(_set_tmux_pane_title)
 # process on every status redraw.
 _set_tmux_window_dir_info() {
   [[ -z "$TMUX" ]] && return
+  [[ -z "$TMUX_PANE" ]] && return
   local info=''
   # A git worktree's `.git` is a file starting with `gitdir:`, not a directory.
   if [[ -f .git ]]; then
@@ -21,7 +22,6 @@ _set_tmux_window_dir_info() {
     read -r gitline < .git
     [[ "$gitline" == gitdir:* ]] && info=" ${PWD:t}"
   fi
-  [[ -z "$TMUX_PANE" ]] && return
   tmux set-option -w -t "$TMUX_PANE" @window-dir-info "$info"
 }
 chpwd_functions+=(_set_tmux_window_dir_info)
