@@ -180,13 +180,30 @@ PR タイトルに `!` (例: `deps(ci)!:`) が含まれていると release-plea
   {{- end }}
 - `📝` で開始する
 - バージョン番号の変更 (vX → vY) は PR body から明らかなので書かない
-- 影響しうる変更のみ簡潔に述べる。影響する変更がなければ「No breaking changes.」/「破壊的変更なし。」等で短く済ませる
+- **本文の構造**: このバージョンの変更点を箇条書きでリストし、各変更点の直下にこのリポジトリへの影響有無をネスト箇条書きで添える。1 変更 = 1 親 bullet + 子 bullet (影響)
+- **breaking changes は親 bullet の冒頭に `**[BREAKING CHANGES]**` を付ける**。レビュアーが一目で識別できるようにするため
+- 変更点が無い (または影響しうる変更がない) 場合は短く「No breaking changes.」/「破壊的変更なし。」だけで済ませる
 - テンプレートリポジトリの場合、影響範囲は「このリポジトリの使い方」ではなく「下流リポジトリへの伝播」を考慮する。ただし下流の詳細な影響調査は下流側の責任なので、ここでは breaking changes の有無と概要を述べれば十分
 
 ```bash
 gh pr review <number> --approve --body "$(cat <<'EOF'
-{{ if $public }}📝 No breaking changes. ...{{ else }}📝 破壊的変更なし。...{{ end }}
+{{ if $public -}}
+📝
+
+- **[BREAKING CHANGES]** Removed `-foo` option; use `-bar` instead.
+    - No impact: this repo does not invoke `-foo`.
+- Added `-baz` flag for offline validation.
+    - No impact: not used here.
 EOF
+{{- else -}}
+📝
+
+- **[BREAKING CHANGES]** `-foo` オプションが削除された。代わりに `-bar` を使う
+    - 影響なし: このリポジトリでは `-foo` を使っていない
+- オフライン検証用の `-baz` フラグが追加された
+    - 影響なし: 未使用
+EOF
+{{- end }}
 )"
 ```
 
