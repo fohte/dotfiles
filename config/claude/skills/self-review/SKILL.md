@@ -37,12 +37,20 @@ description: 差分に対する self-review を 3 つの専門観点グループ
     ```
 
 3. **規約パスの特定**: `CLAUDE.md` (root + 対象サブディレクトリ) と `.gemini/styleguide.md` (存在すれば) のパスをリストアップする。**ここでは読み込まない** — 各 subagent が自分で読む。
-4. **subagent を 3 並列 background 起動**: Agent ツールを **単一のアシスタントメッセージ内に 3 件まとめて記述** し、**全件 `run_in_background: true`** で起動する。subagent_type は指定しない (= general-purpose)。次のいずれも禁止:
+4. **GitHub Actions workflow 変更の検知**: 以下を実行し、出力が 1 行以上あれば次ステップで `gha-security-review` 用の 4 件目を追加起動する。マッチゼロなら 3 件起動。
+
+    ```bash
+    git diff --name-only <range> | grep -E '^(\.github/workflows/.*\.ya?ml|\.github/actions/.+/action\.ya?ml|action\.ya?ml)$'
+    ```
+
+    対象: `.github/workflows/` 配下の workflow / `.github/actions/<name>/action.yml` 形式の reusable composite action / リポジトリルート直下の `action.yml` (action リポジトリ自体)。それ以外の場所に置かれた composite action は意図的に対象外。
+
+5. **subagent を並列 background 起動**: Agent ツールを **単一のアシスタントメッセージ内に 3 (or 4) 件まとめて記述** し、**全件 `run_in_background: true`** で起動する。subagent_type は指定しない (= general-purpose)。次のいずれも禁止:
     - 1 件起動して結果を待ってから次を起動する逐次パターン
     - `run_in_background` を省略 / `false` にして foreground で起動する (foreground だと最初の Agent の結果が返るまで他の Agent を起動するメッセージを送れない = 直列と同じになる)
-    - 2 件まとめて起動した後に 1 件追加で起動するような分割パターン (1 ラウンドで 3 件揃える)
+    - 2 件まとめて起動した後に 1 件追加で起動するような分割パターン (1 ラウンドで全件揃える)
 
-    具体的な起動形 (単一メッセージ内に 3 ブロック並べる):
+    具体的な起動形 (単一メッセージ内に 3-4 ブロック並べる):
 
     ```
     Agent({
@@ -60,9 +68,15 @@ description: 差分に対する self-review を 3 つの専門観点グループ
       run_in_background: true,
       prompt: "<下記テンプレに convention を埋めたもの>"
     })
+    // workflow 変更検知時のみ追加
+    Agent({
+      description: "gha-security review",
+      run_in_background: true,
+      prompt: "<下記 gha テンプレ>"
+    })
     ```
 
-    各 Agent に渡すプロンプトテンプレ:
+    behavior / structure / convention 各 Agent に渡すプロンプトテンプレ:
 
     ```
     あなたは <group> 観点担当のコードレビュアーです。
@@ -79,13 +93,27 @@ description: 差分に対する self-review を 3 つの専門観点グループ
 
     `<group>` には `behavior` / `structure` / `convention` のいずれかが入る。
 
-5. **完了通知を待つ**: 3 件すべての `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止 — 通知のみが完了の根拠。**3 件のうち 1 件でも未完了なら他の作業はせず通知を待つ**。
-6. **結果集約**: 全通知到着後、各 Agent の最終出力を踏まえて以下のルールで統合する:
-    - 観点別評価: 13 件を通し番号順に並べる
-    - 指摘詳細: 重要度順 (Critical → Warning) に並べる
+    `gha-security-review` Agent に渡すプロンプトテンプレ:
+
+    ```
+    あなたは GitHub Actions workflow のセキュリティレビュー担当です。
+
+    1. `~/.claude/skills/gha-security-review/SKILL.md` を Read し、その手順に厳密に従う。
+       必要に応じて同 skill 配下の `references/*.md` を選択的に Read する。
+    2. レビュー対象は以下の patch に含まれる workflow / action 関連ファイル:
+       <patch のフルパス>
+       patch では文脈が不足する場合に限り、リポジトリ内の対象 workflow 本体を Read してよい。
+    3. skill の出力形式 (GHA-NNN の findings 形式) で HIGH / MEDIUM confidence のみ返す。
+       各 finding に **指摘 ID** として `GHA:<file>:<LINE>` を付ける (self-review の dedup と統合するため)。
+    ```
+
+6. **完了通知を待つ**: 起動した全件 (3 or 4) の `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止 — 通知のみが完了の根拠。**1 件でも未完了なら他の作業はせず通知を待つ**。
+7. **結果集約**: 全通知到着後、各 Agent の最終出力を踏まえて以下のルールで統合する:
+    - 観点別評価: behavior + structure + convention の 13 観点を通し番号順に並べる。`gha-security-review` を起動した場合は末尾に独立セクション `GHA Security` として findings 件数サマリを追加する (13 観点には混ぜない)
+    - 指摘詳細: 重要度順 (Critical → Warning) に並べる。`GHA-NNN` findings は HIGH=Critical / MEDIUM=Warning として混ぜて並べる
     - 重複指摘のマージは下記「Dedup ルール」に従う
-    - **subagent 失敗時 fallback**: いずれかの subagent が空応答・エラー・タイムアウトした場合、該当 group の観点を `⚠️ 未評価 (subagent 失敗)` とマークし、その group だけ単独で再起動する (これも `run_in_background: true`)。再起動も失敗するなら最終出力でその旨を明示する。
-7. **最終出力**: 下記「出力形式」セクションに従い、3 セクション構造で出す。
+    - **subagent 失敗時 fallback**: いずれかの subagent が空応答・エラー・タイムアウトした場合、該当 group の観点を `⚠️ 未評価 (subagent 失敗)` とマークし、その group だけ単独で再起動する (これも `run_in_background: true`)。再起動も失敗するなら最終出力でその旨を明示する。`gha-security-review` が失敗した場合は独立セクション `GHA Security` に `⚠️ 未評価 (subagent 失敗)` を出力し、同条件で 1 回だけ再起動する。
+8. **最終出力**: 下記「出力形式」セクションに従い、3 セクション構造で出す。
 
 ## Dedup ルール
 
@@ -125,6 +153,8 @@ description: 差分に対する self-review を 3 つの専門観点グループ
 11. コメントの質: <マーカー> <一行>
 12. プロジェクト規約遵守: <マーカー> <一行>
 13. リファクタリング機会: <マーカー> <一行>
+
+GHA Security: <マーカー> <一行> (workflow 変更がない場合は行ごと省略)
 ```
 
 ### 2. 指摘詳細
