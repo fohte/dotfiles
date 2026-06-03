@@ -156,6 +156,12 @@ rules:
       - allow: 'git restore --staged file.txt'
       - allow: 'git restore --staged .'
       - allow: 'git -C /tmp restore --staged file.txt'
+  - allow: 'git [-C *] stash'
+    tests:
+      - allow: 'git stash'
+  - allow: 'git [-C *] stash pop'
+    tests:
+      - allow: 'git stash pop'
   - allow: 'git [-C *] rm *'
     # -f/--force discards uncommitted modifications, so exclude it from allow.
     # -rf and similar clusters are single flag keys, hence the substring match.

@@ -193,3 +193,7 @@ rules:
     sandbox: readonly
     tests:
       - allow: 'node -e "console.log(1)"'
+
+  - allow: 'corepack enable'
+    tests:
+      - allow: 'corepack enable'

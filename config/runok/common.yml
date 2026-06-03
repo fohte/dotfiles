@@ -125,7 +125,10 @@ rules:
       - allow: 'dot role get'
       - allow: 'dot role overlay'
 
-  - allow: 'mise current'
+  - allow: 'mise current *'
+    tests:
+      - allow: 'mise current'
+      - allow: 'mise current node'
   - allow: 'mise ls-remote *'
   - allow: 'mise registry *'
   - allow: 'mise env *'
