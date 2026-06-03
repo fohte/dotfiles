@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Push a "Release-As: <version>" trigger commit to the default branch via the
+# gh API, temporarily disabling the "pr-required" ruleset so the push goes
+# through.
+
+usage() {
+  cat << 'EOF'
+Usage: release-please-release-as [--repo OWNER/REPO] [-p <package-path>] [-s <scope>] <version>
+
+Options:
+  --repo OWNER/REPO   Target repository (default: current directory)
+  -p <package-path>   Monorepo package path; creates <path>/CHANGELOG.md so
+                      release-please's path filter picks the commit up
+  -s <scope>          Conventional commit scope (default: basename of -p)
+EOF
+}
+
+repo=""
+pkg_path=""
+scope=""
+version=""
+ruleset_name="pr-required"
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --repo)
+      repo=$2
+      shift 2
+      ;;
+    -p)
+      pkg_path=${2%/}
+      shift 2
+      ;;
+    -s)
+      scope=$2
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      version=${1:-}
+      break
+      ;;
+    -*)
+      echo "error: unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+    *)
+      version=$1
+      shift
+      ;;
+  esac
+done
+
+if [[ -z $version ]]; then
+  echo "error: version is required" >&2
+  usage >&2
+  exit 1
+fi
+
+if [[ -z $repo ]]; then
+  repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+fi
+
+branch=$(gh repo view "$repo" --json defaultBranchRef --jq .defaultBranchRef.name)
+
+if [[ -n $pkg_path ]]; then
+  : "${scope:=$(basename "$pkg_path")}"
+  subject="chore($scope): trigger release"
+else
+  subject="chore: trigger release"
+fi
+message=$(printf '%s\n\nRelease-As: %s\n' "$subject" "$version")
+
+parent_sha=$(gh api "repos/$repo/git/ref/heads/$branch" --jq .object.sha)
+parent_tree=$(gh api "repos/$repo/git/commits/$parent_sha" --jq .tree.sha)
+
+if [[ -n $pkg_path ]]; then
+  changelog_path="$pkg_path/CHANGELOG.md"
+
+  # release-please's monorepo path filter needs a file change under the
+  # package path; if CHANGELOG.md already exists there's nothing safe to
+  # auto-edit, so bail and let the user handle it.
+  if gh api "repos/$repo/contents/$changelog_path?ref=$branch" > /dev/null 2>&1; then
+    echo "error: $changelog_path already exists; aborting to avoid overwrite" >&2
+    exit 1
+  fi
+
+  blob_sha=$(jq -n '{content:"",encoding:"utf-8"}' |
+    gh api -X POST "repos/$repo/git/blobs" --input - --jq .sha)
+
+  new_tree=$(jq -n \
+    --arg base "$parent_tree" \
+    --arg path "$changelog_path" \
+    --arg sha "$blob_sha" \
+    '{base_tree:$base, tree:[{path:$path, mode:"100644", type:"blob", sha:$sha}]}' |
+    gh api -X POST "repos/$repo/git/trees" --input - --jq .sha)
+else
+  new_tree=$parent_tree
+fi
+
+rs=$(gh api "repos/$repo/rulesets" --jq ".[] | select(.name==\"$ruleset_name\") | .id")
+if [[ -n $rs ]]; then
+  # Loud restore: if the PUT fails (network, token expiry), the ruleset stays
+  # disabled and the default branch loses push protection — surface it instead
+  # of swallowing the failure inside `trap … && echo`.
+  restore_ruleset() {
+    if gh api -X PUT "repos/$repo/rulesets/$rs" -f enforcement=active > /dev/null; then
+      echo "ruleset re-enabled"
+    else
+      echo "FATAL: failed to re-enable ruleset '$ruleset_name' on $repo; restore manually" >&2
+    fi
+  }
+  trap restore_ruleset EXIT
+  gh api -X PUT "repos/$repo/rulesets/$rs" -f enforcement=disabled > /dev/null
+fi
+
+new_sha=$(jq -n \
+  --arg msg "$message" \
+  --arg tree "$new_tree" \
+  --arg parent "$parent_sha" \
+  '{message:$msg, tree:$tree, parents:[$parent]}' |
+  gh api -X POST "repos/$repo/git/commits" --input - --jq .sha)
+
+gh api -X PATCH "repos/$repo/git/refs/heads/$branch" -f sha="$new_sha" > /dev/null
+
+echo "pushed $new_sha to $repo@$branch ($subject, Release-As: $version)"
