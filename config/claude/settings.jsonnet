@@ -6,6 +6,9 @@ local env(name) = std.extVar(name);
     CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1',
   },
 
+  // Parallel work is driven from tmux panes, so the agent view panel is redundant.
+  disableAgentView: true,
+
   includeCoAuthoredBy: true,
 
   permissions: {
