@@ -1,25 +1,18 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
 definitions:
-  vars:
-    # Reusable command-prefix pattern that bundles kubectl with its
-    # value-taking global flags. Optional groups let each rule match both
-    # space- and `=`-joined flag forms without repeating the list.
-    # `--token` and `--password` are intentionally omitted so secret-bearing
-    # invocations fall through to ask.
+  # Strip value-taking global flags from the leading tokens so each rule can
+  # match on the bare command name. Optional groups let the alias match both
+  # space- and `=`-joined flag forms without repeating the list. `--token`
+  # and `--password` are intentionally omitted from kubectl so secret-bearing
+  # invocations fall through to ask.
+  aliases:
     kubectl:
-      type: pattern
-      values:
-        - 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *]'
-
-    # Reusable command-prefix pattern that bundles talosctl with its
-    # value-taking global flags. Optional groups let each rule match both
-    # space- and `=`-joined flag forms without repeating the list.
+      - 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *]'
     talosctl:
-      type: pattern
-      values:
-        - 'talosctl [-n|--nodes *] [-e|--endpoints *] [-c|--cluster *] [--context *] [--talosconfig *] [--siderov1-keys-dir *]'
+      - 'talosctl [-n|--nodes *] [-e|--endpoints *] [-c|--cluster *] [--context *] [--talosconfig *] [--siderov1-keys-dir *]'
 
+  vars:
     # Node paths that `talosctl read` can return without exposing
     # credentials. `/proc` holds kernel/process metadata only. Declared as
     # a pattern-typed var so the inner `*` keeps its glob semantics.
@@ -29,7 +22,7 @@ definitions:
         - '/proc/*'
 
 rules:
-  - allow: '<var:kubectl> get|describe|logs *'
+  - allow: 'kubectl get|describe|logs *'
     tests:
       - allow: 'kubectl get pods'
       - allow: 'kubectl --context foo get pods'
@@ -43,7 +36,7 @@ rules:
   # `o`), so the `when` clause matches the flag by key prefix to also catch
   # `-oyaml`/`-ojson`. kubectl spells the resource `secret`, `secrets`, or
   # `secret(s).v1[.]`, so glob every form.
-  - ask: '<var:kubectl> get * secret* *'
+  - ask: 'kubectl get * secret* *'
     when: "flags.exists(k, k.startsWith('o'))"
     tests:
       - allow: 'kubectl get secret'
@@ -59,7 +52,7 @@ rules:
   # Read-only info subcommands (no cluster mutation, no secret leakage).
   # `cluster-info dump` is excluded because it aggregates pod logs / ConfigMaps
   # that may contain secrets.
-  - allow: '<var:kubectl> version|api-resources|api-versions|explain *'
+  - allow: 'kubectl version|api-resources|api-versions|explain *'
     tests:
       - allow: 'kubectl version'
       - allow: 'kubectl version --short'
@@ -67,31 +60,31 @@ rules:
       - allow: 'kubectl api-versions'
       - allow: 'kubectl explain pod'
       - allow: 'kubectl --context foo api-resources'
-  - allow: '<var:kubectl> cluster-info'
+  - allow: 'kubectl cluster-info'
     tests:
       - allow: 'kubectl cluster-info'
       - allow: 'kubectl --context foo cluster-info'
 
-  - allow: '<var:kubectl> top node|pod|nodes|pods *'
+  - allow: 'kubectl top node|pod|nodes|pods *'
     tests:
       - allow: 'kubectl top nodes'
       - allow: 'kubectl top pod -A'
       - allow: 'kubectl --context foo top nodes'
 
   # `auth reconcile` mutates RBAC, so it is excluded.
-  - allow: '<var:kubectl> auth can-i|whoami *'
+  - allow: 'kubectl auth can-i|whoami *'
     tests:
       - allow: 'kubectl auth can-i list pods'
       - allow: 'kubectl auth whoami'
       - allow: 'kubectl --context foo auth whoami'
 
-  - allow: '<var:kubectl> diff|wait *'
+  - allow: 'kubectl diff|wait *'
     tests:
       - allow: 'kubectl diff -f manifest.yaml'
       - allow: 'kubectl wait --for=condition=Ready pod/foo'
 
   # `kubectl config` read-only subcommands that only emit names.
-  - allow: '<var:kubectl> config current-context|get-contexts|get-clusters|get-users *'
+  - allow: 'kubectl config current-context|get-contexts|get-clusters|get-users *'
     tests:
       - allow: 'kubectl config current-context'
       - allow: 'kubectl config get-contexts'
@@ -104,7 +97,7 @@ rules:
   # client-certificate-data / token / password fields. `--raw` disables that
   # redaction, and `-o jsonpath=...` can extract `users[].user.token` directly,
   # so allow only the redacted form without custom output formatting.
-  - allow: '<var:kubectl> config view [--minify] [--flatten]'
+  - allow: 'kubectl config view [--minify] [--flatten]'
     tests:
       - allow: 'kubectl config view'
       - allow: 'kubectl config view --minify'
@@ -191,7 +184,7 @@ rules:
   # `-c|--cluster`, `--context`, `--talosconfig`, `--siderov1-keys-dir`. They
   # are listed as optional groups so the same rule matches both space- and
   # `=`-joined forms.
-  - allow: '<var:talosctl> get|list|ls|dmesg|events|containers|cgroups|processes|memory|mounts|netstat|stats|time|usage|version|health|inspect|dashboard|completion|disks|interfaces|routes *'
+  - allow: 'talosctl get|list|ls|dmesg|events|containers|cgroups|processes|memory|mounts|netstat|stats|time|usage|version|health|inspect|dashboard|completion|disks|interfaces|routes *'
     tests:
       - allow: 'talosctl get members'
       - allow: 'talosctl --nodes 10.0.0.1 get members'
@@ -212,7 +205,7 @@ rules:
   # `image list|k8s-bundle|talos-bundle` are read-only. `pull`, `remove`,
   # `cache-create`, `cache-serve`, `cache-cert-gen` mutate node or local state
   # and must fall through to ask.
-  - allow: '<var:talosctl> image|images list|k8s-bundle|talos-bundle *'
+  - allow: 'talosctl image|images list|k8s-bundle|talos-bundle *'
     tests:
       - allow: 'talosctl image list'
       - allow: 'talosctl images list'
@@ -228,11 +221,11 @@ rules:
   # `service <id> start|stop|restart` mutate or risk mutating state, so they
   # must fall through to ask. Negation `!start|stop|restart` constrains the
   # ID position to a single token that is not a state-changing action.
-  - allow: '<var:talosctl> service|services'
+  - allow: 'talosctl service|services'
     tests:
       - allow: 'talosctl services'
       - allow: 'talosctl service'
-  - allow: '<var:talosctl> service|services !start|stop|restart status'
+  - allow: 'talosctl service|services !start|stop|restart status'
     tests:
       - allow: 'talosctl service kubelet status'
       - allow: 'talosctl --nodes 10.0.0.1 service kubelet status'
@@ -245,7 +238,7 @@ rules:
   # `talosctl config` read-only subcommands. `add`, `new`, `merge`, `endpoint`,
   # `node`, `context`, `remove` mutate the local talosconfig, so they are
   # excluded.
-  - allow: 'talosctl [--talosconfig *] [--context *] [-c|--cluster *] config contexts|info'
+  - allow: 'talosctl config contexts|info'
     tests:
       - allow: 'talosctl config contexts'
       - allow: 'talosctl config info'
@@ -260,7 +253,7 @@ rules:
 
   # `etcd status` / `etcd members` are read-only. `etcd snapshot` is excluded
   # because it dumps the full etcd state (including all Kubernetes Secrets).
-  - allow: '<var:talosctl> etcd status|members'
+  - allow: 'talosctl etcd status|members'
     tests:
       - allow: 'talosctl etcd status'
       - allow: 'talosctl etcd members'
@@ -273,7 +266,7 @@ rules:
   # `read` exposes arbitrary node files. Limit allowed targets to
   # `definitions.vars.talos-readable` so credential paths (`/etc/kubernetes`,
   # `/system/secrets`, `/var/lib/kubelet`) keep falling through to ask.
-  - allow: '<var:talosctl> read <var:talos-readable>'
+  - allow: 'talosctl read <var:talos-readable>'
     tests:
       - allow: 'talosctl read /proc/uptime'
       - allow: 'talosctl --nodes 10.0.0.1 read /proc/1/cmdline'
@@ -284,7 +277,7 @@ rules:
   # `logs` reads Talos service or Kubernetes container logs. Default
   # klog/zap output does not include bearer tokens or Secret values, so
   # treat them as readable like `kubectl logs`.
-  - allow: '<var:talosctl> logs *'
+  - allow: 'talosctl logs *'
     tests:
       - allow: 'talosctl logs kubelet'
       - allow: 'talosctl logs -k kube-apiserver'
