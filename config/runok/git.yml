@@ -197,10 +197,16 @@ rules:
       - deny: 'gh issue comment 123'
   - deny: 'gh [-R *] pr edit *'
     when: '!env.PWD.startsWith(env.HOME + "/ghq/github.com/fohte/specs")'
-    message: 'Use /create-pr skill to edit PR title/body. fohte/specs grants its own allow rule.'
+    message: 'Use /create-pr skill to edit PR title/body.'
     tests:
       - deny: 'gh pr edit 285 --title "foo"'
       - deny: 'gh -R fohte/runok pr edit 285 --title "foo"'
+  - deny: 'gh [-R *] pr create *'
+    when: '!env.PWD.startsWith(env.HOME + "/ghq/github.com/fohte/specs")'
+    message: 'Use /create-pr skill to create PRs.'
+    tests:
+      - deny: 'gh pr create --title "foo" --body "bar"'
+      - deny: 'gh -R fohte/runok pr create --title "foo"'
 
   - allow: 'gh [-R *] * list *'
   - allow: 'gh [-R *] * view *'
