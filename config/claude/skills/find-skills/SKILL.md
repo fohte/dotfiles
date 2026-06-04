@@ -20,14 +20,14 @@ Use this skill when the user:
 
 ## What is the Skills CLI?
 
-The Skills CLI (`npx skills`) is the package manager for the open agent skills ecosystem. Skills are modular packages that extend agent capabilities with specialized knowledge, workflows, and tools.
+The Skills CLI (`nlx skills`) is the package manager for the open agent skills ecosystem. Skills are modular packages that extend agent capabilities with specialized knowledge, workflows, and tools.
 
 **Key commands:**
 
-- `npx skills find [query]` - Search for skills interactively or by keyword
-- `npx skills add <package>` - Install a skill from GitHub or other sources
-- `npx skills check` - Check for skill updates
-- `npx skills update` - Update all installed skills
+- `nlx skills find [query]` - Search for skills interactively or by keyword
+- `nlx skills add <package>` - Install a skill from GitHub or other sources
+- `nlx skills check` - Check for skill updates
+- `nlx skills update` - Update all installed skills
 
 **Browse skills at:** https://skills.sh/
 
@@ -55,14 +55,14 @@ For example, top skills for web development include:
 If the leaderboard doesn't cover the user's need, run the find command:
 
 ```bash
-npx skills find [query]
+nlx skills find [query]
 ```
 
 For example:
 
-- User asks "how do I make my React app faster?" → `npx skills find react performance`
-- User asks "can you help me with PR reviews?" → `npx skills find pr review`
-- User asks "I need to create a changelog" → `npx skills find changelog`
+- User asks "how do I make my React app faster?" → `nlx skills find react performance`
+- User asks "can you help me with PR reviews?" → `nlx skills find pr review`
+- User asks "I need to create a changelog" → `nlx skills find changelog`
 
 ### Step 4: Verify Quality Before Recommending
 
@@ -89,20 +89,28 @@ React and Next.js performance optimization guidelines from Vercel Engineering.
 (185K installs)
 
 To install it:
-npx skills add vercel-labs/agent-skills@react-best-practices
+nlx skills add vercel-labs/agent-skills -s react-best-practices
 
 Learn more: https://skills.sh/vercel-labs/agent-skills/react-best-practices
 ```
 
+(The example omits flags for readability. See Step 6 for the full install form.)
+
 ### Step 6: Offer to Install
 
-If the user wants to proceed, you can install the skill for them:
+If the user wants to proceed, install the skill for Claude Code only:
 
 ```bash
-npx skills add <owner/repo@skill> -g -y
+nlx skills add <owner/repo> -s <skill> -a claude-code -g -y --copy
 ```
 
-The `-g` flag installs globally (user-level) and `-y` skips confirmation prompts.
+Flags:
+
+- `-s <skill>`: target a specific skill in the repo (omit to pick interactively / install root)
+- `-a claude-code`: scope install to Claude Code's agent dir. Default installs to every detected agent — usually unwanted noise.
+- `-g`: global (user-level, `~/.claude/skills/`) instead of project-level
+- `-y`: skip confirmation prompts
+- `--copy`: copy files instead of symlinking. Needed when the target install dir is itself a symlink, because the CLI emits a relative symlink (`../../.agents/skills/...`) that resolves against the link target and breaks. `--copy` writes the skill directly under the resolved install dir.
 
 ## Common Skill Categories
 
@@ -130,7 +138,7 @@ If no relevant skills exist:
 
 1. Acknowledge that no existing skill was found
 2. Offer to help with the task directly using your general capabilities
-3. Suggest the user could create their own skill with `npx skills init`
+3. Suggest the user could create their own skill with `nlx skills init`
 
 Example:
 
@@ -139,5 +147,5 @@ I searched for skills related to "xyz" but didn't find any matches.
 I can still help you with this task directly! Would you like me to proceed?
 
 If this is something you do often, you could create your own skill:
-npx skills init my-xyz-skill
+nlx skills init my-xyz-skill
 ```
