@@ -36,6 +36,20 @@ rules:
   - allow: 'claude-session-digest *'
   - allow: 'gen-claude-template *'
 
+  # skills CLI (used by /find-skills)
+  - allow: 'nlx skills find|view|check|update|init *'
+    tests:
+      - allow: 'nlx skills find skill-creator'
+      - allow: 'nlx skills find "github actions"'
+      - allow: 'nlx skills view anthropics/skills@skill-creator'
+      - allow: 'nlx skills check'
+      - allow: 'nlx skills update'
+      - allow: 'nlx skills init my-skill'
+  - allow: 'nlx skills add *'
+    tests:
+      - allow: 'nlx skills add getsentry/skills@gha-security-review -g -y'
+      - allow: 'nlx skills add anthropics/skills@frontend-design'
+
   # semgrep
   - allow: 'sg|ast-grep scan *'
   - allow: 'sg|ast-grep test *'
