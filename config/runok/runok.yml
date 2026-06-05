@@ -19,6 +19,7 @@ extends:
   - './tools/k8s.yml'
   - './tools/linters.yml'
   - './tools/obsidian.yml'
+  - './tools/srt.yml'
   - './tools/terraform.yml'
   - './tools/misc.yml'
   - './work.yml'
