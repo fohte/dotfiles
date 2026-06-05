@@ -104,9 +104,20 @@ a gh issue-agent review <file-path>
 
 Opens a file in an editor (via tmux) for user review. The user must set `submit: true` in the frontmatter to approve. For files without YAML frontmatter (e.g., comment files with HTML comment metadata), a temporary `submit: false` frontmatter is prepended and stripped after review.
 
-Run this **in background** (`run_in_background: true`). The command blocks until the user closes the editor. Exit code 0 means approved, exit code 1 means not approved (user closed without approving), exit code 2 means the editor is already open for this file, exit code 3 means the terminal emulator failed to launch within 10s (likely macOS is asleep — no lock file is left behind).
+Run this **in background** (`run_in_background: true`). The command blocks until the user closes the editor. See [Review exit codes](#review-exit-codes) for how to interpret the result.
 
 The `push` command verifies `.approve` files exist for all changed files and rejects the push if any file is unapproved.
+
+#### Review exit codes
+
+After the background `review` command completes, dispatch on the exit code. **Do NOT proceed to `push` until the command finishes.**
+
+| Code | Meaning                                                                | Action                                                                                                                                                                      |
+| ---- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | Approved (user set `submit: true` and closed the editor)               | Proceed to `push`.                                                                                                                                                          |
+| 1    | Not approved (user closed without setting `submit: true`)              | Ask the user what to change. Do not push.                                                                                                                                   |
+| 2    | Editor is already open for this file (lock exists)                     | Tell the user to reload the file in their existing editor (e.g., `:e` in Neovim). Do NOT retry the command and do NOT ask the user to close the editor.                     |
+| 3    | Terminal emulator failed to launch within 10s (likely macOS is asleep) | No lock file is left behind. Tell the user the terminal could not start and ask them to retry once it is available. Do NOT auto-retry — the same condition will fail again. |
 
 ### Diff (show changes)
 
@@ -284,7 +295,7 @@ Before writing anything, complete all necessary research. The goal is to write a
     - **IMPORTANT**: Never assume `--no-template` without checking templates first
 3. Edit the file at `~/.cache/gh-issue-agent/<owner>/<repo>/new/issue.md`
 4. Run `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) to open in terminal + Neovim for user review. This command blocks until the user closes the editor, so it will complete when the user finishes reviewing.
-5. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved the draft (set `submit: true` in frontmatter), exit code 1 means the user did not approve (closed without approving), exit code 2 means the editor is already open, exit code 3 means the terminal emulator failed to launch within 10s (likely macOS is asleep). If not approved, ask the user what to change. If already open (exit code 2), inform the user that the editor is already open and they can reload the file in their editor (e.g., `:e` in Neovim). Do NOT retry the command. If the terminal failed to launch (exit code 3), no lock file is left behind — tell the user the terminal could not start (likely macOS asleep) and ask them to retry once it is available. Do NOT auto-retry; the same condition will fail again until the user resolves it.
+5. **STOP and wait for the background command to complete**, then dispatch on the exit code per [Review exit codes](#review-exit-codes).
 6. Create the issue: `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new` (the push command verifies `.approve` files exist for all changed files)
     - On success, the directory is renamed to `<issue-number>/`
 
@@ -293,7 +304,7 @@ Before writing anything, complete all necessary research. The goal is to write a
 1. Pull the issue: `a gh issue-agent pull <issue-number>`
 2. Edit `issue.md` or `metadata.json` in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`
 3. Run `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) to open the edited file in terminal + Neovim for user review. This command blocks until the user closes the editor.
-4. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved, exit code 1 means not approved, exit code 2 means the editor is already open, exit code 3 means the terminal emulator failed to launch within 10s (likely macOS is asleep). If not approved, ask the user what to change. If already open (exit code 2), inform the user that the editor is already open and they can reload the file in their editor (e.g., `:e` in Neovim). Do NOT retry the command. If the terminal failed to launch (exit code 3), no lock file is left behind — tell the user the terminal could not start (likely macOS asleep) and ask them to retry once it is available. Do NOT auto-retry; the same condition will fail again until the user resolves it.
+4. **STOP and wait for the background command to complete**, then dispatch on the exit code per [Review exit codes](#review-exit-codes).
 5. Apply changes: `a gh issue-agent push <issue-number>` (the push command verifies `.approve` files exist for all changed files)
 
 #### Workflow D: Editing an EXISTING comment
@@ -305,7 +316,7 @@ Use this when the content should be added to or modified in an existing comment.
 3. Read the target comment file (identified from Step 1 analysis)
 4. Edit the comment file directly
 5. Run `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) for user review. This command blocks until the user closes the editor.
-6. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means approved, exit code 1 means not approved, exit code 2 means the editor is already open, exit code 3 means the terminal emulator failed to launch within 10s (likely macOS is asleep). If not approved, ask the user what to change. If already open (exit code 2), inform the user that the editor is already open and they can reload the file in their editor (e.g., `:e` in Neovim). Do NOT retry the command. If the terminal failed to launch (exit code 3), no lock file is left behind — tell the user the terminal could not start (likely macOS asleep) and ask them to retry once it is available. Do NOT auto-retry; the same condition will fail again until the user resolves it.
+6. **STOP and wait for the background command to complete**, then dispatch on the exit code per [Review exit codes](#review-exit-codes).
 7. Push changes: `a gh issue-agent push <issue-number>` (the push command verifies `.approve` files exist)
 
 **Comment file format:**
@@ -322,7 +333,7 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 2. Generate comment boilerplate: `a gh issue-agent init comment <issue-number>`
 3. Edit the generated file in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/comments/`
 4. Run `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) for user review. This command blocks until the user closes the editor.
-5. **STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means approved, exit code 1 means not approved, exit code 2 means the editor is already open, exit code 3 means the terminal emulator failed to launch within 10s (likely macOS is asleep). If not approved, ask the user what to change. If already open (exit code 2), inform the user that the editor is already open and they can reload the file in their editor (e.g., `:e` in Neovim). Do NOT retry the command. If the terminal failed to launch (exit code 3), no lock file is left behind — tell the user the terminal could not start (likely macOS asleep) and ask them to retry once it is available. Do NOT auto-retry; the same condition will fail again until the user resolves it.
+5. **STOP and wait for the background command to complete**, then dispatch on the exit code per [Review exit codes](#review-exit-codes).
 6. Push changes: `a gh issue-agent push <issue-number>` (the push command verifies `.approve` files exist)
 
 ## Editing Comments
@@ -342,7 +353,7 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 - `push` fails when deleting comments (use `--allow-delete` to allow)
 - Before using `--force` on `pull`, use `diff` or `push --dry-run` to verify what local changes will be lost
 - Always use `a gh issue-agent review <file-path>` **in background** (`run_in_background: true`) to let user review edited content before pushing. The user approves by setting `submit: true` in the frontmatter within Neovim. The `push` command verifies `.approve` files exist for all changed files and rejects the push if any file is unapproved.
-- **CRITICAL: After running `a gh issue-agent review` in background, STOP and wait for the background command to complete.** Do NOT proceed to `push` until the command finishes. Exit code 0 means approved, exit code 1 means not approved, exit code 2 means the editor is already open, exit code 3 means the terminal emulator failed to launch (likely macOS asleep — no lock file is left behind, retry once the terminal is available).
+- **CRITICAL: After running `a gh issue-agent review` in background, STOP and wait for the background command to complete**, then dispatch on the exit code per [Review exit codes](#review-exit-codes).
 
 ## Writing Style
 
