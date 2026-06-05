@@ -51,8 +51,7 @@ rules:
       - allow: 'nlx skills add anthropics/skills@frontend-design'
 
   # semgrep
-  - allow: 'sg|ast-grep scan *'
-  - allow: 'sg|ast-grep test *'
+  - allow: 'sg|ast-grep scan|test|run *'
 
   # workflow tools
   - allow: 'lefthook run *'
