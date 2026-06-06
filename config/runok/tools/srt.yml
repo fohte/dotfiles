@@ -6,21 +6,9 @@
 
 definitions:
   wrappers:
-    # `srt [options] <command...>` runs the inner command in a sandbox.
-    # Wrapper patterns do not support `[...]` optionals, so each flag
-    # combination is enumerated. Flags: `-d|--debug` (bool), `-s|--settings <path>`.
-    - 'srt <cmd>'
-    - 'srt -d|--debug <cmd>'
-    - 'srt -s|--settings * <cmd>'
-    - 'srt -d|--debug -s|--settings * <cmd>'
-    - 'srt -s|--settings * -d|--debug <cmd>'
-
-    # `srt -c '<shell string>'` is shell-c style (like `sh -c`).
-    - 'srt -c <cmd>'
-    - 'srt -d|--debug -c <cmd>'
-    - 'srt -s|--settings * -c <cmd>'
-    - 'srt -d|--debug -s|--settings * -c <cmd>'
-    - 'srt -s|--settings * -d|--debug -c <cmd>'
+    # `srt [options] [-c] <command...>`. With `-c`, the inner command is a
+    # shell string (like `sh -c`); without it, tokens are evaluated directly.
+    - 'srt [-d|--debug] [-s|--settings *] [-c] <cmd>'
 
 tests:
   extends:
@@ -35,13 +23,6 @@ tests:
     - allow: 'srt -c "echo hi"'
     - allow: 'srt --settings ./srt-settings.json -c "echo hi"'
     - allow: 'srt -d -c "echo hi"'
-
-    # Destructive inner commands must still be denied via the inner rule.
-    - deny: 'srt rm -rf /'
-    - deny: 'srt --settings ./srt-settings.json rm -rf /'
-    - deny: 'srt -d rm -rf /'
-    - deny: 'srt -c "rm -rf /"'
-    - deny: 'srt --settings ./srt-settings.json -c "rm -rf /"'
 
     # Destructive inner commands must still be denied via the inner rule.
     - deny: 'srt rm -rf /'

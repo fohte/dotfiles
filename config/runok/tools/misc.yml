@@ -10,10 +10,8 @@ definitions:
     - 'nlx --package * -c <cmd>'
     # Bare form: `nlx -p|--package <pkg> [--prefer-online] <inner-cmd> ...`.
     # No `-c`, so the inner command is parsed as tokens (not a shell string)
-    # and recursively evaluated against the normal rules. Wrapper patterns
-    # don't support optional groups, so list each variant explicitly.
-    - 'nlx -p|--package * <cmd>'
-    - 'nlx -p|--package * --prefer-online <cmd>'
+    # and recursively evaluated against the normal rules.
+    - 'nlx -p|--package * [--prefer-online] <cmd>'
 
 rules:
   # armyknife
