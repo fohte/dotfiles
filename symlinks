@@ -156,3 +156,15 @@ if match_tag rtk; then
 
   ! is_wsl && sym config/rtk/config.toml "$rtk_config_path"
 fi
+
+if match_tag launchd && is_macos; then
+  log-exec mkdir -p ~/.local/state/headroom
+  sym config/launchd/com.fohte.headroom-proxy.plist ~/Library/LaunchAgents/com.fohte.headroom-proxy.plist
+
+  # Re-bootstrap on every deploy so plist edits take effect. bootout is
+  # tolerated when the job is not yet loaded.
+  launchd_domain="gui/$(id -u)"
+  launchd_plist="$HOME/Library/LaunchAgents/com.fohte.headroom-proxy.plist"
+  log-exec launchctl bootout "$launchd_domain" "$launchd_plist" || true
+  log-exec launchctl bootstrap "$launchd_domain" "$launchd_plist"
+fi
