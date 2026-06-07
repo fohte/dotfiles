@@ -7,7 +7,7 @@
 
   <key>ProgramArguments</key>
   <array>
-    <string>/Users/fohte/.local/bin/mise</string>
+    <string>__HOME__/.local/bin/mise</string>
     <string>x</string>
     <string>--</string>
     <string>headroom</string>
@@ -25,9 +25,9 @@
   <true/>
 
   <key>StandardOutPath</key>
-  <string>/Users/fohte/.local/state/headroom/proxy.log</string>
+  <string>__HOME__/.local/state/headroom/proxy.log</string>
 
   <key>StandardErrorPath</key>
-  <string>/Users/fohte/.local/state/headroom/proxy.log</string>
+  <string>__HOME__/.local/state/headroom/proxy.log</string>
 </dict>
 </plist>
