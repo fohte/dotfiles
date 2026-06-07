@@ -1,5 +1,16 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
+definitions:
+  vars:
+    # Paths whose contents are recreatable from sources — safe to `rm -r`
+    # without per-invocation confirmation. Extend as other regenerable
+    # artifact dirs come up.
+    safe-rm-paths:
+      type: pattern
+      values:
+        - '**/node_modules'
+        - 'node_modules'
+
 rules:
   - deny: 'rm -rf *'
     message: 'Blocked because recursive forced deletion is irreversible'
@@ -13,6 +24,18 @@ rules:
       - allow: 'rm /tmp/foo'
       - allow: 'rm -r /tmp/foo'
       - allow: 'rm -r /tmp/foo/bar'
+
+  - allow: 'rm [-r] <var:safe-rm-paths>'
+    tests:
+      - allow: 'rm -r node_modules'
+      - allow: 'rm node_modules'
+      - allow: 'rm -r ./node_modules'
+      - allow: 'rm -r ../node_modules'
+      - allow: 'rm -r backend/node_modules'
+      - allow: 'rm -r packages/foo/node_modules'
+      - allow: 'rm -r /Users/foo/node_modules'
+      - ask: 'rm -r node_modules.bak'
+      - ask: 'rm -r node_modules/something'
 
   - allow: 'cp *'
     tests:
