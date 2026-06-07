@@ -41,9 +41,12 @@ runok audit --json "${audit_args[@]}" |
   jq -c --arg ignore "$ignore_regex" 'select((.command | test($ignore)) | not)' |
   while IFS= read -r line; do
     cmd=$(jq -r '.command' <<< "$line")
-    # On parse error in `runok check`, treat the entry as still-ask so it
-    # surfaces for manual review instead of being silently dropped.
-    decision=$(printf '%s\n' "$cmd" | runok check --output-format json 2> /dev/null | jq -r '.decision // "ask"' 2> /dev/null || echo ask)
+    # `runok check` evaluates each stdin line as a separate command, so a
+    # heredoc-bearing compound yields multiple JSON docs. Treat the entry as
+    # still-ask if ANY sub-decision is ask (otherwise long heredoc compounds
+    # whose middle subcommands hit ask get silently dropped).
+    # On any parse error, fall back to ask so the entry surfaces for review.
+    decision=$(printf '%s\n' "$cmd" | runok check --output-format json 2> /dev/null | jq -sr '[.[].decision] | if any(. == "ask") then "ask" else "other" end' 2> /dev/null || echo ask)
     if [[ "$decision" == "ask" ]]; then
       printf '%s\n' "$line"
     fi
