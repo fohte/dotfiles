@@ -58,11 +58,7 @@ description = "Upgrade Homebrew packages"
 run = "brew upgrade"
 
 [tools]
-<<<<<<< before updating
-"aqua:evilmartians/lefthook" = "2.1.8"
-=======
-lefthook = "2.1.9"
->>>>>>> after updating
+"aqua:evilmartians/lefthook" = "2.1.9"
 
 # lefthook hooks
 actionlint = "1.7.12"
