@@ -148,6 +148,20 @@ rules:
       - allow: 'dot role get'
       - allow: 'dot role overlay'
 
+  # armyknife (`a`) readonly subcommands. Mutating subcommands (a wm new,
+  # a wm delete, a cc resume, etc) are left as ask.
+  - allow: 'a wm|cc list|ls'
+    tests:
+      - allow: 'a wm list'
+      - allow: 'a wm ls'
+      - allow: 'a cc list'
+      - allow: 'a cc ls'
+
+  - allow: 'unzip *'
+    tests:
+      - allow: 'unzip -o foo.zip -d /tmp/out'
+      - allow: 'unzip -oq foo.zip'
+
   - allow: 'mise current *'
     tests:
       - allow: 'mise current'

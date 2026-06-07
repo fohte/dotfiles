@@ -143,6 +143,18 @@ rules:
     tests:
       - allow: 'git merge origin/main'
       - allow: 'git merge origin/master'
+  # --continue / --abort drive an in-progress rebase or merge to a known state.
+  # Both are history-non-destructive: continue advances the same rewrite, abort
+  # restores the pre-operation HEAD.
+  - allow: 'git [-C *] rebase --continue|--abort'
+    tests:
+      - allow: 'git rebase --continue'
+      - allow: 'git rebase --abort'
+      - allow: 'git -C /tmp rebase --continue'
+  - allow: 'git [-C *] merge --continue|--abort'
+    tests:
+      - allow: 'git merge --continue'
+      - allow: 'git merge --abort'
   - allow: 'git [-C *] mv *'
   - allow: 'git [-C *] pull *'
     tests:
@@ -224,6 +236,11 @@ rules:
   - allow: 'gh [-R *] run watch *'
   - allow: 'gh [-R *] search *'
   - allow: 'gh [-R *] run download *'
+  - allow: 'gh [-R *] run rerun * --failed'
+    tests:
+      - allow: 'gh run rerun 123 --failed'
+      - allow: 'gh -R foo/bar run rerun 123 --failed'
+      - ask: 'gh run rerun 123'
   - allow: 'gh [-R *] project item-*|field-list *'
   - ask: 'gh [-R *] project item-delete *'
     tests:

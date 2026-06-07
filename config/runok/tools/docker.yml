@@ -15,6 +15,15 @@ rules:
   - allow: docker info
   - allow: docker network ls|inspect *
   - allow: docker volume ls|inspect *
+  - allow: docker context ls|inspect *
+    tests:
+      - allow: 'docker context ls'
+      - allow: 'docker context inspect default'
+
+  - allow: 'docker build *'
+    tests:
+      - allow: 'docker build -t my-image .'
+      - allow: 'docker build -f Dockerfile.dev -t foo .'
 
   # Apple container CLI: validate Renovate config via the official image.
   # Used by the debug-renovate skill.
@@ -23,10 +32,9 @@ rules:
       - allow: 'container run --rm -v /repo:/repo -w /repo ghcr.io/renovatebot/renovate:latest renovate-config-validator --strict --no-global renovate.json5'
 
   # docker compose
-  - allow: docker compose up *
-  - allow: docker compose logs *
-  - allow: docker compose ps *
-  - allow: docker compose config *
-  - allow: docker compose images *
-  - allow: docker compose top *
-  - allow: docker compose ls *
+  - allow: 'docker compose [-f *] up|logs|ps|config|images|top|ls *'
+    tests:
+      - allow: 'docker compose up -d'
+      - allow: 'docker compose -f docker-compose.infra.yml up -d'
+      - allow: 'docker compose -f ../docker-compose.infra.yml ps'
+      - allow: 'docker compose logs -f web'

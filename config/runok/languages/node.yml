@@ -70,6 +70,10 @@ rules:
     tests:
       - allow: 'nr storybook'
       - allow: 'nr storybook:build'
+  - allow: 'nr [-C|--filter *] generate|generate:* *'
+    tests:
+      - allow: 'nr generate'
+      - allow: 'nr generate:api'
   - deny: 'nlx tsc *'
     message: 'Use nr'
   - deny: 'nlx vitest run *'
@@ -83,6 +87,11 @@ rules:
       - allow: 'nlx prettier --check config/karabiner/karabiner.json'
       - allow: 'nlx prettier --write src/index.ts'
       - allow: 'nlx prettier@3.8.3 --check check.json'
+  # TanStack Router code generation only writes route files in the project.
+  # Other tsr subcommands are not vetted yet.
+  - allow: 'nlx tsr generate'
+    tests:
+      - allow: 'nlx tsr generate'
   - deny: 'pnpm [-C|--filter *] test|test:*|test-*'
     message: 'BLOCKED: Use /ni skill. Run: nr <script>'
   - deny: 'pnpm [-C|--filter *] exec *'

@@ -1,7 +1,33 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
+definitions:
+  wrappers:
+    # uvx fetches and runs a PyPI CLI. Register as a wrapper so the inner
+    # command is evaluated against normal rules. `--from <pkg>` is optional.
+    - 'uvx [--from *] <cmd>'
+
 rules:
   - allow: 'python3 *'
     sandbox: readonly
     tests:
       - allow: 'python3 -c "print(1)"'
+
+  - allow: 'schemathesis *'
+    tests:
+      - allow: 'schemathesis run http://localhost:3000/api-docs/openapi.json'
+      - allow: 'schemathesis --config-file backend/schemathesis.toml run http://localhost:3000/api-docs/openapi.json --checks all'
+
+  - deny: 'pip|pip3 install *'
+    message: 'BLOCKED: Use uvx to run PyPI CLIs without polluting the user/system Python env.'
+    fix_suggestion: 'uvx <pkg>'
+    tests:
+      - deny: 'pip install schemathesis'
+      - deny: 'pip install --user schemathesis'
+      - deny: 'pip3 install -r requirements.txt'
+
+tests:
+  cases:
+    - allow: 'uvx ruff --version'
+    - allow: 'uvx --from "schemathesis>=4.0,<5.0" schemathesis --version'
+    - deny: 'uvx pip install requests'
+    - deny: 'uvx --from pip pip install requests'
