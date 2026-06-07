@@ -14,6 +14,8 @@
     <string>proxy</string>
     <string>--port</string>
     <string>8787</string>
+    <string>--mode</string>
+    <string>cache</string>
   </array>
 
   <key>RunAtLoad</key>
