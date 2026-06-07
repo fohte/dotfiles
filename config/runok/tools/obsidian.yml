@@ -40,6 +40,15 @@ definitions:
         - version
         - help
 
+    # Vault scripts run from inside the vault (`cd ~/obsidian-v2 && ./scripts/...`).
+    # True identity-bound + portable allow is not expressible in current runok
+    # (no CEL var for the executable's resolved real path), so this relies on the
+    # script name being unique to fohte/obsidian-v2.
+    obsidian-scripts:
+      type: path
+      values:
+        - ./scripts/check-moc-reachability
+
 rules:
   - allow: obsidian vault=* <var:obsidian-readonly> *
     tests:
@@ -74,3 +83,11 @@ rules:
       - deny: obsidian vault=obsidian-v2 append note.md content=x
   - deny: obsidian !vault=* !help *
     message: 'Specify vault=<name> as the first argument'
+
+  - allow: '<var:obsidian-scripts> *'
+    tests:
+      - allow: './scripts/check-moc-reachability "notes/inbox/foo.md"'
+      - allow: 'scripts/check-moc-reachability notes/inbox/foo.md'
+  - allow: 'bash <var:obsidian-scripts> *'
+    tests:
+      - allow: 'bash ./scripts/check-moc-reachability "notes/inbox/foo.md"'
