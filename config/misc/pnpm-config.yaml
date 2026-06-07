@@ -1,0 +1,9 @@
+# pnpm global config (~/Library/Preferences/pnpm/config.yaml on macOS,
+# ~/.config/pnpm/config.yaml on Linux).
+# Project .npmrc and user ~/.npmrc both override this.
+
+# Supply chain hardening: skip versions published within the last 7 days.
+# pnpm expects this in minutes, so 7 days = 10080.
+# Override per-project by setting minimumReleaseAge: 0 in the project's pnpm
+# config, or min-release-age=0 in the project .npmrc.
+minimumReleaseAge: 10080

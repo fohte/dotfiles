@@ -1,0 +1,8 @@
+# Loaded at npm "global" config level via NPM_CONFIG_GLOBALCONFIG.
+# Project .npmrc and user ~/.npmrc both override this.
+
+prefix=${HOME}/.npm-global
+
+# Supply chain hardening: skip versions published within the last 7 days.
+# Override per-project by setting min-release-age=0 in project .npmrc.
+min-release-age=7

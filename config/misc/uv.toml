@@ -1,0 +1,3 @@
+# Supply chain hardening: skip versions published within the last 7 days.
+# Project uv.toml / pyproject.toml [tool.uv] overrides this.
+exclude-newer = "7 days"

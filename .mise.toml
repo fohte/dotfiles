@@ -63,7 +63,7 @@ run = "brew upgrade"
 # lefthook hooks
 actionlint = "1.7.12"
 "github:betterleaks/betterleaks" = "1.4.1"
-node = "24.16.0"
+node = "26.3.0"
 pinact = "4.0.0"
 "github:fohte/basefmt" = "0.1.0"
 "npm:@commitlint/cli" = "21.0.2"

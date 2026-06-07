@@ -157,6 +157,15 @@ if match_tag rtk; then
   ! is_wsl && sym config/rtk/config.toml "$rtk_config_path"
 fi
 
+if match_tag misc; then
+  sym config/misc/npmrc ~/.config/npm/npmrc
+  sym config/misc/uv.toml ~/.config/uv/uv.toml
+  # pnpm reads its global config from its OS-native dir, not XDG, so split.
+  is_linux && pnpm_config_path="$HOME/.config/pnpm/config.yaml"
+  is_macos && pnpm_config_path="$HOME/Library/Preferences/pnpm/config.yaml"
+  ! is_wsl && sym config/misc/pnpm-config.yaml "$pnpm_config_path"
+fi
+
 if match_tag launchd && is_macos; then
   log-exec mkdir -p ~/.local/state/headroom
   sym config/launchd/com.fohte.headroom-proxy.plist ~/Library/LaunchAgents/com.fohte.headroom-proxy.plist
