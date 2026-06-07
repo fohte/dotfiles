@@ -7,6 +7,7 @@ $git_state\
 $git_status\
 ${custom.aws_sso_valid}\
 ${custom.aws_sso_expired}\
+${custom.cc_paused}\
 $time\
 $cmd_duration\
 $line_break\
@@ -64,3 +65,12 @@ when = "command -v check-aws-sso-status"
 shell = "bash"
 format = "[$output]($style) "
 style = "bright-red"
+
+# Shows '⏸' when armyknife auto-paused the Claude Code session in this pane.
+# The flag is set on the tmux pane by `a cc hook`.
+[custom.cc_paused]
+command = '[ "$(tmux display -p -t "$TMUX_PANE" "#{@armyknife-cc-pane-has-paused}")" = "1" ] && echo ⏸'
+when = '[ -n "$TMUX" ]'
+shell = "bash"
+format = "[$output]($style) "
+style = "yellow"
