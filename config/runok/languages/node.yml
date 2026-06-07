@@ -197,3 +197,30 @@ rules:
   - allow: 'corepack enable'
     tests:
       - allow: 'corepack enable'
+
+  - allow: 'npm config get *'
+    tests:
+      - allow: 'npm config get min-release-age'
+      - allow: 'npm config get registry'
+  - allow: 'npm config ls [-l|-s|--long|--json]'
+    tests:
+      - allow: 'npm config ls'
+      - allow: 'npm config ls -l'
+      - allow: 'npm config ls --json'
+  - allow: 'npm help *'
+    tests:
+      - allow: 'npm help npmrc'
+      - allow: 'npm help config -l'
+
+  - allow: 'pnpm config get *'
+    tests:
+      - allow: 'pnpm config get minimum-release-age'
+  - allow: 'pnpm -v|--version'
+    tests:
+      - allow: 'pnpm --version'
+      - allow: 'pnpm -v'
+
+  - allow: 'corepack -v|--version'
+    tests:
+      - allow: 'corepack --version'
+      - allow: 'corepack -v'
