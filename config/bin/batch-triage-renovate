@@ -1,20 +1,31 @@
 #!/usr/bin/env bash
-# Fan out the Renovate PR triage workflow across every fohte org repo with an
-# open Renovate PR.
+# Fan out the Renovate PR triage workflow across fohte org repos that consume
+# generic-boilerplate and have open Renovate PRs.
 #
-# For each such repo cloned under ghq root:
+# By default, the candidate repos are shown in fzf for multi-select (Tab to
+# toggle, Enter to confirm). Pass --all to skip the picker.
+#
+# For each selected repo:
 #   - If a tmux session already exists for the repo, add a new window.
 #   - Otherwise, create the session.
 # Either way, the new window starts at the repo root and runs:
 #   claude /fohte-ops:triage-renovate-prs
 #
-# Usage: triage-renovate-all [--dry-run]
+# Usage: batch-triage-renovate [--all] [--dry-run]
 
 set -euo pipefail
+
+for tool in gh ghq yq fzf tmux tmux-name; do
+  command -v "$tool" > /dev/null || {
+    echo "missing required tool: $tool" >&2
+    exit 1
+  }
+done
 
 OWNER="fohte"
 SLASH_COMMAND="/fohte-ops:triage-renovate-prs"
 DRY_RUN=false
+SELECT_ALL=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -22,8 +33,12 @@ while [[ $# -gt 0 ]]; do
       DRY_RUN=true
       shift
       ;;
+    --all)
+      SELECT_ALL=true
+      shift
+      ;;
     -h | --help)
-      sed -n '2,11p' "$0" | sed 's/^# \?//'
+      sed -n '2,15p' "$0" | sed 's/^# \?//'
       exit 0
       ;;
     *)
@@ -46,6 +61,44 @@ fi
 
 ghq_root=$(ghq root)
 
+# Narrow to repos that are cloned locally and managed by generic-boilerplate.
+candidates=""
+while IFS= read -r repo; do
+  [[ -z "$repo" ]] && continue
+  repo_path="$ghq_root/github.com/$repo"
+  [[ -d "$repo_path" ]] || continue
+
+  answers="$repo_path/.copier-answers.yml"
+  [[ -f "$answers" ]] || continue
+  src_path=$(yq -r '._src_path // ""' "$answers")
+  [[ "$src_path" == *generic-boilerplate* ]] || continue
+
+  candidates+="$repo"$'\n'
+done <<< "$repos"
+
+candidates="${candidates%$'\n'}"
+
+if [[ -z "$candidates" ]]; then
+  echo "No boilerplate-managed repos with open Renovate PRs."
+  exit 0
+fi
+
+if "$SELECT_ALL"; then
+  targets="$candidates"
+else
+  targets=$(
+    fzf --multi --reverse \
+      --prompt 'triage> ' \
+      --header 'Tab: toggle / Enter: run / Esc: cancel' \
+      <<< "$candidates"
+  ) || exit 0
+fi
+
+if [[ -z "$targets" ]]; then
+  echo "No repos selected."
+  exit 0
+fi
+
 # `tmux list-sessions` exits non-zero when no server is running; swallow that
 # without redirecting stderr.
 existing_sessions=$(tmux list-sessions -F '#S' || true)
@@ -59,13 +112,6 @@ cmd="claude '$SLASH_COMMAND'"
 while IFS= read -r repo; do
   [[ -z "$repo" ]] && continue
   repo_path="$ghq_root/github.com/$repo"
-  [[ -d "$repo_path" ]] || continue
-
-  answers="$repo_path/.copier-answers.yml"
-  [[ -f "$answers" ]] || continue
-  src_path=$(yq -r '._src_path // ""' "$answers")
-  [[ "$src_path" == *generic-boilerplate* ]] || continue
-
   session=$(tmux-name session "$repo_path")
 
   if "$DRY_RUN"; then
@@ -88,4 +134,4 @@ while IFS= read -r repo; do
   fi
 
   tmux send-keys -t "$window_id" "$cmd" C-m
-done <<< "$repos"
+done <<< "$targets"
