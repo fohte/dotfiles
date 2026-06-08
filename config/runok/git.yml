@@ -117,6 +117,20 @@ rules:
     tests:
       - deny: 'git worktree add ../wt'
       - deny: 'git worktree add ../wt feature-branch'
+  - deny: 'git [-C *] worktree remove *'
+    message: 'Blocked because removing a worktree (with or without --force) should be done manually by the user.'
+    tests:
+      - deny: 'git worktree remove .worktrees/foo'
+      - deny: 'git worktree remove .worktrees/foo --force'
+      - deny: 'git -C /tmp worktree remove --force ~/some/path'
+  - deny: 'git [-C *] branch -d|-D|--delete *'
+    message: 'Blocked because deleting a branch should be done manually by the user.'
+    tests:
+      - deny: 'git branch -d feature/foo'
+      - deny: 'git branch -D feature/foo'
+      - deny: 'git branch --delete feature/foo'
+      - deny: 'git branch --delete --force feature/foo'
+      - deny: 'git -C /tmp branch -D feature/foo'
   - deny: 'git [-C *] reset *'
     message: 'Blocked to prevent rewriting commit history or destroying work. To unstage files, use `git restore --staged <path>` instead.'
     fix_suggestion: 'git restore --staged <path>'
@@ -191,9 +205,17 @@ rules:
   - allow: 'git [-C *] stash'
     tests:
       - allow: 'git stash'
+  - allow: 'git [-C *] stash push *'
+    tests:
+      - allow: 'git stash push'
+      - allow: 'git stash push pnpm-lock.yaml'
+      - allow: 'git stash push -m "wip"'
   - allow: 'git [-C *] stash pop'
     tests:
       - allow: 'git stash pop'
+  - allow: 'git [-C *] submodule update *'
+    tests:
+      - allow: 'git submodule update --init --recursive'
   - allow: 'git [-C *] rm *'
     tests:
       - allow: 'git rm file.txt'
