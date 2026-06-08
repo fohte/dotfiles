@@ -44,15 +44,33 @@ rules:
     fix_suggestion: 'git pull --rebase'
     tests:
       - deny: 'git pull --no-rebase'
-  # `!--` is the first token (the branch/ref), so it never matches `--` and
-  # leaves `git checkout -- <path>` (file restore) out of this deny. Trailing
-  # `<opts>` absorbs flags like `--quiet` so they do not slip the rule.
-  # `--theirs` / `--ours` are conflict-resolution flags for the file-restore
-  # form (no branch side effects), so the `when` clause exempts them.
-  - deny: 'git [-C *] checkout !-- <opts>'
-    when: '!has(flags.theirs) && !has(flags.ours)'
-    message: 'Blocked because `git checkout <branch>` has side effects on the working tree. To restore files, use `git checkout -- <path>` instead.'
-    fix_suggestion: 'git checkout -- <path>'
+  - deny: 'git [-C *] merge origin/* *'
+    message: 'Blocked because syncing with origin should go through `git pull --rebase` to keep history linear.'
+    fix_suggestion: 'git pull --rebase'
+    tests:
+      - deny: 'git merge origin/main'
+      - deny: 'git merge origin/master'
+      - deny: 'git merge origin/renovate/foo --no-edit'
+      - ask: 'git merge feature-branch'
+  # `-i` opens an editor and `--exec <cmd>` executes arbitrary commands during
+  # rebase, both bypassing runok's command-level review.
+  - deny: 'git [-C *] rebase -i|--interactive *'
+    message: 'Blocked because interactive rebase opens an editor and `--exec` can run arbitrary commands.'
+    tests:
+      - deny: 'git rebase -i HEAD~3'
+      - deny: 'git rebase --interactive HEAD~3'
+      - deny: 'git rebase -i --autosquash HEAD~2'
+  # Require `--` to separate ref from pathspec, so `git checkout A B` cannot
+  # accidentally treat A as a branch (side effect on working tree). The third
+  # `when` clause `!flags.exists(k, k == "")` is the `--` presence check:
+  # runok stores the `--` separator in `flags` with an empty-string key, so
+  # the absence of that key means no `--` token was present. `--theirs` /
+  # `--ours` are conflict-resolution flags for the file-restore form (no
+  # branch side effects), so they are exempted.
+  - deny: 'git [-C *] checkout *'
+    when: '!has(flags.theirs) && !has(flags.ours) && !flags.exists(k, k == "")'
+    message: 'Blocked because `git checkout <branch>` or `git checkout <ref> <path>` has side effects on the working tree. Use `git checkout <ref> -- <path>` (with `--`) to restore files.'
+    fix_suggestion: 'git checkout <ref> -- <path>'
     tests:
       - deny: 'git checkout main'
       - deny: 'git checkout main --quiet'
@@ -60,6 +78,7 @@ rules:
       - deny: 'git checkout HEAD~1'
       - deny: 'git checkout v1.0.0'
       - deny: 'git -C /tmp checkout main'
+      - deny: 'git checkout frontend/pnpm-lock.yaml pnpm-lock.yaml'
       - allow: 'git checkout main -- file.txt'
       - allow: 'git checkout -- file.txt'
       - allow: 'git checkout --theirs file.txt'
@@ -139,17 +158,14 @@ rules:
   - allow: 'git [-C *] fetch *'
     tests:
       - allow: 'git fetch origin'
-  - allow: 'git [-C *] merge origin/main|origin/master *'
-    tests:
-      - allow: 'git merge origin/main'
-      - allow: 'git merge origin/master'
   # --continue / --abort drive an in-progress rebase or merge to a known state.
   # Both are history-non-destructive: continue advances the same rewrite, abort
-  # restores the pre-operation HEAD.
-  - allow: 'git [-C *] rebase --continue|--abort'
+  # restores the pre-operation HEAD. Trailing `*` absorbs flags like `--no-edit`.
+  - allow: 'git [-C *] rebase --continue|--abort *'
     tests:
       - allow: 'git rebase --continue'
       - allow: 'git rebase --abort'
+      - allow: 'git rebase --continue --no-edit'
       - allow: 'git -C /tmp rebase --continue'
   - allow: 'git [-C *] merge --continue|--abort'
     tests:
@@ -175,17 +191,14 @@ rules:
     tests:
       - allow: 'git stash pop'
   - allow: 'git [-C *] rm *'
-    # -f/--force discards uncommitted modifications, so exclude it from allow.
-    # -rf and similar clusters are single flag keys, hence the substring match.
-    when: '!flags.exists(k, k.contains("f"))'
     tests:
       - allow: 'git rm file.txt'
       - allow: 'git rm -r dir'
       - allow: 'git rm --cached file.txt'
-      - ask: 'git rm -f file.txt'
-      - ask: 'git rm --force file.txt'
-      - ask: 'git rm -rf dir'
-      - ask: 'git -C /tmp rm -f file.txt'
+      - allow: 'git rm -f file.txt'
+      - allow: 'git rm --force file.txt'
+      - allow: 'git rm -rf dir'
+      - allow: 'git -C /tmp rm -f file.txt'
 
   # gh
   - deny: 'gh [-R *] api * --paginate *'
