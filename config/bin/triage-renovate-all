@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# Fan out the Renovate PR triage workflow across every fohte org repo with an
+# open Renovate PR.
+#
+# For each such repo cloned under ghq root:
+#   - If a tmux session already exists for the repo, add a new window.
+#   - Otherwise, create the session.
+# Either way, the new window starts at the repo root and runs:
+#   claude /fohte-ops:triage-renovate-prs
+#
+# Usage: triage-renovate-all [--dry-run]
+
+set -euo pipefail
+
+OWNER="fohte"
+SLASH_COMMAND="/fohte-ops:triage-renovate-prs"
+DRY_RUN=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    -h | --help)
+      sed -n '2,11p' "$0" | sed 's/^# \?//'
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
+repos=$(
+  gh search prs --owner "$OWNER" --author 'app/renovate' --state open \
+    --json repository --jq '.[].repository.nameWithOwner' |
+    sort -u
+)
+
+if [[ -z "$repos" ]]; then
+  echo "No open Renovate PRs."
+  exit 0
+fi
+
+ghq_root=$(ghq root)
+
+# `tmux list-sessions` exits non-zero when no server is running; swallow that
+# without redirecting stderr.
+existing_sessions=$(tmux list-sessions -F '#S' || true)
+
+session_exists() {
+  grep -qxF "$1" <<< "$existing_sessions"
+}
+
+cmd="claude '$SLASH_COMMAND'"
+
+while IFS= read -r repo; do
+  [[ -z "$repo" ]] && continue
+  repo_path="$ghq_root/github.com/$repo"
+  [[ -d "$repo_path" ]] || continue
+
+  answers="$repo_path/.copier-answers.yml"
+  [[ -f "$answers" ]] || continue
+  src_path=$(yq -r '._src_path // ""' "$answers")
+  [[ "$src_path" == *generic-boilerplate* ]] || continue
+
+  session=$(tmux-name session "$repo_path")
+
+  if "$DRY_RUN"; then
+    if session_exists "$session"; then
+      echo "would add window: session=$session cwd=$repo_path"
+    else
+      echo "would create session: $session cwd=$repo_path"
+    fi
+    continue
+  fi
+
+  if session_exists "$session"; then
+    window_id=$(tmux new-window -d -t "$session:" -c "$repo_path" -P -F '#{window_id}')
+    echo "$repo: added window $window_id in $session"
+  else
+    tmux new-session -d -s "$session" -c "$repo_path"
+    window_id=$(tmux list-windows -t "$session" -F '#{window_id}' | head -1)
+    existing_sessions+=$'\n'"$session"
+    echo "$repo: created session $session (window $window_id)"
+  fi
+
+  tmux send-keys -t "$window_id" "$cmd" C-m
+done <<< "$repos"
