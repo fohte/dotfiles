@@ -44,14 +44,14 @@ rules:
     fix_suggestion: 'git pull --rebase'
     tests:
       - deny: 'git pull --no-rebase'
-  - deny: 'git [-C *] merge origin/* *'
-    message: 'Blocked because syncing with origin should go through `git pull --rebase` to keep history linear.'
+  - deny: 'git [-C *] merge !origin/main|origin/master *'
+    message: 'Blocked because non-default merges should go through `git pull --rebase` to keep history linear.'
     fix_suggestion: 'git pull --rebase'
     tests:
-      - deny: 'git merge origin/main'
-      - deny: 'git merge origin/master'
+      - allow: 'git merge origin/main'
+      - allow: 'git merge origin/master'
       - deny: 'git merge origin/renovate/foo --no-edit'
-      - ask: 'git merge feature-branch'
+      - deny: 'git merge feature-branch'
   # `-i` opens an editor and `--exec <cmd>` executes arbitrary commands during
   # rebase, both bypassing runok's command-level review.
   - deny: 'git [-C *] rebase -i|--interactive *'
@@ -158,6 +158,10 @@ rules:
   - allow: 'git [-C *] fetch *'
     tests:
       - allow: 'git fetch origin'
+  - allow: 'git [-C *] merge origin/main|origin/master *'
+    tests:
+      - allow: 'git merge origin/main'
+      - allow: 'git merge origin/master'
   # --continue / --abort drive an in-progress rebase or merge to a known state.
   # Both are history-non-destructive: continue advances the same rewrite, abort
   # restores the pre-operation HEAD. Trailing `*` absorbs flags like `--no-edit`.
