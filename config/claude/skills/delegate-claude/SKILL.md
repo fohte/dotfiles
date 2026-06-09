@@ -47,14 +47,11 @@ a wm new <branch-name> --agent --label "<title>" --prompt "<instructions>"
 
 #### post-worktree-create hook 失敗時のリトライ
 
-`a wm new` が `Error: hook '...post-worktree-create' exited with status 1` で失敗した場合、worktree とプロンプトは作成済みだが Claude Code セッションが起動していない。これは hook 内のツール (例: チェックアウトしたブランチの設定ファイルがパースエラーで処理できない) が原因で、委任タスク自体とは無関係なことが多い。
+`a wm new` が `Error: hook '...post-worktree-create' exited with status 1` で失敗した場合、worktree とブランチは自動でロールバックされる (新規作成ブランチは削除、既存ブランチを `--force` で上書きしたケースは元の tip に復元)。hook 内のツール (例: チェックアウトしたブランチの設定ファイルがパースエラーで処理できない) が失敗原因で、委任タスク自体とは無関係なことが多い。
 
-この場合は以下の手順でリトライする:
+リトライは同じコマンドに `--skip-hooks` を付けて再実行するだけでよい。委任先で conflict 解決などにより設定ファイルが正常化すれば、hook が参照するツールも再び使えるようになる。プロンプトにはこの背景 (`--skip-hooks` で作成したこと、設定ファイルが一時的に壊れている理由) を一言添えておくとよい。
 
-1. 中途半端に作成された worktree を削除する (`git worktree remove --force <path>`)
-2. 同じコマンドに `--skip-hooks` を付けて再実行する
-
-委任先で conflict 解決などにより設定ファイルが正常化すれば、hook が参照するツールも再び使えるようになる。プロンプトにはこの背景 (`--skip-hooks` で作成したこと、設定ファイルが一時的に壊れている理由) を一言添えておくとよい。
+worktree 削除自体が失敗した警告が出た場合のみ手動復旧が必要で、`a wm delete <name>` で残骸を削除してからリトライする。
 
 ### 例
 
