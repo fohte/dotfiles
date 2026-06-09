@@ -1,14 +1,28 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
+definitions:
+  aliases:
+    # Absorb common global flags so each rule below can be written tightly
+    # (without `<opts>`/`*` between `aws` and the service token).
+    aws:
+      - 'aws [--region *] [--profile *] [--output *] [--endpoint-url *] [--no-cli-pager] [--no-paginate] [--debug]'
+
 rules:
   - allow: 'aws * get-*|list-*|describe-* *'
     tests:
       - allow: 'aws s3 list-buckets'
       - allow: 'aws ec2 describe-instances'
+      - allow: 'aws --region ap-northeast-1 ec2 describe-instances'
   - deny: 'aws ssm get-* --with-decryption *'
     message: 'Blocked to prevent accidental exposure of sensitive parameters'
     fix_suggestion: 'aws ssm get-parameter --name <name> (no decryption)'
     tests:
       - deny: 'aws ssm get-parameter --with-decryption --name foo'
   - allow: 'aws cloudtrail lookup-events *'
+    tests:
+      - allow: 'aws cloudtrail lookup-events --lookup-attributes foo'
+      - allow: 'aws --region ap-northeast-1 cloudtrail lookup-events --lookup-attributes foo'
   - allow: 'aws logs filter-log-events *'
+    tests:
+      - allow: 'aws logs filter-log-events --log-group-name foo'
+      - allow: 'aws --region ap-northeast-1 logs filter-log-events --log-group-name foo'
