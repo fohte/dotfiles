@@ -273,6 +273,13 @@ rules:
       - deny: 'gh pr create --title "foo" --body "bar"'
       - deny: 'gh -R fohte/runok pr create --title "foo"'
 
+  - allow: 'gh [-R *] pr edit * --add-label|--remove-label *'
+    tests:
+      - allow: 'gh pr edit 25 --add-label "bump:minor"'
+      - allow: 'gh pr edit 25 --remove-label "bump:minor"'
+      - allow: 'gh -R fohte/runok pr edit 25 --add-label foo'
+      - deny: 'gh pr edit 25 --body "foo" --add-label bar'
+
   - allow: 'gh [-R *] * list *'
   - allow: 'gh [-R *] * view *'
   - allow: 'gh [-R *] api -X GET *'
