@@ -17,6 +17,13 @@ rules:
       - allow: 'schemathesis run http://localhost:3000/api-docs/openapi.json'
       - allow: 'schemathesis --config-file backend/schemathesis.toml run http://localhost:3000/api-docs/openapi.json --checks all'
 
+  - allow: 'copier copy|update *'
+    tests:
+      - allow: 'copier update'
+      - allow: 'copier update --trust --defaults'
+      - allow: 'copier update --vcs-ref=v0.8.2 --trust --defaults --data-file=/tmp/copier-data.yml'
+      - allow: 'copier copy --overwrite --defaults --data-file data.yml --trust /tmp/dest .'
+
   - deny: 'pip|pip3 install *'
     message: 'BLOCKED: Use uvx to run PyPI CLIs without polluting the user/system Python env.'
     fix_suggestion: 'uvx <pkg>'

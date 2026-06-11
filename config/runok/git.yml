@@ -141,6 +141,19 @@ rules:
       - deny: 'git reset --hard'
       - deny: 'git reset HEAD file.txt'
       - deny: 'git -C /tmp reset --hard HEAD~1'
+  # `git clean` deletes untracked files irreversibly. Dry-run (`-n` /
+  # `--dry-run`) only prints what would be removed, so it is safe; the
+  # destructive variants fall through to default ask. Combined short flags
+  # like `-nd` are parsed as a single token and do not match the alternation,
+  # so they also fall through to ask.
+  - allow: 'git [-C *] clean -n|--dry-run *'
+    tests:
+      - allow: 'git clean -n'
+      - allow: 'git clean -n -d'
+      - allow: 'git clean --dry-run -d'
+      - ask: 'git clean -fd'
+      - ask: 'git clean -fdx'
+
   - deny: 'git clone *'
     message: 'Use ghq for fohte-owned repos, or opensrc for third-party code reading.'
     tests:
