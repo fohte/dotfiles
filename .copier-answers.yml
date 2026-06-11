@@ -1,10 +1,9 @@
 # Changes here will be overwritten by Copier
-_commit: v0.8.0
+_commit: v0.8.2
 _src_path: https://github.com/fohte/generic-boilerplate
 description: ''
 is_public: true
 project_name: dotfiles
 repo_language: en
-subpackages: []
 type: base
 use_release_please: false
