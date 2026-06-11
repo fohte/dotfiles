@@ -8,6 +8,7 @@ $git_status\
 ${custom.aws_sso_valid}\
 ${custom.aws_sso_expired}\
 ${custom.cc_paused}\
+${env_var.STARSHIP_PROMPT_EXTRA}\
 $time\
 $cmd_duration\
 $line_break\
@@ -74,3 +75,9 @@ when = '[ -n "$TMUX" ]'
 shell = "bash"
 format = "[$output]($style) "
 style = "yellow"
+
+[env_var.STARSHIP_PROMPT_EXTRA]
+variable = "STARSHIP_PROMPT_EXTRA"
+format = "[$env_value]($style) "
+style = "bright-purple"
+default = ""
