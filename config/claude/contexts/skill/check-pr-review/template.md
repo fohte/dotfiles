@@ -33,7 +33,15 @@ This pulls all review threads (and review bodies like "LGTM!") to a local Markdo
     - **NEVER autonomously decide "won't fix"**: Even if you believe a comment is a false positive, you MUST ask the user first. Do not skip this step under any circumstances. This is the most common mistake — always err on the side of asking
 4. **Bug reports require test-first fixing**: When a review comment points out a bug (incorrect behavior, edge case failure, race condition, etc.), you MUST first write a test that reproduces the bug before fixing it. This ensures the bug is real and the fix is correct. Only after the test fails as expected, apply the code fix and confirm the test passes
 5. Make necessary code changes based on the feedback
-6. **User confirmation for "won't fix"**: Before treating any comment as "won't fix", you MUST ask the user for confirmation using AskUserQuestion. Present the reviewer's comment, your reasoning for why it's a false positive, and let the user decide whether to fix it or skip it. Never autonomously decide "won't fix" without user approval.
+6. **User confirmation for "won't fix"**: Before treating any comment as "won't fix", you MUST ask the user for confirmation. The user can only make a real decision when they can see the same evidence you used, so the explanation goes in the assistant message **before** the AskUserQuestion call — not crammed into option labels. Never autonomously decide "won't fix" without user approval.
+
+    For each "won't fix" candidate, write out these three elements as separate, labeled bullets in the message text:
+    - **What the reviewer flagged**: the substance of the comment in plain language — what behavior, file, or line is being criticized, and what change the reviewer proposes
+    - **Why the reviewer flagged it**: the reviewer's premise or reasoning, including any assumption they made (e.g., "the reviewer saw only the diff and inferred X is missing")
+    - **Why "won't fix" is justified**: the concrete evidence (file paths, line numbers, upstream design choices, factual corrections to the reviewer's premise) that makes the comment a false positive or out of scope
+
+    AskUserQuestion then offers the decision (fix / won't fix / something else). Option `description` fields stay short — they are not a substitute for the three-element explanation above. A one-line summary like "両方とも boilerplate-managed" is not enough; if the user has to ask "what was the comment about?" the message is too thin.
+
 7. For confirmed "won't fix" comments (approved by the user in step 6), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
 8. If code changes were made (steps 4-7), commit and push using the `/commit` skill, then `git push`
 9. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below)
