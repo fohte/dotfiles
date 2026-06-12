@@ -1,0 +1,4 @@
+# sudo_local: local config file which survives system update and is included for sudo
+# Managed by dotfiles (config/macos/pam.bash). Do not edit directly.
+auth       optional       @PAM_REATTACH_SO@
+auth       sufficient     pam_tid.so
