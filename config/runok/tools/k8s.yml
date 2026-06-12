@@ -12,6 +12,11 @@ definitions:
     talosctl:
       - 'talosctl [-n|--nodes *] [-e|--endpoints *] [-c|--cluster *] [--context *] [--talosconfig *] [--siderov1-keys-dir *]'
 
+  flag_groups:
+    # Capture every `--dry-run` value as a list so a `when` clause can assert
+    # every occurrence is safe (kubectl uses last-wins for repeated flags).
+    kubectl-apply-dry-run: '--dry-run *'
+
   vars:
     # Node paths that `talosctl read` can return without exposing
     # credentials. `/proc` holds kernel/process metadata only. Declared as
@@ -82,6 +87,21 @@ rules:
     tests:
       - allow: 'kubectl diff -f manifest.yaml'
       - allow: 'kubectl wait --for=condition=Ready pod/foo'
+
+  # `kubectl apply` is mutating by default. Allow only when every `--dry-run`
+  # occurrence is `server` or `client`; kubectl uses last-wins for repeated
+  # flags, so a trailing `--dry-run=none` would otherwise slip past a pattern
+  # that only matches the first value.
+  - allow: 'kubectl apply <flag:kubectl-apply-dry-run> *'
+    when: 'flag_groups["kubectl-apply-dry-run"].all(v, v == "server" || v == "client")'
+    tests:
+      - allow: 'kubectl apply --server-side --dry-run=server --force-conflicts --field-manager=argocd-controller -f -'
+      - allow: 'kubectl apply -f manifest.yaml --dry-run=client'
+      - allow: 'kubectl apply --dry-run=server -f manifest.yaml'
+      - ask: 'kubectl apply -f manifest.yaml'
+      - ask: 'kubectl apply --dry-run=none -f manifest.yaml'
+      - ask: 'kubectl apply --dry-run=server -f manifest.yaml --dry-run=none'
+      - ask: 'kubectl apply --dry-run=client --dry-run=none -f manifest.yaml'
 
   # `kubectl config` read-only subcommands that only emit names.
   - allow: 'kubectl config current-context|get-contexts|get-clusters|get-users *'
