@@ -220,6 +220,7 @@ local env(name) = std.extVar(name);
   },
   alwaysThinkingEnabled: true,
   showThinkingSummaries: true,
+  tui: 'fullscreen',
   promptSuggestionEnabled: false,
   teammateMode: 'tmux',
   agentPushNotifEnabled: false,
