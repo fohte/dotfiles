@@ -125,7 +125,7 @@ rules:
       - allow: 'kubectl config view --minify --flatten'
       - allow: 'kubectl --kubeconfig ~/.kube/work config view --minify'
 
-  - allow: 'helm completion|diff|help|history|lint|list|search|show|status|template|verify|version *'
+  - allow: 'helm completion|diff|help|history|lint|list|pull|search|show|status|template|verify|version *'
     tests:
       - allow: 'helm version'
       - allow: 'helm version --short'
@@ -135,6 +135,8 @@ rules:
       - allow: 'helm lint ./chart'
       - allow: 'helm history myrelease'
       - allow: 'helm list -A'
+      - allow: 'helm pull tailscale-operator --version 1.96.5 --repo https://pkgs.tailscale.com/helmcharts --untar'
+      - allow: 'helm pull oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller --version 0.14.1 --untar'
       # `install` / `upgrade` / `uninstall` / `rollback` mutate the cluster.
       - ask: 'helm install foo ./chart'
       - ask: 'helm upgrade foo ./chart'
