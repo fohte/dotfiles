@@ -63,8 +63,13 @@ rules:
   - allow: 'mise run test *'
 
   # tmux (read-only)
+  - allow: 'tmux -V'
   - allow: 'tmux capture-pane *'
-  - allow: 'tmux display-message *'
+  - allow: 'tmux display|display-message *'
+    tests:
+      - allow: 'tmux display-message hello'
+      - allow: 'tmux display -p -t %0 "#{pane_id}"'
+      - allow: 'tmux display -p "x"'
   - allow: 'tmux list-*|show-* *'
     tests:
       - allow: 'tmux list-sessions'
