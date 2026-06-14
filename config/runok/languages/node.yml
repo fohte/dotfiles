@@ -2,16 +2,34 @@
 
 rules:
   # install (use ni)
-  - allow: 'ni [--frozen-lockfile] [--lockfile-only]'
+  - allow: 'ni [--frozen-lockfile|--frozen|--no-frozen-lockfile|--frozen=false|--frozen=true|--frozen-lockfile=false|--frozen-lockfile=true] [--lockfile-only]'
     tests:
       - allow: 'ni'
       - allow: 'ni --frozen-lockfile'
       - allow: 'ni --lockfile-only'
+      - allow: 'ni --frozen'
+      - allow: 'ni --no-frozen-lockfile'
+      - allow: 'ni --frozen=false'
+      - allow: 'ni --frozen-lockfile=false'
+      - allow: 'ni --frozen=false --lockfile-only'
 
   # clean install (use nci)
-  - allow: 'nci'
+  - allow: 'nci [--frozen-lockfile|--no-frozen-lockfile|--frozen-lockfile=false|--frozen-lockfile=true|--lockfile-only]'
     tests:
       - allow: 'nci'
+      - allow: 'nci --no-frozen-lockfile'
+      - allow: 'nci --lockfile-only'
+
+  # uninstall (use nun)
+  - allow: 'nun *'
+    tests:
+      - allow: 'nun lodash'
+      - allow: 'nun node-pg-migrate pg @types/pg'
+  - deny: 'nun -g|--global *'
+    message: 'BLOCKED: Global uninstall is not allowed via nun. Drop -g/--global.'
+    tests:
+      - deny: 'nun -g typescript'
+      - deny: 'nun --global typescript'
 
   # enforce ni -E (exact pinning) in fohte's repos
   - allow: 'ni -E *'
@@ -74,6 +92,14 @@ rules:
     tests:
       - allow: 'nr generate'
       - allow: 'nr generate:api'
+  - allow: 'nr tsr generate'
+    tests:
+      - allow: 'nr tsr generate'
+  # DB migration file generation (drizzle-kit / prisma migrate diff).
+  # Narrower than db:* — db:migrate / db:push apply to the actual DB.
+  - allow: 'nr db:generate'
+    tests:
+      - allow: 'nr db:generate'
   - deny: 'nlx tsc *'
     message: 'Use nr'
   - deny: 'nlx vitest run *'
