@@ -53,6 +53,26 @@ a wm new <branch-name> --agent --label "<title>" --prompt "<instructions>"
 
 worktree 削除自体が失敗した警告が出た場合のみ手動復旧が必要で、`a wm delete <name>` で残骸を削除してからリトライする。
 
+### 複数タスクの一括委任
+
+複数のタスクをまとめて委任する場合、Bash ツールを委任数だけ呼び分けず、**1 回の bash 呼び出し内で `for` ループを使う**こと。委任先ごとに Bash ツール呼び出しを分けるとツール許可プロンプトが委任数だけ発生し、途中 1 件の拒否で以降が止まる。1 つの bash にまとめれば許可は 1 回で済む。for ループは dispatch の手段であり、各イテレーションは依然として独立した 1 委任 = 1 PR なので「1 委任 = 1 PR の原則」とは衝突しない。
+
+各委任先で `--prompt` の中身が異なる場合は、共通部分と差分を別ファイルに分けて `cat` で結合する。プロンプトを Bash 引数に直接埋め込むと引用符のエスケープが破綻しやすいため、ファイル経由で渡すこと。
+
+```bash
+# 事前に /tmp/delegate-common.md と /tmp/delegate-<task>.md を Write しておく
+for entry in "repo-a 123" "repo-b 456" "repo-c 789"; do
+  read repo num <<< "$entry"
+  a wm new <branch> -R ~/ghq/github.com/<org>/$repo \
+    --agent --label "<title> $repo#$num" \
+    --prompt "$(cat /tmp/delegate-common.md /tmp/delegate-$repo.md)" \
+    && echo "OK $repo#$num" || echo "FAIL $repo#$num" &
+done
+wait
+```
+
+末尾の `&` + `wait` で worktree 作成と Claude Code 起動を並列化する (委任数が多いほど効果が大きい)。`wait` の終了コードは最後に待ったジョブのものしか反映しないため、失敗特定のために各イテレーションで `OK`/`FAIL` のマーカーを必ず出力し、終了後に `grep FAIL` で再実行対象を抽出する。
+
 ### 例
 
 ```bash
