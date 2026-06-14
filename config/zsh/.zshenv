@@ -95,6 +95,8 @@ export GPG_TTY=$(tty)
 
 export BAT_THEME=1337
 
+export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
+
 import_env 'homebrew.zsh'
 
 import_env 'gcloud.zsh'

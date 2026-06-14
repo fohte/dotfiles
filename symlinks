@@ -160,6 +160,7 @@ fi
 if match_tag misc; then
   sym config/misc/npmrc ~/.config/npm/npmrc
   sym config/misc/uv.toml ~/.config/uv/uv.toml
+  sym config/misc/ripgrep-config ~/.config/ripgrep/config
   # pnpm reads its global config from its OS-native dir, not XDG, so split.
   is_linux && pnpm_config_path="$HOME/.config/pnpm/config.yaml"
   is_macos && pnpm_config_path="$HOME/Library/Preferences/pnpm/config.yaml"
