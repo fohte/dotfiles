@@ -1,5 +1,13 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
+definitions:
+  wrappers:
+    # `colima ssh -- <cmd>` executes <cmd> inside the colima VM. Register as a
+    # wrapper so the inner command is recursively evaluated against existing
+    # rules (e.g. docker rules in tools/docker.yml). Bare `colima ssh` (no `--`)
+    # opens an interactive shell and falls through to default ask.
+    - 'colima ssh -- <cmd>'
+
 rules:
   # Readonly Colima VM subcommands. start/stop/delete/restart/ssh are
   # destructive or interactive and fall through to default ask.
@@ -11,3 +19,7 @@ rules:
       - ask: 'colima start'
       - ask: 'colima stop'
       - ask: 'colima delete'
+      - allow: 'colima ssh -- docker ps'
+      - allow: 'colima ssh -- docker images postgres'
+      - ask: 'colima ssh -- docker run -d --name pg postgres:17-alpine'
+      - ask: 'colima ssh'
