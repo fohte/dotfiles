@@ -6,6 +6,12 @@ definitions:
     docker:
       - docker
       - docker.lima
+    # docker-compose (v1 standalone binary) is a drop-in alias for `docker compose`.
+    # `docker compose` expands recursively through the `docker` alias above,
+    # so `docker.lima compose` does not need to be listed explicitly.
+    docker-compose:
+      - 'docker compose'
+      - 'docker-compose'
 
 rules:
   # docker
@@ -42,9 +48,11 @@ rules:
       - allow: 'container run --rm -v /repo:/repo -w /repo ghcr.io/renovatebot/renovate:latest renovate-config-validator --strict --no-global renovate.json5'
 
   # docker compose
-  - allow: 'docker compose [-f *] up|logs|ps|config|images|top|ls *'
+  - allow: 'docker-compose [-f *] up|logs|ps|config|images|top|ls *'
     tests:
       - allow: 'docker compose up -d'
       - allow: 'docker compose -f docker-compose.infra.yml up -d'
       - allow: 'docker compose -f ../docker-compose.infra.yml ps'
       - allow: 'docker compose logs -f web'
+      - allow: 'docker-compose up -d'
+      - allow: 'docker.lima compose ps'
