@@ -1,5 +1,12 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
+definitions:
+  aliases:
+    # corepack ships a pnpm shim; alias keeps pnpm rules in sync with it.
+    pnpm:
+      - pnpm
+      - corepack pnpm
+
 rules:
   # install (use ni)
   - allow: 'ni [--frozen-lockfile|--frozen|--no-frozen-lockfile|--frozen=false|--frozen=true|--frozen-lockfile=false|--frozen-lockfile=true] [--lockfile-only]'
@@ -60,6 +67,7 @@ rules:
     fix_suggestion: 'ni'
     tests:
       - deny: 'pnpm install'
+      - deny: 'corepack pnpm install --frozen-lockfile'
   - deny: 'pnpm add *'
     message: 'BLOCKED: Use /ni skill. Run: ni <pkg>'
     fix_suggestion: 'ni <pkg>'
@@ -250,6 +258,12 @@ rules:
   - allow: 'pnpm config get *'
     tests:
       - allow: 'pnpm config get minimum-release-age'
+      - allow: 'corepack pnpm config get minimum-release-age'
+  - deny: 'pnpm config set *'
+    message: 'BLOCKED: project .npmrc edits should be reviewed manually.'
+    tests:
+      - deny: 'pnpm config set verify-deps-before-run never --location=project'
+      - deny: 'corepack pnpm config set verify-deps-before-run never --location=project'
   - allow: 'pnpm -v|--version'
     tests:
       - allow: 'pnpm --version'

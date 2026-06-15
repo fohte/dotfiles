@@ -1,8 +1,18 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
+definitions:
+  aliases:
+    # Colima installs docker.lima as a docker CLI shim.
+    docker:
+      - docker
+      - docker.lima
+
 rules:
   # docker
   - allow: docker inspect *
+    tests:
+      - allow: 'docker inspect foo'
+      - allow: 'docker.lima inspect foo'
   - allow: docker logs *
   - allow: docker ps *
   - allow: docker images *

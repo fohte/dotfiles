@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  # Readonly Colima VM subcommands. start/stop/delete/restart/ssh are
+  # destructive or interactive and fall through to default ask.
+  - allow: 'colima status|list|version|template *'
+    tests:
+      - allow: 'colima status'
+      - allow: 'colima list'
+      - allow: 'colima version'
+      - ask: 'colima start'
+      - ask: 'colima stop'
+      - ask: 'colima delete'

@@ -225,13 +225,13 @@ rules:
     tests:
       - allow: 'git merge origin/main'
       - allow: 'git merge origin/master'
-  # --continue / --abort drive an in-progress rebase or merge to a known state.
-  # Both are history-non-destructive: continue advances the same rewrite, abort
-  # restores the pre-operation HEAD. Trailing `*` absorbs flags like `--no-edit`.
-  - allow: 'git [-C *] rebase --continue|--abort *'
+  # --continue / --abort / --skip progress or unwind an in-progress rebase
+  # without rewriting history beyond the original `git rebase` invocation.
+  - allow: 'git [-C *] rebase --continue|--abort|--skip *'
     tests:
       - allow: 'git rebase --continue'
       - allow: 'git rebase --abort'
+      - allow: 'git rebase --skip'
       - allow: 'git rebase --continue --no-edit'
       - allow: 'git -C /tmp rebase --continue'
   - allow: 'git [-C *] merge --continue|--abort'
@@ -262,6 +262,11 @@ rules:
   - allow: 'git [-C *] stash pop'
     tests:
       - allow: 'git stash pop'
+  - allow: 'git [-C *] stash drop *'
+    tests:
+      - allow: 'git stash drop'
+      - allow: 'git stash drop stash@{0}'
+      - allow: 'git stash drop -q stash@{1}'
   - allow: 'git [-C *] submodule update *'
     tests:
       - allow: 'git submodule update --init --recursive'

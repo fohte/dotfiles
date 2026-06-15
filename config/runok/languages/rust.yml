@@ -27,3 +27,9 @@ rules:
     tests:
       - allow: 'cargo update --workspace --offline'
       - allow: 'cargo update -p armyknife --offline'
+
+  - allow: 'rustup show *'
+    tests:
+      - allow: 'rustup show'
+      - allow: 'rustup show active-toolchain'
+      - allow: 'rustup show home'

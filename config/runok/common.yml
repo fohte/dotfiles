@@ -134,6 +134,21 @@ rules:
   - allow: 'brew list *'
   - allow: 'brew leaves'
   - allow: 'brew tap-info *'
+  - allow: 'brew --prefix *'
+    tests:
+      - allow: 'brew --prefix'
+      - allow: 'brew --prefix docker'
+
+  # psql -c runs arbitrary SQL; restrict to localhost so production DBs are
+  # not reachable. `when` guards against a later `-h` overriding via libpq
+  # last-flag-wins.
+  - allow: 'psql -h localhost *'
+    when: 'flags.h == "localhost"'
+    tests:
+      - allow: 'psql -h localhost -U t_rader -d postgres -c "SELECT 1"'
+      - allow: 'psql -h localhost -l'
+      - ask: 'psql -h remote.example.com -U foo -d bar'
+      - ask: 'psql -h localhost -c "SELECT 1" -h remote.example.com'
 
   - allow: 'tar *'
     tests:
@@ -169,6 +184,9 @@ rules:
   - allow: 'mise ls-remote *'
   - allow: 'mise registry *'
   - allow: 'mise env *'
+  - allow: 'mise tools *'
+    tests:
+      - allow: 'mise tools'
 
   # find is prohibited; use rg, Glob tool, or Grep tool instead
   - deny: 'find *'
