@@ -4,10 +4,10 @@ PLISTS := com.fohte.headroom-proxy.plist
 
 all: $(PLISTS)
 
-# Render plist from .in template. launchd plist XML doesn't expand $HOME,
-# so substitute __HOME__ at build time.
+# launchd plist XML doesn't expand $HOME or $PATH; substitute at build time.
 %.plist: %.plist.in
-	sed 's|__HOME__|$(HOME)|g' $< > $@.tmp && mv $@.tmp $@
+	@mise=$$(command -v mise) && test -n "$$mise" || { echo "mise not found in PATH" >&2; exit 1; }; \
+	sed -e 's|__HOME__|$(HOME)|g' -e "s|__MISE__|$$mise|g" $< > $@.tmp && mv $@.tmp $@
 
 clean:
 	rm -f $(PLISTS)
