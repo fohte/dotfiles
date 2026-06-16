@@ -359,6 +359,8 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 
 **まず ~/.claude/skills/github-issue/writing-guide.md を読み込むこと。** Issue 本文とコメントの書き方ルールが定義されている。
 
+日本語の文体・表現については `japanese-tech-writing` skill の規範にも従う (一文一行、LLM っぽい空句の禁止、冗長の排除など)。
+
 ## Notes
 
 - For other repos, use `-R owner/repo` option

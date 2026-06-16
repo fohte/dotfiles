@@ -41,7 +41,7 @@ git diff origin/master..HEAD
 
 ## 1. PR body のドラフトを作成する
 
-ドラフトは **常に日本語で書くこと**。
+ドラフトは **常に日本語で書くこと**。日本語の文体・表現については `japanese-tech-writing` skill の規範に従う (一文一行、LLM っぽい空句の禁止、冗長の排除など)。
 {{- if $repo_specs }}
 
 `gh pr create` で直接作成。body は雑でよい。完璧さより速度を優先。
