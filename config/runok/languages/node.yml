@@ -143,7 +143,26 @@ rules:
       - deny: 'npx eslint --fix .'
       - deny: 'bunx eslint --fix .'
 
-  # `na <subcmd>` (@antfu/ni agent passthrough) — read-only subcommands only.
+  # `na <subcmd>` (@antfu/ni agent passthrough). Mirror PM-direct denies
+  # so `na` can't be used to bypass the install / run / exec / dlx / config
+  # set restrictions.
+  - deny: 'na install|add|remove|update|run|exec|dlx *'
+    message: 'BLOCKED: Use /ni skill. Use ni / nci / nun / nup / nr / nlx.'
+    fix_suggestion: 'ni / nci / nun / nup / nr / nlx'
+    tests:
+      - deny: 'na install'
+      - deny: 'na add axios'
+      - deny: 'na remove lodash'
+      - deny: 'na update'
+      - deny: 'na run build'
+      - deny: 'na exec eslint .'
+      - deny: 'na dlx eslint --fix .'
+  - deny: 'na config set *'
+    message: 'BLOCKED: PM config edits (.npmrc / .yarnrc / bunfig.toml) should be reviewed manually.'
+    tests:
+      - deny: 'na config set verify-deps-before-run never --location=project'
+
+  # Read-only subcommands routed through na.
   - allow: 'na view|info|ls|list|outdated|audit|why|search|help *'
     tests:
       - allow: 'na view tsx version'
