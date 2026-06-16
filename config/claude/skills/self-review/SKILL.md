@@ -37,20 +37,29 @@ description: 差分に対する self-review を 3 つの専門観点グループ
     ```
 
 3. **規約パスの特定**: `CLAUDE.md` (root + 対象サブディレクトリ) と `.gemini/styleguide.md` (存在すれば) のパスをリストアップする。**ここでは読み込まない** — 各 subagent が自分で読む。
-4. **GitHub Actions workflow 変更の検知**: 以下を実行し、出力が 1 行以上あれば次ステップで `gha-security-review` 用の 4 件目を追加起動する。マッチゼロなら 3 件起動。
+4. **追加 subagent 起動対象の検知**: 以下をそれぞれ実行し、マッチした種別ごとに次ステップで専用 subagent を追加起動する。両方マッチすれば最大 5 件起動。
+    - **GitHub Actions workflow 変更** (`gha-security-review` を追加):
 
-    ```bash
-    git diff --name-only <range> | grep -E '^(\.github/workflows/.*\.ya?ml|\.github/actions/.+/action\.ya?ml|action\.ya?ml)$'
-    ```
+        ```bash
+        git diff --name-only <range> | grep -E '^(\.github/workflows/.*\.ya?ml|\.github/actions/.+/action\.ya?ml|action\.ya?ml)$'
+        ```
 
-    対象: `.github/workflows/` 配下の workflow / `.github/actions/<name>/action.yml` 形式の reusable composite action / リポジトリルート直下の `action.yml` (action リポジトリ自体)。それ以外の場所に置かれた composite action は意図的に対象外。
+        対象: `.github/workflows/` 配下の workflow / `.github/actions/<name>/action.yml` 形式の reusable composite action / リポジトリルート直下の `action.yml` (action リポジトリ自体)。それ以外の場所に置かれた composite action は意図的に対象外。
 
-5. **subagent を並列 background 起動**: Agent ツールを **単一のアシスタントメッセージ内に 3 (or 4) 件まとめて記述** し、**全件 `run_in_background: true`** で起動する。subagent_type は指定しない (= general-purpose)。次のいずれも禁止:
+    - **テストファイル変更** (`test-philosophy-review` を追加): `test-philosophy` skill が定義する「テストの設計指針」観点で評価する。テストコードの追加・変更時のみ起動する。
+
+        ```bash
+        git diff --name-only <range> | grep -iE '(^|/)(tests?|__tests__|spec)/|(\.|_)(test|spec)\.[a-zA-Z]+$|_test\.(go|py|rb)$|_spec\.rb$'
+        ```
+
+        対象: `test/`・`tests/`・`__tests__/`・`spec/` 配下のファイル / `*.test.*`・`*.spec.*`・`*_test.go`・`*_test.py`・`*_test.rb`・`*_spec.rb` などのテスト命名規約に該当するファイル。
+
+5. **subagent を並列 background 起動**: Agent ツールを **単一のアシスタントメッセージ内に 3〜5 件まとめて記述** し、**全件 `run_in_background: true`** で起動する。subagent_type は指定しない (= general-purpose)。次のいずれも禁止:
     - 1 件起動して結果を待ってから次を起動する逐次パターン
     - `run_in_background` を省略 / `false` にして foreground で起動する (foreground だと最初の Agent の結果が返るまで他の Agent を起動するメッセージを送れない = 直列と同じになる)
     - 2 件まとめて起動した後に 1 件追加で起動するような分割パターン (1 ラウンドで全件揃える)
 
-    具体的な起動形 (単一メッセージ内に 3-4 ブロック並べる):
+    具体的な起動形 (単一メッセージ内に 3〜5 ブロック並べる):
 
     ```
     Agent({
@@ -73,6 +82,12 @@ description: 差分に対する self-review を 3 つの専門観点グループ
       description: "gha-security review",
       run_in_background: true,
       prompt: "<下記 gha テンプレ>"
+    })
+    // テストファイル変更検知時のみ追加
+    Agent({
+      description: "test-philosophy review",
+      run_in_background: true,
+      prompt: "<下記 test-philosophy テンプレ>"
     })
     ```
 
@@ -107,12 +122,25 @@ description: 差分に対する self-review を 3 つの専門観点グループ
        各 finding に **指摘 ID** として `GHA:<file>:<LINE>` を付ける (self-review の dedup と統合するため)。
     ```
 
-6. **完了通知を待つ**: 起動した全件 (3 or 4) の `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止 — 通知のみが完了の根拠。**1 件でも未完了なら他の作業はせず通知を待つ**。
+    `test-philosophy-review` Agent に渡すプロンプトテンプレ:
+
+    ```
+    あなたは test-philosophy 観点担当のテストレビュアーです。
+
+    1. `~/.claude/skills/test-philosophy/SKILL.md` を Read し、その規範に厳密に従う。
+       プロジェクト固有の test 規約 (root + 対象サブディレクトリの `CLAUDE.md` 等) もあれば Read する。
+    2. レビュー対象は以下の patch に含まれるテストファイル変更のみ:
+       <patch のフルパス>
+       テストの種類分類 (exploratory / regression / specification) の整合、テスト名・構造・前提共有・モックの過剰使用・並列性などを評価する。プロダクションコード本体の指摘は他 group に任せ、ここではテストコードの設計品質に絞る。
+    3. 指摘 1 件ごとに **指摘 ID** として `TEST:<file>:<LINE>` を付け、重要度 (Critical / Warning) と症状要約を含めて返す。指摘ゼロなら「指摘なし」と返す。
+    ```
+
+6. **完了通知を待つ**: 起動した全件 (3〜5) の `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止 — 通知のみが完了の根拠。**1 件でも未完了なら他の作業はせず通知を待つ**。
 7. **結果集約**: 全通知到着後、各 Agent の最終出力を踏まえて以下のルールで統合する:
-    - 観点別評価: behavior + structure + convention の 13 観点を通し番号順に並べる。`gha-security-review` を起動した場合は末尾に独立セクション `GHA Security` として findings 件数サマリを追加する (13 観点には混ぜない)
-    - 指摘詳細: 重要度順 (Critical → Warning) に並べる。`GHA-NNN` findings は HIGH=Critical / MEDIUM=Warning として混ぜて並べる
-    - 重複指摘のマージは下記「Dedup ルール」に従う
-    - **subagent 失敗時 fallback**: いずれかの subagent が空応答・エラー・タイムアウトした場合、該当 group の観点を `⚠️ 未評価 (subagent 失敗)` とマークし、その group だけ単独で再起動する (これも `run_in_background: true`)。再起動も失敗するなら最終出力でその旨を明示する。`gha-security-review` が失敗した場合は独立セクション `GHA Security` に `⚠️ 未評価 (subagent 失敗)` を出力し、同条件で 1 回だけ再起動する。
+    - 観点別評価: behavior + structure + convention の 13 観点を通し番号順に並べる。`gha-security-review` / `test-philosophy-review` を起動した場合は末尾に独立セクション `GHA Security` / `Test Philosophy` として findings 件数サマリを追加する (13 観点には混ぜない)
+    - 指摘詳細: 重要度順 (Critical → Warning) に並べる。`GHA-NNN` findings は HIGH=Critical / MEDIUM=Warning として、`TEST:` findings は subagent が付けた重要度のまま混ぜて並べる
+    - 重複指摘のマージは下記「Dedup ルール」に従う。特に test-philosophy と structure (9 テスト容易性) は cross-cutting が起きやすいので注意する
+    - **subagent 失敗時 fallback**: いずれかの subagent が空応答・エラー・タイムアウトした場合、該当 group の観点を `⚠️ 未評価 (subagent 失敗)` とマークし、その group だけ単独で再起動する (これも `run_in_background: true`)。再起動も失敗するなら最終出力でその旨を明示する。`gha-security-review` / `test-philosophy-review` が失敗した場合も対応する独立セクションに `⚠️ 未評価 (subagent 失敗)` を出力し、同条件で 1 回だけ再起動する。
 8. **最終出力**: 下記「出力形式」セクションに従い、3 セクション構造で出す。
 
 ## Dedup ルール
@@ -155,6 +183,7 @@ description: 差分に対する self-review を 3 つの専門観点グループ
 13. リファクタリング機会: <マーカー> <一行>
 
 GHA Security: <マーカー> <一行> (workflow 変更がない場合は行ごと省略)
+Test Philosophy: <マーカー> <一行> (テストファイル変更がない場合は行ごと省略)
 ```
 
 ### 2. 指摘詳細
