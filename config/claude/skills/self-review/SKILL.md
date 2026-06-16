@@ -62,12 +62,25 @@ description: 差分に対する self-review を 3 つの専門観点グループ
 
         対象: `db/migrate/`・`db/migrations/`・`migrations/`・`migrate/` 配下のマイグレーション / `schema.rb`・`schema.sql`・`structure.sql`・`schema.prisma` / リポジトリ内の `*.sql`・`*.prisma` ファイル全般。マッチしても DDL 以外の SQL (seed・data fixture など) しか含まない場合は起動を見送ってよい。
 
-5. **subagent を並列 background 起動**: Agent ツールを **単一のアシスタントメッセージ内に 3〜6 件まとめて記述** し、**全件 `run_in_background: true`** で起動する。subagent_type は指定しない (= general-purpose)。次のいずれも禁止:
+    - **日本語ドキュメント変更** (`japanese-tech-writing-review` を追加): `japanese-tech-writing` skill が定義する日本語技術文書の文章規範 (一文一行・全角記号禁止・段落構成・冗長排除など) で評価する。日本語を含むドキュメントの追加・変更時のみ起動する。
+
+        ```bash
+        # 1. ドキュメント候補ファイルを抽出
+        candidates=$(git diff --name-only <range> | grep -iE '\.(md|mdx|markdown|rst|adoc|txt)$')
+        # 2. patch の追加行に日本語 (ひらがな / カタカナ / 漢字) が含まれるファイルだけ残す
+        for f in $candidates; do
+          git diff <range> -- "$f" | grep -E '^\+' | grep -qE '[ぁ-んァ-ヶ一-龯]' && echo "$f"
+        done
+        ```
+
+        対象: `*.md`・`*.mdx`・`*.markdown`・`*.rst`・`*.adoc`・`*.txt` のうち、patch の追加行に日本語文字を含むもの。コード内コメントや英語のみのドキュメントは対象外。
+
+5. **subagent を並列 background 起動**: Agent ツールを **単一のアシスタントメッセージ内に 3〜7 件まとめて記述** し、**全件 `run_in_background: true`** で起動する。subagent_type は指定しない (= general-purpose)。次のいずれも禁止:
     - 1 件起動して結果を待ってから次を起動する逐次パターン
     - `run_in_background` を省略 / `false` にして foreground で起動する (foreground だと最初の Agent の結果が返るまで他の Agent を起動するメッセージを送れない = 直列と同じになる)
     - 2 件まとめて起動した後に 1 件追加で起動するような分割パターン (1 ラウンドで全件揃える)
 
-    具体的な起動形 (単一メッセージ内に 3〜6 ブロック並べる):
+    具体的な起動形 (単一メッセージ内に 3〜7 ブロック並べる):
 
     ```
     Agent({
@@ -102,6 +115,12 @@ description: 差分に対する self-review を 3 つの専門観点グループ
       description: "postgresql-table-design review",
       run_in_background: true,
       prompt: "<下記 postgresql-table-design テンプレ>"
+    })
+    // 日本語ドキュメント変更検知時のみ追加
+    Agent({
+      description: "japanese-tech-writing review",
+      run_in_background: true,
+      prompt: "<下記 japanese-tech-writing テンプレ>"
     })
     ```
 
@@ -163,12 +182,26 @@ description: 差分に対する self-review を 3 つの専門観点グループ
     4. 指摘 1 件ごとに **指摘 ID** として `DB:<file>:<LINE>` を付け、重要度 (Critical / Warning) と症状要約を含めて返す。指摘ゼロなら「指摘なし」と返す。
     ```
 
-6. **完了通知を待つ**: 起動した全件 (3〜6) の `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止 — 通知のみが完了の根拠。**1 件でも未完了なら他の作業はせず通知を待つ**。
+    `japanese-tech-writing-review` Agent に渡すプロンプトテンプレ:
+
+    ```
+    あなたは japanese-tech-writing 観点担当の日本語ドキュメントレビュアーです。
+
+    1. `~/.claude/skills/japanese-tech-writing/SKILL.md` を Read し、その規範に厳密に従う。
+    2. レビュー対象は以下の patch に含まれる日本語ドキュメントの追加・変更行のみ:
+       <patch のフルパス>
+       <対象ファイルパスのリスト>
+       評価軸: 整形 (一文一行、引用ブロック、脚注、コラム記法)、全角記号の混入 (丸括弧・感嘆符・疑問符・コロンは半角、半角英数字との間にスペース)、パラグラフ構成、論証の厳密さ、LLM 的な空句・冗長表現、視点と語りの一貫性。技術的事実の正否は他 group に任せ、ここでは文章規範に絞る。
+    3. patch 内の差分が日本語を含まない箇所 (英語のみ・コードブロック・URL など) はスキップする。
+    4. 指摘 1 件ごとに **指摘 ID** として `JA:<file>:<LINE>` を付け、重要度 (Critical / Warning) と症状要約を含めて返す。指摘ゼロなら「指摘なし」と返す。
+    ```
+
+6. **完了通知を待つ**: 起動した全件 (3〜7) の `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止 — 通知のみが完了の根拠。**1 件でも未完了なら他の作業はせず通知を待つ**。
 7. **結果集約**: 全通知到着後、各 Agent の最終出力を踏まえて以下のルールで統合する:
-    - 観点別評価: behavior + structure + convention の 13 観点を通し番号順に並べる。`gha-security-review` / `test-philosophy-review` / `postgresql-table-design-review` を起動した場合は末尾に独立セクション `GHA Security` / `Test Philosophy` / `DB Schema` として findings 件数サマリを追加する (13 観点には混ぜない)
-    - 指摘詳細: 重要度順 (Critical → Warning) に並べる。`GHA-NNN` findings は HIGH=Critical / MEDIUM=Warning として、`TEST:` / `DB:` findings は subagent が付けた重要度のまま混ぜて並べる
-    - 重複指摘のマージは下記「Dedup ルール」に従う。特に test-philosophy と structure (9 テスト容易性)、postgresql-table-design と behavior (1 正しさ / 2 セキュリティ) や structure (6 互換性) は cross-cutting が起きやすいので注意する
-    - **subagent 失敗時 fallback**: いずれかの subagent が空応答・エラー・タイムアウトした場合、該当 group の観点を `⚠️ 未評価 (subagent 失敗)` とマークし、その group だけ単独で再起動する (これも `run_in_background: true`)。再起動も失敗するなら最終出力でその旨を明示する。`gha-security-review` / `test-philosophy-review` / `postgresql-table-design-review` が失敗した場合も対応する独立セクションに `⚠️ 未評価 (subagent 失敗)` を出力し、同条件で 1 回だけ再起動する。
+    - 観点別評価: behavior + structure + convention の 13 観点を通し番号順に並べる。`gha-security-review` / `test-philosophy-review` / `postgresql-table-design-review` / `japanese-tech-writing-review` を起動した場合は末尾に独立セクション `GHA Security` / `Test Philosophy` / `DB Schema` / `Japanese Writing` として findings 件数サマリを追加する (13 観点には混ぜない)
+    - 指摘詳細: 重要度順 (Critical → Warning) に並べる。`GHA-NNN` findings は HIGH=Critical / MEDIUM=Warning として、`TEST:` / `DB:` / `JA:` findings は subagent が付けた重要度のまま混ぜて並べる
+    - 重複指摘のマージは下記「Dedup ルール」に従う。特に test-philosophy と structure (9 テスト容易性)、postgresql-table-design と behavior (1 正しさ / 2 セキュリティ) や structure (6 互換性)、japanese-tech-writing と convention (10 ドキュメント整合性 / 11 コメントの質) は cross-cutting が起きやすいので注意する
+    - **subagent 失敗時 fallback**: いずれかの subagent が空応答・エラー・タイムアウトした場合、該当 group の観点を `⚠️ 未評価 (subagent 失敗)` とマークし、その group だけ単独で再起動する (これも `run_in_background: true`)。再起動も失敗するなら最終出力でその旨を明示する。`gha-security-review` / `test-philosophy-review` / `postgresql-table-design-review` / `japanese-tech-writing-review` が失敗した場合も対応する独立セクションに `⚠️ 未評価 (subagent 失敗)` を出力し、同条件で 1 回だけ再起動する。
 8. **最終出力**: 下記「出力形式」セクションに従い、3 セクション構造で出す。
 
 ## Dedup ルール
@@ -213,6 +246,7 @@ description: 差分に対する self-review を 3 つの専門観点グループ
 GHA Security: <マーカー> <一行> (workflow 変更がない場合は行ごと省略)
 Test Philosophy: <マーカー> <一行> (テストファイル変更がない場合は行ごと省略)
 DB Schema: <マーカー> <一行> (DB スキーマ変更がない場合は行ごと省略)
+Japanese Writing: <マーカー> <一行> (日本語ドキュメント変更がない場合は行ごと省略)
 ```
 
 ### 2. 指摘詳細
