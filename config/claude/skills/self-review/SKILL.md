@@ -54,12 +54,20 @@ description: 差分に対する self-review を 3 つの専門観点グループ
 
         対象: `test/`・`tests/`・`__tests__/`・`spec/` 配下のファイル / `*.test.*`・`*.spec.*`・`*_test.go`・`*_test.py`・`*_test.rb`・`*_spec.rb` などのテスト命名規約に該当するファイル。
 
-5. **subagent を並列 background 起動**: Agent ツールを **単一のアシスタントメッセージ内に 3〜5 件まとめて記述** し、**全件 `run_in_background: true`** で起動する。subagent_type は指定しない (= general-purpose)。次のいずれも禁止:
+    - **DB スキーマ変更** (`postgresql-table-design-review` を追加): `postgresql-table-design` skill が定義する PostgreSQL テーブル設計指針 (型選択・制約・index・命名・JSONB 使い分けなど) で評価する。スキーマ定義ファイルの追加・変更時のみ起動する。プロジェクトが PostgreSQL を使っていない場合 (例: MySQL only) は起動を見送ってよい。
+
+        ```bash
+        git diff --name-only <range> | grep -iE '(^|/)(db|database)/(migrate|migrations|schema)/|(^|/)(migrations?|schema)/.*\.(sql|rb|py|ts|js)$|(^|/)schema\.(rb|sql|prisma)$|(^|/)structure\.sql$|\.(sql|prisma)$'
+        ```
+
+        対象: `db/migrate/`・`db/migrations/`・`migrations/`・`migrate/` 配下のマイグレーション / `schema.rb`・`schema.sql`・`structure.sql`・`schema.prisma` / リポジトリ内の `*.sql`・`*.prisma` ファイル全般。マッチしても DDL 以外の SQL (seed・data fixture など) しか含まない場合は起動を見送ってよい。
+
+5. **subagent を並列 background 起動**: Agent ツールを **単一のアシスタントメッセージ内に 3〜6 件まとめて記述** し、**全件 `run_in_background: true`** で起動する。subagent_type は指定しない (= general-purpose)。次のいずれも禁止:
     - 1 件起動して結果を待ってから次を起動する逐次パターン
     - `run_in_background` を省略 / `false` にして foreground で起動する (foreground だと最初の Agent の結果が返るまで他の Agent を起動するメッセージを送れない = 直列と同じになる)
     - 2 件まとめて起動した後に 1 件追加で起動するような分割パターン (1 ラウンドで全件揃える)
 
-    具体的な起動形 (単一メッセージ内に 3〜5 ブロック並べる):
+    具体的な起動形 (単一メッセージ内に 3〜6 ブロック並べる):
 
     ```
     Agent({
@@ -88,6 +96,12 @@ description: 差分に対する self-review を 3 つの専門観点グループ
       description: "test-philosophy review",
       run_in_background: true,
       prompt: "<下記 test-philosophy テンプレ>"
+    })
+    // DB スキーマ変更検知時のみ追加
+    Agent({
+      description: "postgresql-table-design review",
+      run_in_background: true,
+      prompt: "<下記 postgresql-table-design テンプレ>"
     })
     ```
 
@@ -135,12 +149,26 @@ description: 差分に対する self-review を 3 つの専門観点グループ
     3. 指摘 1 件ごとに **指摘 ID** として `TEST:<file>:<LINE>` を付け、重要度 (Critical / Warning) と症状要約を含めて返す。指摘ゼロなら「指摘なし」と返す。
     ```
 
-6. **完了通知を待つ**: 起動した全件 (3〜5) の `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止 — 通知のみが完了の根拠。**1 件でも未完了なら他の作業はせず通知を待つ**。
+    `postgresql-table-design-review` Agent に渡すプロンプトテンプレ:
+
+    ```
+    あなたは postgresql-table-design 観点担当の DB スキーマレビュアーです。
+
+    1. `~/.claude/skills/postgresql-table-design/SKILL.md` を Read し、その規範に厳密に従う。
+       プロジェクト固有の DB 規約 (root + 該当サブディレクトリの `CLAUDE.md`、`db/` 配下の README 等) もあれば Read する。
+    2. レビュー対象は以下の patch に含まれるスキーマ定義の追加・変更のみ:
+       <patch のフルパス>
+       評価軸: 型選択 (timestamptz / numeric / text 等の使い分け、禁止型の混入)、NOT NULL・DEFAULT・CHECK・UNIQUE・FK の妥当性、index 設計 (FK index 漏れ、複合 index の並び、partial / expression index の活用)、命名 (snake_case)、JSONB の使い分け、partitioning・identity 採用の妥当性、安全なスキーマ進化 (volatile default による rewrite 等)。アプリケーションロジック側の指摘は他 group に任せ、ここではスキーマ設計に絞る。
+    3. プロジェクトが PostgreSQL でないと patch から判断できる場合 (例: MySQL 固有構文・MongoDB スキーマなど) は冒頭で「対象外: <理由>」と返して終了する。
+    4. 指摘 1 件ごとに **指摘 ID** として `DB:<file>:<LINE>` を付け、重要度 (Critical / Warning) と症状要約を含めて返す。指摘ゼロなら「指摘なし」と返す。
+    ```
+
+6. **完了通知を待つ**: 起動した全件 (3〜6) の `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止 — 通知のみが完了の根拠。**1 件でも未完了なら他の作業はせず通知を待つ**。
 7. **結果集約**: 全通知到着後、各 Agent の最終出力を踏まえて以下のルールで統合する:
-    - 観点別評価: behavior + structure + convention の 13 観点を通し番号順に並べる。`gha-security-review` / `test-philosophy-review` を起動した場合は末尾に独立セクション `GHA Security` / `Test Philosophy` として findings 件数サマリを追加する (13 観点には混ぜない)
-    - 指摘詳細: 重要度順 (Critical → Warning) に並べる。`GHA-NNN` findings は HIGH=Critical / MEDIUM=Warning として、`TEST:` findings は subagent が付けた重要度のまま混ぜて並べる
-    - 重複指摘のマージは下記「Dedup ルール」に従う。特に test-philosophy と structure (9 テスト容易性) は cross-cutting が起きやすいので注意する
-    - **subagent 失敗時 fallback**: いずれかの subagent が空応答・エラー・タイムアウトした場合、該当 group の観点を `⚠️ 未評価 (subagent 失敗)` とマークし、その group だけ単独で再起動する (これも `run_in_background: true`)。再起動も失敗するなら最終出力でその旨を明示する。`gha-security-review` / `test-philosophy-review` が失敗した場合も対応する独立セクションに `⚠️ 未評価 (subagent 失敗)` を出力し、同条件で 1 回だけ再起動する。
+    - 観点別評価: behavior + structure + convention の 13 観点を通し番号順に並べる。`gha-security-review` / `test-philosophy-review` / `postgresql-table-design-review` を起動した場合は末尾に独立セクション `GHA Security` / `Test Philosophy` / `DB Schema` として findings 件数サマリを追加する (13 観点には混ぜない)
+    - 指摘詳細: 重要度順 (Critical → Warning) に並べる。`GHA-NNN` findings は HIGH=Critical / MEDIUM=Warning として、`TEST:` / `DB:` findings は subagent が付けた重要度のまま混ぜて並べる
+    - 重複指摘のマージは下記「Dedup ルール」に従う。特に test-philosophy と structure (9 テスト容易性)、postgresql-table-design と behavior (1 正しさ / 2 セキュリティ) や structure (6 互換性) は cross-cutting が起きやすいので注意する
+    - **subagent 失敗時 fallback**: いずれかの subagent が空応答・エラー・タイムアウトした場合、該当 group の観点を `⚠️ 未評価 (subagent 失敗)` とマークし、その group だけ単独で再起動する (これも `run_in_background: true`)。再起動も失敗するなら最終出力でその旨を明示する。`gha-security-review` / `test-philosophy-review` / `postgresql-table-design-review` が失敗した場合も対応する独立セクションに `⚠️ 未評価 (subagent 失敗)` を出力し、同条件で 1 回だけ再起動する。
 8. **最終出力**: 下記「出力形式」セクションに従い、3 セクション構造で出す。
 
 ## Dedup ルール
@@ -184,6 +212,7 @@ description: 差分に対する self-review を 3 つの専門観点グループ
 
 GHA Security: <マーカー> <一行> (workflow 変更がない場合は行ごと省略)
 Test Philosophy: <マーカー> <一行> (テストファイル変更がない場合は行ごと省略)
+DB Schema: <マーカー> <一行> (DB スキーマ変更がない場合は行ごと省略)
 ```
 
 ### 2. 指摘詳細
