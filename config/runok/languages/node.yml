@@ -46,44 +46,6 @@ rules:
     message: 'BLOCKED: Use ni -E to pin exact versions in fohte repos.'
     fix_suggestion: 'ni -E <pkg>'
 
-  - deny: 'npm install *'
-    message: 'BLOCKED: Use /ni skill. Run: ni <pkg>'
-    fix_suggestion: 'ni'
-    tests:
-      - deny: 'npm install axios'
-      - deny: 'npm install -D typescript'
-  - deny: 'yarn add *'
-    message: 'BLOCKED: Use /ni skill. Run: ni <pkg>'
-    fix_suggestion: 'ni <pkg>'
-    tests:
-      - deny: 'yarn add axios'
-  - deny: 'yarn install *'
-    message: 'BLOCKED: Use /ni skill. Run: ni'
-    fix_suggestion: 'ni'
-    tests:
-      - deny: 'yarn install'
-  - deny: 'pnpm install *'
-    message: 'BLOCKED: Use /ni skill. Run: ni'
-    fix_suggestion: 'ni'
-    tests:
-      - deny: 'pnpm install'
-      - deny: 'corepack pnpm install --frozen-lockfile'
-  - deny: 'pnpm add *'
-    message: 'BLOCKED: Use /ni skill. Run: ni <pkg>'
-    fix_suggestion: 'ni <pkg>'
-    tests:
-      - deny: 'pnpm add axios'
-  - deny: 'bun install *'
-    message: 'BLOCKED: Use /ni skill. Run: ni'
-    fix_suggestion: 'ni'
-    tests:
-      - deny: 'bun install'
-  - deny: 'bun add *'
-    message: 'BLOCKED: Use /ni skill. Run: ni <pkg>'
-    fix_suggestion: 'ni <pkg>'
-    tests:
-      - deny: 'bun add axios'
-
   # run scripts (use nr)
   - allow: 'nr [-C|--filter *] build|build:*|build-* *'
   - allow: 'nr [-C|--filter *] format|format:* *'
@@ -126,111 +88,84 @@ rules:
   - allow: 'nlx tsr generate'
     tests:
       - allow: 'nlx tsr generate'
-  - deny: 'pnpm [-C|--filter *] test|test:*|test-*'
-    message: 'BLOCKED: Use /ni skill. Run: nr <script>'
-  - deny: 'pnpm [-C|--filter *] exec *'
-    message: 'BLOCKED: Use /ni skill. Run: nr <script>'
-  - deny: 'npm run *'
-    message: 'BLOCKED: Use /ni skill. Run: nr <script>'
-    fix_suggestion: 'nr <script>'
+
+  # Force ni-family shortcuts (ni / nci / nun / nup / nr / nlx). Escape
+  # hatch for non-write subcommands: `na <args>` (allowed below).
+  # pnpm is a separate rule because the `pnpm` alias (pnpm | corepack pnpm)
+  # does not expand inside pattern alternation.
+  - deny: 'pnpm *'
+    message: 'BLOCKED: Use /ni skill.'
+    fix_suggestion: 'ni / nr / nlx / na <args>'
     tests:
-      - deny: 'npm run build'
-      - deny: 'npm run test'
-  - deny: 'yarn run *'
-    message: 'BLOCKED: Use /ni skill. Run: nr <script>'
-    fix_suggestion: 'nr <script>'
-    tests:
-      - deny: 'yarn run build'
-  - deny: 'pnpm [--filter *] run *'
-    message: 'BLOCKED: Use /ni skill. Run: nr <script>'
-    fix_suggestion: 'nr <script>'
-    tests:
+      - deny: 'pnpm install'
+      - deny: 'pnpm add axios'
+      - deny: 'pnpm build'
+      - deny: 'pnpm vitest run src/plugins/llm-agent'
+      - deny: 'pnpm typecheck'
+      - deny: 'pnpm tsc --noEmit'
+      - deny: 'pnpm test --run'
+      - deny: 'pnpm test:unit -- src/plugins/llm-agent/response-handler.test.ts'
+      - deny: 'pnpm generate:api'
+      - deny: 'pnpm format:prettier src/lib/api/schema.gen.d.ts'
       - deny: 'pnpm run build'
-  - deny: 'bun run *'
-    message: 'BLOCKED: Use /ni skill. Run: nr <script>'
-    fix_suggestion: 'nr <script>'
-    tests:
-      - deny: 'bun run build'
-
-  # execute packages (prefer nr <script> over nlx)
-  - deny: 'npx *'
-    message: 'BLOCKED: Use /ni skill. Prefer nr <script> if a matching script exists in package.json. Only use nlx if no matching script exists.'
-    fix_suggestion: 'nr <script> or nlx <pkg>'
-    tests:
-      - deny: 'npx eslint --fix .'
-  - deny: 'yarn dlx *'
-    message: 'BLOCKED: Use /ni skill. Prefer nr <script> if a matching script exists in package.json. Only use nlx if no matching script exists.'
-    fix_suggestion: 'nr <script> or nlx <pkg>'
-    tests:
-      - deny: 'yarn dlx eslint --fix .'
-  - deny: 'pnpm dlx *'
-    message: 'BLOCKED: Use /ni skill. Prefer nr <script> if a matching script exists in package.json. Only use nlx if no matching script exists.'
-    fix_suggestion: 'nr <script> or nlx <pkg>'
-    tests:
-      - deny: 'pnpm dlx eslint --fix .'
-  - deny: 'bunx *'
-    message: 'BLOCKED: Use /ni skill. Prefer nr <script> if a matching script exists in package.json. Only use nlx if no matching script exists.'
-    fix_suggestion: 'nr <script> or nlx <pkg>'
-    tests:
-      - deny: 'bunx eslint --fix .'
-
-  # clean install (use nci)
-  - deny: 'npm ci *'
-    message: 'BLOCKED: Use /ni skill. Run: nci'
-    fix_suggestion: 'nci'
-    tests:
-      - deny: 'npm ci'
-
-  # uninstall (use nun)
-  - deny: 'npm uninstall *'
-    message: 'BLOCKED: Use /ni skill. Run: nun <pkg>'
-    fix_suggestion: 'nun <pkg>'
-    tests:
-      - deny: 'npm uninstall lodash'
-  - deny: 'yarn remove *'
-    message: 'BLOCKED: Use /ni skill. Run: nun <pkg>'
-    fix_suggestion: 'nun <pkg>'
-    tests:
-      - deny: 'yarn remove lodash'
-  - deny: 'pnpm remove *'
-    message: 'BLOCKED: Use /ni skill. Run: nun <pkg>'
-    fix_suggestion: 'nun <pkg>'
-    tests:
       - deny: 'pnpm remove lodash'
-  - deny: 'bun remove *'
-    message: 'BLOCKED: Use /ni skill. Run: nun <pkg>'
-    fix_suggestion: 'nun <pkg>'
-    tests:
-      - deny: 'bun remove lodash'
-
-  # update (use nup)
-  - deny: 'npm|pnpm|bun update *'
-    message: 'BLOCKED: Use /ni skill. Run: nup'
-    fix_suggestion: 'nup'
-    tests:
-      - deny: 'npm update'
+      - deny: 'pnpm dlx eslint --fix .'
       - deny: 'pnpm update'
+      - deny: 'pnpm config set verify-deps-before-run never --location=project'
+      - deny: 'corepack pnpm install --frozen-lockfile'
+      - deny: 'corepack pnpm config set verify-deps-before-run never --location=project'
+
+  - deny: 'npm|bun|yarn *'
+    message: 'BLOCKED: Use /ni skill.'
+    fix_suggestion: 'ni / nr / nlx / na <args>'
+    tests:
+      - deny: 'npm install axios'
+      - deny: 'npm install -D typescript'
+      - deny: 'npm run build'
+      - deny: 'npm ci'
+      - deny: 'npm uninstall lodash'
+      - deny: 'npm update'
+      - deny: 'yarn add axios'
+      - deny: 'yarn install'
+      - deny: 'yarn run build'
+      - deny: 'yarn remove lodash'
+      - deny: 'yarn dlx eslint --fix .'
+      - deny: 'bun install'
+      - deny: 'bun add axios'
+      - deny: 'bun run build'
+      - deny: 'bun remove lodash'
       - deny: 'bun update'
 
-  # read-only commands (no ni equivalent)
-  - allow: 'npm whoami'
-  - allow: 'npm -v|--version'
-  - allow: 'npm view *'
-  - allow: 'npm info *'
-  - allow: 'npm ls *'
-  - allow: 'npm outdated *'
-  - allow: 'npm audit *'
-  - allow: 'npm search *'
-  - allow: 'yarn info *'
-  - allow: 'yarn why *'
-  - allow: 'yarn audit *'
-  - allow: 'pnpm ls *'
-  - allow: 'pnpm list *'
-  - allow: 'pnpm outdated *'
-  - allow: 'pnpm audit *'
-  - allow: 'pnpm why *'
-  - allow: 'bun pm ls *'
-  - allow: 'bun pm outdated *'
+  - deny: 'npx|bunx *'
+    message: 'BLOCKED: Use /ni skill. Use nlx.'
+    fix_suggestion: 'nlx <pkg>'
+    tests:
+      - deny: 'npx eslint --fix .'
+      - deny: 'bunx eslint --fix .'
+
+  # `na <subcmd>` (@antfu/ni agent passthrough) — read-only subcommands only.
+  - allow: 'na view|info|ls|list|outdated|audit|why|search|help *'
+    tests:
+      - allow: 'na view tsx version'
+      - allow: 'na info hono'
+      - allow: 'na ls'
+      - allow: 'na outdated'
+  - allow: 'na whoami'
+  - allow: 'na -v|--version'
+    tests:
+      - allow: 'na -v'
+      - allow: 'na --version'
+  - allow: 'na config get *'
+    tests:
+      - allow: 'na config get registry'
+  - allow: 'na config ls [-l|-s|--long|--json]'
+    tests:
+      - allow: 'na config ls'
+      - allow: 'na config ls --json'
+  - allow: 'na pm ls|outdated *'
+    tests:
+      - allow: 'na pm ls'
+      - allow: 'na pm outdated'
 
   - allow: 'node *'
     sandbox: readonly
@@ -240,34 +175,6 @@ rules:
   - allow: 'corepack enable'
     tests:
       - allow: 'corepack enable'
-
-  - allow: 'npm config get *'
-    tests:
-      - allow: 'npm config get min-release-age'
-      - allow: 'npm config get registry'
-  - allow: 'npm config ls [-l|-s|--long|--json]'
-    tests:
-      - allow: 'npm config ls'
-      - allow: 'npm config ls -l'
-      - allow: 'npm config ls --json'
-  - allow: 'npm help *'
-    tests:
-      - allow: 'npm help npmrc'
-      - allow: 'npm help config -l'
-
-  - allow: 'pnpm config get *'
-    tests:
-      - allow: 'pnpm config get minimum-release-age'
-      - allow: 'corepack pnpm config get minimum-release-age'
-  - deny: 'pnpm config set *'
-    message: 'BLOCKED: project .npmrc edits should be reviewed manually.'
-    tests:
-      - deny: 'pnpm config set verify-deps-before-run never --location=project'
-      - deny: 'corepack pnpm config set verify-deps-before-run never --location=project'
-  - allow: 'pnpm -v|--version'
-    tests:
-      - allow: 'pnpm --version'
-      - allow: 'pnpm -v'
 
   - allow: 'corepack -v|--version'
     tests:
