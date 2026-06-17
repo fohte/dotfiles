@@ -158,7 +158,7 @@ rules:
       - deny: 'na exec eslint .'
       - deny: 'na dlx eslint --fix .'
   - deny: 'na config set *'
-    message: 'BLOCKED: PM config edits (.npmrc / .yarnrc / bunfig.toml) should be reviewed manually.'
+    message: 'BLOCKED: package manager config edits (.npmrc / .yarnrc / bunfig.toml) should be reviewed manually.'
     tests:
       - deny: 'na config set verify-deps-before-run never --location=project'
 
