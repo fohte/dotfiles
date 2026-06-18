@@ -29,6 +29,12 @@ case "$tool_name" in
   Edit | Write | MultiEdit)
     exec ~/.claude/hooks/default-branch-edit-guard <<< "$input"
     ;;
+  EnterWorktree)
+    # EnterWorktree is "Permission Required: No" so permissions.deny does not
+    # apply. Worktree creation must go through the /delegate-claude skill.
+    jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "EnterWorktree is disabled. Use the /delegate-claude skill to spawn work in a worktree."}}'
+    exit 0
+    ;;
 esac
 
 if [ "$tool_name" != "Bash" ]; then
