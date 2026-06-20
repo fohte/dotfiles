@@ -3,4 +3,4 @@
 set -euo pipefail
 
 cd "$(ghq list -e -p "fohte/skk-dictionary")"
-make export
+make sync
