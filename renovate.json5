@@ -24,5 +24,11 @@
       matchDatasources: ['node-version'],
       rangeStrategy: 'bump',
     },
+    {
+      matchManagers: ['github-actions'],
+      matchDatasources: ['node-version'],
+      matchFileNames: ['.github/workflows/validate-renovate.yml'],
+      rangeStrategy: 'bump',
+    },
   ],
 }
