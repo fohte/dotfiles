@@ -143,6 +143,24 @@ rules:
       - deny: 'npx eslint --fix .'
       - deny: 'bunx eslint --fix .'
 
+  # Direct node_modules/.bin/<tool> invocation bypasses the ni-family
+  # indirection. Same intent as `nlx <tool>` / `npx <tool>`, which are also
+  # denied above. Two rules (with/without `./` prefix) because runok pattern
+  # alternation does not span path separators; YAML anchor shares the message
+  # so the two stay in lockstep.
+  - deny: 'node_modules/.bin/* *'
+    message: &nmbin_msg 'BLOCKED: Use /ni skill. Direct node_modules/.bin invocation bypasses nr / nlx.'
+    fix_suggestion: &nmbin_fix 'nr <script> / nlx <pkg>'
+    tests:
+      - deny: 'node_modules/.bin/vitest run tests/foo.test.ts'
+      - deny: 'node_modules/.bin/tsc --showConfig'
+      - deny: 'node_modules/.bin/tsc -p tsconfig.build.json --showConfig'
+  - deny: './node_modules/.bin/* *'
+    message: *nmbin_msg
+    fix_suggestion: *nmbin_fix
+    tests:
+      - deny: './node_modules/.bin/tsc --showConfig'
+
   # `na <subcmd>` (@antfu/ni agent passthrough). Mirror PM-direct denies
   # so `na` can't be used to bypass the install / run / exec / dlx / config
   # set restrictions.
