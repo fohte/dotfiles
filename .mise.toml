@@ -5,6 +5,7 @@ description = "Refresh dotfiles and tools"
 depends = [
   "refresh:update-skk",
   "refresh:nvim-restore",
+  "refresh:mise-self-update",
   "refresh:mise-install",
   "refresh:lefthook",
   "refresh:brew-upgrade",
@@ -43,9 +44,13 @@ description = "Restore Neovim plugins"
 depends = ["refresh:deploy"]
 run = "nvim --headless -c 'Lazy! restore' +q"
 
+[tasks."refresh:mise-self-update"]
+description = "Update mise itself (no-op if installed via package manager)"
+run = "mise self-update --yes || true"
+
 [tasks."refresh:mise-install"]
 description = "Install mise tools"
-depends = ["refresh:deploy"]
+depends = ["refresh:deploy", "refresh:mise-self-update"]
 run = "mise install"
 
 [tasks."refresh:lefthook"]
