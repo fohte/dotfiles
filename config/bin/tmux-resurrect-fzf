@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# tmux display-popup does not inherit interactive-shell PATH; expose mise shims
+# so fzf and other mise-managed tools resolve.
+MISE_DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/mise"
+if [ -d "$MISE_DATA_DIR/shims" ]; then
+  export PATH="$MISE_DATA_DIR/shims:$PATH"
+fi
+
+# We are already inside `display-popup`. Strip --tmux from FZF_DEFAULT_OPTS so
+# fzf does not try to spawn a nested popup (which silently fails and closes).
+if [ -n "${FZF_DEFAULT_OPTS:-}" ]; then
+  FZF_DEFAULT_OPTS="$(printf '%s' "$FZF_DEFAULT_OPTS" | sed -E 's/--tmux( +[^ ]+)?//g')"
+  export FZF_DEFAULT_OPTS
+fi
+
+resolve_resurrect_dir() {
+  local d
+  d="$(tmux show-option -gqv @resurrect-dir 2> /dev/null || true)"
+  [ -z "$d" ] && d="$HOME/.tmux/resurrect"
+  echo "${d/#\~/$HOME}"
+}
+
+# Parse a timestamp baked into a tmux-resurrect filename and emit Unix epoch.
+# Expects bare ts string YYYYMMDDTHHMMSS (no prefix/suffix).
+ts_to_epoch() {
+  local ts="$1"
+  gdate -d "${ts:0:4}-${ts:4:2}-${ts:6:2} ${ts:9:2}:${ts:11:2}:${ts:13:2}" +%s
+}
+
+fmt_rel() {
+  local diff="$1"
+  if [ "$diff" -lt 60 ]; then
+    printf '%ds ago' "$diff"
+  elif [ "$diff" -lt 3600 ]; then
+    printf '%dm ago' "$((diff / 60))"
+  elif [ "$diff" -lt 86400 ]; then
+    printf '%dh ago' "$((diff / 3600))"
+  else
+    printf '%dd ago' "$((diff / 86400))"
+  fi
+}
+
+cmd_preview() {
+  local ts="$1"
+  local resurrect_dir file
+  resurrect_dir="$(resolve_resurrect_dir)"
+  file="$resurrect_dir/tmux_resurrect_${ts}.txt"
+  if [ ! -f "$file" ]; then
+    echo "not found: $file"
+    return 0
+  fi
+
+  local epoch now diff
+  epoch="$(ts_to_epoch "$ts")"
+  now="$(gdate +%s)"
+  diff=$((now - epoch))
+  gdate -d "@$epoch" '+%Y-%m-%d %H:%M:%S (%a)'
+  printf '%s\n\n' "$(fmt_rel "$diff")"
+
+  awk -F'\t' '
+    function strip_colon(s) { sub(/^:/, "", s); return s }
+    function sort_str(arr, n,   i, j, v) {
+      for (i = 2; i <= n; i++) {
+        v = arr[i]; j = i - 1
+        while (j > 0 && arr[j] > v) { arr[j+1] = arr[j]; j-- }
+        arr[j+1] = v
+      }
+    }
+    function sort_num(arr, n,   i, j, v) {
+      for (i = 2; i <= n; i++) {
+        v = arr[i] + 0; j = i - 1
+        while (j > 0 && (arr[j] + 0) > v) { arr[j+1] = arr[j]; j-- }
+        arr[j+1] = v
+      }
+    }
+    $1 == "pane" {
+      sess = $2; widx = $3 + 0
+      key  = sess SUBSEP widx
+      sessions[sess] = 1
+      wname[key] = strip_colon($7)
+      panes[key]++
+      cmds[key] = cmds[key] (cmds[key] ? "," : "") $10
+    }
+    END {
+      nsess = nwin = npane = 0
+      for (s in sessions) nsess++
+      for (k in panes)    { nwin++; npane += panes[k] }
+      printf "%d sessions, %d windows, %d panes\n\n", nsess, nwin, npane
+
+      ns = 0
+      for (s in sessions) sarr[++ns] = s
+      sort_str(sarr, ns)
+
+      for (si = 1; si <= ns; si++) {
+        s = sarr[si]
+        printf "%s\n", s
+        delete warr; wn = 0
+        for (k in panes) {
+          split(k, a, SUBSEP)
+          if (a[1] == s) warr[++wn] = a[2] + 0
+        }
+        sort_num(warr, wn)
+        for (wi = 1; wi <= wn; wi++) {
+          w = warr[wi]; key = s SUBSEP w
+          printf "  [%d] %s  (%dp: %s)\n", w, wname[key] ? wname[key] : "?", panes[key], cmds[key]
+        }
+      }
+    }
+  ' "$file"
+}
+
+# Internal preview hook
+if [ "${1:-}" = "--preview" ]; then
+  cmd_preview "${2:?missing ts}"
+  exit 0
+fi
+
+resurrect_dir="$(resolve_resurrect_dir)"
+if [ ! -d "$resurrect_dir" ]; then
+  tmux display-message "resurrect dir not found: $resurrect_dir"
+  exit 1
+fi
+
+current_ts="$(readlink "$resurrect_dir/last" 2> /dev/null | sed -E 's/^tmux_resurrect_(.*)\.txt$/\1/' || true)"
+
+shopt -s nullglob
+files=("$resurrect_dir"/tmux_resurrect_*.txt)
+shopt -u nullglob
+if [ "${#files[@]}" -eq 0 ]; then
+  tmux display-message "no resurrect snapshots in: $resurrect_dir"
+  exit 0
+fi
+
+# mtime equals the embedded timestamp; using it avoids BSD-awk's missing mktime.
+now="$(gdate +%s)"
+list="$(
+  cd "$resurrect_dir"
+  gstat -c '%Y %n' tmux_resurrect_*.txt |
+    sort -rn |
+    while read -r ep fn; do
+      ts="${fn#tmux_resurrect_}"
+      ts="${ts%.txt}"
+      printf '%-9s\t%s\t%s\n' "$(fmt_rel $((now - ep)))" "$ts" "$fn"
+    done
+)"
+
+selected="$(
+  printf '%s\n' "$list" | fzf \
+    --prompt='restore> ' \
+    --header="current: ${current_ts:-<none>}" \
+    --delimiter=$'\t' \
+    --with-nth=1,2 \
+    --preview="$0 --preview {2}" \
+    --preview-window='right,60%,wrap' ||
+    true
+)"
+
+if [ -z "$selected" ]; then
+  exit 0
+fi
+
+filename="$(awk -F'\t' '{print $3}' <<< "$selected")"
+selected_ts="$(awk -F'\t' '{print $2}' <<< "$selected")"
+
+if [ -n "${TMUX_RESURRECT_FZF_DRY_RUN:-}" ]; then
+  tmux display-message "[dry-run] would restore: $selected_ts"
+  exit 0
+fi
+
+ln -sfn "$filename" "$resurrect_dir/last"
+
+restore_script="$HOME/.config/tmux/plugins/tmux-resurrect/scripts/restore.sh"
+if [ ! -x "$restore_script" ]; then
+  tmux display-message "restore.sh not found: $restore_script"
+  exit 1
+fi
+
+if "$restore_script"; then
+  tmux display-message "restore launched: $selected_ts"
+else
+  tmux display-message "restore.sh failed (ts=$selected_ts)"
+  exit 1
+fi
