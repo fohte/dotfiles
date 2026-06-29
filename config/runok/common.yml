@@ -2,14 +2,23 @@
 
 definitions:
   vars:
-    # Paths whose contents are recreatable from sources — safe to `rm -r`
-    # without per-invocation confirmation. Extend as other regenerable
-    # artifact dirs come up.
+    # Directories whose contents are recreatable from sources — safe to
+    # `rm -r` without per-invocation confirmation.
     safe-rm-paths:
       type: pattern
       values:
         - '**/node_modules'
         - 'node_modules'
+
+    # Transient files safe to `rm` (without `-r`) — typically captured
+    # stdout/stderr or rotated logs. Matches any path ending in *.log,
+    # including prefixes like `subdir/foo.log` or `/var/log/foo.log`; the
+    # `.log` convention itself implies "disposable", and writes to system
+    # log paths normally require sudo so are gated by a separate hop.
+    safe-rm-files:
+      type: pattern
+      values:
+        - '*.log'
 
 rules:
   - deny: 'rm -rf *'
@@ -36,6 +45,16 @@ rules:
       - allow: 'rm -r /Users/foo/node_modules'
       - ask: 'rm -r node_modules.bak'
       - ask: 'rm -r node_modules/something'
+
+  - allow: 'rm <var:safe-rm-files>'
+    tests:
+      - allow: 'rm err.log'
+      - allow: 'rm ./err.log'
+      - allow: 'rm subdir/foo.log'
+      # `-r` is intentionally not in the pattern; recursing into a directory
+      # that happens to end in `.log` must stay ask.
+      - ask: 'rm -r foo.log'
+      - ask: 'rm err.txt'
 
   - allow: 'cp *'
     tests:
