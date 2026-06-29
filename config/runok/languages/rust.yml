@@ -17,6 +17,18 @@ rules:
   - allow: 'cargo new *'
     tests:
       - allow: 'cargo new --bin tree-check'
+  # `cargo run` can execute arbitrary host code via build.rs / proc-macros /
+  # --manifest-path / --example, so this broad allow is gated by cwd.
+  - allow: 'cargo run *'
+    when: 'env.PWD.startsWith(env.HOME + "/ghq/github.com/fohte/")'
+    tests:
+      - allow: 'cargo run'
+      - allow: 'cargo run --quiet -- --dump-openapi'
+      - allow: 'cargo run -q -- --dump-openapi'
+      - allow: 'cargo run -- generate trigger'
+      - allow: 'cargo run -- up'
+      - allow: 'cargo run --bin backend --quiet -- --dump-openapi'
+      - allow: 'cargo run --manifest-path backend/Cargo.toml -p backend -- --migrate-only'
   - allow: 'cargo search *'
   - allow: 'cargo test *'
     tests:
