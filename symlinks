@@ -47,6 +47,8 @@ fi
 
 if match_tag tmux; then
   sym config/tmux ~/.config/tmux
+
+  sym_role_overlay config/tmux/tmux.conf ~/.config/tmux/tmux.conf.overlay
 fi
 
 if match_tag wezterm; then
