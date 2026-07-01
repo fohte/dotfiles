@@ -22,6 +22,9 @@ interface SessionData {
   context_window?: {
     context_window_size?: number
   }
+  effort?: {
+    level?: string
+  }
 }
 
 interface RateLimitWindow {
@@ -248,7 +251,7 @@ async function main() {
   const percentage = Math.round((totalTokens / autoCompactThreshold) * 100)
   const color = getColorForPercentage(percentage)
 
-  // Format output: Opus 4.7 [1M] | 1.0k tok (10%) | 5h: 33% (4h50m) / 7d: 6% (1d17h) | v2.1.119 (Claude Code)
+  // Format output: Opus 4.7 [1M] (high) | 1.0k tok (10%) | 5h: 33% (4h50m) / 7d: 6% (1d17h) | v2.1.119 (Claude Code)
   const reset = '\x1b[0m'
   const dim = '\x1b[90m'
 
@@ -256,6 +259,7 @@ async function main() {
   const modelColor = getModelColor(modelName, contextWindow)
   const is1M = contextWindow >= 1_000_000
   const contextLabel = is1M && !/1m/i.test(modelName) ? ' [1M]' : ''
+  const effortLabel = data.effort?.level ? ` (${data.effort.level})` : ''
   const tokensDisplay = formatTokens(totalTokens)
 
   // Prefix a cloud icon in AWS orange when routed through Bedrock
@@ -263,7 +267,9 @@ async function main() {
   const bedrockBadge = isBedrock ? '\x1b[38;5;208m\x1b[0m ' : ''
 
   const parts: string[] = []
-  parts.push(`${bedrockBadge}${modelColor}${modelName}${contextLabel}${reset}`)
+  parts.push(
+    `${bedrockBadge}${modelColor}${modelName}${contextLabel}${effortLabel}${reset}`,
+  )
   parts.push(`${tokensDisplay} tok (${color}${percentage}%${reset})`)
 
   // In the work role, treat weekends as non-active so the 7d pace projection
