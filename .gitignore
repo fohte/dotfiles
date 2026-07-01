@@ -13,10 +13,14 @@
 /config/zsh/.zshenv.overlay
 /config/zsh/.zshrc.overlay
 
-# Role overlay (symlink on work, empty stub elsewhere) deployed into
-# ~/.config/runok by `dot deploy`. ~/.config/runok is a symlink to
-# config/runok, so the file materializes inside this directory.
+# Role overlays deployed by `dot deploy`. runok and tmux dirs are symlinked
+# wholesale into ~/.config, so their overlay files materialize inside this
+# repo. armyknife symlinks individual files instead (see symlinks), but its
+# work.yaml still lands here if ~/.config/armyknife is a directory symlink
+# left over from an older deploy.
 /config/runok/work.yml
+/config/armyknife/work.yaml
+/config/tmux/tmux.conf.overlay
 
 # Local overrides for jsonnet configs (machine-specific, may contain secrets)
 *.local.jsonnet
