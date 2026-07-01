@@ -255,9 +255,10 @@ async function main() {
   const reset = '\x1b[0m'
   const dim = '\x1b[90m'
 
-  const modelName = data.model?.display_name || 'Unknown'
+  const rawModelName = data.model?.display_name || 'Unknown'
+  const modelName = rawModelName.replace(/\s*\(1M context\)\s*/i, '').trim()
   const modelColor = getModelColor(modelName, contextWindow)
-  const is1M = contextWindow >= 1_000_000
+  const is1M = contextWindow >= 1_000_000 || /1m/i.test(rawModelName)
   const contextLabel = is1M && !/1m/i.test(modelName) ? ' [1M]' : ''
   const effortLabel = data.effort?.level ? ` (${data.effort.level})` : ''
   const tokensDisplay = formatTokens(totalTokens)
