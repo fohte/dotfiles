@@ -9,7 +9,6 @@ bindkey '^N' down-history
 no_expand_commands=(
   # these commands should not be expanded because they are aliased by the op plugin.
   aws
-  gh
 )
 
 function ignore-expansion() {
