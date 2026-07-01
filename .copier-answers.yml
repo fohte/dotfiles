@@ -1,5 +1,5 @@
 # Changes here will be overwritten by Copier
-_commit: v0.8.4
+_commit: v0.8.11
 _src_path: https://github.com/fohte/generic-boilerplate
 description: ''
 is_public: true
@@ -8,5 +8,3 @@ repo_language: en
 subpackages: []
 type: base
 use_release_please: false
-
-#copier updated
