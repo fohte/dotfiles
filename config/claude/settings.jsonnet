@@ -3,7 +3,6 @@ local env(name) = std.extVar(name);
 {
   env: {
     CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY: '1',
-    CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1',
     ANTHROPIC_BASE_URL: 'http://127.0.0.1:8787',
   },
 
@@ -222,7 +221,6 @@ local env(name) = std.extVar(name);
   showThinkingSummaries: true,
   tui: 'fullscreen',
   promptSuggestionEnabled: false,
-  teammateMode: 'tmux',
   agentPushNotifEnabled: false,
   editorMode: 'vim',
 
