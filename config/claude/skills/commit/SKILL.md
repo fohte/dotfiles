@@ -116,9 +116,8 @@ fix bug
 1. `git status` で変更内容を確認
 2. `git diff` でステージング前の差分を確認
 3. `git log --oneline -5` で最近のコミットスタイルを確認
-4. 変更を `git add` でステージング (この時点ではコミットしない)
-5. **`self-review` skill でレビュー (条件付き必須)**: `git diff --cached` の差分を `self-review` skill に渡してレビューさせる (3 観点グループの subagent が並列実行される)。省略可能な条件と、🔴 Critical / 🟡 Warning への対応方針は下記「レビューのタイミング」を参照
-6. コミット (HEREDOC を使用してフォーマットを保持):
+4. 変更を `git add` でステージング
+5. コミット (HEREDOC を使用してフォーマットを保持):
 
 ```bash
 git commit -m "$(cat <<'EOF'
@@ -133,15 +132,20 @@ EOF
 )"
 ```
 
-7. `git status` で成功を確認
+6. `git status` で成功を確認
+7. **`self-review` skill でレビュー (条件付き必須・1 回のみ)**: push する前に、これから push する全コミットをまとめてレビューする。省略可能な条件と、🔴 Critical / 🟡 Warning への対応方針は下記「push 前レビュー」を参照
+8. `git push` (upstream 未設定の場合は `git push -u origin HEAD`)
 
-## レビューのタイミング
+## push 前レビュー
 
-`self-review` skill でのレビューは以下の 2 段階で行う。skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、13 観点の統合レポートを返す。
+`git push` の前に、その push に含まれる全コミットをまとめて `self-review` skill でレビューする。skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、13 観点の統合レポートを返す。**レビューは 1 回の push につき 1 回だけ実行する** — コミットのたびに繰り返さない。修正コミットを追加した後も再実行しない。
 
-### コミット単位 (条件付き必須)
-
-step 5 で `git diff --cached` を `self-review` skill に渡す。
+```bash
+# push に含まれる差分を取得
+git diff @{u}..HEAD
+# upstream が未設定の場合は対象ブランチを明示
+git diff origin/master..HEAD
+```
 
 省略可能なのは**以下を全て満たす場合のみ**:
 
@@ -153,27 +157,10 @@ step 5 で `git diff --cached` を `self-review` skill に渡す。
 
 「小さいから」「単純だから」「明らかに問題ないから」「効率を優先したい」「変更が局所的だから」を理由とした自己判断のスキップは禁止。条件に少しでも当てはまらないなら実行する。判断に迷うなら実行する。
 
-🔴 Critical: 修正して step 4 から再実行
-🟡 Warning: 下記「🟡 Warning の判断ルール」に従い、Claude が自分で判断して対応する
+- 🔴 Critical: 該当コードを修正し、`git add` した上で新規コミットとして追加する (`--amend` 禁止)。修正コミットを追加したらそのまま push に進む
+- 🟡 Warning: 下記「🟡 Warning の判断ルール」に従い、Claude が自分で判断して対応する
 
-### push 前 (必須)
-
-`git push` の前に、その push に含まれる全コミットをまとめて `self-review` skill でレビューする。
-
-```bash
-# push に含まれる差分を取得
-git diff @{u}..HEAD
-# upstream が未設定の場合は対象ブランチを明示
-git diff origin/master..HEAD
-```
-
-この差分を `self-review` skill に渡す。
-
-- 🔴 Critical があれば push せず、追加コミットで修正してから再レビュー
-- 🟡 Warning は下記「🟡 Warning の判断ルール」に従い、Claude が自分で判断して対応する
-- コミット単位レビュー済みでも、push 前レビューは必ず実行する。複数コミットをまたぐ整合性 (ある commit で追加した API の呼び出し漏れが別 commit にある等) は単一コミットでは見えない
-
-push 前レビューは `commit` skill の責務だが、`create-pr` skill 経由で push する場合も同様に行う (`create-pr` skill 内で再掲される)。
+このレビューは `commit` skill の責務。`create-pr` skill から push する場合も本手順に従い、`create-pr` skill 側で `self-review` を重複して呼び出さない。
 
 ### 🟡 Warning の判断ルール
 

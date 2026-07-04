@@ -19,25 +19,22 @@
 
 create-pr skill を起動したら、**最初の応答で**以下の必須ステップを列挙し、これから実行する旨を宣言すること。宣言なしに Step 1 以降に進むのは禁止。
 
-- Step 0: push 前 self-review (`self-review` skill を呼ぶ)
+- Step 0: 未 push コミットの push (`commit` skill の push 手順に従う)
 - Step 2: PR body セルフレビュー (13 ルール + 要素抽出 + 減算の独立 3 工程)
 
 「小さい PR だから」「変更が単純だから」「明らかに問題ないから」「効率を優先したい」を理由としたスキップは禁止。これらは典型的な自己判断スキップシグナルで、検出したら必ず実行する。skill のテキストに「必須」「スキップ禁止」と書かれているステップを Claude 側の判断で省略しない。スキップしてよいのはユーザーが該当ステップを名指しで明示的に skip 指示した場合のみ。
 
-## 0. push 前レビュー (必須)
+## 0. 未 push コミットの push (必須)
 
-`git push` の前に、push に含まれる全コミットの差分を `self-review` skill でレビューする (`commit` skill の必須ステップ)。skill 側で 3 グループの subagent を並列起動し統合レポートを返す。
+未 push のコミットがあれば `commit` skill の push 手順 (`self-review` skill でのレビュー → 🔴/🟡 対応 → `git push`) に従って push する。`self-review` はこの skill から直接呼び出さない — 呼び出しは `commit` skill 側の責務とし、二重実行を避ける。
 
 ```bash
-git diff @{u}..HEAD
+git log @{u}..HEAD --oneline
 # upstream 未設定なら
-git diff origin/master..HEAD
+git log origin/master..HEAD --oneline
 ```
 
-- 🔴 Critical: push せず追加コミットで修正 → 再レビュー
-- 🟡 Warning: 修正するか無視するか判断
-- コミット単位レビュー済みでも push 前レビューは必須 (複数コミット間の整合性は単一コミットでは見えない)
-- 「変更が単純」「コミットが 1 つだけ」「明らかに問題ない」「効率を優先したい」を理由としたスキップは禁止。push 直前は必ず実行する
+未 push のコミットがなければこのステップは完了とみなす。
 
 ## 1. PR body のドラフトを作成する
 
