@@ -53,10 +53,9 @@ function formatTokens(tokens: number): string {
   return tokens.toString()
 }
 
-// Return a display color based on model name and context window size.
+// Return a display color based on model name and 1M-context status.
 // Opus uses purple tones, Sonnet uses green tones, and 1M context uses brighter shades.
-function getModelColor(displayName: string, contextWindow: number): string {
-  const is1M = contextWindow >= 1_000_000
+function getModelColor(displayName: string, is1M: boolean): string {
   const lower = displayName.toLowerCase()
   if (lower.includes('opus')) {
     return is1M ? '\x1b[38;5;177m' : '\x1b[38;5;141m'
@@ -257,8 +256,8 @@ async function main() {
 
   const rawModelName = data.model?.display_name || 'Unknown'
   const modelName = rawModelName.replace(/\s*\(1M context\)\s*/i, '').trim()
-  const modelColor = getModelColor(modelName, contextWindow)
   const is1M = contextWindow >= 1_000_000 || /1m/i.test(rawModelName)
+  const modelColor = getModelColor(modelName, is1M)
   const contextLabel = is1M && !/1m/i.test(modelName) ? ' [1M]' : ''
   const effortLabel = data.effort?.level ? ` (${data.effort.level})` : ''
   const tokensDisplay = formatTokens(totalTokens)
