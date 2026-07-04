@@ -133,12 +133,16 @@ EOF
 ```
 
 6. `git status` で成功を確認
-7. **`self-review` skill でレビュー (条件付き必須・1 回のみ)**: push する前に、これから push する全コミットをまとめてレビューする。省略可能な条件と、🔴 Critical / 🟡 Warning への対応方針は下記「push 前レビュー」を参照
+7. **`self-review` skill でレビュー (条件付き必須、1 回のみ)**: push する前に、これから push する全コミットをまとめてレビューする。省略可能な条件と、🔴 Critical / 🟡 Warning への対応方針は下記「push 前レビュー」を参照
 8. `git push` (upstream 未設定の場合は `git push -u origin HEAD`)
 
 ## push 前レビュー
 
-`git push` の前に、その push に含まれる全コミットをまとめて `self-review` skill でレビューする。skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、13 観点の統合レポートを返す。**レビューは 1 回の push につき 1 回だけ実行する** — コミットのたびに繰り返さない。修正コミットを追加した後も再実行しない。
+`git push` の前に、その push に含まれる全コミットをまとめて `self-review` skill でレビューする。
+skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、13 観点の統合レポートを返す。
+**レビューは 1 回の push につき 1 回だけ実行する**。
+コミットのたびに繰り返さない。
+修正コミットを追加した後も再実行しない。
 
 ```bash
 # push に含まれる差分を取得
@@ -157,10 +161,12 @@ git diff origin/master..HEAD
 
 「小さいから」「単純だから」「明らかに問題ないから」「効率を優先したい」「変更が局所的だから」を理由とした自己判断のスキップは禁止。条件に少しでも当てはまらないなら実行する。判断に迷うなら実行する。
 
-- 🔴 Critical: 該当コードを修正し、`git add` した上で新規コミットとして追加する (`--amend` 禁止)。修正コミットを追加したらそのまま push に進む
+- 🔴 Critical: 該当コードを修正し、`git add` した上で新規コミットとして追加する (`--amend` 禁止)。
+  修正コミットを追加したらそのまま push に進む
 - 🟡 Warning: 下記「🟡 Warning の判断ルール」に従い、Claude が自分で判断して対応する
 
-このレビューは `commit` skill の責務。`create-pr` skill から push する場合も本手順に従い、`create-pr` skill 側で `self-review` を重複して呼び出さない。
+このレビューは `commit` skill の責務。
+`create-pr` skill から push する場合も本手順に従い、`create-pr` skill 側で `self-review` を重複して呼び出さない。
 
 ### 🟡 Warning の判断ルール
 

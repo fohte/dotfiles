@@ -26,7 +26,8 @@ create-pr skill を起動したら、**最初の応答で**以下の必須ステ
 
 ## 0. 未 push コミットの push (必須)
 
-未 push のコミットがあれば `commit` skill の push 手順 (`self-review` skill でのレビュー → 🔴/🟡 対応 → `git push`) に従って push する。`self-review` はこの skill から直接呼び出さない — 呼び出しは `commit` skill 側の責務とし、二重実行を避ける。
+未 push のコミットがあれば `commit` skill の push 手順 (`self-review` skill でのレビュー → 🔴/🟡 対応 → `git push`) に従って push する。
+`self-review` はこの skill から直接呼び出さない。呼び出しは `commit` skill 側の責務とし、二重実行を避ける。
 
 ```bash
 git log @{u}..HEAD --oneline
