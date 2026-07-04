@@ -18,12 +18,6 @@ local env(name) = std.extVar(name);
     args: ['--app', 'desktop'],
     env: {},
   },
-  'chrome-devtools': {
-    type: 'stdio',
-    command: 'npx',
-    args: ['-y', 'chrome-devtools-mcp@latest'],
-    env: {},
-  },
   'codebase-memory': {
     type: 'stdio',
     // Launched via wrapper that cd's to the main repo when inside a worktree —
