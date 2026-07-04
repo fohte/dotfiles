@@ -113,7 +113,7 @@ import_env 'mise.zsh'
 # fzf is installed by mise, so fzf.zsh must be loaded after mise.zsh
 import_env 'fzf.zsh'
 
-# gh is installed by mise
+# gh is installed by mise, so github.zsh must be loaded after mise.zsh
 import_env 'github.zsh'
 
 # Calculate initial checksum of zsh config files
