@@ -76,7 +76,7 @@ rules:
       - allow: 'tmux show-options'
 
   # runok
-  - allow: 'runok check *'
+  - allow: 'runok [-c *] check *'
   - allow: 'runok exec *'
 
   - allow: nlx @marp-team/marp-cli@latest *
