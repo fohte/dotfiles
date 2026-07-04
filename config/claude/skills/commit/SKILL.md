@@ -141,7 +141,7 @@ EOF
 
 6. `git status` で成功を確認
 7. **`self-review` skill でレビュー (条件付き必須、1 回のみ)**: push する前に、これから push する全コミットをまとめてレビューする。省略可能な条件と、🔴 Critical / 🟡 Warning への対応方針は下記「push 前レビュー」を参照
-8. `git push` (upstream 未設定の場合は `git push -u origin HEAD`)
+8. `git push` (upstream 未設定の場合は `git push -u origin HEAD`)。**「push してよいか」を尋ねて止まらない**: commit → self-review → push は一連の継続フローであり、途中の確認は CLAUDE.md の「作業を止めない」原則に反する
 
 ## push 前レビュー
 
