@@ -6,7 +6,8 @@ local env(name) = std.extVar(name);
     ANTHROPIC_BASE_URL: 'http://127.0.0.1:8787',
   },
 
-  // Parallel work is driven from tmux panes, so the agent view panel is redundant.
+  // Parallel work is driven by separate tmux panes/sessions, not the
+  // in-app agent-team feature, so the agent view panel is redundant.
   disableAgentView: true,
 
   includeCoAuthoredBy: true,
