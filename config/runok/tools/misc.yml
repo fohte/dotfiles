@@ -118,3 +118,6 @@ rules:
       # falls through to the `rm -rf *` deny rule in common.yml.
       - deny: "nlx --package renovate -c 'rm -rf /'"
       - deny: "nlx --package renovate -c 'renovate-config-validator renovate.json5; rm -rf /'"
+
+  - deny: opencode *
+    message: don't use opencode
