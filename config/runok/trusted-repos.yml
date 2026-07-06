@@ -11,7 +11,7 @@ rules:
   # `cargo run` can execute arbitrary host code via build.rs / proc-macros /
   # --manifest-path / --example, so this broad allow is gated by cwd.
   - allow: 'cargo run *'
-    when: "paths['trusted-repos'].exists(p, env.PWD.startsWith(p))"
+    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/'))"
     tests:
       - allow: 'cargo run'
       - allow: 'cargo run --quiet -- --dump-openapi'
@@ -27,12 +27,12 @@ rules:
   # from inside fohte/* still runs remote code. The cwd check just narrows
   # the blast radius to repos the user is actively working in.
   - allow: 'go run *'
-    when: "paths['trusted-repos'].exists(p, env.PWD.startsWith(p))"
+    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/'))"
     tests:
       - allow: 'go run main.go'
       - allow: 'go run ./cmd/foo'
   - allow: 'go generate *'
-    when: "paths['trusted-repos'].exists(p, env.PWD.startsWith(p))"
+    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/'))"
     tests:
       - allow: 'go generate ./cmd/di/...'
       - allow: 'go generate ./...'
