@@ -40,9 +40,9 @@ rules:
 
   # enforce ni -E (exact pinning) in fohte's repos
   - allow: 'ni -E *'
-    when: "env.PWD.startsWith(env.HOME + '/ghq/github.com/fohte/')"
+    when: "paths['trusted-repos'].exists(p, env.PWD.startsWith(p))"
   - deny: 'ni !-E *'
-    when: "env.PWD.startsWith(env.HOME + '/ghq/github.com/fohte/') && size(args) > 0"
+    when: "paths['trusted-repos'].exists(p, env.PWD.startsWith(p)) && size(args) > 0"
     message: 'BLOCKED: Use ni -E to pin exact versions in fohte repos.'
     fix_suggestion: 'ni -E <pkg>'
 

@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+# Rules that allow arbitrary code execution only inside the user's own repos,
+# where that risk is acceptable.
+definitions:
+  paths:
+    trusted-repos:
+      - '~/ghq/github.com/fohte'
+
+rules:
+  # `cargo run` can execute arbitrary host code via build.rs / proc-macros /
+  # --manifest-path / --example, so this broad allow is gated by cwd.
+  - allow: 'cargo run *'
+    when: "paths['trusted-repos'].exists(p, env.PWD.startsWith(p))"
+    tests:
+      - allow: 'cargo run'
+      - allow: 'cargo run --quiet -- --dump-openapi'
+      - allow: 'cargo run -q -- --dump-openapi'
+      - allow: 'cargo run -- generate trigger'
+      - allow: 'cargo run -- up'
+      - allow: 'cargo run --bin backend --quiet -- --dump-openapi'
+      - allow: 'cargo run --manifest-path backend/Cargo.toml -p backend -- --migrate-only'
+
+  # `go run` / `go generate` execute arbitrary code (main package source,
+  # `//go:generate` directives, or `go run <remote>@version`). The `when`
+  # gates only the cwd, not the arguments — `go run example.com/x@latest`
+  # from inside fohte/* still runs remote code. The cwd check just narrows
+  # the blast radius to repos the user is actively working in.
+  - allow: 'go run *'
+    when: "paths['trusted-repos'].exists(p, env.PWD.startsWith(p))"
+    tests:
+      - allow: 'go run main.go'
+      - allow: 'go run ./cmd/foo'
+  - allow: 'go generate *'
+    when: "paths['trusted-repos'].exists(p, env.PWD.startsWith(p))"
+    tests:
+      - allow: 'go generate ./cmd/di/...'
+      - allow: 'go generate ./...'

@@ -3,6 +3,7 @@
 extends:
   - 'github:fohte/runok-presets/base'
   - './common.yml'
+  - './trusted-repos.yml'
   - './git.yml'
   - './macos.yml'
   - './opensrc.yml'

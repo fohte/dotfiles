@@ -13,8 +13,8 @@ rules:
   - allow: 'go build|test|vet|list *'
   # `go get` only modifies go.mod/go.sum and the module cache; code from
   # fetched deps does not run until a separate `go build`/`go run`, which is
-  # gated below. Allowed unconditionally so dep work in third-party repos
-  # doesn't prompt.
+  # trust-gated (see trusted-repos.yml). Allowed unconditionally so dep work
+  # in third-party repos doesn't prompt.
   - allow: 'go get *'
     tests:
       - allow: 'go get github.com/foo/bar@v1.2.3'
@@ -25,21 +25,7 @@ rules:
       - allow: 'go mod init covcheck'
       - allow: 'go mod edit -go=1.23.0'
       - allow: 'go mod tidy'
-  # `go run` / `go generate` execute arbitrary code (main package source,
-  # `//go:generate` directives, or `go run <remote>@version`). The `when`
-  # gates only the cwd, not the arguments — `go run example.com/x@latest`
-  # from inside fohte/* still runs remote code. The cwd check just narrows
-  # the blast radius to repos the user is actively working in.
-  - allow: 'go run *'
-    when: "env.PWD.startsWith(env.HOME + '/ghq/github.com/fohte/')"
-    tests:
-      - allow: 'go run main.go'
-      - allow: 'go run ./cmd/foo'
-  - allow: 'go generate *'
-    when: "env.PWD.startsWith(env.HOME + '/ghq/github.com/fohte/')"
-    tests:
-      - allow: 'go generate ./cmd/di/...'
-      - allow: 'go generate ./...'
+  # `go run` / `go generate` are trust-gated; see trusted-repos.yml.
   - allow: 'go tool *'
   - allow: 'gotest *'
   - allow: 'gofmt *'
