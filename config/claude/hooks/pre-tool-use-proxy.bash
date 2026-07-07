@@ -35,6 +35,17 @@ case "$tool_name" in
     jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "EnterWorktree is disabled. Use the /delegate-claude skill to spawn work in a worktree."}}'
     exit 0
     ;;
+  Agent)
+    # Agent(isolation:"worktree") creates a git worktree directly via the
+    # harness, bypassing Bash and thus runok's git worktree deny rules --
+    # same bypass as EnterWorktree above. isolation:"remote" doesn't touch
+    # git and stays allowed.
+    isolation=$(echo "$input" | jq -r '.tool_input.isolation // empty')
+    if [ "$isolation" = "worktree" ]; then
+      jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "Agent isolation:\"worktree\" is disabled. Use the /delegate-claude skill to spawn work in a worktree."}}'
+      exit 0
+    fi
+    ;;
 esac
 
 if [ "$tool_name" != "Bash" ]; then
