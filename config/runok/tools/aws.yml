@@ -26,3 +26,11 @@ rules:
     tests:
       - allow: 'aws logs filter-log-events --log-group-name foo'
       - allow: 'aws --region ap-northeast-1 logs filter-log-events --log-group-name foo'
+  # `help` is a reserved positional argument the CLI intercepts before running
+  # the actual operation, so it never reaches the network regardless of which
+  # service/operation precedes it.
+  - allow: 'aws * help'
+    tests:
+      - allow: 'aws help'
+      - allow: 'aws s3 help'
+      - allow: 'aws ec2 describe-instances help'
