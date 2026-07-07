@@ -77,8 +77,9 @@ node = "24.18.0"
 >>>>>>> after updating
 pinact = "4.1.0"
 "github:fohte/basefmt" = "0.1.0"
-"npm:@commitlint/cli" = "21.1.0"
-"npm:prettier" = "3.9.4"
+<<<<<<< before updating
+"npm:@commitlint/cli" = "21.0.2"
+"npm:prettier" = "3.8.4"
 "aqua:koalaman/shellcheck" = "0.11.0"
 "aqua:mvdan/sh" = "3.13.1"
 "aqua:JohnnyMorganz/StyLua" = "2.5.2"
@@ -87,3 +88,14 @@ pinact = "4.1.0"
 # Must stay repo-local: mise-action does not load the global config.
 "aqua:google/go-jsonnet" = "0.22.0"
 "aqua:jqlang/jq" = "1.8.1"
+||||||| last update
+"npm:@commitlint/cli" = "21.0.2"
+"npm:prettier" = "3.8.4"
+shellcheck = "0.11.0"
+shfmt = "3.13.1"
+=======
+"npm:@commitlint/cli" = "21.1.0"
+"npm:prettier" = "3.9.4"
+shellcheck = "0.11.0"
+shfmt = "3.13.1"
+>>>>>>> after updating
