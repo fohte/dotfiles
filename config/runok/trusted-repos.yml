@@ -36,3 +36,13 @@ rules:
     tests:
       - allow: 'go generate ./cmd/di/...'
       - allow: 'go generate ./...'
+
+  # `nr <script>` runs whatever the repo's own package.json "scripts" entry
+  # defines — code the repo owns, same trust boundary as cargo run/go run above.
+  - allow: 'nr *'
+    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/'))"
+    tests:
+      - allow: 'nr dev'
+      - allow: 'nr preview --port 4173'
+      - allow: 'nr --filter web run test'
+      - allow: 'nr -C web dev'
