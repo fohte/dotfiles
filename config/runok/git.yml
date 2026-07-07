@@ -88,13 +88,36 @@ rules:
   # origin/main to sync with the default branch is legitimate and stays
   # allowed via the `allow: 'git [-C *] merge origin/main|origin/master *'`
   # rule further down.
-  - deny: 'git [-C *] merge origin/main|origin/master *'
+  #
+  # Split into bare and `-C <dir>` forms because the check must look at the
+  # directory git actually operates on, not the shell's cwd: `fs.cwd` only
+  # reflects the latter, so a bare `when: fs.cwd...` check here would look at
+  # the wrong directory whenever `-C` is used (e.g. `git -C <worktree> merge
+  # origin/main` run from the main checkout would be wrongly denied, and `git
+  # -C <main-checkout> merge origin/main` run from inside a worktree would
+  # wrongly bypass the deny). `flags.C` gives the `-C` form the right value
+  # to check instead.
+  # The worktree-allow branch of this `when` can't be covered by an inline
+  # test (`InlineTestEntry` has no cwd override, so `runok test` only ever
+  # exercises the deny branch from its own non-worktree cwd). If this
+  # condition changes, manually re-verify by `cd`-ing into a path containing
+  # `.worktrees/` and confirming `runok check --verbose` still allows.
+  - deny: 'git merge origin/main|origin/master *'
     when: "!fs.cwd.contains('/.worktrees/')"
     message: 'Blocked because merging origin/main or origin/master directly (outside a worktree) creates a needless merge commit. Use `git pull` instead.'
     fix_suggestion: 'git pull'
     tests:
       - deny: 'git merge origin/main'
       - deny: 'git merge origin/master'
+  - deny: 'git -C * merge origin/main|origin/master *'
+    when: "!flags.C.contains('/.worktrees/')"
+    message: 'Blocked because merging origin/main or origin/master directly (outside a worktree) creates a needless merge commit. Use `git pull` instead.'
+    fix_suggestion: 'git -C <dir> pull'
+    tests:
+      - deny: 'git -C /tmp merge origin/main'
+      - deny: 'git -C /tmp merge origin/master'
+      - allow: 'git -C /tmp/.worktrees/foo merge origin/main'
+      - allow: 'git -C /tmp/.worktrees/foo merge origin/master'
   - deny: 'git [-C *] merge !origin/main|origin/master *'
     message: 'Blocked because non-default merges should go through `git pull --rebase` to keep history linear.'
     fix_suggestion: 'git pull --rebase'
