@@ -26,11 +26,17 @@ rules:
     tests:
       - allow: 'aws logs filter-log-events --log-group-name foo'
       - allow: 'aws --region ap-northeast-1 logs filter-log-events --log-group-name foo'
-  # `help` is a reserved positional argument the CLI intercepts before running
-  # the actual operation, so it never reaches the network regardless of which
-  # service/operation precedes it.
+  # `help` only short-circuits into the CLI's doc viewer when it appears bare
+  # (no flags anywhere, at most service+operation preceding it) — the parser
+  # is otherwise free to consume the literal word as a flag value (e.g.
+  # `--value help`) or trailing positional arg (e.g. `s3 cp src help`), which
+  # would let a real, possibly mutating, operation through undetected.
   - allow: 'aws * help'
+    when: 'size(flags) == 0 && size(args) <= 3'
     tests:
       - allow: 'aws help'
       - allow: 'aws s3 help'
       - allow: 'aws ec2 describe-instances help'
+      - ask: 'aws --region ap-northeast-1 s3 help'
+      - ask: 'aws ssm put-parameter --name x --overwrite --type String --value help'
+      - ask: 'aws s3 cp s3://bucket/key help'
