@@ -88,6 +88,13 @@ rules:
   - allow: 'nlx tsr generate'
     tests:
       - allow: 'nlx tsr generate'
+  # `playwright install` only downloads browser binaries into the
+  # ms-playwright cache; no arbitrary-code or write-outside-cache flags exist.
+  - allow: 'nlx playwright|playwright@* install [--with-deps] chromium'
+    tests:
+      - allow: 'nlx playwright install chromium'
+      - allow: 'nlx playwright@1.61.1 install chromium'
+      - allow: 'nlx playwright install --with-deps chromium'
 
   # Force ni-family shortcuts (ni / nci / nun / nup / nr / nlx). Escape
   # hatch for non-write subcommands: `na <args>` (allowed below).
