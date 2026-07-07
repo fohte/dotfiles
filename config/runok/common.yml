@@ -279,3 +279,13 @@ rules:
       - deny: 'while true; do sleep 1; done'
       - deny: 'until curl -sf https://example.com; do sleep 1; done'
       - allow: 'for i in 1 2 3; do echo $i; done'
+
+  # `cmd & disown` manually detaches a background job. Claude Code's Bash tool
+  # has a run_in_background option for this; disown showing up means that
+  # option was skipped in favor of a shell-level workaround.
+  - deny: 'disown *'
+    message: 'Use the Bash tool run_in_background option instead of manually backgrounding with `&` and `disown`.'
+    fix_suggestion: 'Run the command with run_in_background: true instead of `cmd & disown`.'
+    tests:
+      - deny: 'disown'
+      - deny: 'disown %1'
