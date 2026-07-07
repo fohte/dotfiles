@@ -175,6 +175,19 @@ return {
           })
         end,
 
+        ['terraformls'] = function()
+          setup_server('terraformls', {
+            on_attach = function(client, buffer)
+              on_attach(client, buffer)
+
+              -- Works around a terraform-ls bug where multiple interpolations in a heredoc
+              -- overflow deltaStart, causing an infinite semanticTokens/refresh loop that
+              -- freezes nvim: https://github.com/hashicorp/terraform-ls/issues/2094
+              client.server_capabilities.semanticTokensProvider = nil
+            end,
+          })
+        end,
+
         ['efm'] = function()
           local efm_configs = require('user.lsp.efm')
 
