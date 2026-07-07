@@ -9,6 +9,8 @@ definitions:
       values:
         - '**/node_modules'
         - 'node_modules'
+        - '**/dist'
+        - 'dist'
 
     # Transient files safe to `rm` (without `-r`) — typically captured
     # stdout/stderr or rotated logs. Matches any path ending in *.log,
@@ -45,6 +47,11 @@ rules:
       - allow: 'rm -r /Users/foo/node_modules'
       - ask: 'rm -r node_modules.bak'
       - ask: 'rm -r node_modules/something'
+      - allow: 'rm -r dist'
+      - allow: 'rm -r web/dist'
+      - allow: 'rm -r packages/foo/dist'
+      - ask: 'rm -r distfoo'
+      - ask: 'rm -r src/distribution'
 
   - allow: 'rm <var:safe-rm-files>'
     tests:
