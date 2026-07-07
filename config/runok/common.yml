@@ -284,7 +284,7 @@ rules:
   # has a run_in_background option for this; disown showing up means that
   # option was skipped in favor of a shell-level workaround.
   - deny: 'disown *'
-    message: 'Use the Bash tool run_in_background option instead of manually backgrounding with `&` and `disown`.'
+    message: 'Manually backgrounding with `&` and `disown` bypasses the Bash tool run_in_background option, so the harness loses track of the job.'
     fix_suggestion: 'Run the command with run_in_background: true instead of `cmd & disown`.'
     tests:
       - deny: 'disown'
