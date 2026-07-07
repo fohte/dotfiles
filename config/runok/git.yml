@@ -214,8 +214,9 @@ rules:
       - deny: 'git reset HEAD file.txt'
       - deny: 'git -C /tmp reset --hard HEAD~1'
   # `git clean` deletes untracked files irreversibly. Dry-run (`-n` /
-  # `--dry-run`) only prints what would be removed, so it is safe; the
-  # destructive variants fall through to default ask.
+  # `--dry-run`) only prints what would be removed, so it is safe; other
+  # destructive variants fall through to default ask, except `-fdx` on
+  # <var:safe-rm-paths> (further down), which is allowed outright.
   - allow: 'git [-C *] clean -n|--dry-run *'
     tests:
       - allow: 'git clean -n'
