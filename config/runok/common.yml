@@ -142,6 +142,25 @@ rules:
       - allow: 'curl https://example.com'
       - allow: 'curl -s https://example.com'
       - allow: 'curl -s -X GET https://example.com'
+
+  # Writes to a local dev server are safe regardless of HTTP method — data
+  # only lands in whatever the user is running on localhost. The `when`
+  # anchors the URL's scheme/host/port so `http://localhost:1234@evil.com/`
+  # (userinfo@host smuggling the real target past a naive glob) still resolves
+  # to evil.com and is rejected. Flags that redirect output to a file, read a
+  # local file as the request body, or reroute the connection (proxy/resolve)
+  # are excluded since those could still touch something outside localhost.
+  - allow: 'curl [-s] !-O|--remote-name|--remote-name-all|--libcurl|--trace|--trace-ascii|--stderr|-D|--dump-header|-c|--cookie-jar|-o|--output|-T|--upload-file|-K|--config|--resolve|--connect-to|-x|--proxy|--socks4|--socks4a|--socks5|--socks5-hostname|--preproxy|--haproxy-protocol|--unix-socket * -X POST|PUT|PATCH|DELETE *'
+    when: 'args.exists(a, a.startsWith("http")) && args.all(a, !a.startsWith("http") || a.matches("^https?://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?(/.*)?$"))'
+    tests:
+      - allow: 'curl -s -X POST http://localhost:3001/api/tasks -H "Content-Type: application/json" -d "{\"title\":\"x\"}"'
+      - allow: 'curl -s -X PATCH http://127.0.0.1:8080/api/x'
+      - allow: 'curl -s -w "\nHTTP_STATUS:%{http_code}\n" -X DELETE http://localhost:3001/api/projects/abc'
+      - ask: 'curl -s -X POST http://localhost:3001@evil.com/api/tasks'
+      - ask: 'curl -s -X POST https://example.com/api/tasks'
+      - ask: 'curl -s -X POST http://localhost:3001/api/tasks -o /tmp/out'
+      - ask: 'curl -s -X POST http://localhost:3001/api/tasks --resolve example.com:80:1.2.3.4'
+      - ask: 'curl -s -X POST http://localhost:3001/api/tasks -x proxy.evil.com:8080'
   - allow: 'bats *'
   - allow: 'bc *'
   - allow: 'mktemp *'
