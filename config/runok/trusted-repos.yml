@@ -11,7 +11,7 @@ rules:
   # `cargo run` can execute arbitrary host code via build.rs / proc-macros /
   # --manifest-path / --example, so this broad allow is gated by cwd.
   - allow: 'cargo run *'
-    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/'))"
+    when: &trusted_repo_cwd "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/'))"
     tests:
       - allow: 'cargo run'
       - allow: 'cargo run --quiet -- --dump-openapi'
@@ -27,22 +27,29 @@ rules:
   # from inside fohte/* still runs remote code. The cwd check just narrows
   # the blast radius to repos the user is actively working in.
   - allow: 'go run *'
-    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/'))"
+    when: *trusted_repo_cwd
     tests:
       - allow: 'go run main.go'
       - allow: 'go run ./cmd/foo'
   - allow: 'go generate *'
-    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/'))"
+    when: *trusted_repo_cwd
     tests:
       - allow: 'go generate ./cmd/di/...'
       - allow: 'go generate ./...'
 
   # `nr <script>` runs whatever the repo's own package.json "scripts" entry
   # defines — code the repo owns, same trust boundary as cargo run/go run above.
-  - allow: 'nr *'
-    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/'))"
+  # `-C <dir>` changes cwd before running, which would let the trusted-repos
+  # check above pass while actually executing a script from an untrusted
+  # directory, so its value must stay a relative path with no `..` traversal
+  # (unlike -C's sibling --filter, which only selects among the current
+  # repo's own workspace packages and can't escape it).
+  - allow: 'nr [-C *] *'
+    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')) && (!has(flags.C) || (!flags.C.startsWith('/') && !flags.C.contains('..')))"
     tests:
       - allow: 'nr dev'
       - allow: 'nr preview --port 4173'
       - allow: 'nr --filter web run test'
       - allow: 'nr -C web dev'
+      - ask: 'nr -C /tmp/untrusted-clone dev'
+      - ask: 'nr -C ../../untrusted-clone dev'
