@@ -1,5 +1,12 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
+definitions:
+  paths:
+    # Repos pushed to directly on the default branch (no PR workflow), where
+    # an accidental push has no review safety net. Add more repos here as needed.
+    master-push-repos:
+      - '~/ghq/github.com/fohte/dotfiles'
+
 rules:
   # deny rules
   - deny: 'git [-C *] commit --amend *'
@@ -69,6 +76,21 @@ rules:
       - ask: 'git push origin :feature/foo'
       - allow: 'git push origin main:main'
       - allow: 'git push origin HEAD:refs/heads/foo'
+  # `-C <dir>` changes the directory git actually operates on, so `flags.C`
+  # is checked in addition to `env.PWD` (the shell's cwd). `paths[]` entries
+  # are canonicalized to absolute paths at load time, but `flags.C` is
+  # compared as the raw, unexpanded token, so a literal `~`-prefixed `-C`
+  # argument (e.g. `-C ~/repo`) won't match -- same gap every other `-C`
+  # check in this file has (they're all tested with absolute paths only).
+  # The bare-cwd branch can't be covered by an inline test (`InlineTestEntry`
+  # has no cwd override); verify manually with `runok check --verbose` from
+  # inside the repo if this changes.
+  - ask: 'git [-C *] push *'
+    when: "paths['master-push-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/') || (has(flags.C) && (flags.C == p || flags.C.startsWith(p + '/'))))"
+    message: 'This repo is pushed to directly on the default branch. Confirm before pushing.'
+    tests:
+      - ask: 'git -C /Users/fohte/ghq/github.com/fohte/dotfiles push origin main'
+      - allow: 'git -C /tmp push origin main'
   - deny: 'git [-C *] rebase origin/main|origin/master *'
     message: 'Blocked to prevent unintended rewriting of commit history'
     fix_suggestion: 'git pull'
