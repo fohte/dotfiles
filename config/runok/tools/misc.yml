@@ -18,6 +18,11 @@ rules:
   - allow: 'a ai draft *'
   - allow: 'a ai pr-draft *'
   - allow: 'a ai review wait *'
+  - deny: 'a ai review request *'
+    message: 'AI review requests cost money and must not be run casually.'
+    tests:
+      - deny: 'a ai review request'
+      - deny: 'a ai review request 123'
   - allow: 'a gh check-pr-review *'
   - allow: 'a gh pr-review check *'
   - allow: 'a gh pr-review reply pull *'
