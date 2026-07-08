@@ -1,9 +1,6 @@
 *.hex
 *.retry
 
-# copier-update-action (< v0.1.3) leaves these on unresolved 3-way merge conflicts
-*.orig
-
 /roles/i3/files/config.d/*.local.conf
 
 # ZDOTDIR is set to ~/.config/zsh, which is symlinked to config/zsh
