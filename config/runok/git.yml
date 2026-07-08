@@ -395,7 +395,7 @@ rules:
     message: 'Use ghq for fohte-owned repos, or opensrc for third-party code reading.'
     tests:
       - deny: 'gh repo clone foo/bar'
-  - deny: 'gh [-R *] api [-X GET] repos/*/contents*'
+  - deny: 'gh [-R *] api [-X GET] * repos/*/contents* *'
     message: 'Use ghq (fohte-owned) or opensrc (third-party) to read repo file contents instead of `gh api .../contents/...`.'
     fix_suggestion: 'ghq get -u <org>/<repo> && cd ~/ghq/github.com/<org>/<repo>; or `opensrc path <pkg>` for third-party.'
     tests:
@@ -404,6 +404,10 @@ rules:
       - deny: 'gh api repos/fohte/foo/contents'
       - deny: 'gh api repos/fohte/foo/contents?ref=main'
       - deny: 'gh -R fohte/foo api -X GET repos/fohte/foo/contents/bar'
+      - deny: 'gh api repos/fohte/foo/contents/bar -f ref=main'
+      - deny: 'gh api -f ref=main repos/fohte/foo/contents/bar'
+      - deny: 'gh api "repos/fohte/copier-update-action/contents/action.yml" -F ref=b6cf0fa2396de17ddd38c98782c8143d423caa09 --jq ".content"'
+      - deny: 'gh api repos/sindresorhus/ky/contents/readme.md --jq .content'
       - allow: 'gh api -X GET /repos'
   - deny: 'gh log *'
     message: 'Not a valid gh command, did you mean `gh run watch`?'
