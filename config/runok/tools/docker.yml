@@ -50,24 +50,24 @@ rules:
 
   # Container lifecycle: start/stop only resume/pause an already-created
   # container (no new code execution, no data loss), so they're safe to allow
-  # unscoped. `rm` deletes containers, and a trailing `*` would otherwise
-  # swallow multiple container names in one call (e.g. `docker rm -f $(docker
-  # ps -aq)` removing everything at once), so it's bounded to one container
-  # per invocation. `-f` (force) only lets it also remove a running container
-  # instead of erroring; it doesn't change what the command is capable of.
-  - allow: 'docker start *'
+  # unscoped.
+  - allow: 'docker start|stop *'
     tests:
       - allow: 'docker start meshi-postgres-test'
       - allow: 'docker start meshi-postgres meshi-obs-smoketest'
-  - allow: 'docker stop *'
-    tests:
       - allow: 'docker stop meshi-postgres-test'
+  # `rm` deletes containers, and a trailing `*` would otherwise swallow
+  # multiple container names in one call (e.g. `docker rm -f $(docker ps
+  # -aq)` removing everything at once), so it's bounded to one container per
+  # invocation. Only `-f`/`--force` is allowed through; other flags such as
+  # `-v`/`--volumes` also delete anonymous volumes and must stay ask.
   - allow: 'docker rm [-f] *'
-    when: 'size(args) == 2' # "rm" itself counts as a positional arg alongside the container name
+    when: 'size(args) == 2 && !flags.exists(k, k != "f" && k != "force")'
     tests:
       - allow: 'docker rm -f meshi-obs-smoketest'
       - allow: 'docker rm meshi-obs-smoketest'
       - ask: 'docker rm -f meshi-obs-smoketest other-container'
+      - ask: 'docker rm -v meshi-obs-smoketest'
 
   # Apple container CLI: validate Renovate config via the official image.
   # Used by the debug-renovate skill.
