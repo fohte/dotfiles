@@ -1,0 +1,8 @@
+variables:
+  # `runok check` evaluates the same master-push-repos ask rule defined in
+  # config/runok/git.yml, so this reuses that single source of truth instead
+  # of re-deriving path membership here. The branch/remote in the probed
+  # command don't matter -- the rule only inspects the working directory.
+  is_master_push_repo: |
+    runok check --output-format json 'git push origin main' 2>/dev/null | jq -e '.decision == "ask"' > /dev/null && echo true || echo false
+template: template.md
