@@ -28,18 +28,46 @@ rules:
   - allow: docker diff *
   - allow: docker history *
   - allow: docker version
-  - allow: docker info
+  - allow: 'docker info *'
+    tests:
+      - allow: 'docker info'
+      - allow: "docker info --format '{{.ServerVersion}}'"
   - allow: docker network ls|inspect *
   - allow: docker volume ls|inspect *
   - allow: docker context ls|inspect *
     tests:
       - allow: 'docker context ls'
       - allow: 'docker context inspect default'
+  - allow: 'docker manifest inspect *'
+    tests:
+      - allow: 'docker manifest inspect node:24.17.0-slim'
+      - ask: 'docker manifest push mymanifest'
 
   - allow: 'docker build *'
     tests:
       - allow: 'docker build -t my-image .'
       - allow: 'docker build -f Dockerfile.dev -t foo .'
+
+  # Container lifecycle: start/stop only resume/pause an already-created
+  # container (no new code execution, no data loss), so they're safe to allow
+  # unscoped. `rm` deletes containers, and a trailing `*` would otherwise
+  # swallow multiple container names in one call (e.g. `docker rm -f $(docker
+  # ps -aq)` removing everything at once), so it's bounded to one container
+  # per invocation. `-f` (force) only lets it also remove a running container
+  # instead of erroring; it doesn't change what the command is capable of.
+  - allow: 'docker start *'
+    tests:
+      - allow: 'docker start meshi-postgres-test'
+      - allow: 'docker start meshi-postgres meshi-obs-smoketest'
+  - allow: 'docker stop *'
+    tests:
+      - allow: 'docker stop meshi-postgres-test'
+  - allow: 'docker rm [-f] *'
+    when: 'size(args) == 2' # "rm" itself counts as a positional arg alongside the container name
+    tests:
+      - allow: 'docker rm -f meshi-obs-smoketest'
+      - allow: 'docker rm meshi-obs-smoketest'
+      - ask: 'docker rm -f meshi-obs-smoketest other-container'
 
   # Apple container CLI: validate Renovate config via the official image.
   # Used by the debug-renovate skill.
