@@ -3,7 +3,9 @@
 definitions:
   vars:
     # Directories whose contents are recreatable from sources — safe to
-    # `rm -r` without per-invocation confirmation.
+    # `rm -r` without per-invocation confirmation. Also referenced by
+    # git.yml's `git clean -fdx` rule, so this list must stay limited to
+    # that rationale; /tmp is a separate var below for that reason.
     safe-rm-paths:
       type: pattern
       values:
@@ -11,6 +13,12 @@ definitions:
         - 'node_modules'
         - '**/dist'
         - 'dist'
+
+    # Disposable scratch space — safe regardless of what's inside.
+    safe-rm-scratch:
+      type: pattern
+      values:
+        - '/tmp/*'
 
     # Transient files safe to `rm` (without `-r`) — typically captured
     # stdout/stderr or rotated logs. Matches any path ending in *.log,
@@ -23,23 +31,39 @@ definitions:
         - '*.log'
 
 rules:
+  # `when` excludes safe targets (via the same `definitions.vars` lists the
+  # allow rule below references, using runok's `glob_matches`/`definitions`
+  # when-clause helpers) so recursive+force stays blocked everywhere else
+  # without duplicating the safe-path lists. `/tmp/*` additionally requires
+  # no `..` in the arg -- `glob_matches` is a plain string glob with no path
+  # semantics, so `/tmp/../etc/passwd` otherwise satisfies the `/tmp/*` glob.
   - deny: 'rm -rf *'
     message: 'Blocked because recursive forced deletion is irreversible'
     fix_suggestion: 'rm -r'
+    when: >-
+      !args.all(a,
+        definitions.vars["safe-rm-paths"].exists(p, glob_matches(p, a)) ||
+        (!a.contains("..") && definitions.vars["safe-rm-scratch"].exists(p, glob_matches(p, a)))
+      )
     tests:
-      - deny: 'rm -rf /tmp/foo'
-      - allow: 'rm -r /tmp/foo'
+      - deny: 'rm -rf .'
+      - deny: 'rm -rf /tmp/../etc/passwd'
+      - deny: 'rm -rf /tmp/..'
 
-  - allow: 'rm [-r] /tmp/*'
+  # A single `when`-gated rule (rather than separate `-r`/`-f`/`-rf` rules)
+  # covers multiple targets in one invocation (`rm -rf node_modules dist`)
+  # too -- `<var:name>` alone only ever consumes one positional argument, so
+  # a pattern built on it can't confirm every target in a multi-arg `rm -f
+  # /tmp/a /tmp/b` is safe.
+  - allow: 'rm [-r] [-f] *'
+    when: >-
+      args.all(a,
+        definitions.vars["safe-rm-paths"].exists(p, glob_matches(p, a)) ||
+        (!a.contains("..") && definitions.vars["safe-rm-scratch"].exists(p, glob_matches(p, a)))
+      )
     tests:
-      - allow: 'rm /tmp/foo'
-      - allow: 'rm -r /tmp/foo'
-      - allow: 'rm -r /tmp/foo/bar'
-
-  - allow: 'rm [-r] <var:safe-rm-paths>'
-    tests:
-      - allow: 'rm -r node_modules'
       - allow: 'rm node_modules'
+      - allow: 'rm -r node_modules'
       - allow: 'rm -r ./node_modules'
       - allow: 'rm -r ../node_modules'
       - allow: 'rm -r backend/node_modules'
@@ -52,16 +76,42 @@ rules:
       - allow: 'rm -r packages/foo/dist'
       - ask: 'rm -r distfoo'
       - ask: 'rm -r src/distribution'
+      - allow: 'rm /tmp/foo'
+      - allow: 'rm -r /tmp/foo'
+      - allow: 'rm -r /tmp/foo/bar'
+      - allow: 'rm -f /tmp/foo'
+      - allow: 'rm -rf /tmp/foo'
+      - allow: 'rm -rf node_modules'
+      - allow: 'rm -rf dist'
+      - allow: 'rm -r -f /tmp/foo'
+      - allow: 'rm -fr /tmp/foo'
+      - allow: 'rm -f /tmp/a.md /tmp/b.md /tmp/c.md /tmp/d.md'
+      - allow: 'rm -rf node_modules dist'
+      - deny: 'rm -rf /etc/passwd'
+      - ask: 'rm -r -f /etc/passwd'
+      - ask: 'rm -f /tmp/foo /etc/passwd'
+      - ask: 'rm -f /tmp/../etc/shadow'
 
-  - allow: 'rm <var:safe-rm-files>'
+  # `-r`/`-R`/`--recursive` is excluded via pattern negation (rather than
+  # left to the `when` clause) because flags are stripped out of `args`
+  # before CEL sees it, so `args.all(...)` can't detect a flag's presence --
+  # recursing into a directory that happens to end in `.log` must stay
+  # `ask`. Glob-matched (`-*r*`/`-*R*`) rather than an exact `-r|-R` list so
+  # fused combinations (`-fr`, `-Rf`, ...) are caught too -- combined short
+  # flags are matched as a single token, so `-fr` doesn't equal `-r`.
+  - allow: 'rm !-*r*|-*R*|--recursive *'
+    when: 'args.all(a, definitions.vars["safe-rm-files"].exists(p, glob_matches(p, a)))'
     tests:
       - allow: 'rm err.log'
       - allow: 'rm ./err.log'
       - allow: 'rm subdir/foo.log'
-      # `-r` is intentionally not in the pattern; recursing into a directory
-      # that happens to end in `.log` must stay ask.
+      - allow: 'rm a.log b.log'
       - ask: 'rm -r foo.log'
+      - ask: 'rm -fr foo.log'
+      - ask: 'rm -Rf foo.log'
+      - ask: 'rm -fR foo.log'
       - ask: 'rm err.txt'
+      - ask: 'rm a.log b.txt'
 
   - allow: 'cp *'
     tests:
