@@ -68,13 +68,7 @@ run = "brew upgrade"
 # lefthook hooks
 actionlint = "1.7.12"
 "github:betterleaks/betterleaks" = "1.5.0"
-<<<<<<< before updating
 node = "26.3.0"
-||||||| last update
-node = "24.17.0"
-=======
-node = "24.18.0"
->>>>>>> after updating
 pinact = "4.1.0"
 "github:fohte/basefmt" = "0.1.0"
 "npm:@commitlint/cli" = "21.1.0"
