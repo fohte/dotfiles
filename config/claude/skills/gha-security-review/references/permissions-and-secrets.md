@@ -23,20 +23,20 @@ GitHub offers two default permission modes (configured in repo Settings > Action
 # VULNERABLE: No explicit permissions — inherits repo default
 on: pull_request
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "What permissions does GITHUB_TOKEN have?"
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - run: echo "What permissions does GITHUB_TOKEN have?"
 
 # SAFE: Explicit minimal permissions at workflow level
 on: pull_request
 permissions:
-  contents: read
+    contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "GITHUB_TOKEN can only read"
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - run: echo "GITHUB_TOKEN can only read"
 ```
 
 ### Permission Scopes
@@ -62,14 +62,14 @@ permissions: write-all
 # DANGEROUS: Broad permissions on untrusted trigger
 on: pull_request_target
 permissions:
-  contents: write
-  pull-requests: write
-  packages: write
+    contents: write
+    pull-requests: write
+    packages: write
 
 # SUSPICIOUS: id-token on workflows that don't deploy
 on: pull_request
 permissions:
-  id-token: write  # Why does a PR build need OIDC?
+    id-token: write # Why does a PR build need OIDC?
 ```
 
 ---

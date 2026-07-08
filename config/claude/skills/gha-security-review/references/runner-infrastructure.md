@@ -136,24 +136,24 @@ steps:
 # Workflow 1: Build (on pull_request — fork code)
 on: pull_request
 steps:
-  - uses: actions/checkout@v4
-  - run: npm run build
-  - uses: actions/upload-artifact@v4
-    with:
-      name: build-output
-      path: dist/  # Fork code controls what's in dist/
+    - uses: actions/checkout@v4
+    - run: npm run build
+    - uses: actions/upload-artifact@v4
+      with:
+          name: build-output
+          path: dist/ # Fork code controls what's in dist/
 
 # Workflow 2: Deploy (on workflow_run — trusted)
 on:
-  workflow_run:
-    workflows: [Build]
-    types: [completed]
+    workflow_run:
+        workflows: [Build]
+        types: [completed]
 steps:
-  - uses: actions/download-artifact@v4
-    with:
-      name: build-output
-      run-id: ${{ github.event.workflow_run.id }}
-  - run: ./deploy.sh dist/  # Deploying fork's build output!
+    - uses: actions/download-artifact@v4
+      with:
+          name: build-output
+          run-id: ${{ github.event.workflow_run.id }}
+    - run: ./deploy.sh dist/ # Deploying fork's build output!
 ```
 
 ### Artifact Scope Rules
