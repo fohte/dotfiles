@@ -124,6 +124,8 @@ brew 'ollama', link: false
 brew 'opencode'
 # Fuzzy-search Claude Code conversation history from the terminal
 brew 'raine/claude-history/claude-history'
+# Local browser-based review tool for AI agent code changes
+brew 'crit'
 
 # ===== Third-party utilities =====
 
