@@ -84,3 +84,55 @@ rules:
       - allow: 'docker compose logs -f web'
       - allow: 'docker-compose up -d'
       - allow: 'docker.lima compose ps'
+
+  - allow: 'docker-compose [-f *] port *'
+    tests:
+      - allow: 'docker compose port postgres 5432'
+      - allow: 'docker compose port db 5432'
+      - allow: 'docker compose port app 8080'
+      - allow: 'docker-compose port web 80'
+
+  - allow: 'docker-compose version'
+    tests:
+      - allow: 'docker compose version'
+      - allow: 'docker-compose version'
+      - ask: 'docker compose version --format json'
+
+  # `--push` has no short-flag form (confirmed via `docker compose build
+  # --help`), so a plain pattern negation can't be bypassed by a fused
+  # short-flag cluster the way a `when` deny-list on `-v`/`down` can.
+  - allow: 'docker-compose [-f *] build !--push *'
+    tests:
+      - allow: 'docker compose build app'
+      - allow: 'docker-compose build app'
+      - allow: 'docker compose build'
+      - ask: 'docker compose build app --push'
+
+  # `-v`/`--volumes` deletes named/anonymous volumes (data loss), so it's
+  # denied outright rather than left as ask. `--rmi` only deletes
+  # rebuildable images, so it's allowed unscoped below. The glob suffix
+  # (`-v*`/`--volumes*`) catches fused short-flag clusters too: down's
+  # only other short flag is `-t`/`--timeout` (value-taking), and pflag
+  # shorthand clusters require the value-taking flag to be last, so any
+  # real fusion of `-v` can only appear as `-vt<N>`/`-vt <N>` -- always
+  # `-v`-prefixed. A cluster like `-tv5` isn't a real bypass: pflag reads
+  # it as `-t` with value `"v5"` (invalid int), not `-v` + `-t`.
+  - deny: 'docker-compose [-f *] down -v*|--volumes* *'
+    message: '`docker compose down -v`/`--volumes` deletes named/anonymous volumes. Run it manually if data loss is intended.'
+    tests:
+      - deny: 'docker compose down -v'
+      - deny: 'docker compose down --volumes'
+      - deny: 'docker compose down app -v'
+      - deny: 'docker compose down -vt5'
+      - deny: 'docker compose down -vt 5'
+
+  - allow: 'docker-compose [-f *] down *'
+    tests:
+      - allow: 'docker compose down'
+      - allow: 'docker-compose down'
+      - allow: 'docker compose -f docker-compose.yml down'
+      - allow: 'docker compose down -t 5'
+      - allow: 'docker compose down --rmi local'
+      - allow: 'docker compose down --rmi all'
+      - allow: 'docker compose down --remove-orphans'
+      - allow: 'docker compose down --dry-run'
