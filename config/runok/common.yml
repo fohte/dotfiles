@@ -14,11 +14,15 @@ definitions:
         - '**/dist'
         - 'dist'
 
-    # Disposable scratch space — safe regardless of what's inside.
+    # Disposable scratch space — safe regardless of what's inside. /private/tmp
+    # is listed alongside /tmp because macOS symlinks /tmp -> /private/tmp, so
+    # resolved paths (e.g. Claude Code's scratchpad dir) show up under
+    # /private/tmp instead.
     safe-rm-scratch:
       type: pattern
       values:
         - '/tmp/*'
+        - '/private/tmp/*'
 
     # Transient files safe to `rm` (without `-r`) — typically captured
     # stdout/stderr or rotated logs. Matches any path ending in *.log,
@@ -49,6 +53,8 @@ rules:
       - deny: 'rm -rf .'
       - deny: 'rm -rf /tmp/../etc/passwd'
       - deny: 'rm -rf /tmp/..'
+      - deny: 'rm -rf /private/tmp/../etc/passwd'
+      - deny: 'rm -rf /private/tmp/..'
 
   # A single `when`-gated rule (rather than separate `-r`/`-f`/`-rf` rules)
   # covers multiple targets in one invocation (`rm -rf node_modules dist`)
@@ -81,6 +87,11 @@ rules:
       - allow: 'rm -r /tmp/foo/bar'
       - allow: 'rm -f /tmp/foo'
       - allow: 'rm -rf /tmp/foo'
+      - allow: 'rm /private/tmp/foo'
+      - allow: 'rm -r /private/tmp/foo'
+      - allow: 'rm -r /private/tmp/foo/bar'
+      - allow: 'rm -f /private/tmp/foo'
+      - allow: 'rm -rf /private/tmp/foo'
       - allow: 'rm -rf node_modules'
       - allow: 'rm -rf dist'
       - allow: 'rm -r -f /tmp/foo'
@@ -91,6 +102,7 @@ rules:
       - ask: 'rm -r -f /etc/passwd'
       - ask: 'rm -f /tmp/foo /etc/passwd'
       - ask: 'rm -f /tmp/../etc/shadow'
+      - ask: 'rm -f /private/tmp/../etc/shadow'
 
   # `-r`/`-R`/`--recursive` is excluded via pattern negation (rather than
   # left to the `when` clause) because flags are stripped out of `args`
