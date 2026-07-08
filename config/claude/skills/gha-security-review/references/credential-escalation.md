@@ -129,28 +129,28 @@ Never give PATs or write permissions to workflows that execute fork code:
 # Workflow 1: Build (no secrets, fork code OK)
 on: pull_request
 permissions:
-  contents: read
+    contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: npm ci && npm test
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - run: npm ci && npm test
 
 # Workflow 2: Release (secrets OK, no fork code)
 on:
-  push:
-    tags: ['v*']
+    push:
+        tags: ['v*']
 permissions:
-  contents: write
+    contents: write
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4  # Only target repo code
-      - env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4 # Only target repo code
+            - env:
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: npm publish
 ```
 
 ### Use Fine-Grained PATs Instead of Classic
