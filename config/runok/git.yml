@@ -48,8 +48,11 @@ rules:
       - deny: 'git push origin +main'
       - deny: 'git push origin +HEAD:refs/heads/foo'
       - deny: 'git push origin main +feature/foo'
-      - allow: 'git push origin main'
-      - allow: 'git push'
+      # -C /tmp keeps these deterministic regardless of invocation cwd -- a
+      # bare `git push origin main` would ask instead of allow when this
+      # rule's own tests run from inside a master-push-repos entry.
+      - allow: 'git -C /tmp push origin main'
+      - allow: 'git -C /tmp push'
   - deny: 'git [-C *] push --mirror *'
     message: 'Blocked because --mirror force-updates all refs on the remote'
     fix_suggestion: 'git push <remote> <branch>'
@@ -67,26 +70,28 @@ rules:
     tests:
       - ask: 'git push origin --delete feature/foo'
       - ask: 'git push -d origin feature/foo'
-      - allow: 'git push origin main'
+      - allow: 'git -C /tmp push origin main'
   - ask: 'git [-C *] push * :*'
     message: 'A refspec with empty source (`:dst`) deletes the remote ref. Confirm before proceeding'
     fix_suggestion: 'git push <remote> --delete <branch>'
     tests:
       - ask: 'git push origin :refs/heads/foo'
       - ask: 'git push origin :feature/foo'
-      - allow: 'git push origin main:main'
-      - allow: 'git push origin HEAD:refs/heads/foo'
-  # `-C <dir>` changes the directory git actually operates on, so `flags.C`
-  # is checked in addition to `env.PWD` (the shell's cwd). `paths[]` entries
-  # are canonicalized to absolute paths at load time, but `flags.C` is
-  # compared as the raw, unexpanded token, so a literal `~`-prefixed `-C`
-  # argument (e.g. `-C ~/repo`) won't match -- same gap every other `-C`
-  # check in this file has (they're all tested with absolute paths only).
-  # The bare-cwd branch can't be covered by an inline test (`InlineTestEntry`
-  # has no cwd override); verify manually with `runok check --verbose` from
-  # inside the repo if this changes.
+      - allow: 'git -C /tmp push origin main:main'
+      - allow: 'git -C /tmp push origin HEAD:refs/heads/foo'
+  # `-C <dir>` changes the directory git actually operates on, so when it's
+  # present only `flags.C` is checked -- not `env.PWD` (the shell's cwd) --
+  # otherwise running `git -C /unrelated/dir push` from inside a
+  # master-push-repo would wrongly ask about a push that doesn't target this
+  # repo at all. `paths[]` entries are canonicalized to absolute paths at
+  # load time, but `flags.C` is compared as the raw, unexpanded token, so a
+  # literal `~`-prefixed `-C` argument (e.g. `-C ~/repo`) won't match -- same
+  # gap every other `-C` check in this file has (they're all tested with
+  # absolute paths only). The bare-cwd branch can't be covered by an inline
+  # test (`InlineTestEntry` has no cwd override); verify manually with
+  # `runok check --verbose` from inside the repo if this changes.
   - ask: 'git [-C *] push *'
-    when: "paths['master-push-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/') || (has(flags.C) && (flags.C == p || flags.C.startsWith(p + '/'))))"
+    when: "(has(flags.C) && paths['master-push-repos'].exists(p, flags.C == p || flags.C.startsWith(p + '/'))) || (!has(flags.C) && paths['master-push-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')))"
     message: 'This repo is pushed to directly on the default branch. Confirm before pushing.'
     tests:
       - ask: 'git -C /Users/fohte/ghq/github.com/fohte/dotfiles push origin main'
@@ -331,7 +336,7 @@ rules:
       - allow: 'git pull --rebase'
   - allow: 'git [-C *] push *'
     tests:
-      - allow: 'git push origin main'
+      - allow: 'git -C /tmp push origin main'
   - allow: 'git [-C *] restore --staged *'
     tests:
       - allow: 'git restore --staged file.txt'
