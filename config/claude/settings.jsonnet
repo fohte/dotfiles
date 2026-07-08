@@ -31,6 +31,7 @@ local env(name) = std.extVar(name);
       'Read(//tmp/**)',
       'Read(//var/folders/**/T/**)',
       'Read(~/.cache/armyknife/**)',
+      'Read(~/.cache/runok/presets/**)',
       'Read(~/.cargo/registry)',
       'Read(~/.claude/**)',
       'Read(~/.go/pkg/mod/**)',
