@@ -211,6 +211,34 @@ rules:
     message: 'BLOCKED: package manager config edits (.npmrc / .yarnrc / bunfig.toml) should be reviewed manually.'
     tests:
       - deny: 'na config set verify-deps-before-run never --location=project'
+  # na is a literal passthrough to the detected PM (na <args> = <pm> <args>),
+  # so `na vitest run <file>` resolves to the local vitest binary just like
+  # `nr vitest run <file>` above -- but bypasses the "use nr" policy. Mirrors
+  # the existing `nlx vitest run *` deny. `-C`/`--filter` is optional here
+  # (unlike the na run rule below) since there's no broader `na vitest *`
+  # catch-all this could shadow.
+  - deny: 'na [-C|--filter *] vitest run *'
+    message: 'Use nr'
+    fix_suggestion: 'nr vitest run <file> (use -C or --filter <workspace> to scope)'
+    tests:
+      - deny: 'na vitest run src/foo.test.ts'
+      - deny: 'na vitest run src/foo.test.ts --reporter=verbose'
+      - deny: 'na --filter web vitest run src/foo.test.ts'
+      - deny: 'na -C packages/web vitest run src/foo.test.ts'
+  # `na install|add|remove|update|run|exec|dlx *` above only catches `run`
+  # when it's the first positional token. `-C`/`--filter` are order-
+  # independent flags, so `na --filter web run test` slips past it. Same
+  # operation as `nr [-C|--filter *] <script>` above, just via na.
+  # -C|--filter is required (not optional) so bare `na run <script>` still
+  # falls through to the broader deny above instead of this rule silently
+  # overriding its message.
+  - deny: 'na -C|--filter * run *'
+    message: 'Use nr'
+    fix_suggestion: 'nr <script> (use -C or --filter <workspace> to scope)'
+    tests:
+      - deny: 'na --filter web run test'
+      - deny: 'na --filter web run build'
+      - deny: 'na -C packages/web run test'
 
   # Read-only subcommands routed through na.
   - allow: 'na view|info|ls|list|outdated|audit|why|search|help *'
@@ -235,6 +263,18 @@ rules:
     tests:
       - allow: 'na pm ls'
       - allow: 'na pm outdated'
+  # pnpm 11.0+ read-only diagnostic; reports unmet peer deps by reading the
+  # lockfile only (https://pnpm.io/cli/peers). No documented flags.
+  - allow: 'na peers check'
+    tests:
+      - allow: 'na peers check'
+  # Removes only unreferenced packages from the global content-addressable
+  # store; never touches project files. pnpm docs:
+  # "Running pnpm store prune is not harmful and has no side effects on
+  # your projects" (https://pnpm.io/cli/store).
+  - allow: 'na store prune'
+    tests:
+      - allow: 'na store prune'
 
   - allow: 'node *'
     sandbox: readonly
