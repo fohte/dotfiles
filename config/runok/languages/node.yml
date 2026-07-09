@@ -9,7 +9,11 @@ definitions:
 
 rules:
   # install (use ni)
-  - allow: 'ni [--frozen-lockfile|--frozen|--no-frozen-lockfile|--frozen=false|--frozen=true|--frozen-lockfile=false|--frozen-lockfile=true] [--lockfile-only]'
+  # Bool flags with no `=value` and not registry/config/-C|--dir/-g|--global
+  # (those can redirect package source or execution scope) are safe to
+  # fast-track allow. Otherwise verify via pnpm docs / ni source
+  # (src/parse.ts) first.
+  - allow: 'ni [--frozen-lockfile|--frozen|--no-frozen-lockfile|--frozen=false|--frozen=true|--frozen-lockfile=false|--frozen-lockfile=true] [--lockfile-only] [--force] [--frozen-if-present] [--strict-peer-dependencies]'
     tests:
       - allow: 'ni'
       - allow: 'ni --frozen-lockfile'
@@ -19,6 +23,10 @@ rules:
       - allow: 'ni --frozen=false'
       - allow: 'ni --frozen-lockfile=false'
       - allow: 'ni --frozen=false --lockfile-only'
+      - allow: 'ni --force'
+      - allow: 'ni --frozen-if-present'
+      - allow: 'ni --strict-peer-dependencies'
+      - allow: 'ni --frozen-if-present --strict-peer-dependencies'
 
   # clean install (use nci)
   - allow: 'nci [--frozen-lockfile|--no-frozen-lockfile|--frozen-lockfile=false|--frozen-lockfile=true|--lockfile-only]'
