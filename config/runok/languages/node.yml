@@ -102,8 +102,8 @@ rules:
   # pnpm is a separate rule because the `pnpm` alias (pnpm | corepack pnpm)
   # does not expand inside pattern alternation.
   - deny: 'pnpm *'
-    message: 'BLOCKED: Use /ni skill.'
-    fix_suggestion: 'ni / nr / nlx / na <args>'
+    message: &pmforce_msg 'BLOCKED: Use /ni skill.'
+    fix_suggestion: &pmforce_fix 'ni / nr / nlx / na <args>'
     tests:
       - deny: 'pnpm install'
       - deny: 'pnpm add axios'
@@ -124,8 +124,8 @@ rules:
       - deny: 'corepack pnpm config set verify-deps-before-run never --location=project'
 
   - deny: 'npm|bun|yarn *'
-    message: 'BLOCKED: Use /ni skill.'
-    fix_suggestion: 'ni / nr / nlx / na <args>'
+    message: *pmforce_msg
+    fix_suggestion: *pmforce_fix
     tests:
       - deny: 'npm install axios'
       - deny: 'npm install -D typescript'
@@ -150,6 +150,22 @@ rules:
     tests:
       - deny: 'npx eslint --fix .'
       - deny: 'bunx eslint --fix .'
+
+  # `nlx npm ...` / `nlx pnpm ...` dlx-executes the npm/pnpm CLI itself,
+  # which is the same bypass as calling them directly. Read-only queries
+  # (view/why/etc) should go through `na` instead. `npm@*`/`pnpm@*` covers
+  # version-pinned dlx invocations (mirrors `nlx prettier|prettier@* *` above).
+  - deny: 'nlx npm|pnpm|npm@*|pnpm@* *'
+    message: *pmforce_msg
+    fix_suggestion: *pmforce_fix
+    tests:
+      - deny: 'nlx npm view @vitest/browser versions --json'
+      - deny: 'nlx npm view @opentelemetry/exporter-trace-otlp-http@0.220.0 peerDependencies dependencies --json'
+      - deny: 'nlx npm install axios'
+      - deny: 'nlx pnpm why eslint-plugin-simple-import-sort'
+      - deny: 'nlx pnpm add axios'
+      - deny: 'nlx npm@10 install axios'
+      - deny: 'nlx pnpm@8 why eslint-plugin-simple-import-sort'
 
   # Direct node_modules/.bin/<tool> invocation bypasses the ni-family
   # indirection. Same intent as `nlx <tool>` / `npx <tool>`, which are also
