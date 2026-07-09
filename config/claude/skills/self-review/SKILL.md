@@ -43,18 +43,10 @@ base 3 reviewer は常に起動。conditional reviewer は変更内容が trigge
 
 ## 実行手順
 
-1. **対象差分の確定**: 呼び出し元 skill (`commit` / `create-pr` など) が指定した範囲 (`git diff --cached` / `git diff @{u}..HEAD` / PR 番号など) を取得する。
-2. **diff をファイルに書き出す**: subagent への埋め込みではなくパス渡しにする (並列起動でのトークン消費を抑える)。
-
-    ```bash
-    git diff --cached > /tmp/self-review-diff-$$.patch
-    # または push 前
-    git diff @{u}..HEAD > /tmp/self-review-diff-$$.patch
-    ```
-
-3. **規約パスの特定**: `CLAUDE.md` (root + 対象サブディレクトリ) と `.gemini/styleguide.md` (存在すれば) のパスをリストアップする。**ここでは読み込まない** — 各 subagent が自分で読む。
-4. **Conditional reviewer の検知**: 下記「Conditional reviewers の定義」セクションの各 reviewer の Trigger コマンドを順に実行し、マッチしたものを step 5 の起動対象に加える。最大で base 3 + conditional 5 = 8 件。
-5. **subagent を並列 background 起動**: base 3 + step 4 でマッチした conditional を、**単一のアシスタントメッセージ内に Agent ツール呼び出しを並べて** **全件 `run_in_background: true`** で起動する。subagent_type は指定しない (= general-purpose)。
+1. **対象差分の確定**: 呼び出し元 skill (`commit` / `create-pr` など) が指定した範囲から `<range>` (`--cached` / `@{u}..HEAD` / `origin/<base>..HEAD` など、`git diff` に渡す引数) を確定する。`git diff --stat <range>` などで `<range>` が解決できることを確認してから先に進む。解決できない場合はここで中断してユーザーに報告し、subagent は 1 件も起動しない (全件が同一原因で個別に失敗するのを防ぐ)。diff 本体はここでは取得しない。各 subagent が自分の Bash tool で `git diff <range>` を実行して取得する。ファイルに書き出さないことで、`.git` 配下への誤生成や一時ファイルの雑な命名・削除漏れを避ける。`<range>` は subagent 起動から結果集約完了までの間、値を変えない (この間は追加の `git add` / `reset` / `commit` を行わない)。各 subagent が個別に diff を取得する設計上、ここが動くと group 間でレビュー対象が食い違う。
+2. **規約パスの特定**: `CLAUDE.md` (root + 対象サブディレクトリ) と `.gemini/styleguide.md` (存在すれば) のパスをリストアップする。**ここでは読み込まない**。各 subagent が自分で読む。
+3. **Conditional reviewer の検知**: 下記「Conditional reviewers の定義」セクションの各 reviewer の Trigger コマンドを順に実行し、マッチしたものを step 4 の起動対象に加える。最大で base 3 + conditional 5 = 8 件。
+4. **subagent を並列 background 起動**: base 3 + step 3 でマッチした conditional を、**単一のアシスタントメッセージ内に Agent ツール呼び出しを並べて** **全件 `run_in_background: true`** で起動する。subagent_type は指定しない (= general-purpose)。
 
     禁止:
     - 1 件起動して結果を待ってから次を起動する逐次パターン
@@ -67,7 +59,7 @@ base 3 reviewer は常に起動。conditional reviewer は変更内容が trigge
     Agent({ description: "behavior review",   run_in_background: true, prompt: "<base テンプレに behavior を埋めたもの>" })
     Agent({ description: "structure review",  run_in_background: true, prompt: "<base テンプレに structure を埋めたもの>" })
     Agent({ description: "convention review", run_in_background: true, prompt: "<base テンプレに convention を埋めたもの>" })
-    // step 4 でマッチした conditional reviewer ごとに追加
+    // step 3 でマッチした conditional reviewer ごとに追加
     Agent({ description: "<name> review",     run_in_background: true, prompt: "<該当 reviewer の Prompt template>" })
     ```
 
@@ -80,25 +72,25 @@ base 3 reviewer は常に起動。conditional reviewer は変更内容が trigge
        - <skill のフルパス>/references/_common.md (動作原則・禁止事項・出力形式ボイラープレート)
        - <skill のフルパス>/references/<group>.md (担当観点・固有原則)
        - <規約ファイルのパスリスト>
-    2. 以下の patch をレビュー対象とする (Read で読み込む):
-       <patch のフルパス>
+    2. 以下のコマンドを自分の Bash tool で実行し、レビュー対象の diff を取得する:
+       git diff <range>
     3. reference の「出力形式」セクションに厳密に従って結果を返す。
        指摘 1 件ごとに **指摘 ID** (`<観点番号>:<file>:<LINE>`) を必ず付ける。
     ```
 
-    `<group>` には `behavior` / `structure` / `convention` のいずれかが入る。conditional reviewer のプロンプトは下記の各ブロックからそのまま使う (`<patch のフルパス>` と `<対象ファイルパスのリスト>` のプレースホルダを差し替える)。
+    `<group>` には `behavior` / `structure` / `convention` のいずれかが入る。conditional reviewer のプロンプトは下記の各ブロックからそのまま使う (`<range>` と `<対象ファイルパスのリスト>` のプレースホルダを差し替える)。
 
-6. **完了通知を待つ**: 起動した全件 (3 〜 8) の `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止 — 通知のみが完了の根拠。**1 件でも未完了なら他の作業はせず通知を待つ**。
-7. **結果集約**: 全通知到着後、各 Agent の最終出力を踏まえて以下のルールで統合する:
+5. **完了通知を待つ**: 起動した全件 (3 〜 8) の `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止。通知のみが完了の根拠。**1 件でも未完了なら他の作業はせず通知を待つ**。
+6. **結果集約**: 全通知到着後、各 Agent の最終出力を踏まえて以下のルールで統合する:
     - 観点別評価: behavior + structure + convention の 13 観点を通し番号順に並べる。起動した conditional reviewer ごとに、Reviewer 構成表の「出力セクション」名で独立セクションを末尾に追加 (13 観点には混ぜない)
     - 指摘詳細: 重要度順 (Critical → Warning) に並べる。`GHA-NNN` findings は HIGH=Critical / MEDIUM=Warning として、その他 conditional の `<prefix>:` findings は subagent が付けた重要度のまま混ぜて並べる
     - 重複指摘のマージは下記「Dedup ルール」に従う
     - **subagent 失敗時 fallback**: いずれかの subagent が空応答・エラー・タイムアウトした場合、該当 group / セクションを `⚠️ 未評価 (subagent 失敗)` とマークし、それだけ単独で再起動する (これも `run_in_background: true`)。再起動も失敗するなら最終出力でその旨を明示する
-8. **最終出力**: 下記「出力形式」セクションに従い、3 セクション構造で出す。
+7. **最終出力**: 下記「出力形式」セクションに従い、3 セクション構造で出す。
 
 ## Conditional reviewers の定義
 
-各 reviewer は Trigger と Prompt template を持つ。Trigger は step 4 の検知に使い、Prompt template は step 5 の Agent 起動でそのまま埋め込む。
+各 reviewer は Trigger と Prompt template を持つ。Trigger は step 3 の検知に使い、Prompt template は step 4 の Agent 起動でそのまま埋め込む。
 
 ### gha-security
 
@@ -117,9 +109,9 @@ git diff --name-only <range> | grep -E '^(\.github/workflows/.*\.ya?ml|\.github/
 
 1. `~/.claude/skills/gha-security-review/SKILL.md` を Read し、その手順に厳密に従う。
    必要に応じて同 skill 配下の `references/*.md` を選択的に Read する。
-2. レビュー対象は以下の patch に含まれる workflow / action 関連ファイル:
-   <patch のフルパス>
-   patch では文脈が不足する場合に限り、リポジトリ内の対象 workflow 本体を Read してよい。
+2. レビュー対象は以下の workflow / action 関連ファイルの diff。自分の Bash tool で実行して取得する:
+   git diff <range> -- <対象ファイルパスのリスト>
+   diff では文脈が不足する場合に限り、リポジトリ内の対象 workflow 本体を Read してよい。
 3. skill の出力形式 (GHA-NNN の findings 形式) で HIGH / MEDIUM confidence のみ返す。
    各 finding に **指摘 ID** として `GHA:<file>:<LINE>` を付ける (self-review の dedup と統合するため)。
 ```
@@ -141,8 +133,8 @@ git diff --name-only <range> | grep -iE '(^|/)(tests?|__tests__|spec)/|(\.|_)(te
 
 1. `~/.claude/skills/test-philosophy/SKILL.md` を Read し、その規範に厳密に従う。
    プロジェクト固有の test 規約 (root + 対象サブディレクトリの `CLAUDE.md` 等) もあれば Read する。
-2. レビュー対象は以下の patch に含まれるテストファイル変更のみ:
-   <patch のフルパス>
+2. レビュー対象は以下のテストファイル変更のみ。自分の Bash tool で diff を実行して取得する:
+   git diff <range> -- <対象ファイルパスのリスト>
    テストの種類分類 (exploratory / regression / specification) の整合、テスト名・構造・前提共有・モックの過剰使用・並列性などを評価する。プロダクションコード本体の指摘は他 group に任せ、ここではテストコードの設計品質に絞る。
 3. 指摘 1 件ごとに **指摘 ID** として `TEST:<file>:<LINE>` を付け、重要度 (Critical / Warning) と症状要約を含めて返す。指摘ゼロなら「指摘なし」と返す。
 ```
@@ -164,10 +156,10 @@ git diff --name-only <range> | grep -iE '(^|/)(db|database)/(migrate|migrations|
 
 1. `~/.claude/skills/postgresql-table-design/SKILL.md` を Read し、その規範に厳密に従う。
    プロジェクト固有の DB 規約 (root + 該当サブディレクトリの `CLAUDE.md`、`db/` 配下の README 等) もあれば Read する。
-2. レビュー対象は以下の patch に含まれるスキーマ定義の追加・変更のみ:
-   <patch のフルパス>
+2. レビュー対象は以下のスキーマ定義の追加・変更のみ。自分の Bash tool で diff を実行して取得する:
+   git diff <range> -- <対象ファイルパスのリスト>
    評価軸: 型選択 (timestamptz / numeric / text 等の使い分け、禁止型の混入)、NOT NULL・DEFAULT・CHECK・UNIQUE・FK の妥当性、index 設計 (FK index 漏れ、複合 index の並び、partial / expression index の活用)、命名 (snake_case)、JSONB の使い分け、partitioning・identity 採用の妥当性、安全なスキーマ進化 (volatile default による rewrite 等)。アプリケーションロジック側の指摘は他 group に任せ、ここではスキーマ設計に絞る。
-3. プロジェクトが PostgreSQL でないと patch から判断できる場合 (例: MySQL 固有構文・MongoDB スキーマなど) は冒頭で「対象外: <理由>」と返して終了する。
+3. プロジェクトが PostgreSQL でないと diff から判断できる場合 (例: MySQL 固有構文・MongoDB スキーマなど) は冒頭で「対象外: <理由>」と返して終了する。
 4. 指摘 1 件ごとに **指摘 ID** として `DB:<file>:<LINE>` を付け、重要度 (Critical / Warning) と症状要約を含めて返す。指摘ゼロなら「指摘なし」と返す。
 ```
 
@@ -178,13 +170,13 @@ git diff --name-only <range> | grep -iE '(^|/)(db|database)/(migrate|migrations|
 ```bash
 # 1. ドキュメント候補ファイルを抽出
 candidates=$(git diff --name-only <range> | grep -iE '\.(md|mdx|markdown|rst|adoc|txt)$')
-# 2. patch の追加行に日本語 (ひらがな / カタカナ / 漢字) が含まれるファイルだけ残す
+# 2. diff の追加行に日本語 (ひらがな / カタカナ / 漢字) が含まれるファイルだけ残す
 for f in $candidates; do
   git diff <range> -- "$f" | grep -E '^\+' | grep -qE '[ぁ-んァ-ヶ一-龯]' && echo "$f"
 done
 ```
 
-対象: `*.md`・`*.mdx`・`*.markdown`・`*.rst`・`*.adoc`・`*.txt` のうち、patch の追加行に日本語文字を含むもの。コード内コメントや英語のみのドキュメントは対象外。
+対象: `*.md`・`*.mdx`・`*.markdown`・`*.rst`・`*.adoc`・`*.txt` のうち、diff の追加行に日本語文字を含むもの。コード内コメントや英語のみのドキュメントは対象外。
 
 **Prompt template**:
 
@@ -192,11 +184,10 @@ done
 あなたは japanese-tech-writing 観点担当の日本語ドキュメントレビュアーです。
 
 1. `~/.claude/skills/japanese-tech-writing/SKILL.md` を Read し、その規範に厳密に従う。
-2. レビュー対象は以下の patch に含まれる日本語ドキュメントの追加・変更行のみ:
-   <patch のフルパス>
-   <対象ファイルパスのリスト>
+2. レビュー対象は以下の日本語ドキュメントの追加・変更行のみ。自分の Bash tool で diff を実行して取得する:
+   git diff <range> -- <対象ファイルパスのリスト>
    評価軸: 整形 (一文一行、引用ブロック、脚注、コラム記法)、全角記号の混入 (丸括弧・感嘆符・疑問符・コロンは半角、半角英数字との間にスペース)、パラグラフ構成、論証の厳密さ、LLM 的な空句・冗長表現、視点と語りの一貫性。技術的事実の正否は他 group に任せ、ここでは文章規範に絞る。
-3. patch 内の差分が日本語を含まない箇所 (英語のみ・コードブロック・URL など) はスキップする。
+3. diff 内の差分が日本語を含まない箇所 (英語のみ・コードブロック・URL など) はスキップする。
 4. 指摘 1 件ごとに **指摘 ID** として `JA:<file>:<LINE>` を付け、重要度 (Critical / Warning) と症状要約を含めて返す。指摘ゼロなら「指摘なし」と返す。
 ```
 
@@ -216,9 +207,8 @@ git diff --name-only <range> | grep -iE '(^|/)README\.(md|mdx|markdown|rst)$|^do
 あなたは crafting-effective-readmes 観点担当のドキュメントレビュアーです。
 
 1. `~/.claude/skills/crafting-effective-readmes/SKILL.md` と必要に応じて `references/*.md` を Read し、その規範に厳密に従う。特に「Scope and source boundaries」「Project Types」「Essential Sections」を重視する。
-2. レビュー対象は以下の patch に含まれる README / docs の追加・変更:
-   <patch のフルパス>
-   <対象ファイルパスのリスト>
+2. レビュー対象は以下の README / docs の追加・変更。自分の Bash tool で diff を実行して取得する:
+   git diff <range> -- <対象ファイルパスのリスト>
    評価軸: スコープ境界 (このリポジトリ外の実装詳細・private 由来情報の混入、コードに裏付けのない限定的記述)、project type に対するセクション欠落・過剰、利用者が次に取る行動を支える例の有無、外部依存の抽象度 (内部パス・hostname・secret store 名などが漏れていないか)。文章規範 (全角記号・段落構成) は `japanese-writing` reviewer に任せ、コードとの整合性は base reviewer の convention group に任せる。
 3. 指摘 1 件ごとに **指摘 ID** として `DOC:<file>:<LINE>` を付け、重要度 (Critical / Warning) と症状要約を含めて返す。指摘ゼロなら「指摘なし」と返す。
 ```
