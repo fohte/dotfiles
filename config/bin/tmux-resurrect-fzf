@@ -18,7 +18,15 @@ fi
 resolve_resurrect_dir() {
   local d
   d="$(tmux show-option -gqv @resurrect-dir 2> /dev/null || true)"
-  [ -z "$d" ] && d="$HOME/.tmux/resurrect"
+  if [ -z "$d" ]; then
+    # Mirrors tmux-resurrect's own default_resurrect_dir fallback
+    # (scripts/helpers.sh) to keep behavior identical to upstream.
+    if [ -d "$HOME/.tmux/resurrect" ]; then
+      d="$HOME/.tmux/resurrect"
+    else
+      d="${XDG_DATA_HOME:-$HOME/.local/share}/tmux/resurrect"
+    fi
+  fi
   echo "${d/#\~/$HOME}"
 }
 
