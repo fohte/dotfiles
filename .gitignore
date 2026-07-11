@@ -1,4 +1,5 @@
 *.hex
+*.orig
 *.retry
 
 /roles/i3/files/config.d/*.local.conf
