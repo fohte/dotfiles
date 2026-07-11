@@ -78,12 +78,29 @@ rules:
   - allow: 'nr db:generate'
     tests:
       - allow: 'nr db:generate'
-  - deny: 'nlx tsc *'
+  - deny: 'nlx|na [-C|--filter *] tsc *'
     message: 'Use nr'
-  - deny: 'nlx vitest run *'
+    tests:
+      - deny: 'nlx tsc --noEmit'
+      - deny: 'na tsc --noEmit'
+      - deny: 'na -C packages/web tsc --noEmit'
+  # `-C`/`--filter` is optional here (unlike the `na -C|--filter * run *`
+  # rule below) since there's no broader `na vitest *` catch-all this could
+  # shadow.
+  - deny: 'nlx|na [-C|--filter *] vitest run *'
     message: 'Use nr'
-  - deny: 'nlx eslint *'
+    fix_suggestion: 'nr vitest run <file> (use -C or --filter <workspace> to scope)'
+    tests:
+      - deny: 'nlx vitest run src/foo.test.ts'
+      - deny: 'na vitest run src/foo.test.ts'
+      - deny: 'na --filter web vitest run src/foo.test.ts'
+      - deny: 'na -C packages/web vitest run src/foo.test.ts'
+  - deny: 'nlx|na [-C|--filter *] eslint *'
     message: 'Use nr'
+    tests:
+      - deny: 'nlx eslint --fix .'
+      - deny: 'na eslint .'
+      - deny: 'na -C packages/web eslint .'
   # prettier is a safe formatter/checker; no nr indirection needed.
   # `prettier@*` also matches version-pinned runs (e.g. prettier@3.8.3).
   - allow: 'nlx prettier|prettier@* *'
@@ -212,19 +229,17 @@ rules:
     tests:
       - deny: 'na config set verify-deps-before-run never --location=project'
   # na is a literal passthrough to the detected PM (na <args> = <pm> <args>),
-  # so `na vitest run <file>` resolves to the local vitest binary just like
-  # `nr vitest run <file>` above -- but bypasses the "use nr" policy. Mirrors
-  # the existing `nlx vitest run *` deny. `-C`/`--filter` is optional here
-  # (unlike the na run rule below) since there's no broader `na vitest *`
-  # catch-all this could shadow.
-  - deny: 'na [-C|--filter *] vitest run *'
-    message: 'Use nr'
-    fix_suggestion: 'nr vitest run <file> (use -C or --filter <workspace> to scope)'
+  # so prefixing na with the pm name itself is always a redundant/broken
+  # invocation (e.g. resolves to `pnpm pnpm peers check`, which pnpm has no
+  # such subcommand for).
+  - deny: 'na pnpm|npm|yarn|bun *'
+    message: 'na already passes through to the detected package manager; drop the redundant pm name.'
+    fix_suggestion: 'na <args> (e.g. na peers check / na view <pkg>)'
     tests:
-      - deny: 'na vitest run src/foo.test.ts'
-      - deny: 'na vitest run src/foo.test.ts --reporter=verbose'
-      - deny: 'na --filter web vitest run src/foo.test.ts'
-      - deny: 'na -C packages/web vitest run src/foo.test.ts'
+      - deny: 'na pnpm peers check'
+      - deny: 'na npm view @fohte/eslint-config@0.3.6 --json'
+      - deny: 'na yarn add axios'
+      - deny: 'na bun install'
   # `na install|add|remove|update|run|exec|dlx *` above only catches `run`
   # when it's the first positional token. `-C`/`--filter` are order-
   # independent flags, so `na --filter web run test` slips past it. Same
@@ -275,6 +290,16 @@ rules:
   - allow: 'na store prune'
     tests:
       - allow: 'na store prune'
+  # `nr tsr generate` / `nlx tsr generate` are already allowed above; na is
+  # the same single-file codegen via a third entry point.
+  - allow: 'na tsr generate'
+    tests:
+      - allow: 'na tsr generate'
+  # Resolves existing semver-range duplicates in the lockfile; no
+  # package.json changes. https://pnpm.io/cli/dedupe
+  - allow: 'na dedupe'
+    tests:
+      - allow: 'na dedupe'
 
   - allow: 'node *'
     sandbox: readonly
