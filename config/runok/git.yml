@@ -58,6 +58,15 @@ rules:
     fix_suggestion: 'git push <remote> <branch>'
     tests:
       - deny: 'git push --mirror origin'
+  # `git push`/`git fetch` are already broadly allowed and aren't
+  # remote-aware, so an unreviewed `remote add` could redirect a later
+  # push/fetch to an unintended destination without another confirmation
+  # point catching it.
+  - deny: 'git [-C *] remote add *'
+    message: 'Blocked because adding a remote could redirect a later push/fetch to an unintended destination.'
+    tests:
+      - deny: 'git remote add origin /tmp/scratch-repo'
+      - deny: 'git -C /tmp remote add origin /tmp/scratch-repo'
   - deny: 'git [-C *] update-ref *'
     message: 'Blocked because `git update-ref` rewrites refs directly and bypasses `git reset` / `git commit --amend` protections'
     fix_suggestion: 'Use porcelain commands (git commit, git revert, git branch). Refuse to do destructive ref edits without user instruction.'
@@ -96,6 +105,18 @@ rules:
     tests:
       - ask: 'git -C /Users/fohte/ghq/github.com/fohte/dotfiles push origin main'
       - allow: 'git -C /tmp push origin main'
+  # Rebasing onto any branch (not just origin/main) rewrites local commit
+  # history and can only be published with a force-push, which is denied
+  # outright below -- so allowing the rebase itself would be a dead end.
+  # Declared before the more specific origin/main and -i denies so those
+  # win the shown message for their narrower cases (last matching `deny`
+  # wins the message; see `runok check` behavior).
+  - deny: 'git [-C *] rebase !--continue|--abort|--skip *'
+    message: 'Blocked because rebasing rewrites local history, which can only be published with a force-push (already blocked).'
+    tests:
+      - deny: 'git rebase some-branch'
+      - deny: 'git -C /tmp rebase some-branch'
+      - deny: 'git rebase --rebase-merges origin/copier-update/v0.8.13'
   - deny: 'git [-C *] rebase origin/main|origin/master *'
     message: 'Blocked to prevent unintended rewriting of commit history'
     fix_suggestion: 'git pull'
@@ -210,6 +231,17 @@ rules:
     tests:
       - deny: 'git -C /tmp switch -c new-branch'
       - deny: 'git -C /tmp switch -C new-branch'
+  # `git branch <name>` doesn't switch the current checkout onto the new
+  # branch, but still creates it outside the `/delegate-claude` flow, so
+  # the same policy applies as `checkout -b`/`switch -c` above.
+  - deny: 'git branch *'
+    when: 'size(flags) == 0 && size(args) > 1'
+    message: 'Blocked because creating a branch should go through the `/delegate-claude` skill, which runs the work in an isolated worktree.'
+    fix_suggestion: '/delegate-claude'
+    tests:
+      - deny: 'git branch "copier-update/v0.8.13"'
+      - deny: 'git branch new-test-branch'
+      - deny: 'git branch fix-test-expect-split origin/main'
   - deny: 'git [-C *] worktree add *'
     message: 'Blocked because creating a worktree should go through the `/delegate-claude` skill.'
     fix_suggestion: '/delegate-claude'
@@ -269,17 +301,30 @@ rules:
 
   # Unlike `rm -r`, `git clean` never touches tracked files, so restricting
   # the destructive `-fdx` form to <var:safe-rm-paths> (build output /
-  # dependency dirs, recreatable from source) is safe. Multiple paths in one
-  # invocation (`git clean -fdx a b c`) aren't covered — the var only binds
-  # one positional slot — and fall through to ask.
-  - allow: 'git [-C *] clean -fdx <var:safe-rm-paths>'
+  # dependency dirs, recreatable from source) is safe. `args` includes the
+  # literal `clean` token alongside the path args (runok quirk: `args`
+  # covers every positional, non-flag token matched by the pattern's
+  # non-bracketed portion, not just the trailing `*`); `exists_one(a, a ==
+  # "clean")` confirms exactly one token equals that literal (the
+  # subcommand itself), so a real target directory named `clean` (which
+  # would produce a second match) still falls through to ask instead of
+  # being silently treated as the subcommand token.
+  - allow: 'git [-C *] clean -fdx *'
+    when: >-
+      args.size() > 1 &&
+      args.exists_one(a, a == "clean") &&
+      args.all(a, a == "clean" || definitions.vars["safe-rm-paths"].exists(p, glob_matches(p, a)))
     tests:
       - allow: 'git clean -fdx web/dist'
       - allow: 'git clean -fdx node_modules'
+      - allow: 'git clean -fdx node_modules dist'
+      - allow: 'git clean -fdx api/node_modules node_modules web/node_modules'
+      - allow: 'git clean -fdx .astro dist'
       - allow: 'git -C /tmp/foo clean -fdx web/dist'
-      - ask: 'git clean -fdx api/node_modules node_modules web/node_modules'
+      - ask: 'git clean -fdx'
       - ask: 'git clean -fdx src'
       - ask: 'git clean -fdx .'
+      - ask: 'git clean -fdx clean'
 
   - deny: 'git clone *'
     message: 'Use ghq for fohte-owned repos, or opensrc for third-party code reading.'
@@ -291,8 +336,58 @@ rules:
     tests:
       - deny: 'git -c user.name=foo commit -m "test"'
       - deny: 'git -c commit.gpgsign=false commit -m "test"'
+  # `args.size() > 2` requires an actual value token beyond `config` +
+  # `user.name`/`user.email` (both counted in `args`, see the `git clean`
+  # rule above), so the read form (`git config user.name`, already allowed
+  # read-only by the preset) isn't caught here too.
+  - deny: 'git [-C *] config user.name|user.email *'
+    when: 'args.size() > 2'
+    message: 'Blocked to keep changes to commit identity visible for confirmation.'
+    tests:
+      - deny: 'git config user.name test'
+      - deny: 'git config user.email test@example.com'
+      - deny: 'git -C /tmp config user.name test'
+      - allow: 'git config user.name'
+      - allow: 'git config --get user.name'
 
   # allow rules
+  # `config/bin/git-main` (on PATH) is invoked by git's subcommand dispatch
+  # as `git main`; it only reads (`git branch -l master main`).
+  - allow: 'git main'
+    tests:
+      - allow: 'git main'
+  # `--check`/`--stat`/`--summary`/`--numstat` turn off actual application
+  # (git-apply(1)); `--apply` is excluded because it re-enables application
+  # after one of those flags, which would defeat the dry-run guarantee.
+  - allow: 'git [-C *] apply *'
+    when: >-
+      (has(flags.check) || has(flags.stat) || has(flags.summary) || has(flags.numstat)) &&
+      !has(flags.apply)
+    tests:
+      - allow: 'git apply --stat /tmp/x.patch'
+      - allow: 'git apply --check /tmp/x.patch'
+      - allow: 'git apply --recount --cached --check /tmp/x.patch'
+      - allow: 'git -C /tmp apply --check /tmp/x.patch'
+      - ask: 'git apply --check --apply /tmp/x.patch'
+  # `--cached` applies the patch to the index only, never the working
+  # tree (git-apply(1)), and is reversible via the already-allowed
+  # `restore --staged`. `--index` also touches the working tree; `--reject`
+  # writes `*.rej` files there too; `--build-fake-ancestor` writes an
+  # arbitrary caller-chosen path; `-3`/`--3way` adds conflict-resolution
+  # complexity not seen in real usage -- all excluded per least privilege.
+  - allow: 'git [-C *] apply *'
+    when: >-
+      has(flags.cached) && !has(flags.index) && !has(flags.reject) &&
+      !flags.exists(k, k == '3way' || k == '3' || k == 'build-fake-ancestor')
+    tests:
+      - allow: 'git apply --cached /tmp/x.patch'
+      - allow: 'git apply --recount --cached --include=foo.ts /tmp/x.patch'
+      - allow: 'git -C /tmp apply --cached /tmp/x.patch'
+      - ask: 'git apply --cached --index /tmp/x.patch'
+      - ask: 'git apply --cached --reject /tmp/x.patch'
+      - ask: 'git apply --cached --build-fake-ancestor=/tmp/fake /tmp/x.patch'
+      - ask: 'git apply --cached --3way /tmp/x.patch'
+      - ask: 'git apply /tmp/x.patch'
   - allow: 'git [-C *] add *'
     tests:
       - allow: 'git add .'
@@ -337,32 +432,57 @@ rules:
   - allow: 'git [-C *] push *'
     tests:
       - allow: 'git -C /tmp push origin main'
-  - allow: 'git [-C *] restore --staged *'
+  # Bare `restore <path>` discards only the named files' uncommitted
+  # changes (copied straight from the index/a ref), the same risk class as
+  # the already-allowed `checkout <ref> -- <path>` above -- `--source` is
+  # its direct modern equivalent. `-p`/`--patch` is excluded because it
+  # opens an editor for hunk editing (git-add(1) EDITING PATCHES), the
+  # same category `rebase -i` is denied for. This subsumes `--staged`
+  # (unstaging only, already the narrowest case), so there's no separate
+  # `restore --staged` rule below.
+  - allow: 'git [-C *] restore *'
+    when: '!has(flags.p) && !has(flags.patch)'
     tests:
+      - allow: 'git restore src/foo.ts'
+      - allow: 'git restore .'
+      - allow: 'git restore -- .'
+      - allow: 'git restore --worktree src/index.ts'
+      - allow: 'git restore --source=HEAD~2 file.txt'
+      - allow: 'git -C /tmp restore file.txt'
       - allow: 'git restore --staged file.txt'
       - allow: 'git restore --staged .'
       - allow: 'git -C /tmp restore --staged file.txt'
+      - ask: 'git restore -p file.txt'
+      - ask: 'git restore --patch file.txt'
   - allow: 'git [-C *] stash'
     tests:
       - allow: 'git stash'
   # `-u`/`-a` extend what gets stashed (untracked / untracked+ignored), but
   # `git stash pop` still fully restores it — no more destructive than a
-  # bare `git stash`.
-  - allow: 'git [-C *] stash [-u|--include-untracked] [-a|--all]'
+  # bare `git stash`. `-m`/`--message` only labels the stash entry.
+  - allow: 'git [-C *] stash [-u|--include-untracked] [-a|--all] [-m|--message *]'
     tests:
       - allow: 'git stash -u'
       - allow: 'git stash --include-untracked'
       - allow: 'git stash -a'
       - allow: 'git -C /tmp/foo stash -u'
+      - allow: 'git stash -u -m "wip: lockfile regen attempt"'
+      - allow: 'git stash -m "wip"'
       - ask: 'git stash -u extra-arg'
   - allow: 'git [-C *] stash push *'
     tests:
       - allow: 'git stash push'
       - allow: 'git stash push pnpm-lock.yaml'
       - allow: 'git stash push -m "wip"'
-  - allow: 'git [-C *] stash pop'
+  # `[--index] [-q|--quiet] [<stash>]` mirrors `git stash pop`'s own usage
+  # line; popping a specific ref is no more destructive than popping the
+  # top entry (both apply-then-drop a single stash, recoverable from
+  # `git fsck --unreachable` if the apply conflicts).
+  - allow: 'git [-C *] stash pop [--index] [-q|--quiet] *'
     tests:
       - allow: 'git stash pop'
+      - allow: 'git stash pop stash@{0}'
+      - allow: 'git stash pop --index stash@{1}'
   - allow: 'git [-C *] stash drop *'
     tests:
       - allow: 'git stash drop'
@@ -380,6 +500,46 @@ rules:
       - allow: 'git rm --force file.txt'
       - allow: 'git rm -rf dir'
       - allow: 'git -C /tmp rm -f file.txt'
+  # `git init` is idempotent on an existing repo and never overwrites
+  # existing content, except `--separate-git-dir` (moves the repo) and
+  # `--template` (can inject arbitrary files, including enabled hooks,
+  # into .git) — neither is declared here, so either falls through to ask.
+  - allow: 'git [-C *] init [-q] [-b *]'
+    tests:
+      - allow: 'git init -q'
+      - allow: 'git init -q -b master'
+      - allow: 'git init'
+      - allow: 'git init -b master'
+      - allow: 'git -C /tmp init -q'
+      - ask: 'git init --separate-git-dir /tmp/evil'
+      - ask: 'git init --template=/tmp/evil'
+      - ask: 'git init --shared=all'
+      - ask: 'git init /tmp/newrepo'
+      - ask: 'git init -b master extra-dir'
+  # No flags at all: `-x`/`-s`/`-e` etc. are fine on their own merits, but
+  # `--strategy`/`-X|--strategy-option` can invoke a `git-merge-<strategy>`
+  # executable, so the simplest safe cut is zero flags. `size(args) > 1`
+  # requires at least one commit-ish beyond the literal `cherry-pick`
+  # token (`args` includes it, see the `git clean` rule above).
+  - allow: 'git cherry-pick *'
+    when: 'size(flags) == 0 && size(args) > 1'
+    tests:
+      - allow: 'git cherry-pick bd8c9c3'
+      - allow: 'git cherry-pick 2c505402 6bb428c3'
+      - ask: 'git cherry-pick -x abc1234'
+      - ask: 'git cherry-pick -s abc1234'
+      - ask: 'git cherry-pick --strategy=recursive abc1234'
+      - ask: 'git cherry-pick -X ours abc1234'
+  - allow: 'git -C * cherry-pick *'
+    when: "!flags.exists(k, k != 'C') && size(args) > 1"
+    tests:
+      - allow: 'git -C /tmp cherry-pick abc1234'
+  - allow: 'git [-C *] cherry-pick --continue|--abort|--skip'
+    tests:
+      - allow: 'git cherry-pick --continue'
+      - allow: 'git cherry-pick --abort'
+      - allow: 'git cherry-pick --skip'
+      - allow: 'git -C /tmp cherry-pick --continue'
 
   # gh
   - deny: 'gh [-R *] api * --paginate *'

@@ -13,6 +13,8 @@ definitions:
         - 'node_modules'
         - '**/dist'
         - 'dist'
+        - '**/.astro'
+        - '.astro'
 
     # Disposable scratch space — safe regardless of what's inside. /private/tmp
     # is listed alongside /tmp because macOS symlinks /tmp -> /private/tmp, so
@@ -82,6 +84,8 @@ rules:
       - allow: 'rm -r packages/foo/dist'
       - ask: 'rm -r distfoo'
       - ask: 'rm -r src/distribution'
+      - allow: 'rm -rf .astro'
+      - allow: 'rm -r packages/foo/.astro'
       - allow: 'rm /tmp/foo'
       - allow: 'rm -r /tmp/foo'
       - allow: 'rm -r /tmp/foo/bar'

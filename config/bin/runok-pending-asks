@@ -18,6 +18,11 @@ IGNORE_COMMANDS=(
   # is too broad (any PR, not just vetted Renovate ones), so keep ask.
   '^gh (-R [^ ]+ |--repo [^ ]+ )?pr review .* --approve'
   '^gh (-R [^ ]+ |--repo [^ ]+ )?pr merge'
+  # Direct pushes to a master-push-repos entry (no PR safety net) should
+  # always be confirmed, including from a `.worktrees/` checkout.
+  '^git( -C [^ ]+)? push$'
+  '^git( -C [^ ]+)? push origin (main|master)$'
+  '^git( -C [^ ]+)? push -u origin HEAD$'
 )
 
 ignore_regex=$(printf '|%s' "${IGNORE_COMMANDS[@]}")
