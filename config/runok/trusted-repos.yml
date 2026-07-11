@@ -53,3 +53,42 @@ rules:
       - allow: 'nr -C web dev'
       - ask: 'nr -C /tmp/untrusted-clone dev'
       - ask: 'nr -C ../../untrusted-clone dev'
+
+  # `mise install` (bare) only installs what the repo's own mise.toml /
+  # .tool-versions already declares, same trust boundary as cargo run/go run
+  # above (it can run a tool's postinstall hook, but only one the repo itself
+  # committed). Deliberately a flagless literal — no observed invocation has
+  # ever carried flags like `-y`, and one that does simply falls through to
+  # the global default `ask` rather than being silently allowed.
+  - allow: 'mise install'
+    when: *trusted_repo_cwd
+    tests:
+      - allow: 'mise install'
+
+  # `mise install <tool>@<version>` takes the package identifier straight
+  # from the CLI argument instead of the repo's committed mise.toml, so it
+  # isn't bounded by the trust boundary the bare allow above relies on (see
+  # its comment). Route persistent needs through `mise use -p`, which writes
+  # to mise.toml so the change is git-diffable, and one-off needs through
+  # `mise exec` (already wrapped in runok.yml, no lasting config change).
+  - deny: 'mise install *'
+    when: 'size(args) > 1'
+    message: 'Installing an explicit tool bypasses the mise.toml trust boundary. For persistent use, add it to config with `mise use -p <config-file> <tool>@<version>` (git-diffable), then bare `mise install` will pick it up. For one-off use, run `mise exec <tool>@<version> -- <cmd>` instead.'
+    fix_suggestion: 'mise use -p mise.toml <tool>@<version>'
+    tests:
+      - deny: 'mise install node@20'
+      - deny: 'mise install npm:opensrc@0.7.2'
+      - allow: 'mise install'
+
+  # `mise trust` marks the nearest mise.toml as trusted in mise's own trust
+  # store, keyed by file path. Unlike cargo run/go run/bare mise install
+  # above, this trust persists across future mise invocations — including
+  # ones outside runok's reach, e.g. `mise activate`'s shell hook — without
+  # being re-checked here each time. The `when` below only gates where the
+  # trust decision gets made, not how long it lasts: only within repos the
+  # user already owns. Also a flagless literal for the same reason as bare
+  # `mise install` above.
+  - allow: 'mise trust'
+    when: *trusted_repo_cwd
+    tests:
+      - allow: 'mise trust'

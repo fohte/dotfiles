@@ -98,8 +98,23 @@ rules:
 
   - allow: pinact run *
 
-  - allow: mise ls|where|which *
+  - allow: mise ls|list|where|which *
+    tests:
+      - allow: 'mise ls'
+      - allow: 'mise list aqua'
   - allow: mise config get *
+  - allow: 'mise config'
+    tests:
+      - allow: 'mise config'
+  - allow: 'mise config ls'
+    tests:
+      - allow: 'mise config ls'
+  - allow: 'mise doctor'
+    tests:
+      - allow: 'mise doctor'
+  - allow: 'mise trust --show'
+    tests:
+      - allow: 'mise trust --show'
 
   - allow: conftest verify *
   - allow: conftest test *
