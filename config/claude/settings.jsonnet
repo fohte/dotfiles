@@ -81,6 +81,14 @@ local env(name) = std.extVar(name);
       'Read(.env)',
       'Read(.env.local)',
       'Read(.envrc)',
+
+      // Fable is priced far above the other tiers and gets prohibitively
+      // expensive once fanned out across subagents, so block explicit
+      // model:"fable" requests here. The implicit-inherit path (no model
+      // specified anywhere) is handled by the agent-guard hook instead,
+      // since permission rules never match an omitted parameter.
+      'Agent(model:fable)',
+
       'mcp__qmd__query',
       'mcp__qmd__vsearch',
 

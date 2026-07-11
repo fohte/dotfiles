@@ -1,0 +1,82 @@
+#!/bin/bash
+# Guards for the Agent tool: block isolation:"worktree", and fill in a safe
+# model when a subagent call would otherwise silently inherit the parent
+# session's model.
+#
+# Invoked from pre-tool-use-proxy.bash; receives the original PreToolUse
+# JSON payload on stdin.
+input=$(cat)
+
+# Agent(isolation:"worktree") creates a git worktree directly via the
+# harness, bypassing Bash and thus runok's git worktree deny rules -- same
+# bypass as EnterWorktree. isolation:"remote" doesn't touch git and stays
+# allowed.
+isolation=$(echo "$input" | jq -r '.tool_input.isolation // empty')
+if [ "$isolation" = "worktree" ]; then
+  jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "Agent isolation:\"worktree\" is disabled. Use the /delegate-claude skill to spawn work in a worktree."}}'
+  exit 0
+fi
+
+# Subagent model resolution order (Claude Code sub-agents doc, "Choose a
+# model"): CLAUDE_CODE_SUBAGENT_MODEL env var > per-call model param >
+# subagent definition's `model` frontmatter > parent session's model. This
+# hook doesn't account for the env var; if it's ever set, it wins over the
+# model this hook injects. With nothing set anywhere, a subagent silently
+# inherits the parent session's model -- including Fable, which is priced
+# far above the other tiers and gets prohibitively expensive once it's
+# fanned out across subagents. Explicit model:"fable" is blocked separately
+# via permissions.deny (Agent(model:fable)); this fills in FALLBACK_MODEL
+# only when BOTH the call and the target subagent's own definition leave
+# model unset, so intentional per-call or per-agent model choices are never
+# overridden.
+readonly FALLBACK_MODEL='sonnet'
+
+model=$(echo "$input" | jq -r '.tool_input.model // empty')
+subagent_type=$(echo "$input" | jq -r '.tool_input.subagent_type // "general-purpose"')
+
+# `fork` always mirrors the parent session (model included) and ignores the
+# model parameter entirely, so there is nothing to fill in.
+if [ -n "$model" ] || [ "$subagent_type" = "fork" ]; then
+  exit 0
+fi
+
+# An unsafe subagent_type only skips the file lookup below (agent_def stays
+# empty), not the fallback fill -- otherwise a crafted subagent_type would
+# reopen the implicit-inherit hole this hook exists to close.
+agent_def=""
+if [[ "$subagent_type" =~ ^[A-Za-z0-9_-]+$ ]]; then
+  cwd=$(echo "$input" | jq -r '.cwd // empty')
+  if [ -n "$cwd" ] && [ -f "$cwd/.claude/agents/$subagent_type.md" ]; then
+    agent_def="$cwd/.claude/agents/$subagent_type.md"
+  elif [ -f "$HOME/.claude/agents/$subagent_type.md" ]; then
+    agent_def="$HOME/.claude/agents/$subagent_type.md"
+  else
+    # Covers plugin-provided subagents (e.g. skill-scoped agents under
+    # <plugin>/skills/<skill>/agents/<name>.md). Built-in agents
+    # (general-purpose, Explore, Plan, ...) have no file anywhere and
+    # correctly fall through to the fallback below.
+    agent_def=$(rg --files "$HOME/.claude/plugins/cache" -g "agents/$subagent_type.md" 2> /dev/null | head -1)
+  fi
+fi
+
+pinned_model=""
+if [ -n "$agent_def" ]; then
+  pinned_model=$(awk '
+    /^---$/ { delim++; next }
+    delim == 1 && /^model:/ { sub(/^model:[ \t]*/, ""); print; exit }
+    delim >= 2 { exit }
+  ' "$agent_def")
+fi
+
+# A subagent definition pinning model:fable is just as expensive as an
+# explicit per-call request, so it gets the same deny rather than being
+# treated as "intentional, leave it alone".
+if [ "$pinned_model" = "fable" ]; then
+  jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "Subagent definition pins model: fable, which is blocked."}}'
+  exit 0
+fi
+
+[ -n "$pinned_model" ] && [ "$pinned_model" != "inherit" ] && exit 0
+
+updated_tool_input=$(echo "$input" | jq -c --arg m "$FALLBACK_MODEL" '.tool_input + {model: $m}')
+jq -nc --argjson u "$updated_tool_input" '{hookSpecificOutput: {hookEventName: "PreToolUse", updatedInput: $u}}'
