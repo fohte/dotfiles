@@ -101,6 +101,20 @@ rules:
       - deny: 'nlx eslint --fix .'
       - deny: 'na eslint .'
       - deny: 'na -C packages/web eslint .'
+  # tsx needs the same fs-write sandboxing as `node *`, but nlx (dlx-style
+  # exec) also needs network + writable cache dirs to resolve the package —
+  # sandboxing that would open network to the executed script too.
+  # `tsx@*` also matches version-pinned runs (mirrors `nlx prettier|prettier@* *`
+  # above).
+  - deny: 'nlx tsx|tsx@* *'
+    message: 'BLOCKED: nlx tsx needs network + its own cache dirs, which cannot be sandboxed safely. If the script only uses erasable TS syntax (no JSX/enum/namespace), use node <script>.ts instead (already covered by the node * rule); otherwise this needs manual review.'
+    fix_suggestion: 'node <script>.ts (only if the script avoids JSX/enum/namespace)'
+    tests:
+      - deny: 'nlx tsx script.ts'
+      - deny: 'nlx tsx --version'
+      - deny: 'nlx tsx@4.19.2 script.ts'
+      - deny: 'nlx -p tsx@4.19.2 script.ts'
+
   # prettier is a safe formatter/checker; no nr indirection needed.
   # `prettier@*` also matches version-pinned runs (e.g. prettier@3.8.3).
   - allow: 'nlx prettier|prettier@* *'
