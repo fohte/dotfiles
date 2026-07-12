@@ -13,8 +13,6 @@
 
 **重要:** diff の確認には必ず `origin/master` と比較すること (`git diff origin/master...HEAD`)。ローカルの `master` は古い可能性がある。
 
-ワークフロー詳細 (Frontmatter、エスケープ、exit code 等) は `~/.claude/skills/create-pr/workflow.md` を参照。
-
 ## 開始時の宣言 (必須・最初の応答で実行)
 
 create-pr skill を起動したら、**最初の応答で**以下の必須ステップを列挙し、これから実行する旨を宣言すること。宣言なしに Step 1 以降に進むのは禁止。
@@ -207,6 +205,18 @@ diff で見える内訳をコロン区切り・括弧書き・サブバレット
 
 静的ファイル追加・設定変更・機械的変更のような小さな PR は Purpose / Approach 各 1 行を既定とし、Design decisions は省略する。template の全セクションを「埋めにいく」と必ず過剰になる。セルフレビューでは「この変更規模に対して body が長すぎないか」を判定し、長ければ各セクションを 1 行まで削る。
 
+### バッククォートのエスケープ
+
+ドラフト本文にバッククォートを含める場合 (Rule 5 のコード要素表記など)、シェルのクォートの種類によってエスケープが必要。
+
+```bash
+# double quote のときは \` でエスケープ
+echo "use \`gh\` command"
+
+# single quote のときは escape 不要
+echo 'use `gh` command'
+```
+
 ### ドラフト投入
 
 {{- if $has_pr_template }}
@@ -243,6 +253,27 @@ echo "## Why
 {{- end }}
 
 ドラフトは `/tmp/pr-body-draft/<owner>/<repo>/<branch>.md` に作成される。以降のコマンドではパス指定不要。
+
+### Frontmatter
+
+`a ai pr-draft new` で作成されるファイルには YAML frontmatter が含まれる。
+
+```yaml
+---
+title: 'PRタイトル'
+steps:
+{{- if $public }}
+    ready-for-translation: false
+{{- end }}
+    submit: false
+---
+```
+
+- `title`: PR のタイトル (submit 時に使用)
+  {{- if $public }}
+- `steps.ready-for-translation`: ドラフト承認フラグ。true になったら翻訳を実行する。public repo では翻訳は**必須**であり、submit 時に日本語が含まれているとエラーになる
+  {{- end }}
+- `steps.submit`: true にするとエディタ終了時にファイルのハッシュが保存される。submit 時にハッシュが一致しないと失敗する (改ざん防止)
 
 **投入したら必ず Step 2 に進むこと。** Step 2 を飛ばして Step 3 (`a ai pr-draft review`) に進むのは禁止。
 
@@ -294,7 +325,12 @@ echo "## Why
 
 ## 3. レビュー
 
-`a ai pr-draft review` を **バックグラウンドで** (`run_in_background: true`) 実行。完了を待ち、exit code で判断 (詳細は `workflow.md`)。
+`a ai pr-draft review` を **バックグラウンドで** (`run_in_background: true`) 実行。完了を待ち、exit code で判断する:
+
+- exit code 0: ユーザーが承認した
+- exit code 1: 未承認 (エディタを承認せず閉じた)。ユーザーに何を変更するか確認する
+- exit code 2: エディタが既に開いている。**追加アクションは不要**。ユーザーにエディタ上でファイルを読み込み直すよう伝える (例: Neovim なら `:e`)。再度 review コマンドを実行したり、エディタを閉じるよう促してはならない
+- exit code 3: ターミナルエミュレータが起動できなかった (macOS スリープ中などで 10s 内に起動失敗)。ロックファイルは残らないので、ユーザーにターミナルが利用可能になってから再実行を依頼する。自動でリトライしてはならない (スリープ状態が解消されない限り再失敗するため)
 
 **polling 禁止**: バックグラウンドで起動した後は `<task-notification>` の完了通知が届くまで何もしない。`while`/`sleep` ループや出力ファイルの繰り返し読み取りで進捗確認してはならない。これは `a ai pr-draft review` だけでなく `a ai review wait` や `gh pr checks --watch` など本スキル内のすべてのバックグラウンドコマンドに共通。
 
