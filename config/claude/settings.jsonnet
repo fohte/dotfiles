@@ -105,8 +105,13 @@ local env(name) = std.extVar(name);
       'CronDelete',
       'CronList',
 
-      // Monitor is busy-wait polling, which is fragile and wastes time.
+      // Both are busy-wait polling, which is fragile and wastes time.
+      // TaskOutput is additionally marked deprecated in its own tool
+      // description in favor of waiting for <task-notification> and reading
+      // the output file directly. The Agent tool's return value serves the
+      // same purpose when waiting in the foreground.
       'Monitor',
+      'TaskOutput',
     ],
     defaultMode: 'acceptEdits',
   },
