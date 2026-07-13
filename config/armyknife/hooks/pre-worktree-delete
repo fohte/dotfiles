@@ -1,0 +1,33 @@
+#!/bin/bash
+# pre-worktree-delete hook for armyknife.
+# Called by `a wm delete` (aliases: d, rm) before removing the worktree directory.
+#
+# armyknife discovers this file at $XDG_CONFIG_HOME/armyknife/hooks/pre-worktree-delete
+# (defaults to ~/.config/armyknife/hooks/pre-worktree-delete).
+# See: https://github.com/fohte/armyknife/blob/master/docs/hooks.md
+#
+# Environment variables set by armyknife:
+#   ARMYKNIFE_WORKTREE_PATH - absolute path to the worktree being deleted
+#   ARMYKNIFE_BRANCH_NAME   - branch name of the worktree (may be empty)
+#   ARMYKNIFE_REPO_ROOT     - root path of the parent repository
+#
+# Hook errors are non-fatal (best-effort): armyknife logs a warning and
+# deletes the worktree anyway.
+set -euo pipefail
+
+if [[ -z "${ARMYKNIFE_WORKTREE_PATH:-}" ]]; then
+  exit 0
+fi
+
+# Stop any crit (https://crit.md) review daemon whose recorded cwd is exactly
+# this worktree's root directory. A daemon started from a subdirectory of the
+# worktree (crit supports reviewing a specific subdir) is NOT covered and will
+# still leak as a zombie process once this directory is removed. Without this,
+# the daemon outlives the directory it was serving and hangs on git/file
+# operations against a path that no longer exists.
+#
+# "All daemons stopped." prints even when there was nothing to stop, so only
+# stdout is discarded here; a genuine failure (non-zero exit) still propagates
+# to armyknife's warning path via `set -e`.
+cd "$ARMYKNIFE_WORKTREE_PATH"
+crit stop --all > /dev/null
