@@ -8,6 +8,7 @@ depends = [
   "refresh:mise-self-update",
   "refresh:mise-install",
   "refresh:lefthook",
+  "refresh:brew-bundle",
   "refresh:brew-upgrade",
 ]
 
@@ -67,8 +68,13 @@ description = "Run lefthook hooks"
 depends = ["refresh:deploy"]
 run = "lefthook run pre-commit"
 
+[tasks."refresh:brew-bundle"]
+description = "Install Homebrew packages from Brewfile"
+run = "brew bundle --file config/homebrew/Brewfile"
+
 [tasks."refresh:brew-upgrade"]
 description = "Upgrade Homebrew packages"
+depends = ["refresh:brew-bundle"]
 run = "brew upgrade"
 
 [tools]
