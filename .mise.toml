@@ -45,8 +45,17 @@ depends = ["refresh:deploy"]
 run = "nvim --headless -c 'Lazy! restore' +q"
 
 [tasks."refresh:mise-self-update"]
-description = "Update mise itself (no-op if installed via package manager)"
-run = "mise self-update --yes || true"
+description = "Update mise itself"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v brew > /dev/null 2>&1 && brew list mise > /dev/null 2>&1; then
+  brew upgrade mise
+else
+  mise self-update --yes || true
+fi
+'''
 
 [tasks."refresh:mise-install"]
 description = "Install mise tools"
