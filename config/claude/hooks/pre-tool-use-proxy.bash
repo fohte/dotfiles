@@ -11,7 +11,7 @@
 #
 # DO NOT add another PreToolUse entry to settings.jsonnet. New per-tool guards
 # belong in their own ~/.claude/hooks/<name> script, invoked from the `case`
-# below. See `cbm-code-discovery-gate` / `default-branch-edit-guard`.
+# below. See `default-branch-edit-guard`.
 input=$(cat)
 
 # Run side-effect hook (ignore stdout, let stderr pass through)
@@ -19,13 +19,7 @@ echo "$input" | a cc hook pre-tool-use > /dev/null
 
 tool_name=$(echo "$input" | jq -r .tool_name)
 
-# codebase-memory-mcp code-discovery gate: block the first Grep/Glob/Read in a
-# session and nudge the agent toward the knowledge graph. Subsequent calls
-# pass through (gate file in /tmp keyed on PPID).
 case "$tool_name" in
-  Grep | Glob | Read | Search)
-    exec ~/.claude/hooks/cbm-code-discovery-gate
-    ;;
   Edit | Write | MultiEdit)
     exec ~/.claude/hooks/default-branch-edit-guard <<< "$input"
     ;;

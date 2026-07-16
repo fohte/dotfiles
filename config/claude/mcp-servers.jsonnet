@@ -18,18 +18,4 @@ local env(name) = std.extVar(name);
     args: ['--app', 'desktop'],
     env: {},
   },
-  'codebase-memory': {
-    type: 'stdio',
-    // Launched via wrapper that cd's to the main repo when inside a worktree —
-    // the server keys its index by CWD, so a bare `codebase-memory-mcp` would
-    // build a separate graph per worktree. MCP clients exec `command` directly
-    // without shell expansion, so the path must be absolute.
-    command: env('HOME') + '/.claude/hooks/cbm-mcp-launcher.bash',
-    args: [],
-    env: {},
-    // Exempt from tool-search deferral so search_graph / trace_path / etc. are
-    // callable without a ToolSearch step, which otherwise makes Grep/Read the
-    // cheaper path and starves cbm of use.
-    alwaysLoad: true,
-  },
 }

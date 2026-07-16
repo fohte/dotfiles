@@ -78,10 +78,6 @@ local env(name) = std.extVar(name);
       'mcp__context7',
       'mcp__qmd',
       'mcp__pencil',
-
-      // Allow all codebase-memory-mcp tools — index/query/trace are read-only
-      // against a local SQLite cache. Destructive operations are denied below.
-      'mcp__codebase-memory',
     ],
     deny: [
       'NotebookEdit',
@@ -98,10 +94,6 @@ local env(name) = std.extVar(name);
 
       'mcp__qmd__query',
       'mcp__qmd__vsearch',
-
-      // Wipes the indexed project from the local SQLite cache. Reversible only
-      // by re-indexing, but accidental drops cost minutes of rebuild time.
-      'mcp__codebase-memory__delete_project',
 
       // Block self-scheduling tools. Claude sometimes defers the current task
       // by scheduling itself ("I'll check this again later") instead of doing
@@ -129,15 +121,6 @@ local env(name) = std.extVar(name);
         hooks: [
           { type: 'command', command: 'a cc hook session-start' },
           { type: 'command', command: 'gen-claude-template context' },
-        ],
-      },
-      {
-        // Reminds the agent to call codebase-memory-mcp tools before falling
-        // back to grep/read. Fires on startup/resume/clear/compact so the hint
-        // survives context clears and compaction.
-        matcher: 'startup|resume|clear|compact',
-        hooks: [
-          { type: 'command', command: '~/.claude/hooks/cbm-session-reminder' },
         ],
       },
       {
