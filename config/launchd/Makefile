@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-PLISTS := com.fohte.headroom-proxy.plist com.fohte.skk-watcher.plist
+PLISTS := com.fohte.skk-watcher.plist
 
 all: $(PLISTS)
 

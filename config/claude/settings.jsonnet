@@ -3,7 +3,6 @@ local env(name) = std.extVar(name);
 {
   env: {
     CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY: '1',
-    ANTHROPIC_BASE_URL: 'http://127.0.0.1:8787',
   },
 
   // Parallel work is driven by separate tmux panes/sessions, not the

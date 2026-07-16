@@ -15,7 +15,6 @@
 
 # packages
 "pipx:neovim-remote" = "latest"
-"pipx:headroom-ai" = { version = "0.23.0", extras = "proxy", uvx_args = "--python 3.13" }
 "gem:rubocop" = "1.84.0"
 
 # CLI tools

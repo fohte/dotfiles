@@ -170,20 +170,27 @@ if match_tag misc; then
 fi
 
 if match_tag launchd && is_macos; then
-  log-exec mkdir -p ~/.local/state/headroom ~/.local/state/skk-watcher
-  sym config/launchd/com.fohte.headroom-proxy.plist ~/Library/LaunchAgents/com.fohte.headroom-proxy.plist
+  log-exec mkdir -p ~/.local/state/skk-watcher
+
+  # One-time cleanup for the decommissioned headroom-proxy job. Removing it
+  # from the loop below stops re-bootstrapping it, but a machine that already
+  # ran a prior deploy still has it loaded and running until this fires.
+  legacy_plist="$HOME/Library/LaunchAgents/com.fohte.headroom-proxy.plist"
+  if [ -e "$legacy_plist" ]; then
+    log-exec launchctl bootout "gui/$(id -u)" "$legacy_plist" || true
+    log-exec rm -f "$legacy_plist" config/launchd/com.fohte.headroom-proxy.plist
+  fi
+
   sym config/launchd/com.fohte.skk-watcher.plist ~/Library/LaunchAgents/com.fohte.skk-watcher.plist
 
   # Re-bootstrap on every deploy so plist edits take effect. bootout is
   # tolerated when the job is not yet loaded.
   launchd_domain="gui/$(id -u)"
-  for plist in com.fohte.headroom-proxy.plist com.fohte.skk-watcher.plist; do
-    launchd_plist="$HOME/Library/LaunchAgents/$plist"
-    log-exec launchctl bootout "$launchd_domain" "$launchd_plist" || true
-    log-exec launchctl bootstrap "$launchd_domain" "$launchd_plist" ||
-      {
-        echo "bootstrap failed for $plist" >&2
-        exit 1
-      }
-  done
+  launchd_plist="$HOME/Library/LaunchAgents/com.fohte.skk-watcher.plist"
+  log-exec launchctl bootout "$launchd_domain" "$launchd_plist" || true
+  log-exec launchctl bootstrap "$launchd_domain" "$launchd_plist" ||
+    {
+      echo "bootstrap failed for com.fohte.skk-watcher.plist" >&2
+      exit 1
+    }
 fi
