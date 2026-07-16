@@ -16,7 +16,17 @@ fi
 
 
 () {
-  local fzf_bin
-  fzf_bin="$(command -v fzf)" || return
+  # mise's aqua backend does not generate a shim for fzf, and the
+  # `mise hook-env` that would add installs/... to PATH runs on precmd —
+  # after .zshenv. Glob the installs dir directly to resolve the binary.
+  local -a matches
+  () {
+    # (n) sorts lexicographically unless numeric_glob_sort is set, so
+    # "0.9.0" would otherwise outrank "0.44.0".
+    setopt local_options numeric_glob_sort
+    matches=(${MISE_DATA_DIR}/installs/aqua-junegunn-fzf/*/fzf(NOn))
+  }
+  local fzf_bin="${matches[1]:-$(command -v fzf)}"
+  [[ -n $fzf_bin ]] || return
   cache_source fzf-zsh "$fzf_bin" -- "$fzf_bin" --zsh
 }
