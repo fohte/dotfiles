@@ -91,3 +91,19 @@ rules:
     when: *trusted_repo_cwd
     tests:
       - allow: 'mise trust'
+
+  # `mise run <task>` executes a task defined in the repo's own mise.toml /
+  # .mise/tasks, same trust boundary as cargo run/go run/nr above. `-C`/`--cd`
+  # changes the task-lookup directory and `-t`/`--tool` installs a tool not
+  # declared in mise.toml, both bypassing the cwd check below the same way
+  # nr's `-C` and the `mise install <tool>@<version>` deny above call out.
+  - allow: 'mise run *'
+    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')) && !has(flags.C) && !has(flags.cd) && !has(flags.t) && !has(flags.tool)"
+    tests:
+      - allow: 'mise run test'
+      - allow: 'mise run db:up'
+      - allow: 'mise run db-up'
+      - ask: 'mise run test -C /tmp/untrusted-clone'
+      - ask: 'mise run test --cd /tmp/untrusted-clone'
+      - ask: 'mise run test --tool npm:evil-package@1.0.0'
+      - ask: 'mise run test -t npm:evil-package@1.0.0'

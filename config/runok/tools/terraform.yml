@@ -9,3 +9,15 @@ rules:
   - allow: 'terraform validate'
     tests:
       - allow: 'terraform validate'
+  - allow: 'terraform version *'
+    tests:
+      - allow: 'terraform version'
+      - allow: 'terraform version -json'
+
+  # terraform-docs. No flags are permitted in the pattern (a literal, not a
+  # wildcard), since `--output-file`/`--config`/`--report-template` can write
+  # to arbitrary paths or load a custom template.
+  - allow: 'terraform-docs .'
+    tests:
+      - allow: 'terraform-docs .'
+      - ask: 'terraform-docs . --output-file README.md'

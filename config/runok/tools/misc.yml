@@ -65,7 +65,6 @@ rules:
       - allow: 'lefthook validate'
       - allow: 'lefthook version'
       - allow: 'lefthook dump'
-  - allow: 'mise run test *'
 
   # tmux (read-only)
   - allow: 'tmux -V'
@@ -115,6 +114,52 @@ rules:
   - allow: 'mise trust --show'
     tests:
       - allow: 'mise trust --show'
+  - allow: 'mise reshim *'
+    tests:
+      - allow: 'mise reshim'
+      - allow: 'mise reshim -v'
+      - allow: 'mise reshim -f'
+  - allow: 'mise activate zsh'
+    tests:
+      - allow: 'mise activate zsh'
+  - allow: 'mise tasks'
+    tests:
+      - allow: 'mise tasks'
+  - allow: 'mise settings get *'
+    tests:
+      - allow: 'mise settings get trusted_config_paths'
+      - allow: 'mise settings get disable_tools'
+      - allow: 'mise settings get'
+  - allow: 'mise prune *'
+    tests:
+      - allow: 'mise prune -y'
+      - allow: 'mise prune --dry-run'
+  - allow: 'mise hook-env *'
+    tests:
+      - allow: 'mise hook-env -s zsh'
+  - allow: 'mise help *'
+    tests:
+      - allow: 'mise help hook-env'
+  - allow: 'mise'
+    tests:
+      - allow: 'mise'
+
+  # basefmt (fohte's own EditorConfig-based formatter, github:fohte/basefmt),
+  # run via `mise x "github:fohte/basefmt" -- basefmt <files>`.
+  - allow: 'basefmt *'
+    tests:
+      - allow: 'basefmt scripts/db-up .mise.toml README.md'
+
+  # betterleaks (secret scanner). The dangerous flags (report-path/template,
+  # config, diagnostics) are deliberately left out of the pattern rather than
+  # negated, so nothing outside the enumerated optional flags matches.
+  - allow: 'betterleaks git --pre-commit --staged [--redact] [--verbose] [--no-banner]'
+    tests:
+      - allow: 'betterleaks git --pre-commit --staged --verbose --no-banner'
+      - allow: 'betterleaks git --pre-commit --redact --staged --verbose'
+      - allow: 'betterleaks git --pre-commit --staged'
+      - ask: 'betterleaks git --pre-commit --staged --report-path /tmp/out.json'
+      - ask: 'betterleaks git --pre-commit --staged /Users/fohte/other-repo'
 
   - allow: conftest verify *
   - allow: conftest test *
