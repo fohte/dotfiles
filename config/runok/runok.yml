@@ -13,6 +13,7 @@ extends:
   - './languages/ruby.yml'
   - './languages/python.yml'
   - './languages/jsonnet.yml'
+  - './languages/perl.yml'
   - './tools/argocd.yml'
   - './tools/aws.yml'
   - './tools/colima.yml'
@@ -46,6 +47,26 @@ definitions:
         write:
           allow: []
           deny:
+            - '<path:sensitive>'
+      network:
+        allow: false
+
+    # For interpreters whose in-place edit mode (e.g. `perl -i`) needs real
+    # writes, unlike `readonly` above. Writes are confined to the project
+    # tree (excluding `.git`), so damage stays recoverable via git, and
+    # network is blocked. Only `<path:sensitive>` is read-denied -- runok's
+    # fs.read only supports deny-listing, not scoping reads to cwd, so other
+    # paths on disk (e.g. ~/.aws/config, ~/.npmrc) remain readable.
+    write-cwd:
+      fs:
+        read:
+          deny:
+            - '<path:sensitive>'
+        write:
+          allow:
+            - '.'
+          deny:
+            - '.git'
             - '<path:sensitive>'
       network:
         allow: false

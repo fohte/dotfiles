@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  # `-e` hands arbitrary code to the interpreter (e.g. `s/pat/CODE/e`,
+  # `system()`, backticks), so this can't be scoped down by flags alone.
+  # See `write-cwd` in runok.yml for how the blast radius is contained.
+  - allow: 'perl *'
+    sandbox: write-cwd
+    tests:
+      - allow: 'perl -0pi -e "s/foo/bar/g" file.ts'
+      - allow: "perl -i -0pe 's/foo/bar/g' file.rs"
+      - allow: 'perl -ne "print if /pattern/" file.txt'
+      - allow: 'perl -c script.pl'
