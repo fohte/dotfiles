@@ -12,6 +12,13 @@ local env(name) = std.extVar(name);
 
   includeCoAuthoredBy: true,
 
+  // Bundled `claude-api` skill inlines its entire multi-language reference
+  // (~200-300k tokens) unconditionally on trigger, regardless of relevance.
+  // https://github.com/anthropics/claude-code/issues/63566
+  skillOverrides: {
+    'claude-api': 'user-invocable-only',
+  },
+
   permissions: {
     allow: [
       'Bash(runok exec:*)',
