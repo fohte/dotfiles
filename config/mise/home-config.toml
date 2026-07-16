@@ -21,7 +21,7 @@
 "aqua:cli/cli" = "2.94.0"
 "aqua:sharkdp/bat" = "0.25.0"
 "aqua:x-motemen/ghq" = "1.7.1"
-"aqua:junegunn/fzf" = "0.61.1"
+"aqua:junegunn/fzf" = "0.74.0"
 "aqua:dandavison/delta" = "0.19.2"
 "aqua:mikefarah/yq" = "4.53.3"
 "vfox:mise-plugins/vfox-neovim" = "0.12.1"
