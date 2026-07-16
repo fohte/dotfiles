@@ -17,7 +17,12 @@ _cache_mise_activate() {
   local mise_bin
   mise_bin="$(command -v mise)" || return
 
-  cache_source mise-activate "$mise_bin" -- _cache_mise_activate "$mise_bin"
+  cache_source mise-activate "$mise_bin" -- _cache_mise_activate "$mise_bin" || return
+
+  # mise's aqua backend doesn't shim every tool (e.g. gh), so PATH still
+  # lacks them until the precmd hook above runs. Run it directly in
+  # non-interactive shells since there's no prompt to protect from blocking.
+  [[ -o interactive ]] || _mise_hook
 }
 
 unfunction _cache_mise_activate
