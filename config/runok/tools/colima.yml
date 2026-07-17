@@ -21,5 +21,8 @@ rules:
       - ask: 'colima delete'
       - allow: 'colima ssh -- docker ps'
       - allow: 'colima ssh -- docker images postgres'
-      - ask: 'colima ssh -- docker run -d --name pg postgres:17-alpine'
+      # `docker run` is gated by trusted-repos.yml's cwd check, same as a
+      # direct `docker run` outside colima ssh -- both end up running in
+      # the same VM.
+      - allow: 'colima ssh -- docker run -d --name pg postgres:17-alpine'
       - ask: 'colima ssh'

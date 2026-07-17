@@ -107,3 +107,64 @@ rules:
       - ask: 'mise run test --cd /tmp/untrusted-clone'
       - ask: 'mise run test --tool npm:evil-package@1.0.0'
       - ask: 'mise run test -t npm:evil-package@1.0.0'
+
+  # `docker exec`/`compose exec` attach to a container that's already
+  # running, so most flags that widen host reach (--cap-add, --userns, ...)
+  # don't apply -- only `--privileged` does (docker/compose both support
+  # re-privileging an already-running container via exec).
+  # Not scoped to a container-name pattern: compose project names change per
+  # worktree, so a name glob would need constant upkeep.
+  - allow: 'docker exec *'
+    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')) && !has(flags.privileged)"
+    tests:
+      - allow: 'docker exec app-1 psql -U app'
+      - allow: 'docker exec -it app-1 sh'
+      - ask: 'docker exec --privileged app-1 sh'
+  - allow: 'docker-compose [-f *] exec *'
+    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')) && !has(flags.privileged)"
+    tests:
+      - allow: 'docker compose exec db psql -U app'
+      - allow: 'docker-compose exec web sh'
+      - ask: 'docker compose exec --privileged web sh'
+
+  # `docker compose run`/`docker run` both start a new container, so the
+  # same flags that widen host reach apply to both -- see the `docker run`
+  # comment below for what this guards and what it deliberately doesn't.
+  - allow: 'docker-compose [-f *] run *'
+    when: &docker_run_cwd_and_flags "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')) && !has(flags.privileged) && !('cap-add' in flags) && !has(flags.userns) && !has(flags.pid) && !has(flags.network) && !has(flags.ipc) && !has(flags.uts) && !('security-opt' in flags) && !('device' in flags)"
+    tests:
+      - allow: 'docker compose run --rm app pnpm test'
+      - allow: 'docker-compose run web sh'
+      - ask: 'docker compose run --cap-add=SYS_ADMIN app sh'
+
+  # `docker run` starts an arbitrary image/command, same trust boundary as
+  # the rules above. Unlike them, a container started this way isn't
+  # limited to what a project's own compose file already declares, so flags
+  # that widen the container's reach into the host (root inside a
+  # privileged container, added capabilities, host/other-namespace sharing,
+  # relaxed seccomp/apparmor, raw device access) must still fall through to
+  # `ask` rather than being silently allowed.
+  #
+  # This is a flag deny-list, not a value inspector: it can't catch
+  # `-v /var/run/docker.sock:/var/run/docker.sock`, which hands the
+  # container the colima VM's own docker socket (root-equivalent control of
+  # every container on the VM) without tripping any flag above. Left
+  # unguarded because the trust boundary this file grants is cwd-scoped
+  # arbitrary host code execution already (see cargo run/nr above); a
+  # container that fully controls the colima VM doesn't reach further than
+  # a trusted-repo shell already does, and the VM's own mount (see
+  # config/colima/colima.yaml) still confines it to a read-only ~/ghq.
+  - allow: 'docker run *'
+    when: *docker_run_cwd_and_flags
+    tests:
+      - allow: 'docker run --rm alpine echo hi'
+      - allow: 'docker run -it --rm -v .:/app node:24 bash'
+      - ask: 'docker run --privileged --rm alpine sh'
+      - ask: 'docker run --cap-add=SYS_ADMIN --rm alpine sh'
+      - ask: 'docker run --userns=host --rm alpine sh'
+      - ask: 'docker run --pid=host --rm alpine sh'
+      - ask: 'docker run --network=host --rm alpine sh'
+      - ask: 'docker run --ipc=host --rm alpine sh'
+      - ask: 'docker run --uts=host --rm alpine sh'
+      - ask: 'docker run --security-opt=seccomp=unconfined --rm alpine sh'
+      - ask: 'docker run --device=/dev/kvm --rm alpine sh'

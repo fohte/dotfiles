@@ -147,6 +147,10 @@ if match_tag mise; then
   fi
 fi
 
+if match_tag colima; then
+  sym config/colima/colima.yaml ~/.colima/default/colima.yaml
+fi
+
 if match_tag runok; then
   sym config/runok ~/.config/runok
   sym_role_file --stub-on-fallback config-overlays/runok/work.yml ~/.config/runok/work.yml

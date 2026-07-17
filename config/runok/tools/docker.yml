@@ -15,6 +15,8 @@ definitions:
 
 rules:
   # docker
+  # `docker exec` / `docker run` and their compose equivalents are
+  # trust-gated; see trusted-repos.yml.
   - allow: docker inspect *
     tests:
       - allow: 'docker inspect foo'

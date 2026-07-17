@@ -99,6 +99,7 @@ export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
 
 import_env 'homebrew.zsh'
 
+import_env 'colima.zsh'
 import_env 'gcloud.zsh'
 import_env 'go.zsh'
 import_env 'node.zsh'
