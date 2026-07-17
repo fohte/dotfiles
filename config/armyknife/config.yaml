@@ -8,12 +8,6 @@ cc:
   auto_compact:
     enabled: false
 
-orgs:
-  fohte:
-    ai:
-      review:
-        reviewers: [gemini]
-
 repos:
   fohte/dotfiles:
     # dotfiles is operated directly on the default branch.

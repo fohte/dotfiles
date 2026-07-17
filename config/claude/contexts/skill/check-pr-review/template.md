@@ -1,8 +1,16 @@
 {{- $v := ds "vars" -}}
 {{- $lang_override := eq $v.repo_language "ja" -}}
 {{- $public := and (eq $v.repo.visibility "PUBLIC") (not $lang_override) -}}
+{{- $owner_fohte := eq $v.repo.owner.login "fohte" -}}
+{{- $bot_examples := "CodeRabbit, Devin" -}}
 
 # Check PR Review Comments
+
+{{- if $owner_fohte }}
+
+fohte 個人リポジトリには自動レビュー bot も人間レビューも存在しない。
+このスキルは **no-op**: 以下の手順は一切実行せず、ユーザーに no-op である旨だけ伝えて終了する。
+{{- else }}
 
 Fetch review comments for a PR and address any feedback.
 
@@ -23,7 +31,7 @@ This pulls all review threads (and review bodies like "LGTM!") to a local Markdo
 
 ## Workflow
 
-1. **Wait for bot reviewers to finish before pulling**: Right after creating or pushing to a PR, automated reviewers (CodeRabbit, Gemini Code Assist, Devin, etc.) have not yet posted comments. Pulling immediately will return zero threads and miss feedback. Run `a ai review wait <pr>` in the background (`run_in_background: true`) and wait for the `<task-notification>` completion event before proceeding. Do NOT poll the output file or sleep — only the completion notification is allowed. Skip this wait only when the user is asking to re-check a PR that has been idle for some time (i.e., bot reviews already finished in a previous turn).
+1. **Wait for bot reviewers to finish before pulling**: Right after creating or pushing to a PR, automated reviewers ({{ $bot_examples }}, etc.) have not yet posted comments. Pulling immediately will return zero threads and miss feedback. Run `a ai review wait <pr>` in the background (`run_in_background: true`) and wait for the `<task-notification>` completion event before proceeding. Do NOT poll the output file or sleep — only the completion notification is allowed. Skip this wait only when the user is asking to re-check a PR that has been idle for some time (i.e., bot reviews already finished in a previous turn).
 2. Run `a gh pr-review reply pull <pr>` (use `--force` when overwriting prior local edits) and Read the resulting file
 3. **Evaluate each comment** with a **fix-by-default** mindset:
     - **Default action is to fix**: Assume review feedback is valid and should be addressed unless there is clear evidence otherwise
@@ -110,7 +118,7 @@ Use `--dry-run` first to preview changes, then run without it to apply.
 
 ### Reply content guidelines
 
-Replies are posted to bot reviewers (e.g., Gemini Code Assist).
+Replies are posted to bot reviewers (e.g., {{ $bot_examples }}).
 
 {{ if $public -}}
 
@@ -127,3 +135,4 @@ Replies are posted to bot reviewers (e.g., Gemini Code Assist).
 - **Fixed replies must include commit hash**: When replying to a thread that was addressed with a code change, always include the commit hash (e.g., `Fixed in abc1234.`). Never reply with just "Fixed." or similar without a hash
 
 **Do NOT**: write long explanations, include greetings/pleasantries, praise the reviewer (e.g., "Good catch!", "Great suggestion!", "Thanks for pointing this out!"), quote the original comment back, or include links to external issues/PRs/URLs that the user did not explicitly ask to reference. Reviewers are bots — complimenting them is meaningless and looks unnatural
+{{- end }}

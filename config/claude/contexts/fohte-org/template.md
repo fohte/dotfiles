@@ -4,9 +4,7 @@
 
 ## fohte organization context
 
-- Gemini Code Assist is enabled for CI reviews
-- Use `a ai review wait` after PR creation to wait for Gemini review
-- Use `check-pr-review` skill to address review feedback
+- No automated PR review bot is configured — `create-pr` and `check-pr-review` treat this org as no-op for review-waiting
   {{- if $v.repo_note }}
 
 ## Obsidian notes for {{ $v.repo_name }}
