@@ -43,7 +43,7 @@
 "aqua:mozilla/sccache" = "0.16.0"
 "npm:@mermaid-js/mermaid-cli" = "latest"
 "github:ast-grep/ast-grep" = "0.44.1"
-"github:rtk-ai/rtk" = "0.38.0"
+"github:rtk-ai/rtk" = "0.43.0"
 "aqua:suzuki-shunsuke/pinact" = "3.10.1"
 "aqua:tree-sitter/tree-sitter" = "0.26.8"
 "aqua:hashicorp/terraform" = "1.15.0"
