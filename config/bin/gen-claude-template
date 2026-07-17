@@ -39,8 +39,13 @@ render_template() {
   while IFS= read -r key; do
     cmd=$(yq -r ".variables.\"$key\"" "$config")
     value=$(eval "$cmd" 2> /dev/null || true)
-    # Parse JSON objects/arrays as structured data; keep everything else as strings
-    if [[ "$value" =~ ^[\{\[] ]]; then
+    # Parse JSON objects/arrays as structured data; keep everything else as strings.
+    # The leading character alone isn't reliable (Obsidian's `[[wikilink]]` starts
+    # with `[` but isn't JSON), so validity is also checked with jq. This still
+    # misclassifies a value that is *only* a numeric/bool/null wikilink (e.g. a
+    # note body consisting solely of `[[2026]]`), since that happens to be valid
+    # JSON on its own.
+    if [[ "$value" =~ ^[\{\[] ]] && jq -e . > /dev/null 2>&1 <<< "$value"; then
       vars_json=$(jq --arg k "$key" --argjson v "$value" '.[$k] = $v' <<< "$vars_json")
     else
       vars_json=$(jq --arg k "$key" --arg v "$value" '.[$k] = $v' <<< "$vars_json")
