@@ -16,12 +16,28 @@
       automerge: true,
       matchUpdateTypes: ['patch'],
     },
-    // Prevent Renovate from pinning Node.js to an exact version in mise config.
-    // The current version (e.g., "23.11.1") is already precise enough, and
-    // Renovate's default 'pin' strategy would create unnecessary PRs.
+    // Language runtimes (node/go/bun/ruby) are machine-wide tools used from
+    // anywhere, not dependencies this repo's own code relies on, so treat
+    // minor bumps as low-risk enough to automerge (patch is already covered
+    // by the 'mise tools' rule above).
     {
       matchManagers: ['mise'],
+      matchDepNames: ['core:node', 'node', 'core:go', 'core:bun', 'core:ruby'],
+      matchUpdateTypes: ['minor'],
+      schedule: ['after 9am on saturday'],
+      automerge: true,
+    },
+    {
+      // Node.js appears in both config/mise/home-config.toml (as "core:node")
+      // and .mise.toml (as "node"); Renovate treats these as separate
+      // dependencies since their depNames differ, so group them into one PR.
+      groupName: 'Node.js',
+      matchManagers: ['mise'],
       matchDatasources: ['node-version'],
+      // Prevent Renovate from pinning Node.js to an exact version in mise
+      // config. The current version (e.g., "23.11.1") is already precise
+      // enough, and Renovate's default 'pin' strategy would create unnecessary
+      // PRs.
       rangeStrategy: 'bump',
     },
     {
