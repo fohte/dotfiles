@@ -20,7 +20,14 @@ pre-commit:
     shfmt:
       file_types:
         - text/x-shellscript
-      run: mise x shfmt -- shfmt --apply-ignore -w {staged_files}
+      run: &shfmt_run mise x shfmt -- shfmt --apply-ignore -w {staged_files}
+      stage_fixed: true
+
+    shfmt-zsh:
+      # file_types: text/x-shellscript does not match .zsh files (no shebang
+      # zsh support in `file`'s magic database), so this is glob-only.
+      glob: '{*.zsh,*.zshenv,*.zshrc}'
+      run: *shfmt_run
       stage_fixed: true
 
     pinact:
