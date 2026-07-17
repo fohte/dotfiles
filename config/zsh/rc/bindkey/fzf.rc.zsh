@@ -46,10 +46,10 @@ bindkey '^G^L' fzf-git-log
 
 fzf-git-branch() {
   selected=$(
-    git branch -a | \
-    fzf -m --ansi --reverse | \
-    sed -e 's/^* //g' | \
-    awk '{ print $1 }'
+    git branch -a |
+      fzf -m --ansi --reverse |
+      sed -e 's/^* //g' |
+      awk '{ print $1 }'
   )
 
   zle reset-prompt

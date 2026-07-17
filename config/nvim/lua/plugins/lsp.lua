@@ -21,6 +21,19 @@ local on_attach = function(client, buffer)
   end
 end
 
+-- shfmt's zsh dialect cannot parse the `${(s..)^...}` expansion flag used here
+-- (see the matching ignore in config/editorconfig/.editorconfig), so formatting this
+-- buffer would either error or, with --apply-ignore, silently write an empty file.
+vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
+  pattern = {
+    '*/config/zsh/rc/bindkey/vimode.rc.zsh',
+    '*/.config/zsh/rc/bindkey/vimode.rc.zsh',
+  },
+  callback = function()
+    vim.b.disable_autoformat = true
+  end,
+})
+
 -- Get capabilities with blink.cmp integration
 local function get_capabilities()
   local ok, blink = pcall(require, 'blink.cmp')
@@ -222,6 +235,11 @@ return {
             {
               languages = { 'sh', 'bash' },
               linters = { 'shellcheck' },
+              formatters = { 'shfmt' },
+            },
+            {
+              -- shellcheck does not support zsh, so no linters here
+              languages = { 'zsh' },
               formatters = { 'shfmt' },
             },
             {

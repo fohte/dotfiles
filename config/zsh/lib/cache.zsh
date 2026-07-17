@@ -14,13 +14,13 @@ cache_source() {
   shift
 
   local -a watches
-  while (( $# > 0 )) && [[ "$1" != "--" ]]; do
+  while (($# > 0)) && [[ "$1" != "--" ]]; do
     watches+=("$1")
     shift
   done
   [[ "$1" == "--" ]] && shift
 
-  if (( $# == 0 )); then
+  if (($# == 0)); then
     print -u2 "cache_source: missing command after --"
     return 2
   fi
@@ -39,7 +39,7 @@ cache_source() {
     done
   fi
 
-  if (( need_regen )); then
+  if ((need_regen)); then
     # Atomic write: redirecting directly to $cache truncates it, so two
     # shells starting in parallel can interleave their output. Write to a
     # per-PID tmp file and rename — same-FS rename is atomic.

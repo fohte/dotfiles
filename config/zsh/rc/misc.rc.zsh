@@ -10,7 +10,7 @@ setopt rm_star_wait
 # match dot files (hidden files) with glob
 setopt glob_dots
 
-zle-line-init zle-keymap-select() {
+function zle-line-init zle-keymap-select {
   if [ ! "$TERM" = "xterm-256color" ]; then
     return
   fi
@@ -19,7 +19,7 @@ zle-line-init zle-keymap-select() {
     vicmd)
       echo -ne "\e[2 q" # block
       ;;
-    main|viins)
+    main | viins)
       echo -ne "\e[6 q" # vertical bar
       ;;
   esac

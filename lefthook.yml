@@ -20,8 +20,6 @@ pre-commit:
     shfmt:
       file_types:
         - text/x-shellscript
-      exclude:
-        - '*.zsh'
       run: mise x shfmt -- shfmt --apply-ignore -w {staged_files}
       stage_fixed: true
 

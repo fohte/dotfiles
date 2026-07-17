@@ -22,7 +22,8 @@ autoload -Uz compinit
     compinit -u -d "$zcompdump"
   fi
 }
-autoload -Uz colors; colors
+autoload -Uz colors
+colors
 
 if ! [ -d ~/.zinit ]; then
   import_rc 'install/zinit.zsh'

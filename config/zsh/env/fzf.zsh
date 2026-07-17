@@ -14,7 +14,6 @@ if [ -n "$TMUX" ]; then
   export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --tmux center,50%"
 fi
 
-
 () {
   # mise's aqua backend does not generate a shim for fzf, and the
   # `mise hook-env` that would add installs/... to PATH runs on precmd —

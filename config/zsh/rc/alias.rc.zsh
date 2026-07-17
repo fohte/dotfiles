@@ -70,7 +70,7 @@ alias gss='git stash save'
 alias gw='git worktree'
 
 alias ghr='gh repo view --web'
-alias ghprv='gh pr view --web' # [gh] [p]ull [r]equest [v]iew
+alias ghprv='gh pr view --web'   # [gh] [p]ull [r]equest [v]iew
 alias ghprc='gh pr create --web' # [gh] [p]ull [r]equest [c]reate
 
 has 'nvim' && alias vim='nvim'
@@ -118,7 +118,7 @@ alias -s py=python
 alias -s rb=ruby
 
 mkcd() {
-  mkdir -p $@ && cd $@;
+  mkdir -p $@ && cd $@
 }
 
 ghqcd() {
@@ -181,6 +181,6 @@ gh-review() {
   echo "[gh-review] checkout #$pr_number"
 }
 
-if [ -z "$CLAUDECODE" ] ; then # skip op plugin aliases on Claude Code to avoid frequent Touch ID prompts
+if [ -z "$CLAUDECODE" ]; then # skip op plugin aliases on Claude Code to avoid frequent Touch ID prompts
   [ -f "$HOME/.config/op/plugins.sh" ] && source "$HOME/.config/op/plugins.sh"
 fi

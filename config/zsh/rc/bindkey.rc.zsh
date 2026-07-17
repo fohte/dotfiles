@@ -15,7 +15,7 @@ function ignore-expansion() {
   local cmd="${BUFFER%% *}"
 
   # check if the command is in the no_expand_commands array
-  (( ${no_expand_commands[(Ie)$cmd]} ))
+  ((${no_expand_commands[(Ie)$cmd]}))
 }
 
 function expand-alias() {
@@ -28,7 +28,7 @@ bindkey -M main ' ' expand-alias
 
 function custom-accept-line() {
   # if buffer is empty and we're in a git repository, run git status
-  if [[ -z "$BUFFER" ]] && git rev-parse --is-inside-work-tree &>/dev/null; then
+  if [[ -z "$BUFFER" ]] && git rev-parse --is-inside-work-tree &> /dev/null; then
     BUFFER="git status"
   fi
 

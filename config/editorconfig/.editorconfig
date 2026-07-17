@@ -48,7 +48,7 @@ indent_style = tab
 [*.diff]
 trim_trailing_whitespace = false
 
-# shfmt: ignore zsh files (shfmt doesn't support zsh)
+# shfmt's zsh dialect does not yet parse the `${(s..)^...}` expansion flag syntax used here
 # Requires --apply-ignore flag in shfmt command
-[[zsh]]
+[config/zsh/rc/bindkey/vimode.rc.zsh]
 ignore = true

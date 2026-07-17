@@ -18,21 +18,21 @@ alias histdb-pwd='histdb --limit 30 --no-host -d "$(pwd)"'
 alias histdb-search='histdb --no-host'
 
 # Wrap histdb's _histdb_addhistory to apply hist_reduce_blanks behavior
-if (( ${+functions[_histdb_addhistory]} )); then
+if ((${+functions[_histdb_addhistory]})); then
   # Save original function
   functions[_histdb_addhistory_original]=${functions[_histdb_addhistory]}
 
   # Wrap it with cleanup logic
   _histdb_addhistory() {
-    local cmd="${1[0, -2]}"
+    local cmd="${1[0,-2]}"
 
     # Apply hist_reduce_blanks equivalent using zsh parameter expansion
     if [[ -o histreduceblanks ]]; then
       setopt local_options extended_glob
-      cmd="${cmd//$'\n'/ }"              # newline to space
-      cmd="${cmd//[[:space:]]##/ }"      # multiple spaces to one
-      cmd="${cmd##[[:space:]]##}"        # trim start
-      cmd="${cmd%%[[:space:]]##}"        # trim end
+      cmd="${cmd//$'\n'/ }"         # newline to space
+      cmd="${cmd//[[:space:]]##/ }" # multiple spaces to one
+      cmd="${cmd##[[:space:]]##}"   # trim start
+      cmd="${cmd%%[[:space:]]##}"   # trim end
     fi
 
     # Call original function with cleaned string
@@ -47,7 +47,7 @@ fzf-history-widget() {
   _histdb_init
 
   # Build directory priority CASE statement for SQL
-  local pwd_clean="${PWD:a}"  # Resolve symlinks
+  local pwd_clean="${PWD:a}" # Resolve symlinks
   local -a dir_levels=()
   local current_path="$pwd_clean"
 
@@ -93,7 +93,7 @@ fzf-history-widget() {
         ;;
     esac
 
-    cat <<-EOF
+    cat <<- EOF
 	SELECT h.id || CHAR(9) || REPLACE(c.argv, CHAR(10), ' ')
 	FROM history h
 	JOIN commands c ON h.command_id = c.id
@@ -116,7 +116,8 @@ fzf-history-widget() {
   local histdb_file="${HISTDB_FILE:-${HOME}/.histdb/zsh-history.db}"
 
   # Create preview command
-  local preview_cmd=$(cat <<-EOF
+  local preview_cmd=$(
+    cat <<- EOF
 	sqlite3 '${histdb_file}' \\
 	  'SELECT c.argv FROM history h JOIN commands c ON h.command_id = c.id WHERE h.id = {1}' \\
 	| bat --color=always --style=plain --language=zsh --paging=never
@@ -131,7 +132,7 @@ fzf-history-widget() {
 
   # Build fzf options array
   local fzf_opts=(
-    --delimiter=$'\t'  # Use TAB as delimiter to separate ID and command
+    --delimiter=$'\t' # Use TAB as delimiter to separate ID and command
     --header "C-s: ${c_green}Success${c_reset} | C-f: Failed | C-r: All"
     --preview "${preview_cmd}"
     --preview-window=bottom:3:wrap
@@ -148,14 +149,14 @@ fzf-history-widget() {
   [[ -n "$LBUFFER" ]] && fzf_opts+=(--query "$LBUFFER")
 
   selected=$(
-    sqlite3 "${histdb_file}" "${query_success}" | \
-    bat --color=always --style=plain --language=zsh --paging=never 2>/dev/null | \
-    env \
-    HISTDB_FILE="${histdb_file}" \
-    HISTDB_QUERY_ALL="${query_all}" \
-    HISTDB_QUERY_SUCCESS="${query_success}" \
-    HISTDB_QUERY_FAILED="${query_failed}" \
-    $(__fzfcmd) "${fzf_opts[@]}"
+    sqlite3 "${histdb_file}" "${query_success}" |
+      bat --color=always --style=plain --language=zsh --paging=never 2> /dev/null |
+      env \
+        HISTDB_FILE="${histdb_file}" \
+        HISTDB_QUERY_ALL="${query_all}" \
+        HISTDB_QUERY_SUCCESS="${query_success}" \
+        HISTDB_QUERY_FAILED="${query_failed}" \
+        $(__fzfcmd) "${fzf_opts[@]}"
   )
 
   local ret=$?

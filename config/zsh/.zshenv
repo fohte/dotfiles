@@ -35,7 +35,7 @@ calculate_zsh_config_checksum() {
   local -a latest
   latest=("$ZSH_CONFIG_HOME"/**/*.(zsh|zshenv|zshrc)(.om[1]))
 
-  if (( ${#latest} == 0 )); then
+  if ((${#latest} == 0)); then
     echo 0
     return
   fi
