@@ -42,7 +42,7 @@
 "aqua:hairyhenderson/gomplate" = "5.1.0"
 "aqua:mozilla/sccache" = "0.16.0"
 "npm:@mermaid-js/mermaid-cli" = "latest"
-"github:ast-grep/ast-grep" = "0.42.0"
+"github:ast-grep/ast-grep" = "0.44.1"
 "github:rtk-ai/rtk" = "0.38.0"
 "aqua:suzuki-shunsuke/pinact" = "3.10.1"
 "aqua:tree-sitter/tree-sitter" = "0.26.8"
