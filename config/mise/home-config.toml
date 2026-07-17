@@ -9,7 +9,7 @@
 # Language versions
 "core:node" = "26.3.0"
 "core:ruby" = "3.4.6"
-"core:go" = "1.25.6"
+"core:go" = "1.26.5"
 "core:bun" = "1.2.22"
 "vfox:mise-plugins/vfox-lua" = "5.4.8"
 
