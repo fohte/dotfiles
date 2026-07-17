@@ -13,7 +13,7 @@ Test Renovate configuration changes locally with the `renovate-dryrun` command. 
 # Allocate a unique log path first so parallel sessions don't clobber each other
 LOG=$(mktemp /tmp/renovate-dryrun.XXXXXX.log)
 
-# Basic usage (token is optional; falls back to gh-token command)
+# Basic usage (token is optional; falls back to gh auth token)
 renovate-dryrun > "$LOG"
 
 # Test specific branch (defaults to current branch)
@@ -47,5 +47,5 @@ The output displays proposed updates in this format:
     - Pin the image to `:latest`. Do not use `:slim` or `npx renovate`
 
 - You SHOULD save output to a unique path under `/tmp/` (e.g. `mktemp /tmp/renovate-dryrun.XXXXXX.log`) since the command takes time and produces extensive output. Do not use a fixed filename — parallel sessions would overwrite each other.
-- Token is optional. The script falls back to the `gh-token` command automatically. Do NOT require `--token` or `$GH_TOKEN` unless the user explicitly provides one.
+- Token is optional. The script falls back to `gh auth token` automatically. Do NOT require `--token` or `$GH_TOKEN` unless the user explicitly provides one.
 - Push is NOT required before running dry-run. The command reads the local `renovate.json5` directly.

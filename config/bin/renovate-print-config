@@ -26,7 +26,7 @@ done
 root_path="$(git root)"
 repo_name="$(basename "$(dirname "$root_path")")/$(basename "$root_path")"
 
-gh_token="$(gh-token)"
+gh_token="$(gh auth token)"
 
 npx -y renovate \
   --token="$gh_token" \
