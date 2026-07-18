@@ -76,6 +76,8 @@ git diff $PRE_MERGE_SHA HEAD --stat
 
 ### 4. push する
 
-未 push のコミット (取り込みで作成したマージコミットを含む) を、`commit` skill の push 手順 (`self-review` skill でのレビュー → 🔴/🟡 対応 → `git push`) に従って push する。conflict 解消はユーザーに確認せず進めている分、push 前レビューがその内容を検証する唯一の関門になる。
+```bash
+git push
+```
 
 force-push は使わない。通常の push が reject される場合 (remote に自分の知らないコミットがある等) は、force-push で押し切らずユーザーに報告して指示を仰ぐ。
