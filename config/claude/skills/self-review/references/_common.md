@@ -2,6 +2,14 @@
 
 3 グループの reference (`behavior.md` / `structure.md` / `convention.md`) から共通参照される動作原則・禁止事項・出力ボイラープレート。各 group reference は冒頭でこのファイルを読み込み、固有の差分のみ自ファイルに記述する。
 
+## 実行手順 (base reviewer 共通)
+
+`~/.claude/agents/self-review-<group>.md` (`<group>` = `behavior` / `structure` / `convention`) はプロンプトに `range: <値>` の形式で `git diff` の対象範囲を受け取り、以下の手順で動く。
+
+1. 自分の Bash tool で `git diff <range>` を実行し、レビュー対象の diff を取得する。
+2. diff で変更されたファイルそれぞれについて、そのディレクトリから repo root まで遡って存在する `CLAUDE.md` を Read する (重複は 1 回のみ)。repo root に `.gemini/styleguide.md` があれば合わせて Read する。
+3. `references/<group>.md` の「出力形式」セクションに厳密に従って結果を返す。指摘 1 件ごとに **指摘 ID** (`<観点番号>:<file>:<LINE>`) を必ず付ける。
+
 ## 動作原則
 
 - レビュー対象は diff の変更行とその直接的な影響範囲のみ。out-of-scope な提案はしない。
@@ -18,6 +26,10 @@
 🟢 (Nit) は使わない。指摘する価値が無ければ観点別評価で `✅` にする。
 
 group 固有の重要度補足 (例: structure の「動作非依存指摘は原則 🟡」) は各 group reference 側で上書き定義する。
+
+## 動作を実行して検証したい場合
+
+指摘の裏付けに実際にコードを実行して確かめたい場合、検証用のファイル・スクリプトをこのリポジトリ内に作成しない (他セッションの作業ツリーを汚し、`git clean` 等で消えて再現不能になる)。検証は Docker コンテナ内で行う (`docker run --rm ...`)。`~/ghq` は colima VM に read-only mount されているため (`config/colima/colima.yaml`)、コンテナ内でどれだけ書き込んでもホストのリポジトリには影響しない。
 
 ## 禁止事項 (全 group 共通)
 
