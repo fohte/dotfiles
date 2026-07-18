@@ -34,9 +34,12 @@ git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'
 ### 2. base branch を取り込む
 
 ```bash
+git rev-parse HEAD > /tmp/sync-base-branch-pre-merge-sha
 git fetch origin <base>
 git merge origin/<base>
 ```
+
+SHA をファイルに退避するのは、"Already up to date." の場合 `HEAD` も reflog も動かず、`HEAD@{1}` のような相対参照では取り込み前の状態を指せないため。
 
 #### conflict が発生した場合
 
@@ -62,11 +65,10 @@ git commit --no-edit
 conflict なく取り込めた場合 (fast-forward や自動 merge も含む) でも、base 側の変更が自分の作業に影響しないとは限らない。何が入ってきたかを確認する。
 
 ```bash
-git log HEAD@{1}..origin/<base> --oneline
-git diff HEAD@{1} HEAD --stat
+PRE_MERGE_SHA=$(cat /tmp/sync-base-branch-pre-merge-sha)
+git log $PRE_MERGE_SHA..origin/<base> --oneline
+git diff $PRE_MERGE_SHA HEAD --stat
 ```
-
-`HEAD@{1}` は取り込み前 (手順2の直前) の HEAD を指す。
 
 プロジェクトの CLAUDE.md や README 等に「新規ファイル追加時はマッピング定義を更新する」「ビルドが要る設定変更後は再デプロイする」といった運用ルールがあれば、それに従って対応する。ルールが明文化されていないプロジェクトでは、依存関係ファイル (lockfile など) の変更で再インストールが要る、マイグレーションの追加で実行が要る、といった観点で確認する。
 
@@ -74,8 +76,6 @@ git diff HEAD@{1} HEAD --stat
 
 ### 4. push する
 
-```bash
-git push
-```
+未 push のコミット (取り込みで作成したマージコミットを含む) を、`commit` skill の push 手順 (`self-review` skill でのレビュー → 🔴/🟡 対応 → `git push`) に従って push する。conflict 解消はユーザーに確認せず進めている分、push 前レビューがその内容を検証する唯一の関門になる。
 
 force-push は使わない。通常の push が reject される場合 (remote に自分の知らないコミットがある等) は、force-push で押し切らずユーザーに報告して指示を仰ぐ。
