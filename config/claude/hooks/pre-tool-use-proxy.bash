@@ -38,9 +38,9 @@ if [ "$tool_name" != "Bash" ]; then
   exit 0
 fi
 
-# runok check always emits a hookSpecificOutput JSON with permissionDecision (allow|ask|deny),
+# runok hook always emits a hookSpecificOutput JSON with permissionDecision (allow|ask|deny),
 # and may also include updatedInput when runok rewrites the command.
-runok_output=$(echo "$input" | runok check --input-format claude-code-hook)
+runok_output=$(echo "$input" | runok hook --agent claude-code)
 
 # Fail-closed-ish guard: if runok crashed or returned non-JSON, fall through with no
 # hook output (Claude Code treats empty stdout as "no decision"). Without this, the
