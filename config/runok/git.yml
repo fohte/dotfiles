@@ -273,12 +273,14 @@ rules:
       - deny: 'git reset HEAD file.txt'
       - deny: 'git -C /tmp reset --hard HEAD~1'
   # `git clean` never touches tracked files, so committed work survives any
-  # variant. `-x` alone is blocked: it also wipes ignored machine-local
-  # state (`.env`, `*.local.*`, `.role`), which nothing can regenerate.
-  # `-fdX <path>` (ignored artifacts) plus `-fd <path>` (untracked) cover
-  # every legitimate cleanup, so `-x` is never needed. Any token containing
-  # `n` is a dry run regardless of other flags (git's own semantics), and
-  # `--exclude` only adjusts ignore rules — both are exempted in the `when`.
+  # variant. Ignored files are where unrecoverable machine-local state
+  # lives (`.env`, `*.local.*`, `.role`), so the two forms that can delete
+  # ignored files get the strictest treatment: `-x` (untracked + ignored in
+  # one sweep) is denied outright — `-fd <path>` plus `-fdX <path>` cover
+  # every legitimate cleanup, so it is never needed — and `-X` is allowed
+  # below only with an explicit pathspec. Any token containing `n` is a dry
+  # run regardless of other flags (git's own semantics), and `--exclude`
+  # only adjusts ignore rules — both are exempted in the `when`.
   - deny: 'git [-C *] clean *'
     when: >-
       flags.exists(k, k != 'exclude' && k.contains('x')) &&
@@ -292,21 +294,34 @@ rules:
       - deny: 'git clean -fdx node_modules'
       - deny: 'git -C /tmp/foo clean -fdx web/dist'
       - allow: 'git clean -ndx'
-      - allow: 'git clean -fdX'
+      - allow: 'git clean -fdX dist'
+      - ask: 'git clean -fdX'
       - allow: 'git clean -fd --exclude=build'
 
-  # Without `-x` the residual blast radius is untracked files only;
-  # tracked files are untouchable by design.
+  # Plain forms delete untracked files only — a residual risk accepted in
+  # exchange for frictionless cleanup. `-X` forms also delete ignored
+  # files, so they must name a pathspec: a bare `git clean -fdX` at the
+  # repo root would sweep `.env` / `*.local.*` / `.role`, and falls
+  # through to ask instead. The `args` check works because `args` always
+  # contains the literal `clean` subcommand token (see the `git config`
+  # rule below); anything beyond it is a pathspec.
   - allow: 'git [-C *] clean *'
+    when: >-
+      flags.exists(k, k.contains('n')) ||
+      !flags.exists(k, k.contains('X')) ||
+      args.exists(a, a != 'clean')
     tests:
       - allow: 'git clean -n'
       - allow: 'git clean --dry-run -d'
       - allow: 'git clean -ndx'
+      - allow: 'git clean -ndX'
       - allow: 'git clean -f'
       - allow: 'git clean -fd'
-      - allow: 'git clean -fdX'
+      - allow: 'git clean -fdX dist'
       - allow: 'git clean -fXd -- dist'
       - allow: 'git -C /tmp/foo clean -fdX web/dist'
+      - ask: 'git clean -fdX'
+      - ask: 'git clean -Xd -f'
       - deny: 'git clean -fdx'
 
   - deny: 'git clone *'
