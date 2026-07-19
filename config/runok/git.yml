@@ -272,59 +272,42 @@ rules:
       - deny: 'git reset --hard'
       - deny: 'git reset HEAD file.txt'
       - deny: 'git -C /tmp reset --hard HEAD~1'
-  # `git clean` deletes untracked files irreversibly. Dry-run (`-n` /
-  # `--dry-run`) only prints what would be removed, so it is safe; other
-  # destructive variants fall through to default ask, except `-fdx` on
-  # <var:safe-rm-paths> (further down), which is allowed outright.
-  - allow: 'git [-C *] clean -n|--dry-run *'
+  # `git clean` never touches tracked files, so committed work survives any
+  # variant. `-x` alone is blocked: it also wipes ignored machine-local
+  # state (`.env`, `*.local.*`, `.role`), which nothing can regenerate.
+  # `-fdX <path>` (ignored artifacts) plus `-fd <path>` (untracked) cover
+  # every legitimate cleanup, so `-x` is never needed. Any token containing
+  # `n` is a dry run regardless of other flags (git's own semantics), and
+  # `--exclude` only adjusts ignore rules — both are exempted in the `when`.
+  - deny: 'git [-C *] clean *'
+    when: >-
+      flags.exists(k, k != 'exclude' && k.contains('x')) &&
+      !flags.exists(k, k.contains('n'))
+    message: 'Blocked because `-x` also deletes ignored files (.env, *.local.*, machine-local state), which are unrecoverable'
+    fix_suggestion: 'git clean -fdX <path> (ignored artifacts) and/or git clean -fd <path> (untracked files)'
+    tests:
+      - deny: 'git clean -fdx'
+      - deny: 'git clean -fx'
+      - deny: 'git clean -f -x'
+      - deny: 'git clean -fdx node_modules'
+      - deny: 'git -C /tmp/foo clean -fdx web/dist'
+      - allow: 'git clean -ndx'
+      - allow: 'git clean -fdX'
+      - allow: 'git clean -fd --exclude=build'
+
+  # Without `-x` the residual blast radius is untracked files only;
+  # tracked files are untouchable by design.
+  - allow: 'git [-C *] clean *'
     tests:
       - allow: 'git clean -n'
-      - allow: 'git clean -n -d'
       - allow: 'git clean --dry-run -d'
-      - ask: 'git clean -fd'
-      - ask: 'git clean -fdx'
-
-  # Combined short flags (e.g. `-ndx`) are parsed as a single token and don't
-  # match the `-n|--dry-run` alternation above. `-n` short-circuits actual
-  # deletion regardless of what else is combined with it (git's own
-  # semantics), so any token containing `n` is still a dry run; git clean's
-  # only other short flags are d/e/f/i/q/x/X, none of which contain `n`.
-  - allow: 'git [-C *] clean -*n* *'
-    tests:
       - allow: 'git clean -ndx'
-      - allow: 'git clean -ndx -e ".worktrees"'
-      - allow: 'git clean -nfd'
-      - allow: 'git clean -dnx'
-      - allow: 'git -C /tmp/foo clean -ndx web/dist'
-      - ask: 'git clean -fdx'
-      - ask: 'git clean -fd'
-
-  # Unlike `rm -r`, `git clean` never touches tracked files, so restricting
-  # the destructive `-fdx` form to <var:safe-rm-paths> (build output /
-  # dependency dirs, recreatable from source) is safe. `args` includes the
-  # literal `clean` token alongside the path args (runok quirk: `args`
-  # covers every positional, non-flag token matched by the pattern's
-  # non-bracketed portion, not just the trailing `*`); `exists_one(a, a ==
-  # "clean")` confirms exactly one token equals that literal (the
-  # subcommand itself), so a real target directory named `clean` (which
-  # would produce a second match) still falls through to ask instead of
-  # being silently treated as the subcommand token.
-  - allow: 'git [-C *] clean -fdx *'
-    when: >-
-      args.size() > 1 &&
-      args.exists_one(a, a == "clean") &&
-      args.all(a, a == "clean" || definitions.vars["safe-rm-paths"].exists(p, glob_matches(p, a)))
-    tests:
-      - allow: 'git clean -fdx web/dist'
-      - allow: 'git clean -fdx node_modules'
-      - allow: 'git clean -fdx node_modules dist'
-      - allow: 'git clean -fdx api/node_modules node_modules web/node_modules'
-      - allow: 'git clean -fdx .astro dist'
-      - allow: 'git -C /tmp/foo clean -fdx web/dist'
-      - ask: 'git clean -fdx'
-      - ask: 'git clean -fdx src'
-      - ask: 'git clean -fdx .'
-      - ask: 'git clean -fdx clean'
+      - allow: 'git clean -f'
+      - allow: 'git clean -fd'
+      - allow: 'git clean -fdX'
+      - allow: 'git clean -fXd -- dist'
+      - allow: 'git -C /tmp/foo clean -fdX web/dist'
+      - deny: 'git clean -fdx'
 
   - deny: 'git clone *'
     message: 'Use ghq for fohte-owned repos, or opensrc for third-party code reading.'
@@ -337,9 +320,10 @@ rules:
       - deny: 'git -c user.name=foo commit -m "test"'
       - deny: 'git -c commit.gpgsign=false commit -m "test"'
   # `args.size() > 2` requires an actual value token beyond `config` +
-  # `user.name`/`user.email` (both counted in `args`, see the `git clean`
-  # rule above), so the read form (`git config user.name`, already allowed
-  # read-only by the preset) isn't caught here too.
+  # `user.name`/`user.email` — runok quirk: `args` covers every positional,
+  # non-flag token matched by the pattern, subcommand and matched literals
+  # included, not just the trailing `*` — so the read form (`git config
+  # user.name`, already allowed read-only by the preset) isn't caught here.
   - deny: 'git [-C *] config user.name|user.email *'
     when: 'args.size() > 2'
     message: 'Blocked to keep changes to commit identity visible for confirmation.'
@@ -520,7 +504,7 @@ rules:
   # `--strategy`/`-X|--strategy-option` can invoke a `git-merge-<strategy>`
   # executable, so the simplest safe cut is zero flags. `size(args) > 1`
   # requires at least one commit-ish beyond the literal `cherry-pick`
-  # token (`args` includes it, see the `git clean` rule above).
+  # token (`args` includes it, see the `git config` rule above).
   - allow: 'git cherry-pick *'
     when: 'size(flags) == 0 && size(args) > 1'
     tests:

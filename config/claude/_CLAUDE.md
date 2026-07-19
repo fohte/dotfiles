@@ -30,7 +30,7 @@
 ### コマンド
 
 - GitHub: use `gh` (e.g., `gh issue view` for issue URLs)
-- rm: prefer `git rm` for tracked files; never pass `-f`
+- rm: prefer `git rm` for tracked files; never pass `-f`. Repo 内の生成物 (dist, node_modules, `*.gen.*` など ignored なもの) の削除は `rm` でなく `git clean -fdX <path>`、untracked の削除は `git clean -fd <path>` を使う (tracked を消せないので安全)
 - 一時ファイル: `/tmp` 下に置く
 - search: prefer `rg` over `find`/`grep`; never search `~` (too heavy)
 - json: use `jq`, not `python3 -c 'import json'`
