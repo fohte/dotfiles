@@ -36,7 +36,7 @@
 "aqua:mvdan/sh" = "3.13.1"
 "aqua:koalaman/shellcheck" = "0.11.0"
 "aqua:rhysd/actionlint" = "1.7.11"
-"npm:@antfu/ni" = "28.3.0"
+"npm:@antfu/ni" = "30.2.0"
 "npm:opensrc" = "0.7.2"
 "aqua:charmbracelet/glow" = "2.1.1"
 "aqua:hairyhenderson/gomplate" = "5.1.0"
