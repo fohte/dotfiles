@@ -3,9 +3,9 @@
 definitions:
   vars:
     # Directories whose contents are recreatable from sources — safe to
-    # `rm -r` without per-invocation confirmation. Also referenced by
-    # git.yml's `git clean -fdx` rule, so this list must stay limited to
-    # that rationale; /tmp is a separate var below for that reason.
+    # `rm -r` without per-invocation confirmation. This list must stay
+    # limited to that rationale; /tmp is a separate var below for that
+    # reason.
     safe-rm-paths:
       type: pattern
       values:
@@ -59,21 +59,29 @@ rules:
       - deny: 'rm -rf /private/tmp/..'
 
   # Repo files must be deleted through git-aware commands so git's
-  # tracked-file guarantee applies; a plain `rm <relative-path>` bypasses it
+  # tracked-file guarantee applies; a plain `rm` on them bypasses it
   # silently, and a deny (unlike ask) makes the agent self-correct via the
-  # fix_suggestion. A relative path is the only cwd-free signal for "inside
-  # the repo", so absolute paths, `~`, and unexpanded `$vars` stay at ask --
-  # they usually point outside the repo, where git clean cannot operate.
-  # Targets matching the safe-rm vars are exempt to keep the allow rules
-  # below effective (deny would win regardless of order).
+  # fix_suggestion. "Inside a repo" is detected two ways: a relative path
+  # (cwd-free signal), or an absolute/`~` path under the ghq root — every
+  # `~/ghq/github.com/...` path is a clone by construction, and agents
+  # routinely pass absolute paths to repo files. Other absolute paths,
+  # `~` paths, and unexpanded `$vars` stay at ask -- they usually point
+  # outside any repo, where git clean cannot operate (this includes
+  # scratch dirs directly under ~/ghq/ that are not clones). Targets
+  # matching the safe-rm vars are exempt to keep the allow rules below
+  # effective (deny would win regardless of order).
   - deny: 'rm *'
     when: >-
       args.exists(a,
-        !a.startsWith("/") && !a.startsWith("~") && !a.startsWith("$") &&
+        (
+          (!a.startsWith("/") && !a.startsWith("~") && !a.startsWith("$")) ||
+          a.startsWith(env.HOME + "/ghq/github.com/") ||
+          a.startsWith("~/ghq/github.com/")
+        ) &&
         !definitions.vars["safe-rm-paths"].exists(p, glob_matches(p, a)) &&
         !definitions.vars["safe-rm-files"].exists(p, glob_matches(p, a))
       )
-    message: 'Blocked because deleting repo-relative paths with rm bypasses git safety (tracked files and uncommitted work can vanish unrecoverably)'
+    message: 'Blocked because deleting repo files with rm bypasses git safety (tracked files and uncommitted work can vanish unrecoverably)'
     fix_suggestion: 'git clean -fdX <path> (ignored artifacts) / git clean -fd <path> (untracked) / git rm <path> (tracked). Plain rm is for paths outside the repo.'
     tests:
       - deny: 'rm tests/foo.test.ts'
@@ -81,12 +89,16 @@ rules:
       - deny: 'rm -f src/routeTree.gen.ts'
       - deny: 'rm -r node_modules package-lock.json'
       - deny: 'rm -r dist src'
+      - deny: 'rm ~/ghq/github.com/foo/repo/file.txt'
+      - deny: 'rm -f ~/ghq/github.com/foo/repo/.worktrees/x/src/scratch.ts'
       - allow: 'rm -r node_modules'
       - allow: 'rm -r dist'
+      - allow: 'rm -r ~/ghq/github.com/foo/repo/node_modules'
       - allow: 'rm /tmp/foo'
       - allow: 'rm err.log'
       - ask: 'rm ~/Library/Preferences/pnpm/rc'
       - ask: 'rm -r $tmpdir'
+      - ask: 'rm -r ~/ghq/_tmp-verify'
       - ask: 'rm /Users/foo/ghq/github.com/foo/repo/file.txt'
 
   # A single `when`-gated rule (rather than separate `-r`/`-f`/`-rf` rules)
@@ -179,6 +191,18 @@ rules:
     tests:
       - allow: 'tee /tmp/foo.json'
       - allow: 'tee -a /tmp/foo.log'
+
+  # Bare `mount` (no args, no flags) lists currently mounted filesystems --
+  # both macOS and Linux mount(8) print the mount table when invoked with
+  # zero arguments. A trailing `*` isn't used: it would also match `mount -a`
+  # (mounts everything in fstab) or `mount <special> <mount_point>` (an
+  # actual mount operation), which must stay ask.
+  - allow: 'mount'
+    tests:
+      - allow: 'mount'
+      - ask: 'mount -a'
+      - ask: 'mount /dev/disk2s1 /mnt'
+
   - allow: 'gsed *'
   - allow: 'sed *'
   # Allow only flags whose semantics match between BSD and GNU sed: -n -E -r
