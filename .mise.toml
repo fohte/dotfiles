@@ -70,6 +70,9 @@ run = "lefthook run pre-commit"
 
 [tasks."refresh:brew-bundle"]
 description = "Install Homebrew packages from Brewfile"
+# Serialized with refresh:mise-self-update: both invoke `brew`, and running them
+# concurrently races on Homebrew's Portable Ruby vendor-install lock.
+wait_for = ["refresh:mise-self-update"]
 run = "brew bundle --file config/homebrew/Brewfile"
 
 [tasks."refresh:brew-upgrade"]
