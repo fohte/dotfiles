@@ -2,13 +2,23 @@
 
 definitions:
   aliases:
-    # Colima installs docker.lima as a docker CLI shim.
+    # Colima installs docker.lima as a docker CLI shim. `--context colima` is
+    # pinned literally (not `--context *`): several rules built on this alias
+    # have no cwd/flag gate of their own (e.g. `docker build *`), and
+    # trusted-repos.yml's cwd-gated rules (`docker run *`, `docker exec *`,
+    # compose `exec`/`run`) rely on the colima VM's confinement to make an
+    # unscoped allow safe -- a wildcard context would let those same rules
+    # match a remote daemon added via `docker context create`, escaping that
+    # confinement entirely (verified: `docker --context evil-remote run --rm
+    # -v /:/host alpine sh` matched `allow` under a wildcard alias).
     docker:
       - docker
       - docker.lima
+      - 'docker --context colima'
     # docker-compose (v1 standalone binary) is a drop-in alias for `docker compose`.
     # `docker compose` expands recursively through the `docker` alias above,
-    # so `docker.lima compose` does not need to be listed explicitly.
+    # so `docker.lima compose` / `docker --context colima compose` do not need
+    # to be listed explicitly.
     docker-compose:
       - 'docker compose'
       - 'docker-compose'
@@ -23,6 +33,10 @@ rules:
       - allow: 'docker.lima inspect foo'
   - allow: docker logs *
   - allow: docker ps *
+    tests:
+      - allow: 'docker ps -a'
+      - allow: 'docker --context colima ps -a'
+      - ask: 'docker --context evil-remote ps -a'
   - allow: docker images *
   - allow: docker stats *
   - allow: docker top *
@@ -70,6 +84,11 @@ rules:
       - allow: 'docker rm meshi-obs-smoketest'
       - ask: 'docker rm -f meshi-obs-smoketest other-container'
       - ask: 'docker rm -v meshi-obs-smoketest'
+      # `--context` is folded into the alias, but the `!flags.exists(k, k !=
+      # "f" && k != "force")` check above still sees the `context` flag and
+      # rejects it -- an extra `--context` falls back to ask instead of
+      # silently widening the rule.
+      - ask: 'docker --context colima rm -f meshi-obs-smoketest'
 
   # Apple container CLI: validate Renovate config via the official image.
   # Used by the debug-renovate skill.
@@ -78,7 +97,7 @@ rules:
       - allow: 'container run --rm -v /repo:/repo -w /repo ghcr.io/renovatebot/renovate:latest renovate-config-validator --strict --no-global renovate.json5'
 
   # docker compose
-  - allow: 'docker-compose [-f *] up|logs|ps|config|images|top|ls *'
+  - allow: 'docker-compose [-f *] [-p *] up|logs|ps|config|images|top|ls *'
     tests:
       - allow: 'docker compose up -d'
       - allow: 'docker compose -f docker-compose.infra.yml up -d'
@@ -86,6 +105,8 @@ rules:
       - allow: 'docker compose logs -f web'
       - allow: 'docker-compose up -d'
       - allow: 'docker.lima compose ps'
+      - allow: 'docker compose -p tq-infra ps'
+      - allow: 'docker --context colima compose -p tq-infra ps'
 
   - allow: 'docker-compose [-f *] port *'
     tests:
