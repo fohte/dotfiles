@@ -7,6 +7,13 @@ definitions:
     # rules (e.g. docker rules in tools/docker.yml). Bare `colima ssh` (no `--`)
     # opens an interactive shell and falls through to default ask.
     - 'colima ssh -- <cmd>'
+    # `limactl shell colima -- <cmd>` is the underlying Lima command colima's
+    # own `ssh` subcommand wraps -- same VM, same inner-command re-evaluation.
+    # The instance name is pinned to the literal `colima` (not `<opts>`/`*`)
+    # for the same reason the `docker` alias pins `--context colima`: other
+    # flags (`--sync`, `--preserve-env`, ...) and other Lima instances aren't
+    # covered by this VM's confirmed read-only `~/ghq` confinement.
+    - 'limactl shell colima -- <cmd>'
 
 rules:
   # Readonly Colima VM subcommands. start/stop/delete/restart/ssh are
@@ -26,3 +33,6 @@ rules:
       # the same VM.
       - allow: 'colima ssh -- docker run -d --name pg postgres:17-alpine'
       - ask: 'colima ssh'
+      - allow: 'limactl shell colima -- docker ps'
+      - ask: 'limactl shell other-vm -- docker ps'
+      - ask: 'limactl shell colima'

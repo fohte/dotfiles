@@ -43,21 +43,61 @@ rules:
   - allow: docker port *
   - allow: docker diff *
   - allow: docker history *
-  - allow: docker version
+  - allow: 'docker version *'
+    tests:
+      - allow: 'docker version'
+      - allow: "docker version --format '{{.Client.Version}}'"
   - allow: 'docker info *'
     tests:
       - allow: 'docker info'
       - allow: "docker info --format '{{.ServerVersion}}'"
   - allow: docker network ls|inspect *
   - allow: docker volume ls|inspect *
-  - allow: docker context ls|inspect *
+  - allow: docker context ls|inspect|show *
     tests:
       - allow: 'docker context ls'
       - allow: 'docker context inspect default'
+      - allow: 'docker context show'
   - allow: 'docker manifest inspect *'
     tests:
       - allow: 'docker manifest inspect node:24.17.0-slim'
       - ask: 'docker manifest push mymanifest'
+  - allow: 'docker buildx imagetools inspect *'
+    tests:
+      - allow: 'docker buildx imagetools inspect ghcr.io/fohte/webhook-hub:latest'
+      - allow: 'docker buildx imagetools inspect --raw node:24-slim'
+  - allow: 'docker system df *'
+    tests:
+      - allow: 'docker system df'
+      - allow: 'docker system df -v'
+      - ask: 'docker system prune'
+  - allow: 'docker pull *'
+    tests:
+      - allow: 'docker pull postgres:17-alpine'
+      - allow: 'docker --context colima pull postgres:17-alpine'
+
+  # docker-credential-osxkeychain is a separate binary implementing docker's
+  # credential-helper protocol (github.com/docker/docker-credential-helpers).
+  # `list` only returns {serverURL: username} pairs -- its Osxkeychain.List()
+  # calls SetReturnAttributes(true) but never SetReturnData, so there is no
+  # code path that reads the stored secret itself.
+  - allow: 'docker-credential-osxkeychain list'
+    tests:
+      - allow: 'docker-credential-osxkeychain list'
+      - ask: 'docker-credential-osxkeychain store'
+      - ask: 'docker-credential-osxkeychain list extra-arg'
+
+  # `context use` persists which context bare `docker` commands (including
+  # the unscoped allow rules above) target next, via ~/.docker/config.json's
+  # currentContext. Those rules assume colima is current; switching context
+  # would silently redirect them to whatever context is active, defeating
+  # the same confinement the literal-only `docker` alias above protects.
+  - deny: 'docker context use *'
+    message: 'Switching the default docker context changes what every already-allowed unscoped `docker` command (docker ps, docker inspect, ...) targets next -- those rules assume colima is current. Switch context manually in your own shell if intended.'
+    tests:
+      - deny: 'docker context use colima'
+      - deny: 'docker context use default'
+      - deny: 'docker context use evil-remote'
 
   - allow: 'docker build *'
     tests:

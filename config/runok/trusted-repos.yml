@@ -139,13 +139,16 @@ rules:
       - allow: 'docker-compose run web sh'
       - ask: 'docker compose run --cap-add=SYS_ADMIN app sh'
 
-  # `docker run` starts an arbitrary image/command, same trust boundary as
-  # the rules above. Unlike them, a container started this way isn't
-  # limited to what a project's own compose file already declares, so flags
-  # that widen the container's reach into the host (root inside a
-  # privileged container, added capabilities, host/other-namespace sharing,
-  # relaxed seccomp/apparmor, raw device access) must still fall through to
-  # `ask` rather than being silently allowed.
+  # `docker run`/`docker create` both start an arbitrary image/command (create
+  # just skips the auto-start -- a later `docker start`, already
+  # unconditionally allowed in tools/docker.yml, is needed to actually run
+  # it), so they share the exact same flag surface and trust boundary. Unlike
+  # the rules above, a container started this way isn't limited to what a
+  # project's own compose file already declares, so flags that widen the
+  # container's reach into the host (root inside a privileged container,
+  # added capabilities, host/other-namespace sharing, relaxed
+  # seccomp/apparmor, raw device access) must still fall through to `ask`
+  # rather than being silently allowed.
   #
   # This is a flag deny-list, not a value inspector: it can't catch
   # `-v /var/run/docker.sock:/var/run/docker.sock`, which hands the
@@ -156,11 +159,13 @@ rules:
   # container that fully controls the colima VM doesn't reach further than
   # a trusted-repo shell already does, and the VM's own mount (see
   # config/colima/colima.yaml) still confines it to a read-only ~/ghq.
-  - allow: 'docker run *'
+  - allow: 'docker run|create *'
     when: *docker_run_cwd_and_flags
     tests:
       - allow: 'docker run --rm alpine echo hi'
       - allow: 'docker run -it --rm -v .:/app node:24 bash'
+      - allow: 'docker create hashicorp/terraform:1.15 sleep 600'
+      - allow: 'docker create --entrypoint /bin/sh hashicorp/terraform:1.15 -c "sleep 600"'
       - ask: 'docker run --privileged --rm alpine sh'
       - ask: 'docker run --cap-add=SYS_ADMIN --rm alpine sh'
       - ask: 'docker run --userns=host --rm alpine sh'
@@ -170,6 +175,8 @@ rules:
       - ask: 'docker run --uts=host --rm alpine sh'
       - ask: 'docker run --security-opt=seccomp=unconfined --rm alpine sh'
       - ask: 'docker run --device=/dev/kvm --rm alpine sh'
+      - ask: 'docker create --privileged alpine sh'
+      - ask: 'docker create --cap-add=SYS_ADMIN alpine sh'
       # The unscoped allow above relies on the colima VM's own confinement
       # (see comment above). `docker` alias only recognizes `--context
       # colima` (tools/docker.yml), so a context pointing at a remote daemon
