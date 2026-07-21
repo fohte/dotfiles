@@ -120,11 +120,13 @@ rules:
       - allow: 'docker exec app-1 psql -U app'
       - allow: 'docker exec -it app-1 sh'
       - ask: 'docker exec --privileged app-1 sh'
-  - allow: 'docker-compose [-f *] exec *'
+  - allow: 'docker-compose [-f *] [-p *] exec *'
     when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')) && !has(flags.privileged)"
     tests:
       - allow: 'docker compose exec db psql -U app'
       - allow: 'docker-compose exec web sh'
+      - allow: 'docker compose -p tq-infra exec -T db psql -U tq -d tq_test -c "\d tasks"'
+      - allow: 'docker --context colima compose exec db psql -U ddr_score_manager -d ddr_score_manager_test -c "\l"'
       - ask: 'docker compose exec --privileged web sh'
 
   # `docker compose run`/`docker run` both start a new container, so the

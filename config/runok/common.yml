@@ -58,6 +58,37 @@ rules:
       - deny: 'rm -rf /private/tmp/../etc/passwd'
       - deny: 'rm -rf /private/tmp/..'
 
+  # Repo files must be deleted through git-aware commands so git's
+  # tracked-file guarantee applies; a plain `rm <relative-path>` bypasses it
+  # silently, and a deny (unlike ask) makes the agent self-correct via the
+  # fix_suggestion. A relative path is the only cwd-free signal for "inside
+  # the repo", so absolute paths, `~`, and unexpanded `$vars` stay at ask --
+  # they usually point outside the repo, where git clean cannot operate.
+  # Targets matching the safe-rm vars are exempt to keep the allow rules
+  # below effective (deny would win regardless of order).
+  - deny: 'rm *'
+    when: >-
+      args.exists(a,
+        !a.startsWith("/") && !a.startsWith("~") && !a.startsWith("$") &&
+        !definitions.vars["safe-rm-paths"].exists(p, glob_matches(p, a)) &&
+        !definitions.vars["safe-rm-files"].exists(p, glob_matches(p, a))
+      )
+    message: 'Blocked because deleting repo-relative paths with rm bypasses git safety (tracked files and uncommitted work can vanish unrecoverably)'
+    fix_suggestion: 'git clean -fdX <path> (ignored artifacts) / git clean -fd <path> (untracked) / git rm <path> (tracked). Plain rm is for paths outside the repo.'
+    tests:
+      - deny: 'rm tests/foo.test.ts'
+      - deny: 'rm pnpm-lock.yaml'
+      - deny: 'rm -f src/routeTree.gen.ts'
+      - deny: 'rm -r node_modules package-lock.json'
+      - deny: 'rm -r dist src'
+      - allow: 'rm -r node_modules'
+      - allow: 'rm -r dist'
+      - allow: 'rm /tmp/foo'
+      - allow: 'rm err.log'
+      - ask: 'rm ~/Library/Preferences/pnpm/rc'
+      - ask: 'rm -r $tmpdir'
+      - ask: 'rm /Users/foo/ghq/github.com/foo/repo/file.txt'
+
   # A single `when`-gated rule (rather than separate `-r`/`-f`/`-rf` rules)
   # covers multiple targets in one invocation (`rm -rf node_modules dist`)
   # too -- `<var:name>` alone only ever consumes one positional argument, so
@@ -77,13 +108,13 @@ rules:
       - allow: 'rm -r backend/node_modules'
       - allow: 'rm -r packages/foo/node_modules'
       - allow: 'rm -r /Users/foo/node_modules'
-      - ask: 'rm -r node_modules.bak'
-      - ask: 'rm -r node_modules/something'
+      - deny: 'rm -r node_modules.bak'
+      - deny: 'rm -r node_modules/something'
       - allow: 'rm -r dist'
       - allow: 'rm -r web/dist'
       - allow: 'rm -r packages/foo/dist'
-      - ask: 'rm -r distfoo'
-      - ask: 'rm -r src/distribution'
+      - deny: 'rm -r distfoo'
+      - deny: 'rm -r src/distribution'
       - allow: 'rm -rf .astro'
       - allow: 'rm -r packages/foo/.astro'
       - allow: 'rm /tmp/foo'
@@ -126,8 +157,8 @@ rules:
       - ask: 'rm -fr foo.log'
       - ask: 'rm -Rf foo.log'
       - ask: 'rm -fR foo.log'
-      - ask: 'rm err.txt'
-      - ask: 'rm a.log b.txt'
+      - deny: 'rm err.txt'
+      - deny: 'rm a.log b.txt'
 
   - allow: 'cp *'
     tests:
