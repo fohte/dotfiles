@@ -4,6 +4,7 @@
 description = "Refresh dotfiles and tools"
 depends = [
   "refresh:update-skk",
+  "refresh:runok",
   "refresh:nvim-restore",
   "refresh:mise-self-update",
   "refresh:mise-install",
@@ -39,6 +40,23 @@ run = "dot deploy"
 [tasks."refresh:update-skk"]
 description = "Update SKK dictionary"
 run = "update-skk-dictionary"
+
+[tasks."refresh:runok"]
+description = "Update runok CLI from source"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(ghq list -p fohte/runok)"
+
+before="$(git rev-parse HEAD)"
+git pull --autostash
+after="$(git rev-parse HEAD)"
+
+if [ "$before" != "$after" ]; then
+  cargo install --path .
+fi
+'''
 
 [tasks."refresh:nvim-restore"]
 description = "Restore Neovim plugins"

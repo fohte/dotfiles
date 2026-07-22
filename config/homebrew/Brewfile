@@ -129,8 +129,6 @@ brew 'crit'
 
 # ===== Third-party utilities =====
 
-# Command execution permission framework for LLM agents
-brew 'fohte/tap/runok'
 # Google CLI for Gmail, Calendar, Drive, Docs, Sheets, and more
 brew 'openclaw/tap/gogcli'
 
