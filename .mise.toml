@@ -19,7 +19,7 @@ run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(ghq list -p fohte/dotfiles)"
+cd "$(ghq list -e -p fohte/dotfiles)"
 
 if git diff --quiet; then
   git pull
@@ -47,7 +47,7 @@ run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(ghq list -p fohte/runok)"
+cd "$(ghq list -e -p fohte/runok)"
 
 before="$(git rev-parse HEAD)"
 git pull --autostash
