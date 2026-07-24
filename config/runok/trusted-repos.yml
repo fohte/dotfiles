@@ -133,11 +133,26 @@ rules:
   # same flags that widen host reach apply to both -- see the `docker run`
   # comment below for what this guards and what it deliberately doesn't.
   - allow: 'docker-compose [-f *] run *'
-    when: &docker_run_cwd_and_flags "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')) && !has(flags.privileged) && !('cap-add' in flags) && !has(flags.userns) && !has(flags.pid) && !has(flags.network) && !has(flags.ipc) && !has(flags.uts) && !('security-opt' in flags) && !('device' in flags)"
+    when: &docker_run_cwd_and_flags "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')) && !has(flags.privileged) && !('cap-add' in flags) && !has(flags.userns) && !has(flags.pid) && !has(flags.ipc) && !has(flags.uts) && !('security-opt' in flags) && !('device' in flags)"
     tests:
       - allow: 'docker compose run --rm app pnpm test'
       - allow: 'docker-compose run web sh'
+      - allow: 'docker compose run --network container:meshi-verify-pg app sh'
       - ask: 'docker compose run --cap-add=SYS_ADMIN app sh'
+      - deny: 'docker compose run --network=host app sh'
+      - deny: 'docker compose run --network host app sh'
+
+  # See the `docker run`/`docker create` deny below for what this guards. A
+  # literal pattern rather than a `when` on `flags.network` -- CEL errors
+  # (rather than short-circuiting) when a `when` references a flag that
+  # isn't present on the command at all, and referencing `flags.network`
+  # unconditionally would break every command in the allow rule above that
+  # doesn't pass `--network`.
+  - deny: 'docker-compose [-f *] run * --network host *'
+    message: &network_host_msg '`--network=host` shares the host/VM network namespace, exposing loopback-only services with no isolation left to rely on. Run manually if actually intended.'
+    tests:
+      - deny: 'docker compose run --network=host app sh'
+      - deny: 'docker-compose run --network host app sh'
 
   # `docker run`/`docker create` both start an arbitrary image/command (create
   # just skips the auto-start -- a later `docker start`, already
@@ -146,11 +161,15 @@ rules:
   # the rules above, a container started this way isn't limited to what a
   # project's own compose file already declares, so flags that widen the
   # container's reach into the host (root inside a privileged container,
-  # added capabilities, host/other-namespace sharing, relaxed
-  # seccomp/apparmor, raw device access) must still fall through to `ask`
-  # rather than being silently allowed.
+  # added capabilities, other-namespace sharing, relaxed seccomp/apparmor,
+  # raw device access) must still fall through to `ask` rather than being
+  # silently allowed. `--network` is the one exception: its value is
+  # inspected below so only `host` (full host/VM network namespace sharing,
+  # exposing loopback-only services with no isolation left to rely on) is
+  # blocked outright; `container:<name>` and custom network names are common
+  # for reaching a sidecar container and stay allowed.
   #
-  # This is a flag deny-list, not a value inspector: it can't catch
+  # This is otherwise a flag deny-list, not a value inspector: it can't catch
   # `-v /var/run/docker.sock:/var/run/docker.sock`, which hands the
   # container the colima VM's own docker socket (root-equivalent control of
   # every container on the VM) without tripping any flag above. Left
@@ -166,11 +185,12 @@ rules:
       - allow: 'docker run -it --rm -v .:/app node:24 bash'
       - allow: 'docker create hashicorp/terraform:1.15 sleep 600'
       - allow: 'docker create --entrypoint /bin/sh hashicorp/terraform:1.15 -c "sleep 600"'
+      - allow: 'docker run --rm --network container:meshi-verify-pg alpine echo hi'
+      - allow: 'docker run --rm --network meshi-verify-net alpine echo hi'
       - ask: 'docker run --privileged --rm alpine sh'
       - ask: 'docker run --cap-add=SYS_ADMIN --rm alpine sh'
       - ask: 'docker run --userns=host --rm alpine sh'
       - ask: 'docker run --pid=host --rm alpine sh'
-      - ask: 'docker run --network=host --rm alpine sh'
       - ask: 'docker run --ipc=host --rm alpine sh'
       - ask: 'docker run --uts=host --rm alpine sh'
       - ask: 'docker run --security-opt=seccomp=unconfined --rm alpine sh'
@@ -183,3 +203,23 @@ rules:
       # doesn't match the alias at all and falls through to ask instead of
       # escaping that confinement.
       - ask: 'docker --context evil-remote run --rm -v /:/host alpine sh'
+
+  # `--network=host` shares the host/VM network namespace, letting the
+  # container reach loopback-only services (debug ports, local OAuth
+  # callback listeners, unauthenticated admin endpoints) that rely on
+  # network isolation as their only access control. Unlike the other
+  # host-reach flags above, this one has a legitimate non-host counterpart
+  # (`container:<name>`, custom network names) common enough to warrant
+  # inspecting the value instead of asking on every `--network` use, so the
+  # dangerous value is a hard deny rather than an ask. `--net` is docker
+  # CLI's undocumented alias for `--network` (confirmed via `docker create
+  # --net=host` producing NetworkMode "host"), so it's matched here too.
+  - deny: 'docker run|create * --network|--net host *'
+    message: *network_host_msg
+    tests:
+      - deny: 'docker run --network=host --rm alpine sh'
+      - deny: 'docker run --network host --rm alpine sh'
+      - deny: 'docker create --network=host alpine sh'
+      - deny: 'docker run --net=host --rm alpine sh'
+      - deny: 'docker run --net host --rm alpine sh'
+      - deny: 'docker create --net=host alpine sh'
