@@ -30,6 +30,10 @@ extends:
 defaults:
   action: ask
 
+experimental:
+  require_command_in_path:
+    enabled: true
+
 definitions:
   paths:
     sensitive:
