@@ -155,19 +155,20 @@ Helm chart の更新は **chart 自体の差分** と **appVersion 経由のア�
 | breaking changes         | 調査結果の要約。根拠 (リリースノート URL など) を添える                                                                                                                                                                                                |
 | このリポジトリへの影響   | 影響あり/なしと理由 (grep 結果や values 比較などの根拠)                                                                                                                                                                                                |
 | グルーピング             | 他の PR とまとめるべきか                                                                                                                                                                                                                               |
-| 対応方針の提案           | 直接マージ / 委任 / 保留                                                                                                                                                                                                                               |
-| automerge 化の検討       | 今後このパッケージ/ルールを automerge 対象にすべきか。可否と根拠、変更先 (このリポジトリの renovate.json5 / 共有 renovate-config repo)。後述「automerge 化 / Renovate 設定変更の検討」参照                                                             |
+| automerge 化の検討       | 今後このパッケージ/ルールを automerge 対象にすべきか。可否・リスク評価・変更先 (このリポジトリの renovate.json5 / 共有 renovate-config repo)。後述「automerge 化 / Renovate 設定変更の検討」参照                                                       |
+| 対応方針の提案           | 直接マージ / 委任 / 保留 / **automerge に委ねる** (上の automerge 化の検討で今回このルールを新設・拡張し、この PR がその対象に含まれる場合。手動マージ不要)                                                                                            |
 | release-please bump 判定 | release-please 利用リポジトリのみ。**actual bump level (patch / minor / major / none) と根拠** (どの `changelog-sections` エントリで visible/hidden か) をセルに明示する。「整合」「問題なし」だけの記述は禁止。後述「release-please bump の判定」参照 |
 
 ### automerge 化 / Renovate 設定変更の検討
 
-今回の判断を都度の手作業で終わらせず、同種の更新を今後 no-look で自動化できないかを評価する。
+今回の判断を都度の手作業で終わらせず、同種の更新を今後 no-look で自動化できないかを評価する。automerge 化は以後の同種 PR を無条件でマージする設定なので、**可否の判断にはリスク評価を必須とする**。「過去に無事故だった」という実績だけで済ませず、何が起きればこの automerge が事故になるかを具体的に検討すること。
 
 - **automerge 化すべきか**: 「直接マージ」と判定した PR について、その根拠が**このパッケージ/エコシステムの一般的な性質** (後方互換を厳守する運用、型定義のみの変更、lockfile 限定の変更など) によるものか、**今回たまたま影響範囲が狭かっただけ**かを区別する。前者のみ automerge 化の候補になる。同じパッケージ/packageRule で過去にも繰り返し同じ判定をしていないか `gh pr list --state merged --search "<package>"` 等で確認すると、実益の大きさを判断しやすい
 - **変更先の判断**: renovate.json5 (または `.github/renovate.json5` 等) の `extends` を確認し、共有設定リポジトリ (renovate-config など) に依存しているか確認する
     - **このリポジトリ固有の事情** (独自の digest pin、特殊な使い方) による判断 → このリポジトリの renovate.json5 に packageRule を追加
-    - **他リポジトリでも共通して安全と言える性質** → 共有設定リポジトリ側の packageRule を変更する。ただし全リポジトリに影響するため、このセッション内で勝手に config repo を編集せず、必ずユーザーに提案として提示し承認を得てから着手する
+    - **他リポジトリでも共通して安全と言える性質** → 共有設定リポジトリ側の packageRule を変更する。ただし全リポジトリに影響するため、必ずユーザーに提案として提示し承認を得てから着手する。実際の変更は `/delegate-claude` で委任する (このセッション内で直接 config repo を編集しない)
 - **提案内容**: 追加/変更する `packageRules` (`matchPackageNames` / `matchUpdateTypes` / `automerge` など) の具体的な差分案を Step 4 の報告に含める。マージ判定とは別に、この差分案自体についてユーザーの明示的な承認を得てから着手する
+- **今回の対象 PR への反映**: 今回新設・拡張したルールの対象に、今トリアージしている PR 自体が含まれる場合、その PR の対応方針は「automerge に委ねる」とし、このセッションで手動マージしない
 
 ### release-please bump の判定
 
@@ -210,6 +211,7 @@ release-please 側の `changelog-sections` / `release-as` を直すべきケー�
 - **直接マージ**: breaking changes がない (または影響がないことが確認済み) **かつ** CI が green で想定外の結果が含まれていない
 - **委任**: breaking changes によるコード修正が必要、CI fail の原因解消が必要、または複数 PR を統合する必要がある
 - **保留**: 調査で判断がつかない、またはユーザーの判断が必要
+- **automerge に委ねる**: 上の「automerge 化 / Renovate 設定変更の検討」で今回この PR を対象に automerge ルールを新設・拡張した場合。config の変更が反映され次第 Renovate 自身がマージするので、このセッションで手動マージしない
 
 直接マージの場合も、ビルド・テストの確認は必要。影響範囲が明確で確認項目が少ない PR はこのセッション内で直接確認してマージする。わざわざ `/delegate-claude` で委任するほどではない場合が多い。
 
