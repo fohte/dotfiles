@@ -31,20 +31,21 @@ base 3 reviewer は常に起動。conditional reviewer は変更内容が trigge
 
 ### Conditional reviewers (該当時のみ起動)
 
-| Name               | 出力セクション     | ID prefix | Agent                          | Focus skill                  | 詳細                                        |
-| ------------------ | ------------------ | --------- | ------------------------------ | ---------------------------- | ------------------------------------------- |
-| `gha-security`     | `GHA Security`     | `GHA`     | `self-review-gha-security`     | `gha-security-review`        | 下記 [#gha-security](#gha-security)         |
-| `test-philosophy`  | `Test Philosophy`  | `TEST`    | `self-review-test-philosophy`  | `test-philosophy`            | 下記 [#test-philosophy](#test-philosophy)   |
-| `db-schema`        | `DB Schema`        | `DB`      | `self-review-db-schema`        | `postgresql-table-design`    | 下記 [#db-schema](#db-schema)               |
-| `japanese-writing` | `Japanese Writing` | `JA`      | `self-review-japanese-writing` | `japanese-tech-writing`      | 下記 [#japanese-writing](#japanese-writing) |
-| `readme`           | `Documentation`    | `DOC`     | `self-review-readme`           | `crafting-effective-readmes` | 下記 [#readme](#readme)                     |
+| Name               | 出力セクション     | ID prefix | Agent                          | Focus skill                                         | 詳細                                        |
+| ------------------ | ------------------ | --------- | ------------------------------ | --------------------------------------------------- | ------------------------------------------- |
+| `gha-security`     | `GHA Security`     | `GHA`     | `self-review-gha-security`     | `gha-security-review`                               | 下記 [#gha-security](#gha-security)         |
+| `test-philosophy`  | `Test Philosophy`  | `TEST`    | `self-review-test-philosophy`  | `test-philosophy`                                   | 下記 [#test-philosophy](#test-philosophy)   |
+| `db-schema`        | `DB Schema`        | `DB`      | `self-review-db-schema`        | `postgresql-table-design`                           | 下記 [#db-schema](#db-schema)               |
+| `japanese-writing` | `Japanese Writing` | `JA`      | `self-review-japanese-writing` | `japanese-tech-writing`                             | 下記 [#japanese-writing](#japanese-writing) |
+| `readme`           | `Documentation`    | `DOC`     | `self-review-readme`           | `crafting-effective-readmes`                        | 下記 [#readme](#readme)                     |
+| `lint-suppression` | `Lint Suppression` | `SUP`     | `self-review-lint-suppression` | `references/lint-suppression.md` (self-review 内蔵) | 下記 [#lint-suppression](#lint-suppression) |
 
 各 conditional reviewer のブロックは「Trigger (検知コマンド + 対象)」「Agent (定義ファイルへの参照)」の 2 要素を持つ。起動時の指示は対応する `Agent` の定義ファイル (`~/.claude/agents/self-review-<name>.md`) に持たせてあるため、ブロック本文には書かない。新しい reviewer を追加するときは Trigger + Agent 参照のブロック、この表の行、および対応する agent 定義ファイルを追加する。
 
 ## 実行手順
 
 1. **対象差分の確定**: 呼び出し元 skill (`commit` / `create-pr` など) が指定した範囲から `<range>` (`--cached` / `@{u}..HEAD` / `origin/<base>..HEAD` など、`git diff` に渡す引数) を確定する。`git diff --stat <range>` などで `<range>` が解決できることを確認してから先に進む。解決できない場合はここで中断してユーザーに報告し、subagent は 1 件も起動しない (全件が同一原因で個別に失敗するのを防ぐ)。diff 本体はここでは取得しない。各 subagent が自分の Bash tool で `git diff <range>` を実行して取得する。ファイルに書き出さないことで、`.git` 配下への誤生成や一時ファイルの雑な命名・削除漏れを避ける。`<range>` は subagent 起動から結果集約完了までの間、値を変えない (この間は追加の `git add` / `reset` / `commit` を行わない)。各 subagent が個別に diff を取得する設計上、ここが動くと group 間でレビュー対象が食い違う。
-2. **Conditional reviewer の検知**: 下記「Conditional reviewers の定義」セクションの各 reviewer の Trigger コマンドを順に実行する。マッチしたものは step 3 の起動対象に加え、Trigger の出力 (対象ファイルパスのリスト) をそのまま `targets` として保持しておく。最大で base 3 + conditional 5 = 8 件。
+2. **Conditional reviewer の検知**: 下記「Conditional reviewers の定義」セクションの各 reviewer の Trigger コマンドを順に実行する。マッチしたものは step 3 の起動対象に加え、Trigger の出力 (対象ファイルパスのリスト) をそのまま `targets` として保持しておく。最大で base 3 + conditional 6 = 9 件。
 3. **subagent を並列 background 起動**: base 3 + step 2 でマッチした conditional を、**単一のアシスタントメッセージ内に Agent ツール呼び出しを並べて** **全件 `run_in_background: true`** で起動する。`subagent_type` に「Reviewer 構成」表の `Agent` 列の値を指定する。プロンプトは `range` (conditional は `targets` も) のみを渡す。reviewer ごとの指示は agent 定義ファイル側に埋め込み済みなので、ここでプロンプトを組み立てる必要はない。
 
     禁止:
@@ -52,7 +53,7 @@ base 3 reviewer は常に起動。conditional reviewer は変更内容が trigge
     - `run_in_background` を省略 / `false` で foreground 起動 (最初の結果が返るまで他の起動メッセージを送れない = 直列と同じ)
     - 複数ラウンドに分けて起動 (1 ラウンドで全件揃える)
 
-    起動形 (3 〜 8 ブロック並列):
+    起動形 (3 〜 9 ブロック並列):
 
     ```
     Agent({ description: "behavior review",   run_in_background: true, subagent_type: "self-review-behavior",   prompt: "range: <range>" })
@@ -62,7 +63,7 @@ base 3 reviewer は常に起動。conditional reviewer は変更内容が trigge
     Agent({ description: "<name> review",     run_in_background: true, subagent_type: "self-review-<name>",     prompt: "range: <range>\ntargets:\n<file1>\n<file2>" })
     ```
 
-4. **完了通知を待つ**: 起動した全件 (3 〜 8) の `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止。通知のみが完了の根拠。**1 件でも未完了なら他の作業はせず通知を待つ**。
+4. **完了通知を待つ**: 起動した全件 (3 〜 9) の `<task-notification>` が届くまで集約に進まない。polling・sleep・出力ファイルの先読みは禁止。通知のみが完了の根拠。**1 件でも未完了なら他の作業はせず通知を待つ**。
 5. **結果集約**: 全通知到着後、各 Agent の最終出力を踏まえて以下のルールで統合する:
     - 観点別評価: behavior + structure + convention の 13 観点を通し番号順に並べる。起動した conditional reviewer ごとに、Reviewer 構成表の「出力セクション」名で独立セクションを末尾に追加 (13 観点には混ぜない)
     - 指摘詳細: 重要度順 (Critical → Warning) に並べる。`GHA-NNN` findings は HIGH=Critical / MEDIUM=Warning として、その他 conditional の `<prefix>:` findings は subagent が付けた重要度のまま混ぜて並べる
@@ -139,6 +140,23 @@ git diff --name-only <range> | grep -iE '(^|/)README\.(md|mdx|markdown|rst)$|^do
 
 **Agent**: `self-review-readme` (`~/.claude/agents/self-review-readme.md`)
 
+### lint-suppression
+
+**Trigger**:
+
+```bash
+for f in $(git diff --name-only <range>); do
+  case "$f" in
+    config/claude/skills/self-review/*|config/claude/agents/self-review-*.md) continue ;;
+  esac
+  git diff <range> -- "$f" | grep -E '^\+' | grep -qiE 'eslint-disable|@ts-ignore|@ts-expect-error|stylelint-disable|rubocop:(disable|todo)|\bnoqa\b|type:[[:space:]]*ignore|pylint:[[:space:]]*disable|\bnosec\b|//[[:space:]]*nolint|shellcheck disable|ignorePatterns|\bExclude[[:space:]]*:' && echo "$f"
+done
+```
+
+対象: `eslint-disable` 系・`@ts-ignore` / `@ts-expect-error`・`stylelint-disable`・`rubocop:disable` / `rubocop:todo`・`# noqa`・`# type: ignore`・`# pylint: disable`・`# nosec`・`//nolint`・`# shellcheck disable` などの行レベル suppress directive、および `.eslintrc*` の `ignorePatterns` や `.rubocop.yml` の `Exclude` などのファイルレベル ignore 設定を diff の追加行に含むファイル。`config/claude/skills/self-review/` 配下と `config/claude/agents/self-review-*.md` は抑制構文を解説するメタドキュメントであり実際の suppress directive を含み得ないため対象外。
+
+**Agent**: `self-review-lint-suppression` (`~/.claude/agents/self-review-lint-suppression.md`)
+
 ## Dedup ルール
 
 グループを MECE に分けたため subagent 間の衝突は起きにくいが、cross-cutting なケースはあり得る。代表的な重なり:
@@ -147,6 +165,7 @@ git diff --name-only <range> | grep -iE '(^|/)README\.(md|mdx|markdown|rst)$|^do
 - `db-schema` ↔ `behavior` (1 正しさ / 2 セキュリティ) / `structure` (6 互換性)
 - `japanese-writing` ↔ `convention` (10 ドキュメント整合性 / 11 コメントの質)
 - `readme` ↔ `convention` (10 ドキュメント整合性) / `japanese-writing` (文章規範)
+- `lint-suppression` ↔ `convention` (12 プロジェクト規約遵守) / `behavior` (2 セキュリティ、security 系ルール抑制時)
 
 各 subagent が出した **指摘 ID** (`<prefix>:<file>:<LINE>`) と症状要約を key に以下を適用する:
 
@@ -192,6 +211,7 @@ Test Philosophy: <マーカー> <一行>   (test-philosophy 未起動時は省�
 DB Schema: <マーカー> <一行>         (db-schema 未起動時は省略)
 Japanese Writing: <マーカー> <一行>  (japanese-writing 未起動時は省略)
 Documentation: <マーカー> <一行>     (readme 未起動時は省略)
+Lint Suppression: <マーカー> <一行>  (lint-suppression 未起動時は省略)
 ```
 
 ### 2. 指摘詳細
