@@ -156,7 +156,18 @@ Helm chart の更新は **chart 自体の差分** と **appVersion 経由のア�
 | このリポジトリへの影響   | 影響あり/なしと理由 (grep 結果や values 比較などの根拠)                                                                                                                                                                                                |
 | グルーピング             | 他の PR とまとめるべきか                                                                                                                                                                                                                               |
 | 対応方針の提案           | 直接マージ / 委任 / 保留                                                                                                                                                                                                                               |
+| automerge 化の検討       | 今後このパッケージ/ルールを automerge 対象にすべきか。可否と根拠、変更先 (このリポジトリの renovate.json5 / 共有 renovate-config repo)。後述「automerge 化 / Renovate 設定変更の検討」参照                                                             |
 | release-please bump 判定 | release-please 利用リポジトリのみ。**actual bump level (patch / minor / major / none) と根拠** (どの `changelog-sections` エントリで visible/hidden か) をセルに明示する。「整合」「問題なし」だけの記述は禁止。後述「release-please bump の判定」参照 |
+
+### automerge 化 / Renovate 設定変更の検討
+
+今回の判断を都度の手作業で終わらせず、同種の更新を今後 no-look で自動化できないかを評価する。
+
+- **automerge 化すべきか**: 「直接マージ」と判定した PR について、その根拠が**このパッケージ/エコシステムの一般的な性質** (後方互換を厳守する運用、型定義のみの変更、lockfile 限定の変更など) によるものか、**今回たまたま影響範囲が狭かっただけ**かを区別する。前者のみ automerge 化の候補になる。同じパッケージ/packageRule で過去にも繰り返し同じ判定をしていないか `gh pr list --state merged --search "<package>"` 等で確認すると、実益の大きさを判断しやすい
+- **変更先の判断**: renovate.json5 (または `.github/renovate.json5` 等) の `extends` を確認し、共有設定リポジトリ (renovate-config など) に依存しているか確認する
+    - **このリポジトリ固有の事情** (独自の digest pin、特殊な使い方) による判断 → このリポジトリの renovate.json5 に packageRule を追加
+    - **他リポジトリでも共通して安全と言える性質** → 共有設定リポジトリ側の packageRule を変更する。ただし全リポジトリに影響するため、このセッション内で勝手に config repo を編集せず、必ずユーザーに提案として提示し承認を得てから着手する
+- **提案内容**: 追加/変更する `packageRules` (`matchPackageNames` / `matchUpdateTypes` / `automerge` など) の具体的な差分案を Step 4 の報告に含める。マージ判定とは別に、この差分案自体についてユーザーの明示的な承認を得てから着手する
 
 ### release-please bump の判定
 
