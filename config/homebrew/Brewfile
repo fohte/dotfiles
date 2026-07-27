@@ -77,14 +77,14 @@ brew 'kubernetes-cli'
 # Configuration helper for talos clusters
 brew 'talhelper'
 # CLI for out-of-band management of Kubernetes nodes created by Talos
-brew 'siderolabs/tap/talosctl'
+brew 'siderolabs/tap/talosctl', trusted: true
 
 # ===== Language servers =====
 
 # General purpose Language Server
 brew 'efm-langserver'
 # Terraform Language Server
-brew 'hashicorp/tap/terraform-ls'
+brew 'hashicorp/tap/terraform-ls', trusted: true
 
 # ===== Networking =====
 
@@ -123,14 +123,14 @@ brew 'ollama', link: false
 # AI coding agent, built for the terminal
 brew 'opencode'
 # Fuzzy-search Claude Code conversation history from the terminal
-brew 'raine/claude-history/claude-history'
+brew 'raine/claude-history/claude-history', trusted: true
 # Local browser-based review tool for AI agent code changes
 brew 'crit'
 
 # ===== Third-party utilities =====
 
 # Google CLI for Gmail, Calendar, Drive, Docs, Sheets, and more
-brew 'openclaw/tap/gogcli'
+brew 'openclaw/tap/gogcli', trusted: true
 
 # ===== Casks =====
 
@@ -139,7 +139,7 @@ cask 'ghostty'
 # Mac OS X Japanese input method based on SKK
 cask 'aquaskk'
 # Command-line interface for 1Password
-cask '1password/tap/1password-cli'
+cask '1password/tap/1password-cli', trusted: true
 # AI coding agent (desktop)
 cask 'codex'
 # Set of tools to manage resources and applications hosted on Google Cloud
@@ -147,7 +147,7 @@ cask 'gcloud-cli'
 # Screen capture utility
 cask 'cleanshot'
 # Cross-platform text expander
-cask 'espanso/espanso/espanso'
+cask 'espanso/espanso/espanso', trusted: true
 # Knowledge base on a local folder of plain text Markdown files
 cask 'obsidian'
 # Team communication and collaboration software
