@@ -7,10 +7,11 @@ definitions:
     - 'uvx [--from *] <cmd>'
 
 rules:
-  - allow: 'python3 *'
+  - allow: 'python3|python *'
     sandbox: readonly
     tests:
       - allow: 'python3 -c "print(1)"'
+      - allow: 'python -c "print(1)"'
 
   - allow: 'schemathesis *'
     tests:
