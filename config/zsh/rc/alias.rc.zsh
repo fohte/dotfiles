@@ -26,6 +26,11 @@ alias q=exit
 
 has assh && alias ssh="assh wrapper ssh --"
 
+alias cl='claude'
+alias cls='claude --model "sonnet[1m]"'
+alias clo='claude --model "opus[1m]"'
+alias clf='claude --model "fable[1m]"'
+
 alias t='tig'
 
 alias g'$'='git cmd-commit'
