@@ -32,6 +32,9 @@ case "$tool_name" in
   Agent)
     exec ~/.claude/hooks/agent-guard <<< "$input"
     ;;
+  AskUserQuestion)
+    exec ~/.claude/hooks/ask-user-question-guard <<< "$input"
+    ;;
 esac
 
 if [ "$tool_name" != "Bash" ]; then

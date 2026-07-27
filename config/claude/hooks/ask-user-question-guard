@@ -1,0 +1,20 @@
+#!/bin/bash
+# Guard for the AskUserQuestion tool: deny calls where a question's header or
+# question text is still the literal string "placeholder" -- i.e. the model
+# never filled in real content, most often seen when it fires off a
+# throwaway question while idling on a background task.
+#
+# Invoked from pre-tool-use-proxy.bash; receives the original PreToolUse
+# JSON payload on stdin.
+input=$(cat)
+
+has_placeholder=$(echo "$input" | jq -r '
+  [.tool_input.questions[]? |
+    select(((.header // "") | ascii_downcase == "placeholder") or
+           ((.question // "") | ascii_downcase == "placeholder"))
+  ] | length > 0
+')
+
+if [ "$has_placeholder" = "true" ]; then
+  jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "AskUserQuestion has an unfilled placeholder header/question -- write real content before asking."}}'
+fi
