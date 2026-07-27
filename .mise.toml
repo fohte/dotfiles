@@ -99,7 +99,7 @@ depends = ["refresh:brew-bundle"]
 run = "brew upgrade"
 
 [tools]
-"aqua:evilmartians/lefthook" = "2.1.9"
+"aqua:evilmartians/lefthook" = "2.1.10"
 
 # lefthook hooks
 actionlint = "1.7.12"
@@ -107,7 +107,7 @@ actionlint = "1.7.12"
 node = "26.3.0"
 pinact = "4.1.0"
 "github:fohte/basefmt" = "0.1.0"
-"npm:@commitlint/cli" = "21.2.0"
+"npm:@commitlint/cli" = "21.2.1"
 "npm:prettier" = "3.9.4"
 "aqua:koalaman/shellcheck" = "0.11.0"
 "aqua:mvdan/sh" = "3.13.1"
