@@ -20,4 +20,10 @@
     // op item: "Langfuse API Key (ローカル用)"
     headersHelper: "LANGFUSE_PUBLIC_KEY='op://Personal/tshqhuwmpvzyr5lkozvqesb4nu/public key' LANGFUSE_SECRET_KEY='op://Personal/tshqhuwmpvzyr5lkozvqesb4nu/secret key' op-run-cached langfuse-mcp-headers",
   },
+  sentry: {
+    // https://mcp.sentry.dev/ — OAuth, no token to manage: Claude Code opens a
+    // browser to sign in on first connection and caches the resulting credentials.
+    type: 'http',
+    url: 'https://mcp.sentry.dev/mcp',
+  },
 }

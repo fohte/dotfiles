@@ -26,6 +26,16 @@
       'mcp__langfuse__get*',
       'mcp__langfuse__list*',
       'mcp__langfuse__query*',
+
+      // Sentry MCP, see mcp-servers.private.jsonnet
+      // https://mcp.sentry.dev/
+      // Read tools are prefixed find/get/search. update_issue (write),
+      // execute_sentry_tool (dynamic dispatcher that can invoke any catalog
+      // tool, including writes, by name), and analyze_issue_with_seer
+      // (triggers Seer AI analysis) don't match and stay gated.
+      'mcp__sentry__find*',
+      'mcp__sentry__get*',
+      'mcp__sentry__search*',
     ],
   },
 }
