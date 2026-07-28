@@ -54,6 +54,33 @@ rules:
       - ask: 'nr -C /tmp/untrusted-clone dev'
       - ask: 'nr -C ../../untrusted-clone dev'
 
+  # `make [<target>...]` (bare `make` runs the Makefile's default target)
+  # runs whatever the repo's own Makefile defines, same trust boundary as
+  # cargo run/go run/nr above. `-C`/`--directory` change which directory's
+  # Makefile runs, which would let the trusted-repos check above pass while
+  # actually running a Makefile from an untrusted directory. Unlike nr's
+  # `-C` handling above, this isn't gated by inspecting the flag's value:
+  # GNU make also accepts the fused form `-C<dir>` (no space), which never
+  # surfaces as a `flags.C` string -- it only shows up as a boolean
+  # `flags.<C+dir>` key -- so a value check on `flags.C`/`flags.directory`
+  # alone would silently let fused (and repeated, since only the last
+  # occurrence's value would be inspected) `-C`/`--directory` usage through
+  # as allow. Rejecting on the mere presence of a `C`- or `directory`-named
+  # flag key, regardless of form, closes that gap instead.
+  - allow: 'make *'
+    when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')) && !flags.exists(k, k.startsWith('C') || k.startsWith('directory'))"
+    tests:
+      - allow: 'make'
+      - allow: 'make build'
+      - ask: 'make -C config/aquaskk'
+      - ask: 'make -C /tmp/untrusted-clone'
+      - ask: 'make -C ../../untrusted-clone'
+      - ask: 'make -C/tmp/untrusted-clone build'
+      - ask: 'make -C /tmp/untrusted-clone -C .'
+      - ask: 'make --directory=config/aquaskk build'
+      - ask: 'make --directory=/tmp/untrusted-clone build'
+      - ask: 'make --directory /tmp/untrusted-clone build'
+
   # `mise install` (bare) only installs what the repo's own mise.toml /
   # .tool-versions already declares, same trust boundary as cargo run/go run
   # above (it can run a tool's postinstall hook, but only one the repo itself
