@@ -8,3 +8,13 @@ rules:
   - allow: 'sw_vers'
   - allow: 'pkgutil --check-signature *'
   - allow: 'launchctl list *'
+
+  # -plist/-p writes attributes to a file; every other flag is a read-only
+  # attribute query (see `mdls -h`).
+  - allow: 'mdls !-plist|-p *'
+    tests:
+      - allow: 'mdls -name kMDItemNumberOfPages "/Users/fohte/.claude/projects/x/tool-results/webfetch-1785209917326-d07pwi.pdf"'
+      - allow: 'mdls bll1992.pdf'
+      - allow: 'mdls -attr kMDItemFSName bll1992.pdf'
+      - ask: 'mdls -plist out.xml bll1992.pdf'
+      - ask: 'mdls -p out.xml bll1992.pdf'

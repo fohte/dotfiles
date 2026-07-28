@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+# PDF processing tools (poppler-utils, tesseract). pdftotext/pdfinfo/pdftoppm
+# have no code-execution, network, or destructive-delete flags -- see each
+# binary's `--help` (confirmed via `otool -L`: none link libcurl). tesseract
+# is different, see its rule below. Output-path arguments can overwrite
+# arbitrary files, same as the existing unconditional `cp *`/`mv *`/`tee *`
+# allows in common.yml.
+
+rules:
+  - allow: 'pdftotext *'
+    tests:
+      - allow: 'pdftotext -layout bll1992.pdf bll1992.txt'
+      - allow: 'pdftotext ffw.pdf ffw.txt'
+      - allow: 'pdftotext -layout "/Users/fohte/.claude/projects/x/tool-results/webfetch-1785208906507-p9ib2e.pdf" /private/tmp/x/scratchpad/edinet_api_spec.txt'
+
+  - allow: 'pdfinfo *'
+    tests:
+      - allow: 'pdfinfo bll1992.pdf'
+      - allow: 'pdfinfo "/Users/fohte/.claude/projects/x/tool-results/webfetch-1785208906507-p9ib2e.pdf"'
+
+  - allow: 'pdftoppm *'
+    tests:
+      - allow: 'pdftoppm -png -r 200 -f 1 -l 4 bll1992.pdf bll_page'
+      - allow: 'pdftoppm -png -r 200 -f 5 -l 8 bll1992.pdf bll_page'
+
+  # tesseract links libcurl and fetches `imagename` over the network when it
+  # contains "://" (see ProcessPagesInternal in tesseract's upstream source) --
+  # not scopable by flags alone since it's triggered by a positional arg. See
+  # `write-cwd` in runok.yml for how the blast radius is contained (same
+  # pattern as `perl *` in languages/perl.yml).
+  - allow: 'tesseract *'
+    sandbox: write-cwd
+    tests:
+      - allow: 'tesseract "$f.png" "$f"'
+      - allow: 'tesseract page1.png page1 --psm 6'
+      - allow: 'tesseract img.png out txt pdf'
