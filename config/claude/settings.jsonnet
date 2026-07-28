@@ -68,12 +68,6 @@ local env(name) = std.extVar(name);
       'mcp__gsc__get_sitemap',
       'mcp__gsc__index_inspect',
 
-      // Grafana MCP (used by the `grafana` subagent)
-      // https://github.com/grafana/mcp-grafana
-      // Service account is Viewer role, so write operations are blocked at the
-      // Grafana API level regardless of MCP tool permissions.
-      'mcp__grafana',
-
       'mcp__context7',
       'mcp__qmd',
       'mcp__pencil',
