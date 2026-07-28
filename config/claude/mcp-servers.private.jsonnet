@@ -11,4 +11,13 @@
       GRAFANA_SERVICE_ACCOUNT_TOKEN: 'op://Personal/v4frcwhkmpcg27dlf3jdc7psvi/credential',
     },
   },
+  langfuse: {
+    // https://langfuse.com/docs/api-and-data-platform/features/mcp-server
+    // Basic auth needs two keys combined, which no single op:// ref can express,
+    // so a helper assembles the header instead.
+    type: 'http',
+    url: 'https://jp.cloud.langfuse.com/api/public/mcp',
+    // op item: "Langfuse API Key (ローカル用)"
+    headersHelper: "LANGFUSE_PUBLIC_KEY='op://Personal/tshqhuwmpvzyr5lkozvqesb4nu/public key' LANGFUSE_SECRET_KEY='op://Personal/tshqhuwmpvzyr5lkozvqesb4nu/secret key' op-run-cached langfuse-mcp-headers",
+  },
 }
