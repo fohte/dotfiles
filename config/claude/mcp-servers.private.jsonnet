@@ -1,12 +1,14 @@
+// op:// refs will be resolved by the op-run-cached wrapper
 {
   grafana: {
     // https://github.com/grafana/mcp-grafana
-    // GRAFANA_URL / GRAFANA_SERVICE_ACCOUNT_TOKEN must be exported in the
-    // parent shell (e.g. via direnv or ~/.local/.zshenv) so the MCP server
-    // picks them up at startup.
     type: 'stdio',
-    command: 'uvx',
-    args: ['mcp-grafana'],
-    env: {},
+    command: 'op-run-cached',
+    args: ['uvx', 'mcp-grafana'],
+    env: {
+      GRAFANA_URL: 'https://fohte.grafana.net',
+      // Grafana Service Account Token
+      GRAFANA_SERVICE_ACCOUNT_TOKEN: 'op://Personal/v4frcwhkmpcg27dlf3jdc7psvi/credential',
+    },
   },
 }

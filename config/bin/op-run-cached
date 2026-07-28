@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+# op-run-cached - run a command with op:// secret references resolved from the
+# environment, caching resolved values in the macOS Keychain.
+#
+# usage: op-run-cached <command> [args...]
+#
+# Drop-in replacement for `op run --no-masking -- <command>`: every exported
+# variable whose value is an op:// reference is replaced by the secret it points
+# at, then <command> is exec'd.
+#
+# The Keychain layer exists because callers re-resolve on every startup: a
+# Keychain hit costs ~12ms against ~1.4s for a warm 1Password round trip (and
+# several seconds cold, plus a Touch ID prompt per terminal session).
+#
+# Set OP_RUN_CACHED_REFRESH=1 to bypass the cache and re-read from 1Password,
+# which is how a rotated secret gets picked up.
+
+set -euo pipefail
+
+# Namespaced so these entries are identifiable in Keychain Access and can be
+# purged as a group.
+readonly KEYCHAIN_PREFIX='op-run-cached'
+
+# Callers may spawn this from a GUI context where $USER is unset; under `set -u`
+# that would abort resolve() mid-way, after the secret has already been read.
+readonly KEYCHAIN_ACCOUNT="${USER:-$(id -un)}"
+
+resolve() {
+  local ref="$1"
+  local service="${KEYCHAIN_PREFIX}:${ref}"
+  local value
+
+  if [[ -z "${OP_RUN_CACHED_REFRESH:-}" ]] &&
+    value=$(security find-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$service" -w 2> /dev/null) &&
+    [[ -n $value ]]; then
+    printf '%s' "$value"
+    return 0
+  fi
+
+  value=$(op read "$ref") || return 1
+
+  # Refuse to cache an empty resolve: it would be served back as a cache hit and
+  # handed to the command as a valid-looking secret.
+  [[ -n $value ]] || return 1
+
+  # A failed cache write only costs the next run a slow path, so warn instead of
+  # aborting a command whose secret already resolved.
+  if ! security add-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$service" -w "$value" -U 2> /dev/null; then
+    echo "op-run-cached: failed to cache $ref in Keychain" >&2
+  fi
+
+  printf '%s' "$value"
+}
+
+if [[ $# -eq 0 ]]; then
+  echo "usage: op-run-cached <command> [args...]" >&2
+  exit 2
+fi
+
+# compgen -e lists exported variables only, matching what a child process would
+# actually inherit.
+for name in $(compgen -e); do
+  value="${!name}"
+  [[ $value == op://* ]] || continue
+
+  # `set -e` does not fire here: a function aborted by `set -e` inside a command
+  # substitution still yields exit 0 for the enclosing assignment (bash 5.3).
+  # Without this check a failed resolve would silently start the command with an
+  # empty secret.
+  if ! resolved=$(resolve "$value"); then
+    echo "op-run-cached: could not resolve $name from $value" >&2
+    exit 1
+  fi
+
+  export "$name=$resolved"
+done
+
+exec "$@"

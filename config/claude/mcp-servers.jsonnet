@@ -3,9 +3,13 @@ local env(name) = std.extVar(name);
 {
   context7: {
     type: 'stdio',
-    command: 'npx',
-    args: ['-y', '@upstash/context7-mcp'],
-    env: {},
+    // op:// refs will be resolved by the op-run-cached wrapper
+    command: 'op-run-cached',
+    args: ['npx', '-y', '@upstash/context7-mcp'],
+    env: {
+      // Context7 API Key
+      CONTEXT7_API_KEY: 'op://Personal/vzna62vsddi7jiv4dmhum3y7f4/credential',
+    },
   },
   qmd: {
     type: 'stdio',
