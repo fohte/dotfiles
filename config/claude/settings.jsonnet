@@ -3,6 +3,13 @@ local env(name) = std.extVar(name);
 {
   env: {
     CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY: '1',
+
+    // Subagents can spawn subagents of their own by default (up to three
+    // layers below the main conversation), which sometimes runs away in an
+    // unintended nested-spawn loop. Setting this to 1 withholds the Agent
+    // tool from every subagent, so nesting is impossible.
+    // https://code.claude.com/docs/en/sub-agents.md#let-subagents-spawn-their-own-subagents
+    CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH: '1',
   },
 
   // Parallel work is driven by separate tmux panes/sessions, not the
