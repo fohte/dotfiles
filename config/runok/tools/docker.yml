@@ -130,6 +130,20 @@ rules:
       # silently widening the rule.
       - ask: 'docker --context colima rm -f meshi-obs-smoketest'
 
+  # `rmi`/`image rm` only delete images, which are rebuildable or
+  # re-pullable (same reasoning as the unscoped `--rmi` in compose down
+  # below), unlike `docker rm` which is bounded to avoid mass container
+  # deletion -- so this is allowed unscoped, multiple images included.
+  - allow: 'docker rmi *'
+    tests:
+      - allow: 'docker rmi my-image'
+      - allow: 'docker rmi -f my-image'
+      - allow: 'docker rmi my-image other-image'
+  - allow: 'docker image rm *'
+    tests:
+      - allow: 'docker image rm my-image'
+      - allow: 'docker image rm -f my-image'
+
   # Apple container CLI: validate Renovate config via the official image.
   # Used by the debug-renovate skill.
   - allow: 'container run --rm -v * -w * ghcr.io/renovatebot/renovate:* renovate-config-validator *'
