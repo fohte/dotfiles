@@ -6,6 +6,11 @@ definitions:
     pnpm:
       - pnpm
       - corepack pnpm
+    # devDependency-only repos have no local commitlint binary; nlx dlx-runs
+    # the npm package of the same name instead.
+    commitlint:
+      - commitlint
+      - nlx commitlint
 
 rules:
   # install (use ni)
@@ -122,6 +127,27 @@ rules:
       - allow: 'nlx prettier --check config/karabiner/karabiner.json'
       - allow: 'nlx prettier --write src/index.ts'
       - allow: 'nlx prettier@3.8.3 --check check.json'
+
+  # commitlint only lints commit messages, but -g|--config/-x|--extends/
+  # -p|--parser-preset/--options load and execute an arbitrary JS/TS module,
+  # and -d|--cwd redirects where commitlint auto-discovers that config -- all
+  # denied rather than left to the trailing wildcard (verified via
+  # `commitlint --help`). The `commitlint` alias above also covers
+  # `nlx commitlint`.
+  - allow: 'commitlint *'
+    when: '!flags.exists(k, k in ["g", "config", "x", "extends", "p", "parser-preset", "options", "d", "cwd"])'
+    tests:
+      - allow: 'commitlint --edit'
+      - allow: 'nlx commitlint --edit'
+      - ask: 'commitlint --edit --config /tmp/evil.config.js'
+      - ask: 'commitlint --edit -g /tmp/evil.config.js'
+      - ask: 'commitlint --edit --extends some-preset'
+      - ask: 'commitlint -x some-preset --edit'
+      - ask: 'commitlint --edit --parser-preset ./evil-preset'
+      - ask: 'commitlint -p ./evil-preset --edit'
+      - ask: 'commitlint --edit --options /tmp/evil.json'
+      - ask: 'commitlint --edit --cwd /tmp'
+      - ask: 'commitlint -d /tmp --edit'
   # TanStack Router code generation only writes route files in the project.
   # Other tsr subcommands are not vetted yet.
   - allow: 'nlx tsr generate'

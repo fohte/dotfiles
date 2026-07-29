@@ -1,6 +1,13 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
 definitions:
+  aliases:
+    # devDependency-only repos have no local lefthook binary; nlx dlx-runs
+    # the npm package of the same name instead.
+    lefthook:
+      - lefthook
+      - nlx lefthook
+
   wrappers:
     # Treat `nlx --package <pkg> -c '<shell-string>'` as a wrapper so the
     # shell string inside the quotes is recursively evaluated against the
@@ -60,11 +67,13 @@ rules:
   - allow: 'lefthook run *'
     tests:
       - allow: 'lefthook run pre-commit'
+      - allow: 'nlx lefthook run pre-commit'
   - allow: 'lefthook validate|version|dump'
     tests:
       - allow: 'lefthook validate'
       - allow: 'lefthook version'
       - allow: 'lefthook dump'
+      - allow: 'nlx lefthook validate'
 
   # tmux (read-only)
   - allow: 'tmux -V'
