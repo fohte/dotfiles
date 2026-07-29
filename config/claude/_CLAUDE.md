@@ -32,6 +32,7 @@
 - GitHub: use `gh` (e.g., `gh issue view` for issue URLs)
 - rm: prefer `git rm` for tracked files; never pass `-f`. Repo 内の生成物 (dist, node_modules, `*.gen.*` など ignored なもの) の削除は `rm` でなく `git clean -fdX <path>`、untracked の削除は `git clean -fd <path>` を使う (tracked は消えない。ただし `-X` は ignored な `.env` / `*.local.*` も消しうるので path を必ず絞る)
 - 一時ファイル: `/tmp` 下に置く
+- ローカルファイル (HTML など) をブラウザで確認させたい場合: `open` ではなく `crit preview <file>` を使う
 - search: prefer `rg` over `find`/`grep`; never search `~` (too heavy)
 - json: use `jq`, not `python3 -c 'import json'`
 - coreutils: use `gsed` / `gdate` / `gstat` (GNU) instead of BSD tools

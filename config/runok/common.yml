@@ -370,6 +370,7 @@ rules:
 
   - deny: 'open *'
     message: 'Use crit to have a human review the file instead.'
+    fix_suggestion: 'crit preview <file>'
 
   # find is prohibited; use rg, Glob tool, or Grep tool instead
   - deny: 'find *'
