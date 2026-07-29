@@ -131,6 +131,14 @@ local env(name) = std.extVar(name);
           { type: 'command', command: '~/.claude/hooks/link-overlay-skills' },
         ],
       },
+      {
+        // Reset context-split-threshold tracking after compaction rewrites
+        // the transcript.
+        matcher: 'compact',
+        hooks: [
+          { type: 'command', command: '~/.claude/hooks/context-split-guard.ts' },
+        ],
+      },
     ],
     UserPromptSubmit: [
       {
@@ -153,6 +161,13 @@ local env(name) = std.extVar(name);
       {
         hooks: [
           { type: 'command', command: 'a cc hook post-tool-use' },
+        ],
+      },
+      {
+        // Notify Claude via additionalContext once context usage crosses each
+        // threshold, so long sessions get proposed to split.
+        hooks: [
+          { type: 'command', command: '~/.claude/hooks/context-split-guard.ts' },
         ],
       },
     ],

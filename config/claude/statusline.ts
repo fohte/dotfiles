@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 
-import { readFileSync, realpathSync } from 'node:fs'
+import { readFileSync, realpathSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
+import { readTotalTokens } from './hooks/lib/transcript-usage.ts'
 
 interface SessionData {
   model: {
@@ -30,18 +31,6 @@ interface SessionData {
 interface RateLimitWindow {
   used_percentage?: number
   resets_at?: number // Unix epoch seconds
-}
-
-interface TranscriptEntry {
-  type: string
-  message?: {
-    usage?: {
-      input_tokens?: number
-      output_tokens?: number
-      cache_creation_input_tokens?: number
-      cache_read_input_tokens?: number
-    }
-  }
 }
 
 function formatTokens(tokens: number): string {
@@ -204,48 +193,28 @@ function formatRateLimit(
   return `${label}: ${color}${pct}%\x1b[0m${remaining}${pace}`
 }
 
+// context_window_size isn't included in PostToolUse/SessionStart hook input
+// (only statusLine input has it), so it's dropped here as a bridge for
+// hooks/context-split-guard.ts to pick up.
+const contextWindowSizeFile = (sessionId: string) =>
+  `/tmp/claude-ctx-window-size-${sessionId}`
+
 async function main() {
   const input = await Bun.stdin.text()
   const data: SessionData = JSON.parse(input)
 
-  // Calculate total tokens from transcript file
-  let totalTokens = 0
-
-  if (data.transcript_path) {
-    try {
-      const file = Bun.file(data.transcript_path)
-      const content = await file.text()
-      const lines = content.trim().split('\n')
-
-      // Get only the last assistant message with usage info
-      let lastUsage = null
-
-      for (const line of lines) {
-        try {
-          const entry: TranscriptEntry = JSON.parse(line)
-          if (entry.type === 'assistant' && entry.message?.usage) {
-            lastUsage = entry.message.usage
-          }
-        } catch {
-          // Skip invalid JSON lines
-        }
-      }
-
-      // Use the cumulative tokens from the last assistant message
-      if (lastUsage) {
-        totalTokens =
-          (lastUsage.input_tokens || 0) +
-          (lastUsage.output_tokens || 0) +
-          (lastUsage.cache_creation_input_tokens || 0) +
-          (lastUsage.cache_read_input_tokens || 0)
-      }
-    } catch (error) {
-      // If we can't read the transcript, tokens remain 0
-    }
-  }
+  const totalTokens = data.transcript_path
+    ? readTotalTokens(data.transcript_path)
+    : 0
 
   // Auto-compact threshold is 80% of the model's context window
   const contextWindow = data.context_window?.context_window_size ?? 200_000
+  if (data.session_id && data.context_window?.context_window_size) {
+    writeFileSync(
+      contextWindowSizeFile(data.session_id),
+      String(data.context_window.context_window_size),
+    )
+  }
   const autoCompactThreshold = contextWindow * 0.8
   const percentage = Math.round((totalTokens / autoCompactThreshold) * 100)
   const color = getColorForPercentage(percentage)
