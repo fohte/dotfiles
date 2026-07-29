@@ -29,13 +29,16 @@
 
       // Sentry MCP, see mcp-servers.private.jsonnet
       // https://mcp.sentry.dev/
-      // Read tools are prefixed find/get/search. update_issue (write),
-      // execute_sentry_tool (dynamic dispatcher that can invoke any catalog
-      // tool, including writes, by name), and analyze_issue_with_seer
-      // (triggers Seer AI analysis) don't match and stay gated.
+      // Read tools are prefixed find/get/search.
       'mcp__sentry__find*',
       'mcp__sentry__get*',
       'mcp__sentry__search*',
+    ],
+    deny+: [
+      // Sentry MCP: writes and other high-risk operations.
+      'mcp__sentry__update*',
+      'mcp__sentry__execute_sentry_tool',
+      'mcp__sentry__analyze_issue_with_seer',
     ],
   },
 }
