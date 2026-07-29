@@ -1,5 +1,10 @@
 import { readFileSync } from 'node:fs'
 
+// Claude Code auto-compacts at 80% of the model's context window. statusline.ts
+// and context-split-guard.ts both express usage as a percentage of this
+// threshold (not the raw window size) so the two numbers stay comparable.
+export const AUTO_COMPACT_RATIO = 0.8
+
 interface TranscriptEntry {
   type: string
   message?: {

@@ -2,7 +2,10 @@
 
 import { readFileSync, realpathSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
-import { readTotalTokens } from './hooks/lib/transcript-usage.ts'
+import {
+  AUTO_COMPACT_RATIO,
+  readTotalTokens,
+} from './hooks/lib/transcript-usage.ts'
 
 interface SessionData {
   model: {
@@ -215,7 +218,7 @@ async function main() {
       String(data.context_window.context_window_size),
     )
   }
-  const autoCompactThreshold = contextWindow * 0.8
+  const autoCompactThreshold = contextWindow * AUTO_COMPACT_RATIO
   const percentage = Math.round((totalTokens / autoCompactThreshold) * 100)
   const color = getColorForPercentage(percentage)
 

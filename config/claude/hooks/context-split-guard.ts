@@ -6,7 +6,7 @@
 // has it), so statusline.ts drops it to contextWindowSizeFile() as a bridge.
 
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { readTotalTokens } from './lib/transcript-usage.ts'
+import { AUTO_COMPACT_RATIO, readTotalTokens } from './lib/transcript-usage.ts'
 
 interface HookInput {
   hook_event_name?: string
@@ -47,8 +47,12 @@ function handlePostToolUse(data: HookInput): void {
   const contextWindowSize = Number(readFileSync(windowSizeFile, 'utf8').trim())
   if (!contextWindowSize) return
 
+  // Same basis as statusline.ts's displayed percentage: usage relative to
+  // the auto-compact threshold, not the raw window size.
   const percentage =
-    (readTotalTokens(data.transcript_path) / contextWindowSize) * 100
+    (readTotalTokens(data.transcript_path) /
+      (contextWindowSize * AUTO_COMPACT_RATIO)) *
+    100
 
   const firedFile = firedThresholdsFile(data.session_id)
   const fired: number[] = existsSync(firedFile)
