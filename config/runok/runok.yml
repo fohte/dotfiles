@@ -17,6 +17,7 @@ extends:
   - './tools/argocd.yml'
   - './tools/aws.yml'
   - './tools/colima.yml'
+  - './tools/crit.yml'
   - './tools/docker.yml'
   - './tools/gcloud.yml'
   - './tools/k8s.yml'

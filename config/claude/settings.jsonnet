@@ -183,6 +183,7 @@ local env(name) = std.extVar(name);
     command: '~/.claude/statusline.ts',
   },
   enabledPlugins: {
+    'crit@crit': true,
     'frontend-design@claude-plugins-official': true,
     'gopls-lsp@claude-plugins-official': true,
     'runok@runok-claude-code-plugin': true,
@@ -190,6 +191,13 @@ local env(name) = std.extVar(name);
     'skill-creator@claude-plugins-official': true,
   },
   extraKnownMarketplaces: {
+    crit: {
+      source: {
+        repo: 'tomasz-tomczyk/crit',
+        source: 'github',
+      },
+      autoUpdate: true,
+    },
     'runok-claude-code-plugin': {
       source: {
         repo: 'fohte/runok-claude-code-plugin',

@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - allow: 'crit *'
+    tests:
+      - allow: 'crit'
+      - allow: 'crit plan.md'
+      - allow: 'crit --pr 123'
+      - allow: 'crit --range main..HEAD'
+      - allow: 'crit comment --author "Claude Code" foo.md:5 body'
+      - allow: 'crit comments --json'
+      - allow: 'crit status'
+      - allow: 'crit pull 123'
+      - allow: 'crit plan-hook'
+
+  # Uploads review content to crit's hosted service and prints a public
+  # (or org-scoped) URL -- never publish outside the local machine unattended.
+  #
+  # `share`/`unpublish`/`push` are only dispatched as subcommands when they
+  # are args[0] (see dispatchWithRegistry in crit's cli_dispatch.go); a
+  # leading global flag like `--port 8080` makes crit fall through to the
+  # bare-review path instead, so no `<opts>`/`*` prefix is needed here.
+  - deny: 'crit share *'
+    message: 'crit share uploads review content to a public/org-scoped URL. Run it yourself if you want to publish.'
+    tests:
+      - deny: 'crit share plan.md'
+      - allow: 'crit comment file.md:5 share'
+  - deny: 'crit unpublish *'
+    message: 'Paired with crit share, which is also denied. Run it yourself if needed.'
+    tests:
+      - deny: 'crit unpublish plan.md'
+
+  # Posts review comments to a GitHub PR, visible to other collaborators.
+  - ask: 'crit push *'
+    tests:
+      - ask: 'crit push --dry-run'
+      - ask: 'crit push 123'
+      - allow: 'crit comment --author push foo.md:5 body'
