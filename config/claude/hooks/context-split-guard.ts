@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
-// PostToolUse + SessionStart(compact) hook: force Claude to state a 分割/継続
-// verdict once context usage crosses each threshold in SPLIT_THRESHOLDS.
+// PostToolUse + SessionStart(compact) hook: force Claude to enumerate the
+// remaining tasks and state how it will run them (subagents / delegate /
+// handoff / 継続) once context usage crosses each SPLIT_THRESHOLDS entry.
 //
 // context_window_size isn't included in hook input (only statusLine input
 // has it), so statusline.ts drops it to contextWindowSizeFile() as a bridge.
@@ -21,27 +22,39 @@ const contextWindowSizeFile = (sessionId: string) =>
 const firedThresholdsFile = (sessionId: string) =>
   `/tmp/claude-ctx-fired-${sessionId}`
 
-const SPLIT_THRESHOLDS = [30, 40, 50, 60, 70, 80, 90]
+// Fires from 20% because "あと少しで終わるから" stays available as an excuse at
+// any single threshold; the low ones exist to catch a session that is burning
+// context faster than the work justifies.
+const SPLIT_THRESHOLDS = [20, 25, 30, 40, 50, 60, 70, 80, 90]
 
-// Demand a stated verdict rather than the split itself: /handoff-claude only
-// triggers on an explicit user request (see skills/handoff-claude/SKILL.md),
-// so the user has to be given something to overrule.
+// Demand a stated verdict rather than the action itself: /delegate-claude and
+// /handoff-claude only trigger on an explicit user request (see their
+// SKILL.md), and a silent choice to keep working inline leaves the user
+// nothing to overrule.
 function mainSessionMessage(percentage: number): string {
   const p = Math.round(percentage)
   return `Context usage is at ~${p}%.
 
-Context is a cost, not a budget: every additional token degrades reasoning quality and is re-billed on every subsequent turn. Having room left is NOT a reason to keep going. The default is to split; continuing is what needs justification.
+Context is a cost, not a budget: every additional token degrades reasoning quality and is re-billed on every subsequent turn. Having room left is NOT a reason to keep going.
 
-Decide now, and state the verdict as the last line of your next message:
+Burning context this fast usually means the work is being run the wrong way: done inline in this session instead of dispatched. So do both of these in your next message, before resuming work:
 
-  ⚠ context ~${p}% — 分割: <残作業をどう切り出すか 1 行>
-  ⚠ context ~${p}% — 継続: <残作業がこのセッションの蓄積文脈を必要とする理由 1 行>
+1. List the remaining work as concrete tasks, one line each.
+2. Decide how those tasks should be run, and state the verdict as the last line:
 
-"継続" is allowed only when the remaining work genuinely depends on context a fresh session would lack. "まだ余裕がある" and "引き継ぎが面倒" do not qualify: the handoff cost must be weighed against the ongoing cost of carrying this context, not against zero.
+  ⚠ context ~${p}% — subagents: <どのタスクをどう subagent に投げるか>
+  ⚠ context ~${p}% — delegate: <どう PR 単位に切り出すか>
+  ⚠ context ~${p}% — handoff: <何を引き継ぐか>
+  ⚠ context ~${p}% — 継続: <残タスクがこのセッションの蓄積文脈を必要とする理由>
 
-Deciding silently is never allowed, since the user cannot overrule a judgment they never saw. One line does not interrupt your work, so being mid-workflow is not a reason to defer it.
+- subagents: the default for any self-contained task (investigation, search, review, mechanical edits). A subagent's working context never enters this session, only its summary does, so dispatching is strictly cheaper than doing it inline.
+- delegate (/delegate-claude): the remaining work should become its own PR(s).
+- handoff (/handoff-claude): stuck on design or investigation, and this session should be restarted fresh.
+- 継続: the remaining tasks genuinely depend on context a subagent or a fresh session would lack.
 
-When the verdict is 分割: /delegate-claude when the remaining work should become its own PR(s), /handoff-claude when stuck on design or investigation. Enumerate the distinct open questions/PRs first, and write one handoff per question if there are several.`
+"あと少しで終わる" is not a verdict: enumerate the tasks first, and let the list show it. "まだ余裕がある" and "引き継ぎが面倒" do not qualify either, since the handoff cost must be weighed against the ongoing cost of carrying this context, not against zero.
+
+Deciding silently is never allowed, since the user cannot overrule a judgment they never saw. Being mid-workflow is not a reason to defer it.`
 }
 
 // Subagent message: a subagent can't spawn its own follow-up subagent or
