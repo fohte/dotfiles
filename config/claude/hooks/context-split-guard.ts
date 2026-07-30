@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-// PostToolUse + SessionStart(compact) hook: nudge Claude to propose splitting
-// the session once context usage crosses each threshold in SPLIT_THRESHOLDS.
+// PostToolUse + SessionStart(compact) hook: force Claude to state a 分割/継続
+// verdict once context usage crosses each threshold in SPLIT_THRESHOLDS.
 //
 // context_window_size isn't included in hook input (only statusLine input
 // has it), so statusline.ts drops it to contextWindowSizeFile() as a bridge.
@@ -23,20 +23,32 @@ const firedThresholdsFile = (sessionId: string) =>
 
 const SPLIT_THRESHOLDS = [30, 40, 50, 60, 70, 80, 90]
 
-// Main-loop message: propose splitting to the user rather than acting
-// unilaterally, since /handoff-claude only triggers on an explicit user
-// request (see skills/handoff-claude/SKILL.md).
-function mainSessionMessage(highest: number, percentage: number): string {
-  return `Context usage has crossed ${highest}% (currently ~${Math.round(percentage)}%). Consider proposing to the user that this session be split soon:
-- /delegate-claude — when the remaining work should become its own PR(s); spin up a separate Claude Code instance per PR.
-- /handoff-claude — when stuck on design or investigation; first enumerate the distinct open questions/angles, then write one handoff per question if there are several (same for /delegate-claude when the remaining work splits into multiple PRs).`
+// Demand a stated verdict rather than the split itself: /handoff-claude only
+// triggers on an explicit user request (see skills/handoff-claude/SKILL.md),
+// so the user has to be given something to overrule.
+function mainSessionMessage(percentage: number): string {
+  const p = Math.round(percentage)
+  return `Context usage is at ~${p}%.
+
+Context is a cost, not a budget: every additional token degrades reasoning quality and is re-billed on every subsequent turn. Having room left is NOT a reason to keep going. The default is to split; continuing is what needs justification.
+
+Decide now, and state the verdict as the last line of your next message:
+
+  ⚠ context ~${p}% — 分割: <残作業をどう切り出すか 1 行>
+  ⚠ context ~${p}% — 継続: <残作業がこのセッションの蓄積文脈を必要とする理由 1 行>
+
+"継続" is allowed only when the remaining work genuinely depends on context a fresh session would lack. "まだ余裕がある" and "引き継ぎが面倒" do not qualify: the handoff cost must be weighed against the ongoing cost of carrying this context, not against zero.
+
+Deciding silently is never allowed, since the user cannot overrule a judgment they never saw. One line does not interrupt your work, so being mid-workflow is not a reason to defer it.
+
+When the verdict is 分割: /delegate-claude when the remaining work should become its own PR(s), /handoff-claude when stuck on design or investigation. Enumerate the distinct open questions/PRs first, and write one handoff per question if there are several.`
 }
 
 // Subagent message: a subagent can't spawn its own follow-up subagent or
 // hand off interactively, so the only move is to stop and let the parent
 // re-dispatch fresh work.
-function subagentMessage(highest: number, percentage: number): string {
-  return `This subagent's context usage has crossed ${highest}% (currently ~${Math.round(percentage)}%). Wrap up now: report progress and findings so far as your final output, then stop. The parent session should start a fresh subagent to continue the remaining work instead of continuing this one.`
+function subagentMessage(percentage: number): string {
+  return `This subagent's context usage is at ~${Math.round(percentage)}%. Wrap up now: report progress and findings so far as your final output, then stop. The parent session should start a fresh subagent to continue the remaining work instead of continuing this one.`
 }
 
 function handlePostToolUse(data: HookInput): void {
@@ -66,10 +78,9 @@ function handlePostToolUse(data: HookInput): void {
 
   writeFileSync(firedFile, JSON.stringify([...fired, ...newlyFired]))
 
-  const highest = Math.max(...newlyFired)
   const message = data.agent_id
-    ? subagentMessage(highest, percentage)
-    : mainSessionMessage(highest, percentage)
+    ? subagentMessage(percentage)
+    : mainSessionMessage(percentage)
 
   console.log(
     JSON.stringify({
