@@ -78,6 +78,13 @@ local env(name) = std.extVar(name);
       'mcp__context7',
       'mcp__qmd',
       'mcp__pencil',
+
+      // tq MCP, see mcp-servers.jsonnet
+      // https://github.com/fohte/tq
+      // Read tools are prefixed get/list/search.
+      'mcp__tq__get*',
+      'mcp__tq__list*',
+      'mcp__tq__search*',
     ],
     deny: [
       'NotebookEdit',

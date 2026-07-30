@@ -14,11 +14,11 @@
   langfuse: {
     // https://langfuse.com/docs/api-and-data-platform/features/mcp-server
     // Basic auth needs two keys combined, which no single op:// ref can express,
-    // so a helper assembles the header instead.
+    // so mcp-headers-from-env assembles the header instead.
     type: 'http',
     url: 'https://jp.cloud.langfuse.com/api/public/mcp',
     // op item: "Langfuse API Key (ローカル用)"
-    headersHelper: "LANGFUSE_PUBLIC_KEY='op://Personal/tshqhuwmpvzyr5lkozvqesb4nu/public key' LANGFUSE_SECRET_KEY='op://Personal/tshqhuwmpvzyr5lkozvqesb4nu/secret key' op-run-cached langfuse-mcp-headers",
+    headersHelper: "LANGFUSE_PUBLIC_KEY='op://Personal/tshqhuwmpvzyr5lkozvqesb4nu/public key' LANGFUSE_SECRET_KEY='op://Personal/tshqhuwmpvzyr5lkozvqesb4nu/secret key' op-run-cached mcp-headers-from-env 'Authorization=basic:LANGFUSE_PUBLIC_KEY:LANGFUSE_SECRET_KEY'",
   },
   sentry: {
     // https://mcp.sentry.dev/ — OAuth, no token to manage: Claude Code opens a

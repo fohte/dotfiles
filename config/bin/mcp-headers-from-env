@@ -1,0 +1,55 @@
+#!/bin/bash
+#
+# mcp-headers-from-env - build a headers JSON object for an MCP `headersHelper`
+# from Header-Name=SPEC pairs, reading values out of the environment.
+#
+# usage: mcp-headers-from-env 'Header-Name=SPEC' [...]
+#
+# SPEC forms:
+#   ENV_VAR_NAME               - header value is the env var's value verbatim
+#   basic:USER_VAR:PASS_VAR    - header value is `Basic <base64(USER:PASS)>`
+#
+# Covers headersHelper's two common shapes: renaming an op-run-cached-resolved
+# secret into a header name, and building a Basic-auth header from a
+# public/secret key pair — so individual MCP servers don't each need their own
+# one-off headers script.
+
+set -euo pipefail
+
+if [[ $# -eq 0 ]]; then
+  echo "usage: mcp-headers-from-env <Header-Name>=<ENV_VAR_NAME|basic:USER_VAR:PASS_VAR> [...]" >&2
+  exit 2
+fi
+
+resolve() {
+  local spec="$1"
+  if [[ $spec == basic:*:* ]]; then
+    local rest="${spec#basic:}"
+    local user_var="${rest%%:*}"
+    local pass_var="${rest#*:}"
+    # set -u doesn't propagate an unbound-variable error out of this nested
+    # command substitution, so check explicitly instead of letting ${!user_var}
+    # fail silently into a broken "Basic " header.
+    : "${!user_var:?mcp-headers-from-env: $user_var is not set}"
+    : "${!pass_var:?mcp-headers-from-env: $pass_var is not set}"
+    # base64 wraps long input on some platforms; a folded header value is invalid.
+    printf 'Basic %s' "$(printf '%s:%s' "${!user_var}" "${!pass_var}" | base64 | tr -d '\n')"
+  else
+    : "${!spec:?mcp-headers-from-env: $spec is not set}"
+    printf '%s' "${!spec}"
+  fi
+}
+
+jq_args=()
+filter='{}'
+i=0
+for pair in "$@"; do
+  header="${pair%%=*}"
+  spec="${pair#*=}"
+  i=$((i + 1))
+  value=$(resolve "$spec")
+  jq_args+=(--arg "h$i" "$header" --arg "v$i" "$value")
+  filter="$filter + {(\$h$i): \$v$i}"
+done
+
+jq -n "${jq_args[@]}" "$filter"
