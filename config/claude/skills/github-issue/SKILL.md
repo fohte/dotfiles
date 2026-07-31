@@ -309,7 +309,7 @@ Before writing anything, complete all necessary research. The goal is to write a
 
 #### Workflow D: Editing an EXISTING comment
 
-Use this when the content should be added to or modified in an existing comment. This includes correcting a comment whose claims turned out to be wrong: fix it in place rather than posting a correction as a new comment.
+Use this when the content should be added to or modified in an existing comment, including correcting a comment whose claims turned out to be wrong.
 
 1. Pull the issue: `a gh issue-agent pull <issue-number>`
 2. List comments: `ls ~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/comments/`
