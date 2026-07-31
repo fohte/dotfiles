@@ -23,10 +23,6 @@ IGNORE_COMMANDS=(
   '^git( -C [^ ]+)? push$'
   '^git( -C [^ ]+)? push origin (main|master)$'
   '^git( -C [^ ]+)? push -u origin HEAD$'
-  # `shadcn init` scaffolds a whole new project (framework template,
-  # dependency install, can overwrite existing config with -f), unlike
-  # `add`/`view` which only touch one component -- always confirm.
-  '^(nlx shadcn(@[^ ]+)?|na shadcn) init( |$)'
 )
 
 ignore_regex=$(printf '|%s' "${IGNORE_COMMANDS[@]}")
