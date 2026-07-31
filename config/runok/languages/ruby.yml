@@ -12,6 +12,20 @@ rules:
   - allow: 'bundle config'
   - allow: 'bundle config get *'
   - allow: 'bundle config list'
+  - allow: 'bundle check'
+    tests:
+      - allow: 'bundle check'
+  - allow: 'gem list|which|contents|environment|env *'
+    tests:
+      - allow: 'gem list grpc -e'
+      - allow: 'gem list wantedly -e'
+      - allow: 'gem list redis -a'
+      - allow: 'gem list -i servicex'
+      - allow: "gem list -i rails -v '5.2.5'"
+      - allow: 'gem which grpc'
+      - allow: 'gem contents retryable'
+      - allow: 'gem environment gemdir'
+      - allow: 'gem env gempath'
   - allow: 'ruby *'
     sandbox: readonly
   - allow: 'ruby -c *'
