@@ -1,11 +1,11 @@
 ---
 name: sync-base-branch
-description: Merge a PR's base branch (master/main, or any other base) into the current worktree branch, resolve any merge conflicts, check whether the incoming changes require follow-up work, and push the result. Use this skill whenever the user asks to bring in, catch up with, or sync with the base branch while working on a branch/worktree — e.g. "base branch 取り込んで", "master 取り込んでコンフリクト直して", "catch up with main", "resolve conflicts with the base branch and push". Always use this skill for that pattern instead of running git merge/push manually.
+description: Merge a PR's base branch (master/main, or any other base) into the current worktree branch, resolve any merge conflicts, check whether the incoming changes require follow-up work, push the result, and confirm CI passes on the resulting PR. Use this skill whenever the user asks to bring in, catch up with, or sync with the base branch while working on a branch/worktree — e.g. "base branch 取り込んで", "master 取り込んでコンフリクト直して", "catch up with main", "resolve conflicts with the base branch and push". Always use this skill for that pattern instead of running git merge/push manually.
 ---
 
 # Sync base branch
 
-worktree で作業中のブランチに base branch (master/main など) の更新を取り込み、conflict を解消し、追従が必要な変更がないか確認したうえで push するまでを一気に行う。
+worktree で作業中のブランチに base branch (master/main など) の更新を取り込み、conflict を解消し、追従が必要な変更がないか確認したうえで push し、CI の結果を確認するまでを一気に行う。
 
 ## 方針
 
@@ -81,3 +81,18 @@ git push
 ```
 
 force-push は使わない。通常の push が reject される場合 (remote に自分の知らないコミットがある等) は、force-push で押し切らずユーザーに報告して指示を仰ぐ。
+
+### 5. CI check する
+
+手順 1 で PR が見つかっていた場合、push 後に CI の結果を確認する。push 直後は check-run が GitHub 側にまだ登録されておらず、`gh pr checks` が "no checks reported" で即座に失敗することがある。その場合は数秒待ってリトライする。
+
+```bash
+for i in $(seq 1 6); do
+  gh pr checks --watch && break
+  sleep 5
+done
+```
+
+全 check が完了するまで待ち、結果をユーザーに報告する。失敗した check があれば、どれが失敗したかを報告する。このスキルの範囲では修正までは行わない。
+
+手順 1 で PR が見つからなかった場合 (default branch にフォールバックした場合) は、確認対象の PR がないためこの手順はスキップする。
