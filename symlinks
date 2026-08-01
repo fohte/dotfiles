@@ -135,6 +135,10 @@ if match_tag armyknife; then
   sym_role_file config-overlays/armyknife/work.yaml ~/.config/armyknife/work.yaml
 fi
 
+if match_tag infractl; then
+  sym config/infractl/config.yaml ~/.config/infractl/config.yml
+fi
+
 if match_tag mise; then
   sym config/mise/home-config.toml ~/.config/mise/config.toml
 

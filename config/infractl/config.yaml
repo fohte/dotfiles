@@ -1,0 +1,25 @@
+targets:
+  tq:
+    namespace: databases
+    cluster: main
+    database: tq
+  t_rader:
+    namespace: databases
+    cluster: main
+    database: t_rader
+  t_rader_agent:
+    namespace: databases
+    cluster: main
+    database: t_rader_agent
+  mastodon:
+    namespace: databases
+    cluster: main
+    database: mastodon
+  slack_bot:
+    namespace: databases
+    cluster: main
+    database: slack_bot
+  meshi:
+    namespace: databases
+    cluster: main
+    database: meshi
