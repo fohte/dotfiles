@@ -136,7 +136,7 @@ if match_tag armyknife; then
 fi
 
 if match_tag infractl; then
-  sym config/infractl/config.yaml ~/.config/infractl/config.yml
+  sym config/infractl/config.yml ~/.config/infractl/config.yml
 fi
 
 if match_tag mise; then
