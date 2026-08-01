@@ -11,7 +11,7 @@ Postgres データベースに対して読み取り専用でクエリを実行�
 
 1. target 一覧を確認: `infractl db targets`
 2. クエリ実行: `infractl db query -t <target> "<SQL>"`
-    - `-t` は必ず指定する (このリポジトリでは省略時のデフォルト target が定義されていないため、省略すると失敗する)
+    - `-t` は必ず指定する (`default` という名前の target は用意されていないため、省略すると失敗する)
     - `--json` で構造化出力に切り替えられる
 
 target は増減しうるので、事前に一覧を覚えるのではなく毎回 `infractl db targets` で確認する。
