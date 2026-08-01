@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  # `infractl db query` connects to production databases as a readonly role
+  # (pg_read_all_data, enforced server-side by Postgres grants), so arbitrary
+  # SQL in the trailing args is safe to allow. Write-capable subcommands
+  # (e.g. a future `db exec` / `db psql`) fall through to ask.
+  - allow: 'infractl db query|targets *'
+    tests:
+      - allow: 'infractl db query "SELECT * FROM time_blocks LIMIT 5"'
+      - allow: 'infractl db query -t tq "SELECT 1"'
+      - allow: 'infractl db targets'
+      - ask: 'infractl db exec "DELETE FROM time_blocks"'
+      - ask: 'infractl db psql'
