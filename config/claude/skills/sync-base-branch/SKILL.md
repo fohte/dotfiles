@@ -84,14 +84,13 @@ force-push は使わない。通常の push が reject される場合 (remote �
 
 ### 5. CI check する
 
-手順 1 で PR が見つかっていた場合、push 後に CI の結果を確認する。push 直後は check-run が GitHub 側にまだ登録されておらず、`gh pr checks` が "no checks reported" で即座に失敗することがある。その場合は数秒待ってリトライする。
+手順 1 で PR が見つかっていた場合、push 後に CI の結果を確認する。
 
 ```bash
-for i in $(seq 1 6); do
-  gh pr checks --watch && break
-  sleep 5
-done
+gh pr checks --watch
 ```
+
+push 直後は check-run が GitHub 側にまだ登録されておらず "no checks reported" で失敗することがある。その場合は数秒待って同じコマンドを再実行する。
 
 全 check が完了するまで待ち、結果をユーザーに報告する。失敗した check があれば、どれが失敗したかを報告する。このスキルの範囲では修正までは行わない。
 
