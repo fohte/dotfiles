@@ -35,6 +35,14 @@ case "$tool_name" in
   AskUserQuestion)
     exec ~/.claude/hooks/ask-user-question-guard <<< "$input"
     ;;
+  Skill)
+    # Only subagent-invoked calls need the guard; main-thread Skill calls
+    # fall through to the no-op exit below without spawning it.
+    agent_id=$(echo "$input" | jq -r '.agent_id // empty')
+    if [ -n "$agent_id" ]; then
+      exec ~/.claude/hooks/skill-subagent-guard <<< "$input"
+    fi
+    ;;
 esac
 
 if [ "$tool_name" != "Bash" ]; then

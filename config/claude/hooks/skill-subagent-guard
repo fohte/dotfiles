@@ -1,0 +1,31 @@
+#!/bin/bash
+# Guard for the Skill tool: deny specific skills when invoked from inside a
+# subagent (Task/Agent-spawned session).
+#
+# Invoked from pre-tool-use-proxy.bash only when the PreToolUse payload's
+# `agent_id` is present (i.e. we're inside a subagent call); receives the
+# original JSON payload on stdin.
+input=$(cat)
+
+skill=$(echo "$input" | jq -r '.tool_input.skill // empty')
+
+deny() {
+  jq -nc --arg reason "$1" '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: $reason}}'
+}
+
+case "$skill" in
+  commit)
+    # commit requires the self-review skill, which fans out 3 subagents
+    # (one per behavior/structure/convention group). Subagents can't spawn
+    # subagents of their own (CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1 in
+    # settings.jsonnet), so running commit from inside a subagent would
+    # silently break that fan-out and skip the review.
+    deny "commit requires self-review to fan out subagents, but subagents can't spawn subagents of their own. Report back to the main thread and let it run commit itself."
+    ;;
+  create-pr)
+    # create-pr's review step (a ai pr-draft review) blocks waiting for
+    # the user to approve in an editor. A subagent has no user to wait on,
+    # so this step can't function there.
+    deny "create-pr's review step waits on the user, which a subagent has no way to do. Report back to the main thread and let it run create-pr itself."
+    ;;
+esac
