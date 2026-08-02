@@ -38,6 +38,14 @@ experimental:
     enabled: true
 
 definitions:
+  vars:
+    # Bundled skill scripts are trusted executable resources managed alongside
+    # their skill instructions, regardless of which repository is the cwd.
+    claude-skill-scripts:
+      type: pattern
+      values:
+        - '~/.claude/skills/*/scripts/*'
+
   paths:
     sensitive:
       - '.env'
@@ -85,6 +93,14 @@ definitions:
     - 'rtk proxy <cmd>'
 
 rules:
+  - allow: 'bash <var:claude-skill-scripts> *'
+    tests:
+      - allow: 'bash ~/.claude/skills/self-review/scripts/run-codex-reviewers arg1 arg2'
+
+  - allow: '<var:claude-skill-scripts> *'
+    tests:
+      - allow: '~/.claude/skills/self-review/scripts/run-codex-reviewers arg1 arg2'
+
   # `rtk <cmd>` strips boilerplate from the inner command's stdout. Any other
   # rtk subcommand should go through `rtk proxy <cmd>`, which is registered
   # as a wrapper above so the inner command is evaluated against normal rules.
