@@ -1,0 +1,197 @@
+#!/bin/bash
+# Assemble immutable review inputs before invoking Codex so model behavior
+# cannot change reviewer selection, reference loading, or the reviewed diff.
+set -euo pipefail
+
+usage() {
+  echo "Usage: run-codex-reviewers --cached | <commit-range>" >&2
+  exit 2
+}
+
+[ "$#" -eq 1 ] || usage
+case "$1" in
+  --cached)
+    diff_args=(--cached)
+    ;;
+  -* | *[[:space:]]*)
+    usage
+    ;;
+  *)
+    diff_args=("$1")
+    ;;
+esac
+
+for command in codex git jq yq; do
+  command -v "$command" > /dev/null || {
+    echo "Error: required command not found: $command" >&2
+    exit 127
+  }
+done
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+skill_dir=$(cd "$script_dir/.." && pwd -P)
+claude_dir=$(cd "$skill_dir/../.." && pwd -P)
+repo_root=$(git rev-parse --show-toplevel)
+reviewers_file="$skill_dir/reviewers.yaml"
+schema_file="$skill_dir/review-output-schema.json"
+
+git diff --stat "${diff_args[@]}" > /dev/null
+
+work_dir=$(mktemp -d -t self-review-codex.XXXXXX)
+trap 'rm -rf "$work_dir"' EXIT
+
+diff_file="$work_dir/diff.patch"
+files_file="$work_dir/files.txt"
+instructions_file="$work_dir/instructions.txt"
+git diff --no-ext-diff "${diff_args[@]}" > "$diff_file"
+git diff --name-only --no-ext-diff "${diff_args[@]}" > "$files_file"
+
+[ -s "$diff_file" ] || {
+  echo "Error: review diff is empty." >&2
+  exit 2
+}
+
+# Only ancestor instructions apply to a changed file. Collecting them here
+# prevents Codex discovery behavior from changing the review contract.
+while IFS= read -r file; do
+  directory=$(dirname "$repo_root/$file")
+  while [[ "$directory" == "$repo_root" || "$directory" == "$repo_root/"* ]]; do
+    for instruction_name in AGENTS.md CLAUDE.md; do
+      [[ -f "$directory/$instruction_name" ]] && printf '%s\n' "$directory/$instruction_name"
+    done
+    [[ "$directory" == "$repo_root" ]] && break
+    directory=$(dirname "$directory")
+  done
+done < "$files_file" | LC_ALL=C sort -u > "$instructions_file"
+
+matches_trigger() {
+  local reviewer="$1" targets_file="$2" kind pattern paths exclude file
+  kind=$(yq -r ".reviewers.\"$reviewer\".trigger.kind // \"\"" "$reviewers_file")
+  pattern=$(yq -r ".reviewers.\"$reviewer\".trigger.pattern // \"\"" "$reviewers_file")
+  paths=$(yq -r ".reviewers.\"$reviewer\".trigger.paths // \"\"" "$reviewers_file")
+  exclude=$(yq -r ".reviewers.\"$reviewer\".trigger.exclude // \"\"" "$reviewers_file")
+
+  case "$kind" in
+    paths)
+      while IFS= read -r file; do
+        [[ -n "$exclude" && "$file" =~ $exclude ]] && continue
+        [[ "$file" =~ $pattern ]] && printf '%s\n' "$file" >> "$targets_file"
+      done < "$files_file"
+      ;;
+    added-lines)
+      while IFS= read -r file; do
+        [[ -n "$exclude" && "$file" =~ $exclude ]] && continue
+        [[ -n "$paths" && ! "$file" =~ $paths ]] && continue
+        if git diff --no-ext-diff "${diff_args[@]}" -- "$file" |
+          awk '/^\+\+\+ / { next } /^\+/ { sub(/^\+/, ""); print }' |
+          grep -qE "$pattern"; then
+          printf '%s\n' "$file" >> "$targets_file"
+        fi
+      done < "$files_file"
+      ;;
+  esac
+  [[ -s "$targets_file" ]]
+}
+
+selected=()
+mkdir -p "$work_dir/targets"
+while IFS= read -r reviewer; do
+  targets_file="$work_dir/targets/$reviewer.txt"
+  : > "$targets_file"
+  if [[ $(yq -r ".reviewers.\"$reviewer\".always // false" "$reviewers_file") == true ]] || matches_trigger "$reviewer" "$targets_file"; then
+    selected+=("$reviewer")
+  fi
+done < <(yq -r '.reviewers | to_entries[] | .key' "$reviewers_file")
+
+append_resource() {
+  local output="$1" path="$2"
+  {
+    printf '\n<resource path="%s">\n' "$path"
+    sed -n '1,$p' "$path"
+    printf '\n</resource>\n'
+  } >> "$output"
+}
+
+build_prompt() {
+  local reviewer="$1" prompt_file="$2" agent relative reference_path matched instruction_file
+  agent=$(yq -r ".reviewers.\"$reviewer\".agent" "$reviewers_file")
+
+  {
+    printf '%s\n' 'Perform a read-only code review using only the supplied review contract and immutable diff.'
+    printf 'Reviewer: %s\n' "$reviewer"
+    printf '%s\n' 'Do not edit files. Repository inspection is allowed only to verify direct effects and precedents.'
+    printf '%s\n' 'Return JSON matching the supplied output schema. Set reviewer to the exact reviewer name above.'
+  } > "$prompt_file"
+
+  append_resource "$prompt_file" "$claude_dir/agents/$agent"
+  while IFS= read -r relative; do
+    matched=false
+    while IFS= read -r reference_path; do
+      [[ -f "$reference_path" ]] || continue
+      append_resource "$prompt_file" "$reference_path"
+      matched=true
+    done < <(compgen -G "$claude_dir/skills/$relative" || true)
+    [[ "$matched" == true ]] || {
+      echo "Error: reviewer resource not found: $relative" >&2
+      return 1
+    }
+  done < <(yq -r ".reviewers.\"$reviewer\".references[]" "$reviewers_file")
+
+  while IFS= read -r instruction_file; do
+    append_resource "$prompt_file" "$instruction_file"
+  done < "$instructions_file"
+
+  {
+    if [[ -s "$work_dir/targets/$reviewer.txt" ]]; then
+      printf '\n<review-targets>\n'
+      sed -n '1,$p' "$work_dir/targets/$reviewer.txt"
+      printf '</review-targets>\n'
+    fi
+    printf '\n<changed-files>\n'
+    sed -n '1,$p' "$files_file"
+    printf '</changed-files>\n\n<diff>\n'
+    sed -n '1,$p' "$diff_file"
+    printf '</diff>\n'
+  } >> "$prompt_file"
+}
+
+pids=()
+for reviewer in "${selected[@]}"; do
+  reviewer_dir="$work_dir/$reviewer"
+  mkdir -p "$reviewer_dir"
+  build_prompt "$reviewer" "$reviewer_dir/prompt.txt"
+  (
+    cd "$repo_root"
+    codex exec \
+      --ephemeral \
+      --sandbox read-only \
+      --output-schema "$schema_file" \
+      --output-last-message "$reviewer_dir/result.json" \
+      --color never \
+      - < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log"
+  ) &
+  pids+=("$!")
+done
+
+failed=false
+for index in "${!pids[@]}"; do
+  if ! wait "${pids[$index]}"; then
+    reviewer=${selected[$index]}
+    echo "Error: Codex reviewer failed: $reviewer" >&2
+    sed -n '1,120p' "$work_dir/$reviewer/stderr.log" >&2
+    failed=true
+  fi
+done
+[[ "$failed" == false ]] || exit 1
+
+result_files=()
+for reviewer in "${selected[@]}"; do
+  result_file="$work_dir/$reviewer/result.json"
+  jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$result_file" > /dev/null || {
+    echo "Error: invalid reviewer result: $reviewer" >&2
+    exit 1
+  }
+  result_files+=("$result_file")
+done
+
+jq -s '.' "${result_files[@]}"

@@ -1,0 +1,80 @@
+# Reviewer selection and prompt inputs are data so Claude and Codex backends
+# can eventually share one source of truth.
+reviewers:
+  behavior:
+    always: true
+    agent: self-review-behavior.md
+    references:
+      - self-review/references/_common.md
+      - self-review/references/behavior.md
+
+  structure:
+    always: true
+    agent: self-review-structure.md
+    references:
+      - self-review/references/_common.md
+      - self-review/references/structure.md
+
+  convention:
+    always: true
+    agent: self-review-convention.md
+    references:
+      - self-review/references/_common.md
+      - self-review/references/convention.md
+
+  gha-security:
+    trigger:
+      kind: paths
+      pattern: '^(\.github/workflows/.*\.ya?ml|\.github/actions/.+/action\.ya?ml|action\.ya?ml)$'
+    agent: self-review-gha-security.md
+    references:
+      - gha-security-review/SKILL.md
+      - gha-security-review/references/*.md
+      - self-review/references/_common.md
+
+  test-philosophy:
+    trigger:
+      kind: paths
+      pattern: '(^|/)(tests?|__tests__|spec)/|(\.|_)(test|spec)\.[a-zA-Z]+$|_test\.(go|py|rb)$|_spec\.rb$'
+    agent: self-review-test-philosophy.md
+    references:
+      - test-philosophy/SKILL.md
+      - self-review/references/_common.md
+
+  db-schema:
+    trigger:
+      kind: paths
+      pattern: '(^|/)(db|database)/(migrate|migrations|schema)/|(^|/)(migrations?|schema)/.*\.(sql|rb|py|ts|js)$|(^|/)schema\.(rb|sql|prisma)$|(^|/)structure\.sql$|\.(sql|prisma)$'
+    agent: self-review-db-schema.md
+    references:
+      - postgresql-table-design/SKILL.md
+      - self-review/references/_common.md
+
+  japanese-writing:
+    trigger:
+      kind: added-lines
+      paths: '\.(md|mdx|markdown|rst|adoc|txt)$'
+      pattern: '[ぁ-んァ-ヶ一-龯]'
+    agent: self-review-japanese-writing.md
+    references:
+      - japanese-tech-writing/SKILL.md
+
+  readme:
+    trigger:
+      kind: paths
+      pattern: '(^|/)README\.(md|mdx|markdown|rst)$|^docs/.+\.(md|mdx|markdown|rst)$'
+      exclude: '(^|/)templates?/'
+    agent: self-review-readme.md
+    references:
+      - crafting-effective-readmes/SKILL.md
+      - crafting-effective-readmes/references/*.md
+
+  lint-suppression:
+    trigger:
+      kind: added-lines
+      pattern: 'eslint-disable|@ts-ignore|@ts-expect-error|stylelint-disable|rubocop:(disable|todo)|\bnoqa\b|type:[[:space:]]*ignore|pylint:[[:space:]]*disable|\bnosec\b|//[[:space:]]*nolint|shellcheck disable|ignorePatterns|\bExclude[[:space:]]*:'
+      exclude: '^config/claude/(skills/self-review/|agents/self-review-.*\.md$)'
+    agent: self-review-lint-suppression.md
+    references:
+      - self-review/references/_common.md
+      - self-review/references/lint-suppression.md
