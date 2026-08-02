@@ -4,6 +4,10 @@ sandbox_mode = "workspace-write"
 network_access = true
 web_search_request = true
 
+[tui]
+status_line = ["model-with-reasoning", "used-tokens", "context-used", "five-hour-limit", "weekly-limit", "codex-version"]
+status_line_use_colors = true
+
 [mcp_servers.context7]
 command = "npx"
 args = ["-y", "@upstash/context7-mcp@latest"]
