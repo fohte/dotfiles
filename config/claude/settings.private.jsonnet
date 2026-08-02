@@ -1,4 +1,8 @@
 {
+  env+: {
+    SELF_REVIEW_BACKEND: 'codex',
+  },
+
   permissions+: {
     allow+: [
       // Slack MCP (claude.ai connector)
