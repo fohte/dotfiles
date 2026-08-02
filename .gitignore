@@ -32,6 +32,7 @@
 /config/claude/settings.json
 /config/claude/mcp-servers.json
 /config/claude/.settings.json.installed
+/config/codex/.config.toml.installed
 /config/launchd/*.plist
 
 # ~/.claude/skills is a dir-symlink to /config/claude/skills, so per-skill

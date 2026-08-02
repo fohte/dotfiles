@@ -122,7 +122,6 @@ fi
 
 if match_tag codex; then
   sym config/codex/AGENTS.md ~/.codex/AGENTS.md
-  sym config/codex/config.toml ~/.codex/config.toml
 fi
 
 if match_tag opencode; then

@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+desired_path="${1:?Usage: install-config <desired> <actual> <state>}"
+actual_path="${2:?Usage: install-config <desired> <actual> <state>}"
+state_path="${3:?Usage: install-config <desired> <actual> <state>}"
+
+actual_dir="$(dirname "$actual_path")"
+mkdir -p "$actual_dir"
+
+task_tmp="$(mktemp -d "${TMPDIR:-/tmp}/codex-config.XXXXXX")"
+trap 'rm -rf "$task_tmp"' EXIT
+
+# Convert through JSON because jq can distinguish the managed leaves from
+# Codex-owned sibling state without relying on TOML formatting.
+yq -p toml -o json "$desired_path" > "$task_tmp/desired.json"
+if [[ -e "$actual_path" ]]; then
+  yq -p toml -o json "$actual_path" > "$task_tmp/actual.json"
+else
+  printf '{}\n' > "$task_tmp/actual.json"
+fi
+if [[ -e "$state_path" ]]; then
+  yq -p toml -o json "$state_path" > "$task_tmp/state.json"
+else
+  printf '{}\n' > "$task_tmp/state.json"
+fi
+
+# Arrays are owned as a whole. Scalar leaves are owned individually so Codex
+# can retain additional entries under tables such as projects, notice, and MCP.
+jq -n \
+  --slurpfile state "$task_tmp/state.json" \
+  --slurpfile actual "$task_tmp/actual.json" \
+  --slurpfile desired "$task_tmp/desired.json" '
+    def managed_paths:
+      [paths as $path
+       | select(
+           (getpath($path) | type) != "object"
+           and (($path | length) == 1
+                or (getpath($path[0:-1]) | type) == "object")
+         )
+       | $path];
+    ($state[0]) as $state
+    | ($actual[0]) as $actual
+    | ($desired[0]) as $desired
+    | [($state | managed_paths[]) as $path
+       | select(
+           ($state | getpath($path)) != ($actual | getpath($path)?)
+           and ($desired | getpath($path)?) != ($actual | getpath($path)?)
+         )
+       | $path]
+  ' > "$task_tmp/drift.json"
+
+if [[ "$(jq length "$task_tmp/drift.json")" -ne 0 ]]; then
+  echo "error: $actual_path has managed changes not reflected in $desired_path." >&2
+  echo >&2
+  echo "Drifted paths:" >&2
+  jq -r '.[] | map(if type == "number" then "[\(.)]" else . end) | join(".") | "  - \(.)"' \
+    "$task_tmp/drift.json" >&2
+  echo >&2
+  echo "Adopt those changes in $desired_path before deploying." >&2
+  exit 1
+fi
+
+jq -n \
+  --slurpfile state "$task_tmp/state.json" \
+  --slurpfile actual "$task_tmp/actual.json" \
+  --slurpfile desired "$task_tmp/desired.json" '
+    def managed_paths:
+      [paths as $path
+       | select(
+           (getpath($path) | type) != "object"
+           and (($path | length) == 1
+                or (getpath($path[0:-1]) | type) == "object")
+         )
+       | $path];
+    ($state[0]) as $state
+    | ($actual[0] | delpaths($state | managed_paths)) * $desired[0]
+  ' > "$task_tmp/merged.json"
+
+yq -p json -o toml "$task_tmp/merged.json" > "$task_tmp/config.toml"
+chmod 600 "$task_tmp/config.toml"
+mv "$task_tmp/config.toml" "$actual_path"
+cp "$desired_path" "$state_path"
