@@ -32,13 +32,23 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 skill_dir=$(cd "$script_dir/.." && pwd -P)
 claude_dir=$(cd "$skill_dir/../.." && pwd -P)
 repo_root=$(git rev-parse --show-toplevel)
-reviewers_file="$skill_dir/reviewers.yaml"
 schema_file="$skill_dir/review-output-schema.json"
-
-git diff --stat "${diff_args[@]}" > /dev/null
+selector="$script_dir/select-reviewers"
 
 work_dir=$(mktemp -d -t self-review-codex.XXXXXX)
 trap 'rm -rf "$work_dir"' EXIT
+
+# The selector and prompt builder must observe the same staged snapshot.
+if [[ ${diff_args[0]} == --cached ]]; then
+  source_index=${GIT_INDEX_FILE:-$(git rev-parse --git-path index)}
+  cp "$source_index" "$work_dir/index"
+  export GIT_INDEX_FILE="$work_dir/index"
+fi
+
+manifest_file="$work_dir/manifest.json"
+"$selector" "$1" > "$manifest_file"
+resolved_range=$(jq -r '.range' "$manifest_file")
+diff_args=("$resolved_range")
 
 diff_file="$work_dir/diff.patch"
 files_file="$work_dir/files.txt"
@@ -64,44 +74,14 @@ while IFS= read -r file; do
   done
 done < "$files_file" | LC_ALL=C sort -u > "$instructions_file"
 
-matches_trigger() {
-  local reviewer="$1" targets_file="$2" kind pattern paths exclude file
-  kind=$(yq -r ".reviewers.\"$reviewer\".trigger.kind // \"\"" "$reviewers_file")
-  pattern=$(yq -r ".reviewers.\"$reviewer\".trigger.pattern // \"\"" "$reviewers_file")
-  paths=$(yq -r ".reviewers.\"$reviewer\".trigger.paths // \"\"" "$reviewers_file")
-  exclude=$(yq -r ".reviewers.\"$reviewer\".trigger.exclude // \"\"" "$reviewers_file")
-
-  case "$kind" in
-    paths)
-      while IFS= read -r file; do
-        [[ -n "$exclude" && "$file" =~ $exclude ]] && continue
-        [[ "$file" =~ $pattern ]] && printf '%s\n' "$file" >> "$targets_file"
-      done < "$files_file"
-      ;;
-    added-lines)
-      while IFS= read -r file; do
-        [[ -n "$exclude" && "$file" =~ $exclude ]] && continue
-        [[ -n "$paths" && ! "$file" =~ $paths ]] && continue
-        if git diff --no-ext-diff "${diff_args[@]}" -- "$file" |
-          awk '/^\+\+\+ / { next } /^\+/ { sub(/^\+/, ""); print }' |
-          grep -qE "$pattern"; then
-          printf '%s\n' "$file" >> "$targets_file"
-        fi
-      done < "$files_file"
-      ;;
-  esac
-  [[ -s "$targets_file" ]]
-}
-
 selected=()
-mkdir -p "$work_dir/targets"
 while IFS= read -r reviewer; do
-  targets_file="$work_dir/targets/$reviewer.txt"
-  : > "$targets_file"
-  if [[ $(yq -r ".reviewers.\"$reviewer\".always // false" "$reviewers_file") == true ]] || matches_trigger "$reviewer" "$targets_file"; then
-    selected+=("$reviewer")
-  fi
-done < <(yq -r '.reviewers | to_entries[] | .key' "$reviewers_file")
+  selected+=("$reviewer")
+done < <(jq -r '.reviewers[].name' "$manifest_file")
+mkdir -p "$work_dir/targets"
+for reviewer in "${selected[@]}"; do
+  jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .targets[]' "$manifest_file" > "$work_dir/targets/$reviewer.txt"
+done
 
 append_resource() {
   local output="$1" path="$2"
@@ -113,8 +93,8 @@ append_resource() {
 }
 
 build_prompt() {
-  local reviewer="$1" prompt_file="$2" agent relative reference_path matched instruction_file
-  agent=$(yq -r ".reviewers.\"$reviewer\".agent" "$reviewers_file")
+  local reviewer="$1" prompt_file="$2" agent relative instruction_file
+  agent=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .agent' "$manifest_file")
 
   {
     printf '%s\n' 'Perform a read-only code review using only the supplied review contract and immutable diff.'
@@ -123,19 +103,10 @@ build_prompt() {
     printf '%s\n' 'Return JSON matching the supplied output schema. Set reviewer to the exact reviewer name above.'
   } > "$prompt_file"
 
-  append_resource "$prompt_file" "$claude_dir/agents/$agent"
+  append_resource "$prompt_file" "$claude_dir/agents/$agent.md"
   while IFS= read -r relative; do
-    matched=false
-    while IFS= read -r reference_path; do
-      [[ -f "$reference_path" ]] || continue
-      append_resource "$prompt_file" "$reference_path"
-      matched=true
-    done < <(compgen -G "$claude_dir/skills/$relative" || true)
-    [[ "$matched" == true ]] || {
-      echo "Error: reviewer resource not found: $relative" >&2
-      return 1
-    }
-  done < <(yq -r ".reviewers.\"$reviewer\".references[]" "$reviewers_file")
+    append_resource "$prompt_file" "$claude_dir/skills/$relative"
+  done < <(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .references[]' "$manifest_file")
 
   while IFS= read -r instruction_file; do
     append_resource "$prompt_file" "$instruction_file"

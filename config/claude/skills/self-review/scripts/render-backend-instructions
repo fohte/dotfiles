@@ -1,0 +1,35 @@
+#!/bin/bash
+# Resolve the backend before Claude sees the skill so backend choice cannot be
+# reinterpreted from natural-language instructions.
+set -euo pipefail
+
+case "${SELF_REVIEW_BACKEND:-claude}" in
+  claude)
+    cat << 'EOF'
+## Backend execution
+
+Use Claude Code internal subagents as follows:
+
+1. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
+2. Run `~/.claude/skills/self-review/scripts/select-reviewers <range>` once. Stop without launching any subagent if it fails.
+3. Use the returned `range` value from this point onward. Its `reviewers` array is the complete launch manifest. In one assistant message, launch every entry with `run_in_background: true` and `subagent_type` equal to `agent`. Pass the returned `range`, the exact `references` list prefixed with `~/.claude/skills/`, and, when non-empty, the exact `targets` list. Do not add, remove, or reorder reviewers.
+4. Wait for completion notifications from every launched subagent. Do not poll, sleep, or aggregate early.
+5. If a subagent fails, retry only that manifest entry once with the identical prompt and `run_in_background: true`. Mark it as unevaluated if the retry also fails.
+EOF
+    ;;
+  codex)
+    cat << 'EOF'
+## Backend execution
+
+Use Codex reviewers as follows:
+
+1. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
+2. Run `~/.claude/skills/self-review/scripts/run-codex-reviewers <range>` exactly once. Do not launch Claude Code review subagents in parallel or as fallback.
+3. Treat a nonzero exit as a review failure and report it. Otherwise, aggregate the returned JSON array using the common rules below.
+EOF
+    ;;
+  *)
+    echo "Error: unsupported SELF_REVIEW_BACKEND: ${SELF_REVIEW_BACKEND}" >&2
+    exit 2
+    ;;
+esac

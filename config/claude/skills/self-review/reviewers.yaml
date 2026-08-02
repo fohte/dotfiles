@@ -35,6 +35,7 @@ reviewers:
   test-philosophy:
     trigger:
       kind: paths
+      case_insensitive: true
       pattern: '(^|/)(tests?|__tests__|spec)/|(\.|_)(test|spec)\.[a-zA-Z]+$|_test\.(go|py|rb)$|_spec\.rb$'
     agent: self-review-test-philosophy.md
     references:
@@ -44,6 +45,7 @@ reviewers:
   db-schema:
     trigger:
       kind: paths
+      case_insensitive: true
       pattern: '(^|/)(db|database)/(migrate|migrations|schema)/|(^|/)(migrations?|schema)/.*\.(sql|rb|py|ts|js)$|(^|/)schema\.(rb|sql|prisma)$|(^|/)structure\.sql$|\.(sql|prisma)$'
     agent: self-review-db-schema.md
     references:
@@ -62,6 +64,7 @@ reviewers:
   readme:
     trigger:
       kind: paths
+      case_insensitive: true
       pattern: '(^|/)README\.(md|mdx|markdown|rst)$|^docs/.+\.(md|mdx|markdown|rst)$'
       exclude: '(^|/)templates?/'
     agent: self-review-readme.md
@@ -72,6 +75,7 @@ reviewers:
   lint-suppression:
     trigger:
       kind: added-lines
+      case_insensitive: true
       pattern: 'eslint-disable|@ts-ignore|@ts-expect-error|stylelint-disable|rubocop:(disable|todo)|\bnoqa\b|type:[[:space:]]*ignore|pylint:[[:space:]]*disable|\bnosec\b|//[[:space:]]*nolint|shellcheck disable|ignorePatterns|\bExclude[[:space:]]*:'
       exclude: '^config/claude/(skills/self-review/|agents/self-review-.*\.md$)'
     agent: self-review-lint-suppression.md

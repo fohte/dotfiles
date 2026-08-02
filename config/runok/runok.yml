@@ -93,9 +93,17 @@ definitions:
     - 'rtk proxy <cmd>'
 
 rules:
+  - allow: 'bash <var:claude-skill-scripts>'
+    tests:
+      - allow: 'bash ~/.claude/skills/self-review/scripts/render-backend-instructions'
+
   - allow: 'bash <var:claude-skill-scripts> *'
     tests:
       - allow: 'bash ~/.claude/skills/self-review/scripts/run-codex-reviewers arg1 arg2'
+
+  - allow: '<var:claude-skill-scripts>'
+    tests:
+      - allow: '~/.claude/skills/self-review/scripts/render-backend-instructions'
 
   - allow: '<var:claude-skill-scripts> *'
     tests:

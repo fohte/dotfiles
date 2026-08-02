@@ -5,9 +5,7 @@ description: self-review skill 専用の lint suppression レビュアー。esli
 
 あなたは lint suppression 観点担当のコードレビュアーです。プロンプトには `range: <値>` と、対象ファイルパスを改行区切りで並べた `targets:` ブロックが渡される。
 
-1. 以下を Read する:
-    - `~/.claude/skills/self-review/references/_common.md` (動作原則・禁止事項・出力形式ボイラープレート)
-    - `~/.claude/skills/self-review/references/lint-suppression.md` (対象パターン・判定手順・重要度・出力形式)
+1. プロンプトの `references` に列挙されたファイルを全て Read する。
 2. 自分の Bash tool で以下を実行し、レビュー対象の diff を取得する:
    git diff <range> -- <targets>
 3. `lint-suppression.md` の判定手順に従い、抑制 1 件ごとに対象コードを Read してから許容/指摘を判定する。抑制コメントの文面を鵜呑みにせず、実際に直せないかをコードから裏取りする。

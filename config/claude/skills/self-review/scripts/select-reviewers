@@ -1,0 +1,156 @@
+#!/bin/bash
+# Keep reviewer selection outside model instructions so both backends use the
+# same trigger implementation and reviewer ordering.
+set -euo pipefail
+
+usage() {
+  echo "Usage: select-reviewers --cached | <commit-range>" >&2
+  exit 2
+}
+
+[ "$#" -eq 1 ] || usage
+
+for required_command in git jq yq; do
+  command -v "$required_command" > /dev/null || {
+    echo "Error: required command not found: $required_command" >&2
+    exit 127
+  }
+done
+
+case "$1" in
+  --cached)
+    diff_args=(--cached)
+    resolved_range=--cached
+    ;;
+  -* | *[[:space:]]*) usage ;;
+  *...*)
+    left=${1%%...*}
+    right=${1#*...}
+    [[ -n "$left" && -n "$right" ]] || usage
+    left=$(git rev-parse --verify "$left^{commit}")
+    right=$(git rev-parse --verify "$right^{commit}")
+    resolved_range="$left...$right"
+    diff_args=("$resolved_range")
+    ;;
+  *..*)
+    left=${1%%..*}
+    right=${1#*..}
+    [[ -n "$left" && -n "$right" ]] || usage
+    left=$(git rev-parse --verify "$left^{commit}")
+    right=$(git rev-parse --verify "$right^{commit}")
+    resolved_range="$left..$right"
+    diff_args=("$resolved_range")
+    ;;
+  *)
+    resolved_range=$(git rev-parse --verify "$1^{commit}")
+    diff_args=("$resolved_range")
+    ;;
+esac
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+skill_dir=$(cd "$script_dir/.." && pwd -P)
+claude_dir=$(cd "$skill_dir/../.." && pwd -P)
+reviewers_file="$skill_dir/reviewers.yaml"
+
+work_dir=$(mktemp -d -t self-review-select.XXXXXX)
+trap 'rm -rf "$work_dir"' EXIT
+
+# A copied index keeps every selector read on the same staged snapshot even
+# when another process stages files concurrently.
+if [[ "$resolved_range" == --cached ]]; then
+  source_index=${GIT_INDEX_FILE:-$(git rev-parse --git-path index)}
+  cp "$source_index" "$work_dir/index"
+  export GIT_INDEX_FILE="$work_dir/index"
+fi
+
+git diff --stat "${diff_args[@]}" > /dev/null
+if git diff --quiet --no-ext-diff "${diff_args[@]}"; then
+  echo "Error: review diff is empty." >&2
+  exit 2
+fi
+
+files_file="$work_dir/files.txt"
+git diff --name-only --no-ext-diff "${diff_args[@]}" > "$files_file"
+
+matches_trigger() {
+  local reviewer="$1" targets_file="$2" kind pattern paths exclude case_insensitive file grep_options
+  kind=$(yq -r ".reviewers.\"$reviewer\".trigger.kind // \"\"" "$reviewers_file")
+  pattern=$(yq -r ".reviewers.\"$reviewer\".trigger.pattern // \"\"" "$reviewers_file")
+  paths=$(yq -r ".reviewers.\"$reviewer\".trigger.paths // \"\"" "$reviewers_file")
+  exclude=$(yq -r ".reviewers.\"$reviewer\".trigger.exclude // \"\"" "$reviewers_file")
+  case_insensitive=$(yq -r ".reviewers.\"$reviewer\".trigger.case_insensitive // false" "$reviewers_file")
+
+  if [[ "$case_insensitive" == true ]]; then
+    shopt -s nocasematch
+    grep_options=(-iE)
+  else
+    shopt -u nocasematch
+    grep_options=(-E)
+  fi
+
+  case "$kind" in
+    paths)
+      while IFS= read -r file; do
+        [[ -n "$exclude" && "$file" =~ $exclude ]] && continue
+        [[ "$file" =~ $pattern ]] && printf '%s\n' "$file" >> "$targets_file"
+      done < "$files_file"
+      ;;
+    added-lines)
+      while IFS= read -r file; do
+        [[ -n "$exclude" && "$file" =~ $exclude ]] && continue
+        [[ -n "$paths" && ! "$file" =~ $paths ]] && continue
+        if git diff --no-ext-diff "${diff_args[@]}" -- "$file" |
+          awk '/^\+\+\+ / { next } /^\+/ { sub(/^\+/, ""); print }' |
+          grep "${grep_options[@]}" "$pattern" > /dev/null; then
+          printf '%s\n' "$file" >> "$targets_file"
+        fi
+      done < "$files_file"
+      ;;
+    '') ;;
+    *)
+      echo "Error: unsupported trigger kind for $reviewer: $kind" >&2
+      return 2
+      ;;
+  esac
+  [[ -s "$targets_file" ]]
+}
+
+manifest="$work_dir/manifest.jsonl"
+while IFS= read -r reviewer; do
+  targets_file="$work_dir/$reviewer.targets"
+  : > "$targets_file"
+  selected=false
+  if [[ $(yq -r ".reviewers.\"$reviewer\".always // false" "$reviewers_file") == true ]]; then
+    selected=true
+  elif matches_trigger "$reviewer" "$targets_file"; then
+    selected=true
+  else
+    status=$?
+    [[ "$status" -eq 1 ]] || exit "$status"
+  fi
+  if [[ "$selected" == true ]]; then
+    agent=$(yq -r ".reviewers.\"$reviewer\".agent" "$reviewers_file")
+    references_file="$work_dir/$reviewer.references"
+    : > "$references_file"
+    while IFS= read -r relative; do
+      matched=false
+      while IFS= read -r reference_path; do
+        [[ -f "$reference_path" ]] || continue
+        printf '%s\n' "${reference_path#"$claude_dir/skills/"}" >> "$references_file"
+        matched=true
+      done < <(compgen -G "$claude_dir/skills/$relative" || true)
+      [[ "$matched" == true ]] || {
+        echo "Error: reviewer resource not found: $relative" >&2
+        exit 1
+      }
+    done < <(yq -r ".reviewers.\"$reviewer\".references[]" "$reviewers_file")
+    jq -n \
+      --arg name "$reviewer" \
+      --arg agent "${agent%.md}" \
+      --rawfile references "$references_file" \
+      --rawfile targets "$targets_file" \
+      '{name: $name, agent: $agent, references: ($references | split("\n") | map(select(length > 0))), targets: ($targets | split("\n") | map(select(length > 0)))}' >> "$manifest"
+  fi
+done < <(yq -r '.reviewers | to_entries[] | .key' "$reviewers_file")
+
+jq -s --arg range "$resolved_range" '{range: $range, reviewers: .}' "$manifest"
