@@ -54,6 +54,7 @@ local env(name) = std.extVar(name);
       'Read(~/.go/pkg/mod/**)',
       'Read(~/.opensrc/**)',
       'Read(~/.config/**)',
+      'Read(~/.local/share/mise/installs/**)',
       'Read(~/.local/share/nvim/lazy)',
       'Read(~/Dropbox)',
       'Read(~/Library/Application Support/CleanShot)',
