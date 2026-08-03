@@ -21,12 +21,12 @@ rules:
   # leading global flag like `--port 8080` makes crit fall through to the
   # bare-review path instead, so no `<opts>`/`*` prefix is needed here.
   - deny: 'crit share *'
-    message: 'crit share uploads review content to a public/org-scoped URL. Run it yourself if you want to publish.'
+    message: 'crit share is disabled globally via ~/.crit.config.json (share_url=""), so this would not publish even if run yourself.'
     tests:
       - deny: 'crit share plan.md'
       - allow: 'crit comment file.md:5 share'
   - deny: 'crit unpublish *'
-    message: 'Paired with crit share, which is also denied. Run it yourself if needed.'
+    message: 'Paired with crit share, which is also disabled globally (see crit share message).'
     tests:
       - deny: 'crit unpublish plan.md'
 

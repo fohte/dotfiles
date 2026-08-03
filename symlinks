@@ -26,6 +26,10 @@ if match_tag tig; then
   sym config/tig/.tigrc ~/.tigrc
 fi
 
+if match_tag crit; then
+  sym config/crit/config.json ~/.crit.config.json
+fi
+
 if match_tag nvim; then
   sym config/nvim ~/.config/nvim
 fi
