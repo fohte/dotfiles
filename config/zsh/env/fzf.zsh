@@ -15,9 +15,8 @@ if [ -n "$TMUX" ]; then
 fi
 
 () {
-  # mise's aqua backend does not generate a shim for fzf, and the
-  # `mise hook-env` that would add installs/... to PATH runs on precmd —
-  # after .zshenv. Glob the installs dir directly to resolve the binary.
+  # Prefer the real binary over the mise shim, which is a symlink to the mise
+  # binary: generating the cache through the shim execs mise first.
   local -a matches
   () {
     # (n) sorts lexicographically unless numeric_glob_sort is set, so

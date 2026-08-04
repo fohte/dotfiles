@@ -1,5 +1,6 @@
-# Generate-on-demand cache of command output, invalidated when any watched
-# file (typically the generating binary) is newer than the cache.
+# Generate-on-demand cache of command output, invalidated when argv changes or
+# when any watched file (typically the generating binary) is newer than the
+# cache. The argv key lives in `<cache>.argv` next to the cache itself.
 #
 # Usage: cache_source <name> <watch-file>... -- <cmd> [args...]
 #
@@ -27,8 +28,19 @@ cache_source() {
 
   local cache="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/${name}.zsh"
 
+  # argv is part of the cache key, recorded alongside the cache. Generators
+  # embed the path they were invoked with into their output — starship bakes it
+  # into PROMPT — so a cache generated from a different path keeps running that
+  # old binary forever. Watch-file mtimes cannot catch this: when argv resolves
+  # to another binary, that binary is typically older than the cache.
+  # Quote each element before joining, or `--opt 'a b'` and `--opt a b` collapse
+  # to the same key. The nesting is required: in a scalar assignment `(q+)` sees
+  # the already-joined string and quotes that instead of the elements.
+  local stamp="${cache}.argv"
+  local key="${(j: :)${(q+)@}}"
+
   local need_regen=1
-  if [[ -s $cache ]]; then
+  if [[ -s $cache && -f $stamp && "$(< $stamp)" == "$key" ]]; then
     need_regen=0
     local w
     for w in $watches; do
@@ -45,12 +57,18 @@ cache_source() {
     # per-PID tmp file and rename — same-FS rename is atomic.
     mkdir -p "${cache:h}"
     local tmp="${cache}.$$.tmp"
-    if "$@" > "$tmp"; then
-      mv -f "$tmp" "$cache"
-    else
+    if ! "$@" > "$tmp"; then
       rm -f "$tmp"
       return 1
     fi
+    if ! mv -f "$tmp" "$cache"; then
+      rm -f "$tmp"
+      return 1
+    fi
+    # Only now that the new output is installed. Stamping any earlier would
+    # advertise the new key while the old output is still in place, which is the
+    # stale cache this key exists to catch.
+    print -r -- "$key" > "$stamp"
   fi
   source "$cache"
 }

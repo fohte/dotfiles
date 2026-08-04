@@ -46,9 +46,10 @@ import_rc 'tmux.rc.zsh'
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc
 
 () {
-  # mise's aqua backend does not generate a shim for starship, and the
-  # `mise hook-env` that would add installs/... to PATH runs on precmd —
-  # after .zshrc. Glob the installs dir directly to resolve the binary.
+  # `starship init` bakes the path it was invoked with into PROMPT/RPROMPT, so
+  # resolving to the mise shim — a symlink to the mise binary — makes every
+  # prompt exec mise twice before starship even starts. Glob the installs dir
+  # for the real binary rather than trusting whatever `command -v` finds.
   local -a matches=(${MISE_DATA_DIR}/installs/aqua-starship-starship/*/starship(NOn))
   local starship_bin="${matches[1]:-$(command -v starship)}"
   [[ -n $starship_bin ]] || return
