@@ -22,8 +22,9 @@ INDEX_FILE="$STATE_DIR/index"
 mkdir -p "$STATE_DIR"
 
 # Get sessions sorted by last attached time (MRU order)
+# Sessions with @session-hidden set are excluded (see tmux.conf).
 get_mru_sessions() {
-  tmux list-sessions -F "#{session_last_attached} #{session_name}" |
+  tmux list-sessions -f '#{?#{@session-hidden},0,1}' -F "#{session_last_attached} #{session_name}" |
     sort -rn |
     cut -d' ' -f2-
 }

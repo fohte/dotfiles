@@ -168,12 +168,14 @@ run_preview_mode() {
 # Args:
 #   $1: current session name (skips `tmux display-message`)
 #   $2: raw session list, formatted as "<last_attached>|<name>;<last_attached>|<name>;..."
-#       (produced by tmux format `#{S:#{session_last_attached}|#{session_name};}`)
+#       (produced by the tmux format in the M-s bind, which omits sessions with
+#       @session-hidden set)
 print_list() {
   local current_session="${1:-$(tmux display-message -p '#S')}"
   local raw_sessions="${2:-}"
   if [ -z "$raw_sessions" ]; then
-    raw_sessions="$(tmux list-sessions -F "#{session_last_attached}|#{session_name};" | tr -d '\n')"
+    # Sessions with @session-hidden set are excluded (see tmux.conf).
+    raw_sessions="$(tmux list-sessions -f '#{?#{@session-hidden},0,1}' -F "#{session_last_attached}|#{session_name};" | tr -d '\n')"
   fi
 
   local ghq_out
