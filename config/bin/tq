@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# Named `tq` deliberately, shadowing the `tq` binary pnpm's global install
+# puts under $PNPM_HOME: config/bin (~/bin) sits earlier on PATH. The real
+# binary is resolved directly under $PNPM_HOME instead of via PATH, to avoid
+# recursing into this wrapper.
+#
+# Same service token as the `tq` MCP server entry in mcp-servers.jsonnet
+# (op item: "tq MCP (Cloudflare Access Service Token)").
+
+set -euo pipefail
+
+# config/zsh/env/pnpm.zsh sets this for interactive shells, but this wrapper
+# may also run from non-Zsh contexts (cron, GUI launchers) that never source it.
+if [[ -z "${PNPM_HOME:-}" ]]; then
+  if [[ $OSTYPE == darwin* ]]; then
+    PNPM_HOME="$HOME/Library/pnpm"
+  else
+    PNPM_HOME="$HOME/.local/share/pnpm"
+  fi
+fi
+
+if [[ -x "$PNPM_HOME/bin/tq" ]]; then
+  real_tq="$PNPM_HOME/bin/tq"
+elif [[ -x "$PNPM_HOME/tq" ]]; then
+  real_tq="$PNPM_HOME/tq"
+else
+  echo "tq: CLI not found under \$PNPM_HOME ($PNPM_HOME)." >&2
+  echo "Run 'pnpm run install-cli' in the tq repo, or 'dot refresh'." >&2
+  exit 1
+fi
+
+headers_json=$(
+  CF_ACCESS_CLIENT_ID='op://Personal/pamhi2ise6e5xuqeeilflxf27a/username' \
+    CF_ACCESS_CLIENT_SECRET='op://Personal/pamhi2ise6e5xuqeeilflxf27a/credential' \
+    op-run-cached mcp-headers-from-env \
+    'CF-Access-Client-Id=CF_ACCESS_CLIENT_ID' \
+    'CF-Access-Client-Secret=CF_ACCESS_CLIENT_SECRET'
+)
+
+header_args=()
+while IFS=$'\t' read -r name value; do
+  header_args+=(-H "$name: $value")
+done < <(jq -r 'to_entries[] | "\(.key)\t\(.value)"' <<< "$headers_json")
+
+export TQ_API_URL="${TQ_API_URL:-https://tq.fohte.net}"
+
+exec "$real_tq" "${header_args[@]}" "$@"

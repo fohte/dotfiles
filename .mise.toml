@@ -5,6 +5,7 @@ description = "Refresh dotfiles and tools"
 depends = [
   "refresh:update-skk",
   "refresh:runok",
+  "refresh:tq-cli",
   "refresh:nvim-restore",
   "refresh:mise-self-update",
   "refresh:mise-install",
@@ -55,6 +56,39 @@ after="$(git rev-parse HEAD)"
 
 if [ "$before" != "$after" ]; then
   cargo install --path .
+fi
+'''
+
+[tasks."refresh:tq-cli"]
+description = "Install tq CLI from source"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+tq_dir="$(ghq list -e -p fohte/tq)"
+if [ -z "$tq_dir" ]; then
+  echo "fohte/tq not cloned, skipping tq CLI install"
+  exit 0
+fi
+
+cd "$tq_dir"
+
+before="$(git rev-parse HEAD)"
+git pull --autostash
+after="$(git rev-parse HEAD)"
+
+pnpm_home="${PNPM_HOME:-}"
+if [ -z "$pnpm_home" ]; then
+  case "$(uname -s)" in
+    Darwin) pnpm_home="$HOME/Library/pnpm" ;;
+    *) pnpm_home="$HOME/.local/share/pnpm" ;;
+  esac
+fi
+
+# Reinstall not just on a new HEAD but also when the global link itself is
+# missing (e.g. after a PNPM_HOME change, or a fresh clone at an unchanged HEAD).
+if [ "$before" != "$after" ] || { [ ! -x "$pnpm_home/bin/tq" ] && [ ! -x "$pnpm_home/tq" ]; }; then
+  pnpm run install-cli
 fi
 '''
 
