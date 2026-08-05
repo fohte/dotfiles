@@ -135,6 +135,7 @@ for reviewer in "${selected[@]}"; do
     cd "$repo_root"
     codex exec \
       --ephemeral \
+      --model "${SELF_REVIEW_CODEX_MODEL:-gpt-5.6-terra}" \
       --sandbox read-only \
       --output-schema "$schema_file" \
       --output-last-message "$reviewer_dir/result.json" \
