@@ -217,6 +217,7 @@ local env(name) = std.extVar(name);
     'crit@crit': true,
     'frontend-design@claude-plugins-official': true,
     'gopls-lsp@claude-plugins-official': true,
+    'ponytail@ponytail': true,
     'runok@runok-claude-code-plugin': true,
     'rust-analyzer-lsp@claude-plugins-official': true,
     'skill-creator@claude-plugins-official': true,
@@ -225,6 +226,13 @@ local env(name) = std.extVar(name);
     crit: {
       source: {
         repo: 'tomasz-tomczyk/crit',
+        source: 'github',
+      },
+      autoUpdate: true,
+    },
+    ponytail: {
+      source: {
+        repo: 'DietrichGebert/ponytail',
         source: 'github',
       },
       autoUpdate: true,
