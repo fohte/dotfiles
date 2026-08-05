@@ -19,15 +19,20 @@ if [[ -z "${ARMYKNIFE_WORKTREE_PATH:-}" ]]; then
   exit 0
 fi
 
-# Stop any crit (https://crit.md) review daemon whose recorded cwd is exactly
-# this worktree's root directory. A daemon started from a subdirectory of the
-# worktree (crit supports reviewing a specific subdir) is NOT covered and will
-# still leak as a zombie process once this directory is removed. Without this,
-# the daemon outlives the directory it was serving and hangs on git/file
-# operations against a path that no longer exists.
+# Stop the crit (https://crit.md) review daemon serving this worktree. Without
+# this, the daemon outlives the directory it was serving and hangs on git/file
+# operations against a path that no longer exists: it has no idle timeout and
+# only detaches from its cwd once the client is gone.
 #
-# "All daemons stopped." prints even when there was nothing to stop, so only
-# stdout is discarded here; a genuine failure (non-zero exit) still propagates
-# to armyknife's warning path via `set -e`.
+# crit resolves the daemon from cwd + branch, hence the cd. A daemon started in a
+# subdirectory of the worktree, or left on a branch that is no longer checked
+# out, is not resolved and still leaks.
 cd "$ARMYKNIFE_WORKTREE_PATH"
-crit stop --all > /dev/null
+
+# `crit stop` exits non-zero when it resolves no daemon, which is the normal
+# state for a worktree that was never reviewed; the gate keeps that out of
+# armyknife's warning path.
+daemon_running="$(crit status --json | jq -r '.daemon.running')"
+if [[ "$daemon_running" == "true" ]]; then
+  crit stop > /dev/null
+fi
