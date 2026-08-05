@@ -5,8 +5,7 @@ $directory\
 $git_branch\
 $git_state\
 $git_status\
-${custom.aws_sso_valid}\
-${custom.aws_sso_expired}\
+${custom.aws_sso}\
 ${custom.cc_paused}\
 ${env_var.STARSHIP_PROMPT_EXTRA}\
 $time\
@@ -53,19 +52,20 @@ style = "bright-black"
 format = "[$duration]($style) "
 style = "yellow"
 
-[custom.aws_sso_valid]
-command = "check-aws-sso-status && echo '󰅠'" # nf-md-cloud_check
+# `when` and `command` are a subprocess each, and this is the slowest check in
+# the prompt, so both states share one module. A custom module carries a single
+# $style, hence the colors inline. starship trims module output, so the
+# separating space has to live in `format`.
+[custom.aws_sso]
+command = '''
+check-aws-sso-status; case $? in
+  0) printf '\033[92m󰅠\033[0m' ;; # nf-md-cloud_check
+  1) printf '\033[91m󰧠\033[0m' ;; # nf-md-cloud_alert
+esac
+'''
 when = "command -v check-aws-sso-status"
 shell = "bash"
-format = "[$output]($style) "
-style = "bright-green"
-
-[custom.aws_sso_expired]
-command = "check-aws-sso-status; [ $? -eq 1 ] && echo '󰧠'" # nf-md-cloud_alert
-when = "command -v check-aws-sso-status"
-shell = "bash"
-format = "[$output]($style) "
-style = "bright-red"
+format = "$output "
 
 # Shows '⏸' when armyknife auto-paused the Claude Code session in this pane.
 # The flag is materialized as `<TMPDIR>/armyknife-cc-paused-<user>-<pane>` by

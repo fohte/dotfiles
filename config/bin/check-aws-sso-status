@@ -6,35 +6,53 @@
 #   0: session is valid
 #   1: session is expired/invalid
 #   2: AWS SSO not configured
+#
+# Runs on every starship prompt, where spawning a subprocess costs more than any
+# work done here, so the file scan and the JSON read use only builtins.
 
 set -euo pipefail
 
-# Find the most recent SSO cache file
 cache_dir="${HOME}/.aws/sso/cache"
 if [[ ! -d "$cache_dir" ]]; then
   exit 2
 fi
 
-# Get the most recent cache file
-cache_file=$(find "$cache_dir" -name "*.json" -type f -print0 2> /dev/null | xargs -0 ls -t 2> /dev/null | head -1)
-if [[ -z "$cache_file" ]]; then
+# awscli writes these flat, so a non-recursive glob reaches all of them.
+shopt -s nullglob
+newest=
+for f in "$cache_dir"/*.json; do
+  if [[ -z "$newest" || "$f" -nt "$newest" ]]; then
+    newest="$f"
+  fi
+done
+if [[ -z "$newest" ]]; then
   exit 1
 fi
 
-# Extract expiration time
-expires_at=$(jq -r '.expiresAt' "$cache_file" 2> /dev/null)
-if [[ "$expires_at" == "null" || -z "$expires_at" ]]; then
+# `-d ''` slurps the whole file. No NUL is ever found, so read reports EOF with
+# status 1 even though it filled the variable.
+content=
+IFS= read -r -d '' content < "$newest" || true
+
+expires_at="${content#*\"expiresAt\"}"
+if [[ "$expires_at" == "$content" ]]; then
+  exit 1
+fi
+# Drop the `: ` separator up to the value's opening quote, then the rest of the
+# document from its closing quote on.
+expires_at="${expires_at#*\"}"
+expires_at="${expires_at%%\"*}"
+if [[ -z "$expires_at" ]]; then
   exit 1
 fi
 
-# Convert to epoch time using GNU date
-expires_epoch=$(date -d "$expires_at" "+%s" 2> /dev/null)
-current_epoch=$(date "+%s")
+# GNU date, for `-d` parsing of the ISO 8601 value.
+if ! expires_epoch=$(date -d "$expires_at" "+%s" 2> /dev/null); then
+  exit 1
+fi
+now=$(date "+%s")
 
-# Calculate remaining time
-remaining=$((expires_epoch - current_epoch))
-
-if [[ $remaining -le 0 ]]; then
+if ((expires_epoch <= now)); then
   exit 1
 fi
 
