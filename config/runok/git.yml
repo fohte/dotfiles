@@ -67,6 +67,26 @@ rules:
     tests:
       - deny: 'git remote add origin /tmp/scratch-repo'
       - deny: 'git -C /tmp remote add origin /tmp/scratch-repo'
+  # Shallow-ness lives in `.git/shallow`, which every worktree of a repo
+  # shares, and git treats the commits listed there as parentless -- so one
+  # `fetch --depth` taints history traversal repo-wide, and the damage only
+  # surfaces later as `merge`/`merge-base` reporting unrelated histories.
+  # `--unshallow` / `--deepen` only ever remove boundaries, so they stay
+  # allowed.
+  - deny: 'git [-C *] fetch|pull * --depth|--shallow-since|--shallow-exclude *'
+    message: 'Blocked because shallow-fetch flags write a `.git/shallow` boundary that all worktrees of this repo share, making git treat the boundary commit as parentless (later merges fail with "unrelated histories").'
+    fix_suggestion: 'Drop the shallow-fetch flag: `git fetch origin <sha>` fetches the same commit without truncating history. To only read a commit, use `gh api repos/<owner>/<repo>/commits/<sha>`, or `git show <sha>` if it is already fetched.'
+    tests:
+      - deny: 'git fetch origin 0123456789abcdef0123456789abcdef01234567 --depth=1 -q'
+      - deny: 'git fetch origin abc123 --depth 1'
+      - deny: 'git -C /tmp fetch --depth=1 origin abc123'
+      - deny: 'git fetch --shallow-since=2026-01-01 origin'
+      - deny: 'git fetch --shallow-exclude=v1.0 origin'
+      - deny: 'git pull --depth=1 origin master'
+      - allow: 'git fetch origin abc123'
+      - allow: 'git fetch --unshallow'
+      - allow: 'git fetch --deepen=100'
+      - allow: 'git pull'
   - deny: 'git [-C *] update-ref *'
     message: 'Blocked because `git update-ref` rewrites refs directly and bypasses `git reset` / `git commit --amend` protections'
     fix_suggestion: 'Use porcelain commands (git commit, git revert, git branch). Refuse to do destructive ref edits without user instruction.'
