@@ -4,7 +4,10 @@
 set -euo pipefail
 
 usage_file="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-usage.json"
-max_used_percent=90
+# 100 lets Codex run right up to the account limit. A run that trips the
+# limit mid-review fails loudly (non-zero exit), and the next skill load
+# falls back to Claude once the recorded snapshot reflects it.
+max_used_percent=100
 
 # The snapshot run-codex-reviewers leaves behind stays authoritative until the
 # window resets, because used_percent only grows within one window. Deciding
