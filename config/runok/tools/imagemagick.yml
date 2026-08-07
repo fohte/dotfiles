@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+# ImageMagick. `magick` accepts `-script {filename}`, which executes a CLI
+# argument list read from a file, and it is accepted anywhere in the argument
+# list -- not just in leading position. The negation is what keeps this rule
+# narrow; do not replace it with a bare `magick *`.
+#
+# The `identify` / `compare` subcommands reject `-script` as an unrecognized
+# option, as do the IM6 binaries of the same name.
+#
+# These rules are not limited to local files: a positional argument starting
+# with http:// or https:// makes ImageMagick fetch it by shelling out to curl
+# (delegates.xml `https:decode`), on all three commands alike.
+
+rules:
+  - allow: 'magick !-script *'
+    tests:
+      - allow: 'magick identify shots-baseline/NormalMessage.png __screenshots__/NormalMessage.png'
+      - allow: 'magick compare -metric AE run1.png run2.png /tmp/diffcheck.png'
+      - allow: 'magick compare -metric AE actual-Default.png -alpha off s.png null:'
+      - allow: 'magick compare -metric AE -fuzz 0% run1.png run2.png -compose src -highlight-color red /tmp/highlight.png'
+      - allow: 'magick run1.png run2.png -compose difference -composite -threshold 1% -trim info:'
+      - allow: 'magick actual-Default.png -alpha off base-Default.png -alpha off -compose difference -composite -colorspace gray -scale 1x844! txt:-'
+      - allow: 'magick base-Default.png -background black -page +0+3 -flatten -crop 1280x844+0+0 +repage shift.png'
+      - allow: 'magick base-Default.png -alpha off -background "#0d0d0d" -splice 0x3+0+0 -crop 1280x844+0+0 +repage s.png'
+      - allow: 'magick actual-Default.png -crop 400x90+0+0 +repage -scale 300% crop-actual.png'
+      - allow: 'magick -list delegate'
+      - ask: 'magick -script mal.magick'
+      - ask: 'magick actual-Default.png -script mal.magick out.png'
+      - ask: 'magick run1.png run2.png -compose difference -composite info: -script mal.magick'
+
+  - allow: 'identify|compare *'
+    tests:
+      - allow: 'identify actual-Default.png'
+      - allow: 'identify run1.png run2.png'
+      - allow: 'compare -metric AE base.png actual.png diff.png'
+      - allow: 'compare -metric AE base.png actual.png null:'
