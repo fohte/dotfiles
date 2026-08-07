@@ -20,6 +20,7 @@ extends:
   - './tools/crit.yml'
   - './tools/docker.yml'
   - './tools/gcloud.yml'
+  - './tools/imagemagick.yml'
   - './tools/infractl.yml'
   - './tools/k8s.yml'
   - './tools/linters.yml'
