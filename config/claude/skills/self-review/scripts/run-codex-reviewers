@@ -34,6 +34,8 @@ claude_dir=$(cd "$skill_dir/../.." && pwd -P)
 repo_root=$(git rev-parse --show-toplevel)
 schema_file="$skill_dir/review-output-schema.json"
 selector="$script_dir/select-reviewers"
+usage_file="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-usage.json"
+auth_file="$HOME/.codex/auth.json"
 
 work_dir=$(mktemp -d -t self-review-codex.XXXXXX)
 trap 'rm -rf "$work_dir"' EXIT
@@ -126,6 +128,28 @@ build_prompt() {
   } >> "$prompt_file"
 }
 
+# Snapshot the account limits so the next skill load can pick a backend without
+# a network call. Every window is kept: each one blocks Codex on its own, and
+# they expire at different times.
+record_codex_usage() {
+  local response snapshot
+  command -v curl > /dev/null || return 0
+  [[ -f "$auth_file" ]] || return 0
+  response=$(curl --silent --show-error --max-time 20 \
+    --header "Authorization: Bearer $(jq -r '.tokens.access_token' "$auth_file")" \
+    --header "ChatGPT-Account-Id: $(jq -r '.tokens.account_id' "$auth_file")" \
+    https://chatgpt.com/backend-api/wham/usage) || return 0
+  snapshot=$(jq -ce '
+    [.rate_limit.primary_window, .rate_limit.secondary_window]
+    | map(select(. != null) | {used_percent, reset_at})
+  ' <<< "$response") || return 0
+  # Replace atomically so a concurrent review never reads a truncated snapshot
+  # and mistakes it for "no limit recorded".
+  mkdir -p "$(dirname "$usage_file")"
+  printf '%s\n' "$snapshot" > "$usage_file.$$"
+  mv "$usage_file.$$" "$usage_file"
+}
+
 pids=()
 for reviewer in "${selected[@]}"; do
   reviewer_dir="$work_dir/$reviewer"
@@ -154,6 +178,12 @@ for index in "${!pids[@]}"; do
     failed=true
   fi
 done
+
+# Recorded on failure too: a run that dies on the usage limit is exactly the one
+# whose snapshot must be refreshed, otherwise a stale reset_at sends every later
+# review back to Codex while the limit still holds.
+record_codex_usage || true
+
 [[ "$failed" == false ]] || exit 1
 
 result_files=()

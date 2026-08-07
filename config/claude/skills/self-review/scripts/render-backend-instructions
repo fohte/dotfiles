@@ -3,9 +3,25 @@
 # reinterpreted from natural-language instructions.
 set -euo pipefail
 
-case "${SELF_REVIEW_BACKEND:-claude}" in
-  claude)
-    cat << 'EOF'
+usage_file="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-usage.json"
+max_used_percent=90
+
+# The snapshot run-codex-reviewers leaves behind stays authoritative until the
+# window resets, because used_percent only grows within one window. Deciding
+# from it keeps this path free of network calls, and keeps the usage endpoint
+# untouched for as long as the limit holds. Any single exhausted window is
+# enough to block Codex.
+codex_over_limit() {
+  [[ -f "$usage_file" ]] || return 1
+  jq -e \
+    --argjson now "$(date +%s)" \
+    --argjson max "$max_used_percent" \
+    'any(.[]; $now < .reset_at and .used_percent >= $max)' \
+    "$usage_file" > /dev/null
+}
+
+claude_instructions() {
+  cat << 'EOF'
 ## Backend execution
 
 Use Claude Code internal subagents as follows:
@@ -16,9 +32,10 @@ Use Claude Code internal subagents as follows:
 4. Wait for completion notifications from every launched subagent. Do not poll, sleep, or aggregate early.
 5. If a subagent fails, retry only that manifest entry once with the identical prompt and `run_in_background: true`. Mark it as unevaluated if the retry also fails.
 EOF
-    ;;
-  codex)
-    cat << 'EOF'
+}
+
+codex_instructions() {
+  cat << 'EOF'
 ## Backend execution
 
 Use Codex reviewers as follows:
@@ -27,6 +44,19 @@ Use Codex reviewers as follows:
 2. Run `~/.claude/skills/self-review/scripts/run-codex-reviewers <range>` exactly once. Do not launch Claude Code review subagents in parallel or as fallback.
 3. Treat a nonzero exit as a review failure and report it. Otherwise, aggregate the returned JSON array using the common rules below.
 EOF
+}
+
+case "${SELF_REVIEW_BACKEND:-claude}" in
+  claude)
+    claude_instructions
+    ;;
+  codex)
+    if codex_over_limit; then
+      echo 'Codex is over its usage limit, so this review runs on the Claude backend. State that in the final output.'
+      claude_instructions
+    else
+      codex_instructions
+    fi
     ;;
   *)
     echo "Error: unsupported SELF_REVIEW_BACKEND: ${SELF_REVIEW_BACKEND}" >&2
