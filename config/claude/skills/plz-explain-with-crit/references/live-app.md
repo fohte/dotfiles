@@ -5,10 +5,11 @@
 ## 準備と起動
 
 ```
-crit <url>
+crit live <url>
 ```
 
-URL は live mode として自動判別されるので `crit live` と明示しなくてよい。
+**`live` は省略できない。** 引数の形から mode が推測されることはなく、`crit <url>` は URL をファイルパスとして扱って `Error: file not found` で終了する。
+
 crit は指定した URL を proxy して review UI を重ねるので、**先にアプリ側を起動しておく**必要がある。
 
 認証が要る画面は crit がログイン後の状態を再現できないため、クッキーを渡す。
