@@ -22,6 +22,20 @@ reviewers:
       - self-review/references/_common.md
       - self-review/references/convention.md
 
+  comment:
+    trigger:
+      kind: added-lines
+      # Markers require a following space: without it the pattern also matches
+      # CSS hex literals and Ruby string interpolation.
+      pattern: '(^|[[:space:]])(//|#|--)[[:space:]]|^[[:space:]]*(\*|/\*)|"""|<!--'
+      # `# ` at the start of a line in prose files is a Markdown heading, not
+      # a comment marker.
+      exclude: '\.(md|mdx|markdown|rst|adoc|txt)$'
+    agent: self-review-comment.md
+    references:
+      - self-review/references/_common.md
+      - self-review/references/comment.md
+
   gha-security:
     trigger:
       kind: paths

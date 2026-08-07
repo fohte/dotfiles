@@ -183,7 +183,7 @@ EOF
 ## コミット前レビュー
 
 `git commit` の前に、ステージング済みの差分を `self-review` skill でレビューする。
-skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、13 観点の統合レポートを返す。
+skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、12 観点の統合レポートを返す。
 **レビューは 1 コミットにつき 1 回だけ実行する**。
 🔴 Critical / 🟡 Warning への対応で `git add` した後、レビューを再実行しない。
 
@@ -226,7 +226,7 @@ git diff --cached
 {{- end }}
 
 `git push` の前に、その push に含まれる全コミットをまとめて `self-review` skill でレビューする。
-skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、13 観点の統合レポートを返す。
+skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、12 観点の統合レポートを返す。
 **レビューは 1 回の push につき 1 回だけ実行する**。
 コミットのたびに繰り返さない。
 修正コミットを追加した後も再実行しない。

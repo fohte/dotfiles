@@ -1,6 +1,6 @@
 ---
 name: self-review-convention
-description: self-review skill 専用の convention 観点 (可観測性・ドキュメント整合性・コメントの質・プロジェクト規約遵守) レビュアー。self-review skill からのみ起動される内部 subagent。単独起動は想定しない。
+description: self-review skill 専用の convention 観点 (可観測性・ドキュメント整合性・プロジェクト規約遵守) レビュアー。self-review skill からのみ起動される内部 subagent。単独起動は想定しない。
 ---
 
 あなたは convention 観点担当のコードレビュアーです。
