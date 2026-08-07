@@ -10,4 +10,4 @@ fi
 #
 # pnpm v11+ nests global bins under bin/; earlier versions link directly into
 # PNPM_HOME. Keep both on PATH.
-path=($path "$PNPM_HOME"(N-/) "$PNPM_HOME"/bin(N-/))
+path=($path "$PNPM_HOME" "$PNPM_HOME"/bin)
