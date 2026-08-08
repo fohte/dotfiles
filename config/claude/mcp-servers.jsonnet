@@ -22,14 +22,4 @@ local env(name) = std.extVar(name);
     args: ['--app', 'desktop'],
     env: {},
   },
-  tq: {
-    // Personal task management app (github.com/fohte/tq). /api/mcp is carved
-    // out behind a dedicated Cloudflare Access application authorized by a
-    // service token, bypassing the GitHub IdP login required for the rest of
-    // the host.
-    type: 'http',
-    url: 'https://tq.fohte.net/api/mcp',
-    // op item: "tq MCP (Cloudflare Access Service Token)"
-    headersHelper: "CF_ACCESS_CLIENT_ID='op://Personal/pamhi2ise6e5xuqeeilflxf27a/username' CF_ACCESS_CLIENT_SECRET='op://Personal/pamhi2ise6e5xuqeeilflxf27a/credential' op-run-cached mcp-headers-from-env 'CF-Access-Client-Id=CF_ACCESS_CLIENT_ID' 'CF-Access-Client-Secret=CF_ACCESS_CLIENT_SECRET'",
-  },
 }

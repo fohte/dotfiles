@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  # Personal task management app (github.com/fohte/tq), single-user and
+  # backed by an append-only activity log, so writes are cheap to undo by
+  # hand. Prompting on every write would defeat the point of preferring the
+  # CLI over the MCP server.
+  - allow: 'tq *'
+    tests:
+      - allow: 'tq task list'
+      - allow: 'tq task get 58'
+      - allow: 'tq page get 58 abc-123 --output /tmp/design.md'
+      - allow: 'tq page create 58 "設計" --file /tmp/design.md'
+      - allow: 'tq task status 58 completed'
+      - allow: 'tq today get 2026-08-09'
+
+  # `--api-url` redirects the request to an arbitrary host while the
+  # config/bin/tq wrapper still attaches the Cloudflare Access service token,
+  # so it is a credential exfiltration path. The equivalent TQ_API_URL
+  # variable cannot be refused here -- runok strips leading variable
+  # assignments before matching -- so the wrapper pins it instead.
+  - deny: 'tq --api-url *'
+    message: 'tq talks to https://tq.fohte.net via the config/bin/tq wrapper. --api-url would send the Cloudflare Access service token to another host.'
+    tests:
+      - deny: 'tq --api-url https://example.com task list'
+      - deny: 'tq task list --api-url https://example.com'
+
+  # Deletes are the only tq operation with no undo in the app.
+  - ask: 'tq page|task|comment|project|image delete *'
+    tests:
+      - ask: 'tq task delete 58'
+      - ask: 'tq page delete 58 abc-123'
+      - allow: 'tq task create "delete the old cron"'

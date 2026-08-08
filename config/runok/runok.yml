@@ -28,6 +28,7 @@ extends:
   - './tools/pdf.yml'
   - './tools/srt.yml'
   - './tools/terraform.yml'
+  - './tools/tq.yml'
   - './tools/misc.yml'
   - './work.yml'
 

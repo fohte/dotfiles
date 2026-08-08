@@ -5,8 +5,11 @@
 # binary is resolved directly under $PNPM_HOME instead of via PATH, to avoid
 # recursing into this wrapper.
 #
-# Same service token as the `tq` MCP server entry in mcp-servers.jsonnet
-# (op item: "tq MCP (Cloudflare Access Service Token)").
+# The CLI knows nothing about Cloudflare Access: tq sits behind it for
+# deployment reasons, not as part of its API contract, so it only exposes a
+# generic `-H` header flag. Mapping the 1Password service token onto the
+# Access header names is this wrapper's job.
+# op item: "tq MCP (Cloudflare Access Service Token)"
 
 set -euo pipefail
 
@@ -43,6 +46,12 @@ while IFS=$'\t' read -r name value; do
   header_args+=(-H "$name: $value")
 done < <(jq -r 'to_entries[] | "\(.key)\t\(.value)"' <<< "$headers_json")
 
-export TQ_API_URL="${TQ_API_URL:-https://tq.fohte.net}"
+# Pinned rather than defaulted: the header args above carry the service token,
+# so honouring a caller-supplied TQ_API_URL would send it to an arbitrary host.
+# `TQ_API_URL=... tq ...` is indistinguishable from a plain `tq ...` to runok,
+# which strips leading variable assignments before matching, so this is the
+# only place the redirect can be refused. Point the CLI under $PNPM_HOME
+# directly to talk to a non-production API; it needs no token.
+export TQ_API_URL='https://tq.fohte.net'
 
 exec "$real_tq" "${header_args[@]}" "$@"
