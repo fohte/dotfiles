@@ -7,12 +7,30 @@ rules:
   # CLI over the MCP server.
   - allow: 'tq *'
     tests:
-      - allow: 'tq task list'
-      - allow: 'tq task get 58'
-      - allow: 'tq page get 58 abc-123 --output /tmp/design.md'
-      - allow: 'tq page create 58 "設計" --file /tmp/design.md'
-      - allow: 'tq task status 58 completed'
-      - allow: 'tq today get 2026-08-09'
+      - allow: 'tq --author claude-opus-5 task list'
+      - allow: 'tq --author claude-opus-5 task get 58'
+      - allow: 'tq --author claude-opus-5 page get 58 abc-123 --output /tmp/design.md'
+      - allow: 'tq --author claude-opus-5 page create 58 "設計" --file /tmp/design.md'
+      - allow: 'tq --author claude-opus-5 task status 58 completed'
+      - allow: 'tq --author claude-opus-5 today get 2026-08-09'
+
+  # tq attributes every write to an author and falls back to `human` when the
+  # `X-Author` header is absent, so an unattributed agent write is recorded as
+  # the user's own. The CLI leaves `--author` optional for humans at a shell;
+  # the requirement is imposed on agents here instead. Checking for the flag
+  # rather than enumerating write verbs keeps this from rotting as commands are
+  # added -- the header is ignored on reads, so demanding it there costs
+  # nothing. `--help` is exempt because the skill tells agents to read it.
+  - deny: 'tq *'
+    when: '!has(flags.author) && !has(flags.help) && !has(flags.h)'
+    message: 'tq attributes writes to whoever sends the command and falls back to the user. --author is required on every tq command, reads included.'
+    fix_suggestion: 'tq --author <your model name> <resource> <verb> ...'
+    tests:
+      - deny: 'tq task complete 58'
+      - deny: 'tq page list 58'
+      - allow: 'tq --author claude-opus-5 task complete 58'
+      - allow: 'tq --help'
+      - allow: 'tq task create --help'
 
   # `--api-url` redirects the request to an arbitrary host while the
   # config/bin/tq wrapper still attaches the Cloudflare Access service token,
@@ -22,12 +40,16 @@ rules:
   - deny: 'tq --api-url *'
     message: 'tq talks to https://tq.fohte.net via the config/bin/tq wrapper. --api-url would send the Cloudflare Access service token to another host.'
     tests:
-      - deny: 'tq --api-url https://example.com task list'
-      - deny: 'tq task list --api-url https://example.com'
+      - deny: 'tq --author claude-opus-5 --api-url https://example.com task list'
+      - deny: 'tq --author claude-opus-5 task list --api-url https://example.com'
 
-  # Deletes are the only tq operation with no undo in the app.
-  - ask: 'tq page|task|comment|project|image delete *'
+  # Deletes are the only tq operation with no undo in the app. `[--author *]`
+  # is spelled out because the flag and its value otherwise sit between `tq`
+  # and the resource and shift every later token out of position.
+  - ask: 'tq [--author *] page|task|comment|project|image delete *'
     tests:
-      - ask: 'tq task delete 58'
-      - ask: 'tq page delete 58 abc-123'
-      - allow: 'tq task create "delete the old cron"'
+      - ask: 'tq --author claude-opus-5 task delete 58'
+      - ask: 'tq --author claude-opus-5 page delete 58 abc-123'
+      - allow: 'tq --author claude-opus-5 task create "delete the old cron"'
+      # `delete` as a plain argument value is not a delete operation.
+      - allow: 'tq --author claude-opus-5 task search delete'

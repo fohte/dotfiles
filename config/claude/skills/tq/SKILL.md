@@ -9,6 +9,16 @@ description: 'Read and write the user''s personal task manager (tq, https://tq.f
 
 Resources: `task`, `page`, `comment`, `project`, `label`, `image`, `github`, `today`, `calendar`, `slack`, `health`.
 
+## Name yourself with `--author`
+
+tq records who made each write and treats an unattributed one as the user's own. Pass your own model name (e.g. `claude-opus-5`) so your edits are not logged as theirs. It is a global option, so it goes before the resource, and runok refuses `tq` without it.
+
+```bash
+tq --author claude-opus-5 task complete 58
+```
+
+The examples below leave it out to keep them readable; every real invocation still needs it.
+
 ## Discover flags from `--help`, don't guess them
 
 The CLI derives its flags, choices, validation, and help text from the API's zod schemas, so `--help` is always current while anything written down here can go stale. Run `tq <resource> <subcommand> --help` before a command you haven't used in this session.
