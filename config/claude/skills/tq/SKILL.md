@@ -56,6 +56,22 @@ tq page get 58 <pageId>                           # body to stdout, only if it i
 
 Anywhere a task ID is taken, both the short task number (`58`) and the UUID work. A `https://tq.fohte.net/tasks/<uuid>` URL therefore needs no lookup — pass the UUID straight through.
 
+## Cross-reference other systems by URL, not by `#number`
+
+Inside descriptions, page bodies, and comments, `#58` renders as a link to tq task 58. A pull request or issue written as a bare `#140` therefore becomes a link to an unrelated tq task. Write the full URL for anything that does not live in tq, and keep the number in the link text when you want it readable.
+
+```md
+<!-- bad: renders as a link to tq task 140 -->
+
+| #140 | search fix |
+
+<!-- good -->
+
+| [my-app #140](https://github.com/acme/my-app/pull/140) | search fix |
+```
+
+This bites hardest in summary write-ups, where a table of bare PR numbers is the natural thing to type. Before posting a body that references another system, grep it for `#<digits>`.
+
 ## HTML pages
 
 `--format html` renders the page as a full HTML document inside a sandboxed iframe: no access to the app's cookies, localStorage, or API. Inline all CSS and JS instead of referencing external files, since nothing guarantees an external resource is still reachable when the page is opened months later.
