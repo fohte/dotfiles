@@ -11,6 +11,8 @@
 ## 準備と起動
 
 Write ツールで HTML を書いてから crit に渡す。
+配色は常にダークモード固定で書く。
+`prefers-color-scheme` によるライト/ダーク切り替えは不要。
 
 ```
 crit preview <file.html>
