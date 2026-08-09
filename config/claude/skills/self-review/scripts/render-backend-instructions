@@ -31,7 +31,7 @@ Use Claude Code internal subagents as follows:
 
 1. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
 2. Run `~/.claude/skills/self-review/scripts/select-reviewers <range>` once. Stop without launching any subagent if it fails.
-3. Use the returned `range` value from this point onward. Its `reviewers` array is the complete launch manifest. In one assistant message, launch every entry with `run_in_background: false` and `subagent_type` equal to `agent`, so they run concurrently and their results come back in that same tool result. Pass the returned `range`, the exact `references` list prefixed with `~/.claude/skills/`, and, when non-empty, the exact `targets` list. Do not add, remove, or reorder reviewers.
+3. Use the returned `range` value from this point onward. Its `reviewers` array is the complete launch manifest. Launch every entry with `run_in_background: false` and `subagent_type` equal to `agent`. Every launch must be a `tool_use` block in ONE assistant message: a synchronous launch blocks until it returns, so reviewers split across messages run strictly serially, one whole review after another. Pass the returned `range`, the exact `references` list prefixed with `~/.claude/skills/`, and, when non-empty, the exact `targets` list. Do not add, remove, or reorder reviewers.
 4. If a subagent fails, retry only that manifest entry once with the identical prompt and `run_in_background: false`. Mark it as unevaluated if the retry also fails.
 EOF
 }
