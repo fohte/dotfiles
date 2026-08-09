@@ -224,6 +224,10 @@ a {{ color: inherit; }}
 .tg input:checked + label[data-v='approve'] {{ background: #1d3a30; color: var(--green); }}
 .tg input:focus-visible + label {{ outline: 2px solid var(--blue); outline-offset: -2px; }}
 
+/* Approved = decided; fold the evidence away so only the undecided PRs stay readable. */
+.pr:has(input[value='approve']:checked) .rows {{ display: none; }}
+.pr:has(input[value='approve']:checked) .pr-head {{ border-bottom: none; }}
+
 .rows {{ display: grid; grid-template-columns: 8.5rem 1fr; }}
 .rows > dt {{ padding: 0.7rem 0 0.7rem 1rem; color: var(--dim); font-size: 0.82rem; border-top: 1px solid var(--line); }}
 .rows > dd {{ padding: 0.7rem 1rem 0.7rem 0; margin: 0; border-top: 1px solid var(--line); }}
