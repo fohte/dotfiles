@@ -145,19 +145,50 @@ Helm chart の更新は **chart 自体の差分** と **appVersion 経由のア�
 
 ## Step 4: マージ判定とユーザー報告
 
-各 PR について以下をテーブル形式で報告する:
+報告は `crit-triage` で HTML にして crit で開く。**チャットにテーブルを書かない。** 項目数が多く、ターミナルのテーブルでは読めない。
 
-| 項目                     | 内容                                                                                                                                                                                                                                                   |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| PR 番号・タイトル        | 基本情報                                                                                                                                                                                                                                               |
-| バージョン変更           | 例: 6.4.1 → 8.0.0                                                                                                                                                                                                                                      |
-| CI 状態                  | Step 2 の結果。green / fail / 想定外結果あり、と原因要約                                                                                                                                                                                               |
-| breaking changes         | 調査結果の要約。根拠 (リリースノート URL など) を添える                                                                                                                                                                                                |
-| このリポジトリへの影響   | 影響あり/なしと理由 (grep 結果や values 比較などの根拠)                                                                                                                                                                                                |
-| グルーピング             | 他の PR とまとめるべきか                                                                                                                                                                                                                               |
-| automerge 化の検討       | 今後このパッケージ/ルールを automerge 対象にすべきか。可否・リスク評価・変更先 (このリポジトリの renovate.json5 / 共有 renovate-config repo)。後述「automerge 化 / Renovate 設定変更の検討」参照                                                       |
-| 対応方針の提案           | 直接マージ / 委任 / 保留 / **automerge に委ねる** (上の automerge 化の検討で今回このルールを新設・拡張し、この PR がその対象に含まれる場合。手動マージ不要)                                                                                            |
-| release-please bump 判定 | release-please 利用リポジトリのみ。**actual bump level (patch / minor / major / none) と根拠** (どの `changelog-sections` エントリで visible/hidden か) をセルに明示する。「整合」「問題なし」だけの記述は禁止。後述「release-please bump の判定」参照 |
+Write ツールで JSON を書き、次を **`run_in_background: true`** で実行する (crit はユーザーが approve するまで終了しない)。起動ログに出た URL の文字列をそのままユーザーに案内する。
+
+```bash
+~/.claude/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage /tmp/renovate-triage.json
+```
+
+**JSON を書く前にスクリプト冒頭の docstring を読む。** スキーマと各フィールドの意味はそこにある。
+
+PR は判定 (`verdict`) ごとにグルーピングする。ユーザーは「委任するもの一覧」「automerge に回すもの一覧」という単位で見る:
+
+| verdict    | 意味                                            |
+| ---------- | ----------------------------------------------- |
+| `merge`    | 直接マージ                                      |
+| `auto`     | automerge に委ねる (今回ルールを新設・拡張する) |
+| `delegate` | 委任                                            |
+| `hold`     | 保留                                            |
+
+各 PR の `rows` に含める項目:
+
+| label            | 内容                                                                                                                                                                                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| breaking changes | 調査結果。1 変更 = 1 `items` エントリとし、`impact` にこのリポジトリへの影響あり/なしと理由を書く。根拠 (リリースノート URL) は `text` にリンクで、grep 結果やコマンド出力は `evidence` に入れる                                                 |
+| グルーピング     | 他の PR とまとめるべきか。相手の PR 番号はリンクにする                                                                                                                                                                                           |
+| automerge 化     | 今後このパッケージ/ルールを automerge 対象にすべきか。可否・リスク評価・変更先 (このリポジトリの renovate.json5 / 共有 renovate-config repo)。後述「automerge 化 / Renovate 設定変更の検討」参照                                                 |
+| release-please   | release-please 利用リポジトリのみ。**actual bump level (patch / minor / major / none) と根拠** (どの `changelog-sections` エントリで visible/hidden か) を明示する。「整合」「問題なし」だけの記述は禁止。後述「release-please bump の判定」参照 |
+| 対応             | 承認されたら実際に何をするか (実行するコマンド、委任先ブランチなど)                                                                                                                                                                              |
+
+バージョン変更と CI 状態は `badges` に入れる (例: `{"text": "major 6.4.1 → 8.0.0", "tone": "red"}`)。CI が fail / 想定外結果のときは `CI` 行を足して原因を書く。
+
+### 承認結果の読み方
+
+ユーザーが各 PR を approve / deny (既定は deny) して crit を approve するとコマンドが終了し、stdout の末尾に state が出る:
+
+```
+--- state ---
+{"pr-812": "approve", "pr-813": "deny"}
+```
+
+- crit の出力に `crit daemon shut down before review was finished.` が出ている場合、ユーザーは report を見終えていない。exit code は 0 なので state だけ見ても気付けない。承認結果として扱わず起動し直す
+- `approve` の PR だけ Step 5 に進む
+- `deny` の理由は crit のコメントに書かれている。調査して crit に返信し、crit を再開して届ける (このループの作法は `plz-explain-with-crit` skill と同じ)
+- 未操作の PR も `deny` として出る。**欠損や deny を approve と読み替えない**
 
 ### automerge 化 / Renovate 設定変更の検討
 

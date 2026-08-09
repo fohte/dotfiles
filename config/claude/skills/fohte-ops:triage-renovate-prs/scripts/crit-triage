@@ -1,0 +1,412 @@
+#!/usr/bin/env python3
+"""Render a triage report as HTML, open it in crit, and print the approve/deny result.
+
+Usage: crit-triage <data.json> [crit args...]
+
+The caller (usually Claude) writes only the data JSON; the page chrome lives here.
+Output goes next to the input: <data>.html and <data>.state.json.
+
+Data format:
+
+    {
+      "title": "Renovate PR triage",
+      "repo": "acme/web",
+      "groups": [
+        {
+          "verdict": "merge",            // merge | auto | delegate | hold
+          "title": "直接マージ",
+          "note": "承認後このセッションで squash merge する",
+          "prs": [
+            {
+              "number": 816,
+              "title": "chore(deps): update helm release cert-manager to v1.17.1",
+              "url": "...",              // optional, defaults to the repo's PR URL
+              "badges": [{"text": "minor 1.16.3 → 1.17.1", "tone": "dim"}],
+              "rows": [
+                {
+                  "label": "breaking changes",
+                  "text": "prose",       // optional
+                  "items": [             // optional
+                    {
+                      "text": "Node 18 のサポート終了",
+                      "breaking": true,
+                      // level: ok (影響なし) | warn (影響あり)
+                      "impact": {"level": "warn", "text": "ci.yml が node 18 を指定"}
+                    }
+                  ],
+                  "evidence": "$ rg ...",  // optional, folded into <details>
+                  "evidence_open": false,
+                  "tone": "none"           // optional: none (dimmed) | warn
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+Every `text` field takes markdown-lite: `code` and [label](url). Everything else is escaped.
+"""
+import html
+import json
+import re
+import secrets
+import subprocess
+import sys
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
+
+LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+CODE = re.compile(r"`([^`]+)`")
+TONES = {"dim", "green", "amber", "red"}
+VERDICTS = {"merge", "auto", "delegate", "hold"}
+
+
+def md(text):
+    """Escape HTML, then re-enable inline code and links."""
+    out = html.escape(str(text))
+    out = LINK.sub(r'<a class="ref" href="\2">\1</a>', out)
+    return CODE.sub(r"<code>\1</code>", out)
+
+
+def render_row(row):
+    label = html.escape(row["label"])
+    tone = row.get("tone", "")
+    if tone and tone not in {"none", "warn"}:
+        raise SystemExit(f"unknown row tone: {tone}")
+    parts = []
+
+    if "text" in row:
+        parts.append(md(row["text"]))
+
+    items = row.get("items") or []
+    if items:
+        lis = []
+        for item in items:
+            body = ""
+            if item.get("breaking"):
+                body += '<span class="brk">[BREAKING]</span> '
+            body += md(item["text"])
+            impact = item.get("impact")
+            if impact:
+                level = impact["level"]
+                if level not in {"ok", "warn"}:
+                    raise SystemExit(f"unknown impact level: {level}")
+                mark = "●" if level == "ok" else "▲"
+                body += f'<span class="impact {level}">{mark} {md(impact["text"])}</span>'
+            lis.append(f"<li>{body}</li>")
+        parts.append("<ul>" + "".join(lis) + "</ul>")
+
+    if row.get("evidence"):
+        open_attr = " open" if row.get("evidence_open") else ""
+        summary = html.escape(row.get("evidence_label", "根拠"))
+        parts.append(
+            f"<details{open_attr}><summary>{summary}</summary>"
+            f"<pre>{html.escape(row['evidence'])}</pre></details>"
+        )
+
+    cls = f' class="{tone}"' if tone else ""
+    return f"<dt>{label}</dt><dd{cls}>{''.join(parts)}</dd>"
+
+
+def pr_key(number):
+    """Radio group name, and the key the caller reads the approve/deny result by."""
+    return f"pr-{number}"
+
+
+def render_pr(pr, repo):
+    num = pr["number"]
+    name = pr_key(num)
+    url = html.escape(pr.get("url") or f"https://github.com/{repo}/pull/{num}")
+    badges = ""
+    for badge in pr.get("badges") or []:
+        tone = badge.get("tone", "dim")
+        if tone not in TONES:
+            raise SystemExit(f"unknown badge tone: {tone}")
+        badges += f'<span class="badge b-{tone}">{md(badge["text"])}</span>'
+    rows = "".join(render_row(r) for r in pr["rows"])
+    return f"""<section class="pr">
+  <div class="pr-head">
+    <div class="pr-title">
+      <a class="num" href="{url}">#{num}</a>
+      <h3><a href="{url}">{html.escape(pr["title"])}</a></h3>
+      <div class="badges">{badges}</div>
+    </div>
+    <div class="tg">
+      <input type="radio" name="{name}" id="{name}-d" value="deny" checked
+        /><label for="{name}-d" data-v="deny">deny</label
+        ><input type="radio" name="{name}" id="{name}-a" value="approve"
+        /><label for="{name}-a" data-v="approve">approve</label>
+    </div>
+  </div>
+  <dl class="rows">{rows}</dl>
+</section>"""
+
+
+def render(data, endpoint):
+    repo = data["repo"]
+    groups, total = "", 0
+    summary = []
+    for group in data["groups"]:
+        verdict = group["verdict"]
+        if verdict not in VERDICTS:
+            raise SystemExit(f"unknown verdict: {verdict}")
+        prs = group["prs"]
+        total += len(prs)
+        summary.append(f"{group['title']} {len(prs)}")
+        note = f'<span class="note">{md(group["note"])}</span>' if group.get("note") else ""
+        groups += f"""<div class="group g-{verdict}">
+  <h2>{html.escape(group["title"])} <span class="n">({len(prs)})</span>{note}</h2>
+  {"".join(render_pr(pr, repo) for pr in prs)}
+</div>"""
+
+    title = html.escape(data.get("title", "Triage"))
+    sub = f"{total} PRs — " + " / ".join(summary)
+    return TEMPLATE.format(
+        title=title, repo=html.escape(repo), sub=html.escape(sub), groups=groups, total=total, endpoint=endpoint
+    )
+
+
+TEMPLATE = """<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>{title}</title>
+<style>
+:root {{
+  --bg: #14161a; --card: #1c1f25; --line: #2c313a; --fg: #e3e6ea; --dim: #8b939f;
+  --green: #4ec9a5; --amber: #e2b04a; --red: #e5786d; --blue: #6aa9f0;
+}}
+* {{ box-sizing: border-box; }}
+body {{
+  margin: 0; padding: 2rem 2rem 6rem; background: var(--bg); color: var(--fg);
+  font: 15px/1.6 -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}}
+.wrap {{ max-width: 960px; margin: 0 auto; }}
+h1 {{ font-size: 1.35rem; margin: 0 0 0.3rem; }}
+.sub {{ color: var(--dim); font-size: 0.9rem; margin: 0 0 2rem; }}
+code {{
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.86em;
+  background: #0f1114; padding: 0.1em 0.4em; border-radius: 3px;
+}}
+a {{ color: inherit; }}
+.pr-title a:hover {{ color: var(--blue); }}
+.ref {{ color: var(--blue); text-decoration: none; }}
+.ref:hover {{ text-decoration: underline; }}
+
+.group {{ margin-bottom: 2.2rem; }}
+.group > h2 {{ font-size: 0.95rem; margin: 0 0 0.8rem; padding-left: 0.6rem; border-left: 3px solid var(--dim); }}
+.group > h2 .n {{ color: var(--dim); font-weight: 400; }}
+.group > h2 .note {{ display: block; font-size: 0.8rem; font-weight: 400; color: var(--dim); margin-top: 0.15rem; }}
+.g-merge > h2 {{ border-color: var(--green); color: var(--green); }}
+.g-auto > h2 {{ border-color: var(--blue); color: var(--blue); }}
+.g-delegate > h2 {{ border-color: var(--amber); color: var(--amber); }}
+.g-hold > h2 {{ border-color: var(--dim); color: var(--dim); }}
+
+.pr {{ background: var(--card); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 0.9rem; overflow: hidden; }}
+.pr-head {{ display: flex; align-items: flex-start; gap: 0.9rem; padding: 0.9rem 1rem; border-bottom: 1px solid var(--line); }}
+.pr-title {{ flex: 1; min-width: 0; }}
+.pr-title .num {{ color: var(--dim); font-family: ui-monospace, monospace; }}
+.pr-title h3 {{ display: inline; font-size: 1rem; font-weight: 600; margin: 0; }}
+.badges {{ display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.4rem; }}
+.badge {{ font-size: 0.75rem; padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }}
+.b-dim {{ color: var(--dim); }}
+.b-green {{ color: var(--green); }}
+.b-amber {{ color: var(--amber); }}
+.b-red {{ color: var(--red); }}
+
+.tg {{ flex: none; display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; font-size: 0.78rem; }}
+.tg input {{ position: absolute; opacity: 0; pointer-events: none; }}
+.tg label {{ padding: 0.3rem 0.8rem; cursor: pointer; color: var(--dim); user-select: none; }}
+.tg label + input + label {{ border-left: 1px solid var(--line); }}
+.tg input:checked + label[data-v='deny'] {{ background: #3a2226; color: var(--red); }}
+.tg input:checked + label[data-v='approve'] {{ background: #1d3a30; color: var(--green); }}
+.tg input:focus-visible + label {{ outline: 2px solid var(--blue); outline-offset: -2px; }}
+
+.rows {{ display: grid; grid-template-columns: 8.5rem 1fr; }}
+.rows > dt {{ padding: 0.7rem 0 0.7rem 1rem; color: var(--dim); font-size: 0.82rem; border-top: 1px solid var(--line); }}
+.rows > dd {{ padding: 0.7rem 1rem 0.7rem 0; margin: 0; border-top: 1px solid var(--line); }}
+.rows > dt:first-of-type, .rows > dd:first-of-type {{ border-top: none; }}
+.rows ul {{ margin: 0; padding-left: 1.1rem; }}
+.rows li + li {{ margin-top: 0.5rem; }}
+.brk {{ color: var(--red); font-weight: 600; }}
+.impact {{ display: block; margin-top: 0.15rem; font-size: 0.88rem; }}
+.ok {{ color: var(--green); }}
+.warn {{ color: var(--amber); }}
+.none {{ color: var(--dim); }}
+details {{ margin-top: 0.5rem; }}
+summary {{ cursor: pointer; color: var(--dim); font-size: 0.82rem; }}
+details pre {{
+  margin: 0.5rem 0 0; padding: 0.6rem 0.8rem; background: #0f1114; border-radius: 5px;
+  overflow-x: auto; font-size: 0.8rem; line-height: 1.5;
+}}
+
+.bar {{
+  position: fixed; left: 0; right: 0; bottom: 0; padding: 0.7rem 2rem; background: #0f1114;
+  border-top: 1px solid var(--line); display: flex; gap: 1.2rem; align-items: baseline; font-size: 0.85rem;
+}}
+.bar b {{ color: var(--green); font-size: 1rem; }}
+.bar .hint {{ color: var(--dim); }}
+#saved {{ margin-left: auto; color: var(--dim); font-family: ui-monospace, monospace; font-size: 0.78rem; }}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>{title} — <a class="ref" href="https://github.com/{repo}">{repo}</a></h1>
+<p class="sub">{sub}</p>
+{groups}
+</div>
+
+<div class="bar">
+  <span>approve <b id="count">0</b> / {total}</span>
+  <span class="hint">deny が既定。approve = この対応方針で進めてよい / 指摘・質問は crit のコメントで</span>
+  <span id="saved">…</span>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:{endpoint}'
+const saved = document.getElementById('saved')
+const count = document.getElementById('count')
+const radios = [...document.querySelectorAll('.tg input')]
+const names = [...new Set(radios.map((r) => r.name))]
+
+const collect = () =>
+  Object.fromEntries(names.map((n) => [n, document.querySelector(`input[name="${{n}}"]:checked`).value]))
+
+const render = (s) => (count.textContent = Object.values(s).filter((v) => v === 'approve').length)
+
+const save = () => {{
+  const s = collect()
+  render(s)
+  fetch(API, {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify(s) }})
+    .then(() => (saved.textContent = 'saved ' + new Date().toLocaleTimeString()))
+    .catch((e) => (saved.textContent = 'POST failed: ' + e))
+}}
+
+fetch(API)
+  .then((r) => r.json())
+  .then((s) => {{
+    Object.entries(s).forEach(([n, v]) => {{
+      const el = document.querySelector(`input[name="${{n}}"][value="${{v}}"]`)
+      if (el) el.checked = true
+    }})
+    render(collect())
+    saved.textContent = 'loaded'
+  }})
+  .catch((e) => (saved.textContent = 'GET failed: ' + e))
+
+radios.forEach((r) => r.addEventListener('change', save))
+</script>
+</body>
+</html>
+"""
+
+
+def serve(state_path):
+    """Start the state store on a free port and return its (port, token)."""
+    # The page is served from crit's origin, so the store has to allow cross-origin
+    # requests -- which also lets any other page the user has open reach it by
+    # guessing the port. The token in the path is what keeps those pages out.
+    token = secrets.token_urlsafe(16)
+
+    class Handler(BaseHTTPRequestHandler):
+        def _authorized(self):
+            if self.path == f"/{token}":
+                return True
+            self.send_response(404)
+            self.end_headers()
+            return False
+
+        def _cors(self):
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Headers", "content-type")
+
+        def do_OPTIONS(self):
+            if not self._authorized():
+                return
+            self.send_response(204)
+            self._cors()
+            self.end_headers()
+
+        def do_GET(self):
+            if not self._authorized():
+                return
+            body = state_path.read_bytes() if state_path.exists() else b"{}"
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self._cors()
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_POST(self):
+            if not self._authorized():
+                return
+            n = int(self.headers.get("Content-Length", 0))
+            state_path.write_bytes(self.rfile.read(n))
+            self.send_response(204)
+            self._cors()
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    # Daemon thread: the store dies with crit, so there is nothing to clean up.
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server.server_port, token
+
+
+def selftest():
+    assert md("a<b & `x` [t](http://e/?a=1&b=2)") == (
+        'a&lt;b &amp; <code>x</code> <a class="ref" href="http://e/?a=1&amp;b=2">t</a>'
+    )
+    row = render_row(
+        {
+            "label": "l",
+            "items": [{"text": "t", "breaking": True, "impact": {"level": "warn", "text": "i"}}],
+            "evidence": "<log>",
+        }
+    )
+    assert '<span class="brk">[BREAKING]</span> t<span class="impact warn">▲ i</span>' in row
+    assert "<pre>&lt;log&gt;</pre>" in row
+    # The radio name and the result key must stay the same string, or every PR
+    # silently reads back as "deny".
+    assert f'name="{pr_key(9)}"' in render_pr({"number": 9, "title": "t", "rows": []}, "o/r")
+    print("ok")
+
+
+def main():
+    if len(sys.argv) < 2:
+        raise SystemExit(__doc__.split("\n\n")[1])
+
+    if sys.argv[1] == "--selftest":
+        return selftest()
+
+    data_path = Path(sys.argv[1])
+    data = json.loads(data_path.read_text())
+    html_path = data_path.with_suffix(".html")
+    state_path = data_path.with_suffix(".state.json")
+
+    port, token = serve(state_path)
+    html_path.write_text(render(data, f"{port}/{token}"))
+
+    crit = subprocess.run(["crit", *sys.argv[2:], "preview", str(html_path)])
+    # A crashed crit leaves an untouched state file, which would otherwise read as
+    # "the user denied everything" instead of "the user never saw the report".
+    if crit.returncode != 0:
+        raise SystemExit(f"crit exited with {crit.returncode}; no triage result collected")
+
+    # Fill in PRs the user never touched, so "missing" is never mistaken for "approved".
+    state = json.loads(state_path.read_text()) if state_path.exists() else {}
+    result = {
+        pr_key(pr["number"]): state.get(pr_key(pr["number"]), "deny")
+        for group in data["groups"]
+        for pr in group["prs"]
+    }
+    print("--- state ---")
+    print(json.dumps(result, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()
