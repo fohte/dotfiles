@@ -1,6 +1,6 @@
 {
   env+: {
-    SELF_REVIEW_BACKEND: 'codex',
+    SELF_REVIEW_BACKEND: 'claude',
   },
 
   permissions+: {
