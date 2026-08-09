@@ -7,6 +7,12 @@ definitions:
     master-push-repos:
       - '~/ghq/github.com/fohte/dotfiles'
 
+  flag_groups:
+    # Capture every `--add-label` value as a list so a `when` clause can
+    # check all of them for `vrt-approved` (gh's --add-label is repeatable,
+    # and each occurrence's value may itself be comma-joined).
+    pr-edit-add-label: '--add-label *'
+
 rules:
   # deny rules
   - deny: 'git [-C *] commit --amend *'
@@ -610,6 +616,30 @@ rules:
     tests:
       - deny: 'gh pr create --title "foo" --body "bar"'
       - deny: 'gh -R fohte/runok pr create --title "foo"'
+
+  # Only the add path is denied -- removing vrt-approved, and adding/removing
+  # any other label, stays allowed via the rule below.
+  - deny: 'gh [-R *] pr edit * <flag:pr-edit-add-label> *'
+    when: >-
+      flag_groups['pr-edit-add-label'].exists(v,
+        v == 'vrt-approved' || v.startsWith('vrt-approved,') ||
+        v.endsWith(',vrt-approved') || v.contains(',vrt-approved,'))
+    message: '`vrt-approved` means a human visually reviewed the VRT diff and approved it. Claude Code cannot verify a visual diff, so this label must be added by the user.'
+    fix_suggestion: 'Ask the user to review the VRT report and add the label themselves.'
+    tests:
+      - deny: 'gh pr edit 25 --add-label vrt-approved'
+      - deny: 'gh pr edit 25 --add-label=vrt-approved'
+      - deny: 'gh pr edit 25 --add-label vrt-approved,bump:minor'
+      - deny: 'gh pr edit 25 --add-label bump:minor,vrt-approved'
+      - deny: 'gh pr edit 25 --add-label=vrt-approved,bump:minor'
+      - deny: 'gh pr edit 25 --add-label bump:minor,vrt-approved,foo'
+      - deny: 'gh pr edit 25 --add-label bump:minor --add-label vrt-approved'
+      - deny: 'gh -R fohte/tq pr edit 25 --add-label vrt-approved'
+      - deny: 'gh pr edit 25 --add-label vrt-approved --title "foo"'
+      - allow: 'gh pr edit 25 --remove-label vrt-approved'
+      - allow: 'gh pr edit 25 --add-label bump:minor'
+      - allow: 'gh pr edit 25 --add-label not-vrt-approved-fake'
+      - allow: 'gh pr edit 25 --remove-label vrt-approved --add-label bump:minor'
 
   - allow: 'gh [-R *] pr edit * --add-label|--remove-label *'
     tests:
