@@ -169,6 +169,15 @@ rules:
       - allow: 'nlx playwright install chromium'
       - allow: 'nlx playwright@1.61.1 install chromium'
       - ask: 'nlx playwright install --with-deps chromium'
+  # mmdc renders a .mmd/.md diagram to an image. Its flags are unrestricted
+  # here, which leaves two escapes reachable: `-p/--puppeteerConfigFile` takes
+  # a puppeteer launch config whose `executablePath` starts an arbitrary
+  # binary, and the version spec accepts tarball URLs and git shorthands that
+  # make nlx install a different package than mermaid-cli.
+  - allow: 'nlx [-y] @mermaid-js/mermaid-cli@* *'
+    tests:
+      - allow: 'nlx -y @mermaid-js/mermaid-cli@10.9.1 -i flowchart1.mmd -o flowchart1.svg'
+      - allow: 'nlx @mermaid-js/mermaid-cli@latest -i a.mmd -o a.png -t dark -b transparent'
   # The component argument ("item address") resolves through more than plain
   # component names: shadcn-ui/ui packages/shadcn/src/registry/address.ts
   # resolveItemAddress also accepts a bare URL or a local `*.json` file.
