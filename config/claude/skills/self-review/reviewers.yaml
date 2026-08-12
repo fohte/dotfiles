@@ -50,7 +50,7 @@ reviewers:
     trigger:
       kind: paths
       case_insensitive: true
-      pattern: '(^|/)(tests?|__tests__|spec)/|(\.|_)(test|spec)\.[a-zA-Z]+$|_test\.(go|py|rb)$|_spec\.rb$'
+      pattern: '(^|/)(tests?|__tests__|spec)/|(\.|_)(test|spec|stories)\.[a-zA-Z]+$|_test\.(go|py|rb)$|_spec\.rb$'
     agent: self-review-test-philosophy.md
     references:
       - test-philosophy/SKILL.md
