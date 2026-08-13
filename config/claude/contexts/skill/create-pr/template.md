@@ -38,6 +38,7 @@ git log origin/master..HEAD --oneline
 push の要否にかかわらず、base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。委任先の無人セッションでも待つ。手順は以下の 2 段階:
 
 1. `crit:crit-story` skill で story を作成する。story の文章 (prologue の `title` / `overview` / `key_changes` / `risks`、各 chapter の `title` / `summary`) は**日本語で書く**。`crit story --guide` が返す guide 本文は英語だが、それは出力言語の指定ではない
+    - ingest (`crit story --story-file`) には必ず `--no-open` を付ける。ブラウザを開くのは次のレビュー loop の責務で、両方が開くと同じレビューが 2 タブになる
 2. `crit:crit` skill でレビュー loop を回し、承認を待つ。`crit story` は story を保存して即座に終了するため、承認待ちのブロックは `crit:crit` 側が担う
 
 指摘に対応して修正した場合は、`commit` skill の push 手順でコミット・push してからレビューをやり直す。diff が変われば story は古くなるので、story も作り直す (既存 story があるので ingest 時に `--refresh` を付ける)。
