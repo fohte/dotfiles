@@ -17,12 +17,12 @@
 
 create-pr skill を起動したら、**最初の応答で**以下の必須ステップを列挙し、これから実行する旨を宣言すること。宣言なしに Step 1 以降に進むのは禁止。
 
-- Step 0: 未 push コミットの push (`commit` skill の push 手順に従う) と、branch の diff の crit レビュー
+- Step 0: 未 push コミットの push (`commit` skill の push 手順に従う) と、branch の diff の crit story 作成 + crit レビュー
 - Step 2: PR body セルフレビュー (13 ルール + 要素抽出 + 減算の独立 3 工程)
 
 「小さい PR だから」「変更が単純だから」「明らかに問題ないから」「効率を優先したい」を理由としたスキップは禁止。これらは典型的な自己判断スキップシグナルで、検出したら必ず実行する。skill のテキストに「必須」「スキップ禁止」と書かれているステップを Claude 側の判断で省略しない。スキップしてよいのはユーザーが該当ステップを名指しで明示的に skip 指示した場合のみ。
 
-## 0. push と diff の crit レビュー (必須)
+## 0. push と diff の crit story 作成 + crit レビュー (必須)
 
 未 push のコミットがあれば `commit` skill の push 手順 (`self-review` skill でのレビュー → 🔴/🟡 対応 → `git push`) に従って push する。
 `self-review` はこの skill から直接呼び出さない。呼び出しは `commit` skill 側の責務とし、二重実行を避ける。
@@ -35,8 +35,12 @@ git log origin/master..HEAD --oneline
 
 未 push のコミットがなければ push は不要。
 
-push の要否にかかわらず、`crit:crit` skill で base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。委任先の無人セッションでも待つ。
-指摘に対応して修正した場合は、`commit` skill の push 手順でコミット・push してからレビューをやり直す。
+push の要否にかかわらず、base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。委任先の無人セッションでも待つ。手順は以下の 2 段階:
+
+1. `crit:crit-story` skill で story を作成する。story の文章 (prologue の `title` / `overview` / `key_changes` / `risks`、各 chapter の `title` / `summary`) は**日本語で書く**。`crit story --guide` が返す guide 本文は英語だが、それは出力言語の指定ではない
+2. `crit:crit` skill でレビュー loop を回し、承認を待つ。`crit story` は story を保存して即座に終了するため、承認待ちのブロックは `crit:crit` 側が担う
+
+指摘に対応して修正した場合は、`commit` skill の push 手順でコミット・push してからレビューをやり直す。diff が変われば story は古くなるので、story も作り直す (既存 story があるので ingest 時に `--refresh` を付ける)。
 
 ## 1. PR body のドラフトを作成する
 
