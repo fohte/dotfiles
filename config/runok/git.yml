@@ -154,6 +154,25 @@ rules:
     fix_suggestion: 'git pull --rebase'
     tests:
       - deny: 'git pull --no-rebase'
+  # `--rebase=<value>` is the same off switch spelled as a flag value, and
+  # git's bool parser accepts all of false/no/off/0. `-r` is the short form
+  # and fuses with its value (`-rfalse`). `--rebase=merges` still rebases, so
+  # it stays allowed. Kept separate from the rule above because runok only
+  # supports multi-word alternation in command position.
+  - deny: 'git [-C *] pull * -r|--rebase false|no|off|0 *'
+    message: 'Blocked to prevent unintended merge commits'
+    fix_suggestion: 'git pull --rebase'
+    tests:
+      - deny: 'git pull --rebase=false'
+      - deny: 'git pull --rebase=no'
+      - deny: 'git pull --rebase=off'
+      - deny: 'git pull --rebase=0'
+      - deny: 'git pull -rfalse'
+      - deny: 'git -C /tmp pull --rebase=off origin master'
+      - allow: 'git pull'
+      - allow: 'git pull --rebase'
+      - allow: 'git pull --rebase=merges'
+      - allow: 'git pull -rmerges'
   # Merging origin/main or origin/master while OUTSIDE a `.worktrees/<name>`
   # checkout means we're in the main worktree, which is always on the
   # default branch -- merging its own remote tracking ref is the same-branch
