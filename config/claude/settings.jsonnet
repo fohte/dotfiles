@@ -252,6 +252,10 @@ local env(name) = std.extVar(name);
   autoMemoryEnabled: false,
   autoDreamEnabled: false,
 
+  // Output quality degrades as context fills, long before the model's limit
+  // (~967K for Sonnet 5), so compact earlier than the tuned window.
+  autoCompactWindow: 300000,
+
   // sonnet5 xhigh > opus4.8 medium https://www.anthropic.com/news/claude-sonnet-5
   model: 'claude-sonnet-5[1m]',
   effortLevel: 'xhigh',
