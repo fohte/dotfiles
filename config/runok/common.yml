@@ -352,6 +352,12 @@ rules:
       - allow: 'a cc list'
       - allow: 'a cc ls'
 
+  - allow: 'a cc peer parent|children|list *'
+    tests:
+      - allow: 'a cc peer parent'
+      - allow: 'a cc peer children'
+      - allow: 'a cc peer list -R armyknife'
+
   - allow: 'unzip *'
     tests:
       - allow: 'unzip -o foo.zip -d /tmp/out'

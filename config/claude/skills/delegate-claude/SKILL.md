@@ -1,6 +1,6 @@
 ---
 name: delegate-claude
-description: Delegate tasks to a separate Claude Code instance in its own git worktree. Use this skill when the user says "delegate", "/delegate-claude", asks to run a task in parallel in another worktree, wants to spawn a child Claude session, or needs to offload implementation work to an independent Claude Code instance. Also trigger when the user wants to start work on a different repository without leaving the current session, or when breaking down a large task into parallel sub-tasks each handled by separate Claude instances.
+description: Delegate tasks to a separate Claude Code instance in its own git worktree. Use this skill when the user says "delegate", "/delegate-claude", asks to run a task in parallel in another worktree, wants to spawn a child Claude session, or needs to offload implementation work to an independent Claude Code instance. Also trigger when the user wants to start work on a different repository without leaving the current session, or when breaking down a large task into parallel sub-tasks each handled by separate Claude instances. Also use when a session needs to contact the session that delegated to it, or one it delegated to.
 ---
 
 # 別の Claude Code インスタンスにタスクを委任する
@@ -227,9 +227,9 @@ a wm new fix-auth --agent --label "session.ts TTL 修正" --prompt "## タスク
 
 ### 手順
 
-1. `ListAgents` で対象セッションを特定する。セッション名は `a wm new` に渡したブランチ名がベースになっているため、どの委任がどれか判別できる
+1. `a cc peer children` で対象セッションを特定する。`label` と `cwd` でどの委任か判別し、`name` をそのまま `SendMessage` の `to` に渡す
 2. `SendMessage` で訂正を送る
-3. 対象セッションが `ListAgents` に現れない場合 (委任先が既に作業を終えている場合など) は、誤った前提が既に成果物に入っている。PR が作成済みならその PR にコメントとして訂正を残し、まだ無ければユーザーに報告する
+3. 対象が一覧に無い、または `name` が `null` の場合 (委任先が既に作業を終えている場合など) は、誤った前提が既に成果物に入っている。PR が作成済みならその PR にコメントとして訂正を残し、まだ無ければユーザーに報告する
 
 ### 訂正に含める内容
 
@@ -238,3 +238,11 @@ a wm new fix-auth --agent --label "session.ts TTL 修正" --prompt "## タスク
 - **正しい事実と根拠**: 委任先が自分で再検証できるよう、ファイルパス、行番号、出典を添える
 - **ゴールが変わるのか変わらないのか**: 「作業内容は変わらないが理由付けだけが変わる」のか「ゴール自体が変わる」のかを明言する。これがないと委任先は作業をやり直すべきか判断できない
 - **範囲外のままにするもの**: 訂正のついでにスコープが膨らむのを防ぐ
+
+## 委任先から委任元に連絡する場合
+
+委任先が委任元に訂正や確認を返すときは、`a cc peer parent` が出力する名前をそのまま `SendMessage` の `to` に渡す。
+
+`ListAgents` の一覧から探してはならない。そこに出る名前は cwd 由来の slug + 乱数サフィックスなので、委任元がリポジトリのルートで動いていると同じ prefix の行が並び、どれが委任元か判別できない。
+
+`a cc peer parent` がエラーになる (委任元が記録されていない、名前が解決できない) 場合は、候補を当てにいかずユーザーに報告する。
