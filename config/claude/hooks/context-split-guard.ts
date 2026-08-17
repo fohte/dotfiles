@@ -47,7 +47,7 @@ Burning context this fast usually means the work is being run the wrong way: don
   ⚠ context ~${p}% — handoff: <何を引き継ぐか>
   ⚠ context ~${p}% — 継続: <残タスクがこのセッションの蓄積文脈を必要とする理由>
 
-- subagents: the default for any self-contained task (investigation, search, review, mechanical edits). A subagent's working context never enters this session, only its summary does, so dispatching is strictly cheaper than doing it inline.
+- subagents: the default for any self-contained task (investigation, search, review, mechanical edits). A subagent's working context never enters this session, only its summary does, so dispatching is strictly cheaper than doing it inline. \`subagent_type: "fork"\` does NOT satisfy this verdict and is forbidden here: a fork inherits this session's whole context and re-bills it, which is the exact cost this message exists to cut. Dispatch a fresh subagent instead, and write the task description so it stands on its own without this session's history.
 - delegate (/delegate-claude): the remaining work should become its own PR(s).
 - handoff (/handoff-claude): stuck on design or investigation, and this session should be restarted fresh.
 - 継続: the remaining tasks genuinely depend on context a subagent or a fresh session would lack.
