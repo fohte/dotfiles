@@ -1,4 +1,4 @@
-# complete aliased commands (e.g., aws aliased to `op plugin run -- aws`)
+# complete an alias by its own name instead of by its expansion
 setopt completealiases
 
 # bash-style completions

@@ -185,7 +185,3 @@ gh-review() {
   gh pr checkout "$pr_number"
   echo "[gh-review] checkout #$pr_number"
 }
-
-if [ -z "$CLAUDECODE" ]; then # skip op plugin aliases on Claude Code to avoid frequent Touch ID prompts
-  [ -f "$HOME/.config/op/plugins.sh" ] && source "$HOME/.config/op/plugins.sh"
-fi

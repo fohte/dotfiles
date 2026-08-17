@@ -56,6 +56,7 @@ definitions:
       - '~/.ssh/**'
       - '~/.gnupg/**'
       - '~/.aws/credentials'
+      - '~/.aws/sso/**'
       - '~/.config/gh/hosts.yml'
 
   sandbox:
