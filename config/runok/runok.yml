@@ -29,6 +29,7 @@ extends:
   - './tools/srt.yml'
   - './tools/terraform.yml'
   - './tools/tq.yml'
+  - './tools/wrangler.yml'
   - './tools/misc.yml'
   - './work.yml'
 

@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  # `*` absorbs wrangler's 0-2 level command nesting (`d1 list`,
+  # `kv namespace list`, `pages deployment list`).
+  - allow: 'wrangler * list|info|get|describe|view|status|models *'
+    tests:
+      - allow: 'wrangler d1 list'
+      - allow: 'wrangler d1 info my-db'
+      - allow: 'wrangler deployments status'
+      - allow: 'wrangler versions view 00000000-0000-0000-0000-000000000000'
+      - allow: 'wrangler ai models'
+      - allow: 'wrangler secret list'
+      - allow: 'wrangler r2 bucket list'
+      - allow: 'wrangler pages deployment list'
+      - allow: 'wrangler workflows instances list my-workflow'
+      - ask: 'wrangler d1 execute my-db --command "SELECT 1"'
+      - ask: 'wrangler d1 export my-db --output dump.sql'
+      - ask: 'wrangler versions deploy'
+      - ask: 'wrangler vectorize query my-index'
+      - ask: 'wrangler vectorize list-vectors my-index'
+
+  # The read verb above is not anchored to the subcommand position, so a
+  # mutating command whose resource name happens to be `list`/`get`/... would
+  # otherwise match it (`wrangler d1 delete list`). Naming the mutating verbs
+  # pulls those back to `ask`, which outranks `allow`.
+  - ask: 'wrangler * build|bulk|create|delete|deploy|download|execute|export|insert|purge|push|put|rename|rollback|trigger|update|upload|upsert *'
+    tests:
+      - ask: 'wrangler d1 delete list'
+      - ask: 'wrangler r2 bucket delete models'
+      - ask: 'wrangler deploy --env get'
+      - ask: 'wrangler deploy --name status'
+      - allow: 'wrangler d1 info my-db'
+
+  - allow: 'wrangler whoami'
+    tests:
+      - allow: 'wrangler whoami'
+      - ask: 'wrangler login'
+      - ask: 'wrangler deploy'
+
+  # KV and R2 object access is billed per operation, so it stays on `ask` even
+  # for reads. `ask` outranks the `allow` above (Explicit Deny Wins).
+  - ask: 'wrangler kv *'
+    tests:
+      - ask: 'wrangler kv namespace list'
+      - ask: 'wrangler kv key list --namespace-id 00000000000000000000000000000000'
+      - ask: 'wrangler kv key get my-key'
+
+  - ask: 'wrangler r2 object *'
+    tests:
+      - ask: 'wrangler r2 object get my-bucket/my-key'
