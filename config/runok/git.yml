@@ -122,14 +122,15 @@ rules:
   # load time, but `flags.C` is compared as the raw, unexpanded token, so a
   # literal `~`-prefixed `-C` argument (e.g. `-C ~/repo`) won't match -- same
   # gap every other `-C` check in this file has (they're all tested with
-  # absolute paths only). The bare-cwd branch can't be covered by an inline
-  # test (`InlineTestEntry` has no cwd override); verify manually with
+  # absolute paths only). Neither branch's ask case can be covered by an
+  # inline test: `InlineTestEntry` has no cwd override, and a `-C` test would
+  # have to spell out this machine's home directory, which `master-push-repos`
+  # resolves differently per machine. Verify manually with
   # `runok check --verbose` from inside the repo if this changes.
   - ask: 'git [-C *] push *'
     when: "(has(flags.C) && paths['master-push-repos'].exists(p, flags.C == p || flags.C.startsWith(p + '/'))) || (!has(flags.C) && paths['master-push-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')))"
     message: 'This repo is pushed to directly on the default branch. Confirm before pushing.'
     tests:
-      - ask: 'git -C /Users/fohte/ghq/github.com/fohte/dotfiles push origin main'
       - allow: 'git -C /tmp push origin main'
   # Rebasing onto any branch (not just origin/main) rewrites local commit
   # history and can only be published with a force-push, which is denied
