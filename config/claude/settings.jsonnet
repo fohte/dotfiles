@@ -14,6 +14,12 @@ local env(name) = std.extVar(name);
     // tool from every subagent, so nesting is impossible.
     // https://code.claude.com/docs/en/sub-agents.md#let-subagents-spawn-their-own-subagents
     CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH: '1',
+
+    // A fork inherits the parent's whole context, so it re-bills what
+    // delegation is supposed to shed. Its availability also drops
+    // `run_in_background` from the Agent tool schema, which makes every
+    // subagent launch asynchronous with no way to opt out.
+    CLAUDE_CODE_FORK_SUBAGENT: '0',
   },
 
   // Parallel work is driven by separate tmux panes/sessions, not the
