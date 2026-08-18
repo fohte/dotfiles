@@ -358,6 +358,12 @@ rules:
       - allow: 'a cc peer children'
       - allow: 'a cc peer list -R armyknife'
 
+  # `wake` mutates (resumes a paused peer), but only a peer that is already
+  # waiting for a message; delegation is unusable if every wake needs approval.
+  - allow: 'a cc peer wake *'
+    tests:
+      - allow: 'a cc peer wake abc123'
+
   - allow: 'unzip *'
     tests:
       - allow: 'unzip -o foo.zip -d /tmp/out'
