@@ -91,6 +91,10 @@ local env(name) = std.extVar(name);
       'mcp__pencil',
     ],
     deny: [
+      // Artifacts publish work product to claude.ai, which no local workflow
+      // here depends on; crit preview covers viewing generated HTML locally.
+      'Artifact',
+
       'NotebookEdit',
       'Read(.env)',
       'Read(.env.local)',
