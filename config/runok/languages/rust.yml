@@ -12,6 +12,22 @@ rules:
   - allow: 'cargo clippy *'
   - allow: 'cargo doc *'
   - allow: 'cargo fmt *'
+  # Writes only Cargo.lock, same blast radius as the already-allowed `cargo update *`.
+  - allow: 'cargo generate-lockfile *'
+    tests:
+      - allow: 'cargo generate-lockfile'
+      - allow: 'cargo generate-lockfile --offline'
+  # An unknown name makes `cargo help <name>` exec `cargo-<name> --help` from
+  # PATH, so the subcommand is pinned to the set already allowed below.
+  - allow: 'cargo help build|check|clean|clippy|doc|fmt|generate-lockfile|help|info|llvm-cov|metadata|new|search|test|tree|update'
+    tests:
+      - allow: 'cargo help build'
+      - allow: 'cargo help generate-lockfile'
+      - ask: 'cargo help pwntest'
+  - allow: 'cargo info *'
+    tests:
+      - allow: 'cargo info progenitor'
+      - allow: 'cargo info serde@1.0'
   - allow: 'cargo llvm-cov *'
   - allow: 'cargo metadata *'
   - allow: 'cargo new *'
