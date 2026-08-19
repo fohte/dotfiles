@@ -178,7 +178,7 @@ rules:
   # checkout means we're in the main worktree, which is always on the
   # default branch -- merging its own remote tracking ref is the same-branch
   # antipattern that `git pull` should handle instead. Inside a worktree
-  # (`a wm new` / `/delegate-claude`, always a feature branch), merging
+  # (`a cc new` / `/delegate-claude`, always a feature branch), merging
   # origin/main to sync with the default branch is legitimate and stays
   # allowed via the `allow: 'git [-C *] merge origin/main|origin/master *'`
   # rule further down.
@@ -452,7 +452,7 @@ rules:
   - allow: 'git [-C *] fetch *'
     tests:
       - allow: 'git fetch origin'
-  # Inside a `.worktrees/<name>` checkout (`a wm new` / `/delegate-claude`),
+  # Inside a `.worktrees/<name>` checkout (`a cc new` / `/delegate-claude`),
   # this is the only rule that matches (the cwd-gated deny above requires
   # being outside `.worktrees/`), so it stays allow there.
   - allow: 'git [-C *] merge origin/main|origin/master *'

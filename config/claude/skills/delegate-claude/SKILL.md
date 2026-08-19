@@ -5,18 +5,18 @@ description: Delegate tasks to a separate Claude Code instance in its own git wo
 
 # 別の Claude Code インスタンスにタスクを委任する
 
-`a wm new --prompt` を使って、別の worktree で別の Claude Code インスタンスに処理を委任する。
+`a cc new --worktree --prompt` を使って、別の worktree で別の Claude Code インスタンスに処理を委任する。
 
 ## 最優先ルール
 
 - **ユーザーが明示的に delegate を指示した場合は、必ず delegate する**: タスクの規模・複雑さ・難易度に関わらず、ユーザーが `/delegate-claude` や「delegate して」と指示した場合は、自分の判断で「delegate 不要」と判断してはならない。ユーザーには delegate する意図がある。理由を推測せず、指示に従うこと
 - **delegate 不要と判断して自分で作業を始めることは禁止**: このスキルが発動した時点で、タスクの実行方法は delegate に確定している。「これは簡単だから自分でやろう」「PR 不要だから delegate しなくてよい」といった判断は一切してはならない
-- **1 委任 = 1 PR の原則**: 1 回の `a wm new` で委任するタスクは 1 PR 分の作業に限定すること。「複数フェーズを一括で」「複数 PR を順次作成」のような複数 PR をまとめた委任は禁止。委任先は単一の Claude Code プロセスで作業するため、複数 PR を順に作る前提では設計しない。委任先がさらに `/delegate-claude` で再委任することも想定しない。大きな計画やフェーズ分割されたタスクの場合は、委任元 (現在のセッション) が split-into-prs skill で 1 PR 単位に分割し、最初の 1 PR だけを委任する。後続の PR は前の PR が merge / 確認された後に、改めて委任元から別途委任する
+- **1 委任 = 1 PR の原則**: 1 回の `a cc new` で委任するタスクは 1 PR 分の作業に限定すること。「複数フェーズを一括で」「複数 PR を順次作成」のような複数 PR をまとめた委任は禁止。委任先は単一の Claude Code プロセスで作業するため、複数 PR を順に作る前提では設計しない。委任先がさらに `/delegate-claude` で再委任することも想定しない。大きな計画やフェーズ分割されたタスクの場合は、委任元 (現在のセッション) が split-into-prs skill で 1 PR 単位に分割し、最初の 1 PR だけを委任する。後続の PR は前の PR が merge / 確認された後に、改めて委任元から別途委任する
 
 ## 絶対禁止事項
 
 - **ユーザーが指定したリポジトリを勝手に変更しない**: ユーザーが委任先リポジトリを明示した場合、自分の判断で別のリポジトリに変更してはならない。ユーザーはどのリポジトリで修正すべきかを把握している。「こっちのリポジトリの方が適切では」と思っても、ユーザーの指定に従うこと
-- **自分で実装作業をしない**: このスキルが発動したら、ファイル編集・コード変更・調査を自分で行ってはならない。唯一の仕事はプロンプトを構成して `a wm new` コマンドを実行すること
+- **自分で実装作業をしない**: このスキルが発動したら、ファイル編集・コード変更・調査を自分で行ってはならない。唯一の仕事はプロンプトを構成して `a cc new` コマンドを実行すること
 - **委任前にファイルを編集しない**: 「先に少し直してから委任しよう」は禁止。未コミットの変更がある状態で worktree を作ると、委任先にその変更が反映されない
 - **SendMessage を進捗確認や催促に使わない**: 委任先は別プロセスだが同じマシン上の Claude Code セッションなので、ListAgents に現れ SendMessage も届く。届くからといって、状況を尋ねる、急かす、作業中に細かく口を出すといった用途に使ってはならない。委任先は対話しながら進める相手ではない。送ってよいのは次の 2 つだけで、いずれも手順は後述の「委任元から委任先に連絡する場合」に従う
 
@@ -24,12 +24,12 @@ description: Delegate tasks to a separate Claude Code instance in its own git wo
     - 委任先が委任元の管理下にあるもの (別リポジトリの修正、パッケージの publish、先行 PR の merge など) を待って止まっている場合の、解消した旨の通知
 
 - **用が無いのに停止中のセッションを起こさない**: `a cc peer wake` は、送る用件が既に確定していて、連絡先のセッションが停止している場合にだけ使う。状況を見るため、念のため、といった理由で起こしてはならない。`a cc sweep` はアイドルなセッションを意図的に停止しており、それを覆すことになる
-- **委任後に完了をポーリングしない**: `a wm new` に完了通知の仕組みはないが、それを自作のポーリングで代替してはならない。委任が始まったことをユーザーに報告したら完了とする。委任は委任元セッションを解放するための手段であり、張り付いて見守る対象ではない。ユーザーに訊かれて `ListAgents` で状態を答えるのは構わないが、訊かれてもいないのに状態を確認して報告するのは、それ自体がポーリングにあたる
+- **委任後に完了をポーリングしない**: `a cc new` に完了通知の仕組みはないが、それを自作のポーリングで代替してはならない。委任が始まったことをユーザーに報告したら完了とする。委任は委任元セッションを解放するための手段であり、張り付いて見守る対象ではない。ユーザーに訊かれて `ListAgents` で状態を答えるのは構わないが、訊かれてもいないのに状態を確認して報告するのは、それ自体がポーリングにあたる
 
 ## 使い方
 
 ```bash
-a wm new <branch-name> --agent --label "<title>" --prompt "<instructions>"
+a cc new --worktree=<branch-name> --agent --label "<title>" --prompt "<instructions>"
 ```
 
 - `branch-name`: 新しい環境用に作成するブランチ名
@@ -45,15 +45,15 @@ a wm new <branch-name> --agent --label "<title>" --prompt "<instructions>"
 ### オプション
 
 - `--from <ref>`: ベースとなる ref を指定 (デフォルト: main ブランチ)
-    - 例: `a wm new feature-x --agent --label "..." --from origin/develop --prompt "..."`
-    - Renovate の PR をテストする場合: `a wm new test-upgrade --agent --label "..." --from origin/renovate/some-branch --prompt "..."`
+    - 例: `a cc new --worktree=feature-x --agent --label "..." --from origin/develop --prompt "..."`
+    - Renovate の PR をテストする場合: `a cc new --worktree=test-upgrade --agent --label "..." --from origin/renovate/some-branch --prompt "..."`
 - `-R <path>` / `--repo <path>`: 対象リポジトリのパスを指定。指定するとカレントディレクトリに関係なく、そのリポジトリ上で worktree を作成する
-    - 例: `a wm new fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "..." --prompt "..."`
+    - 例: `a cc new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "..." --prompt "..."`
 - `--skip-hooks`: post-worktree-create hook をスキップする。hook 自体が壊れていて worktree 内で直す必要がある場合に使う
 
 #### post-worktree-create hook 失敗時のリトライ
 
-`a wm new` が `Error: hook '...post-worktree-create' exited with status 1` で失敗した場合、worktree とブランチは自動でロールバックされる (新規作成ブランチは削除、既存ブランチを `--force` で上書きしたケースは元の tip に復元)。hook 内のツール (例: チェックアウトしたブランチの設定ファイルがパースエラーで処理できない) が失敗原因で、委任タスク自体とは無関係なことが多い。
+`a cc new` が `Error: hook '...post-worktree-create' exited with status 1` で失敗した場合、worktree とブランチは自動でロールバックされる (新規作成ブランチは削除、既存ブランチを `--force` で上書きしたケースは元の tip に復元)。hook 内のツール (例: チェックアウトしたブランチの設定ファイルがパースエラーで処理できない) が失敗原因で、委任タスク自体とは無関係なことが多い。
 
 リトライは同じコマンドに `--skip-hooks` を付けて再実行するだけでよい。委任先で conflict 解決などにより設定ファイルが正常化すれば、hook が参照するツールも再び使えるようになる。プロンプトにはこの背景 (`--skip-hooks` で作成したこと、設定ファイルが一時的に壊れている理由) を一言添えておくとよい。
 
@@ -76,7 +76,7 @@ worktree 削除自体が失敗した警告が出た場合のみ手動復旧が�
 dir=/var/folders/.../delegate.AbC123  # 上で作成したパスをそのまま使う
 for entry in "repo-a 123" "repo-b 456" "repo-c 789"; do
   read repo num <<< "$entry"
-  a wm new <branch> -R ~/ghq/github.com/<org>/$repo \
+  a cc new --worktree=<branch> -R ~/ghq/github.com/<org>/$repo \
     --agent --label "<title> $repo#$num" \
     --prompt "$(cat "$dir/common.md" "$dir/$repo.md")" \
     && echo "OK $repo#$num" || echo "FAIL $repo#$num" &
@@ -90,10 +90,10 @@ wait
 
 ```bash
 # 現在のリポジトリ
-a wm new feature-login --agent --label "メール認証ログイン実装" --prompt "メール/パスワード認証によるログイン機能を実装"
+a cc new --worktree=feature-login --agent --label "メール認証ログイン実装" --prompt "メール/パスワード認証によるログイン機能を実装"
 
 # 別のリポジトリ (-R オプション)
-a wm new fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "API タイムアウト修正" --prompt "API のタイムアウト設定を修正"
+a cc new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "API タイムアウト修正" --prompt "API のタイムアウト設定を修正"
 ```
 
 実行すると:
@@ -105,7 +105,7 @@ a wm new fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "A
 ## 委任時の注意事項
 
 - **既存ブランチで作業する場合**: 既存のリモートブランチ (例: follow-up PR のブランチ) にそのまま commit したい場合は、ブランチ名をそのまま `<branch-name>` に指定する
-    - 例: `a wm new follow-up-123-terraform/foo --agent --label "..." --prompt "..."`
+    - 例: `a cc new --worktree=follow-up-123-terraform/foo --agent --label "..." --prompt "..."`
 - **ブランチ名**: 新規ブランチを作る場合、ブランチ名に `/` を含めないこと。代わりにハイフンを使う (例: `fix/login-bug` ではなく `fix-login-bug`)。ブランチには `fohte/` がプレフィックスとして付くため、`fix/...` だと `fohte/fix/...` になり冗長
 - 新しいインスタンスは独立した worktree で作業するため、現在の作業と競合しない
 
@@ -135,7 +135,7 @@ a wm new fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "A
 - 「現在のブランチで同じファイルを編集した」という理由だけで `--from` が必要だと判断してはいけない。判断基準は「そのファイルを編集したかどうか」ではなく、「委任先が main ブランチ上で同じ修正を適用できるかどうか」。main にあるファイルに対する独立した修正であれば、たとえ現在のブランチでも同じファイルを触っていても `--from` は不要
 - 「ある PR で問題が見つかった」という理由だけで `--from` にその PR のブランチを指定してはいけない。PR は問題の発見契機にすぎない。修正がその PR の変更内容に依存しない限り main ベースで行う
 - **merge 済みの PR/ブランチに対して `--from` を指定してはいけない**。merge 済みということは変更が既に main に取り込まれているため、main ベースで作業すればその変更は含まれている。merge 済みかどうかが不明な場合は、`gh pr view` や `git log` で確認してから判断すること
-- **commit 先 (branch-name) と base ref (`--from`) を混同しない**。既存ブランチに直接 commit したいだけなら `a wm new <既存ブランチ名>` で足りる。`--from origin/<同名ブランチ>` の指定は冗長で判断ミスのシグナル
+- **commit 先 (branch-name) と base ref (`--from`) を混同しない**。既存ブランチに直接 commit したいだけなら `a cc new --worktree=<既存ブランチ名>` で足りる。`--from origin/<同名ブランチ>` の指定は冗長で判断ミスのシグナル
 
 間違えて `--from` で現在のブランチを指定すると、関係のない変更が混入して別々の PR にできなくなる。
 
@@ -184,7 +184,7 @@ a wm new fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "A
 ### 良い例
 
 ```bash
-a wm new fix-auth-timeout --agent --label "セッション TTL 設定反映修正" --prompt "## 背景
+a cc new --worktree=fix-auth-timeout --agent --label "セッション TTL 設定反映修正" --prompt "## 背景
 
 ### 目的・モチベーション
 セッションタイムアウトが短すぎてユーザーが頻繁に再ログインを強いられている。本来 30 分のはずが 5 分で切れる。
@@ -216,10 +216,10 @@ a wm new fix-auth-timeout --agent --label "セッション TTL 設定反映修�
 
 ```bash
 # NG: コンテキスト不足 - 新しいインスタンスは「そのバグ」が何か分からない
-a wm new fix-bug --agent --label "バグ修正" --prompt "さっき話したバグを直して"
+a cc new --worktree=fix-bug --agent --label "バグ修正" --prompt "さっき話したバグを直して"
 
 # NG: 手順を指示しすぎ - 委任先の自律性を奪う
-a wm new fix-auth --agent --label "session.ts TTL 修正" --prompt "## タスク
+a cc new --worktree=fix-auth --agent --label "session.ts TTL 修正" --prompt "## タスク
 1. src/auth/session.ts を開く
 2. 42 行目の TTL を 300 から 1800 に変更
 3. テストを追加

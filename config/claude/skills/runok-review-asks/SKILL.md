@@ -284,8 +284,8 @@ tests には最低 1 件、提案を導いた実際のコマンドを入れる�
 
 **ignore エントリ**: `config/bin/runok-pending-asks` の `IGNORE_COMMANDS` 配列に正規表現を 1 行追加。元コマンドから機械的に作る:
 
-- `a wm new foo bar` → `^a wm new( |$)`
-- 引数違いを許容する場合 (`^a wm new` で前方一致) を基本にする
+- `a cc new --worktree=foo --agent ...` → `^a cc new( |$)`
+- 引数違いを許容する場合 (`^a cc new` で前方一致) を基本にする
 
 ### 6. テスト
 

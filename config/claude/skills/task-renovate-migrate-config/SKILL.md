@@ -16,7 +16,7 @@ Search for `renovate/migrate-config` branch PRs in fohte's GitHub repositories, 
 5. For each repository, use `delegate-claude` Skill:
 
 ```bash
-cd ~/ghq/github.com/fohte/<repo> && a wm new renovate/migrate-config --prompt "## Background
+cd ~/ghq/github.com/fohte/<repo> && a cc new --worktree=renovate/migrate-config --prompt "## Background
 Renovate created a config migration PR #<number>.
 
 ## Task

@@ -13,7 +13,7 @@ set -euo pipefail
 # Extended regular expressions matched against the top-level `.command` field.
 # Matching entries are never proposed for allow-listing.
 IGNORE_COMMANDS=(
-  '^a wm new'
+  '^a cc new'
   # Claude Code drives Renovate PR approve -> merge, but a blanket allow
   # is too broad (any PR, not just vetted Renovate ones), so keep ask.
   '^gh (-R [^ ]+ |--repo [^ ]+ )?pr review .* --approve'

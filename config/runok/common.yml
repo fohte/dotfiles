@@ -343,7 +343,7 @@ rules:
       - allow: 'dot role get'
       - allow: 'dot role overlay'
 
-  # armyknife (`a`) readonly subcommands. Mutating subcommands (a wm new,
+  # armyknife (`a`) readonly subcommands. Mutating subcommands (a cc new,
   # a wm delete, a cc resume, etc) are left as ask.
   - allow: 'a wm|cc list|ls'
     tests:
