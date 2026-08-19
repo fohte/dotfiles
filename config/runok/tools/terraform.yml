@@ -14,6 +14,17 @@ rules:
       - allow: 'terraform version'
       - allow: 'terraform version -json'
 
+  # Terraform runs in CI, so a local run would touch the lock file and state
+  # that CI owns.
+  - deny: 'terraform init|plan|apply *'
+    message: 'Terraform runs in CI. Do not init/plan/apply locally.'
+    fix_suggestion: 'Push the change and let CI run Terraform.'
+    tests:
+      - deny: 'terraform init'
+      - deny: 'terraform init -upgrade'
+      - deny: 'terraform plan'
+      - deny: 'terraform apply -auto-approve'
+
   # terraform-docs. No flags are permitted in the pattern (a literal, not a
   # wildcard), since `--output-file`/`--config`/`--report-template` can write
   # to arbitrary paths or load a custom template.
