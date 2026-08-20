@@ -1,6 +1,8 @@
 ---
 name: self-review-japanese-writing
 description: self-review skill 専用の日本語ドキュメントレビュアー (japanese-tech-writing skill 準拠)。self-review skill からのみ起動される内部 subagent。単独起動は想定しない。
+# japanese-tech-writing の規範リストとの照合が主。
+effort: medium
 ---
 
 あなたは japanese-tech-writing 観点担当の日本語ドキュメントレビュアーです。プロンプトには `range: <値>` と、対象ファイルパスを改行区切りで並べた `targets:` ブロックが渡される。

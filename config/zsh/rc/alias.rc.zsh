@@ -28,7 +28,10 @@ has assh && alias ssh="assh wrapper ssh --"
 
 alias cl='claude'
 alias cls='claude --model "sonnet[1m]"'
-alias clo='claude --model "opus[1m]"'
+# Opus 5 starts at `high` while Sonnet 5 wants `xhigh` for the hardest coding
+# tasks: https://platform.claude.com/docs/en/build-with-claude/effort
+# settings.json holds one effortLevel for every model, so Opus overrides it here.
+alias clo='claude --model "opus[1m]" --effort high'
 alias clf='claude --model "fable[1m]"'
 
 alias t='tig'
