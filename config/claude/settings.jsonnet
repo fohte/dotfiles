@@ -39,12 +39,10 @@ local env(name) = std.extVar(name);
 
   includeCoAuthoredBy: true,
 
-  // Bundled `claude-api` skill inlines its entire multi-language reference
-  // (~200-300k tokens) unconditionally on trigger, regardless of relevance.
-  // https://github.com/anthropics/claude-code/issues/63566
-  skillOverrides: {
-    'claude-api': 'user-invocable-only',
-  },
+  // Bundled skills (dataviz, code-review, claude-api, etc.) are never used
+  // here and cost context on every session. Disables every bundled skill
+  // except /doctor. https://code.claude.com/docs/en/settings-reference.md
+  disableBundledSkills: true,
 
   permissions: {
     allow: [
