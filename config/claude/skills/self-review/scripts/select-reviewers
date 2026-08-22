@@ -55,12 +55,8 @@ reviewers_file="$skill_dir/reviewers.yaml"
 work_dir=$(mktemp -d -t self-review-select.XXXXXX)
 trap 'rm -rf "$work_dir"' EXIT
 
-# `dot role overlay` resolves the overlay file purely by role + filename, not
-# by content: on `work` role it looks up reviewers.yaml in a separate
-# config-overlays repo instead of this reviewers.private.yaml. Nothing here
-# stops that overlay from also defining `agents:` / `agent:` and routing a
-# reviewer to a non-claude agent on a work machine -- it just isn't this
-# file, and today's work overlay doesn't do it.
+# `dot role overlay` resolves the overlay file by role + filename, not by
+# content, so a role overlay of this file can define its own `agent:` routing.
 overlay_file=$(dot role overlay "$reviewers_file" 2> /dev/null || true)
 if [[ -n "$overlay_file" ]]; then
   yq eval-all 'select(fileIndex==0) * select(fileIndex==1)' "$reviewers_file" "$overlay_file" > "$work_dir/reviewers.yaml"
