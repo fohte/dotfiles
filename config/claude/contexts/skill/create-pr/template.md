@@ -101,38 +101,13 @@ echo 'use `gh` command'
 
 ### ドラフト投入
 
-{{- if $has_pr_template }}
-
-**以下の PR template のセクション構造に従うこと。**
-
-```markdown
-{{ $v.pr_template }}
-```
-
-- template の見出し構造をそのまま踏襲し、各セクションを埋める
-- コメント指示 (`<!-- ... -->`) はドラフトから削除
-- 上記の書き方ルールは template の全セクションに適用する。Why/What の見出し固定など構造ルールは template の構造に置き換わる
+上記の PR template の構造に従ったドラフト本文を投入する (コメント指示 `<!-- ... -->` は削除)。
 
 ```bash
 cat <<'EOF' | a ai pr-draft new --title "PRタイトル"
-<template の構造に従ったドラフト本文>
+<上記の構造に従ったドラフト本文>
 EOF
 ```
-
-{{- else }}
-
-```bash
-echo "## Why
-
-- <修正系: 症状/影響のみ / 新規追加: 目的>
-
-## What
-
-- <変更の効果を簡潔に>
-    - <技術的原因があれば子要素として補足>" | a ai pr-draft new --title "PRタイトル"
-```
-
-{{- end }}
 
 ドラフトは決まったパスに作成される (`~/.claude/skills/create-pr/scripts/draft-path` で確認できる)。以降のコマンドではパス指定不要。
 
