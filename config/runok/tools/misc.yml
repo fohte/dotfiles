@@ -193,5 +193,21 @@ rules:
       - deny: "nlx --package renovate -c 'rm -rf /'"
       - deny: "nlx --package renovate -c 'renovate-config-validator renovate.json5; rm -rf /'"
 
+  # `--plugin name=path` and `--exec-pipe -- <cmd>` run arbitrary commands, so
+  # this can't be scoped down by flags alone. `readonly` (see runok.yml) denies
+  # every write and all network, which rendering never needs: there is no
+  # `exec.*` template namespace, every datasource scheme is read-only, and
+  # output goes to stdout. `-o <file>` and `--output-dir` are denied as a
+  # result -- redirect instead.
+  - allow: 'gomplate *'
+    sandbox: readonly
+    tests:
+      - allow: 'gomplate -f -'
+      - allow: 'gomplate -d vars=stdin:///vars.json -f -'
+      - allow: 'gomplate -d vars=stdin:///vars.json -f config/claude/contexts/skill/create-pr/template.md'
+      # Arbitrary-exec flags stay allowed by the pattern on purpose; the
+      # sandbox is what contains them.
+      - allow: 'gomplate -i hello --exec-pipe -- cat'
+
   - deny: opencode *
     message: don't use opencode
