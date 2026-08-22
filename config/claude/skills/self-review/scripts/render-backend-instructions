@@ -1,67 +1,19 @@
 #!/bin/bash
-# Resolve the backend before Claude sees the skill so backend choice cannot be
-# reinterpreted from natural-language instructions.
+# Reviewer-to-agent routing (claude / codex / agy, role overlay, usage-limit
+# fallback) is resolved entirely inside select-reviewers, so this text is one
+# fixed procedure regardless of machine role or account limits.
 set -euo pipefail
 
-usage_file="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-usage.json"
-# 100 lets Codex run right up to the account limit. A run that trips the
-# limit mid-review fails loudly (non-zero exit), and the next skill load
-# falls back to Claude once the recorded snapshot reflects it.
-max_used_percent=100
-
-# The snapshot run-codex-reviewers leaves behind stays authoritative until the
-# window resets, because used_percent only grows within one window. Deciding
-# from it keeps this path free of network calls, and keeps the usage endpoint
-# untouched for as long as the limit holds. Any single exhausted window is
-# enough to block Codex.
-codex_over_limit() {
-  [[ -f "$usage_file" ]] || return 1
-  jq -e \
-    --argjson now "$(date +%s)" \
-    --argjson max "$max_used_percent" \
-    'any(.[]; $now < .reset_at and .used_percent >= $max)' \
-    "$usage_file" > /dev/null
-}
-
-claude_instructions() {
-  cat << 'EOF'
+cat << 'EOF'
 ## Backend execution
 
-Use Claude Code internal subagents as follows:
-
 1. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
-2. Run `~/.claude/skills/self-review/scripts/select-reviewers <range>` once. Stop without launching any subagent if it fails.
-3. Use the returned `range` value from this point onward. Its `reviewers` array is the complete launch manifest. Launch every entry with `run_in_background: false` and `subagent_type` equal to `agent`. Every launch must be a `tool_use` block in ONE assistant message: a synchronous launch blocks until it returns, so reviewers split across messages run strictly serially, one whole review after another. Pass the returned `range`, the exact `references` list prefixed with `~/.claude/skills/`, and, when non-empty, the exact `targets` list. Do not add, remove, or reorder reviewers.
-4. If a subagent fails, retry only that manifest entry once with the identical prompt and `run_in_background: false`. Mark it as unevaluated if the retry also fails.
+2. Create a manifest file path (e.g. `mktemp -t self-review-manifest.XXXXXX`) and run `~/.claude/skills/self-review/scripts/select-reviewers <range> > <manifest-file>` once. Stop without launching anything if it fails. Do not call `select-reviewers` again for this review — every step below reads `<manifest-file>` instead. Its `reviewers` array is the complete launch manifest: do not add, remove, or reorder entries.
+3. Group manifest entries by `.agent` and launch every group in ONE assistant message so they run in parallel — a synchronous launch blocks until it returns, so entries split across messages run strictly serially, one whole review after another:
+   - Entries with `.agent == "claude"`: launch one subagent per entry with `run_in_background: false` and `subagent_type` equal to the entry's `definition`. Pass the manifest's `range`, the exact `references` list prefixed with `~/.claude/skills/`, and, when non-empty, the exact `targets` list.
+   - Every other distinct `.agent` value present (e.g. `codex`, `agy`): run `~/.claude/skills/self-review/scripts/run-external-reviewers <manifest-file> --agent <name>` once. It reads the reviewers assigned to that agent directly from `<manifest-file>` and returns a JSON array of results.
+4. On failure, retry exactly once with an identical call:
+   - A failed subagent: retry the same subagent call once (`run_in_background: false`). Mark it unevaluated if the retry also fails.
+   - A failed `run-external-reviewers` call: retry the same command once. If the retry also fails, fall back to a Claude subagent (`subagent_type` = the entry's `definition`) for each reviewer that was assigned to that agent, applying the same retry-once-then-unevaluated rule.
+5. If a manifest entry has a non-null `fallback_reason`, mention it for that reviewer in the final Summary output.
 EOF
-}
-
-codex_instructions() {
-  cat << 'EOF'
-## Backend execution
-
-Use Codex reviewers as follows:
-
-1. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
-2. Run `~/.claude/skills/self-review/scripts/run-codex-reviewers <range>` exactly once. Do not launch Claude Code review subagents in parallel or as fallback.
-3. Treat a nonzero exit as a review failure and report it. Otherwise, aggregate the returned JSON array using the common rules below.
-EOF
-}
-
-case "${SELF_REVIEW_BACKEND:-claude}" in
-  claude)
-    claude_instructions
-    ;;
-  codex)
-    if codex_over_limit; then
-      echo 'Codex is over its usage limit, so this review runs on the Claude backend. State that in the final output.'
-      claude_instructions
-    else
-      codex_instructions
-    fi
-    ;;
-  *)
-    echo "Error: unsupported SELF_REVIEW_BACKEND: ${SELF_REVIEW_BACKEND}" >&2
-    exit 2
-    ;;
-esac

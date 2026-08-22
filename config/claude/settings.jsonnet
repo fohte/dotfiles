@@ -4,10 +4,6 @@ local env(name) = std.extVar(name);
   env: {
     CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY: '1',
 
-    // Keep the existing internal-subagent workflow unless a machine role
-    // explicitly selects another self-review backend.
-    SELF_REVIEW_BACKEND: 'claude',
-
     // Subagents can spawn subagents of their own by default (up to three
     // layers below the main conversation), which sometimes runs away in an
     // unintended nested-spawn loop. Setting this to 1 withholds the Agent

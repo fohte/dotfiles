@@ -1,27 +1,25 @@
 #!/bin/bash
-# Assemble immutable review inputs before invoking Codex so model behavior
-# cannot change reviewer selection, reference loading, or the reviewed diff.
+# Assemble immutable review inputs before invoking an external agent so model
+# behavior cannot change reviewer selection, reference loading, or the
+# reviewed diff. Only the exec/parse step in run_<agent> differs by agent.
 set -euo pipefail
 
 usage() {
-  echo "Usage: run-codex-reviewers --cached | <commit-range>" >&2
+  echo "Usage: run-external-reviewers <manifest-file> --agent <name>" >&2
   exit 2
 }
 
-[ "$#" -eq 1 ] || usage
-case "$1" in
-  --cached)
-    diff_args=(--cached)
-    ;;
-  -* | *[[:space:]]*)
-    usage
-    ;;
-  *)
-    diff_args=("$1")
-    ;;
-esac
+[ "$#" -eq 3 ] || usage
+manifest_file="$1"
+[[ "$2" == --agent ]] || usage
+agent_name="$3"
 
-for command in codex git jq yq; do
+[[ -f "$manifest_file" ]] || {
+  echo "Error: manifest file not found: $manifest_file" >&2
+  exit 2
+}
+
+for command in git jq "$agent_name"; do
   command -v "$command" > /dev/null || {
     echo "Error: required command not found: $command" >&2
     exit 127
@@ -33,28 +31,42 @@ skill_dir=$(cd "$script_dir/.." && pwd -P)
 claude_dir=$(cd "$skill_dir/../.." && pwd -P)
 repo_root=$(git rev-parse --show-toplevel)
 schema_file="$skill_dir/review-output-schema.json"
-selector="$script_dir/select-reviewers"
 usage_file="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-usage.json"
 auth_file="$HOME/.codex/auth.json"
 
-work_dir=$(mktemp -d -t self-review-codex.XXXXXX)
+work_dir=$(mktemp -d -t self-review-external.XXXXXX)
 trap 'rm -rf "$work_dir"' EXIT
 
-# The selector and prompt builder must observe the same staged snapshot.
-if [[ ${diff_args[0]} == --cached ]]; then
+resolved_range=$(jq -r '.range' "$manifest_file")
+diff_args=("$resolved_range")
+
+# The caller passes in the manifest it already resolved via select-reviewers,
+# instead of this script invoking select-reviewers again: a second,
+# independent resolution could see a different staged snapshot or a Codex
+# usage-limit fallback that flips between the two calls, silently dropping a
+# reviewer the caller already committed to (no error, no fallback_reason —
+# it just never runs on any backend).
+if [[ "$resolved_range" == --cached ]]; then
   source_index=${GIT_INDEX_FILE:-$(git rev-parse --git-path index)}
   cp "$source_index" "$work_dir/index"
   export GIT_INDEX_FILE="$work_dir/index"
 fi
 
-manifest_file="$work_dir/manifest.json"
-"$selector" "$1" > "$manifest_file"
-resolved_range=$(jq -r '.range' "$manifest_file")
-diff_args=("$resolved_range")
+# select-reviewers already resolved agent + model from reviewers.yaml and its
+# role overlay, so this script never reads reviewers.yaml directly.
+model=$(jq -r --arg agent "$agent_name" '.agents[$agent].model // empty' "$manifest_file")
+[[ "$agent_name" == codex ]] && model="${SELF_REVIEW_CODEX_MODEL:-$model}"
+
+# Neither agent requires a model: an unset one just means "use the CLI's own
+# default" (checked once here so run_codex/run_agy don't duplicate it). The
+# `[@]+` guard matters because this script's shebang runs under macOS's
+# bundled /bin/bash (3.2, pre-dates GPLv3), whose `nounset` treats expanding
+# an empty array as an unbound-variable error.
+model_args=()
+[[ -n "$model" ]] && model_args=(--model "$model")
 
 diff_file="$work_dir/diff.patch"
 files_file="$work_dir/files.txt"
-instructions_file="$work_dir/instructions.txt"
 git diff --no-ext-diff "${diff_args[@]}" > "$diff_file"
 git diff --name-only --no-ext-diff "${diff_args[@]}" > "$files_file"
 
@@ -63,8 +75,18 @@ git diff --name-only --no-ext-diff "${diff_args[@]}" > "$files_file"
   exit 2
 }
 
+selected=()
+while IFS= read -r reviewer; do
+  selected+=("$reviewer")
+done < <(jq -r --arg agent "$agent_name" '.reviewers[] | select(.agent == $agent) | .name' "$manifest_file")
+
+if [ "${#selected[@]}" -eq 0 ]; then
+  echo '[]'
+  exit 0
+fi
+
 # Only ancestor instructions apply to a changed file. Collecting them here
-# prevents Codex discovery behavior from changing the review contract.
+# prevents agent discovery behavior from changing the review contract.
 while IFS= read -r file; do
   directory=$(dirname "$repo_root/$file")
   while [[ "$directory" == "$repo_root" || "$directory" == "$repo_root/"* ]]; do
@@ -74,12 +96,9 @@ while IFS= read -r file; do
     [[ "$directory" == "$repo_root" ]] && break
     directory=$(dirname "$directory")
   done
-done < "$files_file" | LC_ALL=C sort -u > "$instructions_file"
+done < "$files_file" | LC_ALL=C sort -u > "$work_dir/instructions.txt"
+instructions_file="$work_dir/instructions.txt"
 
-selected=()
-while IFS= read -r reviewer; do
-  selected+=("$reviewer")
-done < <(jq -r '.reviewers[].name' "$manifest_file")
 mkdir -p "$work_dir/targets"
 for reviewer in "${selected[@]}"; do
   jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .targets[]' "$manifest_file" > "$work_dir/targets/$reviewer.txt"
@@ -95,8 +114,8 @@ append_resource() {
 }
 
 build_prompt() {
-  local reviewer="$1" prompt_file="$2" agent relative instruction_file
-  agent=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .agent' "$manifest_file")
+  local reviewer="$1" prompt_file="$2" definition relative instruction_file
+  definition=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .definition' "$manifest_file")
 
   {
     printf '%s\n' 'Perform a read-only code review using only the supplied review contract and immutable diff.'
@@ -105,7 +124,7 @@ build_prompt() {
     printf '%s\n' 'Return JSON matching the supplied output schema. Set reviewer to the exact reviewer name above.'
   } > "$prompt_file"
 
-  append_resource "$prompt_file" "$claude_dir/agents/$agent.md"
+  append_resource "$prompt_file" "$claude_dir/agents/$definition.md"
   while IFS= read -r relative; do
     append_resource "$prompt_file" "$claude_dir/skills/$relative"
   done < <(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .references[]' "$manifest_file")
@@ -150,6 +169,38 @@ record_codex_usage() {
   mv "$usage_file.$$" "$usage_file"
 }
 
+run_codex() {
+  local reviewer_dir="$1"
+  codex exec \
+    --ephemeral \
+    "${model_args[@]+"${model_args[@]}"}" \
+    --sandbox read-only \
+    --output-schema "$schema_file" \
+    --output-last-message "$reviewer_dir/result.json" \
+    --color never \
+    - < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log"
+}
+
+# agy has no stdin prompt mode: `--print` (and its `--prompt` alias) takes the
+# prompt as the flag's own value, so it must be attached with `=` rather than
+# left to consume the next argv token (verified against agy v1.1.18; a bare
+# `--print` followed by another flag misparses that flag as the prompt). It
+# also wraps the schema-checked result in `.structured_output` rather than
+# writing it as the whole message, unlike `codex --output-schema`.
+run_agy() {
+  local reviewer_dir="$1"
+  agy \
+    --sandbox \
+    --add-dir "$repo_root" \
+    "${model_args[@]+"${model_args[@]}"}" \
+    --output-format json \
+    --json-schema "$schema_file" \
+    --print="$(cat "$reviewer_dir/prompt.txt")" \
+    > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || return 1
+  jq -e '.status == "SUCCESS"' "$reviewer_dir/stdout.log" > /dev/null || return 1
+  jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
+}
+
 pids=()
 for reviewer in "${selected[@]}"; do
   reviewer_dir="$work_dir/$reviewer"
@@ -157,14 +208,14 @@ for reviewer in "${selected[@]}"; do
   build_prompt "$reviewer" "$reviewer_dir/prompt.txt"
   (
     cd "$repo_root"
-    codex exec \
-      --ephemeral \
-      --model "${SELF_REVIEW_CODEX_MODEL:-gpt-5.6-terra}" \
-      --sandbox read-only \
-      --output-schema "$schema_file" \
-      --output-last-message "$reviewer_dir/result.json" \
-      --color never \
-      - < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log"
+    case "$agent_name" in
+      codex) run_codex "$reviewer_dir" ;;
+      agy) run_agy "$reviewer_dir" ;;
+      *)
+        echo "Error: unsupported agent: $agent_name" >&2
+        exit 1
+        ;;
+    esac
   ) &
   pids+=("$!")
 done
@@ -173,7 +224,7 @@ failed=false
 for index in "${!pids[@]}"; do
   if ! wait "${pids[$index]}"; then
     reviewer=${selected[$index]}
-    echo "Error: Codex reviewer failed: $reviewer" >&2
+    echo "Error: reviewer failed: $reviewer" >&2
     sed -n '1,120p' "$work_dir/$reviewer/stderr.log" >&2
     failed=true
   fi
@@ -182,7 +233,9 @@ done
 # Recorded on failure too: a run that dies on the usage limit is exactly the one
 # whose snapshot must be refreshed, otherwise a stale reset_at sends every later
 # review back to Codex while the limit still holds.
-record_codex_usage || true
+if [[ "$agent_name" == codex ]]; then
+  record_codex_usage || true
+fi
 
 [[ "$failed" == false ]] || exit 1
 
