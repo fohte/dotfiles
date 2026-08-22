@@ -30,6 +30,17 @@ rules:
     tests:
       - deny: 'crit unpublish plan.md'
 
+  # Kills every crit daemon on the machine, including ones owned by other
+  # Claude Code sessions.
+  - deny: 'crit stop --all *'
+    message: 'crit stop --all kills daemons of other sessions too.'
+    fix_suggestion: 'Run `crit stop` (current session) or `crit stop <file>` instead.'
+    tests:
+      - deny: 'crit stop --all'
+      - deny: 'crit stop plan.md --all'
+      - allow: 'crit stop'
+      - allow: 'crit stop plan.md'
+
   # Posts review comments to a GitHub PR, visible to other collaborators.
   - ask: 'crit push *'
     tests:
