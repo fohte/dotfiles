@@ -1,23 +1,33 @@
-# Reviewer selection and prompt inputs are data so Claude and Codex backends
-# can eventually share one source of truth.
+# Reviewer selection and prompt inputs are data so every backend (Claude
+# subagents, Codex, Antigravity, ...) shares one source of truth.
+#
+# `default_agent` / per-reviewer `agent` name which CLI runs a reviewer
+# (`claude` or a key under `agents:`). `definition` names the reviewer
+# definition file under ~/.claude/agents/, independent of which agent runs it.
+default_agent: claude
+
+agents:
+  codex:
+    model: gpt-5.6-terra
+
 reviewers:
   behavior:
     always: true
-    agent: self-review-behavior.md
+    definition: self-review-behavior.md
     references:
       - self-review/references/_common.md
       - self-review/references/behavior.md
 
   structure:
     always: true
-    agent: self-review-structure.md
+    definition: self-review-structure.md
     references:
       - self-review/references/_common.md
       - self-review/references/structure.md
 
   convention:
     always: true
-    agent: self-review-convention.md
+    definition: self-review-convention.md
     references:
       - self-review/references/_common.md
       - self-review/references/convention.md
@@ -31,7 +41,7 @@ reviewers:
       # `# ` at the start of a line in prose files is a Markdown heading, not
       # a comment marker.
       exclude: '\.(md|mdx|markdown|rst|adoc|txt)$'
-    agent: self-review-comment.md
+    definition: self-review-comment.md
     references:
       - self-review/references/_common.md
       - self-review/references/comment.md
@@ -40,7 +50,7 @@ reviewers:
     trigger:
       kind: paths
       pattern: '^(\.github/workflows/.*\.ya?ml|\.github/actions/.+/action\.ya?ml|action\.ya?ml)$'
-    agent: self-review-gha-security.md
+    definition: self-review-gha-security.md
     references:
       - gha-security-review/SKILL.md
       - gha-security-review/references/*.md
@@ -51,7 +61,7 @@ reviewers:
       kind: paths
       case_insensitive: true
       pattern: '(^|/)(tests?|__tests__|spec)/|(\.|_)(test|spec|stories)\.[a-zA-Z]+$|_test\.(go|py|rb)$|_spec\.rb$'
-    agent: self-review-test-philosophy.md
+    definition: self-review-test-philosophy.md
     references:
       - test-philosophy/SKILL.md
       - self-review/references/_common.md
@@ -61,7 +71,7 @@ reviewers:
       kind: paths
       case_insensitive: true
       pattern: '(^|/)(db|database)/(migrate|migrations|schema)/|(^|/)(migrations?|schema)/.*\.(sql|rb|py|ts|js)$|(^|/)schema\.(rb|sql|prisma)$|(^|/)structure\.sql$|\.(sql|prisma)$'
-    agent: self-review-db-schema.md
+    definition: self-review-db-schema.md
     references:
       - postgresql-table-design/SKILL.md
       - self-review/references/_common.md
@@ -71,7 +81,7 @@ reviewers:
       kind: added-lines
       paths: '\.(md|mdx|markdown|rst|adoc|txt)$'
       pattern: '[ぁ-んァ-ヶ一-龯]'
-    agent: self-review-japanese-writing.md
+    definition: self-review-japanese-writing.md
     references:
       - japanese-tech-writing/SKILL.md
 
@@ -81,7 +91,7 @@ reviewers:
       case_insensitive: true
       pattern: '(^|/)README\.(md|mdx|markdown|rst)$|^docs/.+\.(md|mdx|markdown|rst)$'
       exclude: '(^|/)templates?/'
-    agent: self-review-readme.md
+    definition: self-review-readme.md
     references:
       - crafting-effective-readmes/SKILL.md
       - crafting-effective-readmes/references/*.md
@@ -92,7 +102,7 @@ reviewers:
       case_insensitive: true
       pattern: 'eslint-disable|@ts-ignore|@ts-expect-error|stylelint-disable|rubocop:(disable|todo)|\bnoqa\b|type:[[:space:]]*ignore|pylint:[[:space:]]*disable|\bnosec\b|//[[:space:]]*nolint|shellcheck disable|ignorePatterns|\bExclude[[:space:]]*:'
       exclude: '^config/claude/(skills/self-review/|agents/self-review-.*\.md$)'
-    agent: self-review-lint-suppression.md
+    definition: self-review-lint-suppression.md
     references:
       - self-review/references/_common.md
       - self-review/references/lint-suppression.md

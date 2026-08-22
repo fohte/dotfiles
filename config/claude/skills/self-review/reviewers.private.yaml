@@ -1,0 +1,13 @@
+# Private-role overlay merged into reviewers.yaml by select-reviewers
+# (via `dot role overlay`). Routes reviewers whose judgment amounts to
+# grading Claude's own prose to a non-Claude model (Antigravity's Gemini),
+# so the judge isn't grading against its own writing style.
+agents:
+  agy:
+    model: gemini-3.1-pro-high
+
+reviewers:
+  comment:
+    agent: agy
+  japanese-writing:
+    agent: agy

@@ -10,7 +10,7 @@ usage() {
 
 [ "$#" -eq 1 ] || usage
 
-for required_command in git jq yq; do
+for required_command in git jq yq dot; do
   command -v "$required_command" > /dev/null || {
     echo "Error: required command not found: $required_command" >&2
     exit 127
@@ -54,6 +54,39 @@ reviewers_file="$skill_dir/reviewers.yaml"
 
 work_dir=$(mktemp -d -t self-review-select.XXXXXX)
 trap 'rm -rf "$work_dir"' EXIT
+
+# `dot role overlay` resolves the overlay file purely by role + filename, not
+# by content: on `work` role it looks up reviewers.yaml in a separate
+# config-overlays repo instead of this reviewers.private.yaml. Nothing here
+# stops that overlay from also defining `agents:` / `agent:` and routing a
+# reviewer to a non-claude agent on a work machine -- it just isn't this
+# file, and today's work overlay doesn't do it.
+overlay_file=$(dot role overlay "$reviewers_file" 2> /dev/null || true)
+if [[ -n "$overlay_file" ]]; then
+  yq eval-all 'select(fileIndex==0) * select(fileIndex==1)' "$reviewers_file" "$overlay_file" > "$work_dir/reviewers.yaml"
+  reviewers_file="$work_dir/reviewers.yaml"
+fi
+
+if [[ -n "${SELF_REVIEW_BACKEND:-}" ]]; then
+  valid_agents=$(yq -r '(["claude"] + (.agents // {} | keys)) | join(" ")' "$reviewers_file")
+  [[ " $valid_agents " == *" $SELF_REVIEW_BACKEND "* ]] || {
+    echo "Error: unsupported SELF_REVIEW_BACKEND: $SELF_REVIEW_BACKEND" >&2
+    exit 2
+  }
+fi
+
+# The snapshot run-external-reviewers leaves behind after a Codex call stays
+# authoritative until the window resets, so a limit check here never needs a
+# network call, and the usage endpoint stays untouched for as long as the
+# limit holds.
+codex_usage_file="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-usage.json"
+codex_over_limit() {
+  [[ -f "$codex_usage_file" ]] || return 1
+  jq -e \
+    --argjson now "$(date +%s)" \
+    'any(.[]; $now < .reset_at and .used_percent >= 100)' \
+    "$codex_usage_file" > /dev/null
+}
 
 # A copied index keeps every selector read on the same staged snapshot even
 # when another process stages files concurrently.
@@ -129,7 +162,16 @@ while IFS= read -r reviewer; do
     [[ "$status" -eq 1 ]] || exit "$status"
   fi
   if [[ "$selected" == true ]]; then
-    agent=$(yq -r ".reviewers.\"$reviewer\".agent" "$reviewers_file")
+    definition=$(yq -r ".reviewers.\"$reviewer\".definition" "$reviewers_file")
+
+    resolved_agent=$(yq -r ".reviewers.\"$reviewer\".agent // .default_agent" "$reviewers_file")
+    [[ -n "${SELF_REVIEW_BACKEND:-}" ]] && resolved_agent="$SELF_REVIEW_BACKEND"
+    fallback_reason=null
+    if [[ "$resolved_agent" == codex ]] && codex_over_limit; then
+      resolved_agent=claude
+      fallback_reason='"Codex is over its usage limit, so this reviewer ran on the Claude backend instead."'
+    fi
+
     references_file="$work_dir/$reviewer.references"
     : > "$references_file"
     while IFS= read -r relative; do
@@ -146,11 +188,14 @@ while IFS= read -r reviewer; do
     done < <(yq -r ".reviewers.\"$reviewer\".references[]" "$reviewers_file")
     jq -n \
       --arg name "$reviewer" \
-      --arg agent "${agent%.md}" \
+      --arg agent "$resolved_agent" \
+      --arg definition "${definition%.md}" \
+      --argjson fallback_reason "$fallback_reason" \
       --rawfile references "$references_file" \
       --rawfile targets "$targets_file" \
-      '{name: $name, agent: $agent, references: ($references | split("\n") | map(select(length > 0))), targets: ($targets | split("\n") | map(select(length > 0)))}' >> "$manifest"
+      '{name: $name, agent: $agent, definition: $definition, fallback_reason: $fallback_reason, references: ($references | split("\n") | map(select(length > 0))), targets: ($targets | split("\n") | map(select(length > 0)))}' >> "$manifest"
   fi
 done < <(yq -r '.reviewers | to_entries[] | .key' "$reviewers_file")
 
-jq -s --arg range "$resolved_range" '{range: $range, reviewers: .}' "$manifest"
+agents_json=$(yq -o=json '.agents // {}' "$reviewers_file")
+jq -s --arg range "$resolved_range" --argjson agents "$agents_json" '{range: $range, agents: $agents, reviewers: .}' "$manifest"
