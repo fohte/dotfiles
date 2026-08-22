@@ -134,7 +134,7 @@ echo "## Why
 
 {{- end }}
 
-ドラフトは `/tmp/pr-body-draft/<owner>/<repo>/<branch>.md` に作成される。以降のコマンドではパス指定不要。
+ドラフトは決まったパスに作成される (`~/.claude/skills/create-pr/scripts/draft-path` で確認できる)。以降のコマンドではパス指定不要。
 
 ### Frontmatter
 
@@ -167,7 +167,7 @@ steps:
 
 ### 手順
 
-1. 投入されたファイル (`/tmp/pr-body-draft/<owner>/<repo>/<branch>.md`) を Read する
+1. 投入されたファイル (`~/.claude/skills/create-pr/scripts/draft-path` で確認できるパス) を Read する
 2. **Step 1 で示した全ルールを順に**、各ルールについて以下の形式でユーザーに発話する{{ if $has_design_decisions }} (Rule 1〜14){{ else }} (Rule 1〜8, 10〜14。Rule 9 は省略){{ end }}:
 
     ```

@@ -46,8 +46,8 @@ PROMPT
   )
   result=$(call_agy "$prompt" "$schema_file")
   agy_result_or_die "$result"
-  new_title=$(jq -r '.structured_output.title' <<< "$result")
-  new_body=$(jq -r '.structured_output.body' <<< "$result")
+  new_title=$(jq -r '.structured_output.pr_title' <<< "$result")
+  new_body=$(jq -r '.structured_output.pr_body' <<< "$result")
   new_frontmatter=$(NEW_TITLE="$new_title" yq '.title = strenv(NEW_TITLE) | .steps.submit = false' <<< "$frontmatter")
 else
   conversation_id=$(cat "${draft_path}.agy-conversation")
@@ -66,8 +66,8 @@ PROMPT
   )
   result=$(call_agy "$prompt" "$schema_file" "$conversation_id")
   agy_result_or_die "$result"
-  new_title=$(jq -r '.structured_output.title' <<< "$result")
-  new_body=$(jq -r '.structured_output.body' <<< "$result")
+  new_title=$(jq -r '.structured_output.pr_title' <<< "$result")
+  new_body=$(jq -r '.structured_output.pr_body' <<< "$result")
   new_frontmatter=$(NEW_TITLE="$new_title" yq '.title = strenv(NEW_TITLE)' <<< "$frontmatter")
 fi
 

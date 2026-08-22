@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "additionalProperties": false,
-  "required": ["title", "body"],
+  "required": ["pr_title", "pr_body"],
   "properties": {
-    "title": { "type": "string" },
-    "body": { "type": "string" }
+    "pr_title": { "type": "string" },
+    "pr_body": { "type": "string" }
   }
 }

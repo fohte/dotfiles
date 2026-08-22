@@ -46,10 +46,10 @@ PROMPT
 result=$(call_agy "$prompt" "$schema_file")
 agy_result_or_die "$result"
 
-title=$(jq -r '.structured_output.title' <<< "$result")
+title=$(jq -r '.structured_output.pr_title' <<< "$result")
 conversation_id=$(jq -r '.conversation_id' <<< "$result")
 
-jq -r '.structured_output.body' <<< "$result" | a ai pr-draft new --title "$title"
+jq -r '.structured_output.pr_body' <<< "$result" | a ai pr-draft new --title "$title"
 
 draft_path=$("$script_dir/draft-path")
 printf '%s' "$conversation_id" > "${draft_path}.agy-conversation"
