@@ -1,0 +1,55 @@
+#!/bin/bash
+# Draft the PR body via agy in one shot (writing + self-review are the same
+# call — see the "$agy" branch of Step 1 in template.md for why). The diff
+# and the resulting draft never enter Claude's context; only this script
+# sees them.
+set -euo pipefail
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+rules_file="$HOME/.claude/contexts/skill/create-pr/rules.md"
+schema_file="$script_dir/agy-schema.json"
+# shellcheck source=config/claude/skills/create-pr/scripts/call-agy.sh disable=SC1091
+source "$script_dir/call-agy.sh"
+
+diff=$(git diff --no-ext-diff origin/master...HEAD)
+[ -n "$diff" ] || {
+  echo "Error: diff against origin/master is empty." >&2
+  exit 1
+}
+commits=$(git log origin/master..HEAD)
+
+has_release_please=$("$script_dir/has-release-please")
+pr_template=$("$script_dir/find-pr-template")
+
+rules=$(
+  jq -n --arg has_release_please "$has_release_please" --arg pr_template "$pr_template" \
+    '{has_release_please:$has_release_please, pr_template:$pr_template}' |
+    gomplate -d vars=stdin:///vars.json -f "$rules_file"
+)
+
+prompt=$(
+  cat << PROMPT
+GitHub の Pull Request の title と body を日本語で書く。以下のルールに厳密に従うこと。narration や説明は不要で、指定した JSON 形式でだけ出力する。
+
+$rules
+
+<diff>
+$diff
+</diff>
+
+<commits>
+$commits
+</commits>
+PROMPT
+)
+
+result=$(call_agy "$prompt" "$schema_file")
+agy_result_or_die "$result"
+
+title=$(jq -r '.structured_output.title' <<< "$result")
+conversation_id=$(jq -r '.conversation_id' <<< "$result")
+
+jq -r '.structured_output.body' <<< "$result" | a ai pr-draft new --title "$title"
+
+draft_path=$("$script_dir/draft-path")
+printf '%s' "$conversation_id" > "${draft_path}.agy-conversation"

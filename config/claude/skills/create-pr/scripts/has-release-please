@@ -1,0 +1,4 @@
+#!/bin/bash
+set -euo pipefail
+root=$(git rev-parse --show-toplevel)
+{ [ -f "$root/release-please-config.json" ] || [ -f "$root/.release-please-manifest.json" ]; } && echo true || echo false

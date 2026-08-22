@@ -1,0 +1,8 @@
+- 直訳ではなく意図を汲んだ自然な英語に
+- type との二重表現を英語でも避ける (`fix: fix ...` 不可)
+- `fix` type: 解決策を述べる (`support` は新機能ニュアンスなので `fix` で使わない)
+- `feat` type: 「〜できるようにする」は `support`/`allow` (`enable` は「有効化」ニュアンス)
+- 文を `When`/`If`/`Since`/`Because`/`Without` で始めない
+- 自然な構造に: `Fix existing violations and add annotations` → `Fix existing violations by adding annotations`
+- 冗長表現を避ける: `in order to` → `to`、`make sure to` → `ensure` or 命令形
+- `etc.` ではなく `or similar tools` / `and related features`
