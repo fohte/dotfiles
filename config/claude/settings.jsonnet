@@ -26,6 +26,17 @@ local env(name) = std.extVar(name);
   // in-app agent-team feature, so the agent view panel is redundant.
   disableAgentView: true,
 
+  // Artifacts publish work product to claude.ai, which no local workflow here
+  // depends on; crit preview covers viewing generated HTML locally. Disabling
+  // rather than denying: a deny rule blocks the call but keeps the (large)
+  // tool definition in every request.
+  disableArtifact: true,
+
+  // Fan-out is driven by the Agent tool and separate sessions. Gates only the
+  // Workflow tool, /workflows, and the ultracode keyword; SendMessage and the
+  // Agent tool are unaffected.
+  disableWorkflows: true,
+
   includeCoAuthoredBy: true,
 
   // Bundled `claude-api` skill inlines its entire multi-language reference
@@ -91,10 +102,6 @@ local env(name) = std.extVar(name);
       'mcp__pencil',
     ],
     deny: [
-      // Artifacts publish work product to claude.ai, which no local workflow
-      // here depends on; crit preview covers viewing generated HTML locally.
-      'Artifact',
-
       'NotebookEdit',
       'Read(.env)',
       'Read(.env.local)',
