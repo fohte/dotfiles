@@ -57,6 +57,14 @@ fi
 model=$(jq -r --arg agent "$agent_name" '.agents[$agent].model // empty' "$manifest_file")
 [[ "$agent_name" == codex ]] && model="${SELF_REVIEW_CODEX_MODEL:-$model}"
 
+# Neither agent requires a model: an unset one just means "use the CLI's own
+# default" (checked once here so run_codex/run_agy don't duplicate it). The
+# `[@]+` guard matters because this script's shebang runs under macOS's
+# bundled /bin/bash (3.2, pre-dates GPLv3), whose `nounset` treats expanding
+# an empty array as an unbound-variable error.
+model_args=()
+[[ -n "$model" ]] && model_args=(--model "$model")
+
 diff_file="$work_dir/diff.patch"
 files_file="$work_dir/files.txt"
 git diff --no-ext-diff "${diff_args[@]}" > "$diff_file"
@@ -165,7 +173,7 @@ run_codex() {
   local reviewer_dir="$1"
   codex exec \
     --ephemeral \
-    --model "$model" \
+    "${model_args[@]+"${model_args[@]}"}" \
     --sandbox read-only \
     --output-schema "$schema_file" \
     --output-last-message "$reviewer_dir/result.json" \
@@ -184,7 +192,7 @@ run_agy() {
   agy \
     --sandbox \
     --add-dir "$repo_root" \
-    --model "$model" \
+    "${model_args[@]+"${model_args[@]}"}" \
     --output-format json \
     --json-schema "$schema_file" \
     --print="$(cat "$reviewer_dir/prompt.txt")" \

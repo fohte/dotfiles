@@ -6,10 +6,6 @@
 # definition file under ~/.claude/agents/, independent of which agent runs it.
 default_agent: claude
 
-agents:
-  codex:
-    model: gpt-5.6-terra
-
 reviewers:
   behavior:
     always: true

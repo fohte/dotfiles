@@ -67,14 +67,6 @@ if [[ -n "$overlay_file" ]]; then
   reviewers_file="$work_dir/reviewers.yaml"
 fi
 
-if [[ -n "${SELF_REVIEW_BACKEND:-}" ]]; then
-  valid_agents=$(yq -r '(["claude"] + (.agents // {} | keys)) | join(" ")' "$reviewers_file")
-  [[ " $valid_agents " == *" $SELF_REVIEW_BACKEND "* ]] || {
-    echo "Error: unsupported SELF_REVIEW_BACKEND: $SELF_REVIEW_BACKEND" >&2
-    exit 2
-  }
-fi
-
 # The snapshot run-external-reviewers leaves behind after a Codex call stays
 # authoritative until the window resets, so a limit check here never needs a
 # network call, and the usage endpoint stays untouched for as long as the
@@ -165,7 +157,6 @@ while IFS= read -r reviewer; do
     definition=$(yq -r ".reviewers.\"$reviewer\".definition" "$reviewers_file")
 
     resolved_agent=$(yq -r ".reviewers.\"$reviewer\".agent // .default_agent" "$reviewers_file")
-    [[ -n "${SELF_REVIEW_BACKEND:-}" ]] && resolved_agent="$SELF_REVIEW_BACKEND"
     fallback_reason=null
     if [[ "$resolved_agent" == codex ]] && codex_over_limit; then
       resolved_agent=claude
