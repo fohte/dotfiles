@@ -12,7 +12,7 @@
 
 以下の手順で PR を作成する。
 
-**重要:** diff の確認には必ず `origin/master` と比較すること (`git diff origin/master...HEAD`)。ローカルの `master` は古い可能性がある。
+**重要:** diff の確認には必ず remote の default branch と比較すること (`git diff "origin/$(git main)...HEAD"`)。ローカルの default branch は古い可能性がある。
 
 ## 開始時の宣言 (必須・最初の応答で実行)
 
@@ -33,7 +33,7 @@ create-pr skill を起動したら、**最初の応答で**以下の必須ステ
 ```bash
 git log @{u}..HEAD --oneline
 # upstream 未設定なら
-git log origin/master..HEAD --oneline
+git log "origin/$(git main)..HEAD" --oneline
 ```
 
 未 push のコミットがなければ push は不要。

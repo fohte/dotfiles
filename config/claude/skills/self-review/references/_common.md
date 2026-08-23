@@ -4,11 +4,10 @@
 
 ## 実行手順 (共通)
 
-`~/.claude/agents/self-review-<name>.md` はプロンプトに `range: <値>` の形式で `git diff` の対象範囲を受け取り、以下の手順で動く。
+reviewer はプロンプトに、自分の agent 定義・reference・適用される `CLAUDE.md` / `AGENTS.md` を `<resource>` として、レビュー対象を `<review-targets>` / `<changed-files>` / `<diff>` として、いずれも埋め込み済みで受け取る。
 
-1. 自分の Bash tool で `git diff <range>` を実行し、レビュー対象の diff を取得する。
-2. diff で変更されたファイルそれぞれについて、そのディレクトリから repo root まで遡って存在する `CLAUDE.md` を Read する (重複は 1 回のみ)。repo root に `.gemini/styleguide.md` があれば合わせて Read する。
-3. 自分の reference の「出力形式」セクションに厳密に従って結果を返す。指摘 1 件ごとに **指摘 ID** (`<観点番号>:<file>:<LINE>`) を必ず付ける。
+1. 埋め込まれた `<diff>` をレビュー対象とする。diff や `CLAUDE.md` を自分で取得し直さない。
+2. 自分の reference の「出力形式」セクションに厳密に従って結果を返す。指摘 1 件ごとに **指摘 ID** (`<観点番号>:<file>:<LINE>`) を必ず付ける。
 
 ## reviewer 名簿
 
