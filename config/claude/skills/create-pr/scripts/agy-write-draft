@@ -18,6 +18,20 @@ diff=$(git diff --no-ext-diff origin/master...HEAD)
 }
 commits=$(git log origin/master..HEAD)
 
+branch=$(git branch --show-current)
+purpose=$(git config --get "branch.$branch.x-purpose" || true)
+purpose_block=""
+if [ -n "$purpose" ]; then
+  purpose_block=$(
+    cat << PURPOSE
+
+<branch_purpose>
+$purpose
+</branch_purpose>
+PURPOSE
+  )
+fi
+
 has_release_please=$("$script_dir/has-release-please")
 pr_template=$("$script_dir/find-pr-template")
 
@@ -32,6 +46,7 @@ prompt=$(
 GitHub の Pull Request の title と body を日本語で書く。以下のルールに厳密に従うこと。narration や説明は不要で、指定した JSON 形式でだけ出力する。
 
 $rules
+$purpose_block
 
 <diff>
 $diff

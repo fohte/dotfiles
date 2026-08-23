@@ -4,9 +4,9 @@
 call_agy() {
   local prompt="$1" schema_file="$2" conversation_id="${3:-}"
   if [ -n "$conversation_id" ]; then
-    agy -p "$prompt" --conversation "$conversation_id" --output-format json --json-schema "$schema_file"
+    agy --print="$prompt" --conversation "$conversation_id" --output-format json --json-schema "$schema_file"
   else
-    agy -p "$prompt" --output-format json --json-schema "$schema_file"
+    agy --print="$prompt" --output-format json --json-schema "$schema_file"
   fi
 }
 
