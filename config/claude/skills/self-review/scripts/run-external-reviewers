@@ -205,8 +205,11 @@ run_agy() {
     --output-format json \
     --json-schema "$schema_file" \
     --print="$(cat "$reviewer_dir/prompt.txt")" \
-    > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || return 1
-  jq -e '.status == "SUCCESS"' "$reviewer_dir/stdout.log" > /dev/null || return 1
+    > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || true
+  # A tool denied by the permission rules in config/agy leaves `status` at ERROR
+  # even though the review itself ran to completion, so the schema-checked
+  # payload is the only signal separating a finished review from a failed run.
+  jq -e '.structured_output != null' "$reviewer_dir/stdout.log" > /dev/null || return 1
   jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
 }
 

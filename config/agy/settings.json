@@ -1,0 +1,6 @@
+{
+  "enableTelemetry": false,
+  "permissions": {
+    "deny": ["command(*)", "unsandboxed(*)"]
+  }
+}

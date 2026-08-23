@@ -10,12 +10,13 @@ call_agy() {
   fi
 }
 
+# A tool denied by the permission rules in config/agy leaves `status` at ERROR
+# even though the draft itself was produced, so the schema-checked payload is the
+# only signal separating a finished run from a failed one.
 agy_result_or_die() {
   local result="$1"
-  local status
-  status=$(jq -r '.status' <<< "$result")
-  if [ "$status" != "SUCCESS" ]; then
-    echo "Error: agy failed (status: $status)" >&2
+  if ! jq -e '.structured_output != null' <<< "$result" > /dev/null; then
+    echo "Error: agy failed (status: $(jq -r '.status' <<< "$result"))" >&2
     exit 1
   fi
 }
