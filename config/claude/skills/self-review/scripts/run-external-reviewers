@@ -19,7 +19,20 @@ agent_name="$3"
   exit 2
 }
 
-for command in git jq "$agent_name"; do
+# The reviewers.yaml agent key is a routing label, not a binary name, so the
+# executable is resolved here rather than assumed to match. Resolving it also
+# rejects an unknown agent before any reviewer is spawned; the dispatch below
+# would otherwise surface it as N background reviewers that simply failed.
+case "$agent_name" in
+  codex) agent_command=codex ;;
+  agy) agent_command=agy ;;
+  *)
+    echo "Error: unsupported agent: $agent_name" >&2
+    exit 2
+    ;;
+esac
+
+for command in git jq "$agent_command"; do
   command -v "$command" > /dev/null || {
     echo "Error: required command not found: $command" >&2
     exit 127
@@ -211,10 +224,6 @@ for reviewer in "${selected[@]}"; do
     case "$agent_name" in
       codex) run_codex "$reviewer_dir" ;;
       agy) run_agy "$reviewer_dir" ;;
-      *)
-        echo "Error: unsupported agent: $agent_name" >&2
-        exit 1
-        ;;
     esac
   ) &
   pids+=("$!")
