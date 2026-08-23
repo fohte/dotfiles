@@ -33,7 +33,15 @@ local env(name) = std.extVar(name);
   // Agent tool are unaffected.
   disableWorkflows: true,
 
-  includeCoAuthoredBy: true,
+  // `commit` drops the `Co-Authored-By` trailer, `sessionUrl` the
+  // `Claude-Session` one that otherwise puts a claude.ai session link in the
+  // history of every public repository committed to from here. `pr` is left
+  // unset, so pull request bodies keep their footer.
+  // https://code.claude.com/docs/en/settings-reference.md#attribution
+  attribution: {
+    commit: '',
+    sessionUrl: false,
+  },
 
   // Bundled skills (dataviz, code-review, claude-api, etc.) are never used
   // here and cost context on every session. Disables every bundled skill
