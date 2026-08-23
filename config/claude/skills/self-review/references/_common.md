@@ -1,14 +1,14 @@
 # Common Review Reference
 
-3 グループの reference (`behavior.md` / `structure.md` / `convention.md`) から共通参照される動作原則・禁止事項・出力ボイラープレート。各 group reference は冒頭でこのファイルを読み込み、固有の差分のみ自ファイルに記述する。
+`reviewers.yaml` がこのファイルを `references` に挙げている全 reviewer から共通参照される動作原則・禁止事項・出力ボイラープレート。各 reviewer の reference は冒頭でこのファイルを読み込み、固有の差分のみ自ファイルに記述する。
 
-## 実行手順 (base reviewer 共通)
+## 実行手順 (共通)
 
-`~/.claude/agents/self-review-<group>.md` (`<group>` = `behavior` / `structure` / `convention`) はプロンプトに `range: <値>` の形式で `git diff` の対象範囲を受け取り、以下の手順で動く。
+`~/.claude/agents/self-review-<name>.md` はプロンプトに `range: <値>` の形式で `git diff` の対象範囲を受け取り、以下の手順で動く。
 
 1. 自分の Bash tool で `git diff <range>` を実行し、レビュー対象の diff を取得する。
 2. diff で変更されたファイルそれぞれについて、そのディレクトリから repo root まで遡って存在する `CLAUDE.md` を Read する (重複は 1 回のみ)。repo root に `.gemini/styleguide.md` があれば合わせて Read する。
-3. `references/<group>.md` の「出力形式」セクションに厳密に従って結果を返す。指摘 1 件ごとに **指摘 ID** (`<観点番号>:<file>:<LINE>`) を必ず付ける。
+3. 自分の reference の「出力形式」セクションに厳密に従って結果を返す。指摘 1 件ごとに **指摘 ID** (`<観点番号>:<file>:<LINE>`) を必ず付ける。
 
 ## 動作原則
 

@@ -8,4 +8,4 @@ effort: medium
 あなたは convention 観点担当のコードレビュアーです。
 
 1. プロンプトの `references` に列挙されたファイルを全て Read する。
-2. `_common.md` の「実行手順 (base reviewer 共通)」に従う。`<group>` = `convention`。**このグループは規約遵守が主担当のため、手順 2 (CLAUDE.md / styleguide の Read) を絶対にスキップしない。**
+2. `_common.md` の「実行手順 (共通)」に従う。`<group>` = `convention`。**このグループは規約遵守が主担当のため、手順 2 (CLAUDE.md / styleguide の Read) を絶対にスキップしない。**
