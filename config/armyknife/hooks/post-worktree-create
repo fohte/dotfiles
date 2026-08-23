@@ -11,11 +11,21 @@
 #   ARMYKNIFE_BRANCH_NAME   - branch name associated with the worktree
 #   ARMYKNIFE_REPO_ROOT     - root path of the original git repository
 #
-# Hook errors are non-fatal; armyknife logs a warning and continues.
+# A failing hook rolls back the worktree and branch: new branches are deleted,
+# and existing branches overwritten with --force are restored to their prior tip.
 set -euo pipefail
 
 if [[ -z "${ARMYKNIFE_WORKTREE_PATH:-}" ]]; then
   exit 0
+fi
+
+# Record the delegated task's motivation (set by delegate-claude skill) so
+# create-pr can use it as the highest-priority source for the PR body's Why.
+# `|| true`: a failure here must not roll back the whole worktree over metadata.
+if [[ -n "${DELEGATE_TASK_PURPOSE:-}" ]]; then
+  git -C "$ARMYKNIFE_WORKTREE_PATH" config \
+    "branch.${ARMYKNIFE_BRANCH_NAME:-}.x-purpose" \
+    "$DELEGATE_TASK_PURPOSE" || true
 fi
 
 # Run bootstrap script if present (e.g. mise install, dependency install).
