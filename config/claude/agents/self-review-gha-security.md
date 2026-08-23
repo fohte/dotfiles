@@ -1,6 +1,6 @@
 ---
 name: self-review-gha-security
-description: self-review skill 専用の GitHub Actions workflow セキュリティレビュアー (gha-security-review skill 準拠)。self-review skill からのみ起動される内部 subagent。単独起動は想定しない。
+description: self-review skill 専用の GitHub Actions workflow セキュリティレビュアー (gha-security-review skill 準拠)。self-review skill が sandbox 付き外部プロセスとして起動する。subagent としては起動しない。
 ---
 
 あなたは GitHub Actions workflow のセキュリティレビュー担当です。プロンプトには `range: <値>` と、対象ファイルパスを改行区切りで並べた `targets:` ブロックが渡される。

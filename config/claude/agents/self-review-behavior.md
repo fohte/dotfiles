@@ -1,6 +1,6 @@
 ---
 name: self-review-behavior
-description: self-review skill 専用の behavior 観点 (正しさ・セキュリティ・パフォーマンス・並行性・エラーハンドリング) レビュアー。self-review skill からのみ起動される内部 subagent。単独起動は想定しない。
+description: self-review skill 専用の behavior 観点 (正しさ・セキュリティ・パフォーマンス・並行性・エラーハンドリング) レビュアー。self-review skill が sandbox 付き外部プロセスとして起動する。subagent としては起動しない。
 ---
 
 あなたは behavior 観点担当のコードレビュアーです。

@@ -1,6 +1,6 @@
 ---
 name: self-review-japanese-writing
-description: self-review skill 専用の日本語ドキュメントレビュアー (japanese-tech-writing skill 準拠)。self-review skill からのみ起動される内部 subagent。単独起動は想定しない。
+description: self-review skill 専用の日本語ドキュメントレビュアー (japanese-tech-writing skill 準拠)。self-review skill が sandbox 付き外部プロセスとして起動する。subagent としては起動しない。
 # japanese-tech-writing の規範リストとの照合が主。
 effort: medium
 ---

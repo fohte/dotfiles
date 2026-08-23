@@ -1,15 +1,14 @@
-# Reviewer selection and prompt inputs are data so every backend (Claude
-# subagents, Codex, Antigravity, ...) shares one source of truth.
+# Reviewer selection and prompt inputs are data so every backend (Claude, Codex,
+# Antigravity, ...) shares one source of truth.
 #
-# `default_agent` / per-reviewer `agent` name which backend runs a reviewer:
-# `claude` for an in-process subagent, or a key run-external-reviewers knows
-# (`claude-cli`, `codex`, `agy`), optionally configured under `agents:`.
-# `definition` names the reviewer definition file under ~/.claude/agents/,
-# independent of which agent runs it.
+# `default_agent` / per-reviewer `agent` name which backend runs a reviewer, and
+# must be a key run-external-reviewers knows (`claude`, `codex`, `agy`),
+# optionally configured under `agents:`. `definition` names the reviewer
+# definition file under ~/.claude/agents/, independent of which agent runs it.
 #
-# `claude-cli` is the same model as `claude` in a separate sandboxed process. A
-# subagent inherits the session's permission mode, so it can edit the repository
-# and run the test suite no matter what its reference tells it.
+# Every reviewer runs as a sandboxed external process. Claude also offers an
+# in-process subagent, but one inherits the session's permission mode, so it can
+# edit the repository and run the test suite no matter what its reference says.
 default_agent: claude
 
 reviewers:
@@ -22,7 +21,6 @@ reviewers:
 
   structure:
     always: true
-    agent: claude-cli
     definition: self-review-structure.md
     references:
       - self-review/references/_common.md

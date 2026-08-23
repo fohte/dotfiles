@@ -1,6 +1,6 @@
 ---
 name: self-review-readme
-description: self-review skill 専用の README / docs レビュアー (crafting-effective-readmes skill 準拠)。self-review skill からのみ起動される内部 subagent。単独起動は想定しない。
+description: self-review skill 専用の README / docs レビュアー (crafting-effective-readmes skill 準拠)。self-review skill が sandbox 付き外部プロセスとして起動する。subagent としては起動しない。
 ---
 
 あなたは crafting-effective-readmes 観点担当のドキュメントレビュアーです。プロンプトには `range: <値>` と、対象ファイルパスを改行区切りで並べた `targets:` ブロックが渡される。

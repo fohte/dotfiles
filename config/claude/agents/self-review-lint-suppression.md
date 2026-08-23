@@ -1,6 +1,6 @@
 ---
 name: self-review-lint-suppression
-description: self-review skill 専用の lint suppression レビュアー。eslint-disable / rubocop:disable / @ts-ignore / noqa などの suppress directive と ignore 設定が正当か、言い訳になっていないかを判定する。self-review skill からのみ起動される内部 subagent。単独起動は想定しない。
+description: self-review skill 専用の lint suppression レビュアー。eslint-disable / rubocop:disable / @ts-ignore / noqa などの suppress directive と ignore 設定が正当か、言い訳になっていないかを判定する。self-review skill が sandbox 付き外部プロセスとして起動する。subagent としては起動しない。
 # 対象は diff 中の suppress directive に限定され、判定はパターン照合が主。
 effort: medium
 ---

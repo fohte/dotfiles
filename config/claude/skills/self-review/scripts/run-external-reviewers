@@ -19,23 +19,17 @@ agent_name="$3"
   exit 2
 }
 
-# The reviewers.yaml agent key is a routing label, not a binary name, so the
-# executable is resolved here rather than assumed to match. Resolving it also
-# rejects an unknown agent before any reviewer is spawned; the dispatch below
+# Reject an unknown agent before any reviewer is spawned; the dispatch below
 # would otherwise surface it as N background reviewers that simply failed.
 case "$agent_name" in
-  codex) agent_command=codex ;;
-  agy) agent_command=agy ;;
-  # `claude` already names the in-process subagent backend in reviewers.yaml,
-  # so the external-process one needs a key of its own.
-  claude-cli) agent_command=claude ;;
+  codex | agy | claude) ;;
   *)
     echo "Error: unsupported agent: $agent_name" >&2
     exit 2
     ;;
 esac
 
-for command in git jq "$agent_command"; do
+for command in git jq "$agent_name"; do
   command -v "$command" > /dev/null || {
     echo "Error: required command not found: $command" >&2
     exit 127
@@ -283,7 +277,7 @@ for reviewer in "${selected[@]}"; do
     case "$agent_name" in
       codex) run_codex "$reviewer_dir" ;;
       agy) run_agy "$reviewer_dir" ;;
-      claude-cli) run_claude "$reviewer_dir" ;;
+      claude) run_claude "$reviewer_dir" ;;
     esac
   ) &
   pids+=("$!")

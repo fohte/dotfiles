@@ -1,6 +1,6 @@
 ---
 name: self-review-convention
-description: self-review skill 専用の convention 観点 (可観測性・ドキュメント整合性・プロジェクト規約遵守) レビュアー。self-review skill からのみ起動される内部 subagent。単独起動は想定しない。
+description: self-review skill 専用の convention 観点 (可観測性・ドキュメント整合性・プロジェクト規約遵守) レビュアー。self-review skill が sandbox 付き外部プロセスとして起動する。subagent としては起動しない。
 # 規約と実装の照合が主で、壊れ方の推論を要しない。
 effort: medium
 ---
