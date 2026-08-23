@@ -11,12 +11,14 @@ schema_file="$script_dir/agy-schema.json"
 # shellcheck source=config/claude/skills/create-pr/scripts/call-agy.sh disable=SC1091
 source "$script_dir/call-agy.sh"
 
-diff=$(git diff --no-ext-diff origin/master...HEAD)
+base="origin/$(git main)"
+
+diff=$(git diff --no-ext-diff "$base...HEAD")
 [ -n "$diff" ] || {
-  echo "Error: diff against origin/master is empty." >&2
+  echo "Error: diff against $base is empty." >&2
   exit 1
 }
-commits=$(git log origin/master..HEAD)
+commits=$(git log "$base..HEAD")
 
 branch=$(git branch --show-current)
 purpose=$(git config --get "branch.$branch.x-purpose" || true)
