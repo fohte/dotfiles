@@ -11,4 +11,4 @@ description: self-review skill 専用の GitHub Actions workflow セキュリテ
    diff では文脈が不足する場合に限り、リポジトリ内の対象 workflow 本体を Read してよい。
 3. skill の出力形式 (GHA-NNN の findings 形式) で HIGH / MEDIUM confidence のみ返す。各 finding に **指摘 ID** として `GHA:<file>:<LINE>` を付ける (self-review の dedup と統合するため)。
 
-動作確認のために実際にワークフローや検証スクリプトを実行したい場合は `~/.claude/skills/self-review/references/_common.md` の「動作を実行して検証したい場合」を Read し、それに従う (検証用ファイルをこのリポジトリ内に作成せず、Docker コンテナ内で行う)。
+動作確認のために実際にワークフローや検証スクリプトを実行したい場合は `~/.claude/skills/self-review/references/_common.md` の「動作原則」に従い、疑っている条件だけを叩く単発実行に限る。

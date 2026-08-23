@@ -57,10 +57,6 @@ conditional reviewer (`reviewers.yaml` の trigger に一致する diff での�
 
 group 固有の重要度補足 (例: structure の「動作非依存指摘は原則 🟡」) は各 group reference 側で上書き定義する。
 
-## 動作を実行して検証したい場合
-
-指摘の裏付けに実際にコードを実行して確かめたい場合、検証用のファイル・スクリプトをこのリポジトリ内に作成しない (他セッションの作業ツリーを汚し、`git clean` 等で消えて再現不能になる)。検証は Docker コンテナ内で行う (`docker run --rm ...`)。`~/ghq` は colima VM に read-only mount されているため (`config/colima/colima.yaml`)、コンテナ内でどれだけ書き込んでもホストのリポジトリには影響しない。
-
 ## 禁止事項 (全 group 共通)
 
 - linter / formatter の責務 (型を厳しくしろ、any 禁止、命名規則、インデント、import 順、未使用変数など)

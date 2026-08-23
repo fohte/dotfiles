@@ -12,4 +12,4 @@ description: self-review skill 専用の DB スキーマレビュアー (postgre
 3. プロジェクトが PostgreSQL でないと diff から判断できる場合 (例: MySQL 固有構文・MongoDB スキーマなど) は冒頭で「対象外: <理由>」と返して終了する。
 4. 指摘 1 件ごとに **指摘 ID** として `DB:<file>:<LINE>` を付け、重要度 (Critical / Warning) と症状要約を含めて返す。指摘ゼロなら「指摘なし」と返す。
 
-動作確認のために実際にマイグレーションや検証クエリを実行したい場合は `~/.claude/skills/self-review/references/_common.md` の「動作を実行して検証したい場合」を Read し、それに従う (検証用ファイルをこのリポジトリ内に作成せず、Docker コンテナ内で行う)。
+動作確認のために実際にマイグレーションや検証クエリを実行したい場合は `~/.claude/skills/self-review/references/_common.md` の「動作原則」に従い、疑っている条件だけを叩く単発実行に限る。
