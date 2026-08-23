@@ -103,7 +103,7 @@ rules:
 
   - allow: 'bash <var:claude-skill-scripts> *'
     tests:
-      - allow: 'bash ~/.claude/skills/self-review/scripts/run-external-reviewers arg1 --agent codex'
+      - allow: 'bash ~/.claude/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
 
   - allow: '<var:claude-skill-scripts>'
     tests:
@@ -111,7 +111,7 @@ rules:
 
   - allow: '<var:claude-skill-scripts> *'
     tests:
-      - allow: '~/.claude/skills/self-review/scripts/run-external-reviewers arg1 --agent codex'
+      - allow: '~/.claude/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
 
   # `rtk <cmd>` strips boilerplate from the inner command's stdout. Any other
   # rtk subcommand should go through `rtk proxy <cmd>`, which is registered

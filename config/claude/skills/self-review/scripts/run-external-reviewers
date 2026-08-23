@@ -5,31 +5,43 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: run-external-reviewers <manifest-file> --agent <name>" >&2
+  echo "Usage: run-external-reviewers <manifest-file>" >&2
   exit 2
 }
 
-[ "$#" -eq 3 ] || usage
+[ "$#" -eq 1 ] || usage
 manifest_file="$1"
-[[ "$2" == --agent ]] || usage
-agent_name="$3"
 
 [[ -f "$manifest_file" ]] || {
   echo "Error: manifest file not found: $manifest_file" >&2
   exit 2
 }
 
-# Reject an unknown agent before any reviewer is spawned; the dispatch below
-# would otherwise surface it as N background reviewers that simply failed.
-case "$agent_name" in
-  codex | agy | claude) ;;
-  *)
-    echo "Error: unsupported agent: $agent_name" >&2
-    exit 2
-    ;;
-esac
+# jq is checked on its own because reading the manifest below already needs it.
+command -v jq > /dev/null || {
+  echo "Error: required command not found: jq" >&2
+  exit 127
+}
 
-for command in git jq "$agent_name"; do
+# Reject an unknown agent, or one whose executable is missing, before any
+# reviewer is spawned; the dispatch below would otherwise surface it as N
+# background reviewers that simply failed.
+agents=()
+while IFS= read -r agent; do
+  agents+=("$agent")
+done < <(jq -r '[.reviewers[].agent] | unique[]' "$manifest_file")
+
+for agent in "${agents[@]+"${agents[@]}"}"; do
+  case "$agent" in
+    codex | agy | claude) ;;
+    *)
+      echo "Error: unsupported agent: $agent" >&2
+      exit 2
+      ;;
+  esac
+done
+
+for command in git "${agents[@]+"${agents[@]}"}"; do
   command -v "$command" > /dev/null || {
     echo "Error: required command not found: $command" >&2
     exit 127
@@ -62,19 +74,6 @@ if [[ "$resolved_range" == --cached ]]; then
   export GIT_INDEX_FILE="$work_dir/index"
 fi
 
-# select-reviewers already resolved agent + model from reviewers.yaml and its
-# role overlay, so this script never reads reviewers.yaml directly.
-model=$(jq -r --arg agent "$agent_name" '.agents[$agent].model // empty' "$manifest_file")
-[[ "$agent_name" == codex ]] && model="${SELF_REVIEW_CODEX_MODEL:-$model}"
-
-# Neither agent requires a model: an unset one just means "use the CLI's own
-# default" (checked once here so run_codex/run_agy don't duplicate it). The
-# `[@]+` guard matters because this script's shebang runs under macOS's
-# bundled /bin/bash (3.2, pre-dates GPLv3), whose `nounset` treats expanding
-# an empty array as an unbound-variable error.
-model_args=()
-[[ -n "$model" ]] && model_args=(--model "$model")
-
 diff_file="$work_dir/diff.patch"
 files_file="$work_dir/files.txt"
 git diff --no-ext-diff "${diff_args[@]}" > "$diff_file"
@@ -88,7 +87,7 @@ git diff --name-only --no-ext-diff "${diff_args[@]}" > "$files_file"
 selected=()
 while IFS= read -r reviewer; do
   selected+=("$reviewer")
-done < <(jq -r --arg agent "$agent_name" '.reviewers[] | select(.agent == $agent) | .name' "$manifest_file")
+done < <(jq -r '.reviewers[].name' "$manifest_file")
 
 if [ "${#selected[@]}" -eq 0 ]; then
   echo '[]'
@@ -216,10 +215,15 @@ run_agy() {
 # have to be dropped from the tool set, while `--tools` says nothing about what
 # a shell command may touch. Either one alone leaves the repository writable.
 #
-# The sandbox likewise stops Bash from reading a secret but not the Read tool,
-# which is why the same paths are denied twice. A permission rule needs the `//`
-# prefix to mean an absolute path, so prefixing one produces three slashes; a
-# plain `Read(/abs/path)` matches nothing and denies nothing.
+# Reads are bounded once per mechanism for the same reason. The sandbox denies
+# the checkout root so a review cannot wander into an unrelated repository, and
+# re-opens the one under review inside it: sandbox read rules resolve by
+# specificity, not deny-over-allow. Read, Grep, and Glob bypass the sandbox
+# entirely and are bounded instead by the working directory plus
+# `additionalDirectories`, so the secrets need a permission rule of their own. A
+# permission rule needs the `//` prefix to mean an absolute path, so prefixing
+# one produces three slashes; a plain `Read(/abs/path)` matches nothing and
+# denies nothing.
 #
 # Writes are allowed under the reviewer's own scratch directory. Settling a
 # doubt by running a minimal repro is part of the review, and it is per-reviewer
@@ -240,16 +244,21 @@ run_claude() {
     --arg repo "$repo_root" \
     --arg scratch "$reviewer_dir/scratch" \
     --arg home "$HOME" \
+    --arg checkout_root "$HOME/ghq" \
     '[$home + "/.ssh", $home + "/.aws", $home + "/.gnupg"] as $secrets
      | {
-         permissions: { deny: ($secrets | map("Read(//\(.)/**)")) },
+         permissions: {
+           deny: ($secrets | map("Read(//\(.)/**)")),
+           additionalDirectories: [$scratch]
+         },
          sandbox: {
            enabled: true,
            network: { allowedDomains: [], strictAllowlist: true },
            filesystem: {
              denyWrite: [$repo],
              allowWrite: [$scratch],
-             denyRead: $secrets
+             denyRead: ($secrets + [$checkout_root]),
+             allowRead: [$repo]
            }
          }
        }' > "$reviewer_dir/settings.json"
@@ -267,14 +276,32 @@ run_claude() {
   jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
 }
 
+codex_used=false
 pids=()
 for reviewer in "${selected[@]}"; do
   reviewer_dir="$work_dir/$reviewer"
   mkdir -p "$reviewer_dir"
   build_prompt "$reviewer" "$reviewer_dir/prompt.txt"
+
+  reviewer_agent=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .agent' "$manifest_file")
+  [[ "$reviewer_agent" == codex ]] && codex_used=true
+
+  # select-reviewers already resolved agent + model from reviewers.yaml and its
+  # role overlay, so this script never reads reviewers.yaml directly.
+  model=$(jq -r --arg agent "$reviewer_agent" '.agents[$agent].model // empty' "$manifest_file")
+  [[ "$reviewer_agent" == codex ]] && model="${SELF_REVIEW_CODEX_MODEL:-$model}"
+
+  # None of the agents require a model: an unset one just means "use the CLI's
+  # own default" (checked once here so run_codex/run_agy/run_claude don't
+  # duplicate it). The `[@]+` guard matters because this script's shebang runs
+  # under macOS's bundled /bin/bash (3.2, pre-dates GPLv3), whose `nounset`
+  # treats expanding an empty array as an unbound-variable error.
+  model_args=()
+  [[ -n "$model" ]] && model_args=(--model "$model")
+
   (
     cd "$repo_root"
-    case "$agent_name" in
+    case "$reviewer_agent" in
       codex) run_codex "$reviewer_dir" ;;
       agy) run_agy "$reviewer_dir" ;;
       claude) run_claude "$reviewer_dir" ;;
@@ -296,20 +323,30 @@ done
 # Recorded on failure too: a run that dies on the usage limit is exactly the one
 # whose snapshot must be refreshed, otherwise a stale reset_at sends every later
 # review back to Codex while the limit still holds.
-if [[ "$agent_name" == codex ]]; then
+if [[ "$codex_used" == true ]]; then
   record_codex_usage || true
 fi
 
-[[ "$failed" == false ]] || exit 1
-
+# One reviewer failing must not discard the ones that succeeded: a retry re-runs
+# every reviewer, so anything dropped here is lost for good if the retry fails on
+# a different reviewer. The caller reads which reviewers are missing off the
+# array and treats only those as unevaluated.
 result_files=()
 for reviewer in "${selected[@]}"; do
   result_file="$work_dir/$reviewer/result.json"
+  [[ -f "$result_file" ]] || continue
   jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$result_file" > /dev/null || {
     echo "Error: invalid reviewer result: $reviewer" >&2
-    exit 1
+    failed=true
+    continue
   }
   result_files+=("$result_file")
 done
 
-jq -s '.' "${result_files[@]}"
+if [ "${#result_files[@]}" -eq 0 ]; then
+  echo '[]'
+else
+  jq -s '.' "${result_files[@]}"
+fi
+
+[[ "$failed" == false ]] || exit 1

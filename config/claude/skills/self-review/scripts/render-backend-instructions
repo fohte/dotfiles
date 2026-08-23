@@ -9,8 +9,8 @@ cat << 'EOF'
 
 1. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
 2. Create a manifest file path (e.g. `mktemp -t self-review-manifest.XXXXXX`) and run `~/.claude/skills/self-review/scripts/select-reviewers <range> > <manifest-file>` once. Stop without launching anything if it fails. Do not call `select-reviewers` again for this review — every step below reads `<manifest-file>` instead. Its `reviewers` array is the complete launch manifest: do not add, remove, or reorder entries.
-3. Group manifest entries by `.agent` and run `~/.claude/skills/self-review/scripts/run-external-reviewers <manifest-file> --agent <name>` once per distinct `.agent` value. Each call reads the reviewers assigned to that agent directly from `<manifest-file>` and returns a JSON array of results. Issue every call in ONE assistant message so they run in parallel — a synchronous call blocks until it returns, so calls split across messages run strictly serially, one whole review after another.
+3. Run `~/.claude/skills/self-review/scripts/run-external-reviewers <manifest-file>` once. It launches every reviewer in `<manifest-file>` on its own agent in parallel and returns a JSON array of results.
 4. Never run a reviewer as a subagent, including as a fallback. Every reviewer is written for the sandbox this script puts it in, and a subagent would inherit this session's permission mode instead.
-5. On failure, retry the same command once. If the retry also fails, mark every reviewer assigned to that agent unevaluated.
+5. On failure, retry the same command once. It still prints the reviewers that succeeded, so take the union of both runs' results and mark unevaluated only the reviewers missing from it.
 6. If a manifest entry has a non-null `fallback_reason`, mention it for that reviewer in the final Summary output.
 EOF
