@@ -69,6 +69,7 @@ group 固有の重要度補足 (例: structure の「動作非依存指摘は原
 - そのコミットで触っていない箇所への out-of-scope 提案
 - 「Consider improving X」「You might want to」のような曖昧表現 (代わりに「X causes Y; do Z」と書く)
 - 抽象的なテストカバレッジ要求 (具体的な漏れシナリオが特定できる場合のみ指摘)
+- 既存テストスイート / lint / build の実行 (分かるのは「今 green か」だけで、どの観点の裏取りにもならない)
 
 ## 観点別評価マーカー
 
