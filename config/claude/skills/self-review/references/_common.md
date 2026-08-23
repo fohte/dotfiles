@@ -10,6 +10,34 @@
 2. diff で変更されたファイルそれぞれについて、そのディレクトリから repo root まで遡って存在する `CLAUDE.md` を Read する (重複は 1 回のみ)。repo root に `.gemini/styleguide.md` があれば合わせて Read する。
 3. 自分の reference の「出力形式」セクションに厳密に従って結果を返す。指摘 1 件ごとに **指摘 ID** (`<観点番号>:<file>:<LINE>`) を必ず付ける。
 
+## reviewer 名簿
+
+self-review は観点を分割して複数の reviewer を並列実行する。
+**自分の担当観点だけを見る。担当外は他の reviewer が見るので拾わない。**
+
+base reviewer (常に起動する):
+
+| reviewer   | 担当観点                                                                       |
+| ---------- | ------------------------------------------------------------------------------ |
+| behavior   | 1 正しさ / 2 セキュリティ / 3 パフォーマンス / 4 並行性 / 5 エラーハンドリング |
+| structure  | 6 互換性 / 8 保守性 / 9 テスト容易性 / 12 リファクタリング機会                 |
+| convention | 7 可観測性 / 10 ドキュメント整合性 / 11 プロジェクト規約遵守                   |
+
+conditional reviewer (`reviewers.yaml` の trigger に一致する diff でのみ起動する):
+
+| reviewer         | 担当                                      |
+| ---------------- | ----------------------------------------- |
+| comment          | 追加・変更されたコメントの質              |
+| lint-suppression | suppress directive と ignore 設定の正当性 |
+| test-philosophy  | テストの書き方                            |
+| db-schema        | DB スキーマ設計                           |
+| gha-security     | GitHub Actions workflow のセキュリティ    |
+| readme           | README / docs                             |
+| japanese-writing | 日本語文書                                |
+
+意図的に重複させている境界は、その両側の reference に明記してある (例: `convention.md` の観点 10 と `comment.md`)。
+明記が無い担当外の観点には踏み込まない。
+
 ## 動作原則
 
 - レビュー対象は diff の変更行とその直接的な影響範囲のみ。out-of-scope な提案はしない。
