@@ -1,0 +1,18 @@
+#!/bin/bash
+# Render a delegate-claude task.yaml into the --prompt markdown that `a cc new`
+# expects. See SKILL.md's "プロンプト構造" for the task.yaml schema.
+set -euo pipefail
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+task_file="${1:?Usage: render-task <task.yaml>}"
+
+# Keep in sync with the required-field column of SKILL.md's task.yaml field table.
+for field in purpose goal; do
+  value=$(yq -r ".$field // \"\"" "$task_file")
+  [ -n "$value" ] || {
+    echo "Error: task.yaml is missing required field '$field'." >&2
+    exit 1
+  }
+done
+
+gomplate -d task="$task_file" -f "$script_dir/prompt-template.md"

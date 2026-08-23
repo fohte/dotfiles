@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pr_title", "pr_body"],
+  "properties": {
+    "pr_title": { "type": "string" },
+    "pr_body": { "type": "string" }
+  }
+}

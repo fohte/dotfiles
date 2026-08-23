@@ -29,7 +29,11 @@ description: Delegate tasks to a separate Claude Code instance in its own git wo
 ## 使い方
 
 ```bash
-a cc new --worktree=<branch-name> --agent --label "<title>" --prompt "<instructions>"
+dir=$(mktemp -d /tmp/delegate.XXXXXX)
+# Write ツールで $dir/task.yaml を作成 (スキーマは後述の「プロンプト構造 (必須)」参照)
+prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
+DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
+  a cc new --worktree=<branch-name> --agent --label "<title>" --prompt "$prompt"
 ```
 
 - `branch-name`: 新しい環境用に作成するブランチ名
@@ -40,7 +44,10 @@ a cc new --worktree=<branch-name> --agent --label "<title>" --prompt "<instructi
     - 末尾に句読点を付けない
     - 良い例: "PR #40 CI 修正", "セッション一覧 TUI 実装", "Renovate 設定デバッグ", "ラベル生成プロンプト改善"
     - 悪い例: "バグ修正", "機能実装" (何の? がわからない)
-- `--prompt`: 新しい Claude Code インスタンスへの指示
+- `task.yaml`: Write ツールで `$dir` 配下に書く構造化データ。委任先へのプロンプトの元データであり、スキーマは後述の「プロンプト構造 (必須)」を参照。**必ず `mktemp -d` で作った一意なディレクトリ配下に置く** (固定パスは並行セッションと衝突する)
+- `render-task`: `task.yaml` を `--prompt` 用の markdown に変換するスクリプト。`purpose`/`goal` が空だとエラーで停止する
+- `--prompt`: `render-task` の出力をそのまま渡す
+- `DELEGATE_TASK_PURPOSE`: `task.yaml` の `purpose` をそのまま渡す環境変数。委任先 worktree の post-worktree-create hook がこれを読み `branch.<name>.x-purpose` に書き込み、`create-pr` skill が PR の Why セクション生成時に参照する
 
 ### オプション
 
@@ -63,23 +70,26 @@ worktree 削除自体が失敗した警告が出た場合のみ手動復旧が�
 
 複数のタスクをまとめて委任する場合、Bash ツールを委任数だけ呼び分けず、**1 回の bash 呼び出し内で `for` ループを使う**こと。委任先ごとに Bash ツール呼び出しを分けるとツール許可プロンプトが委任数だけ発生し、途中 1 件の拒否で以降が止まる。1 つの bash にまとめれば許可は 1 回で済む。for ループは dispatch の手段であり、各イテレーションは依然として独立した 1 委任 = 1 PR なので「1 委任 = 1 PR の原則」とは衝突しない。
 
-各委任先で `--prompt` の中身が異なる場合は、共通部分と差分を別ファイルに分けて `cat` で結合する。プロンプトを Bash 引数に直接埋め込むと引用符のエスケープが破綻しやすいため、ファイル経由で渡すこと。
+各委任先で task.yaml の内容が異なる場合は、共通する field (`investigated`/`links`/`additionalContext` など) を `common.yaml` に、差分のある field (`purpose`/`goal` など) を per-task の `<repo>.yaml` に分けて Write し、`yq` でマージしてから `render-task` に渡す。task.yaml を Bash 引数に直接埋め込まず、必ず Write ツールでファイルに書いてから渡すこと。
 
-**プロンプトファイルは必ず `mktemp -d` で作った一意なディレクトリ配下に置く。** `/tmp/delegate-1.md` のような固定名は、過去セッションや並行セッションと衝突して別タスクのプロンプトを上書き / 読み込みする事故につながる。事前に 1 回だけ `dir=$(mktemp -d -t delegate.XXXXXX)` を実行し、以降の Write・cat はすべてその `$dir` 配下のパスを使う。
+**task.yaml は必ず `mktemp -d` で作った一意なディレクトリ配下に置く。** `/tmp/delegate-1.yaml` のような固定名は、過去セッションや並行セッションと衝突して別タスクの内容を上書き / 読み込みする事故につながる。事前に 1 回だけ `dir=$(mktemp -d /tmp/delegate.XXXXXX)` を実行し、以降の Write・マージ結果はすべてその `$dir` 配下のパスを使う。
 
 ```bash
-# 事前準備: 一意な作業ディレクトリを作り、その下に common.md と <task>.md を Write する
-#   dir=$(mktemp -d -t delegate.XXXXXX); echo "$dir"
-#   → 例: /var/folders/.../delegate.AbC123
-#   その後 Write tool で $dir/common.md, $dir/repo-a.md ... を作成
+# 事前準備: 一意な作業ディレクトリを作り、その下に common.yaml と <repo>.yaml を Write する
+#   dir=$(mktemp -d /tmp/delegate.XXXXXX); echo "$dir"
+#   → 例: /tmp/delegate.AbC123
+#   その後 Write tool で $dir/common.yaml (共通 field), $dir/repo-a.yaml (差分 field) ... を作成
 
-dir=/var/folders/.../delegate.AbC123  # 上で作成したパスをそのまま使う
+dir=/tmp/delegate.AbC123  # 上で作成したパスをそのまま使う
 for entry in "repo-a 123" "repo-b 456" "repo-c 789"; do
   read repo num <<< "$entry"
-  a cc new --worktree=<branch> -R ~/ghq/github.com/<org>/$repo \
-    --agent --label "<title> $repo#$num" \
-    --prompt "$(cat "$dir/common.md" "$dir/$repo.md")" \
-    && echo "OK $repo#$num" || echo "FAIL $repo#$num" &
+  task="$dir/$repo.task.yaml"
+  yq eval-all '. as $item ireduce ({}; . * $item)' "$dir/common.yaml" "$dir/$repo.yaml" > "$task"
+  prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$task")
+  DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$task")" \
+    a cc new --worktree=<branch> -R ~/ghq/github.com/<org>/$repo \
+      --agent --label "<title> $repo#$num" --prompt "$prompt" \
+      && echo "OK $repo#$num" || echo "FAIL $repo#$num" &
 done
 wait
 ```
@@ -90,10 +100,18 @@ wait
 
 ```bash
 # 現在のリポジトリ
-a cc new --worktree=feature-login --agent --label "メール認証ログイン実装" --prompt "メール/パスワード認証によるログイン機能を実装"
+dir=$(mktemp -d /tmp/delegate.XXXXXX)
+# Write ツールで $dir/task.yaml を作成 (purpose: メール認証ログインが必要な理由, goal: ログイン機能が動くこと, など)
+prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
+DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
+  a cc new --worktree=feature-login --agent --label "メール認証ログイン実装" --prompt "$prompt"
 
 # 別のリポジトリ (-R オプション)
-a cc new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "API タイムアウト修正" --prompt "API のタイムアウト設定を修正"
+dir=$(mktemp -d /tmp/delegate.XXXXXX)
+# Write ツールで $dir/task.yaml を作成 (purpose: API タイムアウトで困っている内容, goal: タイムアウト設定の期待値, など)
+prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
+DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
+  a cc new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "API タイムアウト修正" --prompt "$prompt"
 ```
 
 実行すると:
@@ -141,89 +159,99 @@ a cc new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent
 
 ## プロンプト構造 (必須)
 
-委任先の Claude Code インスタンスは**現在の会話の事前知識を持っていない**。以下の構造を使って十分なコンテキストを含めること。
+委任先の Claude Code インスタンスは**現在の会話の事前知識を持っていない**。十分なコンテキストを持たせるため、`--prompt` に渡す markdown を直接書くのではなく、構造化した `task.yaml` を書く。`render-task` がこれを決定的に markdown へ変換する。
 
-**最重要: 「背景」セクションに最も力を入れて書く。** 委任先が自律的に適切な判断を下せるかどうかは、背景の質で決まる。
+**最重要: `purpose`/`investigated`/`links` に最も力を入れて書く。** この 3 field が委任先にとっての「背景」を構成する。委任先が自律的に適切な判断を下せるかどうかは、ここの質で決まる。
 
-```
-## 背景
+| field               | 必須 | `--prompt` への反映                     | git config への反映                           |
+| ------------------- | ---- | --------------------------------------- | --------------------------------------------- |
+| `purpose`           | 必須 | 背景 > 目的・モチベーション             | あり (`branch.<name>.x-purpose` の値そのもの) |
+| `investigated`      | 任意 | 背景 > 調査済みの内容                   | なし                                          |
+| `links`             | 任意 | 背景 > 参考リンク (URL ごとに 1 bullet) | なし                                          |
+| `goal`              | 必須 | ゴール                                  | なし                                          |
+| `additionalContext` | 任意 | 現状                                    | なし                                          |
 
-### 目的・モチベーション
-[なぜこのタスクが必要か。何を実現したいか。ユーザーにとってどんな価値があるか]
+```yaml
+purpose: | # 必須。1-2 行: 動機・why
+    レポート共有を毎回手作業でやっていて数が増えると回らない。
+    1 コマンドで共有 URL まで出したい。
 
-### 問題の詳細 (バグ修正の場合)
-[症状、再現手順、期待される動作と実際の動作の差分]
+investigated: | # 任意: すでに調査済み・判明している内容
+    `report export` はローカルパスしか返さない (src/export.rs:88)。
+    アップロード API は既にある。
 
-### 調査済みの内容
-[すでに分かっていること。調査結果とその根拠 (ログ、コード箇所、ドキュメントなど)]
+links: # 任意: 関連する issue/PR/doc の URL 一覧
+    - https://github.com/example/reporter/issues/210
 
-### 参考リンク
-[関連する Issue / PR / ドキュメントの URL。親 Issue や親 PR がある場合は必ず含める]
+goal: | # 必須: 完了状態の定義
+    `report export --share` で共有 URL が標準出力に出る。
 
-## 現状
-[現在のコードの状態。関連ファイルやアーキテクチャ。すでに決まっている設計判断]
-
-## ゴール
-[最終的に何が達成されていればよいか。成功条件]
-
-`/commit` skill で commit し、`/create-pr` skill で PR を作成するところまで完了させること。
+additionalContext: | # 任意: 上記に当てはまらない文脈の catch-all
+    hook が壊れているので --skip-hooks で worktree を作った。
 ```
 
 ### 書き方のルール
 
-- **背景を最も厚く書く**: プロンプト全体の半分以上を背景に充てる。委任先が「なぜこの作業をするのか」を深く理解できるようにする
-- **ゴールだけ伝え、手順は指示しない**: 「何を達成してほしいか」を書き、「どうやるか」は委任先に任せる。具体的な実装ステップや中間手順を指示しない
-- **成果物の中身まで指示しない**: 特に commit message や PR description に何を書くかは指示しないこと。委任先は `/commit` や `/create-pr` skill に従って書き方を判断する。プロンプトに「PR description に〇〇を書くこと」「△△を注記すること」と書くと、委任先は skill のルールより委任元の指示を優先してしまい、skill で禁止されている内容 (検討経緯、動作確認手順など) が PR description に混入する。伝えるべきはタスクの「ゴール」だけであり、「ゴールに付随する情報をどう記録するか」は委任先の skill に任せる
-- **テンプレートの完了条件を勝手に変えない**: ゴールセクション末尾の「`/commit` skill で commit し、`/create-pr` skill で PR を作成するところまで完了させること。」は固定テンプレートであり、省略・変更してはならない。「commit 不要」「PR 不要」「commit だけでよい」などの独自判断を加えることは禁止。ユーザーが明示的に指示した場合のみ変更してよい
-- **commit/PR 作成の指示は必ず含める**: ゴールセクションの末尾にテンプレートの一文 (「`/commit` skill で commit し、`/create-pr` skill で PR を作成するところまで完了させること。」) を必ず含めること。これは「手順の指示」ではなく「完了条件の定義」であり省略してはならない
-- **根拠を含める**: 調査結果や判断には、その根拠 (ログ、コード箇所、エラーメッセージ、ドキュメント URL など) を添える
-- **伝聞を検証済みの事実として書かない**: 「調査済みの内容」に書いてよいのは自分で確かめた事実に限る。コード中のコメント、Issue や PR の本文、過去の調査メモなど既存の記述を根拠に使う場合は、裏を取ってから書くか、取れていないなら「〜と書かれているが未検証」と出所と検証状況を明示する。委任先はそこに書かれたことを前提として実装し、誤った前提はコード中のコメントや PR description として成果物に定着してしまう。既存の記述が誤診であることは珍しくなく、特に「直せない」「〜が原因」と断定している記述ほど検証する価値が高い
-- **リンクを貼る**: Issue / PR / ドキュメントなど、参考にしたものは URL を貼る。特に親 Issue や関連 PR は必須
-- **パスは実在を確認する**: プロンプトにファイルパスやディレクトリパスを含める場合、そのパスが委任先から実際にアクセスできることを事前に確認する。特に worktree 内で作業している場合、本体リポジトリのパスと worktree のパスは異なるため注意する。テンプレートやスキルの指示にあるパスをそのまま使わず、実際の cwd やファイルの所在を確認すること
+- **`purpose`/`investigated`/`links` を最も厚く書く**: task.yaml の中でこの 3 field に最も分量を割く。委任先が「なぜこの作業をするのか」を深く理解できるようにする
+- **`goal` はゴールだけ伝え、手順は指示しない**: 「何を達成してほしいか」を書き、「どうやるか」は委任先に任せる。具体的な実装ステップや中間手順を書かない
+- **成果物の中身まで指示しない**: 特に commit message や PR description に何を書くかを `goal` に書かないこと。委任先は `/commit` や `/create-pr` skill に従って書き方を判断する。「PR description に〇〇を書くこと」「△△を注記すること」と書くと、委任先は skill のルールより委任元の指示を優先してしまい、skill で禁止されている内容 (検討経緯、動作確認手順など) が PR description に混入する。伝えるべきはタスクの `goal` だけであり、「ゴールに付随する情報をどう記録するか」は委任先の skill に任せる
+- **commit/PR 作成の完了条件は task.yaml に書かない**: 「`/commit` skill で commit し、`/create-pr` skill で PR を作成するところまで完了させること。」は `render-task` が markdown の末尾に常に付与する固定文であり、task.yaml 側に書く・省略する・変更するという判断は発生しない。「commit 不要」「PR 不要」のような独自判断を `goal` に書き加えることも禁止
+- **根拠を含める**: `investigated` に書く調査結果や判断には、その根拠 (ログ、コード箇所、エラーメッセージ、ドキュメント URL など) を添える
+- **伝聞を検証済みの事実として書かない**: `investigated` に書いてよいのは自分で確かめた事実に限る。コード中のコメント、Issue や PR の本文、過去の調査メモなど既存の記述を根拠に使う場合は、裏を取ってから書くか、取れていないなら「〜と書かれているが未検証」と出所と検証状況を明示する。委任先はそこに書かれたことを前提として実装し、誤った前提はコード中のコメントや PR description として成果物に定着してしまう。既存の記述が誤診であることは珍しくなく、特に「直せない」「〜が原因」と断定している記述ほど検証する価値が高い
+- **`links` に URL を貼る**: Issue / PR / ドキュメントなど、参考にしたものは URL を `links` に列挙する。特に親 Issue や関連 PR は必須
+- **パスは実在を確認する**: task.yaml にファイルパスやディレクトリパスを含める場合、そのパスが委任先から実際にアクセスできることを事前に確認する。特に worktree 内で作業している場合、本体リポジトリのパスと worktree のパスは異なるため注意する。テンプレートやスキルの指示にあるパスをそのまま使わず、実際の cwd やファイルの所在を確認すること
 
 ### 良い例
 
+```yaml
+# $dir/task.yaml (Write ツールで作成)
+purpose: |
+    セッションタイムアウトが短すぎてユーザーが頻繁に再ログインを強いられている。
+    本来 30 分のはずが 5 分で切れる。ログイン後 5 分待つと 401 が返る。
+investigated: |
+    src/auth/session.ts の SessionManager クラスで TTL を設定しているが、
+    config/auth.json の timeout 値 (1800秒) が反映されていない。
+    Redis の TTL を確認したところ実際に 300 秒で設定されている
+    (根拠: redis-cli TTL session:xxx の結果)。
+    最近の JWT からセッション認証への移行 (PR #142) でデフォルト値のフォールバックが
+    追加され、config の値を上書きしている可能性が高い。
+links:
+    - https://github.com/example/repo/issues/210
+    - https://github.com/example/repo/pull/142
+goal: |
+    セッションタイムアウトが config/auth.json の設定値 (30 分) どおりに動作する。
+additionalContext: |
+    認証は src/auth/session.ts の SessionManager クラスで処理。
+    セッション設定は config/auth.json に定義。Redis をセッションストレージとして使用。
+```
+
 ```bash
-a cc new --worktree=fix-auth-timeout --agent --label "セッション TTL 設定反映修正" --prompt "## 背景
-
-### 目的・モチベーション
-セッションタイムアウトが短すぎてユーザーが頻繁に再ログインを強いられている。本来 30 分のはずが 5 分で切れる。
-
-### 問題の詳細
-- 症状: ログイン後、5 分間操作しないとセッションが切れて再ログインが必要になる
-- 期待される動作: 30 分間操作がなくてもセッションが維持される
-- 再現: ログイン後 5 分待つと 401 が返る
-
-### 調査済みの内容
-- src/auth/session.ts の SessionManager クラスで TTL を設定しているが、config/auth.json の timeout 値 (1800秒) が反映されていない
-- Redis の TTL を確認したところ実際に 300 秒で設定されている (根拠: redis-cli TTL session:xxx の結果)
-- 最近の JWT からセッション認証への移行 (PR #142) でデフォルト値のフォールバックが追加され、config の値を上書きしている可能性が高い
-
-### 参考リンク
-- Issue: https://github.com/example/repo/issues/210
-- 関連 PR (認証移行): https://github.com/example/repo/pull/142
-
-## 現状
-- 認証は src/auth/session.ts の SessionManager クラスで処理
-- セッション設定は config/auth.json に定義
-- Redis をセッションストレージとして使用
-
-## ゴール
-セッションタイムアウトが config/auth.json の設定値 (30 分) どおりに動作する。"
+dir=$(mktemp -d /tmp/delegate.XXXXXX)
+# 上記の内容で $dir/task.yaml を Write
+prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
+DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
+  a cc new --worktree=fix-auth-timeout --agent --label "セッション TTL 設定反映修正" --prompt "$prompt"
 ```
 
 ### 悪い例
 
-```bash
-# NG: コンテキスト不足 - 新しいインスタンスは「そのバグ」が何か分からない
-a cc new --worktree=fix-bug --agent --label "バグ修正" --prompt "さっき話したバグを直して"
+```yaml
+# NG: コンテキスト不足 - purpose が漠然としていて、新しいインスタンスには「そのバグ」が何か分からない
+purpose: |
+    さっき話したバグを直して
+goal: |
+    バグが直っている
+```
 
-# NG: 手順を指示しすぎ - 委任先の自律性を奪う
-a cc new --worktree=fix-auth --agent --label "session.ts TTL 修正" --prompt "## タスク
-1. src/auth/session.ts を開く
-2. 42 行目の TTL を 300 から 1800 に変更
-3. テストを追加
-4. commit はしないこと"
+```yaml
+# NG: goal に手順を指示しすぎ - 委任先の自律性を奪う
+purpose: |
+    セッションが 5 分で切れてしまう
+goal: |
+    1. src/auth/session.ts を開く
+    2. 42 行目の TTL を 300 から 1800 に変更する
+    3. テストを追加する
+    4. commit はしないこと
 ```
 
 ## 委任元から委任先に連絡する場合

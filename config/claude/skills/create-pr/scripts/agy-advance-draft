@@ -1,0 +1,79 @@
+#!/bin/bash
+# Advance a draft that the editor didn't approve: either apply the user's
+# inline comments, or (once `ready-for-translation` is set) translate it to
+# English. Claude never reads the draft file or the comments — this script
+# does, and only ever reports its exit code back.
+set -euo pipefail
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+schema_file="$script_dir/agy-schema.json"
+# shellcheck source=config/claude/skills/create-pr/scripts/call-agy.sh disable=SC1091
+source "$script_dir/call-agy.sh"
+
+draft_path=$("$script_dir/draft-path")
+[ -f "$draft_path" ] || {
+  echo "Error: draft file not found: $draft_path" >&2
+  exit 1
+}
+
+delim2=$(awk '/^---$/{n++; if (n == 2) { print NR; exit }}' "$draft_path")
+frontmatter=$(sed -n "2,$((delim2 - 1))p" "$draft_path")
+body=$(tail -n +"$((delim2 + 1))" "$draft_path")
+title=$(yq -r '.title' <<< "$frontmatter")
+
+ready_for_translation=$(yq -r '.steps["ready-for-translation"] // false' <<< "$frontmatter")
+needs_translation=false
+if [ "$ready_for_translation" = "true" ] && rg -q '\p{Hiragana}|\p{Katakana}|\p{Han}' <<< "$body"; then
+  needs_translation=true
+fi
+
+if [ "$needs_translation" = "true" ]; then
+  translate_rules=$(cat "$HOME/.claude/contexts/skill/create-pr/translate-rules.md")
+  prompt=$(
+    cat << PROMPT
+以下の GitHub Pull Request の title と body を英語に翻訳する。以下のルールに厳密に従うこと。narration や説明は不要で、指定した JSON 形式でだけ出力する。
+
+$translate_rules
+
+<title>
+$title
+</title>
+
+<body>
+$body
+</body>
+PROMPT
+  )
+  result=$(call_agy "$prompt" "$schema_file")
+  agy_result_or_die "$result"
+  new_title=$(jq -r '.structured_output.pr_title' <<< "$result")
+  new_body=$(jq -r '.structured_output.pr_body' <<< "$result")
+  new_frontmatter=$(NEW_TITLE="$new_title" yq '.title = strenv(NEW_TITLE) | .steps.submit = false' <<< "$frontmatter")
+else
+  conversation_id=$(cat "${draft_path}.agy-conversation")
+  prompt=$(
+    cat << PROMPT
+以下は先ほど書いた GitHub Pull Request の title と body で、レビュアーがコメントを書き込んでいる。コメントで指示された修正だけを適用し、対応済みのコメント本文は削除する。翻訳はしない。narration や説明は不要で、指定した JSON 形式でだけ出力する。
+
+<title>
+$title
+</title>
+
+<body>
+$body
+</body>
+PROMPT
+  )
+  result=$(call_agy "$prompt" "$schema_file" "$conversation_id")
+  agy_result_or_die "$result"
+  new_title=$(jq -r '.structured_output.pr_title' <<< "$result")
+  new_body=$(jq -r '.structured_output.pr_body' <<< "$result")
+  new_frontmatter=$(NEW_TITLE="$new_title" yq '.title = strenv(NEW_TITLE)' <<< "$frontmatter")
+fi
+
+{
+  printf -- '---\n'
+  printf '%s\n' "$new_frontmatter"
+  printf -- '---\n'
+  printf '%s' "$new_body"
+} > "$draft_path"
