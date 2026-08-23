@@ -26,6 +26,9 @@ agent_name="$3"
 case "$agent_name" in
   codex) agent_command=codex ;;
   agy) agent_command=agy ;;
+  # `claude` already names the in-process subagent backend in reviewers.yaml,
+  # so the external-process one needs a key of its own.
+  claude-cli) agent_command=claude ;;
   *)
     echo "Error: unsupported agent: $agent_name" >&2
     exit 2
@@ -214,6 +217,62 @@ run_agy() {
   jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
 }
 
+# Restricting the tool set and enabling the sandbox are not two ways of saying
+# the same thing: the sandbox governs Bash subprocesses only, so Write and Edit
+# have to be dropped from the tool set, while `--tools` says nothing about what
+# a shell command may touch. Either one alone leaves the repository writable.
+#
+# The sandbox likewise stops Bash from reading a secret but not the Read tool,
+# which is why the same paths are denied twice. A permission rule needs the `//`
+# prefix to mean an absolute path, so prefixing one produces three slashes; a
+# plain `Read(/abs/path)` matches nothing and denies nothing.
+#
+# Writes are allowed under the reviewer's own scratch directory. Settling a
+# doubt by running a minimal repro is part of the review, and it is per-reviewer
+# so that parallel reviewers cannot overwrite each other's prompt or result.
+#
+# `--safe-mode` drops CLAUDE.md and skills, which is intended: build_prompt
+# already inlines every instruction file that applies to the diff, so the review
+# contract stays identical to the one codex and agy receive.
+#
+# `--json-schema` takes the schema inline and rejects a path, unlike
+# `codex --output-schema` and `agy --json-schema`. It also cannot resolve the
+# `$schema` meta-schema reference the other two accept, and fails the whole run
+# on it, so that key is dropped on the way in rather than removed from the file.
+run_claude() {
+  local reviewer_dir="$1"
+  mkdir -p "$reviewer_dir/scratch"
+  jq -n \
+    --arg repo "$repo_root" \
+    --arg scratch "$reviewer_dir/scratch" \
+    --arg home "$HOME" \
+    '[$home + "/.ssh", $home + "/.aws", $home + "/.gnupg"] as $secrets
+     | {
+         permissions: { deny: ($secrets | map("Read(//\(.)/**)")) },
+         sandbox: {
+           enabled: true,
+           network: { allowedDomains: [], strictAllowlist: true },
+           filesystem: {
+             denyWrite: [$repo],
+             allowWrite: [$scratch],
+             denyRead: $secrets
+           }
+         }
+       }' > "$reviewer_dir/settings.json"
+
+  claude \
+    --print \
+    --safe-mode \
+    "${model_args[@]+"${model_args[@]}"}" \
+    --tools Bash,Read,Grep,Glob \
+    --settings "$reviewer_dir/settings.json" \
+    --output-format json \
+    --json-schema "$(jq -c 'del(."$schema")' "$schema_file")" \
+    < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || return 1
+  jq -e '.subtype == "success"' "$reviewer_dir/stdout.log" > /dev/null || return 1
+  jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
+}
+
 pids=()
 for reviewer in "${selected[@]}"; do
   reviewer_dir="$work_dir/$reviewer"
@@ -224,6 +283,7 @@ for reviewer in "${selected[@]}"; do
     case "$agent_name" in
       codex) run_codex "$reviewer_dir" ;;
       agy) run_agy "$reviewer_dir" ;;
+      claude-cli) run_claude "$reviewer_dir" ;;
     esac
   ) &
   pids+=("$!")
