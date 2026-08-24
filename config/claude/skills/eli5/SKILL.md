@@ -104,19 +104,27 @@ For **business audiences** (managers, directors):
 - Professionals: Confident and clear. Respect their intelligence while bridging knowledge gaps.
 - Family: Patient, warm, conversational. Like explaining over dinner.
 
+## Step 4: Deliver It in crit
+
+Do not answer in the chat. Write the explanation as a single self-contained HTML file and open it with crit, so the audience can select any part of it and ask a follow-up right there. Only if crit cannot be launched at all, say so and answer in the chat instead.
+
+Invoke the `plz-explain-with-crit` skill (Skill tool, or `/plz-explain-with-crit`) and follow it together with its `references/generated-html.md` for the whole loop: background launch, reporting the URL, picking up the questions the user leaves as comments, and replying on crit. Its `## 作るかどうか` rule (no diagram, so answer in the chat instead) does not apply — for this skill the explanation itself is the artifact, always open it.
+
+Keep the HTML styled for the audience too: a page for a 5-year-old and a page for a director should not look the same.
+
 ## Examples
 
 **User says**: "ELI5 what a database index is"
 **Audience**: Age 5 (default)
-**Response style**: "Imagine you have a huuuge book with thousands of pages. Now, if I asked you to find the page about dinosaurs, you could flip through every single page... or you could look at the table of contents at the front! A database index is like that table of contents. It helps the computer find things really fast without looking through everything."
+**Explanation style**: "Imagine you have a huuuge book with thousands of pages. Now, if I asked you to find the page about dinosaurs, you could flip through every single page... or you could look at the table of contents at the front! A database index is like that table of contents. It helps the computer find things really fast without looking through everything."
 
 **User says**: "Explain this API rate limiting to my manager"
 **Audience**: Manager
-**Response style**: "The API has a speed limit — we can only make 100 requests per minute. Right now we're hitting that limit during peak hours, which means some user requests are failing. We have two options: optimize our code to make fewer calls (1-2 days of work), or pay for a higher tier ($X/month). I'd recommend..."
+**Explanation style**: "The API has a speed limit — we can only make 100 requests per minute. Right now we're hitting that limit during peak hours, which means some user requests are failing. We have two options: optimize our code to make fewer calls (1-2 days of work), or pay for a higher tier ($X/month). I'd recommend..."
 
 **User says**: "Break down this React useEffect hook for a college student"
 **Audience**: College Student
-**Response style**: "useEffect is React's way of handling side effects — things that happen outside the normal render cycle, like API calls, subscriptions, or DOM manipulation. Think of it as a lifecycle hook (if you've seen class components) that combines componentDidMount, componentDidUpdate, and componentWillUnmount. The dependency array controls when it re-runs..."
+**Explanation style**: "useEffect is React's way of handling side effects — things that happen outside the normal render cycle, like API calls, subscriptions, or DOM manipulation. Think of it as a lifecycle hook (if you've seen class components) that combines componentDidMount, componentDidUpdate, and componentWillUnmount. The dependency array controls when it re-runs..."
 
 ## Important Reminders
 
