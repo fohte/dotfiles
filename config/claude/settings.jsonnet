@@ -144,6 +144,12 @@ local env(name) = std.extVar(name);
       {
         hooks: [
           { type: 'command', command: 'a cc hook session-start' },
+          // config/bin/tq fetches a Cloudflare Access token via 1Password
+          // before ever reaching the CLI's own never-fail guarantee
+          // (cli/src/commands/hook.ts), so a locked vault or offline network
+          // makes the wrapper itself exit non-zero under `set -e`. `|| true`
+          // keeps that failure from surfacing on every session.
+          { type: 'command', command: 'tq hook SessionStart || true' },
           { type: 'command', command: 'gen-claude-template context' },
         ],
       },
@@ -213,6 +219,8 @@ local env(name) = std.extVar(name);
       {
         hooks: [
           { type: 'command', command: 'a cc hook stop' },
+          // See the `|| true` note on the SessionStart entry above.
+          { type: 'command', command: 'tq hook Stop || true' },
         ],
       },
     ],
@@ -220,6 +228,8 @@ local env(name) = std.extVar(name);
       {
         hooks: [
           { type: 'command', command: 'a cc hook session-end' },
+          // See the `|| true` note on the SessionStart entry above.
+          { type: 'command', command: 'tq hook SessionEnd || true' },
         ],
       },
     ],
