@@ -39,7 +39,8 @@ pr_template=$("$script_dir/find-pr-template")
 
 rules=$(
   jq -n --arg has_release_please "$has_release_please" --arg pr_template "$pr_template" \
-    '{has_release_please:$has_release_please, pr_template:$pr_template}' |
+    --arg has_branch_purpose "$purpose" \
+    '{has_release_please:$has_release_please, pr_template:$pr_template, has_branch_purpose:$has_branch_purpose}' |
     gomplate -d vars=stdin:///vars.json -f "$rules_file"
 )
 

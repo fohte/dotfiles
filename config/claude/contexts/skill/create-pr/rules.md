@@ -2,6 +2,8 @@
 {{- $release_please := eq (conv.ToString $v.has_release_please) "true" -}}
 {{- $has_pr_template := ne (conv.ToString $v.pr_template) "" -}}
 {{- $has_design_decisions := and $has_pr_template (strings.Contains "Design decisions" (conv.ToString $v.pr_template)) -}}
+{{- /* Claude が直接読む経路では vars にこのキー自体が無いので、index で欠落を許容する */ -}}
+{{- $has_branch_purpose := index $v "has_branch_purpose" -}}
 
 ### PR template の構造
 
@@ -77,8 +79,10 @@ PR template が存在しないリポジトリでは以下の構造を使う。
 
 新規追加で機能/リソースの一行説明だけで終わらせない (「で、なんで今これが必要なの?」が残るなら動機が抜けている)。「〜がない」「〜が存在しない」と書かない (新しいものを作るのだから「ない」のは当然 → 実現したいことを書く)。委任タスクや issue の「背景」「目的」、コミットメッセージの `intent`/`decision` action line は動機そのもの。Why に必ず反映する。
 
+{{ if $has_branch_purpose -}}
 `<branch_purpose>` が渡されている場合は、diff・コミットログから動機を逆算するより先にこれを Why の一次情報として使う。要約・言い換えの際も内容 (困りごと・目的) を変えない。
 
+{{ end -}}
 委任タスクや issue、コミットメッセージから Why を拾うときは、提示された統計・技術的説明・既存仕組みの欠陥を**そのままコピペしない**。コピペすると Why の抽象度が技術原因まで下がる。困りごとに翻訳して書く。
 
 #### Rule 3. 主語と結論を先に書く (Why)
