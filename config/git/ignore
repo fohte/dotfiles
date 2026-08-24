@@ -90,3 +90,5 @@ context_portal/
 **/.kiro
 
 runok.local.yml
+
+**/.claude/.cc-writes/
