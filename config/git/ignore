@@ -81,6 +81,8 @@ context_portal/
 **/.claude/settings.local.json
 **/.claude/tmp/
 **/.z/
+# staging dir for sandboxed atomic writes (Claude Code appends this rule to core.excludesfile itself)
+**/.claude/.cc-writes/
 
 # marksman (auto-created in worktrees for project root detection)
 .marksman.toml
@@ -90,5 +92,3 @@ context_portal/
 **/.kiro
 
 runok.local.yml
-
-**/.claude/.cc-writes/
