@@ -406,6 +406,18 @@ rules:
     tests:
       - allow: 'rg pattern ./src'
 
+  # `-r*` only catches the fused short flag; the literal `--replace` does not
+  # start with `-r`, so the long form stays open for deliberate replacement.
+  - deny: 'rg -r* *'
+    message: 'rg -r is --replace, not recursive: `-rn` is parsed as `--replace n` and rewrites every match to "n". rg already recurses by default; pass -n for line numbers.'
+    fix_suggestion: 'rg -n pattern ./src (pass --replace explicitly to actually replace)'
+    tests:
+      - deny: 'rg -rn pattern ./src'
+      - deny: 'rg -rln pattern ./src'
+      - deny: 'rg -ril pattern ./src'
+      - deny: 'rg -r pattern ./src'
+      - allow: 'rg --replace=n pattern ./src'
+
   - allow: wait *
 
   - allow: 'runok-pending-asks *'
