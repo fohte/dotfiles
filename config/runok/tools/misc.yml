@@ -8,6 +8,16 @@ definitions:
       - lefthook
       - nlx lefthook
 
+    # marp-cli ships a `marp` bin, so it runs either under that short name (a
+    # local/global binary, or `nlx` resolving the local devDependency's bin) or
+    # under the scoped package name that `nlx` dlx-runs when nothing is
+    # installed locally.
+    marp:
+      - marp
+      - nlx marp
+      - nlx @marp-team/marp-cli
+      - nlx @marp-team/marp-cli@*
+
   wrappers:
     # Treat `nlx --package <pkg> -c '<shell-string>'` as a wrapper so the
     # shell string inside the quotes is recursively evaluated against the
@@ -92,7 +102,25 @@ rules:
   - allow: 'runok [-c *] check *'
   - allow: 'runok exec *'
 
-  - allow: nlx @marp-team/marp-cli@latest *
+  # `--engine <file.js>` loads a JS module as the converter, `--config` (`-c` /
+  # `--config-file`) points at a config file that may define `engine` as a JS
+  # function, and `--browser-path` runs an arbitrary executable -- all three are
+  # negated so they fall through to the default ask.
+  - allow: 'marp !--engine !-c !--config !--config-file !--browser-path *'
+    tests:
+      - allow: 'marp slides.md -o slides.html'
+      - ask: 'marp --engine ./evil.js slides.md'
+      - ask: 'marp --engine=./evil.js slides.md'
+      - ask: 'marp -c ./marp.config.js slides.md'
+      - ask: 'marp --config ./marp.config.js slides.md'
+      - ask: 'marp --config-file ./marp.config.js slides.md'
+      - ask: 'marp --browser-path /tmp/evil slides.md'
+      - ask: 'nlx @marp-team/marp-cli@latest --engine ./evil.js slides.md'
+      - allow: 'nlx marp slides.md --pdf'
+      - allow: 'nlx @marp-team/marp-cli slides.md --images png'
+      - allow: 'nlx @marp-team/marp-cli@latest slides.md -o out/slides.html'
+      - allow: 'nlx @marp-team/marp-cli@4.2.3 slides.md'
+      - allow: 'nlx -p @marp-team/marp-cli marp slides.md'
 
   # opensrc (read-only and idempotent fetch). remove/clean fall through to default ask.
   - allow: 'opensrc path|list|fetch *'
