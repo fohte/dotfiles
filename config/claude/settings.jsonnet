@@ -70,6 +70,7 @@ local env(name) = std.extVar(name);
       'Read(~/.cache/runok/presets/**)',
       'Read(~/.cargo/registry)',
       'Read(~/.claude/**)',
+      'Read(~/.crit/**)',
       'Read(~/.go/pkg/mod/**)',
       'Read(~/.opensrc/**)',
       'Read(~/.config/**)',
