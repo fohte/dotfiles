@@ -42,12 +42,14 @@ Burning context this fast usually means the work is being run the wrong way: don
 1. List the remaining work as concrete tasks, one line each.
 2. Decide how those tasks should be run, and state the verdict as the last line:
 
-  ⚠ context ~${p}% — subagents: <どのタスクをどう subagent に投げるか>
+  ⚠ context ~${p}% — subagents: <どのタスクをどの観点に割って何個の subagent に投げるか>
   ⚠ context ~${p}% — delegate: <どう PR 単位に切り出すか>
   ⚠ context ~${p}% — handoff: <何を引き継ぐか>
   ⚠ context ~${p}% — 継続: <残タスクがこのセッションの蓄積文脈を必要とする理由>
 
 - subagents: the default for any self-contained task (investigation, search, review, mechanical edits). A subagent's working context never enters this session, only its summary does, so dispatching is strictly cheaper than doing it inline.
+  Go task by task and ask what part of it can be carved out. A single investigation normally becomes several subagents, one per angle (this file's callers / how the upstream tool behaves / what the existing tests cover), dispatched in parallel — splitting by angle is what makes the work parallel and each report small, so it is the normal case, not an optimization.
+  What stays here is the part that cannot be carved out: choosing the angles, merging what comes back, and the judgment and edits that need the merged picture. Handing the remaining work to one subagent as a block is the opposite of this verdict — it re-runs the same monolithic session elsewhere, and you get one summary you cannot steer or audit.
 - delegate (/delegate-claude): the remaining work should become its own PR(s).
 - handoff (/handoff-claude): stuck on design or investigation, and this session should be restarted fresh.
 - 継続: the remaining tasks genuinely depend on context a subagent or a fresh session would lack.
