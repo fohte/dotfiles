@@ -13,9 +13,9 @@ description: Drive `runok-pending-asks` output to zero by converting each pendin
 
 - **allow**: dotfiles の `config/runok/*.yml` または対象 repo の `runok.local.yml` にルール追記。現機能で安全に書けない場合は「runok / preset にどの機能があれば書けるか」を言語化し、機能追加を別タスク化したうえで暫定 ignore する
 - **deny**: 明確に害があり、ask で都度判断する余地もないコマンドだけ。閾値は高い
-- **ignore (= 意図的に ask 維持)**: `config/bin/runok-pending-asks` の `IGNORE_COMMANDS` に正規表現追加。**user が毎回明示的に判断したい** ものに限る (例: `gh pr merge` を都度承認したい)
+- **ignore (= 現在の decision を維持したまま review 対象から外す)**: `config/bin/runok-pending-asks` の `IGNORE_COMMANDS` に正規表現追加。**user が毎回明示的に判断したい** ものに限る (例: `gh pr merge` を都度承認したい)。ただし decision が pass (未マッチ fallback) のエントリを ignore しても確認プロンプトは保証されない (Claude Code の `auto` モード判定に委ねられる)。runok レベルで都度確認を強制したいなら `ask:` ルールを明示的に書く
 
-「保留」「次回検討」「ひとまず見送り」は禁止。これらを許すと判断保留が事実上の第 4 の選択肢になり、出力ゼロに到達しない。**「allow が書けないからとりあえず ignore」は禁止** — ignore は positive intent (ask を意図的に残したい) でのみ使う。書けない理由が runok の表現力不足なら、必要な機能を言語化して別タスク化し、その上で暫定 ignore する。
+「保留」「次回検討」「ひとまず見送り」は禁止。これらを許すと判断保留が事実上の第 4 の選択肢になり、出力ゼロに到達しない。**「allow が書けないからとりあえず ignore」は禁止** — ignore は positive intent (判断を毎回 user に残したい) でのみ使う。書けない理由が runok の表現力不足なら、必要な機能を言語化して別タスク化し、その上で暫定 ignore する。
 
 ## 最重要原則: 最小権限 (least privilege)
 
@@ -31,7 +31,7 @@ allow ルールは「そのコマンドが本来持てる能力の最も狭い�
 
 - スクリプト: `config/bin/runok-pending-asks` (PATH 済)
     - 出力は `runok audit --json` 生 JSONL そのまま (整形なし)。各エントリの `.command` は実行された compound 全体 (例: `cd foo && cargo new --bin tree-check`)、`.command_evaluations[]` に分解後の各サブコマンドと判定がある
-    - `--action ask` がデフォルト。`--since` / `--limit` 等は素の `runok audit` と同じフラグを受け付ける
+    - デフォルトでは `--action` を渡さず全件取得し、decision が ask / pass のものを絞り込む (`--action` を明示すればそちらが優先される)。`--since` / `--limit` 等は素の `runok audit` と同じフラグを受け付ける (`--limit` は絞り込み後の出力件数に効く)
     - 現在 allow / deny に変わっているコマンドと、内部 `IGNORE_COMMANDS` 正規表現にマッチするコマンドは出力から除外済
 - 書き込み先候補: `config/runok/{common,git,macos,opensrc,work}.yml` と `config/runok/{languages,tools}/*.yml`
 - 設定は `runok.yml` の `extends:` で preset (例: `github:fohte/runok-presets/base`) と `config/runok/*.yml` を合成する。preset 側にも `definitions.wrappers` (bash -c / sh -c / time / env / sudo / xargs / find -exec 等) と readonly 系の allow が既にある
@@ -133,9 +133,9 @@ allow 不可ルートに倒すべき代表カテゴリ。詳細評価項目と�
 - user が **意図的に毎回 ask したい** (例: `gh pr merge` を都度承認したい、destructive op を毎回判断したい) → **ignore 候補**。これが ignore の本来意味
 - 「保留」「allow したくないからとりあえず ignore」は選択肢に存在しない
 
-**ignore の本来意味**: ignore は「default の ask 動作を維持する」+「review 対象から外す」の組合せ。「user が毎回明示判断したいから ask を継続したい」という positive intent でだけ使う。「allow できない時の捨て場」として使うと、本当に意図的 ask したい項目との区別が消え、後で見直す手がかりも失う。
+**ignore の本来意味**: ignore は「そのエントリの現在の decision (ask / pass) を維持する」+「review 対象から外す」の組合せ。「user が毎回明示判断したいから ask を継続したい」という positive intent でだけ使う。「allow できない時の捨て場」として使うと、本当に意図的 ask したい項目との区別が消え、後で見直す手がかりも失う。
 
-**deny の閾値**: deny は「明確に害があり、ask で都度判断する余地もないほど常に間違っている」場合だけ。「allow したくない」は deny の理由にならない。`deny` にすると user が「ask flow を回したい」場合も塞いでしまうので、稀にでも意図的に実行したい余地があれば ignore (= ask 維持) を選ぶ。
+**deny の閾値**: deny は「明確に害があり、ask で都度判断する余地もないほど常に間違っている」場合だけ。「allow したくない」は deny の理由にならない。`deny` にすると user が「ask flow を回したい」場合も塞いでしまうので、稀にでも意図的に実行したい余地があれば ignore (= 都度判断の余地を残す) を選ぶ。
 
 **絶対パス禁止**: CEL `when` でユーザーホーム配下を判定する場合は `env.HOME + "/..."` を使う。`/Users/<name>/...` の直書き、`$HOME` 展開前提の書き方は禁止。
 
@@ -316,7 +316,7 @@ tests には最低 1 件、提案を導いた実際のコマンドを入れる�
 - deploy (`dot deploy -t runok` 等) は実行しない。runok 設定は symlink で即時反映される
 - push は行わない (commit skill の責務に従う)
 - 「残りは次回」で途中終了しない。出力ゼロに到達するまでループを抜けない
-- default が ask で済むものを deny にしない (deny の閾値は高い)
+- default の pass (Claude Code 側の判断に委ねる) で済むものを deny にしない (deny の閾値は高い)
 - **allow が安全に書けない候補を ignore に流さない**。ignore は「user が意図的に毎回 ask したい」 positive intent のみ。書けない理由が runok の表現力不足なら、必要な機能を言語化して別タスク化 + 暫定 ignore (コメント付き)
 - user が明示承認していない allow を「ついでに」追加しない
 - **チェックリスト (4a の R1-R5 / Q1-Q2 / D1-D2) を「具体的な事実」で全件埋めないまま allow / deny を提案しない**。「危険ではない」「読み取り専用」「狭い」のような根拠なし語は事実ではない。埋められない candidate は ignore に降格して表に残す (= 表から除外しない)。除外すると user は当該コマンドが ask 履歴に残り続けていることに気付けない

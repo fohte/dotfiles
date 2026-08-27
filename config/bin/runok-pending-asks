@@ -12,6 +12,10 @@
 
 set -euo pipefail
 
+# `runok audit` always applies a --limit (default 50) and has no "unlimited"
+# value, so scan the whole log via a limit far above any realistic entry count.
+RAW_FETCH_LIMIT=1000000
+
 # Extended regular expressions matched against the top-level `.command` field.
 # Matching entries are never proposed for allow-listing.
 IGNORE_COMMANDS=(
@@ -35,11 +39,21 @@ ignore_regex=${ignore_regex:1}
 # Fetch everything and filter in jq below, unless the caller passed their
 # own --action.
 has_action=0
-for a in "$@"; do
-  case "$a" in
-    --action | --action=*) has_action=1 ;;
+# `runok audit --limit` truncates before the ask/pass filter below runs, so
+# allow entries can crowd every pending one out of the window. Keep the
+# caller's --limit off the raw fetch and cap the filtered output instead.
+limit=''
+args=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --action | --action=*) has_action=1 && args+=("$1") ;;
+    --limit) limit=${2:-} && shift ;;
+    --limit=*) limit=${1#--limit=} ;;
+    *) args+=("$1") ;;
   esac
+  shift
 done
+set -- ${args[@]+"${args[@]}"} --limit "$RAW_FETCH_LIMIT"
 
 if [[ $has_action -eq 0 ]]; then
   action_filter='(.action.type == "ask" or .action.type == "pass")'
@@ -47,6 +61,7 @@ else
   action_filter='true'
 fi
 
+printed=0
 runok audit --json "$@" |
   jq -c --arg ignore "$ignore_regex" "select(($action_filter) and ((.command | test(\$ignore)) | not))" |
   while IFS= read -r line; do
@@ -58,6 +73,11 @@ runok audit --json "$@" |
     # On any parse error, fall back to pending so the entry surfaces for review.
     decision=$(printf '%s\n' "$cmd" | runok check --output-format json 2> /dev/null | jq -sr '[.[].decision] | if any(. == "ask" or . == "pass") then "pending" else "other" end' 2> /dev/null || echo pending)
     if [[ "$decision" == "pending" ]]; then
-      printf '%s\n' "$line"
+      printed=$((printed + 1))
+      # Stop printing rather than breaking out: an early break would SIGPIPE
+      # the upstream jq and trip pipefail.
+      if [[ -z $limit || $printed -le $limit ]]; then
+        printf '%s\n' "$line"
+      fi
     fi
   done
