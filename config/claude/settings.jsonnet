@@ -145,7 +145,7 @@ local env(name) = std.extVar(name);
       'Monitor',
       'TaskOutput',
     ],
-    defaultMode: 'acceptEdits',
+    defaultMode: 'auto',
   },
 
   hooks: {
