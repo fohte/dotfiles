@@ -344,8 +344,16 @@ rules:
       - allow: 'dot role get'
       - allow: 'dot role overlay'
 
-  # armyknife (`a`) readonly subcommands. Mutating subcommands (a cc new,
-  # a wm delete, a cc resume, etc) fall through to pass.
+  # Spawning a new Claude session costs real tokens and runs unattended, so it
+  # always needs a human decision -- an explicit `ask`, since falling through
+  # to pass lets auto mode approve it.
+  - ask: 'a cc new *'
+    tests:
+      - ask: 'a cc new'
+      - ask: 'a cc new -R dotfiles'
+
+  # armyknife (`a`) readonly subcommands. Other mutating subcommands
+  # (a wm delete, a cc resume, etc) fall through to pass.
   - allow: 'a wm|cc list|ls'
     tests:
       - allow: 'a wm list'
