@@ -23,7 +23,7 @@ rules:
     tests:
       - allow: 'cargo help build'
       - allow: 'cargo help generate-lockfile'
-      - ask: 'cargo help pwntest'
+      - pass: 'cargo help pwntest'
   - allow: 'cargo info *'
     tests:
       - allow: 'cargo info progenitor'

@@ -17,8 +17,8 @@ rules:
       - ask: 'wrangler d1 execute my-db --command "SELECT 1"'
       - ask: 'wrangler d1 export my-db --output dump.sql'
       - ask: 'wrangler versions deploy'
-      - ask: 'wrangler vectorize query my-index'
-      - ask: 'wrangler vectorize list-vectors my-index'
+      - pass: 'wrangler vectorize query my-index'
+      - pass: 'wrangler vectorize list-vectors my-index'
 
   # The read verb above is not anchored to the subcommand position, so a
   # mutating command whose resource name happens to be `list`/`get`/... would
@@ -35,7 +35,7 @@ rules:
   - allow: 'wrangler whoami'
     tests:
       - allow: 'wrangler whoami'
-      - ask: 'wrangler login'
+      - pass: 'wrangler login'
       - ask: 'wrangler deploy'
 
   # KV and R2 object access is billed per operation, so it stays on `ask` even

@@ -50,7 +50,7 @@ allow ルールは「そのコマンドが本来持てる能力の最も狭い�
 - [ ] `IGNORE_COMMANDS` の現状を読んだか?
 - [ ] 既存ルールに code smell (絶対パス, 過広 allow 等) はないか? あれば修正候補として記録
 - [ ] wrapper 化可能な候補を ignore に流していないか?
-- [ ] default は ask。「allow したくない = deny」になっていないか?
+- [ ] default は pass。「allow したくない = deny」になっていないか?
 - [ ] user が明示承認した allow だけを書き込もうとしているか? 黙って混ぜていないか?
 - [ ] 各 allow パターンの power (最小権限) を評価したか?
 - [ ] risk 評価が必要な候補を sub-agent batch に分けたか? (main 単独一括評価になっていないか)

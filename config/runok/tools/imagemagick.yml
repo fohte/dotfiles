@@ -25,9 +25,9 @@ rules:
       - allow: 'magick base-Default.png -alpha off -background "#0d0d0d" -splice 0x3+0+0 -crop 1280x844+0+0 +repage s.png'
       - allow: 'magick actual-Default.png -crop 400x90+0+0 +repage -scale 300% crop-actual.png'
       - allow: 'magick -list delegate'
-      - ask: 'magick -script mal.magick'
-      - ask: 'magick actual-Default.png -script mal.magick out.png'
-      - ask: 'magick run1.png run2.png -compose difference -composite info: -script mal.magick'
+      - pass: 'magick -script mal.magick'
+      - pass: 'magick actual-Default.png -script mal.magick out.png'
+      - pass: 'magick run1.png run2.png -compose difference -composite info: -script mal.magick'
 
   - allow: 'identify|compare *'
     tests:

@@ -51,8 +51,8 @@ rules:
       - allow: 'nr preview --port 4173'
       - allow: 'nr --filter web run test'
       - allow: 'nr -C web dev'
-      - ask: 'nr -C /tmp/untrusted-clone dev'
-      - ask: 'nr -C ../../untrusted-clone dev'
+      - pass: 'nr -C /tmp/untrusted-clone dev'
+      - pass: 'nr -C ../../untrusted-clone dev'
 
   # `make [<target>...]` (bare `make` runs the Makefile's default target)
   # runs whatever the repo's own Makefile defines, same trust boundary as
@@ -72,20 +72,20 @@ rules:
     tests:
       - allow: 'make'
       - allow: 'make build'
-      - ask: 'make -C config/aquaskk'
-      - ask: 'make -C /tmp/untrusted-clone'
-      - ask: 'make -C ../../untrusted-clone'
-      - ask: 'make -C/tmp/untrusted-clone build'
-      - ask: 'make -C /tmp/untrusted-clone -C .'
-      - ask: 'make --directory=config/aquaskk build'
-      - ask: 'make --directory=/tmp/untrusted-clone build'
-      - ask: 'make --directory /tmp/untrusted-clone build'
+      - pass: 'make -C config/aquaskk'
+      - pass: 'make -C /tmp/untrusted-clone'
+      - pass: 'make -C ../../untrusted-clone'
+      - pass: 'make -C/tmp/untrusted-clone build'
+      - pass: 'make -C /tmp/untrusted-clone -C .'
+      - pass: 'make --directory=config/aquaskk build'
+      - pass: 'make --directory=/tmp/untrusted-clone build'
+      - pass: 'make --directory /tmp/untrusted-clone build'
 
   # `mise install` (bare) only installs what the repo's own mise.toml /
   # .tool-versions already declares, same trust boundary as cargo run/go run
   # above (it can run a tool's postinstall hook, but only one the repo itself
   # committed). A flagless literal — a flag on the command falls through to
-  # the global default `ask` rather than being silently allowed.
+  # the global default `pass` rather than being silently allowed.
   - allow: 'mise install'
     when: *trusted_repo_cwd
     tests:
@@ -130,10 +130,10 @@ rules:
       - allow: 'mise run test'
       - allow: 'mise run db:up'
       - allow: 'mise run db-up'
-      - ask: 'mise run test -C /tmp/untrusted-clone'
-      - ask: 'mise run test --cd /tmp/untrusted-clone'
-      - ask: 'mise run test --tool npm:evil-package@1.0.0'
-      - ask: 'mise run test -t npm:evil-package@1.0.0'
+      - pass: 'mise run test -C /tmp/untrusted-clone'
+      - pass: 'mise run test --cd /tmp/untrusted-clone'
+      - pass: 'mise run test --tool npm:evil-package@1.0.0'
+      - pass: 'mise run test -t npm:evil-package@1.0.0'
 
   # `docker exec`/`compose exec` attach to a container that's already
   # running, so most flags that widen host reach (--cap-add, --userns, ...)
@@ -146,7 +146,7 @@ rules:
     tests:
       - allow: 'docker exec app-1 psql -U app'
       - allow: 'docker exec -it app-1 sh'
-      - ask: 'docker exec --privileged app-1 sh'
+      - pass: 'docker exec --privileged app-1 sh'
   - allow: 'docker-compose [-f *] [-p *] exec *'
     when: "paths['trusted-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')) && !has(flags.privileged)"
     tests:
@@ -154,7 +154,7 @@ rules:
       - allow: 'docker-compose exec web sh'
       - allow: 'docker compose -p tq-infra exec -T db psql -U tq -d tq_test -c "\d tasks"'
       - allow: 'docker --context colima compose exec db psql -U ddr_score_manager -d ddr_score_manager_test -c "\l"'
-      - ask: 'docker compose exec --privileged web sh'
+      - pass: 'docker compose exec --privileged web sh'
 
   # `docker compose run`/`docker run` both start a new container, so the
   # same flags that widen host reach apply to both -- see the `docker run`
@@ -165,7 +165,7 @@ rules:
       - allow: 'docker compose run --rm app pnpm test'
       - allow: 'docker-compose run web sh'
       - allow: 'docker compose run --network container:meshi-verify-pg app sh'
-      - ask: 'docker compose run --cap-add=SYS_ADMIN app sh'
+      - pass: 'docker compose run --cap-add=SYS_ADMIN app sh'
       - deny: 'docker compose run --network=host app sh'
       - deny: 'docker compose run --network host app sh'
 
@@ -189,7 +189,7 @@ rules:
   # project's own compose file already declares, so flags that widen the
   # container's reach into the host (root inside a privileged container,
   # added capabilities, other-namespace sharing, relaxed seccomp/apparmor,
-  # raw device access) must still fall through to `ask` rather than being
+  # raw device access) must still fall through to `pass` rather than being
   # silently allowed. `--network` is the one exception: its value is
   # inspected below so only `host` (full host/VM network namespace sharing,
   # exposing loopback-only services with no isolation left to rely on) is
@@ -214,22 +214,22 @@ rules:
       - allow: 'docker create --entrypoint /bin/sh hashicorp/terraform:1.15 -c "sleep 600"'
       - allow: 'docker run --rm --network container:meshi-verify-pg alpine echo hi'
       - allow: 'docker run --rm --network meshi-verify-net alpine echo hi'
-      - ask: 'docker run --privileged --rm alpine sh'
-      - ask: 'docker run --cap-add=SYS_ADMIN --rm alpine sh'
-      - ask: 'docker run --userns=host --rm alpine sh'
-      - ask: 'docker run --pid=host --rm alpine sh'
-      - ask: 'docker run --ipc=host --rm alpine sh'
-      - ask: 'docker run --uts=host --rm alpine sh'
-      - ask: 'docker run --security-opt=seccomp=unconfined --rm alpine sh'
-      - ask: 'docker run --device=/dev/kvm --rm alpine sh'
-      - ask: 'docker create --privileged alpine sh'
-      - ask: 'docker create --cap-add=SYS_ADMIN alpine sh'
+      - pass: 'docker run --privileged --rm alpine sh'
+      - pass: 'docker run --cap-add=SYS_ADMIN --rm alpine sh'
+      - pass: 'docker run --userns=host --rm alpine sh'
+      - pass: 'docker run --pid=host --rm alpine sh'
+      - pass: 'docker run --ipc=host --rm alpine sh'
+      - pass: 'docker run --uts=host --rm alpine sh'
+      - pass: 'docker run --security-opt=seccomp=unconfined --rm alpine sh'
+      - pass: 'docker run --device=/dev/kvm --rm alpine sh'
+      - pass: 'docker create --privileged alpine sh'
+      - pass: 'docker create --cap-add=SYS_ADMIN alpine sh'
       # The unscoped allow above relies on the colima VM's own confinement
       # (see comment above). `docker` alias only recognizes `--context
       # colima` (tools/docker.yml), so a context pointing at a remote daemon
-      # doesn't match the alias at all and falls through to ask instead of
+      # doesn't match the alias at all and falls through to pass instead of
       # escaping that confinement.
-      - ask: 'docker --context evil-remote run --rm -v /:/host alpine sh'
+      - pass: 'docker --context evil-remote run --rm -v /:/host alpine sh'
 
   # `--network=host` shares the host/VM network namespace, letting the
   # container reach loopback-only services (debug ports, local OAuth
@@ -237,10 +237,11 @@ rules:
   # network isolation as their only access control. Unlike the other
   # host-reach flags above, this one has a legitimate non-host counterpart
   # (`container:<name>`, custom network names) common enough to warrant
-  # inspecting the value instead of asking on every `--network` use, so the
-  # dangerous value is a hard deny rather than an ask. `--net` is docker
-  # CLI's undocumented alias for `--network` (confirmed via `docker create
-  # --net=host` producing NetworkMode "host"), so it's matched here too.
+  # inspecting the value instead of letting every `--network` use fall
+  # through to pass, so the dangerous value is a hard deny rather than pass.
+  # `--net` is docker CLI's undocumented alias for `--network` (confirmed via
+  # `docker create --net=host` producing NetworkMode "host"), so it's matched
+  # here too.
   - deny: 'docker run|create * --network|--net host *'
     message: *network_host_msg
     tests:

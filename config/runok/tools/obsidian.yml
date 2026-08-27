@@ -55,7 +55,7 @@ rules:
       - allow: obsidian vault=obsidian-v2 read note.md
       - allow: obsidian vault=obsidian-v2 tasks
       - allow: obsidian vault=obsidian-v2 plugins
-      - ask: obsidian vault=obsidian-v2 plugin:enable id=x
+      - pass: obsidian vault=obsidian-v2 plugin:enable id=x
 
   # readonly suffix patterns (e.g. property:read, daily:path, base:views)
   - allow: obsidian vault=* *:read|*:list|*:path|*:views|*:query|*:context|*:enabled *
@@ -68,7 +68,7 @@ rules:
       - allow: obsidian vault=obsidian-v2 base:query
       - allow: obsidian vault=obsidian-v2 search:context query=x
       - allow: obsidian vault=obsidian-v2 plugins:enabled
-      - ask: obsidian vault=obsidian-v2 daily:append content=x
+      - pass: obsidian vault=obsidian-v2 daily:append content=x
 
   - allow: obsidian vault=* search|search:* *
     tests:

@@ -31,4 +31,4 @@ rules:
   - allow: 'terraform-docs .'
     tests:
       - allow: 'terraform-docs .'
-      - ask: 'terraform-docs . --output-file README.md'
+      - pass: 'terraform-docs . --output-file README.md'

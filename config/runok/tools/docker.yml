@@ -36,7 +36,7 @@ rules:
     tests:
       - allow: 'docker ps -a'
       - allow: 'docker --context colima ps -a'
-      - ask: 'docker --context evil-remote ps -a'
+      - pass: 'docker --context evil-remote ps -a'
   - allow: docker images *
   - allow: docker stats *
   - allow: docker top *
@@ -61,7 +61,7 @@ rules:
   - allow: 'docker manifest inspect *'
     tests:
       - allow: 'docker manifest inspect node:24.17.0-slim'
-      - ask: 'docker manifest push mymanifest'
+      - pass: 'docker manifest push mymanifest'
   - allow: 'docker buildx imagetools inspect *'
     tests:
       - allow: 'docker buildx imagetools inspect ghcr.io/fohte/webhook-hub:latest'
@@ -70,7 +70,7 @@ rules:
     tests:
       - allow: 'docker system df'
       - allow: 'docker system df -v'
-      - ask: 'docker system prune'
+      - pass: 'docker system prune'
   - allow: 'docker pull *'
     tests:
       - allow: 'docker pull postgres:17-alpine'
@@ -84,8 +84,8 @@ rules:
   - allow: 'docker-credential-osxkeychain list'
     tests:
       - allow: 'docker-credential-osxkeychain list'
-      - ask: 'docker-credential-osxkeychain store'
-      - ask: 'docker-credential-osxkeychain list extra-arg'
+      - pass: 'docker-credential-osxkeychain store'
+      - pass: 'docker-credential-osxkeychain list extra-arg'
 
   # `context use` persists which context bare `docker` commands (including
   # the unscoped allow rules above) target next, via ~/.docker/config.json's
@@ -116,19 +116,20 @@ rules:
   # multiple container names in one call (e.g. `docker rm -f $(docker ps
   # -aq)` removing everything at once), so it's bounded to one container per
   # invocation. Only `-f`/`--force` is allowed through; other flags such as
-  # `-v`/`--volumes` also delete anonymous volumes and must stay ask.
+  # `-v`/`--volumes` also delete anonymous volumes and must fall through to
+  # pass.
   - allow: 'docker rm [-f] *'
     when: 'size(args) == 2 && !flags.exists(k, k != "f" && k != "force")'
     tests:
       - allow: 'docker rm -f meshi-obs-smoketest'
       - allow: 'docker rm meshi-obs-smoketest'
-      - ask: 'docker rm -f meshi-obs-smoketest other-container'
-      - ask: 'docker rm -v meshi-obs-smoketest'
+      - pass: 'docker rm -f meshi-obs-smoketest other-container'
+      - pass: 'docker rm -v meshi-obs-smoketest'
       # `--context` is folded into the alias, but the `!flags.exists(k, k !=
       # "f" && k != "force")` check above still sees the `context` flag and
-      # rejects it -- an extra `--context` falls back to ask instead of
+      # rejects it -- an extra `--context` falls back to pass instead of
       # silently widening the rule.
-      - ask: 'docker --context colima rm -f meshi-obs-smoketest'
+      - pass: 'docker --context colima rm -f meshi-obs-smoketest'
 
   # `rmi`/`image rm` only delete images, which are rebuildable or
   # re-pullable (same reasoning as the unscoped `--rmi` in compose down
@@ -173,7 +174,7 @@ rules:
     tests:
       - allow: 'docker compose version'
       - allow: 'docker-compose version'
-      - ask: 'docker compose version --format json'
+      - pass: 'docker compose version --format json'
 
   # `--push` has no short-flag form (confirmed via `docker compose build
   # --help`), so a plain pattern negation can't be bypassed by a fused
@@ -183,11 +184,11 @@ rules:
       - allow: 'docker compose build app'
       - allow: 'docker-compose build app'
       - allow: 'docker compose build'
-      - ask: 'docker compose build app --push'
+      - pass: 'docker compose build app --push'
 
   # `-v`/`--volumes` deletes named/anonymous volumes (data loss), so it's
-  # denied outright rather than left as ask. `--rmi` only deletes
-  # rebuildable images, so it's allowed unscoped below. The glob suffix
+  # denied outright rather than left to fall through to pass. `--rmi` only
+  # deletes rebuildable images, so it's allowed unscoped below. The glob suffix
   # (`-v*`/`--volumes*`) catches fused short-flag clusters too: down's
   # only other short flag is `-t`/`--timeout` (value-taking), and pflag
   # shorthand clusters require the value-taking flag to be last, so any

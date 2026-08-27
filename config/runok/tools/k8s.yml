@@ -5,7 +5,7 @@ definitions:
   # match on the bare command name. Optional groups let the alias match both
   # space- and `=`-joined flag forms without repeating the list. `--token`
   # and `--password` are intentionally omitted from kubectl so secret-bearing
-  # invocations fall through to ask.
+  # invocations fall through to pass.
   aliases:
     kubectl:
       - 'kubectl [-n|--namespace *] [--context *] [--cluster *] [--user *] [--kubeconfig *]'
@@ -98,10 +98,10 @@ rules:
       - allow: 'kubectl apply --server-side --dry-run=server --force-conflicts --field-manager=argocd-controller -f -'
       - allow: 'kubectl apply -f manifest.yaml --dry-run=client'
       - allow: 'kubectl apply --dry-run=server -f manifest.yaml'
-      - ask: 'kubectl apply -f manifest.yaml'
-      - ask: 'kubectl apply --dry-run=none -f manifest.yaml'
-      - ask: 'kubectl apply --dry-run=server -f manifest.yaml --dry-run=none'
-      - ask: 'kubectl apply --dry-run=client --dry-run=none -f manifest.yaml'
+      - pass: 'kubectl apply -f manifest.yaml'
+      - pass: 'kubectl apply --dry-run=none -f manifest.yaml'
+      - pass: 'kubectl apply --dry-run=server -f manifest.yaml --dry-run=none'
+      - pass: 'kubectl apply --dry-run=client --dry-run=none -f manifest.yaml'
 
   # `kubectl config` read-only subcommands that only emit names.
   - allow: 'kubectl config current-context|get-contexts|get-clusters|get-users *'
@@ -138,14 +138,14 @@ rules:
       - allow: 'helm pull tailscale-operator --version 1.96.5 --repo https://pkgs.tailscale.com/helmcharts --untar'
       - allow: 'helm pull oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller --version 0.14.1 --untar'
       # `install` / `upgrade` / `uninstall` / `rollback` mutate the cluster.
-      - ask: 'helm install foo ./chart'
-      - ask: 'helm upgrade foo ./chart'
-      - ask: 'helm uninstall foo'
-      - ask: 'helm rollback foo 1'
+      - pass: 'helm install foo ./chart'
+      - pass: 'helm upgrade foo ./chart'
+      - pass: 'helm uninstall foo'
+      - pass: 'helm rollback foo 1'
       # `test` runs test pods on the cluster.
-      - ask: 'helm test myrelease'
+      - pass: 'helm test myrelease'
       # `env` reveals KUBECONFIG path and other secrets-adjacent state.
-      - ask: 'helm env'
+      - pass: 'helm env'
   - allow: 'helm get hooks|metadata|notes *'
     tests:
       - allow: 'helm get notes myrelease'
@@ -163,8 +163,8 @@ rules:
       - allow: 'helm repo update cnpg'
       - allow: 'helm repo update'
       - allow: 'helm repo list'
-      # `repo remove` is destructive; let it fall through to ask.
-      - ask: 'helm repo remove cnpg'
+      # `repo remove` is destructive; let it fall through to pass.
+      - pass: 'helm repo remove cnpg'
 
   - allow: 'helmfile [-l|--selector *] [-f|--file *] [-e|--environment *] [-n|--namespace *] [--kube-context *] [--kubeconfig *] build|deps|diff|fetch|lint|list|print-env|repos|show-dag|status|template|version *'
     tests:
@@ -181,16 +181,16 @@ rules:
       - allow: 'helmfile --selector name=alloy diff'
       - allow: 'helmfile --debug template'
       # `apply` / `sync` / `destroy` mutate the cluster.
-      - ask: 'helmfile apply'
-      - ask: 'helmfile --selector name=alloy apply'
-      - ask: 'helmfile sync'
-      - ask: 'helmfile destroy'
+      - pass: 'helmfile apply'
+      - pass: 'helmfile --selector name=alloy apply'
+      - pass: 'helmfile sync'
+      - pass: 'helmfile destroy'
       # `init` installs helm plugins locally.
-      - ask: 'helmfile init'
+      - pass: 'helmfile init'
       # `test` runs test pods on the cluster (not read-only).
-      - ask: 'helmfile test'
+      - pass: 'helmfile test'
       # `write-values` writes values files to arbitrary paths.
-      - ask: 'helmfile write-values'
+      - pass: 'helmfile write-values'
 
   # `-i/--insecure` makes talosctl talk to the maintenance API without auth,
   # so any subcommand using it must fall through to ask. This `ask` rule wins
@@ -226,7 +226,7 @@ rules:
 
   # `image list|k8s-bundle|talos-bundle` are read-only. `pull`, `remove`,
   # `cache-create`, `cache-serve`, `cache-cert-gen` mutate node or local state
-  # and must fall through to ask.
+  # and must fall through to pass.
   - allow: 'talosctl image|images list|k8s-bundle|talos-bundle *'
     tests:
       - allow: 'talosctl image list'
@@ -234,14 +234,14 @@ rules:
       - allow: 'talosctl --nodes 10.0.0.1 image list'
       - allow: 'talosctl image k8s-bundle'
       - allow: 'talosctl image talos-bundle'
-      - ask: 'talosctl image pull ghcr.io/foo:bar'
-      - ask: 'talosctl image remove ghcr.io/foo:bar'
-      - ask: 'talosctl image cache-create --image-layer-cache /tmp/cache'
+      - pass: 'talosctl image pull ghcr.io/foo:bar'
+      - pass: 'talosctl image remove ghcr.io/foo:bar'
+      - pass: 'talosctl image cache-create --image-layer-cache /tmp/cache'
 
   # `service` / `services` without arguments lists services. `service <id>
   # status` is the explicit read action. `service <id>` (action omitted) and
   # `service <id> start|stop|restart` mutate or risk mutating state, so they
-  # must fall through to ask. Negation `!start|stop|restart` constrains the
+  # must fall through to pass. Negation `!start|stop|restart` constrains the
   # ID position to a single token that is not a state-changing action.
   - allow: 'talosctl service|services'
     tests:
@@ -251,11 +251,11 @@ rules:
     tests:
       - allow: 'talosctl service kubelet status'
       - allow: 'talosctl --nodes 10.0.0.1 service kubelet status'
-      - ask: 'talosctl service kubelet restart'
-      - ask: 'talosctl service kubelet start'
-      - ask: 'talosctl service kubelet stop'
-      - ask: 'talosctl service kubelet stop status'
-      - ask: 'talosctl service kubelet'
+      - pass: 'talosctl service kubelet restart'
+      - pass: 'talosctl service kubelet start'
+      - pass: 'talosctl service kubelet stop'
+      - pass: 'talosctl service kubelet stop status'
+      - pass: 'talosctl service kubelet'
 
   # `talosctl config` read-only subcommands. `add`, `new`, `merge`, `endpoint`,
   # `node`, `context`, `remove` mutate the local talosconfig, so they are
@@ -265,13 +265,13 @@ rules:
       - allow: 'talosctl config contexts'
       - allow: 'talosctl config info'
       - allow: 'talosctl --talosconfig ~/.talos/config config contexts'
-      - ask: 'talosctl config context foo'
-      - ask: 'talosctl config new'
-      - ask: 'talosctl config add foo'
-      - ask: 'talosctl config merge ./other'
-      - ask: 'talosctl config endpoint 10.0.0.1'
-      - ask: 'talosctl config node 10.0.0.1'
-      - ask: 'talosctl config remove foo'
+      - pass: 'talosctl config context foo'
+      - pass: 'talosctl config new'
+      - pass: 'talosctl config add foo'
+      - pass: 'talosctl config merge ./other'
+      - pass: 'talosctl config endpoint 10.0.0.1'
+      - pass: 'talosctl config node 10.0.0.1'
+      - pass: 'talosctl config remove foo'
 
   # `etcd status` / `etcd members` are read-only. `etcd snapshot` is excluded
   # because it dumps the full etcd state (including all Kubernetes Secrets).
@@ -280,21 +280,21 @@ rules:
       - allow: 'talosctl etcd status'
       - allow: 'talosctl etcd members'
       - allow: 'talosctl --nodes 10.0.0.1 etcd status'
-      - ask: 'talosctl etcd snapshot /tmp/snap.db'
-      - ask: 'talosctl etcd defrag'
-      - ask: 'talosctl etcd leave'
-      - ask: 'talosctl etcd remove-member node-1'
+      - pass: 'talosctl etcd snapshot /tmp/snap.db'
+      - pass: 'talosctl etcd defrag'
+      - pass: 'talosctl etcd leave'
+      - pass: 'talosctl etcd remove-member node-1'
 
   # `read` exposes arbitrary node files. Limit allowed targets to
   # `definitions.vars.talos-readable` so credential paths (`/etc/kubernetes`,
-  # `/system/secrets`, `/var/lib/kubelet`) keep falling through to ask.
+  # `/system/secrets`, `/var/lib/kubelet`) keep falling through to pass.
   - allow: 'talosctl read <var:talos-readable>'
     tests:
       - allow: 'talosctl read /proc/uptime'
       - allow: 'talosctl --nodes 10.0.0.1 read /proc/1/cmdline'
-      - ask: 'talosctl read /etc/kubernetes/pki/ca.key'
-      - ask: 'talosctl read /system/secrets/encryption-config.yaml'
-      - ask: 'talosctl read /var/lib/kubelet/pki/kubelet.key'
+      - pass: 'talosctl read /etc/kubernetes/pki/ca.key'
+      - pass: 'talosctl read /system/secrets/encryption-config.yaml'
+      - pass: 'talosctl read /var/lib/kubelet/pki/kubelet.key'
 
   # `logs` reads Talos service or Kubernetes container logs. Default
   # klog/zap output does not include bearer tokens or Secret values, so
@@ -306,7 +306,7 @@ rules:
       - allow: 'talosctl --nodes 10.0.0.1 logs k8s.io/kube-system/kube-apiserver-xxx'
 
   # The following reads are credential-adjacent and intentionally fall through
-  # to ask:
+  # to pass:
   #   - `kubeconfig`: downloads cluster-admin credentials.
   #   - `copy`: pulls arbitrary data out of the node.
   #   - `pcap` / `tcpdump`: packet capture can expose plaintext creds.

@@ -49,8 +49,8 @@ rules:
   - allow: 'a gh issue-agent push !--force !--allow-delete *'
     tests:
       - allow: a gh issue-agent push 123
-      - ask: a gh issue-agent push --force 123
-      - ask: a gh issue-agent push --allow-delete 123
+      - pass: a gh issue-agent push --force 123
+      - pass: a gh issue-agent push --allow-delete 123
 
   # Claude Code
   - allow: 'claude-session-digest *'
@@ -105,32 +105,32 @@ rules:
   # `--engine <file.js>` loads a JS module as the converter, `--config` (`-c` /
   # `--config-file`) points at a config file that may define `engine` as a JS
   # function, and `--browser-path` runs an arbitrary executable -- all three are
-  # negated so they fall through to the default ask.
+  # negated so they fall through to the default pass.
   - allow: 'marp !--engine !-c !--config !--config-file !--browser-path *'
     tests:
       - allow: 'marp slides.md -o slides.html'
-      - ask: 'marp --engine ./evil.js slides.md'
-      - ask: 'marp --engine=./evil.js slides.md'
-      - ask: 'marp -c ./marp.config.js slides.md'
-      - ask: 'marp --config ./marp.config.js slides.md'
-      - ask: 'marp --config-file ./marp.config.js slides.md'
-      - ask: 'marp --browser-path /tmp/evil slides.md'
-      - ask: 'nlx @marp-team/marp-cli@latest --engine ./evil.js slides.md'
+      - pass: 'marp --engine ./evil.js slides.md'
+      - pass: 'marp --engine=./evil.js slides.md'
+      - pass: 'marp -c ./marp.config.js slides.md'
+      - pass: 'marp --config ./marp.config.js slides.md'
+      - pass: 'marp --config-file ./marp.config.js slides.md'
+      - pass: 'marp --browser-path /tmp/evil slides.md'
+      - pass: 'nlx @marp-team/marp-cli@latest --engine ./evil.js slides.md'
       - allow: 'nlx marp slides.md --pdf'
       - allow: 'nlx @marp-team/marp-cli slides.md --images png'
       - allow: 'nlx @marp-team/marp-cli@latest slides.md -o out/slides.html'
       - allow: 'nlx @marp-team/marp-cli@4.2.3 slides.md'
       - allow: 'nlx -p @marp-team/marp-cli marp slides.md'
 
-  # opensrc (read-only and idempotent fetch). remove/clean fall through to default ask.
+  # opensrc (read-only and idempotent fetch). remove/clean fall through to default pass.
   - allow: 'opensrc path|list|fetch *'
     tests:
       - allow: 'opensrc path zod'
       - allow: 'opensrc path zod@3.22.0'
       - allow: 'opensrc list'
       - allow: 'opensrc fetch react'
-      - ask: 'opensrc remove zod'
-      - ask: 'opensrc clean'
+      - pass: 'opensrc remove zod'
+      - pass: 'opensrc clean'
 
   - allow: pinact run *
 
@@ -195,8 +195,8 @@ rules:
       - allow: 'betterleaks git --pre-commit --staged --verbose --no-banner'
       - allow: 'betterleaks git --pre-commit --redact --staged --verbose'
       - allow: 'betterleaks git --pre-commit --staged'
-      - ask: 'betterleaks git --pre-commit --staged --report-path /tmp/out.json'
-      - ask: 'betterleaks git --pre-commit --staged /Users/fohte/other-repo'
+      - pass: 'betterleaks git --pre-commit --staged --report-path /tmp/out.json'
+      - pass: 'betterleaks git --pre-commit --staged /Users/fohte/other-repo'
 
   - allow: conftest verify *
   - allow: conftest test *

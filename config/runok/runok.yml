@@ -33,9 +33,6 @@ extends:
   - './tools/misc.yml'
   - './work.yml'
 
-defaults:
-  action: ask
-
 experimental:
   require_command_in_path:
     enabled: true

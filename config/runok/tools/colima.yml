@@ -5,7 +5,7 @@ definitions:
     # `colima ssh -- <cmd>` executes <cmd> inside the colima VM. Register as a
     # wrapper so the inner command is recursively evaluated against existing
     # rules (e.g. docker rules in tools/docker.yml). Bare `colima ssh` (no `--`)
-    # opens an interactive shell and falls through to default ask.
+    # opens an interactive shell and falls through to default pass.
     - 'colima ssh -- <cmd>'
     # `limactl shell colima -- <cmd>` is the underlying Lima command colima's
     # own `ssh` subcommand wraps -- same VM, same inner-command re-evaluation.
@@ -17,22 +17,22 @@ definitions:
 
 rules:
   # Readonly Colima VM subcommands. start/stop/delete/restart/ssh are
-  # destructive or interactive and fall through to default ask.
+  # destructive or interactive and fall through to default pass.
   - allow: 'colima status|list|version|template *'
     tests:
       - allow: 'colima status'
       - allow: 'colima list'
       - allow: 'colima version'
-      - ask: 'colima start'
-      - ask: 'colima stop'
-      - ask: 'colima delete'
+      - pass: 'colima start'
+      - pass: 'colima stop'
+      - pass: 'colima delete'
       - allow: 'colima ssh -- docker ps'
       - allow: 'colima ssh -- docker images postgres'
       # `docker run` is gated by trusted-repos.yml's cwd check, same as a
       # direct `docker run` outside colima ssh -- both end up running in
       # the same VM.
       - allow: 'colima ssh -- docker run -d --name pg postgres:17-alpine'
-      - ask: 'colima ssh'
+      - pass: 'colima ssh'
       - allow: 'limactl shell colima -- docker ps'
-      - ask: 'limactl shell other-vm -- docker ps'
-      - ask: 'limactl shell colima'
+      - pass: 'limactl shell other-vm -- docker ps'
+      - pass: 'limactl shell colima'

@@ -1,7 +1,9 @@
 #!/bin/bash
 #
 # Pass `runok audit --json` output through, dropping entries that are no longer
-# `ask` under the current ruleset or that match an IGNORE_COMMANDS regex.
+# `ask`/`pass` under the current ruleset or that match an IGNORE_COMMANDS regex.
+# `pass` (no runok rule matched, deferred to Claude Code) is as triage-worthy
+# as `ask`, since it is the unmatched-rule fallback.
 # Designed to be consumed by the `runok-review-asks` Claude skill.
 #
 # Output: the original `runok audit --json` JSONL, unmodified, with non-matching
@@ -28,7 +30,10 @@ IGNORE_COMMANDS=(
 ignore_regex=$(printf '|%s' "${IGNORE_COMMANDS[@]}")
 ignore_regex=${ignore_regex:1}
 
-# Default --action ask unless the caller specified one.
+# `runok audit --action` only accepts a single allow/deny/ask value (it
+# doesn't know about `pass`), so it can't filter for ask+pass together.
+# Fetch everything and filter in jq below, unless the caller passed their
+# own --action.
 has_action=0
 for a in "$@"; do
   case "$a" in
@@ -36,23 +41,23 @@ for a in "$@"; do
   esac
 done
 
-audit_args=()
 if [[ $has_action -eq 0 ]]; then
-  audit_args+=(--action ask)
+  action_filter='(.action.type == "ask" or .action.type == "pass")'
+else
+  action_filter='true'
 fi
-audit_args+=("$@")
 
-runok audit --json "${audit_args[@]}" |
-  jq -c --arg ignore "$ignore_regex" 'select((.command | test($ignore)) | not)' |
+runok audit --json "$@" |
+  jq -c --arg ignore "$ignore_regex" "select(($action_filter) and ((.command | test(\$ignore)) | not))" |
   while IFS= read -r line; do
     cmd=$(jq -r '.command' <<< "$line")
     # `runok check` evaluates each stdin line as a separate command, so a
     # heredoc-bearing compound yields multiple JSON docs. Treat the entry as
-    # still-ask if ANY sub-decision is ask (otherwise long heredoc compounds
-    # whose middle subcommands hit ask get silently dropped).
-    # On any parse error, fall back to ask so the entry surfaces for review.
-    decision=$(printf '%s\n' "$cmd" | runok check --output-format json 2> /dev/null | jq -sr '[.[].decision] | if any(. == "ask") then "ask" else "other" end' 2> /dev/null || echo ask)
-    if [[ "$decision" == "ask" ]]; then
+    # still-pending if ANY sub-decision is ask/pass (otherwise long heredoc
+    # compounds whose middle subcommands hit ask/pass get silently dropped).
+    # On any parse error, fall back to pending so the entry surfaces for review.
+    decision=$(printf '%s\n' "$cmd" | runok check --output-format json 2> /dev/null | jq -sr '[.[].decision] | if any(. == "ask" or . == "pass") then "pending" else "other" end' 2> /dev/null || echo pending)
+    if [[ "$decision" == "pending" ]]; then
       printf '%s\n' "$line"
     fi
   done

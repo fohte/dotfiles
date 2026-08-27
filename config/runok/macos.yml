@@ -16,8 +16,8 @@ rules:
       - allow: 'mdls -name kMDItemNumberOfPages "/Users/fohte/.claude/projects/x/tool-results/webfetch-1785209917326-d07pwi.pdf"'
       - allow: 'mdls bll1992.pdf'
       - allow: 'mdls -attr kMDItemFSName bll1992.pdf'
-      - ask: 'mdls -plist out.xml bll1992.pdf'
-      - ask: 'mdls -p out.xml bll1992.pdf'
+      - pass: 'mdls -plist out.xml bll1992.pdf'
+      - pass: 'mdls -p out.xml bll1992.pdf'
 
   # -j/--js runs the given file as JavaScript via JavaScriptCore, which sips
   # links (otool -L). Every other flag is an image query or transform. Output
@@ -27,5 +27,5 @@ rules:
       - allow: 'sips -z 300 600 adding-tag.png --out adding-tag-zoom.png'
       - allow: 'sips -g pixelWidth -g pixelHeight IncomingOnly.png'
       - allow: 'sips -s description "x" screenshot.png'
-      - ask: 'sips -j evil.js screenshot.png'
-      - ask: 'sips -z 300 600 in.png --out out.png -j evil.js'
+      - pass: 'sips -j evil.js screenshot.png'
+      - pass: 'sips -z 300 600 in.png --out out.png -j evil.js'

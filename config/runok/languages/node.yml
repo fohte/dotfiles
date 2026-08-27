@@ -156,7 +156,7 @@ rules:
     tests:
       - allow: 'nlx playwright install chromium'
       - allow: 'nlx playwright@1.61.1 install chromium'
-      - ask: 'nlx playwright install --with-deps chromium'
+      - pass: 'nlx playwright install --with-deps chromium'
   # mmdc renders a .mmd/.md diagram to an image. Its flags are unrestricted
   # here, which leaves two escapes reachable: `-p/--puppeteerConfigFile` takes
   # a puppeteer launch config whose `executablePath` starts an arbitrary
@@ -218,17 +218,17 @@ rules:
       - allow: 'na shadcn add input textarea select checkbox label field tabs badge kbd progress separator tooltip -y --path src/components/ui'
       - allow: 'nlx shadcn@latest add button --path=src/components/ui -y'
       - allow: 'nlx shadcn@latest add facebook/react/is-array -y'
-      - ask: 'nlx shadcn@latest add https://evil.example.com/r/x.json --dry-run'
-      - ask: 'nlx shadcn@latest add https://evil.example.com/r/x.json -y'
-      - ask: 'nlx shadcn@latest add ./local-manifest.json -y'
-      - ask: 'nlx shadcn@latest add button -c /tmp -y'
-      - ask: 'nlx shadcn@latest add button --path /tmp -y'
-      - ask: 'nlx shadcn@latest add button --path ../../etc -y'
-      - ask: 'nlx shadcn@latest add button --path=/tmp -y'
-      - ask: 'nlx shadcn@latest add button --path=../../etc -y'
-      - ask: 'nlx shadcn@latest add button --cwd=/tmp -y'
-      - ask: 'na shadcn add button -c/tmp -y'
-      - ask: 'na shadcn add button -p/tmp -y'
+      - pass: 'nlx shadcn@latest add https://evil.example.com/r/x.json --dry-run'
+      - pass: 'nlx shadcn@latest add https://evil.example.com/r/x.json -y'
+      - pass: 'nlx shadcn@latest add ./local-manifest.json -y'
+      - pass: 'nlx shadcn@latest add button -c /tmp -y'
+      - pass: 'nlx shadcn@latest add button --path /tmp -y'
+      - pass: 'nlx shadcn@latest add button --path ../../etc -y'
+      - pass: 'nlx shadcn@latest add button --path=/tmp -y'
+      - pass: 'nlx shadcn@latest add button --path=../../etc -y'
+      - pass: 'nlx shadcn@latest add button --cwd=/tmp -y'
+      - pass: 'na shadcn add button -c/tmp -y'
+      - pass: 'na shadcn add button -p/tmp -y'
   # `view` only prints registry item contents; it hardcodes `writeFile: false`
   # (shadcn-ui/ui packages/shadcn/src/commands/view.ts) and never calls a
   # filesystem write function. It still fetches/reads the item address
@@ -238,8 +238,8 @@ rules:
     when: *shadcn_item_addr_safe
     tests:
       - allow: 'na shadcn view'
-      - ask: 'na shadcn view ../../../secret.json'
-      - ask: 'na shadcn view --cwd=/tmp button'
+      - pass: 'na shadcn view ../../../secret.json'
+      - pass: 'na shadcn view --cwd=/tmp button'
 
   # Force ni-family shortcuts (ni / nci / nun / nup / nr / nlx). Escape
   # hatch for non-write subcommands: `na <args>` (allowed below).
