@@ -16,6 +16,14 @@ local env(name) = std.extVar(name);
     // `run_in_background` from the Agent tool schema, which makes every
     // subagent launch asynchronous with no way to opt out.
     CLAUDE_CODE_FORK_SUBAGENT: '0',
+
+    // On a macOS memory-pressure notification, Claude Code kills every
+    // background Bash task at once. That takes down long-lived servers
+    // started from one -- notably `crit preview`, whose launching client
+    // forwards the signal to the crit daemon it spawned, so the review URL
+    // dies and has to be reopened. The flag has no per-task scope, so this
+    // gives up the reap for every background task, not just those servers.
+    CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP: '1',
   },
 
   // Parallel work is driven by separate tmux panes/sessions, not the
