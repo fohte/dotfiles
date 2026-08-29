@@ -706,13 +706,12 @@ rules:
       - allow: 'gh pr diff 481'
   - deny: 'gh [-R *] issue|pr close|reopen * --comment|-c *'
     message: 'Claude Code does not post PR or issue comments. Close or reopen without --comment.'
-    fix_suggestion: 'gh pr close 481'
+    fix_suggestion: 'gh issue close 123'
     tests:
       - deny: 'gh pr close 481 --comment "foo"'
       - deny: 'gh -R fohte/tq pr reopen 481 -c "foo"'
       - deny: 'gh issue close 123 --comment "foo"'
       - deny: 'gh issue reopen 123 -c "foo"'
-      - pass: 'gh pr close 481'
       - pass: 'gh issue close 123'
   - deny: 'gh [-R *] api * -X|--method POST|PUT|PATCH|DELETE *'
     when: "args.exists(a, a.contains('comments') || a.contains('/reviews'))"
@@ -739,6 +738,20 @@ rules:
     tests:
       - deny: 'gh pr create --title "foo" --body "bar"'
       - deny: 'gh -R fohte/runok pr create --title "foo"'
+
+  - deny: 'gh [-R *] pr close|merge *'
+    message: "Merging or closing a PR is the user's decision, not something Claude Code judges on its own."
+    fix_suggestion: 'Report the PR and the reason to the user and let them run it.'
+    tests:
+      - deny: 'gh pr merge'
+      - deny: 'gh pr merge 481 --squash --auto'
+      - deny: 'gh -R fohte/tq pr close 481'
+      - allow: 'gh pr view 481'
+  - deny: 'gh [-R *] api * -X|--method PUT * repos/*/pulls/*/merge *'
+    message: "Merging a PR is the user's decision, not something Claude Code judges on its own."
+    fix_suggestion: 'Report the PR and the reason to the user and let them run it.'
+    tests:
+      - deny: 'gh api -X PUT repos/fohte/tq/pulls/481/merge'
 
   # Only the add path is denied -- removing vrt-approved, and adding/removing
   # any other label, stays allowed via the rule below.
