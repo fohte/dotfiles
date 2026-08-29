@@ -75,6 +75,9 @@ description に詳細を書かない。
 片方でも欠けるなら `complete` せず `tq task status <id> todo` に戻す。
 残作業をまとめコメントに書いた上で完了にすると、閉じたタスクの中に未着手の作業が埋まる。
 
+PR 番号は下記のように tq task へのリンク化を避けた形で書く。
+詳細は `tq` skill の「Cross-reference other systems by URL, not by `#number`」を参照する。
+
 まとめコメントの型:
 
 ```md
