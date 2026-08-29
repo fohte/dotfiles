@@ -40,6 +40,10 @@ local env(name) = std.extVar(name);
   // tool definition in every request.
   disableArtifact: true,
 
+  // `off` removes the SendFeedback tool entirely, so no draft is ever queued.
+  // `quiet` would still queue drafts and only hide the per-draft notice.
+  feedbackDrafts: 'off',
+
   // Fan-out is driven by the Agent tool and separate sessions. Gates only the
   // Workflow tool, /workflows, and the ultracode keyword; SendMessage and the
   // Agent tool are unaffected.
