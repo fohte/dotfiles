@@ -4,6 +4,10 @@ local env(name) = std.extVar(name);
   env: {
     CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY: '1',
 
+    // `auto` permission mode otherwise injects an instruction to edit files
+    // through Bash (sed / heredoc) instead of the Read / Edit / Write tools.
+    CLAUDE_CODE_THRIFTY_SONIC: '0',
+
     // Subagents can spawn subagents of their own by default (up to three
     // layers below the main conversation), which sometimes runs away in an
     // unintended nested-spawn loop. Setting this to 1 withholds the Agent
