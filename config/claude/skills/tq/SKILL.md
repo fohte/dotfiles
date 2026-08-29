@@ -58,19 +58,23 @@ Anywhere a task ID is taken, both the short task number (`58`) and the UUID work
 
 ## Cross-reference other systems by URL, not by `#number`
 
-Inside descriptions, page bodies, and comments, `#58` renders as a link to tq task 58. A pull request or issue written as a bare `#140` therefore becomes a link to an unrelated tq task. Write the full URL for anything that does not live in tq, and keep the number in the link text when you want it readable.
+Inside descriptions, page bodies, and comments, `#58` renders as a link to tq task 58. A pull request or issue written as a bare `#140` therefore becomes a link to an unrelated tq task. Write the full URL for anything that does not live in tq, and keep the number in the link text when you want it readable. When a full link would be noise (a passing mention in prose, not a reference worth clicking), wrap the number in a code span instead — a code span never resolves as a tq reference, but a bare number does regardless of where it sits in the sentence.
 
 ```md
 <!-- bad: renders as a link to tq task 140 -->
 
 | #140 | search fix |
 
+Also fixed the same regression as #140.
+
 <!-- good -->
 
 | [my-app #140](https://github.com/acme/my-app/pull/140) | search fix |
+
+Also fixed the same regression as [my-app #140](https://github.com/acme/my-app/pull/140).
 ```
 
-This bites hardest in summary write-ups, where a table of bare PR numbers is the natural thing to type. Before posting a body that references another system, grep it for `#<digits>`.
+This bites in summary write-ups (a table of bare PR numbers) and in ordinary prose alike — a passing mention like "fixed the same bug as #140" is just as easy to type without thinking. Before posting a body that references another system, grep it for `#<digits>`.
 
 ## HTML pages
 
