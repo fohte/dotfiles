@@ -10,8 +10,6 @@ export NPM_CONFIG_GLOBALCONFIG="$HOME/.config/npm/npmrc"
 
 # vitest reads a different env var for the worker cap depending on major
 # version (WORKERS from 4.0; THREADS/FORKS pools before that).
-if [[ -z "$CI" ]]; then
-  export VITEST_MAX_WORKERS=4
-  export VITEST_MAX_THREADS=4
-  export VITEST_MAX_FORKS=4
-fi
+export VITEST_MAX_WORKERS=4
+export VITEST_MAX_THREADS=4
+export VITEST_MAX_FORKS=4
