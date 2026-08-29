@@ -8,6 +8,10 @@ export NI_DEFAULT_AGENT="bun"
 # writing the token to ~/.npmrc (user config) without leaking it into the repo.
 export NPM_CONFIG_GLOBALCONFIG="$HOME/.config/npm/npmrc"
 
-# Browser-mode vitest spawns a headless Chromium process per worker, which
-# can pin every core on the machine if left unbounded.
-export VITEST_MAX_WORKERS=4
+# vitest reads a different env var for the worker cap depending on major
+# version (WORKERS from 4.0; THREADS/FORKS pools before that).
+if [[ -z "$CI" ]]; then
+  export VITEST_MAX_WORKERS=4
+  export VITEST_MAX_THREADS=4
+  export VITEST_MAX_FORKS=4
+fi
