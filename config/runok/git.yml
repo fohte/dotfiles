@@ -294,6 +294,35 @@ rules:
     tests:
       - deny: 'git worktree add ../wt'
       - deny: 'git worktree add ../wt feature-branch'
+  # Object-database and index plumbing can assemble a commit and push it
+  # without ever creating a branch, a worktree, or a checkout, which routes
+  # around every rule above. The whole verb group is blocked, so harmless uses
+  # that share these verbs (`hash-object` without `-w`, `update-index
+  # --assume-unchanged`) are swept up as collateral.
+  - deny: 'git [-C *] hash-object|update-index|read-tree|write-tree|commit-tree|mktree|mktag|fast-import|replace *'
+    message: 'Blocked because git plumbing can build and publish a commit without a checkout, bypassing the branch-creation and worktree rules.'
+    fix_suggestion: '/delegate-claude'
+    tests:
+      - deny: 'git hash-object -w /tmp/blob'
+      - deny: 'git update-index --add --cacheinfo 100644,abc1234,foo.txt'
+      - deny: 'git read-tree HEAD'
+      - deny: 'git write-tree'
+      - deny: 'git commit-tree abc1234 -p def5678 -m msg'
+      - deny: 'git mktree'
+      - deny: 'git mktag'
+      - deny: 'git fast-import'
+      - deny: 'git replace abc1234 def5678'
+      - deny: 'git -C /tmp write-tree'
+  # A refspec whose source is a raw object name publishes a commit that no
+  # local branch points at -- the push half of the plumbing bypass above.
+  - deny: 'git [-C *] push *'
+    when: "args.exists(a, a.matches('^[0-9a-f]{7,40}:'))"
+    message: 'Blocked because pushing a raw object name creates a remote branch with no local branch behind it, bypassing the branch-creation and worktree rules.'
+    fix_suggestion: '/delegate-claude'
+    tests:
+      - deny: 'git push origin 0123456789abcdef0123456789abcdef01234567:refs/heads/foo'
+      - deny: 'git push origin abc1234:refs/heads/foo'
+      - allow: 'git -C /tmp push origin HEAD:refs/heads/foo'
   - deny: 'git [-C *] worktree remove *'
     message: 'Blocked because removing a worktree (with or without --force) should be done manually by the user.'
     tests:
@@ -614,6 +643,49 @@ rules:
       - deny: 'gh api "repos/fohte/copier-update-action/contents/action.yml" -F ref=b6cf0fa2396de17ddd38c98782c8143d423caa09 --jq ".content"'
       - deny: 'gh api repos/sindresorhus/ky/contents/readme.md --jq .content'
       - allow: 'gh api -X GET /repos'
+  # Writing through the contents API commits straight onto a branch with no
+  # checkout involved -- a branch-creation/worktree concern, unlike the read
+  # rule above, which is about where to read source from.
+  - deny: 'gh [-R *] api * -X|--method POST|PUT|PATCH|DELETE * repos/*/contents* *'
+    message: 'Blocked because writing through the contents API commits to a branch without a checkout, bypassing the branch-creation and worktree rules.'
+    fix_suggestion: '/delegate-claude'
+    tests:
+      - deny: 'gh api -X PUT repos/fohte/foo/contents/bar.md -f message=m'
+      - deny: 'gh api --method PUT repos/fohte/foo/contents/bar.md'
+      - deny: 'gh api -X DELETE repos/fohte/foo/contents/bar.md'
+      - deny: 'gh api -X=POST repos/fohte/foo/contents/bar.md'
+      - deny: 'gh api -X PATCH repos/fohte/foo/contents/bar.md'
+      - pass: 'gh api -X PUT repos/fohte/foo/pulls/1'
+  # The git data API is the plumbing bypass over HTTP: blobs/trees/commits
+  # build an object graph and refs publishes it, with no local repo involved.
+  - deny: 'gh [-R *] api * -X|--method POST|PUT|PATCH|DELETE * repos/*/git/* *'
+    message: 'Blocked because the git data API creates commits and branches server-side, bypassing the branch-creation and worktree rules.'
+    fix_suggestion: '/delegate-claude'
+    tests:
+      - deny: 'gh api -X POST repos/fohte/foo/git/blobs -f content=x'
+      - deny: 'gh api -X POST repos/fohte/foo/git/refs -f ref=refs/heads/x'
+      - deny: 'gh api -X PATCH repos/fohte/foo/git/refs/heads/x -f sha=abc1234'
+  # Reading blobs/trees through the git data API reaches the same file
+  # contents the read rule above routes to ghq/opensrc, so it gets the same
+  # treatment rather than the worktree-bypass one.
+  - deny: 'gh [-R *] api [-X GET] * repos/*/git/* *'
+    message: 'Use ghq (fohte-owned) or opensrc (third-party) to read repo objects, or `git ls-remote` / `git show <sha>` for refs and commits.'
+    fix_suggestion: 'ghq get -u <org>/<repo> && cd ~/ghq/github.com/<org>/<repo>; or `opensrc path <pkg>` for third-party.'
+    tests:
+      - deny: 'gh api repos/fohte/foo/git/commits/abc1234'
+      - deny: 'gh api -X GET repos/fohte/foo/git/trees/abc1234'
+      - deny: 'gh api repos/fohte/foo/git/blobs/abc1234 --jq .content'
+  # `-f`/`-F` values land in `args` because the pattern doesn't declare those
+  # flags, so an inline query is visible here -- `-F query=@file` and heredocs
+  # are not.
+  - deny: 'gh [-R *] api * graphql *'
+    when: "args.exists(a, a.contains('mutation'))"
+    message: 'Blocked because a GraphQL mutation (e.g. createCommitOnBranch, createRef) writes to the repo server-side, bypassing the branch-creation and worktree rules.'
+    fix_suggestion: '/delegate-claude'
+    tests:
+      - deny: 'gh api graphql -f query=mutation{createCommitOnBranch}'
+      - deny: 'gh api graphql --raw-field query=mutation{createRef}'
+      - allow: 'gh api graphql -f query=query{repository{name}}'
   - deny: 'gh log *'
     message: 'Not a valid gh command, did you mean `gh run watch`?'
   - deny: 'gh [-R *] issue comment *'
