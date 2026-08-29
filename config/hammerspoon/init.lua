@@ -11,33 +11,49 @@ end
 ------------------------------
 --- Applications
 ------------------------------
-hs.hotkey.bind({ 'alt' }, '1', function()
-  hs.application.launchOrFocus('/Applications/Ghostty.app')
-end)
+local function launchFocusOrCycle(path)
+  return function()
+    local app = hs.application.frontmostApplication()
+    if not (app and app:path() == path) then
+      hs.application.launchOrFocus(path)
+      return
+    end
 
-hs.hotkey.bind({ 'alt' }, '2', function()
-  hs.application.launchOrFocus('/Applications/Arc.app')
-end)
+    local wins = hs.fnutils.filter(app:allWindows(), function(w)
+      return w:isStandard() and w:id()
+    end)
+    -- allWindows() order is not stable, so sort by id to keep cycling deterministic
+    table.sort(wins, function(a, b)
+      return a:id() < b:id()
+    end)
+    if #wins < 2 then
+      return
+    end
 
-hs.hotkey.bind({ 'alt' }, '3', function()
-  hs.application.launchOrFocus('/Applications/Slack.app')
-end)
+    local focused = app:focusedWindow()
+    local index = 0
+    for i, w in ipairs(wins) do
+      if focused and w:id() == focused:id() then
+        index = i
+      end
+    end
+    wins[index % #wins + 1]:focus()
+  end
+end
 
-hs.hotkey.bind({ 'alt' }, '5', function()
-  hs.application.launchOrFocus('/Applications/Claude.app')
-end)
+hs.hotkey.bind({ 'alt' }, '1', launchFocusOrCycle('/Applications/Ghostty.app'))
 
-hs.hotkey.bind({ 'alt' }, 'o', function()
-  hs.application.launchOrFocus('/Applications/Obsidian.app')
-end)
+hs.hotkey.bind({ 'alt' }, '2', launchFocusOrCycle('/Applications/Arc.app'))
 
-hs.hotkey.bind({ 'alt' }, '8', function()
-  hs.application.launchOrFocus('/Applications/Todoist.app')
-end)
+hs.hotkey.bind({ 'alt' }, '3', launchFocusOrCycle('/Applications/Slack.app'))
 
-hs.hotkey.bind({ 'alt' }, '9', function()
-  hs.application.launchOrFocus('/Applications/Fantastical.app')
-end)
+hs.hotkey.bind({ 'alt' }, '5', launchFocusOrCycle('/Applications/Claude.app'))
+
+hs.hotkey.bind({ 'alt' }, 'o', launchFocusOrCycle('/Applications/Obsidian.app'))
+
+hs.hotkey.bind({ 'alt' }, '8', launchFocusOrCycle('/Applications/Todoist.app'))
+
+hs.hotkey.bind({ 'alt' }, '9', launchFocusOrCycle('/Applications/Fantastical.app'))
 
 ------------------------------
 --- Window Management
