@@ -157,7 +157,7 @@ local env(name) = std.extVar(name);
   autoMode: {
     hard_deny: [
       '$defaults',
-      'Never post, edit, or delete a comment, review, or review reply on a GitHub pull request, issue, or discussion, by any route (gh CLI, REST or GraphQL API, curl, a script, an MCP tool), regardless of who authored the target and regardless of whether the user asked for it. Submitting a review counts even with no body attached, so `--approve` and `--request-changes` are included. Report the intended content in the conversation and let the user post it. Exception: the literal command `a gh pr-review reply` (`a` is the armyknife CLI), the reply path driven by the check-pr-review skill; an equivalent raw `gh` or API call is not covered by this exception.',
+      'Never post, edit, or delete a comment, review, or review reply on a GitHub pull request, issue, or discussion, by any route (gh CLI, REST or GraphQL API, curl, a script, an MCP tool), regardless of who authored the target and regardless of whether the user asked for it. Submitting a review counts even with no body attached, so `--approve` and `--request-changes` are included. Report the intended content in the conversation and let the user post it.',
     ],
   },
 

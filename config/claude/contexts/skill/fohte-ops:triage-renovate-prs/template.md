@@ -14,9 +14,10 @@ no-look merge は避け、各 PR の breaking changes と影響範囲を把握�
 2. **各 PR の CI 状態の確認**
 3. **各 PR の breaking changes 調査** (最重要・**sub-agent 並列実行必須**)
 4. **PR 間の依存関係分析とグルーピング**
-5. **ユーザーへの報告と承認**
-6. **Approve コメント**
-7. **対応の実行** (直接マージ or 委任)
+5. **ユーザーへの報告と承認** (承認された PR への approve コメント投稿までを含む)
+6. **対応の実行** (直接マージ or 委任)
+
+approve コメントを `gh pr review` で自分で投稿してはならない。投稿は Step 5 の `crit-triage` だけが行う。
 
 ## Step 1: PR 一覧の取得
 
@@ -126,7 +127,7 @@ Helm chart の更新は **chart 自体の差分** と **appVersion 経由のア�
 - 該当 API を使っていないことを確認した grep コマンドと結果
 - chart の場合: 確認した values.yaml/template の差分 URL またはコマンド
 
-## Step 3: PR 間の依存関係分析
+## Step 4: PR 間の依存関係分析
 
 同一エコシステム内のパッケージ更新は、一緒に対応すべきかどうかを判断する。
 
@@ -143,14 +144,17 @@ Helm chart の更新は **chart 自体の差分** と **appVersion 経由のア�
 - 片方を先に入れると壊れる可能性があるか
 - 一緒に入れないと意味がない (新機能を使うために両方必要) か
 
-## Step 4: マージ判定とユーザー報告
+## Step 5: マージ判定とユーザー報告
 
 報告は `crit-triage` で HTML にして crit で開く。**チャットにテーブルを書かない。** 項目数が多く、ターミナルのテーブルでは読めない。
+
+`crit-triage` は報告の表示だけでなく、ユーザーが承認した PR への approve コメント投稿までを行う。ユーザーが crit 上で見た本文がそのまま投稿されるよう、レポートの表示と投稿は同じプロセスの同じ値から行われる。
 
 Write ツールで JSON を書き、次を **`run_in_background: true`** で実行する (crit はユーザーが approve するまで終了しない)。起動ログに出た URL の文字列をそのままユーザーに案内する。
 
 ```bash
-~/.claude/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage /tmp/renovate-triage.json
+# <data.json> は Write ツールで書いた /tmp/renovate-triage.<採番>.json
+~/.claude/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage <data.json>
 ```
 
 **JSON を書く前にスクリプト冒頭の docstring を読む。** スキーマと各フィールドの意味はそこにある。
@@ -176,18 +180,67 @@ PR は判定 (`verdict`) ごとにグルーピングする。ユーザーは「�
 
 バージョン変更と CI 状態は `badges` に入れる (例: `{"text": "major 6.4.1 → 8.0.0", "tone": "red"}`)。CI が fail / 想定外結果のときは `CI` 行を足して原因を書く。
 
+### `review_body` (approve コメント本文)
+
+approve review を付ける PR には `review_body` を書く。レポートにそのまま表示され、ユーザーがその PR と crit の両方を approve した時点で `crit-triage` が GitHub に投稿する。**`gh pr review` を自分で叩かない。**
+
+`review_body` を書くのは approve review を付ける PR だけにする。`delegate` / `hold` / automerge に委ねる PR には書かない。
+
+{{ if $public -}}
+
+- **言語**: 英語で書く
+  {{- else -}}
+- **言語**: 日本語で書く (敬語不要、簡潔な口調)
+  {{- end }}
+- `📝` で開始する
+- バージョン番号の変更 (vX → vY) は PR body から明らかなので書かない
+- **本文の構造**: このバージョンの変更点を箇条書きでリストし、各変更点の直下にこのリポジトリへの影響有無をネスト箇条書きで添える。1 変更 = 1 親 bullet + 子 bullet (影響)
+- **breaking changes は親 bullet の冒頭に `**[BREAKING CHANGES]**` を付ける**。レビュアーが一目で識別できるようにするため
+- **upstream (依存先) リポジトリの issue/PR にリンクしない**: `owner/repo#1234` 形式や URL は GitHub 上でクロスリファレンスとして解釈され、無関係な第三者リポジトリの issue/PR タイムラインに残ってしまう。upstream の変更点は番号やリンクを付けず説明のみ書く
+- 変更点が無い (または影響しうる変更がない) 場合は短く「No breaking changes.」/「破壊的変更なし。」だけで済ませる
+- テンプレートリポジトリの場合、影響範囲は「このリポジトリの使い方」ではなく「下流リポジトリへの伝播」を考慮する。ただし下流の詳細な影響調査は下流側の責任なので、ここでは breaking changes の有無と概要を述べれば十分
+
+例:
+
+{{ if $public -}}
+
+```
+📝
+
+- **[BREAKING CHANGES]** Removed `-foo` option; use `-bar` instead.
+    - No impact: this repo does not invoke `-foo`.
+- Added `-baz` flag for offline validation.
+    - No impact: not used here.
+```
+
+{{- else -}}
+
+```
+📝
+
+- **[BREAKING CHANGES]** `-foo` オプションが削除された。代わりに `-bar` を使う
+    - 影響なし: このリポジトリでは `-foo` を使っていない
+- オフライン検証用の `-baz` フラグが追加された
+    - 影響なし: 未使用
+```
+
+{{- end }}
+
 ### 承認結果の読み方
 
-ユーザーが各 PR を approve / deny (既定は deny) して crit を approve するとコマンドが終了し、stdout の末尾に state が出る:
+ユーザーが各 PR を approve / deny (既定は deny) して crit を approve するとコマンドが終了し、stdout の末尾に state と投稿結果が出る:
 
 ```
 --- state ---
 {"pr-812": "approve", "pr-813": "deny"}
+--- posted ---
+ok #812
 ```
 
-- crit の出力に `crit daemon shut down before review was finished.` が出ている場合、ユーザーは report を見終えていない。exit code は 0 なので state だけ見ても気付けない。承認結果として扱わず起動し直す
-- `approve` の PR だけ Step 5 に進む
-- `deny` の理由は crit のコメントに書かれている。調査して crit に返信し、crit を再開して届ける (このループの作法は `plz-explain-with-crit` skill と同じ)
+- `approve` の PR だけ Step 6 に進む。`ok #<number>` が出た PR は approve コメント投稿済み
+- `FAILED #<number>: ...` が出た PR は投稿されていない。原因を潰してから対応する
+- ユーザーが report を見終えずに crit を終えた場合は `crit ended before the review was finished` で exit 1 する。この場合は state が出ず、何も投稿されない。起動し直す
+- `deny` の理由は crit のコメントに書かれている。調査して crit に返信し、crit を再開して届ける (このループの作法は `plz-explain-with-crit` skill と同じ)。同じ JSON パスで再実行すれば、前ラウンドで投稿済みの PR は `skip` される
 - 未操作の PR も `deny` として出る。**欠損や deny を approve と読み替えない**
 
 ### automerge 化 / Renovate 設定変更の検討
@@ -198,7 +251,7 @@ PR は判定 (`verdict`) ごとにグルーピングする。ユーザーは「�
 - **変更先の判断**: renovate.json5 (または `.github/renovate.json5` 等) の `extends` を確認し、共有設定リポジトリ (renovate-config など) に依存しているか確認する
     - **このリポジトリ固有の事情** (独自の digest pin、特殊な使い方) による判断 → このリポジトリの renovate.json5 に packageRule を追加
     - **他リポジトリでも共通して安全と言える性質** → 共有設定リポジトリ側の packageRule を変更する。ただし全リポジトリに影響するため、必ずユーザーに提案として提示し承認を得てから着手する。実際の変更は `/delegate-claude` で委任する (このセッション内で直接 config repo を編集しない)
-- **提案内容**: 追加/変更する `packageRules` (`matchPackageNames` / `matchUpdateTypes` / `automerge` など) の具体的な差分案を Step 4 の報告に含める。マージ判定とは別に、この差分案自体についてユーザーの明示的な承認を得てから着手する
+- **提案内容**: 追加/変更する `packageRules` (`matchPackageNames` / `matchUpdateTypes` / `automerge` など) の具体的な差分案を Step 5 の報告に含める。マージ判定とは別に、この差分案自体についてユーザーの明示的な承認を得てから着手する
 - **今回の対象 PR への反映**: 今回新設・拡張したルールの対象に、今トリアージしている PR 自体が含まれる場合、その PR の対応方針は「automerge に委ねる」とし、このセッションで手動マージしない
 
 ### release-please bump の判定
@@ -247,70 +300,6 @@ release-please 側の `changelog-sections` / `release-as` を直すべきケー�
 直接マージの場合も、ビルド・テストの確認は必要。影響範囲が明確で確認項目が少ない PR はこのセッション内で直接確認してマージする。わざわざ `/delegate-claude` で委任するほどではない場合が多い。
 
 **自分でマージ判定を最終決定しない。必ずユーザーに確認する。**
-
-## Step 5: Approve コメント
-
-ユーザーの承認後、マージ前に各 PR に approve review コメントを付ける。
-
-**対象が複数 PR の場合、すべての `gh pr review --approve` を 1 つの bash 呼び出し (Bash tool 1 回の実行) にまとめる。** PR ごとに Bash tool 呼び出しを分けると、実行のたびに人間の承認 (permission prompt) が必要になり、PR 数だけ承認を求めることになるため避ける。まとめて実行した場合、bash の exit code は最後のコマンドの結果しか反映しないため、各コマンドに `|| echo "FAILED: ..."` を付けて失敗を出力に明示し、実行後は出力に `FAILED:` がないか確認すること。
-
-### コメントのルール
-
-{{ if $public -}}
-
-- **言語**: 英語で書く
-  {{- else -}}
-- **言語**: 日本語で書く (敬語不要、簡潔な口調)
-  {{- end }}
-- `📝` で開始する
-- バージョン番号の変更 (vX → vY) は PR body から明らかなので書かない
-- **本文の構造**: このバージョンの変更点を箇条書きでリストし、各変更点の直下にこのリポジトリへの影響有無をネスト箇条書きで添える。1 変更 = 1 親 bullet + 子 bullet (影響)
-- **breaking changes は親 bullet の冒頭に `**[BREAKING CHANGES]**` を付ける**。レビュアーが一目で識別できるようにするため
-- **upstream (依存先) リポジトリの issue/PR にリンクしない**: `owner/repo#1234` 形式や URL は GitHub 上でクロスリファレンスとして解釈され、無関係な第三者リポジトリの issue/PR タイムラインに残ってしまう。upstream の変更点は番号やリンクを付けず説明のみ書く
-- 変更点が無い (または影響しうる変更がない) 場合は短く「No breaking changes.」/「破壊的変更なし。」だけで済ませる
-- テンプレートリポジトリの場合、影響範囲は「このリポジトリの使い方」ではなく「下流リポジトリへの伝播」を考慮する。ただし下流の詳細な影響調査は下流側の責任なので、ここでは breaking changes の有無と概要を述べれば十分
-
-例:
-
-```bash
-{{ if $public -}}
-gh pr review <number1> --approve --body "$(cat <<'EOF'
-📝
-
-- **[BREAKING CHANGES]** Removed `-foo` option; use `-bar` instead.
-    - No impact: this repo does not invoke `-foo`.
-- Added `-baz` flag for offline validation.
-    - No impact: not used here.
-EOF
-)" || echo "FAILED: gh pr review <number1>"
-
-gh pr review <number2> --approve --body "$(cat <<'EOF'
-📝
-
-- Bumped internal build tooling.
-    - No impact: build-only change; no API changes.
-EOF
-)" || echo "FAILED: gh pr review <number2>"
-{{- else -}}
-gh pr review <number1> --approve --body "$(cat <<'EOF'
-📝
-
-- **[BREAKING CHANGES]** `-foo` オプションが削除された。代わりに `-bar` を使う
-    - 影響なし: このリポジトリでは `-foo` を使っていない
-- オフライン検証用の `-baz` フラグが追加された
-    - 影響なし: 未使用
-EOF
-)" || echo "FAILED: gh pr review <number1>"
-
-gh pr review <number2> --approve --body "$(cat <<'EOF'
-📝
-
-- 内部ビルドツールをバージョンアップした
-    - 影響なし: ビルドのみの変更で API は変わらない
-EOF
-)" || echo "FAILED: gh pr review <number2>"
-{{- end }}
-```
 
 ## Step 6: 対応の実行
 

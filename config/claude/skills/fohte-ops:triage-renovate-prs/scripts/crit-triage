@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Render a triage report as HTML, open it in crit, and print the approve/deny result.
+"""Render a triage report as HTML, open it in crit, and act on the approve/deny result.
 
 Usage: crit-triage <data.json> [crit args...]
 
 The caller (usually Claude) writes only the data JSON; the page chrome lives here.
-Output goes next to the input: <data>.html and <data>.state.json.
+Output goes next to the input: <data>.html, <data>.state.json and <data>.posted.json.
+
+A PR with a `review_body` gets that body shown verbatim in the report and, if the
+human approves both that PR and the crit review itself, posted to GitHub as an
+approving review by this same process -- so the text that was reviewed is the text
+that is posted, with no file in between for anything to rewrite.
 
 Data format:
 
@@ -22,6 +27,9 @@ Data format:
               "title": "chore(deps): update helm release cert-manager to v1.17.1",
               "url": "...",              // optional, defaults to the repo's PR URL
               "badges": [{"text": "minor 1.16.3 → 1.17.1", "tone": "dim"}],
+              // Posted as an approving review when this PR is approved. Omit for
+              // PRs that should not get one (delegate / hold / automerge).
+              "review_body": "📝\n\n- ...",
               "rows": [
                 {
                   "label": "breaking changes",
@@ -53,6 +61,7 @@ import re
 import secrets
 import subprocess
 import sys
+import tempfile
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -126,6 +135,10 @@ def render_pr(pr, repo):
             raise SystemExit(f"unknown badge tone: {tone}")
         badges += f'<span class="badge b-{tone}">{md(badge["text"])}</span>'
     rows = "".join(render_row(r) for r in pr["rows"])
+    # Verbatim, not markdown-rendered: this is the exact string handed to
+    # `gh pr review`, and approving is what publishes it.
+    if pr.get("review_body"):
+        rows += f'<dt>投稿コメント</dt><dd><pre class="post">{html.escape(pr["review_body"])}</pre></dd>'
     return f"""<section class="pr">
   <div class="pr-head">
     <div class="pr-title">
@@ -153,6 +166,11 @@ def render(data, endpoint):
         if verdict not in VERDICTS:
             raise SystemExit(f"unknown verdict: {verdict}")
         prs = group["prs"]
+        # Outside `merge` the toggle means "go ahead and delegate/hold/automerge
+        # this", so approving it must not also publish an approving review.
+        for pr in prs:
+            if pr.get("review_body") and verdict != "merge":
+                raise SystemExit(f"review_body on a {verdict} PR: #{pr['number']}")
         total += len(prs)
         summary.append(f"{group['title']} {len(prs)}")
         note = f'<span class="note">{md(group["note"])}</span>' if group.get("note") else ""
@@ -241,10 +259,11 @@ a {{ color: inherit; }}
 .none {{ color: var(--dim); }}
 details {{ margin-top: 0.5rem; }}
 summary {{ cursor: pointer; color: var(--dim); font-size: 0.82rem; }}
-details pre {{
+details pre, pre.post {{
   margin: 0.5rem 0 0; padding: 0.6rem 0.8rem; background: #0f1114; border-radius: 5px;
   overflow-x: auto; font-size: 0.8rem; line-height: 1.5;
 }}
+pre.post {{ margin: 0; white-space: pre-wrap; border-left: 3px solid var(--green); }}
 
 .bar {{
   position: fixed; left: 0; right: 0; bottom: 0; padding: 0.7rem 2rem; background: #0f1114;
@@ -264,7 +283,7 @@ details pre {{
 
 <div class="bar">
   <span>approve <b id="count">0</b> / {total}</span>
-  <span class="hint">deny が既定。approve = この対応方針で進めてよい / 指摘・質問は crit のコメントで</span>
+  <span class="hint">deny が既定。approve = この対応方針で進めてよい + 投稿コメントをこのまま GitHub に出してよい / 指摘・質問は crit のコメントで</span>
   <span id="saved">…</span>
 </div>
 
@@ -361,6 +380,53 @@ def serve(state_path):
     return server.server_port, token
 
 
+def run_crit(argv, html_path):
+    """Run crit to completion, mirroring its stderr, and return (rc, approved).
+
+    crit prints the review URL and a final `approved: true|false` on stderr.
+    Neither line appears when the daemon dies before the review is finished --
+    which exits 0 all the same -- so `approved` is None for that case and must
+    not be read as a decision.
+    """
+    proc = subprocess.Popen(
+        ["crit", *argv, "preview", str(html_path)], stderr=subprocess.PIPE, text=True, bufsize=1
+    )
+    approved = None
+    for line in proc.stderr:
+        sys.stderr.write(line)
+        sys.stderr.flush()
+        if line.strip() in {"approved: true", "approved: false"}:
+            approved = line.strip().endswith("true")
+    return proc.wait(), approved
+
+
+def post_reviews(data, result, posted_path):
+    """Post the approving reviews the human just signed off on in the report."""
+    posted = set(json.loads(posted_path.read_text())) if posted_path.exists() else set()
+    for group in data["groups"]:
+        for pr in group["prs"]:
+            num, body = pr["number"], pr.get("review_body")
+            if not body or result[pr_key(num)] != "approve":
+                continue
+            # The deny loop re-runs this script against the same data file, so
+            # without this a PR approved in an earlier round posts again.
+            if num in posted:
+                print(f"skip #{num}: already posted")
+                continue
+            run = subprocess.run(
+                ["gh", "pr", "review", str(num), "-R", data["repo"], "--approve", "--body-file", "-"],
+                input=body,
+                text=True,
+                capture_output=True,
+            )
+            if run.returncode != 0:
+                print(f"FAILED #{num}: {run.stderr.strip()}")
+                continue
+            posted.add(num)
+            posted_path.write_text(json.dumps(sorted(posted)))
+            print(f"ok #{num}")
+
+
 def selftest():
     assert md("a<b & `x` [t](http://e/?a=1&b=2)") == (
         'a&lt;b &amp; <code>x</code> <a class="ref" href="http://e/?a=1&amp;b=2">t</a>'
@@ -377,6 +443,38 @@ def selftest():
     # The radio name and the result key must stay the same string, or every PR
     # silently reads back as "deny".
     assert f'name="{pr_key(9)}"' in render_pr({"number": 9, "title": "t", "rows": []}, "o/r")
+    # The body is shown as-is, so `<b>` must not become markup and `*` must not
+    # become emphasis -- what is displayed has to be what gets posted.
+    assert "<pre class=\"post\">a &lt;b&gt; *c*</pre>" in render_pr(
+        {"number": 9, "title": "t", "rows": [], "review_body": "a <b> *c*"}, "o/r"
+    )
+
+    calls = []
+    data = {
+        "repo": "o/r",
+        "groups": [
+            {
+                "verdict": "merge",
+                "prs": [
+                    {"number": 1, "review_body": "b1"},  # posts
+                    {"number": 2, "review_body": "b2"},  # denied
+                    {"number": 3},  # no body
+                    {"number": 4, "review_body": "b4"},  # already posted
+                ],
+            }
+        ],
+    }
+    result = {pr_key(n): "deny" if n == 2 else "approve" for n in (1, 2, 3, 4)}
+    posted = Path(tempfile.mkdtemp()) / "t.posted.json"
+    posted.write_text("[4]")
+    real_run = subprocess.run
+    subprocess.run = lambda cmd, **kw: calls.append(cmd) or subprocess.CompletedProcess(cmd, 0)
+    try:
+        post_reviews(data, result, posted)
+    finally:
+        subprocess.run = real_run
+    assert [c[3] for c in calls] == ["1"], calls
+    assert json.loads(posted.read_text()) == [1, 4]
     print("ok")
 
 
@@ -395,11 +493,14 @@ def main():
     port, token = serve(state_path)
     html_path.write_text(render(data, f"{port}/{token}"))
 
-    crit = subprocess.run(["crit", *sys.argv[2:], "preview", str(html_path)])
-    # A crashed crit leaves an untouched state file, which would otherwise read as
-    # "the user denied everything" instead of "the user never saw the report".
-    if crit.returncode != 0:
-        raise SystemExit(f"crit exited with {crit.returncode}; no triage result collected")
+    rc, approved = run_crit(sys.argv[2:], html_path)
+    # A crashed or abandoned crit leaves an untouched state file, which would
+    # otherwise read as "the user denied everything" instead of "the user never
+    # saw the report".
+    if rc != 0:
+        raise SystemExit(f"crit exited with {rc}; no triage result collected")
+    if approved is None:
+        raise SystemExit("crit ended before the review was finished; no result collected, nothing posted")
 
     # Fill in PRs the user never touched, so "missing" is never mistaken for "approved".
     state = json.loads(state_path.read_text()) if state_path.exists() else {}
@@ -410,6 +511,14 @@ def main():
     }
     print("--- state ---")
     print(json.dumps(result, ensure_ascii=False))
+
+    print("--- posted ---")
+    # The per-PR toggles only carry consent once the review as a whole was
+    # approved; finishing with changes requested revokes all of it.
+    if approved:
+        post_reviews(data, result, data_path.with_suffix(".posted.json"))
+    else:
+        print("nothing: the review was finished with changes requested")
 
 
 if __name__ == "__main__":
