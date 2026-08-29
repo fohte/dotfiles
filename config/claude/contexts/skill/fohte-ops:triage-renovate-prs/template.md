@@ -14,10 +14,10 @@ no-look merge は避け、各 PR の breaking changes と影響範囲を把握�
 2. **各 PR の CI 状態の確認**
 3. **各 PR の breaking changes 調査** (最重要・**sub-agent 並列実行必須**)
 4. **PR 間の依存関係分析とグルーピング**
-5. **ユーザーへの報告と承認** (承認された PR への approve コメント投稿までを含む)
-6. **対応の実行** (直接マージ or 委任)
+5. **ユーザーへの報告と承認** (承認された PR への approve コメント投稿と auto-merge の armed までを含む)
+6. **着地の確認** (マージの完了確認 or 委任)
 
-approve コメントを `gh pr review` で自分で投稿してはならない。投稿は Step 5 の `crit-triage` だけが行う。
+`gh pr review` / `gh pr merge` / `gh pr close` を自分で叩いてはならない (runok が deny する)。GitHub への書き込みは Step 5 の `crit-triage` だけが行う。
 
 ## Step 1: PR 一覧の取得
 
@@ -144,11 +144,13 @@ Helm chart の更新は **chart 自体の差分** と **appVersion 経由のア�
 - 片方を先に入れると壊れる可能性があるか
 - 一緒に入れないと意味がない (新機能を使うために両方必要) か
 
+**順序依存と判定した PR は、同じラウンドの `merge` にまとめて入れない。** Step 5 で承認された `merge` PR は全て同時に auto-merge が armed され、着地順は各 PR の CI 完了順に委ねられる。先行 PR が Step 6 で `MERGED` になったのを確認してから、後続 PR を次のラウンドで triage する。
+
 ## Step 5: マージ判定とユーザー報告
 
 報告は `crit-triage` で HTML にして crit で開く。**チャットにテーブルを書かない。** 項目数が多く、ターミナルのテーブルでは読めない。
 
-`crit-triage` は報告の表示だけでなく、ユーザーが承認した PR への approve コメント投稿までを行う。ユーザーが crit 上で見た本文がそのまま投稿されるよう、レポートの表示と投稿は同じプロセスの同じ値から行われる。
+`crit-triage` は報告の表示だけでなく、`verdict` が `merge` の PR をユーザーが承認した時点で、approve コメントの投稿と auto-merge の armed まで行う。ユーザーが crit 上で見た内容がそのまま実行されるよう、表示と実行は同じプロセスの同じ値から行われる。
 
 Write ツールで JSON を書き、次を **`run_in_background: true`** で実行する (crit はユーザーが approve するまで終了しない)。起動ログに出た URL の文字列をそのままユーザーに案内する。
 
@@ -176,7 +178,7 @@ PR は判定 (`verdict`) ごとにグルーピングする。ユーザーは「�
 | グルーピング     | 他の PR とまとめるべきか。相手の PR 番号はリンクにする                                                                                                                                                                                           |
 | automerge 化     | 今後このパッケージ/ルールを automerge 対象にすべきか。可否・リスク評価・変更先 (このリポジトリの renovate.json5 / 共有 renovate-config repo)。後述「automerge 化 / Renovate 設定変更の検討」参照                                                 |
 | release-please   | release-please 利用リポジトリのみ。**actual bump level (patch / minor / major / none) と根拠** (どの `changelog-sections` エントリで visible/hidden か) を明示する。「整合」「問題なし」だけの記述は禁止。後述「release-please bump の判定」参照 |
-| 対応             | 承認されたら実際に何をするか (実行するコマンド、委任先ブランチなど)                                                                                                                                                                              |
+| 対応             | 承認されたら実際に何が起きるか。`merge` なら approve コメント投稿と auto-merge の armed、それ以外なら委任先ブランチや保留理由                                                                                                                    |
 
 バージョン変更と CI 状態は `badges` に入れる (例: `{"text": "major 6.4.1 → 8.0.0", "tone": "red"}`)。CI が fail / 想定外結果のときは `CI` 行を足して原因を書く。
 
@@ -228,19 +230,20 @@ approve review を付ける PR には `review_body` を書く。レポートに�
 
 ### 承認結果の読み方
 
-ユーザーが各 PR を approve / deny (既定は deny) して crit を approve するとコマンドが終了し、stdout の末尾に state と投稿結果が出る:
+ユーザーが各 PR を approve / deny (既定は deny) して crit を approve するとコマンドが終了し、stdout の末尾に state と実行結果が出る:
 
 ```
 --- state ---
 {"pr-812": "approve", "pr-813": "deny"}
---- posted ---
-ok #812
+--- done ---
+ok #812 review
+ok #812 merge
 ```
 
-- `approve` の PR だけ Step 6 に進む。`ok #<number>` が出た PR は approve コメント投稿済み
-- `FAILED #<number>: ...` が出た PR は投稿されていない。原因を潰してから対応する
+- `verdict` が `merge` の PR は、approve された時点で `crit-triage` が approve コメント投稿と auto-merge の armed まで済ませている。Step 6 で改めてマージ操作をしない
+- `FAILED #<number> <verb>: ...` が出た PR はその操作が実行されていない。原因を潰してから対応する。`review` が失敗した PR は `merge` も armed されない (approve が要るリポジトリでどのみちマージできないため)
 - ユーザーが report を見終えずに crit を終えた場合は `crit ended before the review was finished` で exit 1 する。この場合は state が出ず、何も投稿されない。起動し直す
-- `deny` の理由は crit のコメントに書かれている。調査して crit に返信し、crit を再開して届ける (このループの作法は `plz-explain-with-crit` skill と同じ)。同じ JSON パスで再実行すれば、前ラウンドで投稿済みの PR は `skip` される
+- `deny` の理由は crit のコメントに書かれている。調査して crit に返信し、crit を再開して届ける (このループの作法は `plz-explain-with-crit` skill と同じ)。同じ JSON パスで再実行すれば、前ラウンドで処理済みの PR は `skip` される
 - 未操作の PR も `deny` として出る。**欠損や deny を approve と読み替えない**
 
 ### automerge 化 / Renovate 設定変更の検討
@@ -297,49 +300,26 @@ release-please 側の `changelog-sections` / `release-as` を直すべきケー�
 - **保留**: 調査で判断がつかない、またはユーザーの判断が必要
 - **automerge に委ねる**: 上の「automerge 化 / Renovate 設定変更の検討」で今回この PR を対象に automerge ルールを新設・拡張した場合。config の変更が反映され次第 Renovate 自身がマージするので、このセッションで手動マージしない
 
-直接マージの場合も、ビルド・テストの確認は必要。影響範囲が明確で確認項目が少ない PR はこのセッション内で直接確認してマージする。わざわざ `/delegate-claude` で委任するほどではない場合が多い。
+影響範囲が明確で確認項目が少ない PR は、`/delegate-claude` で委任するほどではないことが多い。`merge` に分類してレポートに載せる。
 
-**自分でマージ判定を最終決定しない。必ずユーザーに確認する。**
+**マージ判定を自分で最終決定しない。** `merge` に分類することは提案であって決定ではなく、実際にマージが動くのはユーザーが crit 上でその PR を approve したときだけ。
 
-## Step 6: 対応の実行
+## Step 6: 着地の確認
 
 ### 直接マージの場合
 
-マージ前に `gh pr checks --watch --fail-fast` で CI が全て通るのを待つ。CI が通っていない PR は絶対にマージしない。
+**マージ操作は残っていない。** Step 5 で auto-merge が armed 済みで、必要な checks が満たされた瞬間に GitHub がマージする。`gh pr merge` を自分で叩かない (runok が deny する)。
+
+やることは着地の確認だけ:
 
 ```bash
-gh pr checks <number> --watch --fail-fast
+gh pr view <number> --json state,mergedAt,mergeable,mergeStateStatus
 ```
 
-CI が通っていれば squash merge する。fohte org のリポジトリでは branch protection により `--auto` が必須なので、最初から `--auto` を付けて実行すること。`--auto` なしで `gh pr merge` を呼ぶと "the base branch policy prohibits the merge" で失敗する。
-
-```bash
-gh pr merge <number> --squash --auto
-```
-
-`--auto` を指定すると、必要な checks が満たされた瞬間に自動でマージされる。直前に `gh pr checks --watch` で待機しているので即座にマージが完了するはず。マージ後は `gh pr view <number> --json state,mergedAt` で `MERGED` を確認する。
-
-複数 PR をマージする場合は 1 つずつ順番にマージする (前の PR のマージで conflict が発生する可能性があるため)。
-
-マージ後、**main ブランチの CI が全て通ることを確認**してから次の PR のマージに進む。
-
-```bash
-# main の最新 Test ワークフローを取得して watch
-gh run list --branch main --limit 3 --workflow Test --json databaseId,status,conclusion \
-  --jq '.[] | "\(.databaseId)\t\(.status)\t\(.conclusion // "-")"'
-gh run watch <run-id> --exit-status --interval 10
-```
-
-#### Renovate のリベース待ち (重要)
-
-base ブランチが進むと、その PR が触っているファイル (例: `pnpm-lock.yaml`, `Cargo.lock`) と競合して `gh pr view --json mergeable,mergeStateStatus` が `CONFLICTING` / `DIRTY` を返すことがある。
-
-**この時点で慌てて手動操作してはならない。** Renovate は base 更新を webhook で検知し、通常 1-2 分以内に自動的にリベースして新しい commit を push する。以下の手順で待つこと:
-
-1. mergeable 状態を一度確認する: `gh pr view <number> --json mergeable,mergeStateStatus`
-2. `CONFLICTING` / `DIRTY` だった場合は、何もせず 60-120 秒待ってからもう一度確認する
-3. `MERGEABLE` / `CLEAN` になったら次の手順 (`gh pr checks --watch --fail-fast`) に進む
-4. リベース後は新しい commit に対して CI が走り直すので、改めて `--watch` で完了を待つ
+- `MERGED` になっていれば完了
+- `OPEN` のままなら、まだ checks 待ちか、base が進んで `CONFLICTING` / `DIRTY` になっている。**どちらも待てばよい**。Renovate は base 更新を webhook で検知して 1-2 分でリベースし、リベース後の checks が通れば armed のままの auto-merge が発火する
+- `gh pr view` は GitHub の mergeability チェックがまだ走っていないと `UNKNOWN` を返すことがある。その場合は数秒待ってもう一度呼ぶ
+- checks が fail していて armed のまま止まっている場合は、原因を調べてユーザーに報告する
 
 **禁止事項** (やりがちな雑な対応):
 
@@ -348,17 +328,14 @@ base ブランチが進むと、その PR が触っているファイル (例: `
 - `git rebase` してローカルから force push する (Renovate との関連が壊れる)
 - `--admin` フラグでマージを強行する
 
-`gh pr view` は GitHub の mergeability チェックがまだ走っていないと `UNKNOWN` を返すことがある。その場合は数秒待ってもう一度呼ぶこと。
-
 ### 委任の場合 (コード修正が必要 / 複数 PR の統合)
 
 `/delegate-claude` スキルで委任する。Renovate のブランチ名をそのまま使う。
 
-複数 PR を統合する場合は、メインとなる PR のブランチで作業し、他の PR の変更も取り込む。完了後、統合された PR にはコメントで「PR #X に統合した」旨を記載して close する。
+複数 PR を統合する場合は、メインとなる PR のブランチで作業し、他の PR の変更も取り込む。統合された側の PR を閉じるのはユーザーの判断なので、**自分で close せず**、どの PR をどこに統合したかをユーザーに報告して委ねる。
 
 ### 注意事項
 
 - **Renovate ブランチで直接作業する**: 新しいブランチを作ると Renovate PR との関連が切れる
-- **CI 確認を必ず行う**: push 後に CI が通ることを確認してから merge する
-- **PR 間の依存関係を考慮した順序で処理する**: 例えば、ベースライブラリを先に merge してから plugin を merge する
-- **conflict を見ても手動操作しない**: 上の「Renovate のリベース待ち」セクションを参照。Renovate に任せて待つ
+- **CI 確認を必ず行う**: push 後に CI が通ることを確認する
+- **conflict を見ても手動操作しない**: Renovate のリベースに任せて待つ

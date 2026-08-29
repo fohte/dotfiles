@@ -4,12 +4,12 @@
 Usage: crit-triage <data.json> [crit args...]
 
 The caller (usually Claude) writes only the data JSON; the page chrome lives here.
-Output goes next to the input: <data>.html, <data>.state.json and <data>.posted.json.
+Output goes next to the input: <data>.html, <data>.state.json and <data>.done.json.
 
-A PR with a `review_body` gets that body shown verbatim in the report and, if the
-human approves both that PR and the crit review itself, posted to GitHub as an
-approving review by this same process -- so the text that was reviewed is the text
-that is posted, with no file in between for anything to rewrite.
+Approving a `merge` PR here -- and then the crit review itself -- is what carries
+out its plan: this same process posts its `review_body` as an approving review and
+arms auto-merge on it. Nothing is written to disk between the report the human read
+and the calls that act on it, so what was reviewed is what happens.
 
 Data format:
 
@@ -27,8 +27,8 @@ Data format:
               "title": "chore(deps): update helm release cert-manager to v1.17.1",
               "url": "...",              // optional, defaults to the repo's PR URL
               "badges": [{"text": "minor 1.16.3 → 1.17.1", "tone": "dim"}],
-              // Posted as an approving review when this PR is approved. Omit for
-              // PRs that should not get one (delegate / hold / automerge).
+              // Posted as an approving review when this PR is approved. Omit to
+              // arm the merge without posting one; only `merge` PRs may carry it.
               "review_body": "📝\n\n- ...",
               "rows": [
                 {
@@ -400,31 +400,48 @@ def run_crit(argv, html_path):
     return proc.wait(), approved
 
 
-def post_reviews(data, result, posted_path):
-    """Post the approving reviews the human just signed off on in the report."""
-    posted = set(json.loads(posted_path.read_text())) if posted_path.exists() else set()
+def gh_pr(repo, num, argv, stdin=None):
+    """Run one `gh pr <verb>` against a PR, reporting the outcome."""
+    run = subprocess.run(
+        ["gh", "pr", argv[0], str(num), "-R", repo, *argv[1:]],
+        input=stdin,
+        text=True,
+        capture_output=True,
+    )
+    ok = run.returncode == 0
+    print(f"{'ok' if ok else 'FAILED'} #{num} {argv[0]}" + ("" if ok else f": {run.stderr.strip()}"))
+    return ok
+
+
+def act_on_approvals(data, result, done_path):
+    """Carry out what the human signed off on in the report, PR by PR."""
+    done = set(json.loads(done_path.read_text())) if done_path.exists() else set()
     for group in data["groups"]:
         for pr in group["prs"]:
-            num, body = pr["number"], pr.get("review_body")
-            if not body or result[pr_key(num)] != "approve":
+            num = pr["number"]
+            if group["verdict"] != "merge" or result[pr_key(num)] != "approve":
                 continue
-            # The deny loop re-runs this script against the same data file, so
-            # without this a PR approved in an earlier round posts again.
-            if num in posted:
-                print(f"skip #{num}: already posted")
-                continue
-            run = subprocess.run(
-                ["gh", "pr", "review", str(num), "-R", data["repo"], "--approve", "--body-file", "-"],
-                input=body,
-                text=True,
-                capture_output=True,
-            )
-            if run.returncode != 0:
-                print(f"FAILED #{num}: {run.stderr.strip()}")
-                continue
-            posted.add(num)
-            posted_path.write_text(json.dumps(sorted(posted)))
-            print(f"ok #{num}")
+            steps = []
+            if pr.get("review_body"):
+                steps.append((["review", "--approve", "--body-file", "-"], pr["review_body"]))
+            # `--auto` hands the CI gate to GitHub, which merges once the required
+            # checks pass -- including after a Renovate rebase, since only a push
+            # from someone without write access disarms it.
+            steps.append((["merge", "--squash", "--auto"], None))
+            for argv, stdin in steps:
+                # The deny loop re-runs this script against the same data file,
+                # and one step can fail after an earlier one landed, so each is
+                # recorded on its own rather than per PR.
+                key = f"{num}:{argv[0]}"
+                if key in done:
+                    print(f"skip #{num} {argv[0]}: already done")
+                    continue
+                if not gh_pr(data["repo"], num, argv, stdin):
+                    # Never arm a merge on a PR whose approving review failed to
+                    # post; branch protection would block it anyway.
+                    break
+                done.add(key)
+                done_path.write_text(json.dumps(sorted(done)))
 
 
 def selftest():
@@ -456,25 +473,40 @@ def selftest():
             {
                 "verdict": "merge",
                 "prs": [
-                    {"number": 1, "review_body": "b1"},  # posts
+                    {"number": 1, "review_body": "b1"},  # reviewed, then merged
                     {"number": 2, "review_body": "b2"},  # denied
-                    {"number": 3},  # no body
-                    {"number": 4, "review_body": "b4"},  # already posted
+                    {"number": 3},  # merged without a review
+                    {"number": 4, "review_body": "b4"},  # already done
                 ],
-            }
+            },
+            {"verdict": "hold", "prs": [{"number": 5}]},  # approved, but not to merge
         ],
     }
-    result = {pr_key(n): "deny" if n == 2 else "approve" for n in (1, 2, 3, 4)}
-    posted = Path(tempfile.mkdtemp()) / "t.posted.json"
-    posted.write_text("[4]")
+    result = {pr_key(n): "deny" if n == 2 else "approve" for n in (1, 2, 3, 4, 5)}
+    done = Path(tempfile.mkdtemp()) / "t.done.json"
+    done.write_text('["4:merge", "4:review"]')
     real_run = subprocess.run
-    subprocess.run = lambda cmd, **kw: calls.append(cmd) or subprocess.CompletedProcess(cmd, 0)
+
+    def fake(cmd, **kw):
+        calls.append(cmd)
+        # #1 posts its review, then fails to arm the merge.
+        return subprocess.CompletedProcess(cmd, 1 if cmd[2:4] == ["merge", "1"] else 0, stderr="x")
+
+    subprocess.run = fake
     try:
-        post_reviews(data, result, posted)
+        act_on_approvals(data, result, done)
+        assert [(c[2], c[3]) for c in calls] == [
+            ("review", "1"),
+            ("merge", "1"),
+            ("merge", "3"),
+        ], calls
+        assert json.loads(done.read_text()) == ["1:review", "3:merge", "4:merge", "4:review"]
+        # Retrying must not repost #1's review just because its merge failed.
+        calls.clear()
+        act_on_approvals(data, result, done)
+        assert [(c[2], c[3]) for c in calls] == [("merge", "1")], calls
     finally:
         subprocess.run = real_run
-    assert [c[3] for c in calls] == ["1"], calls
-    assert json.loads(posted.read_text()) == [1, 4]
     print("ok")
 
 
@@ -512,11 +544,11 @@ def main():
     print("--- state ---")
     print(json.dumps(result, ensure_ascii=False))
 
-    print("--- posted ---")
+    print("--- done ---")
     # The per-PR toggles only carry consent once the review as a whole was
     # approved; finishing with changes requested revokes all of it.
     if approved:
-        post_reviews(data, result, data_path.with_suffix(".posted.json"))
+        act_on_approvals(data, result, data_path.with_suffix(".done.json"))
     else:
         print("nothing: the review was finished with changes requested")
 
