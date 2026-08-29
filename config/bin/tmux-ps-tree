@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# Show the process tree under each tmux pane, ranked by CPU or memory.
+
+set -euo pipefail
+
+key=cpu
+num=10
+
+usage() {
+  cat << 'USAGE'
+usage: tmux-ps-tree [-m] [-n num]
+  -m      rank by memory instead of CPU
+  -n num  number of panes to show (0 for all, default 10)
+USAGE
+}
+
+while getopts 'mn:h' opt; do
+  case "$opt" in
+    m) key=rss ;;
+    n) num=$OPTARG ;;
+    h)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+cols=$(tput cols) || cols=80
+
+bold=''
+reset=''
+if [ -t 1 ]; then
+  bold=$'\033[1m'
+  reset=$'\033[0m'
+fi
+
+# Collect into variables rather than process substitution: a failure inside
+# <(...) leaves set -e untouched and degrades to a header-only table
+panes=$(tmux list-panes -a -F '#{pane_tty} #{session_name}:#{window_index}.#{pane_index}')
+procs=$(ps -axo tty=,pid=,ppid=,pcpu=,rss=,command=)
+
+awk -v key="$key" -v num="$num" -v width="$((cols - 22))" -v bold="$bold" -v reset="$reset" '
+function human(kb) {
+  if (kb < 1024) return sprintf("%dK", kb)
+  if (kb < 1048576) return sprintf("%dM", kb / 1024)
+  return sprintf("%.1fG", kb / 1048576)
+}
+
+function shorten(s,   n, a, i, out) {
+  # ps escapes newlines in the command as a literal \\012
+  gsub(/\\012/, " ", s)
+  n = split(s, a, " ")
+  for (i = 1; i <= n; i++) {
+    if (a[i] !~ /^-/) sub(/.*\//, "", a[i])
+    out = (i == 1) ? a[i] : out " " a[i]
+  }
+  return out
+}
+
+function total(p, k,   n, a, i, s) {
+  if ((p SUBSEP k) in memo) return memo[p SUBSEP k]
+  s = (k == "cpu") ? cpu[p] : rss[p]
+  n = split(kids[p], a, " ")
+  for (i = 1; i <= n; i++) s += total(a[i], k)
+  memo[p SUBSEP k] = s
+  return s
+}
+
+function sort_desc(list, tot,   n, a, i, j, t, out) {
+  n = split(list, a, " ")
+  for (i = 2; i <= n; i++) {
+    t = a[i]
+    for (j = i - 1; j > 0 && tot[a[j]] < tot[t]; j--) a[j + 1] = a[j]
+    a[j + 1] = t
+  }
+  for (i = 1; i <= n; i++) out = out " " a[i]
+  return out
+}
+
+# Truncate the command instead of the whole line: the box-drawing prefix is
+# multibyte and substr() would cut it mid-character
+function draw(p, prefix, islast, depth,   n, a, i) {
+  printf "%6.1f %6s %6d  %s%s%s\n", cpu[p], human(rss[p]), p, prefix,
+    (islast ? "└─ " : "├─ "), substr(cmd[p], 1, width - depth * 3)
+  n = split(sort_desc(kids[p], pidkey), a, " ")
+  for (i = 1; i <= n; i++) draw(a[i], prefix (islast ? "   " : "│  "), i == n, depth + 1)
+}
+
+FNR == NR {
+  tty = $1
+  sub(/^\/dev\//, "", tty)
+  pane[tty] = $2
+  next
+}
+
+$1 in pane {
+  pid = $2
+  ttyof[pid] = $1
+  parent[pid] = $3
+  cpu[pid] = $4
+  rss[pid] = $5
+  line = $0
+  for (i = 1; i <= 5; i++) sub(/^[ \t]*[^ \t]+/, "", line)
+  cmd[pid] = shorten(line)
+  seen[pid] = 1
+}
+
+END {
+  for (p in seen) {
+    par = parent[p]
+    if (par in seen) kids[par] = kids[par] " " p
+    else roots[ttyof[p]] = roots[ttyof[p]] " " p
+  }
+  for (p in seen) pidkey[p] = total(p, key)
+
+  ttylist = ""
+  for (t in roots) {
+    ttylist = ttylist " " t
+    n = split(roots[t], a, " ")
+    for (i = 1; i <= n; i++) {
+      panecpu[t] += total(a[i], "cpu")
+      panerss[t] += total(a[i], "rss")
+    }
+    pkey[t] = (key == "cpu") ? panecpu[t] : panerss[t]
+  }
+  ntty = split(sort_desc(ttylist, pkey), ttys, " ")
+
+  printf "%6s %6s %6s  PANE / PROCESS\n", "CPU%", "RSS", "PID"
+  for (i = 1; i <= ntty && (num == 0 || i <= num); i++) {
+    t = ttys[i]
+    printf "%6.1f %6s %6s  %s%s%s\n", panecpu[t], human(panerss[t]), "", bold, pane[t], reset
+    n = split(sort_desc(roots[t], pidkey), a, " ")
+    for (j = 1; j <= n; j++) draw(a[j], "", j == n, 0)
+  }
+}
+' <(printf '%s\n' "$panes") <(printf '%s\n' "$procs")
