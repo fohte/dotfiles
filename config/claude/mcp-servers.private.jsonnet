@@ -26,4 +26,12 @@
     type: 'http',
     url: 'https://mcp.sentry.dev/mcp',
   },
+  't-rader': {
+    // Cloudflare Access requires a service token; the token's two halves live
+    // in separate op fields, so mcp-headers-from-env assembles the header.
+    type: 'http',
+    url: 'https://t-rader.fohte.net/mcp/mgmt',
+    // op item: "t-rader MCP (Cloudflare Access Service Token)"
+    headersHelper: "CF_ACCESS_CLIENT_ID='op://Personal/pamhi2ise6e5xuqeeilflxf27a/username' CF_ACCESS_CLIENT_SECRET='op://Personal/pamhi2ise6e5xuqeeilflxf27a/credential' op-run-cached mcp-headers-from-env 'CF-Access-Client-Id=CF_ACCESS_CLIENT_ID' 'CF-Access-Client-Secret=CF_ACCESS_CLIENT_SECRET'",
+  },
 }
