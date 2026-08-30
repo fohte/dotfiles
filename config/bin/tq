@@ -34,8 +34,8 @@ else
 fi
 
 headers_json=$(
-  CF_ACCESS_CLIENT_ID='op://Personal/pamhi2ise6e5xuqeeilflxf27a/username' \
-    CF_ACCESS_CLIENT_SECRET='op://Personal/pamhi2ise6e5xuqeeilflxf27a/credential' \
+  CF_ACCESS_CLIENT_ID='op://Personal/2reeyq2igmclr5iwmnzylsg5x4/username' \
+    CF_ACCESS_CLIENT_SECRET='op://Personal/2reeyq2igmclr5iwmnzylsg5x4/credential' \
     op-run-cached mcp-headers-from-env \
     'CF-Access-Client-Id=CF_ACCESS_CLIENT_ID' \
     'CF-Access-Client-Secret=CF_ACCESS_CLIENT_SECRET'
