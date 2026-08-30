@@ -30,7 +30,7 @@ path=("$MISE_DATA_DIR/shims"(N-/) $path)
   # name succeeds silently, so the per-prompt exec would quietly come back, and
   # the wrapper would shadow `mise` with a call to a _mise_orig that never got
   # defined.
-  if ((!($+functions[_mise_hook_precmd] && $+functions[_mise_hook] && $+functions[mise]))); then
+  if ((! ($+functions[_mise_hook_precmd] && $+functions[_mise_hook] && $+functions[mise]))); then
     print -u2 'mise.zsh: mise activate no longer defines the hooks this file adjusts'
     return
   fi
