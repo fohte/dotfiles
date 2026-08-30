@@ -121,11 +121,12 @@ Helm chart の更新は **chart 自体の差分** と **appVersion 経由のア�
 
 ### 「影響なし」判定の根拠
 
-「影響なさそう」「可能性が低い」と根拠なく判断するのは禁止。リリースノートやコードを実際に確認した上で判断する。報告には以下を必ず含める:
-
-- 確認した release note / changelog の URL
-- 該当 API を使っていないことを確認した grep コマンドと結果
-- chart の場合: 確認した values.yaml/template の差分 URL またはコマンド
+「影響なさそう」「可能性が低い」と根拠なく判断するのは禁止。
+リリースノートやコードを実際に確認した上で判断する。
+ただし報告には確認した release note の URL や grep コマンド・実行結果そのものは含めない (Step 5 の `changes[].impact` にはそれらの根拠ではなく、確認した具体的事実を書く)。
+ファイルパス、設定キー、実際の値など、検証可能な具体性を持たせた上で結論だけ書く。
+「影響なし」「問題なし」のような根拠の見えない結論のみで済ませるのは禁止。
+chart の場合も同様に、確認した values.yaml/template の具体的な差分内容 (どの key がどう変わったか) を書く。
 
 ## Step 4: PR 間の依存関係分析
 
@@ -145,6 +146,8 @@ Helm chart の更新は **chart 自体の差分** と **appVersion 経由のア�
 - 一緒に入れないと意味がない (新機能を使うために両方必要) か
 
 **順序依存と判定した PR は、同じラウンドの `merge` にまとめて入れない。** Step 5 で承認された `merge` PR は全て同時に auto-merge が armed され、着地順は各 PR の CI 完了順に委ねられる。先行 PR が Step 6 で `MERGED` になったのを確認してから、後続 PR を次のラウンドで triage する。
+
+この判定結果は Step 5 で後続 PR の `gates.order` に反映する。
 
 ## Step 5: マージ判定とユーザー報告
 
@@ -170,81 +173,65 @@ PR は判定 (`verdict`) ごとにグルーピングする。ユーザーは「�
 | `delegate` | 委任                                            |
 | `hold`     | 保留                                            |
 
-各 PR の `rows` に含める項目:
+### 各 PR に書く項目
 
-| label            | 内容                                                                                                                                                                                                                                             |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| breaking changes | 調査結果。1 変更 = 1 `items` エントリとし、`impact` にこのリポジトリへの影響あり/なしと理由を書く。根拠 (リリースノート URL) は `text` にリンクで、grep 結果やコマンド出力は `evidence` に入れる                                                 |
-| グルーピング     | 他の PR とまとめるべきか。相手の PR 番号はリンクにする                                                                                                                                                                                           |
-| automerge 化     | 今後このパッケージ/ルールを automerge 対象にすべきか。可否・リスク評価・変更先 (このリポジトリの renovate.json5 / 共有 renovate-config repo)。後述「automerge 化 / Renovate 設定変更の検討」参照                                                 |
-| release-please   | release-please 利用リポジトリのみ。**actual bump level (patch / minor / major / none) と根拠** (どの `changelog-sections` エントリで visible/hidden か) を明示する。「整合」「問題なし」だけの記述は禁止。後述「release-please bump の判定」参照 |
-| 対応             | 承認されたら実際に何が起きるか。`merge` なら approve コメント投稿と auto-merge の armed、それ以外なら委任先ブランチや保留理由                                                                                                                    |
+各 PR カードの一行 verdict (「そのままマージしてよい」/「今はマージできない — ...」) は手で書かない。
+`gates` と `changes` から `crit-triage` が導出する。
+**すべての gate が `ok` かつすべての `changes[].impact.level` が `ok` (または changes が空) のときだけ「そのままマージしてよい」になる。**
+それ以外は理由付きで「今はマージできない」になる。
+導出ロジックの詳細は docstring を読む。
 
-バージョン変更と CI 状態は `badges` に入れる (例: `{"text": "major 6.4.1 → 8.0.0", "tone": "red"}`)。CI が fail / 想定外結果のときは `CI` 行を足して原因を書く。
+**`merge` group に入れてよい PR は、この導出結果が「そのままマージしてよい」になる PR だけ。**
+そうならない PR (コード修正が要る、CI 調査中、他 PR 待ち) を `merge` group に入れるとスクリプトが `SystemExit` で拒否する。
+コード修正や CI 調査が必要な PR は `delegate` か `hold` に置く。
 
-### `review_body` (approve コメント本文)
+| label           | 内容                                                                                                                                                                                                                                                                                           |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gates.ci`      | CI の状態。fail や想定外の結果があれば `warn` + 原因                                                                                                                                                                                                                                           |
+| `gates.release` | release-please 利用リポジトリのみ。判定結果を 60 文字以内で結論だけ書く (例: `"patch bump (意図通り)"` `"hidden、bump なし (意図通り)"`)。調査の深さは変えず、報告の粒度だけ圧縮する。後述「release-please bump の判定」参照                                                                   |
+| `gates.order`   | 他 PR の着地待ちのときだけ設定する。`text` はこの PR のカードに出るだけでなく、verdict の「今はマージできない — 」に続く理由としてそのまま使われるので、その文脈で自然に読める文にする (例: `"#118 のマージ待ち"`。`"#118 が先"` のような言い切りは避ける)。依存関係が無ければキーごと省略する |
+| `changes`       | upstream の変更点のみ。1 変更 = 1 エントリ。`impact.text` に確認済みの具体的事実を書く (詳細は Step 3 の「影響なし」判定の根拠を参照)。`impact.level` が `warn` なら `action` (具体的な修正手順) が必須。書けないなら調査が終わっていない証拠なので、曖昧な「要修正」で済ませない              |
+| `scope`         | このリポジトリに明確に別コンポーネントがある場合のみ設定する (release-please の `packages`、monorepo workspace 設定、PR が触るファイルなどから判定)。1 件も設定しなければ scope 列自体が出ない。単一コンポーネントのリポジトリで無理に付けない                                                 |
+| `versions`      | 短いプレーンテキスト (例: `"foo-lib 4.2.0 → 5.0.0"`)                                                                                                                                                                                                                                           |
 
-approve review を付ける PR には `review_body` を書く。レポートにそのまま表示され、ユーザーがその PR と crit の両方を approve した時点で `crit-triage` が GitHub に投稿する。**`gh pr review` を自分で叩かない。**
+### 投稿されるレビューコメント (`review_body`)
 
-`review_body` を書くのは approve review を付ける PR だけにする。`delegate` / `hold` / automerge に委ねる PR には書かない。
-
-{{ if $public -}}
-
-- **言語**: 英語で書く
-  {{- else -}}
-- **言語**: 日本語で書く (敬語不要、簡潔な口調)
-  {{- end }}
-- `📝` で開始する
-- バージョン番号の変更 (vX → vY) は PR body から明らかなので書かない
-- **本文の構造**: このバージョンの変更点を箇条書きでリストし、各変更点の直下にこのリポジトリへの影響有無をネスト箇条書きで添える。1 変更 = 1 親 bullet + 子 bullet (影響)
-- **breaking changes は親 bullet の冒頭に `**[BREAKING CHANGES]**` を付ける**。レビュアーが一目で識別できるようにするため
-- **upstream (依存先) リポジトリの issue/PR にリンクしない**: `owner/repo#1234` 形式や URL は GitHub 上でクロスリファレンスとして解釈され、無関係な第三者リポジトリの issue/PR タイムラインに残ってしまう。upstream の変更点は番号やリンクを付けず説明のみ書く
-- 変更点が無い (または影響しうる変更がない) 場合は短く「No breaking changes.」/「破壊的変更なし。」だけで済ませる
-- テンプレートリポジトリの場合、影響範囲は「このリポジトリの使い方」ではなく「下流リポジトリへの伝播」を考慮する。ただし下流の詳細な影響調査は下流側の責任なので、ここでは breaking changes の有無と概要を述べれば十分
-
-例:
+approve コメント本文は手動で記述しない。
+**`merge` group の PR について、`changes` から `crit-triage` が自動生成する。**
+JSON に `review_body` を書くとスクリプトが拒否する (`delegate` / `hold` / automerge に委ねる PR にはそもそも生成されない)。
+**`gh pr review` を自分で叩かない。**
 
 {{ if $public -}}
-
-```
-📝
-
-- **[BREAKING CHANGES]** Removed `-foo` option; use `-bar` instead.
-    - No impact: this repo does not invoke `-foo`.
-- Added `-baz` flag for offline validation.
-    - No impact: not used here.
-```
-
+このリポジトリは public なので、生成されるコメントには `changes[].text_en` / `impact.text_en` が使われる。
+全ての `changes` / `impact` に `text_en` を書く。
 {{- else -}}
-
-```
-📝
-
-- **[BREAKING CHANGES]** `-foo` オプションが削除された。代わりに `-bar` を使う
-    - 影響なし: このリポジトリでは `-foo` を使っていない
-- オフライン検証用の `-baz` フラグが追加された
-    - 影響なし: 未使用
-```
-
+このリポジトリは非公開なので、生成されるコメントには `changes[].text` / `impact.text` が使われる。
 {{- end }}
+
+生成されるのは Markdown テーブル (「なにがおきるか」「影響」「内容」列、breaking な変更には自動で `**[BREAKING]**` が付く) で、`changes` が空なら「破壊的変更なし。」の 1 行になる。
+
+**`changes[].text` / `impact.text` に upstream (依存先) リポジトリの issue/PR 番号 (`owner/repo#1234` 形式) や URL を書かない。**
+GitHub 上でクロスリファレンスとして解釈され、無関係な第三者リポジトリの issue/PR タイムラインに残ってしまうため、生成後のコメントにそれらが残っているとスクリプトが拒否する。
+upstream の変更点は番号やリンクを付けず説明のみ書く。
 
 ### 承認結果の読み方
 
-ユーザーが各 PR を approve / deny (既定は deny) して crit を approve するとコマンドが終了し、stdout の末尾に state と実行結果が出る:
+ユーザーが各 PR / proposal を approve / deny (既定は deny) して crit を approve するとコマンドが終了し、stdout の末尾に state と実行結果が出る:
 
 ```
 --- state ---
-{"pr-812": "approve", "pr-813": "deny"}
+{"pr-812": "approve", "pr-813": "deny", "prop-1": "approve"}
 --- done ---
 ok #812 review
 ok #812 merge
 ```
 
 - `verdict` が `merge` の PR は、approve された時点で `crit-triage` が approve コメント投稿と auto-merge の armed まで済ませている。Step 6 で改めてマージ操作をしない
+- `prop-<n>` (`proposals` の 1-based index) は `crit-triage` 自身では何もしない。`--- done ---` にも出てこない。approve された `prop-<n>` は、このセッションが state を確認したあと Claude 自身が実行する (共有 config リポジトリなら `/delegate-claude` で委任、このリポジトリの renovate.json5 ならこのセッションで直接編集)
 - `FAILED #<number> <verb>: ...` が出た PR はその操作が実行されていない。原因を潰してから対応する。`review` が失敗した PR は `merge` も armed されない (approve が要るリポジトリでどのみちマージできないため)
 - ユーザーが report を見終えずに crit を終えた場合は `crit ended before the review was finished` で exit 1 する。この場合は state が出ず、何も投稿されない。起動し直す
 - `deny` の理由は crit のコメントに書かれている。調査して crit に返信し、crit を再開して届ける (このループの作法は `plz-explain-with-crit` skill と同じ)。同じ JSON パスで再実行すれば、前ラウンドで処理済みの PR は `skip` される
-- 未操作の PR も `deny` として出る。**欠損や deny を approve と読み替えない**
+- 未操作の PR / proposal も `deny` として出る。**欠損や deny を approve と読み替えない**
 
 ### automerge 化 / Renovate 設定変更の検討
 
@@ -252,10 +239,10 @@ ok #812 merge
 
 - **automerge 化すべきか**: 「直接マージ」と判定した PR について、その根拠が**このパッケージ/エコシステムの一般的な性質** (後方互換を厳守する運用、型定義のみの変更、lockfile 限定の変更など) によるものか、**今回たまたま影響範囲が狭かっただけ**かを区別する。前者のみ automerge 化の候補になる。同じパッケージ/packageRule で過去にも繰り返し同じ判定をしていないか `gh pr list --state merged --search "<package>"` 等で確認すると、実益の大きさを判断しやすい
 - **変更先の判断**: renovate.json5 (または `.github/renovate.json5` 等) の `extends` を確認し、共有設定リポジトリ (renovate-config など) に依存しているか確認する
-    - **このリポジトリ固有の事情** (独自の digest pin、特殊な使い方) による判断 → このリポジトリの renovate.json5 に packageRule を追加
-    - **他リポジトリでも共通して安全と言える性質** → 共有設定リポジトリ側の packageRule を変更する。ただし全リポジトリに影響するため、必ずユーザーに提案として提示し承認を得てから着手する。実際の変更は `/delegate-claude` で委任する (このセッション内で直接 config repo を編集しない)
-- **提案内容**: 追加/変更する `packageRules` (`matchPackageNames` / `matchUpdateTypes` / `automerge` など) の具体的な差分案を Step 5 の報告に含める。マージ判定とは別に、この差分案自体についてユーザーの明示的な承認を得てから着手する
-- **今回の対象 PR への反映**: 今回新設・拡張したルールの対象に、今トリアージしている PR 自体が含まれる場合、その PR の対応方針は「automerge に委ねる」とし、このセッションで手動マージしない
+    - **このリポジトリ固有の事情** (独自の digest pin、特殊な使い方) による判断 → `proposals[].target.shared` を `false` にし、このリポジトリの renovate.json5 への変更として提示する
+    - **他リポジトリでも共通して安全と言える性質** → `proposals[].target.shared` を `true` にし、共有設定リポジトリへの変更として提示する。全リポジトリに影響するため、この場では変更に着手しない。承認後に `/delegate-claude` で委任する (このセッション内で直接 config repo を編集しない)
+- **出力先**: 検討結果は Step 5 の報告の **`proposals[]` に 1 エントリとして追加する** (PR の行には書かない)。`target.why` (なぜその変更先か) と `risks` (最低 1 件、「これが事故になるとしたら何が起きるか」) は必須。`diff` に `packageRules` (`matchPackageNames` / `matchUpdateTypes` / `automerge` など) の具体的な差分案を書く。各 proposal は PR の判定とは独立した approve/deny toggle を持つので、マージ判定と混同しない
+- **今回の対象 PR への反映**: 今回提案したルールの対象に、今トリアージしている PR 自体が含まれる場合、その PR の対応方針は「automerge に委ねる」とし、このセッションで手動マージしない
 
 ### release-please bump の判定
 

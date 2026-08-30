@@ -7,53 +7,104 @@ The caller (usually Claude) writes only the data JSON; the page chrome lives her
 Output goes next to the input: <data>.html, <data>.state.json and <data>.done.json.
 
 Approving a `merge` PR here -- and then the crit review itself -- is what carries
-out its plan: this same process posts its `review_body` as an approving review and
-arms auto-merge on it. Nothing is written to disk between the report the human read
-and the calls that act on it, so what was reviewed is what happens.
+out its plan: this same process posts the generated review comment as an approving
+review and arms auto-merge on it. Nothing is written to disk between the report the
+human read and the calls that act on it, so what was reviewed is what happens.
+
+A PR card answers two questions: is it safe to merge right now (the "gates" line:
+CI / release / merge order), and does this update break the repo (the "changes"
+table: what happened upstream, whether it hits this repo, and what to do about it
+if it does). The one-line verdict at the top of the card is never written by hand --
+it is derived from gates + changes, so it can never say something the data
+underneath contradicts. The review comment posted to GitHub is generated from the
+same changes table, so the report and the comment show the same facts.
 
 Data format:
 
     {
       "title": "Renovate PR triage",
       "repo": "acme/web",
+      "public": false,               // true => public repo, comment cells go in English
       "groups": [
         {
-          "verdict": "merge",            // merge | auto | delegate | hold
+          "verdict": "merge",        // merge | auto | delegate | hold
           "title": "直接マージ",
           "note": "承認後このセッションで squash merge する",
           "prs": [
             {
-              "number": 816,
-              "title": "chore(deps): update helm release cert-manager to v1.17.1",
-              "url": "...",              // optional, defaults to the repo's PR URL
-              "badges": [{"text": "minor 1.16.3 → 1.17.1", "tone": "dim"}],
-              // Posted as an approving review when this PR is approved. Omit to
-              // arm the merge without posting one; only `merge` PRs may carry it.
-              "review_body": "📝\n\n- ...",
-              "rows": [
+              "number": 119,
+              "scope": "api",        // omit if the repo only has one component
+              "title": "chore(deps): update foo-lib to v5",
+              "url": "...",         // optional, defaults to the repo's PR URL
+              "versions": "foo-lib 4.2.0 → 5.0.0",
+
+              // Procedural line (is it OK to merge right now?). Omit a key if it
+              // doesn't apply to this PR (e.g. no "order" if nothing depends on it).
+              "gates": {
+                "ci":      {"level": "ok",   "text": "全 check green"},
+                "release": {"level": "ok",   "text": "api が patch bump (意図通り)"},
+                "order":   {"level": "warn", "text": "#118 のマージ待ち"}
+              },
+
+              // What changed upstream, and whether it hits this repo. Only
+              // upstream changes go here -- no grep commands, no release-note
+              // URLs. The reason IS the evidence: "`foo()` is unused here" is
+              // the reason, a URL to the release notes is not.
+              "changes": [
                 {
-                  "label": "breaking changes",
-                  "text": "prose",       // optional
-                  "items": [             // optional
-                    {
-                      "text": "Node 18 のサポート終了",
-                      "breaking": true,
-                      // level: ok (影響なし) | warn (影響あり)
-                      "impact": {"level": "warn", "text": "ci.yml が node 18 を指定"}
-                    }
-                  ],
-                  "evidence": "$ rg ...",  // optional, folded into <details>
-                  "evidence_open": false,
-                  "tone": "none"           // optional: none (dimmed) | warn
+                  "text": "createClient() の第 2 引数が options オブジェクトに変更",
+                  "text_en": "createClient() now takes an options object as its 2nd arg",
+                  "breaking": true,
+                  "impact": {
+                    "level": "warn",       // ok (影響なし) | warn (要対応)
+                    "text": "src/api/client.ts:12 が旧シグネチャ",
+                    "text_en": "src/api/client.ts:12 still uses the old signature",
+                    "action": "createClient(url, 5000) を createClient(url, { timeoutMs: 5000 }) に書き換える"
+                  }
                 }
               ]
             }
           ]
         }
+      ],
+
+      // Renovate config changes (automerge expansion, commit-prefix rules, ...).
+      // A different decision than merging a PR, so it gets its own approve
+      // toggle (`prop-<n>`) and crit-triage never acts on it -- an approved
+      // proposal is only returned in the result for Claude to carry out.
+      "proposals": [
+        {
+          "title": "actions/** の major も automerge 対象にする",
+          "target": {
+            "repo": "acme/renovate-config",
+            "shared": true,          // false => this repo's own renovate.json5
+            "why": "判断の根拠がこのリポジトリの使い方ではなくエコシステム全般の性質だから"
+          },
+          "diff": "// base.json5\\n-   matchUpdateTypes: ['minor', 'patch'],\\n+   matchUpdateTypes: ['minor', 'patch', 'major'],",
+          "risks": [
+            {"level": "warn", "text": "runner の最低バージョンが上がると self-hosted runner のリポジトリが no-look で壊れる"},
+            {"level": "ok", "text": "対象リポジトリは全て GitHub-hosted", "evidence": "$ rg runs-on -r ..."}
+          ],
+          "on_approve": "/delegate-claude で acme/renovate-config に委任し、PR を立てるところまで"
+        }
       ]
     }
 
-Every `text` field takes markdown-lite: `code` and [label](url). Everything else is escaped.
+Rules enforced at render time (a violation raises SystemExit rather than being
+silently dropped from the report):
+
+- gates.*.text <= 60 chars, impact.text <= 120 chars -- what doesn't fit belongs
+  in a proposal, not squeezed into the card
+- impact.level == "warn" requires impact.action
+- when "public" is true, every change and its impact needs a *_en counterpart
+- a PR in a "merge" group must derive to an unblocked verdict (no warn gates or
+  impacts) -- a PR that isn't safe to merge yet doesn't belong in that group
+- the generated review comment may not contain an `owner/repo#123` reference or
+  an upstream URL (those show up as cross-references on a third-party repo)
+- a proposal needs target.why and at least one risk
+
+Every `text` / `text_en` field takes markdown-lite: `code` and [label](url).
+Everything else is escaped.
 """
 import html
 import json
@@ -68,55 +119,20 @@ from pathlib import Path
 
 LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 CODE = re.compile(r"`([^`]+)`")
-TONES = {"dim", "green", "amber", "red"}
 VERDICTS = {"merge", "auto", "delegate", "hold"}
+GATE_ORDER = ("ci", "release", "order")
+GATE_LABEL = {"ci": "CI", "release": "リリース", "order": "順序"}
+IMPACT_LABEL = {"ok": ("なし", "None"), "warn": ("要対応", "Action needed")}
+MAX_GATE_TEXT = 60
+MAX_IMPACT_TEXT = 120
+UPSTREAM_REF = re.compile(r"[\w.-]+/[\w.-]+#\d+|https?://")
 
 
 def md(text):
     """Escape HTML, then re-enable inline code and links."""
     out = html.escape(str(text))
-    out = LINK.sub(r'<a class="ref" href="\2">\1</a>', out)
+    out = LINK.sub(r'<a href="\2">\1</a>', out)
     return CODE.sub(r"<code>\1</code>", out)
-
-
-def render_row(row):
-    label = html.escape(row["label"])
-    tone = row.get("tone", "")
-    if tone and tone not in {"none", "warn"}:
-        raise SystemExit(f"unknown row tone: {tone}")
-    parts = []
-
-    if "text" in row:
-        parts.append(md(row["text"]))
-
-    items = row.get("items") or []
-    if items:
-        lis = []
-        for item in items:
-            body = ""
-            if item.get("breaking"):
-                body += '<span class="brk">[BREAKING]</span> '
-            body += md(item["text"])
-            impact = item.get("impact")
-            if impact:
-                level = impact["level"]
-                if level not in {"ok", "warn"}:
-                    raise SystemExit(f"unknown impact level: {level}")
-                mark = "●" if level == "ok" else "▲"
-                body += f'<span class="impact {level}">{mark} {md(impact["text"])}</span>'
-            lis.append(f"<li>{body}</li>")
-        parts.append("<ul>" + "".join(lis) + "</ul>")
-
-    if row.get("evidence"):
-        open_attr = " open" if row.get("evidence_open") else ""
-        summary = html.escape(row.get("evidence_label", "根拠"))
-        parts.append(
-            f"<details{open_attr}><summary>{summary}</summary>"
-            f"<pre>{html.escape(row['evidence'])}</pre></details>"
-        )
-
-    cls = f' class="{tone}"' if tone else ""
-    return f"<dt>{label}</dt><dd{cls}>{''.join(parts)}</dd>"
 
 
 def pr_key(number):
@@ -124,28 +140,192 @@ def pr_key(number):
     return f"pr-{number}"
 
 
-def render_pr(pr, repo):
+def prop_key(index):
+    """Radio group name for the `index`-th (1-based) proposal."""
+    return f"prop-{index}"
+
+
+def render_gates(gates, pr_num):
+    unknown = set(gates) - set(GATE_ORDER)
+    if unknown:
+        raise SystemExit(f"#{pr_num}: unknown gates key(s): {sorted(unknown)}")
+    parts = []
+    for key in GATE_ORDER:
+        gate = gates.get(key)
+        if not gate:
+            continue
+        level = gate["level"]
+        if level not in {"ok", "warn"}:
+            raise SystemExit(f"#{pr_num}: unknown gates.{key}.level: {level}")
+        text = gate["text"]
+        if len(text) > MAX_GATE_TEXT:
+            raise SystemExit(f"#{pr_num}: gates.{key}.text exceeds {MAX_GATE_TEXT} chars: {text}")
+        body = md(text)
+        if level == "warn":
+            body = f'<span class="w">{body}</span>'
+        parts.append(f"<i>{GATE_LABEL[key]}</i>{body}")
+    return '<span class="sep">|</span>'.join(parts)
+
+
+def render_change(change, pr_num, public):
+    """Validate one change + its impact, and render its <tr>."""
+    text = change["text"]
+    if public and not change.get("text_en"):
+        raise SystemExit(f"#{pr_num}: change is missing text_en (repo is public): {text}")
+
+    impact = change.get("impact")
+    if not impact:
+        raise SystemExit(f"#{pr_num}: change is missing impact: {text}")
+    level = impact["level"]
+    if level not in {"ok", "warn"}:
+        raise SystemExit(f"#{pr_num}: unknown impact.level: {level}")
+    if len(impact["text"]) > MAX_IMPACT_TEXT:
+        raise SystemExit(f"#{pr_num}: impact.text exceeds {MAX_IMPACT_TEXT} chars: {impact['text']}")
+    if level == "warn" and not impact.get("action"):
+        raise SystemExit(f"#{pr_num}: impact.level is warn but action is missing: {text}")
+    if public and not impact.get("text_en"):
+        raise SystemExit(f"#{pr_num}: impact is missing text_en (repo is public): {impact['text']}")
+
+    mark = '<span class="bk">BREAKING</span>' if change.get("breaking") else ""
+    what_td = f"<td>{mark}{md(text)}</td>"
+    cls = " w" if level == "warn" else ""
+    imp_td = f'<td class="imp{cls}">{IMPACT_LABEL[level][0]}</td>'
+    detail = md(impact["text"])
+    if level == "warn":
+        detail += f'<span class="todo">→ {md(impact["action"])}</span>'
+    detail_td = f'<td class="r{cls}">{detail}</td>'
+    return f"<tr>{what_td}{imp_td}{detail_td}</tr>"
+
+
+def render_changes(changes, pr_num, public):
+    """Render the changes table. Empty input renders nothing -- nothing to report."""
+    if not changes:
+        return ""
+    rows = "".join(render_change(c, pr_num, public) for c in changes)
+    return (
+        f'<table class="ev">\n'
+        f"<caption>upstream の変更 {len(changes)} 件</caption>\n"
+        f"<tr><th>なにがおきるか</th><th>影響</th><th>内容</th></tr>\n"
+        f"{rows}\n"
+        f"</table>"
+    )
+
+
+def derive_verdict(gates, changes):
+    """The one-line verdict, derived from gates + changes so no one has to write it.
+
+    `changes` must already be validated (every entry has "impact"."level") --
+    call this only after render_changes() on the same list.
+    """
+    warn_changes = sum(1 for c in changes if c["impact"]["level"] == "warn")
+    reasons = []
+    if warn_changes:
+        reasons.append(f"コード修正 {warn_changes} 件")
+    order = gates.get("order")
+    if order and order["level"] == "warn":
+        reasons.append(order["text"])
+    ci = gates.get("ci")
+    # A failing CI check caused by a change already counted above isn't a second
+    # reason -- it's the same reason showing up twice.
+    if ci and ci["level"] == "warn" and not warn_changes:
+        reasons.append("CI 調査中")
+    release = gates.get("release")
+    if release and release["level"] == "warn":
+        reasons.append(release["text"])
+    if not reasons:
+        return "そのままマージしてよい", False
+    return "今はマージできない — " + " / ".join(reasons), True
+
+
+def _esc_cell(text):
+    return text.replace("|", "\\|").replace("\n", " ")
+
+
+def gen_review_body(changes, public):
+    """The approve-review comment, generated from the (already-validated) changes table."""
+    if not changes:
+        return "📝\n\n" + ("No breaking changes." if public else "破壊的変更なし。")
+    if public:
+        header, sep = "| What changed | Impact here | Details |", "| --- | --- | --- |"
+        rows = [
+            "| {} | {} | {} |".format(
+                _esc_cell(("**[BREAKING]** " if c.get("breaking") else "") + c["text_en"]),
+                IMPACT_LABEL[c["impact"]["level"]][1],
+                _esc_cell(c["impact"]["text_en"]),
+            )
+            for c in changes
+        ]
+    else:
+        header, sep = "| なにがおきるか | 影響 | 内容 |", "| --- | --- | --- |"
+        rows = [
+            "| {} | {} | {} |".format(
+                _esc_cell(("**[BREAKING]** " if c.get("breaking") else "") + c["text"]),
+                IMPACT_LABEL[c["impact"]["level"]][0],
+                _esc_cell(c["impact"]["text"]),
+            )
+            for c in changes
+        ]
+    return "📝\n\n" + "\n".join([header, sep, *rows])
+
+
+def check_no_upstream_refs(text, pr_num):
+    """`owner/repo#123` and bare URLs turn into cross-references on someone else's repo."""
+    m = UPSTREAM_REF.search(text)
+    if m:
+        raise SystemExit(f"#{pr_num}: generated review body references an upstream issue/PR or URL: {m.group(0)!r}")
+
+
+def render_pr(pr, repo, public, has_scope, group_verdict):
     num = pr["number"]
     name = pr_key(num)
     url = html.escape(pr.get("url") or f"https://github.com/{repo}/pull/{num}")
-    badges = ""
-    for badge in pr.get("badges") or []:
-        tone = badge.get("tone", "dim")
-        if tone not in TONES:
-            raise SystemExit(f"unknown badge tone: {tone}")
-        badges += f'<span class="badge b-{tone}">{md(badge["text"])}</span>'
-    rows = "".join(render_row(r) for r in pr["rows"])
-    # Verbatim, not markdown-rendered: this is the exact string handed to
-    # `gh pr review`, and approving is what publishes it.
-    if pr.get("review_body"):
-        rows += f'<dt>投稿コメント</dt><dd><pre class="post">{html.escape(pr["review_body"])}</pre></dd>'
-    return f"""<section class="pr">
-  <div class="pr-head">
-    <div class="pr-title">
-      <a class="num" href="{url}">#{num}</a>
-      <h3><a href="{url}">{html.escape(pr["title"])}</a></h3>
-      <div class="badges">{badges}</div>
-    </div>
+    gates = pr.get("gates", {})
+    changes = pr.get("changes", [])
+
+    gates_html = render_gates(gates, num)
+    changes_html = render_changes(changes, num, public)  # validates changes as a side effect
+
+    verdict_text, blocked = derive_verdict(gates, changes)
+    if group_verdict == "merge" and blocked:
+        raise SystemExit(f"#{num}: in a merge group but its derived verdict blocks merging: {verdict_text}")
+
+    review_body = None
+    if group_verdict == "merge":
+        review_body = gen_review_body(changes, public)
+        check_no_upstream_refs(review_body, num)
+        pr["review_body"] = review_body
+    # Outside `merge` the toggle means "go ahead and delegate/hold/automerge this
+    # PR", so it must never carry an approving review.
+    if pr.get("review_body") and group_verdict != "merge":
+        raise SystemExit(f"review_body on a {group_verdict} PR: #{num}")
+
+    if has_scope:
+        scope = html.escape(pr.get("scope", ""))
+        left = f'<div class="gutter"><span class="num">#{num}</span><span class="scope">{scope}</span></div>'
+        num_prefix = ""
+    else:
+        left = ""
+        num_prefix = f'<span class="num">#{num}</span> '
+
+    vers = pr.get("versions")
+    vers_html = f'<div class="vers">{md(vers)}</div>' if vers else ""
+    id_html = f'<div class="id">{num_prefix}<h5><a href="{url}">{html.escape(pr["title"])}</a></h5>{vers_html}</div>'
+
+    gates_block = f'<div class="gates">{gates_html}</div>' if gates_html else ""
+    gen_block = ""
+    if review_body:
+        gen_block = (
+            '<div class="gen"><div class="cap">投稿されるコメント (上の表から自動生成)</div>'
+            f"<pre>{html.escape(review_body)}</pre></div>"
+        )
+
+    verdict_cls = " w" if blocked else ""
+    flat = "" if has_scope else " flat"
+
+    return f"""<section class="pr{flat}">
+  <div class="head">
+    {left}
+    {id_html}
     <div class="tg">
       <input type="radio" name="{name}" id="{name}-d" value="deny" checked
         /><label for="{name}-d" data-v="deny">deny</label
@@ -153,170 +333,281 @@ def render_pr(pr, repo):
         /><label for="{name}-a" data-v="approve">approve</label>
     </div>
   </div>
-  <dl class="rows">{rows}</dl>
+  <div class="verdict{verdict_cls}">{md(verdict_text)}</div>
+  {gates_block}
+  {changes_html}
+  {gen_block}
 </section>"""
+
+
+def render_diff(diff_text):
+    lines = []
+    for line in diff_text.split("\n"):
+        esc = html.escape(line)
+        if line.startswith("-"):
+            lines.append(f'<span class="m">{esc}</span>')
+        elif line.startswith("+"):
+            lines.append(f'<span class="p">{esc}</span>')
+        else:
+            lines.append(esc)
+    return "\n".join(lines)
+
+
+def render_risk(risk, idx):
+    level = risk["level"]
+    if level not in {"ok", "warn"}:
+        raise SystemExit(f"unknown risks[{idx}].level: {level}")
+    cls = " w" if level == "warn" else ""
+    mark = "▲" if level == "warn" else "●"
+    evidence = ""
+    if risk.get("evidence"):
+        evidence = f' <span class="why" title="{html.escape(risk["evidence"])}">根拠</span>'
+    return f'<li class="{cls}">{mark} {md(risk["text"])}{evidence}</li>'
+
+
+def render_proposal(proposal, idx):
+    key = prop_key(idx)
+    target = proposal["target"]
+    if not target.get("why"):
+        raise SystemExit(f"proposal {idx}: target.why is required")
+    risks = proposal.get("risks") or []
+    if not risks:
+        raise SystemExit(f"proposal {idx}: risks is required")
+
+    shared = target.get("shared", False)
+    where = "共有 config" if shared else "このリポジトリ"
+    tgt = f'変更先: <b>{html.escape(target["repo"])}</b> ({where})'
+    risks_html = "".join(render_risk(r, i) for i, r in enumerate(risks))
+
+    return f"""<div class="pcard">
+  <div class="head">
+    <div class="id">
+      <h5>{md(proposal["title"])}</h5>
+      <div class="tgt">{tgt}</div>
+    </div>
+    <div class="tg">
+      <input type="radio" name="{key}" id="{key}-d" value="deny" checked
+        /><label for="{key}-d" data-v="deny">deny</label
+        ><input type="radio" name="{key}" id="{key}-a" value="approve"
+        /><label for="{key}-a" data-v="approve">approve</label>
+    </div>
+  </div>
+  <div class="sect">
+    <div class="cap">なぜ{"共有 config か" if shared else "このリポジトリか"}</div>
+    <p>{md(target["why"])}</p>
+  </div>
+  <div class="sect">
+    <div class="cap">差分</div>
+    <pre class="d">{render_diff(proposal.get("diff", ""))}</pre>
+  </div>
+  <div class="sect">
+    <div class="cap">これが事故になるとき</div>
+    <ul class="risk">{risks_html}</ul>
+  </div>
+  <div class="sect">
+    <div class="cap">承認したら</div>
+    <p>{md(proposal["on_approve"])}</p>
+  </div>
+</div>"""
 
 
 def render(data, endpoint):
     repo = data["repo"]
-    groups, total = "", 0
-    summary = []
+    if "public" not in data:
+        raise SystemExit("data.public is required (true for public non-Japanese repos)")
+    public = data["public"]
+    has_scope = any(pr.get("scope") for group in data["groups"] for pr in group["prs"])
+
+    groups_html = []
     for group in data["groups"]:
         verdict = group["verdict"]
         if verdict not in VERDICTS:
             raise SystemExit(f"unknown verdict: {verdict}")
         prs = group["prs"]
-        # Outside `merge` the toggle means "go ahead and delegate/hold/automerge
-        # this", so approving it must not also publish an approving review.
         for pr in prs:
-            if pr.get("review_body") and verdict != "merge":
-                raise SystemExit(f"review_body on a {verdict} PR: #{pr['number']}")
-        total += len(prs)
-        summary.append(f"{group['title']} {len(prs)}")
+            if "review_body" in pr:
+                raise SystemExit(f"#{pr['number']}: review_body must not be set in the input; it is generated")
         note = f'<span class="note">{md(group["note"])}</span>' if group.get("note") else ""
-        groups += f"""<div class="group g-{verdict}">
-  <h2>{html.escape(group["title"])} <span class="n">({len(prs)})</span>{note}</h2>
-  {"".join(render_pr(pr, repo) for pr in prs)}
-</div>"""
+        pr_html = "".join(render_pr(pr, repo, public, has_scope, verdict) for pr in prs)
+        groups_html.append(
+            f'<div class="group">\n'
+            f'  <h2>{html.escape(group["title"])} <span class="n">({len(prs)})</span>{note}</h2>\n'
+            f"  {pr_html}\n"
+            f"</div>"
+        )
 
+    proposals = data.get("proposals") or []
+    proposals_html = ""
+    if proposals:
+        cards = "".join(render_proposal(p, i + 1) for i, p in enumerate(proposals))
+        proposals_html = f"<h2>Renovate 設定変更の提案</h2>\n{cards}"
+
+    total = sum(len(g["prs"]) for g in data["groups"]) + len(proposals)
     title = html.escape(data.get("title", "Triage"))
-    sub = f"{total} PRs — " + " / ".join(summary)
-    return TEMPLATE.format(
-        title=title, repo=html.escape(repo), sub=html.escape(sub), groups=groups, total=total, endpoint=endpoint
-    )
+
+    out = TEMPLATE
+    for token, value in {
+        "__TITLE__": title,
+        "__REPO__": html.escape(repo),
+        "__GROUPS__": "".join(groups_html),
+        "__PROPOSALS__": proposals_html,
+        "__TOTAL__": str(total),
+        "__ENDPOINT__": endpoint,
+    }.items():
+        out = out.replace(token, value)
+    return out
 
 
+# Plain string, not str.format(): the JS below uses `${...}` template literals
+# and object-literal braces, which would otherwise have to be doubled everywhere.
+# Substitution is done with the __TOKEN__.replace() loop in render() instead.
 TEMPLATE = """<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<title>{title}</title>
+<title>__TITLE__</title>
 <style>
-:root {{
-  --bg: #14161a; --card: #1c1f25; --line: #2c313a; --fg: #e3e6ea; --dim: #8b939f;
-  --green: #4ec9a5; --amber: #e2b04a; --red: #e5786d; --blue: #6aa9f0;
-}}
-* {{ box-sizing: border-box; }}
-body {{
+:root {
+  --bg: #14161a; --card: #1c1f25; --card2: #16181d; --line: #2c313a; --line2: #232830;
+  --fg: #e3e6ea; --dim: #8b939f; --dimmer: #5f6773;
+  --act: #e2b04a; /* the only semantic color: needs action */
+}
+* { box-sizing: border-box; }
+body {
   margin: 0; padding: 2rem 2rem 6rem; background: var(--bg); color: var(--fg);
   font: 15px/1.6 -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
-}}
-.wrap {{ max-width: 960px; margin: 0 auto; }}
-h1 {{ font-size: 1.35rem; margin: 0 0 0.3rem; }}
-.sub {{ color: var(--dim); font-size: 0.9rem; margin: 0 0 2rem; }}
-code {{
+}
+.wrap { max-width: 960px; margin: 0 auto; }
+h1 { font-size: 1.35rem; margin: 0 0 1.5rem; }
+h2 { font-size: 0.95rem; margin: 2.2rem 0 0.8rem; padding-left: 0.6rem; border-left: 3px solid var(--dimmer); }
+h2 .n { color: var(--dim); font-weight: 400; }
+h2 .note { display: block; font-size: 0.8rem; font-weight: 400; color: var(--dim); margin-top: 0.15rem; }
+code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.86em;
   background: #0f1114; padding: 0.1em 0.4em; border-radius: 3px;
-}}
-a {{ color: inherit; }}
-.pr-title a:hover {{ color: var(--blue); }}
-.ref {{ color: var(--blue); text-decoration: none; }}
-.ref:hover {{ text-decoration: underline; }}
+}
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--dimmer); }
 
-.group {{ margin-bottom: 2.2rem; }}
-.group > h2 {{ font-size: 0.95rem; margin: 0 0 0.8rem; padding-left: 0.6rem; border-left: 3px solid var(--dim); }}
-.group > h2 .n {{ color: var(--dim); font-weight: 400; }}
-.group > h2 .note {{ display: block; font-size: 0.8rem; font-weight: 400; color: var(--dim); margin-top: 0.15rem; }}
-.g-merge > h2 {{ border-color: var(--green); color: var(--green); }}
-.g-auto > h2 {{ border-color: var(--blue); color: var(--blue); }}
-.g-delegate > h2 {{ border-color: var(--amber); color: var(--amber); }}
-.g-hold > h2 {{ border-color: var(--dim); color: var(--dim); }}
+.group { margin-bottom: 2.2rem; }
 
-.pr {{ background: var(--card); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 0.9rem; overflow: hidden; }}
-.pr-head {{ display: flex; align-items: flex-start; gap: 0.9rem; padding: 0.9rem 1rem; border-bottom: 1px solid var(--line); }}
-.pr-title {{ flex: 1; min-width: 0; }}
-.pr-title .num {{ color: var(--dim); font-family: ui-monospace, monospace; }}
-.pr-title h3 {{ display: inline; font-size: 1rem; font-weight: 600; margin: 0; }}
-.badges {{ display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.4rem; }}
-.badge {{ font-size: 0.75rem; padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }}
-.b-dim {{ color: var(--dim); }}
-.b-green {{ color: var(--green); }}
-.b-amber {{ color: var(--amber); }}
-.b-red {{ color: var(--red); }}
+.pr { background: var(--card); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 0.9rem; overflow: hidden; }
+.pr .head { padding: 0.9rem 1rem 0.75rem; display: flex; gap: 0.9rem; align-items: flex-start; }
+.pr .gutter { flex: none; width: 4.6rem; font-family: ui-monospace, monospace; padding-top: 0.1rem; }
+.pr .gutter .num { display: block; color: var(--dimmer); font-size: 0.86rem; }
+.pr .gutter .scope { display: block; color: var(--fg); font-size: 0.8rem; letter-spacing: 0.06em; margin-top: 0.15rem; }
+.pr .id { flex: 1; min-width: 0; }
+.pr .id > .num { color: var(--dimmer); font-family: ui-monospace, monospace; font-size: 0.86rem; }
+.pr h5 { font-size: 1rem; font-weight: 600; margin: 0; }
+.pr.flat .id h5 { display: inline; }
+.pr .vers { font-family: ui-monospace, monospace; font-size: 0.78rem; color: var(--dimmer); margin-top: 0.25rem; }
 
-.tg {{ flex: none; display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; font-size: 0.78rem; }}
-.tg input {{ position: absolute; opacity: 0; pointer-events: none; }}
-.tg label {{ padding: 0.3rem 0.8rem; cursor: pointer; color: var(--dim); user-select: none; }}
-.tg label + input + label {{ border-left: 1px solid var(--line); }}
-.tg input:checked + label[data-v='deny'] {{ background: #3a2226; color: var(--red); }}
-.tg input:checked + label[data-v='approve'] {{ background: #1d3a30; color: var(--green); }}
-.tg input:focus-visible + label {{ outline: 2px solid var(--blue); outline-offset: -2px; }}
+.tg { flex: none; display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; font-size: 0.76rem; }
+.tg input { position: absolute; opacity: 0; pointer-events: none; }
+.tg label { padding: 0.28rem 0.8rem; cursor: pointer; color: var(--dimmer); user-select: none; }
+.tg label + input + label { border-left: 1px solid var(--line); }
+.tg input:checked + label { background: #303640; color: var(--fg); }
+.tg input:focus-visible + label { outline: 2px solid var(--act); outline-offset: -2px; }
 
-/* Approved = decided; fold the evidence away so only the undecided PRs stay readable. */
-.pr:has(input[value='approve']:checked) .rows {{ display: none; }}
-.pr:has(input[value='approve']:checked) .pr-head {{ border-bottom: none; }}
+.pr .verdict { padding: 0 1rem 0.5rem 6.5rem; font-size: 1.08rem; font-weight: 600; }
+.pr .verdict.w { color: var(--act); }
+.pr.flat .verdict { padding-left: 1rem; }
+.pr .gates { padding: 0 1rem 1rem 6.5rem; font-size: 0.84rem; color: var(--dim); }
+.pr.flat .gates { padding-left: 1rem; }
+.pr .gates i { font-style: normal; color: var(--dimmer); font-size: 0.76rem; margin-right: 0.3rem; }
+.pr .gates .sep { color: var(--line); margin: 0 0.55rem; }
+.pr .gates .w { color: var(--act); }
 
-.rows {{ display: grid; grid-template-columns: 8.5rem 1fr; }}
-.rows > dt {{ padding: 0.7rem 0 0.7rem 1rem; color: var(--dim); font-size: 0.82rem; border-top: 1px solid var(--line); }}
-.rows > dd {{ padding: 0.7rem 1rem 0.7rem 0; margin: 0; border-top: 1px solid var(--line); }}
-.rows > dt:first-of-type, .rows > dd:first-of-type {{ border-top: none; }}
-.rows ul {{ margin: 0; padding-left: 1.1rem; }}
-.rows li + li {{ margin-top: 0.5rem; }}
-.brk {{ color: var(--red); font-weight: 600; }}
-.impact {{ display: block; margin-top: 0.15rem; font-size: 0.88rem; }}
-.ok {{ color: var(--green); }}
-.warn {{ color: var(--amber); }}
-.none {{ color: var(--dim); }}
-details {{ margin-top: 0.5rem; }}
-summary {{ cursor: pointer; color: var(--dim); font-size: 0.82rem; }}
-details pre, pre.post {{
-  margin: 0.5rem 0 0; padding: 0.6rem 0.8rem; background: #0f1114; border-radius: 5px;
-  overflow-x: auto; font-size: 0.8rem; line-height: 1.5;
-}}
-pre.post {{ margin: 0; white-space: pre-wrap; border-left: 3px solid var(--green); }}
+table.ev { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+table.ev caption { caption-side: top; text-align: left; font-size: 0.74rem; letter-spacing: 0.05em; color: var(--dimmer); padding: 0.5rem 1rem 0.4rem; border-top: 1px solid var(--line); background: var(--card2); }
+table.ev th { text-align: left; font-weight: 600; font-size: 0.74rem; color: var(--dimmer); letter-spacing: 0.04em; padding: 0 1rem 0.45rem; border-bottom: 1px solid var(--line); background: var(--card2); }
+table.ev td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--line2); vertical-align: top; }
+table.ev tr:last-child td { border-bottom: none; }
+table.ev td.imp { width: 4.6rem; color: var(--dimmer); white-space: nowrap; }
+table.ev td.imp.w { color: var(--act); font-weight: 600; }
+table.ev td.r { color: var(--dim); }
+table.ev td.r.w { color: var(--act); }
+.bk { font-family: ui-monospace, monospace; font-size: 0.68rem; letter-spacing: 0.08em; color: var(--dimmer); border: 1px solid var(--line); border-radius: 3px; padding: 0 0.3rem; margin-right: 0.4rem; vertical-align: 1px; }
+.todo { display: block; margin-top: 0.3rem; color: var(--act); }
 
-.bar {{
+.gen { border-top: 1px solid var(--line); padding: 0.7rem 1rem 0.9rem; }
+.gen .cap { color: var(--dimmer); font-size: 0.76rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+.gen pre { margin: 0; padding: 0.7rem 0.85rem; background: #0f1114; border-radius: 5px; white-space: pre; overflow-x: auto; font-size: 0.72rem; line-height: 1.6; font-family: ui-monospace, monospace; color: var(--dim); }
+
+.pr:has(input[value='approve']:checked) .verdict,
+.pr:has(input[value='approve']:checked) .gates,
+.pr:has(input[value='approve']:checked) table.ev,
+.pr:has(input[value='approve']:checked) .gen { display: none; }
+
+.pcard { background: var(--card); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 0.9rem; overflow: hidden; }
+.pcard .head { padding: 0.9rem 1rem 0.75rem; display: flex; gap: 1rem; align-items: flex-start; }
+.pcard .id { flex: 1; }
+.pcard h5 { margin: 0; font-size: 1rem; font-weight: 600; }
+.pcard .tgt { font-size: 0.8rem; color: var(--dimmer); margin-top: 0.3rem; }
+.pcard .sect { border-top: 1px solid var(--line); padding: 0.7rem 1rem; font-size: 0.88rem; }
+.pcard .sect .cap { color: var(--dimmer); font-size: 0.74rem; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
+.pcard .sect p { margin: 0; color: var(--dim); }
+.pcard pre.d { margin: 0; padding: 0.6rem 0.8rem; background: #0f1114; border-radius: 5px; font-size: 0.76rem; line-height: 1.6; font-family: ui-monospace, monospace; color: var(--dim); overflow-x: auto; white-space: pre-wrap; }
+.pcard pre.d .m { color: #b0655e; }
+.pcard pre.d .p { color: #5c9c85; }
+.pcard ul.risk { margin: 0; padding-left: 1.1rem; color: var(--dim); }
+.pcard ul.risk li { margin-bottom: 0.35rem; }
+.pcard ul.risk li.w { color: var(--act); }
+.why { color: var(--dimmer); font-size: 0.76rem; text-decoration: underline; text-decoration-style: dotted; cursor: help; }
+
+.pcard:has(input[value='approve']:checked) .sect { display: none; }
+
+.bar {
   position: fixed; left: 0; right: 0; bottom: 0; padding: 0.7rem 2rem; background: #0f1114;
   border-top: 1px solid var(--line); display: flex; gap: 1.2rem; align-items: baseline; font-size: 0.85rem;
-}}
-.bar b {{ color: var(--green); font-size: 1rem; }}
-.bar .hint {{ color: var(--dim); }}
-#saved {{ margin-left: auto; color: var(--dim); font-family: ui-monospace, monospace; font-size: 0.78rem; }}
+}
+.bar b { color: var(--fg); font-size: 1rem; }
+.bar .hint { color: var(--dim); }
+#saved { margin-left: auto; color: var(--dim); font-family: ui-monospace, monospace; font-size: 0.78rem; }
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>{title} — <a class="ref" href="https://github.com/{repo}">{repo}</a></h1>
-<p class="sub">{sub}</p>
-{groups}
+<h1>__TITLE__ — <a href="https://github.com/__REPO__">__REPO__</a></h1>
+__GROUPS__
+__PROPOSALS__
 </div>
 
 <div class="bar">
-  <span>approve <b id="count">0</b> / {total}</span>
-  <span class="hint">deny が既定。approve = この対応方針で進めてよい + 投稿コメントをこのまま GitHub に出してよい / 指摘・質問は crit のコメントで</span>
+  <span>approve <b id="count">0</b> / __TOTAL__</span>
+  <span class="hint">deny が既定。PR の承認 = この対応方針で進め投稿コメントをそのまま GitHub に出してよい。提案の承認 = 変更に着手してよい。指摘・質問は crit のコメントで</span>
   <span id="saved">…</span>
 </div>
 
 <script>
-const API = 'http://127.0.0.1:{endpoint}'
+const API = 'http://127.0.0.1:__ENDPOINT__'
 const saved = document.getElementById('saved')
 const count = document.getElementById('count')
 const radios = [...document.querySelectorAll('.tg input')]
 const names = [...new Set(radios.map((r) => r.name))]
 
 const collect = () =>
-  Object.fromEntries(names.map((n) => [n, document.querySelector(`input[name="${{n}}"]:checked`).value]))
+  Object.fromEntries(names.map((n) => [n, document.querySelector(`input[name="${n}"]:checked`).value]))
 
 const render = (s) => (count.textContent = Object.values(s).filter((v) => v === 'approve').length)
 
-const save = () => {{
+const save = () => {
   const s = collect()
   render(s)
-  fetch(API, {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify(s) }})
+  fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(s) })
     .then(() => (saved.textContent = 'saved ' + new Date().toLocaleTimeString()))
     .catch((e) => (saved.textContent = 'POST failed: ' + e))
-}}
+}
 
 fetch(API)
   .then((r) => r.json())
-  .then((s) => {{
-    Object.entries(s).forEach(([n, v]) => {{
-      const el = document.querySelector(`input[name="${{n}}"][value="${{v}}"]`)
+  .then((s) => {
+    Object.entries(s).forEach(([n, v]) => {
+      const el = document.querySelector(`input[name="${n}"][value="${v}"]`)
       if (el) el.checked = true
-    }})
+    })
     render(collect())
     saved.textContent = 'loaded'
-  }})
+  })
   .catch((e) => (saved.textContent = 'GET failed: ' + e))
 
 radios.forEach((r) => r.addEventListener('change', save))
@@ -414,7 +705,11 @@ def gh_pr(repo, num, argv, stdin=None):
 
 
 def act_on_approvals(data, result, done_path):
-    """Carry out what the human signed off on in the report, PR by PR."""
+    """Carry out what the human signed off on in the report, PR by PR.
+
+    Proposals are never acted on here -- an approved proposal is only surfaced
+    in the printed result for Claude to carry out afterwards.
+    """
     done = set(json.loads(done_path.read_text())) if done_path.exists() else set()
     for group in data["groups"]:
         for pr in group["prs"]:
@@ -446,25 +741,217 @@ def act_on_approvals(data, result, done_path):
 
 def selftest():
     assert md("a<b & `x` [t](http://e/?a=1&b=2)") == (
-        'a&lt;b &amp; <code>x</code> <a class="ref" href="http://e/?a=1&amp;b=2">t</a>'
+        'a&lt;b &amp; <code>x</code> <a href="http://e/?a=1&amp;b=2">t</a>'
     )
-    row = render_row(
+
+    assert render_gates({}, 1) == ""
+    g = render_gates({"ci": {"level": "ok", "text": "全 check green"}}, 1)
+    assert g == "<i>CI</i>全 check green"
+    g = render_gates({"order": {"level": "warn", "text": "[#118](url) が先"}}, 1)
+    assert g == '<i>順序</i><span class="w"><a href="url">#118</a> が先</span>'
+    try:
+        render_gates({"ci": {"level": "warn", "text": "x" * 61}}, 1)
+        assert False, "should reject overlong gate text"
+    except SystemExit:
+        pass
+    try:
+        render_gates({"ci": {"level": "maybe", "text": "x"}}, 1)
+        assert False, "should reject unknown gate level"
+    except SystemExit:
+        pass
+
+    ok_change = {"text": "t", "impact": {"level": "ok", "text": "i"}}
+    warn_change = {
+        "text": "t2",
+        "text_en": "t2en",
+        "breaking": True,
+        "impact": {"level": "warn", "text": "i2", "text_en": "i2en", "action": "do x"},
+    }
+    row = render_changes([ok_change, warn_change], 1, public=False)
+    assert '<span class="bk">BREAKING</span>' in row
+    assert '<td class="imp w">要対応</td>' in row
+    assert '<span class="todo">→ do x</span>' in row
+    assert "upstream の変更 2 件" in row
+
+    try:
+        render_changes([{"text": "t", "impact": {"level": "warn", "text": "i"}}], 1, public=False)
+        assert False, "warn impact without action should be rejected"
+    except SystemExit:
+        pass
+    try:
+        render_changes([{"text": "t", "impact": {"level": "ok", "text": "i" * 121}}], 1, public=False)
+        assert False, "overlong impact text should be rejected"
+    except SystemExit:
+        pass
+    try:
+        render_changes([{"text": "t", "impact": {"level": "ok", "text": "i"}}], 1, public=True)
+        assert False, "public repo without text_en should be rejected"
+    except SystemExit:
+        pass
+
+    assert derive_verdict({}, []) == ("そのままマージしてよい", False)
+    assert derive_verdict({"ci": {"level": "ok", "text": "x"}}, [ok_change]) == ("そのままマージしてよい", False)
+    assert derive_verdict({}, [warn_change]) == ("今はマージできない — コード修正 1 件", True)
+    text, blocked = derive_verdict({"order": {"level": "warn", "text": "#118 のマージ待ち"}}, [warn_change])
+    assert blocked and text == "今はマージできない — コード修正 1 件 / #118 のマージ待ち", text
+    # A CI failure caused by the already-counted warn change isn't a second reason.
+    text, _ = derive_verdict({"ci": {"level": "warn", "text": "x"}}, [warn_change])
+    assert text == "今はマージできない — コード修正 1 件", text
+    # An uncaused CI failure is its own reason.
+    text, _ = derive_verdict({"ci": {"level": "warn", "text": "x"}}, [])
+    assert text == "今はマージできない — CI 調査中", text
+
+    assert gen_review_body([], public=False) == "📝\n\n破壊的変更なし。"
+    assert gen_review_body([], public=True) == "📝\n\nNo breaking changes."
+    body = gen_review_body([ok_change, warn_change], public=False)
+    assert "| t | なし | i |" in body
+    assert "| **[BREAKING]** t2 | 要対応 | i2 |" in body
+    body_en = gen_review_body([warn_change], public=True)
+    assert "| **[BREAKING]** t2en | Action needed | i2en |" in body_en
+    # A pipe in the content must not break the table.
+    piped = gen_review_body([{"text": "a|b", "impact": {"level": "ok", "text": "c|d"}}], public=False)
+    assert "a\\|b" in piped and "c\\|d" in piped
+
+    try:
+        check_no_upstream_refs("see acme/widget#42 for details", 1)
+        assert False, "owner/repo#N reference should be rejected"
+    except SystemExit:
+        pass
+    try:
+        check_no_upstream_refs("see https://github.com/acme/widget/releases", 1)
+        assert False, "upstream URL should be rejected"
+    except SystemExit:
+        pass
+    check_no_upstream_refs("no references here", 1)  # must not raise
+
+    assert f'name="{pr_key(9)}"' in render_pr(
+        {"number": 9, "title": "t", "gates": {}, "changes": []}, "o/r", False, False, "merge"
+    )
+    merge_pr = {"number": 9, "title": "t", "gates": {}, "changes": [ok_change]}
+    out = render_pr(merge_pr, "o/r", False, False, "merge")
+    assert merge_pr["review_body"] == "📝\n\n| なにがおきるか | 影響 | 内容 |\n| --- | --- | --- |\n| t | なし | i |"
+    assert "<pre>" in out and html.escape(merge_pr["review_body"]) in out
+
+    delegate_pr = {"number": 10, "title": "t", "gates": {}, "changes": []}
+    render_pr(delegate_pr, "o/r", False, False, "delegate")
+    assert "review_body" not in delegate_pr
+
+    try:
+        render_pr({"number": 11, "title": "t", "gates": {}, "changes": [warn_change]}, "o/r", False, False, "merge")
+        assert False, "a blocked PR in a merge group should be rejected"
+    except SystemExit:
+        pass
+
+    # has_scope toggles the gutter on/off
+    scoped = render_pr({"number": 1, "scope": "api", "title": "t", "gates": {}, "changes": []}, "o/r", False, True, "hold")
+    assert '<span class="scope">api</span>' in scoped
+    flat = render_pr({"number": 1, "title": "t", "gates": {}, "changes": []}, "o/r", False, False, "hold")
+    assert "gutter" not in flat
+
+    try:
+        render_proposal({"title": "t", "target": {"repo": "o/r"}, "risks": [{"level": "ok", "text": "x"}]}, 1)
+        assert False, "missing target.why should be rejected"
+    except SystemExit:
+        pass
+    try:
+        render_proposal({"title": "t", "target": {"repo": "o/r", "why": "w"}, "risks": []}, 1)
+        assert False, "missing risks should be rejected"
+    except SystemExit:
+        pass
+    prop = render_proposal(
         {
-            "label": "l",
-            "items": [{"text": "t", "breaking": True, "impact": {"level": "warn", "text": "i"}}],
-            "evidence": "<log>",
-        }
+            "title": "t",
+            "target": {"repo": "acme/config", "shared": True, "why": "w"},
+            "diff": "-old\n+new",
+            "risks": [{"level": "warn", "text": "r", "evidence": "$ cmd"}],
+            "on_approve": "do it",
+        },
+        1,
     )
-    assert '<span class="brk">[BREAKING]</span> t<span class="impact warn">▲ i</span>' in row
-    assert "<pre>&lt;log&gt;</pre>" in row
-    # The radio name and the result key must stay the same string, or every PR
-    # silently reads back as "deny".
-    assert f'name="{pr_key(9)}"' in render_pr({"number": 9, "title": "t", "rows": []}, "o/r")
-    # The body is shown as-is, so `<b>` must not become markup and `*` must not
-    # become emphasis -- what is displayed has to be what gets posted.
-    assert "<pre class=\"post\">a &lt;b&gt; *c*</pre>" in render_pr(
-        {"number": 9, "title": "t", "rows": [], "review_body": "a <b> *c*"}, "o/r"
+    assert f'name="{prop_key(1)}"' in prop
+    assert '<span class="m">-old</span>' in prop and '<span class="p">+new</span>' in prop
+    assert 'title="$ cmd"' in prop
+
+    full = render(
+        {
+            "title": "T",
+            "repo": "o/r",
+            "public": False,
+            "groups": [
+                {
+                    "verdict": "merge",
+                    "title": "直接マージ",
+                    "prs": [{"number": 118, "title": "t", "gates": {}, "changes": [ok_change]}],
+                },
+                {
+                    "verdict": "delegate",
+                    "title": "委任",
+                    "prs": [{"number": 119, "title": "t2", "gates": {}, "changes": [warn_change]}],
+                },
+            ],
+            "proposals": [
+                {
+                    "title": "p",
+                    "target": {"repo": "o/r", "why": "w"},
+                    "risks": [{"level": "ok", "text": "r"}],
+                    "on_approve": "a",
+                }
+            ],
+        },
+        "12345/tok",
     )
+    assert "#118" in full and "#119" in full and f'name="{prop_key(1)}"' in full
+    assert "__" not in full  # no leftover template tokens
+
+    # review_body must not be settable from the input
+    try:
+        render(
+            {
+                "repo": "o/r",
+                "public": False,
+                "groups": [{"verdict": "hold", "title": "g", "prs": [{"number": 1, "title": "t", "review_body": "x"}]}],
+            },
+            "1/t",
+        )
+        assert False, "review_body in the input should be rejected"
+    except SystemExit:
+        pass
+
+    # render() must mutate pr["review_body"] before act_on_approvals() posts it --
+    # that coupling is what makes "reviewed = what happens" true, so it needs its
+    # own regression check instead of relying on a hand-authored review_body fixture.
+    render_data = {
+        "repo": "o/r",
+        "public": False,
+        "groups": [
+            {
+                "verdict": "merge",
+                "title": "直接マージ",
+                "prs": [{"number": 42, "title": "t", "gates": {}, "changes": [ok_change]}],
+            }
+        ],
+    }
+    render(render_data, "1/t")
+    rendered_pr = render_data["groups"][0]["prs"][0]
+    assert rendered_pr["review_body"] == gen_review_body([ok_change], public=False)
+
+    posted = []
+
+    def fake_post(cmd, **kw):
+        posted.append((cmd, kw.get("input")))
+        return subprocess.CompletedProcess(cmd, 0)
+
+    real_run = subprocess.run
+    subprocess.run = fake_post
+    try:
+        act_on_approvals(render_data, {pr_key(42): "approve"}, Path(tempfile.mkdtemp()) / "t.done.json")
+    finally:
+        subprocess.run = real_run
+    review_calls = [(cmd, stdin) for cmd, stdin in posted if cmd[2] == "review"]
+    assert len(review_calls) == 1, posted
+    review_cmd, review_stdin = review_calls[0]
+    assert review_cmd[2] == "review" and review_cmd[6:] == ["--approve", "--body-file", "-"], review_cmd
+    assert review_stdin == rendered_pr["review_body"]
 
     calls = []
     data = {
@@ -534,13 +1021,17 @@ def main():
     if approved is None:
         raise SystemExit("crit ended before the review was finished; no result collected, nothing posted")
 
-    # Fill in PRs the user never touched, so "missing" is never mistaken for "approved".
+    # Fill in PRs and proposals the user never touched, so "missing" is never
+    # mistaken for "approved".
     state = json.loads(state_path.read_text()) if state_path.exists() else {}
     result = {
         pr_key(pr["number"]): state.get(pr_key(pr["number"]), "deny")
         for group in data["groups"]
         for pr in group["prs"]
     }
+    result.update(
+        {prop_key(i + 1): state.get(prop_key(i + 1), "deny") for i in range(len(data.get("proposals") or []))}
+    )
     print("--- state ---")
     print(json.dumps(result, ensure_ascii=False))
 
