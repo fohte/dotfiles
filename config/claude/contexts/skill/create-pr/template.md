@@ -188,6 +188,7 @@ context 残量の少なさは委任理由にならない。
 5. ❌ と「削る」判定があればファイルを直接編集して修正。修正後、もう一度 Step 2 を最初からやり直す (1 回の修正で複数ルール違反が連鎖して発生することがあるため)
    {{- end }}
    {{- end }}
+   {{- if not $repo_specs }}
 
 ## 3. レビュー
 
@@ -246,13 +247,27 @@ a ai pr-draft submit [--base main]
 {{- if $public }}
 title と body に日本語が含まれていないこと。
 {{- end }}
+{{- end }}
 
-## {{ if $repo_specs }}2{{ else }}6{{ end }}. CI 実行を監視
+## {{ if $repo_specs }}2{{ else }}6{{ end }}. tq タスクへのリンク登録
+
+作業のもとになった tq タスク (`tq.fohte.net/tasks/<uuid>` の URL や task 番号) が、委任プロンプトの参考リンクなどこのセッションの文脈から分かる場合のみ、作成した PR をそのタスクにリンクする。
+分からない場合は探しにいかず何もしない。
+
+```bash
+pr_url=$(gh pr view --json url -q .url)
+tq --author <自分のモデル名 (例: claude-opus-5)> github link <tq task の UUID または番号> "$pr_url"
+```
+
+`--author` の指定方法は `tq` skill 参照。
+同じ PR に対して既にリンク済みの場合は "already linked" エラーになるが、再実行時の想定内なので無視してよい。
+
+## {{ if $repo_specs }}3{{ else }}7{{ end }}. CI 実行を監視
 
 `gh pr checks --watch` で CI を監視。失敗したら調査・修正して再 push。
 {{ if not $owner_fohte }}
 
-## {{ if $repo_specs }}3{{ else }}7{{ end }}. レビューコメントを確認して対応する
+## {{ if $repo_specs }}4{{ else }}8{{ end }}. レビューコメントを確認して対応する
 
 **CI や bot のチェックが `pass` でもレビューコメントは付く。CI pass = レビュー指摘なし ではない。** submit 後は必ず `/check-pr-review` skill を実行し、CodeRabbit / Devin 等の自動レビューと人間のコメントを確認して対応する。
 
