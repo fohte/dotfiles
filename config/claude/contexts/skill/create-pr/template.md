@@ -251,12 +251,23 @@ title と body に日本語が含まれていないこと。
 
 ## {{ if $repo_specs }}2{{ else }}6{{ end }}. tq タスクへのリンク登録
 
-作業のもとになった tq タスク (`tq.fohte.net/tasks/<uuid>` の URL や task 番号) が、委任プロンプトの参考リンクなどこのセッションの文脈から分かる場合のみ、作成した PR をそのタスクにリンクする。
-分からない場合は探しにいかず何もしない。
+このセッション (`$TQ_SESSION_ID`) に tq タスクがちょうど 1 件リンクされている場合のみ、作成した PR をそのタスクにリンクする。
+0 件または複数件のときは何もしない。
+文脈からの推測はしない。
 
 ```bash
-pr_url=$(gh pr view --json url -q .url)
-tq --author <自分のモデル名 (例: claude-opus-5)> github link <tq task の UUID または番号> "$pr_url"
+tq_task_id=""
+if [ -n "${TQ_SESSION_ID:-}" ]; then
+  session_json=$(tq --author <自分のモデル名 (例: claude-opus-5)> session list --session-id "$TQ_SESSION_ID") \
+    || echo "tq session list failed" >&2
+  if [ -n "$session_json" ]; then
+    tq_task_id=$(echo "$session_json" | jq -r 'if (.[0].tasks | length) == 1 then .[0].tasks[0].id else empty end')
+  fi
+fi
+if [ -n "$tq_task_id" ]; then
+  pr_url=$(gh pr view --json url -q .url)
+  tq --author <自分のモデル名 (例: claude-opus-5)> github link "$tq_task_id" "$pr_url"
+fi
 ```
 
 `--author` の指定方法は `tq` skill 参照。
