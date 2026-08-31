@@ -98,6 +98,5 @@ tq page list 58
 tq page create 58 '調査メモ' --file /tmp/findings.md
 
 # Move a task along
-tq task status 58 in_progress
 tq task complete 58
 ```
