@@ -57,6 +57,8 @@ sym() {
       log-exec rm -r "$dst"
     fi
     log-exec ln -sfnv "$src" "$dst"
+  elif [ "$(readlink "$dst")" != "$src" ]; then
+    echo "[warn] $dst exists but is not a symlink to $src; run 'dot deploy --force' to replace" >&2
   fi
 }
 
