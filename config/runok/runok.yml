@@ -41,10 +41,13 @@ definitions:
   vars:
     # Bundled skill scripts are trusted executable resources managed alongside
     # their skill instructions, regardless of which repository is the cwd.
+    # Only the `~/.claude/...` spelling matches: a pattern var compares the
+    # token as written, so an expanded path falls through to the generic rules.
     claude-skill-scripts:
       type: pattern
       values:
         - '~/.claude/skills/*/scripts/*'
+        - '~/.claude/skills/*/bin/*'
 
   paths:
     sensitive:
@@ -87,6 +90,26 @@ definitions:
       network:
         allow: false
 
+    # For tools that create real temp files (e.g. `mkdtemp`) and write their
+    # output next to the cwd. `fs.write.allow` takes literal existing
+    # directories only -- neither `$TMPDIR` nor a glob is expanded -- so the
+    # macOS temp root `$TMPDIR` points into is listed whole as `/var/folders`.
+    write-tmp-cwd:
+      fs:
+        read:
+          deny:
+            - '<path:sensitive>'
+        write:
+          allow:
+            - '.'
+            - '/tmp'
+            - '/var/folders'
+          deny:
+            - '.git'
+            - '<path:sensitive>'
+      network:
+        allow: false
+
   wrappers:
     # `*` consumes 0+ TOOL@VERSION args so both `mise x -- <cmd>` and
     # `mise x jq node@20 -- <cmd>` route through the wrapper.
@@ -94,6 +117,10 @@ definitions:
     - 'rtk proxy <cmd>'
 
 rules:
+  # No sandbox: bundled scripts spawn agents and reach the network. The
+  # `node <var:claude-skill-scripts> *` rule in languages/node.yml sandboxes
+  # only that invocation form, so it caps blast radius rather than confining
+  # what a skill's own code may do.
   - allow: 'bash <var:claude-skill-scripts>'
     tests:
       - allow: 'bash ~/.claude/skills/self-review/scripts/render-backend-instructions'

@@ -418,10 +418,24 @@ rules:
     tests:
       - allow: 'na dedupe'
 
+  # Skill-bundled tools (e.g. archify) stage output through mkdtemp in $TMPDIR,
+  # which `readonly` below rejects. A local server still cannot bind, so
+  # `archify preview` fails here; use `crit preview <file>` instead.
+  - allow: 'node <var:claude-skill-scripts> *'
+    sandbox: write-tmp-cwd
+    tests:
+      - allow: 'node ~/.claude/skills/archify/bin/archify.mjs validate architecture /tmp/spec.json --json'
+
+  # Rule order carries no priority: when both allow rules match, the strictest
+  # sandbox wins, so `readonly` needs `when` to step aside for the rule above.
+  # The condition mirrors <var:claude-skill-scripts> exactly -- a wider one
+  # drops paths that no rule covers into the default (ask) action.
   - allow: 'node *'
+    when: "!(size(args) > 0 && args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/'))"
     sandbox: readonly
     tests:
       - allow: 'node -e "console.log(1)"'
+      - allow: 'node lint.mjs ~/.claude/skills/archify/SKILL.md'
 
   - allow: 'corepack enable'
     tests:
