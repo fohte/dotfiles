@@ -288,6 +288,44 @@ rules:
       - deny: 'bun remove lodash'
       - deny: 'bun update'
 
+  # Listed after the catch-all denies on purpose: when several rules of the
+  # same action match, the last one listed supplies the message.
+  # `corepack pnpm` is spelled out because the `pnpm` alias does not expand
+  # inside pattern alternation.
+  - deny: '"corepack pnpm"|pnpm|npm|bun|yarn run *'
+    message: &pmrun_msg 'Use nr. Args after the script name pass through as-is, so no `--` separator.'
+    fix_suggestion: &nr_fix 'nr <script> <args>'
+    tests:
+      - deny: 'pnpm run build'
+      - deny: 'pnpm run test:unit src/foo.test.ts'
+      - deny: 'corepack pnpm run build'
+      - deny: 'npm run build'
+      - deny: 'yarn run build'
+      - deny: 'bun run build'
+  - deny: '"corepack pnpm"|pnpm|npm|bun|yarn -C|--filter * run *'
+    message: *pmrun_msg
+    fix_suggestion: &nr_scoped_fix 'nr -C <dir> <script> <args>'
+    tests:
+      - deny: 'pnpm --filter web run test'
+      - deny: 'pnpm -C packages/web run test'
+      - deny: 'corepack pnpm --filter web run test'
+
+  - deny: '"corepack pnpm"|pnpm|npm|bun|yarn exec *'
+    message: &pmexec_msg 'Use nr with the package.json script that wraps the tool; nlx <tool> only when no script wraps it.'
+    fix_suggestion: *nr_fix
+    tests:
+      - deny: 'pnpm exec vitest run src/foo.test.ts'
+      - deny: 'corepack pnpm exec vitest run src/foo.test.ts'
+      - deny: 'npm exec eslint .'
+      - deny: 'yarn exec tsc --noEmit'
+  - deny: '"corepack pnpm"|pnpm|npm|bun|yarn -C|--filter * exec *'
+    message: *pmexec_msg
+    fix_suggestion: *nr_scoped_fix
+    tests:
+      - deny: 'pnpm --filter web exec vitest run --changed origin/main'
+      - deny: 'pnpm -C packages/web exec eslint .'
+      - deny: 'corepack pnpm --filter web exec eslint .'
+
   - deny: 'npx|bunx *'
     message: 'BLOCKED: Use /ni skill. Use nlx.'
     fix_suggestion: 'nlx <pkg>'
