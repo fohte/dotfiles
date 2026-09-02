@@ -194,8 +194,7 @@ context 残量の少なさは委任理由にならない。
 
 `a ai pr-draft review` を **バックグラウンドで** (`run_in_background: true`) 実行。完了を待ち、exit code で判断する:
 
-- exit code 0: ユーザーが承認した
-- exit code 1: 未承認 (エディタを承認せず閉じた)。ユーザーに何を変更するか確認する
+- exit code 0 / 1: エディタが閉じた。0 は `steps` のいずれかが変わったこと、1 は変わらなかったことしか意味せず、**どちらも承認を意味しない**。次に進んでよいかは stdout を読んで Step 4 で判断する
 - exit code 2: エディタが既に開いている。**追加アクションは不要**。ユーザーにエディタ上でファイルを読み込み直すよう伝える (例: Neovim なら `:e`)。再度 review コマンドを実行したり、エディタを閉じるよう促してはならない
 - exit code 3: ターミナルエミュレータが起動できなかった (macOS スリープ中などで 10s 内に起動失敗)。ロックファイルは残らないので、ユーザーにターミナルが利用可能になってから再実行を依頼する。自動でリトライしてはならない (スリープ状態が解消されない限り再失敗するため)
 
@@ -203,23 +202,29 @@ context 残量の少なさは委任理由にならない。
 
 ## 4. ユーザーの指示に応じた対応
 
-{{- if $agy }}
+**バックグラウンド実行の stdout を必ず読んでから分岐する。** stdout はエディタ編集前後の unified diff (無編集なら `(no edits)`) で、frontmatter の `steps` の変化とユーザーが本文に書き込んだコメントの両方が出る。review はエディタを開く前に `steps` を全て false に戻すので、この diff だけで今どの段階かが確定する。
 
-`a ai pr-draft review` の exit code だけで判断する。frontmatter や本文を Claude が直接読む必要はない。
+- diff に `submit: true` がある: Step 5 へ
+- ない (`ready-for-translation: true` のみ、本文へのコメント、`(no edits)`): まだ途中段階。以下の対応をして Step 3 に戻る。`submit: true` が出るまで何周でも回す
+  {{- if $agy }}
 
-exit code 1 (未承認) の場合、以下を実行して agy に直させ、再度 Step 3 の `a ai pr-draft review` を実行する。ユーザーのコメントへの対応と、承認後の翻訳 (`steps.ready-for-translation: true` になった場合{{ if not $public }}。このリポジトリでは翻訳は発生しない{{ end }}) のどちらが必要かはスクリプトが frontmatter を見て自動判定する。
+対応は以下を実行して agy に任せる。Claude が diff から読むのは `steps` の行だけでよく、本文コメントの解釈はスクリプトの責務。ユーザーのコメントへの対応と、翻訳 (`steps.ready-for-translation: true` になった場合{{ if not $public }}。このリポジトリでは翻訳は発生しない{{ end }}) のどちらが必要かもスクリプトが frontmatter を見て自動判定する。
 
 ```bash
 ~/.claude/skills/create-pr/scripts/agy-advance-draft
 ```
 
+`(no edits)` のときだけは agy に渡すものがないので、ユーザーに何を変更するか確認する。
+
 {{- else }}
 
-`a ai pr-draft review` の stdout (frontmatter と本文中のユーザーコメントを含む) を踏まえて以下に振り分ける。
+diff の内容で以下に振り分ける。
 
 ### 修正指示の場合
 
 修正のみ行い**翻訳は行わない**。ユーザーが本文に書き込んだコメント行は対応後に削除する。修正後は再度 `a ai pr-draft review` をバックグラウンドで実行。
+
+diff が `(no edits)` なら対応するものがないので、ユーザーに何を変更するか確認する。
 {{- if $public }}
 
 ### ドラフト承認後の翻訳 (`steps.ready-for-translation: true` かつ日本語含む)
@@ -231,9 +236,7 @@ public repo では翻訳必須。`steps.ready-for-translation: true` になっ�
 {{ file.Read (print (env.Getenv "HOME") "/.claude/contexts/skill/create-pr/translate-rules.md") }}
 {{- else }}
 
-### Submit への進め方
-
-翻訳不要。ユーザーが `steps.submit: true` にしたら submit に進む。
+このリポジトリでは翻訳は発生しない。
 {{- end }}
 {{- end }}
 
