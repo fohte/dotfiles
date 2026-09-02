@@ -116,6 +116,10 @@ apply_symbolic_hotkey() {
 # See: https://aotamasaki.hatenablog.com/entry/command_with_open_bracket_is_unavailable
 apply_symbolic_hotkey 27 false # 27 = "Move focus to next window"
 
+# Disable "Select the previous input source" (Ctrl+Space)
+# Steals Ctrl+Space from editors/terminals.
+apply_symbolic_hotkey 60 false # 60 = "Select the previous input source"
+
 # -- Appearance --
 
 # Dark mode
