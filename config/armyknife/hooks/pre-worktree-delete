@@ -36,3 +36,16 @@ daemon_running="$(crit status --json | jq -r '.daemon.running')"
 if [[ "$daemon_running" == "true" ]]; then
   crit stop > /dev/null
 fi
+
+# Drop the codebase-memory graph for this worktree. Projects are keyed by path
+# alone, so a worktree indexed at any point leaves a graph nothing reclaims.
+#
+# The name must be derived exactly as the indexer does it (src/pipeline/fqn.c).
+if command -v codebase-memory-mcp > /dev/null; then
+  cbm_project="$(printf '%s' "$ARMYKNIFE_WORKTREE_PATH" | tr '/:' '--' | sed -e 's/--*/-/g' -e 's/^-//' -e 's/-$//')"
+  # An unindexed worktree is the common case, and it answers not_found on stderr
+  # with a non-zero exit. --json moves that onto stdout and CBM_LOG_LEVEL drops
+  # the startup lines, so only a real failure reaches armyknife's warning path.
+  CBM_LOG_LEVEL=error codebase-memory-mcp cli --json delete_project \
+    --project="$cbm_project" > /dev/null || true
+fi
