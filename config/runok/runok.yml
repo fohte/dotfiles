@@ -41,13 +41,21 @@ definitions:
   vars:
     # Bundled skill scripts are trusted executable resources managed alongside
     # their skill instructions, regardless of which repository is the cwd.
-    # Only the `~/.claude/...` spelling matches: a pattern var compares the
-    # token as written, so an expanded path falls through to the generic rules.
+    # Only the spelled-out forms below match: a pattern var compares the
+    # token as written, so any other spelling falls through to the generic
+    # rules. User skills are invoked with the `~/...` spelling; plugin-bundled
+    # skills (nested under plugins/cache/<marketplace>/<plugin>/<version>/)
+    # are invoked with a fully-resolved absolute path instead, so both the
+    # `~/...` and absolute forms are listed for those.
     claude-skill-scripts:
       type: pattern
       values:
         - '~/.claude/skills/*/scripts/*'
         - '~/.claude/skills/*/bin/*'
+        - '~/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
+        - '~/.claude/plugins/cache/*/*/*/skills/*/bin/*'
+        - '*/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
+        - '*/.claude/plugins/cache/*/*/*/skills/*/bin/*'
 
   paths:
     sensitive:
@@ -124,11 +132,16 @@ rules:
   - allow: 'bash <var:claude-skill-scripts>'
     tests:
       - allow: 'bash ~/.claude/skills/self-review/scripts/render-backend-instructions'
+      - allow: 'bash /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs'
 
   - allow: 'bash <var:claude-skill-scripts> *'
     tests:
       - allow: 'bash ~/.claude/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
+      - allow: 'bash /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
 
+  # Absolute-path forms of <var:claude-skill-scripts> aren't tested here: bare
+  # execution of an absolute path always loses to the `deny: '/* *'` rule
+  # below (Explicit Deny Wins), regardless of this rule's own match.
   - allow: '<var:claude-skill-scripts>'
     tests:
       - allow: '~/.claude/skills/self-review/scripts/render-backend-instructions'

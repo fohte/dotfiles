@@ -463,13 +463,15 @@ rules:
     sandbox: write-tmp-cwd
     tests:
       - allow: 'node ~/.claude/skills/archify/bin/archify.mjs validate architecture /tmp/spec.json --json'
+      - allow: 'node ~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/build.cjs in.md out.md'
+      - allow: 'node /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/build.cjs in.md out.md'
 
   # Rule order carries no priority: when both allow rules match, the strictest
   # sandbox wins, so `readonly` needs `when` to step aside for the rule above.
   # The condition mirrors <var:claude-skill-scripts> exactly -- a wider one
   # drops paths that no rule covers into the default (ask) action.
   - allow: 'node *'
-    when: "!(size(args) > 0 && args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/'))"
+    when: "!(size(args) > 0 && (args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') || args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') || args[0].matches('^.*/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/')))"
     sandbox: readonly
     tests:
       - allow: 'node -e "console.log(1)"'
