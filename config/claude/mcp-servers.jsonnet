@@ -17,6 +17,17 @@ local env(name) = std.extVar(name);
     args: ['mcp'],
     env: {},
   },
+  'codebase-memory': {
+    type: 'stdio',
+    // MCP clients exec `command` directly without shell expansion, so a literal
+    // ~ would not resolve.
+    command: env('HOME') + '/.claude/hooks/cbm-mcp-launcher.bash',
+    args: [],
+    env: {},
+    // Exempt from tool-search deferral: a ToolSearch step would make Grep/Read
+    // the cheaper path.
+    alwaysLoad: true,
+  },
   pencil: {
     command: '/Applications/Pencil.app/Contents/Resources/app.asar.unpacked/out/mcp-server-darwin-arm64',
     args: ['--app', 'desktop'],

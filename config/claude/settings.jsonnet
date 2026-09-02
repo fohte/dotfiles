@@ -119,6 +119,22 @@ local env(name) = std.extVar(name);
       'mcp__context7',
       'mcp__qmd',
       'mcp__pencil',
+
+      // Only the tools that read the graph or refresh the local SQLite index.
+      // manage_adr and ingest_traces write into the repo tree, so they are left
+      // out and fall through to a prompt.
+      'mcp__codebase-memory__index_repository',
+      'mcp__codebase-memory__index_status',
+      'mcp__codebase-memory__check_index_coverage',
+      'mcp__codebase-memory__list_projects',
+      'mcp__codebase-memory__search_graph',
+      'mcp__codebase-memory__search_code',
+      'mcp__codebase-memory__trace_path',
+      'mcp__codebase-memory__detect_changes',
+      'mcp__codebase-memory__query_graph',
+      'mcp__codebase-memory__get_graph_schema',
+      'mcp__codebase-memory__get_code_snippet',
+      'mcp__codebase-memory__get_architecture',
     ],
     deny: [
       'NotebookEdit',
@@ -135,6 +151,10 @@ local env(name) = std.extVar(name);
 
       'mcp__qmd__query',
       'mcp__qmd__vsearch',
+
+      // Wipes the indexed project from the local SQLite cache. Reversible only
+      // by re-indexing, but accidental drops cost minutes of rebuild time.
+      'mcp__codebase-memory__delete_project',
 
       // Block self-scheduling tools. Claude sometimes defers the current task
       // by scheduling itself ("I'll check this again later") instead of doing
