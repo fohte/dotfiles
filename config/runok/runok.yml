@@ -41,12 +41,9 @@ definitions:
   vars:
     # Bundled skill scripts are trusted executable resources managed alongside
     # their skill instructions, regardless of which repository is the cwd.
-    # Only the spelled-out forms below match: a pattern var compares the
-    # token as written, so any other spelling falls through to the generic
-    # rules. User skills are invoked with the `~/...` spelling; plugin-bundled
-    # skills (nested under plugins/cache/<marketplace>/<plugin>/<version>/)
-    # are invoked with a fully-resolved absolute path instead, so both the
-    # `~/...` and absolute forms are listed for those.
+    # A pattern var compares the token as written, so every spelling a script
+    # is invoked with needs its own entry; anything else falls through to the
+    # generic rules.
     claude-skill-scripts:
       type: pattern
       values:
@@ -54,8 +51,11 @@ definitions:
         - '~/.claude/skills/*/bin/*'
         - '~/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
         - '~/.claude/plugins/cache/*/*/*/skills/*/bin/*'
-        - '*/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
-        - '*/.claude/plugins/cache/*/*/*/skills/*/bin/*'
+        # Plugin skills are usually invoked with a resolved absolute path. The
+        # leading `/` keeps a cwd-relative `foo/.claude/plugins/cache/...` from
+        # posing as a trusted script.
+        - '/*/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
+        - '/*/.claude/plugins/cache/*/*/*/skills/*/bin/*'
 
   paths:
     sensitive:
@@ -145,10 +145,12 @@ rules:
   - allow: '<var:claude-skill-scripts>'
     tests:
       - allow: '~/.claude/skills/self-review/scripts/render-backend-instructions'
+      - allow: '~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs'
 
   - allow: '<var:claude-skill-scripts> *'
     tests:
       - allow: '~/.claude/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
+      - allow: '~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
 
   # `rtk <cmd>` strips boilerplate from the inner command's stdout. Any other
   # rtk subcommand should go through `rtk proxy <cmd>`, which is registered

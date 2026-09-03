@@ -471,7 +471,7 @@ rules:
   # The condition mirrors <var:claude-skill-scripts> exactly -- a wider one
   # drops paths that no rule covers into the default (ask) action.
   - allow: 'node *'
-    when: "!(size(args) > 0 && (args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') || args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') || args[0].matches('^.*/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/')))"
+    when: "!(size(args) > 0 && (args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') || args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') || args[0].matches('^/.*/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/')))"
     sandbox: readonly
     tests:
       - allow: 'node -e "console.log(1)"'
