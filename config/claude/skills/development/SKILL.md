@@ -27,7 +27,7 @@ description: Development (実装フルフローモード). Use this skill when i
 タスクの要件を理解し、実装に必要なコンテキストを収集する。
 
 - 関連する既存コードの構造を把握する
-- 類似実装があれば参考にする (Grep/Glob で検索)
+- 類似実装があれば参考にする (codebase-memory の `search_graph` で検索、見つからなければ Grep/Glob)
 - ディレクトリ構造と命名規則を確認する
 - CLAUDE.md やプロジェクト固有の制約を確認する
 

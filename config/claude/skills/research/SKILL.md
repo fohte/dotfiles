@@ -47,7 +47,7 @@ description: Research (調査専用モード)
 
 #### A. 類似実装の調査
 
-- 類似機能のファイルを検索 (Grep/Glob)
+- 類似機能を検索 (codebase-memory の `search_graph` / `trace_path`、文字列検索が必要なら Grep/Glob)
 - ディレクトリ構造と命名規則を把握
 - 既存の実装パターンを特定
 
