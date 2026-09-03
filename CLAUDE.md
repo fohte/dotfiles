@@ -109,7 +109,7 @@ config/
 ├── rg/                      # ripgrep 設定
 ├── rubocop/                 # RuboCop 設定
 ├── runok/                   # runok 設定 (~/.config/runok/ に symlink、コマンド実行ルール)
-├── agy/                     # Antigravity CLI 設定 (headless 専用のため command 実行を deny)
+├── agy/                     # Antigravity CLI 設定 (headless 専用のため read_file 以外の tool を deny)
 └── tig/                     # tig 設定
 ```
 

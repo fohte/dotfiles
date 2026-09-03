@@ -2,6 +2,13 @@
   "enableTelemetry": false,
   "permissions": {
     "allow": ["read_file(*)"],
-    "deny": ["command(*)", "unsandboxed(*)"]
+    "deny": [
+      "command(*)",
+      "unsandboxed(*)",
+      "write_file(*)",
+      "read_url(*)",
+      "mcp(*)",
+      "execute_url(*)"
+    ]
   }
 }
