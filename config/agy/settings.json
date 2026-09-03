@@ -1,6 +1,7 @@
 {
   "enableTelemetry": false,
   "permissions": {
+    "allow": ["read_file(*)"],
     "deny": ["command(*)", "unsandboxed(*)"]
   }
 }
