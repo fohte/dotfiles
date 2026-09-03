@@ -138,9 +138,6 @@ local env(name) = std.extVar(name);
     ],
     deny: [
       'NotebookEdit',
-      'Read(.env)',
-      'Read(.env.local)',
-      'Read(.envrc)',
 
       // Fable is priced far above the other tiers and gets prohibitively
       // expensive once fanned out across subagents, so block explicit
