@@ -49,13 +49,15 @@ local env(name) = std.extVar(name);
   // Agent tool are unaffected.
   disableWorkflows: true,
 
-  // `commit` drops the `Co-Authored-By` trailer, `sessionUrl` the
-  // `Claude-Session` one that otherwise puts a claude.ai session link in the
-  // history of every public repository committed to from here. `pr` is left
-  // unset, so pull request bodies keep their footer.
+  // Every key is opt-out: unset means the attribution is attached.
   // https://code.claude.com/docs/en/settings-reference.md#attribution
   attribution: {
+    // `Co-Authored-By` trailer.
     commit: '',
+    // Footer in pull request bodies.
+    pr: '',
+    // `Claude-Session` trailer, a claude.ai session link that would otherwise
+    // land in the history of every public repository committed to from here.
     sessionUrl: false,
   },
 
