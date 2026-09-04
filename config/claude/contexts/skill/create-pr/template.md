@@ -257,7 +257,6 @@ title と body に日本語が含まれていないこと。
 このセッション (`$TQ_SESSION_ID`) にリンクされている tq タスクから、作成した PR をリンクする先を決める。
 複数件リンクされていても、そこに親子関係があるなら子が作業対象なので一意に決まる。
 `tasks[]` の `parentId` が別の linked task の `id` を指していれば親子で、親は捨てて子 (葉) を残す。
-文脈からの推測はしない。
 
 ```bash
 tq_task_id=""
@@ -271,7 +270,7 @@ if [ -n "${TQ_SESSION_ID:-}" ]; then
     case "$(echo "$leaves" | jq 'length')" in
       0) echo "no tq task linked to this session" >&2 ;;
       1) tq_task_id=$(echo "$leaves" | jq -r '.[0].id') ;;
-      *) echo "ask the user which to link: $(echo "$leaves" | jq -r '[.[] | "#\(.number) \(.title)"] | join(", ")')" >&2 ;;
+      *) echo "pick one yourself: $(echo "$leaves" | jq -r '[.[] | "\(.id) #\(.number) \(.title)"] | join(", ")')" >&2 ;;
     esac
   fi
 fi
@@ -282,7 +281,9 @@ fi
 ```
 
 葉が 0 件 (そもそもリンクが無い) なら何もしない。
-葉が複数件残る (兄弟タスクが並んでいる) ときは、stderr に出た候補を見せてどれにリンクするかユーザーに聞く。
+葉が複数件残る (兄弟タスクが並んでいる) ときは、候補の title と PR の内容を突き合わせて自分で決め、その id で `tq_task_id=<id>` を置いて再実行する。
+ユーザーに聞かない。
+選んだ task と根拠は最後の報告に 1 行で書き、後から誤リンクを見つけられるようにする。
 **黙って飛ばして PR 作成を完了扱いにしない。**
 
 `--author` の指定方法は `tq` skill 参照。
