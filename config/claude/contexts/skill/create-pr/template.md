@@ -254,8 +254,9 @@ title と body に日本語が含まれていないこと。
 
 ## {{ if $repo_specs }}2{{ else }}6{{ end }}. tq タスクへのリンク登録
 
-このセッション (`$TQ_SESSION_ID`) に tq タスクがちょうど 1 件リンクされている場合のみ、作成した PR をそのタスクにリンクする。
-0 件または複数件のときは何もしない。
+このセッション (`$TQ_SESSION_ID`) にリンクされている tq タスクから、作成した PR をリンクする先を決める。
+複数件リンクされていても、そこに親子関係があるなら子が作業対象なので一意に決まる。
+`tasks[]` の `parentId` が別の linked task の `id` を指していれば親子で、親は捨てて子 (葉) を残す。
 文脈からの推測はしない。
 
 ```bash
@@ -264,7 +265,14 @@ if [ -n "${TQ_SESSION_ID:-}" ]; then
   session_json=$(tq --author <自分のモデル名 (例: claude-opus-5)> session list --session-id "$TQ_SESSION_ID") \
     || echo "tq session list failed" >&2
   if [ -n "$session_json" ]; then
-    tq_task_id=$(echo "$session_json" | jq -r 'if (.[0].tasks | length) == 1 then .[0].tasks[0].id else empty end')
+    leaves=$(echo "$session_json" | jq -c '
+      .[0].tasks as $t
+      | [$t[] | select(.id as $id | any($t[]; .parentId == $id) | not)]')
+    case "$(echo "$leaves" | jq 'length')" in
+      0) echo "no tq task linked to this session" >&2 ;;
+      1) tq_task_id=$(echo "$leaves" | jq -r '.[0].id') ;;
+      *) echo "ask the user which to link: $(echo "$leaves" | jq -r '[.[] | "#\(.number) \(.title)"] | join(", ")')" >&2 ;;
+    esac
   fi
 fi
 if [ -n "$tq_task_id" ]; then
@@ -272,6 +280,10 @@ if [ -n "$tq_task_id" ]; then
   tq --author <自分のモデル名 (例: claude-opus-5)> github link "$tq_task_id" "$pr_url"
 fi
 ```
+
+葉が 0 件 (そもそもリンクが無い) なら何もしない。
+葉が複数件残る (兄弟タスクが並んでいる) ときは、stderr に出た候補を見せてどれにリンクするかユーザーに聞く。
+**黙って飛ばして PR 作成を完了扱いにしない。**
 
 `--author` の指定方法は `tq` skill 参照。
 同じ PR に対して既にリンク済みの場合は "already linked" エラーになるが、再実行時の想定内なので無視してよい。
