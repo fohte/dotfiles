@@ -48,6 +48,7 @@ dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成 (スキーマは後述の「プロンプト構造 (必須)」参照)
 prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
+  DELEGATE_TQ_TASK_ID="<この委任作業が属する tq タスクの ID。無ければ変数ごと省略>" \
   a cc new --worktree=<branch-name> --agent --label "<title>" --prompt "$prompt"
 ```
 
@@ -63,6 +64,7 @@ DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
 - `render-task`: `task.yaml` を `--prompt` 用の markdown に変換するスクリプト。`purpose`/`goal` が空だとエラーで停止する
 - `--prompt`: `render-task` の出力をそのまま渡す
 - `DELEGATE_TASK_PURPOSE`: `task.yaml` の `purpose` をそのまま渡す環境変数。委任先 worktree の post-worktree-create hook がこれを読み `branch.<name>.x-purpose` に書き込み、`create-pr` skill が PR の Why セクション生成時に参照する
+- `DELEGATE_TQ_TASK_ID`: この委任作業が属する tq タスクの ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-task-id` に書き込み、委任先の `track-in-tq` skill がタスク作成時の `--parent-id` に使う。渡さないと委任先は委任元のセッションにリンクされたタスク一覧から親を推測する羽目になり、一覧が複数件のときに親無しのタスクができる。**委任元が tq タスクを持っているなら必ず渡す**
 
 ### オプション
 
