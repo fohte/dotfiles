@@ -29,6 +29,9 @@ case "$tool_name" in
     jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "EnterWorktree is disabled. Use the /delegate-claude skill to spawn work in a worktree."}}'
     exit 0
     ;;
+  TaskStop)
+    exec ~/.claude/hooks/task-stop-guard <<< "$input"
+    ;;
   Agent)
     exec ~/.claude/hooks/agent-guard <<< "$input"
     ;;
