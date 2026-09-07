@@ -97,7 +97,7 @@ FNR == NR {
   next
 }
 
-$1 in pane {
+{
   pid = $2
   ttyof[pid] = $1
   parent[pid] = $3
@@ -106,16 +106,22 @@ $1 in pane {
   line = $0
   for (i = 1; i <= 5; i++) sub(/^[ \t]*[^ \t]+/, "", line)
   cmd[pid] = shorten(line)
-  seen[pid] = 1
+  # Processes spawned without a controlling terminal have tty "??" but still
+  # belong to the pane subtree, so keep every process, not just pane ones
+  all[pid] = 1
+  if ($1 in pane) seen[pid] = 1
 }
 
 END {
+  for (p in all) kids[parent[p]] = kids[parent[p]] " " p
+  # A pane process reachable through a tty-less ancestor is already drawn as its
+  # descendant, so look past those ancestors instead of at the direct parent
   for (p in seen) {
-    par = parent[p]
-    if (par in seen) kids[par] = kids[par] " " p
-    else roots[ttyof[p]] = roots[ttyof[p]] " " p
+    q = parent[p]
+    while ((q in all) && !(q in seen) && q != parent[q]) q = parent[q]
+    if (!(q in seen)) roots[ttyof[p]] = roots[ttyof[p]] " " p
   }
-  for (p in seen) pidkey[p] = total(p, key)
+  for (p in all) pidkey[p] = total(p, key)
 
   ttylist = ""
   for (t in roots) {
