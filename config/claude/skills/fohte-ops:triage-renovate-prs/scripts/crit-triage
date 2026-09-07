@@ -8,8 +8,9 @@ Output goes next to the input: <data>.html, <data>.state.json and <data>.done.js
 
 Approving a `merge` PR here -- and then the crit review itself -- is what carries
 out its plan: this same process posts the generated review comment as an approving
-review and arms auto-merge on it. Nothing is written to disk between the report the
-human read and the calls that act on it, so what was reviewed is what happens.
+review and arms auto-merge on it -- or merges it outright, when GitHub refuses to
+arm a PR that is already mergeable. Nothing is written to disk between the report
+the human read and the calls that act on it, so what was reviewed is what happens.
 
 A PR card answers two questions: is it safe to merge right now (the "gates" line:
 CI / release / merge order), and does this update break the repo (the "changes"
@@ -107,6 +108,7 @@ Every `text` / `text_en` field takes markdown-lite: `code` and [label](url).
 Everything else is escaped.
 """
 import html
+import io
 import json
 import re
 import secrets
@@ -692,16 +694,13 @@ def run_crit(argv, html_path):
 
 
 def gh_pr(repo, num, argv, stdin=None):
-    """Run one `gh pr <verb>` against a PR, reporting the outcome."""
-    run = subprocess.run(
+    """Run one `gh pr <verb>` against a PR."""
+    return subprocess.run(
         ["gh", "pr", argv[0], str(num), "-R", repo, *argv[1:]],
         input=stdin,
         text=True,
         capture_output=True,
     )
-    ok = run.returncode == 0
-    print(f"{'ok' if ok else 'FAILED'} #{num} {argv[0]}" + ("" if ok else f": {run.stderr.strip()}"))
-    return ok
 
 
 def act_on_approvals(data, result, done_path):
@@ -731,7 +730,15 @@ def act_on_approvals(data, result, done_path):
                 if key in done:
                     print(f"skip #{num} {argv[0]}: already done")
                     continue
-                if not gh_pr(data["repo"], num, argv, stdin):
+                run = gh_pr(data["repo"], num, argv, stdin)
+                # GitHub refuses to arm auto-merge on an already mergeable PR.
+                if run.returncode != 0 and "--auto" in argv and "clean status" in (run.stderr or ""):
+                    run = gh_pr(data["repo"], num, [a for a in argv if a != "--auto"], stdin)
+                ok = run.returncode == 0
+                # One line per step, printed only once the step is settled:
+                # readers take `FAILED` to mean the operation did not happen.
+                print(f"{'ok' if ok else 'FAILED'} #{num} {argv[0]}" + ("" if ok else f": {(run.stderr or '').strip()}"))
+                if not ok:
                     # Never arm a merge on a PR whose approving review failed to
                     # post; branch protection would block it anyway.
                     break
@@ -994,6 +1001,47 @@ def selftest():
         assert [(c[2], c[3]) for c in calls] == [("merge", "1")], calls
     finally:
         subprocess.run = real_run
+
+    # An auto-merge GitHub refuses because the PR is already mergeable falls
+    # back to a plain merge, recorded under the same `done` key.
+    calls.clear()
+    clean_data = {"repo": "o/r", "groups": [{"verdict": "merge", "prs": [{"number": 6}]}]}
+    done = Path(tempfile.mkdtemp()) / "t.done.json"
+
+    def fake_clean(cmd, **kw):
+        calls.append(cmd)
+        if "--auto" in cmd:
+            stderr = "GraphQL: Pull request Pull request is in clean status (enablePullRequestAutoMerge)"
+            return subprocess.CompletedProcess(cmd, 1, stderr=stderr)
+        return subprocess.CompletedProcess(cmd, 0, stderr="")
+
+    subprocess.run = fake_clean
+    real_stdout, sys.stdout = sys.stdout, io.StringIO()
+    try:
+        act_on_approvals(clean_data, {pr_key(6): "approve"}, done)
+    finally:
+        subprocess.run = real_run
+        out, sys.stdout = sys.stdout.getvalue(), real_stdout
+    assert [c[6:] for c in calls] == [["--squash", "--auto"], ["--squash"]], calls
+    assert json.loads(done.read_text()) == ["6:merge"]
+    # A merge that did happen must not be reported as FAILED: the caller reads
+    # that as "not merged" and goes looking for a cause that isn't there.
+    assert out.splitlines() == ["ok #6 merge"], out
+
+    # Any other merge failure stays a failure -- never merge past an unmet gate.
+    calls.clear()
+
+    def fake_blocked(cmd, **kw):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 1, stderr="Pull request is not mergeable")
+
+    subprocess.run = fake_blocked
+    try:
+        act_on_approvals(clean_data, {pr_key(6): "approve"}, Path(tempfile.mkdtemp()) / "t.done.json")
+    finally:
+        subprocess.run = real_run
+    assert [c[6:] for c in calls] == [["--squash", "--auto"]], calls
+
     print("ok")
 
 

@@ -226,7 +226,7 @@ ok #812 review
 ok #812 merge
 ```
 
-- `verdict` が `merge` の PR は、approve された時点で `crit-triage` が approve コメント投稿と auto-merge の armed まで済ませている。Step 6 で改めてマージ操作をしない
+- `verdict` が `merge` の PR は、approve された時点で `crit-triage` が approve コメント投稿と auto-merge の armed (既にマージ可能な PR ならマージそのもの) まで済ませている。Step 6 で改めてマージ操作をしない
 - `prop-<n>` (`proposals` の 1-based index) は `crit-triage` 自身では何もしない。`--- done ---` にも出てこない。approve された `prop-<n>` は、このセッションが state を確認したあと Claude 自身が実行する (共有 config リポジトリなら `/delegate-claude` で委任、このリポジトリの renovate.json5 ならこのセッションで直接編集)
 - `FAILED #<number> <verb>: ...` が出た PR はその操作が実行されていない。原因を潰してから対応する。`review` が失敗した PR は `merge` も armed されない (approve が要るリポジトリでどのみちマージできないため)
 - ユーザーが report を見終えずに crit を終えた場合は `crit ended before the review was finished` で exit 1 する。この場合は state が出ず、何も投稿されない。起動し直す
@@ -295,7 +295,7 @@ release-please 側の `changelog-sections` / `release-as` を直すべきケー�
 
 ### 直接マージの場合
 
-**マージ操作は残っていない。** Step 5 で auto-merge が armed 済みで、必要な checks が満たされた瞬間に GitHub がマージする。`gh pr merge` を自分で叩かない (runok が deny する)。
+**マージ操作は残っていない。** Step 5 で auto-merge が armed 済みで、必要な checks が満たされた瞬間に GitHub がマージする。承認時点で既に全 checks が green だった PR は、GitHub が auto-merge の armed を拒否するため Step 5 でそのままマージされている。`gh pr merge` を自分で叩かない (runok が deny する)。
 
 やることは着地の確認だけ:
 
