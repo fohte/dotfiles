@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+# Ask Renovate to run again, or to rebase specific PRs, on the current repo.
+#
+# Usage:
+#   renovate-trigger run [--no-wait] [--timeout <sec>]
+#   renovate-trigger rebase <pr>... [--no-wait] [--timeout <sec>]
+#
+# Both hosting styles work without a flag. The Dependency Dashboard issue author
+# tells them apart: the Mend-hosted GitHub App opens it as `renovate[bot]`, while
+# a self-hosted run in GitHub Actions opens it as the repo's own bot. The App
+# polls the repo, so ticking a checkbox is enough; a self-hosted run only happens
+# on schedule, so the workflow is dispatched as well.
+#
+# Renovate clears the checkbox it has processed, so waiting means polling until
+# it is unchecked again. `run` on a self-hosted repo has no checkbox to watch and
+# returns as soon as the workflow is dispatched.
+
+set -euo pipefail
+
+POLL_INTERVAL=10
+# Under the 10 min ceiling of unattended callers, so waiting ends with the
+# timeout message instead of being killed.
+TIMEOUT=540
+WAIT=true
+PRS=()
+
+usage() {
+  sed -n '3,7p' "$0" | sed 's/^# \?//'
+}
+
+cmd="${1:-}"
+shift || true
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --no-wait)
+      WAIT=false
+      shift
+      ;;
+    --timeout)
+      TIMEOUT="$2"
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    [0-9]* | '#'[0-9]*)
+      PRS+=("${1#\#}")
+      shift
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+case "$cmd" in
+  run | rebase) ;;
+  *)
+    usage >&2
+    exit 1
+    ;;
+esac
+
+issue_body() {
+  gh api "repos/{owner}/{repo}/issues/$1" --jq .body
+}
+
+tick() {
+  local n="$1" marker="$2" body
+  body=$(issue_body "$n")
+
+  if [[ "$body" == *"[x] <!-- $marker -->"* ]]; then
+    echo "#$n: already checked"
+    return 0
+  fi
+
+  if [[ "$body" != *"[ ] <!-- $marker -->"* ]]; then
+    echo "#$n: no '$marker' checkbox in the body" >&2
+    return 1
+  fi
+
+  jq -n --arg b "${body/\[ \] <!-- $marker -->/[x] <!-- $marker -->}" '{body: $b}' |
+    gh api -X PATCH "repos/{owner}/{repo}/issues/$n" --input - --silent
+  echo "#$n: checked '$marker'"
+}
+
+wait_unchecked() {
+  local n="$1" marker="$2" deadline=$((SECONDS + TIMEOUT)) body
+  while true; do
+    # Fetched into a variable rather than inline in the loop condition, where a
+    # failing `gh api` would be exempt from errexit and read as "unchecked".
+    body=$(issue_body "$n")
+    [[ "$body" == *"[x] <!-- $marker -->"* ]] || break
+    if ((SECONDS >= deadline)); then
+      echo "#$n: still checked after ${TIMEOUT}s" >&2
+      return 1
+    fi
+    sleep "$POLL_INTERVAL"
+  done
+  echo "#$n: picked up by Renovate"
+}
+
+dispatch_workflow() {
+  local wf
+  # A repo often also has a renovate config validation workflow, so prefer the
+  # conventional `renovate.yml` before falling back to any name containing it.
+  wf=$(gh workflow list --json path --jq '
+    ([.[].path | select(test("/renovate\\.ya?ml$"))][0])
+    // ([.[].path | select(test("renovate"; "i"))][0])
+    // ""')
+  if [[ -z "$wf" ]]; then
+    echo "self-hosted Renovate, but no workflow matching 'renovate' in this repo" >&2
+    return 1
+  fi
+  gh workflow run "$wf"
+  echo "dispatched $wf"
+}
+
+dashboard=$(
+  gh issue list --state open --search 'Dependency Dashboard in:title' \
+    --json number,author --jq '.[0] // ""'
+)
+if [[ -z "$dashboard" ]]; then
+  echo "no open Dependency Dashboard issue (disabled, or renamed via dependencyDashboardTitle)" >&2
+  exit 1
+fi
+
+dashboard_number=$(jq -r .number <<< "$dashboard")
+dashboard_author=$(jq -r .author.login <<< "$dashboard")
+
+# `gh issue list` reports the App as "app/renovate"; other endpoints as "renovate[bot]".
+hosted_app=false
+[[ "$dashboard_author" == "app/renovate" || "$dashboard_author" == "renovate[bot]" ]] && hosted_app=true
+
+case "$cmd" in
+  run)
+    if [[ ${#PRS[@]} -gt 0 ]]; then
+      echo "run takes no PR numbers" >&2
+      exit 1
+    fi
+    if "$hosted_app"; then
+      tick "$dashboard_number" 'manual job'
+      "$WAIT" && wait_unchecked "$dashboard_number" 'manual job'
+    else
+      dispatch_workflow
+    fi
+    ;;
+
+  rebase)
+    if [[ ${#PRS[@]} -eq 0 ]]; then
+      echo "rebase needs at least one PR number" >&2
+      usage >&2
+      exit 1
+    fi
+    for pr in "${PRS[@]}"; do
+      tick "$pr" rebase-check
+    done
+    "$hosted_app" || dispatch_workflow
+    if "$WAIT"; then
+      for pr in "${PRS[@]}"; do
+        wait_unchecked "$pr" rebase-check
+      done
+    fi
+    ;;
+esac

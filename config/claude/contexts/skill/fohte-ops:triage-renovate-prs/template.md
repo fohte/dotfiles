@@ -311,9 +311,22 @@ gh pr view <number> --json state,mergedAt,mergeable,mergeStateStatus
 **禁止事項** (やりがちな雑な対応):
 
 - `@renovatebot rebase` メンションコメントを付ける (Renovate が反応する保証がない上、自動リベースが既に進行中なら無駄)
-- PR body の `<!-- rebase-check -->` チェックボックスを手動でチェックする
+- PR body の `<!-- rebase-check -->` チェックボックスを手動で編集する (後述の `renovate-trigger rebase` を使う)
 - `git rebase` してローカルから force push する (Renovate との関連が壊れる)
 - `--admin` フラグでマージを強行する
+
+### Renovate を能動的に動かす
+
+待っても Renovate が動かないとき (self-hosted はスケジュール実行なので次回まで何も起きない、config を変更した直後など) だけ使う:
+
+```bash
+renovate-trigger run             # Renovate に再実行を要求する
+renovate-trigger rebase <pr>...  # 指定 PR のリベース/リトライを要求する
+```
+
+GitHub App 版と GitHub Actions 版のどちらかは自動判定されるので指定不要。
+`rebase` と GitHub App 版の `run` は、Renovate が要求を拾う (チェックボックスが外れる) まで待つ。
+GitHub Actions 版の `run` は workflow を dispatch した時点で終了する。
 
 ### 委任の場合 (コード修正が必要 / 複数 PR の統合)
 
