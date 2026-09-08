@@ -1,17 +1,43 @@
 #!/bin/bash
-# Guard for the TaskStop tool ("Stop Task"): deny it while a human-in-the-loop
-# review is open. TaskStop is "Permission Required: No", so permissions.deny
-# does not apply to it and a PreToolUse hook is the only layer that can block
-# it. Stopping mid-review strands the reviewer: the detached editor survives,
-# but the process waiting for its result is gone.
+# Guard for the TaskStop tool ("Stop Task"): deny it while this session is
+# waiting for a human-in-the-loop review. TaskStop is "Permission Required:
+# No", so permissions.deny does not apply to it and a PreToolUse hook is the
+# only layer that can block it. Stopping the wait strands the reviewer: the
+# editor survives, but nothing is left holding the .done FIFO, so the review
+# the user finishes is discarded instead of coming back.
 #
-# tool_input carries an opaque task_id only, so the stopped command cannot be
-# identified; a live review-complete process stands in for "an editor is open
-# and a human is being waited on". The check is machine-wide, so a review open
-# in another session blocks TaskStop here too.
-#
+# tool_input carries an opaque task_id only, so the process being stopped
+# cannot be identified; a review command running under this session stands in
+# for it. Only the waiting side is a descendant of the session -- the
+# review-complete half runs under the detached terminal -- so the ancestry walk
+# also keeps a review opened by a parallel session from blocking TaskStop here.
+
 # `pgrep -f` matches anywhere in argv, hence the anchor to the command name:
 # any agent quoting this file carries the bare words in its own arguments.
-pgrep -f '^[^ ]*a (ai|gh) .*(review-complete|draft --complete)' > /dev/null || exit 0
+waiters=$(pgrep -f '^[^ ]*a (ai pr-draft review|gh issue-agent review|ai draft)( |$)')
+[ -n "$waiters" ] || exit 0
 
-jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "A human-in-the-loop review is open and waiting on the user. Stopping now kills the side waiting for the review result while the editor stays up, so the review is completed by the user and then silently discarded. Wait for it to finish."}}'
+ancestors() {
+  local pid=$1
+  while [ -n "$pid" ] && [ "$pid" -gt 1 ]; do
+    echo "$pid"
+    pid=$(ps -o ppid= -p "$pid" | tr -d ' ')
+  done
+}
+
+for pid in $(ancestors $$); do
+  # comm is the full path when claude was not started off PATH.
+  comm=$(ps -o comm= -p "$pid")
+  if [ "${comm##*/}" = claude ]; then
+    session=$pid
+    break
+  fi
+done
+[ -n "${session:-}" ] || exit 0
+
+for pid in $waiters; do
+  if ancestors "$pid" | grep -qx "$session"; then
+    jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "A human-in-the-loop review started by this session is open and waiting on the user. Stopping now kills the side waiting for the review result while the editor stays up, so the review is completed by the user and then silently discarded. Wait for it to finish."}}'
+    exit 0
+  fi
+done
