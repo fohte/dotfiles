@@ -35,9 +35,7 @@ local env(name) = std.extVar(name);
   disableAgentView: true,
 
   // Artifacts publish work product to claude.ai, which no local workflow here
-  // depends on; crit preview covers viewing generated HTML locally. Disabling
-  // rather than denying: a deny rule blocks the call but keeps the (large)
-  // tool definition in every request.
+  // depends on; crit preview covers viewing generated HTML locally.
   disableArtifact: true,
 
   // `off` removes the SendFeedback tool entirely, so no draft is ever queued.
@@ -163,6 +161,11 @@ local env(name) = std.extVar(name);
       'CronCreate',
       'CronDelete',
       'CronList',
+
+      // Omits paused sessions, so a related session silently drops out of the
+      // list and SendMessage gets aimed at whichever one looks closest.
+      // `a cc peer list` returns paused sessions too.
+      'ListAgents',
 
       // Both are busy-wait polling, which is fragile and wastes time.
       // TaskOutput is additionally marked deprecated in its own tool

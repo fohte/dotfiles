@@ -35,6 +35,7 @@
 - 一時ファイル: `/tmp` 下に置く。固定名は並列セッションが同じパスを共有して互いに上書きするので、`mktemp /tmp/<name>.XXXXXX` で採番する (skill が `/tmp/foo.json` のような固定パス例を示していても同様。`mktemp` 単体や `-t` は `$TMPDIR` に作るため `/tmp` 外に出る)
 - ローカルファイル (HTML など) をブラウザで確認させたい場合: `open` ではなく `crit preview <file>` を使う
 - search: コードの構造 (定義の場所、呼び出し元/呼び出し先、影響範囲) を知りたいときは先に codebase-memory MCP (`search_graph` / `trace_path` / `get_code_snippet`) を使う。文字列そのものを探すときは `rg` (`find`/`grep` より優先)。never search `~` (too heavy)
+- 他の Claude Code セッションを探すとき: `a cc peer list` (`parent` / `children` は絞り込み版)。出力の `name` をそのまま `SendMessage` の `to` に渡す。`name` が `null` なら停止中なので、用件が確定しているときだけ `a cc peer wake <session_id>` で起こす
 - json: use `jq`, not `python3 -c 'import json'`
 - coreutils: use `gsed` / `gdate` / `gstat` (GNU) instead of BSD tools
 - `rtk`: a PreToolUse hook auto-rewrites commands to `rtk <cmd>` to save tokens. Use `rtk proxy <cmd>` only when truncation hurts.
