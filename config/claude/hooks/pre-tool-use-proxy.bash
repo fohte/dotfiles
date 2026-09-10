@@ -21,6 +21,11 @@ tool_name=$(echo "$input" | jq -r .tool_name)
 
 case "$tool_name" in
   Edit | Write | MultiEdit)
+    deny=$(~/.claude/hooks/ponytail-comment-guard <<< "$input")
+    if [ -n "$deny" ]; then
+      echo "$deny"
+      exit 0
+    fi
     exec ~/.claude/hooks/default-branch-edit-guard <<< "$input"
     ;;
   EnterWorktree)

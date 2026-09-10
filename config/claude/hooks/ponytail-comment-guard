@@ -1,0 +1,27 @@
+#!/bin/bash
+# Block Edit/Write/MultiEdit that introduce a `ponytail:` marker comment.
+# Invoked from pre-tool-use-proxy.bash; PreToolUse JSON on stdin, deny JSON out.
+input=$(cat)
+
+file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
+
+# A guard cannot name the pattern it forbids without matching itself.
+case "$(basename -- "$file_path")" in
+  ponytail-comment-guard) exit 0 ;;
+esac
+
+# old_string is left out so removing an existing marker stays possible.
+added=$(echo "$input" | jq -r '
+  [.tool_input.content?, .tool_input.new_string?, (.tool_input.edits[]?.new_string)?]
+  | map(select(type == "string")) | .[]
+')
+
+echo "$added" | grep -qEi '(#|//|--|;|\*|<!--)[[:space:]]*ponytail:' || exit 0
+
+jq -nc '{
+  hookSpecificOutput: {
+    hookEventName: "PreToolUse",
+    permissionDecision: "deny",
+    permissionDecisionReason: "Writing a `ponytail:` marker comment is blocked. Such a comment states why a shortcut was taken and what would replace it later, which the comment rules in ~/.claude/CLAUDE.md keep out of source. Drop the comment and retry; if the shortcut is worth recording, it belongs in the commit message or PR description."
+  }
+}'
