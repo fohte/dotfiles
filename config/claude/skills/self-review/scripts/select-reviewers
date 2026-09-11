@@ -51,6 +51,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 skill_dir=$(cd "$script_dir/.." && pwd -P)
 claude_dir=$(cd "$skill_dir/../.." && pwd -P)
 reviewers_file="$skill_dir/reviewers.yaml"
+repo_root=$(git rev-parse --show-toplevel)
 
 work_dir=$(mktemp -d -t self-review-select.XXXXXX)
 trap 'rm -rf "$work_dir"' EXIT
@@ -185,4 +186,4 @@ while IFS= read -r reviewer; do
 done < <(yq -r '.reviewers | to_entries[] | .key' "$reviewers_file")
 
 agents_json=$(yq -o=json '.agents // {}' "$reviewers_file")
-jq -s --arg range "$resolved_range" --argjson agents "$agents_json" '{range: $range, agents: $agents, reviewers: .}' "$manifest"
+jq -s --arg range "$resolved_range" --arg repo_root "$repo_root" --argjson agents "$agents_json" '{range: $range, repo_root: $repo_root, agents: $agents, reviewers: .}' "$manifest"

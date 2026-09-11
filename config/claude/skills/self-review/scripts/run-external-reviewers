@@ -62,6 +62,13 @@ trap 'rm -rf "$work_dir"' EXIT
 resolved_range=$(jq -r '.range' "$manifest_file")
 diff_args=("$resolved_range")
 
+manifest_repo_root=$(jq -r '.repo_root // empty' "$manifest_file")
+[[ "$manifest_repo_root" == "$repo_root" ]] || {
+  echo "Error: manifest belongs to another repository: ${manifest_repo_root:-<missing>} (current: $repo_root)" >&2
+  echo "Re-run select-reviewers for this repository and pass its manifest path." >&2
+  exit 2
+}
+
 # The caller passes in the manifest it already resolved via select-reviewers,
 # instead of this script invoking select-reviewers again: a second,
 # independent resolution could see a different staged snapshot or a Codex
