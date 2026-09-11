@@ -101,6 +101,8 @@ hs.hotkey.bind({ 'alt' }, '2', launchFocusOrCycle('/Applications/Arc.app'))
 
 hs.hotkey.bind({ 'alt' }, '3', launchFocusOrCycle('/Applications/Slack.app'))
 
+hs.hotkey.bind({ 'alt' }, '4', launchFocusOrCycle(os.getenv('HOME') .. '/Applications/Chrome Apps.localized/tq.app'))
+
 hs.hotkey.bind({ 'alt' }, '5', launchFocusOrCycle('/Applications/Claude.app'))
 
 hs.hotkey.bind({ 'alt' }, 'o', launchFocusOrCycle('/Applications/Obsidian.app'))
