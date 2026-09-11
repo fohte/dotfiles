@@ -1,24 +1,24 @@
 ---
 name: delegate-claude
-description: Delegate tasks to a separate Claude Code instance in its own git worktree. Use this skill when the user says "delegate", "/delegate-claude", asks to run a task in parallel in another worktree, wants to spawn a child Claude session, or needs to offload implementation work to an independent Claude Code instance. Also trigger when the user wants to start work on a different repository without leaving the current session, or when breaking down a large task into parallel sub-tasks each handled by separate Claude instances. Also use when a session needs to contact the session that delegated to it, or one it delegated to.
+description: Delegate tasks to a separate Claude Code instance, either in its own git worktree or directly on the default branch for repositories configured that way. Use this skill when the user says "delegate", "/delegate-claude", asks to run a task in parallel in another worktree, wants to spawn a child Claude session, or needs to offload implementation work to an independent Claude Code instance. Also trigger when the user wants to start work on a different repository without leaving the current session, or when breaking down a large task into parallel sub-tasks each handled by separate Claude instances. Also use when a session needs to contact the session that delegated to it, or one it delegated to. This skill also covers repositories that are worked on directly on the default branch without a worktree or a PR — the mode is resolved from armyknife config, so delegate to those repositories with this skill too.
 ---
 
 # 別の Claude Code インスタンスにタスクを委任する
 
-`a cc new --worktree --prompt` を使って、別の worktree で別の Claude Code インスタンスに処理を委任する。
+`a cc new --prompt` を使って、別の Claude Code インスタンスに処理を委任する。委任先が worktree を作るリポジトリか、default branch で直接作業するリポジトリかで起動の仕方が変わる (後述の「使い方」)。
 
 ## 最優先ルール
 
 - **ユーザーが明示的に delegate を指示した場合は、必ず delegate する**: タスクの規模・複雑さ・難易度に関わらず、ユーザーが `/delegate-claude` や「delegate して」と指示した場合は、自分の判断で「delegate 不要」と判断してはならない。ユーザーには delegate する意図がある。理由を推測せず、指示に従うこと
 - **delegate 不要と判断して自分で作業を始めることは禁止**: このスキルが発動した時点で、タスクの実行方法は delegate に確定している。「これは簡単だから自分でやろう」「PR 不要だから delegate しなくてよい」といった判断は一切してはならない
 - **委任できるのは実装作業だけ**: 何を作るか / 何をどう直すかが確定したタスクのみを委任する。設計が未決のタスク、原因が未特定のバグ、方針を決めるための調査を丸投げしてはならない。確定させるのは委任元の責任 (後述の「委任前に確定させること」)。設計や原因が未確定であることは委任を取りやめる理由にはならない。確定作業を先に済ませてから委任すること
-- **1 委任 = 1 PR の原則**: 1 回の `a cc new` で委任するタスクは 1 PR 分の作業に限定すること。「複数フェーズを一括で」「複数 PR を順次作成」のような複数 PR をまとめた委任は禁止。委任先は単一の Claude Code プロセスで作業するため、複数 PR を順に作る前提では設計しない。委任先がさらに `/delegate-claude` で再委任することも想定しない。大きな計画やフェーズ分割されたタスクの場合は、委任元 (現在のセッション) が split-into-prs skill で 1 PR 単位に分割し、最初の 1 PR だけを委任する。後続の PR は前の PR が merge / 確認された後に、改めて委任元から別途委任する
+- **1 委任 = 1 PR の原則**: 1 回の `a cc new` で委任するタスクは 1 PR 分の作業に限定すること。「複数フェーズを一括で」「複数 PR を順次作成」のような複数 PR をまとめた委任は禁止。委任先は単一の Claude Code プロセスで作業するため、複数 PR を順に作る前提では設計しない。委任先がさらに `/delegate-claude` で再委任することも想定しない。大きな計画やフェーズ分割されたタスクの場合は、委任元 (現在のセッション) が split-into-prs skill で 1 PR 単位に分割し、最初の 1 PR だけを委任する。後続の PR は前の PR が merge / 確認された後に、改めて委任元から別途委任する。PR が出ない direct-commit モード (後述) では、この原則を「1 委任 = push される 1 まとまりの変更」と読み替える
 
 ## 絶対禁止事項
 
 - **ユーザーが指定したリポジトリを勝手に変更しない**: ユーザーが委任先リポジトリを明示した場合、自分の判断で別のリポジトリに変更してはならない。ユーザーはどのリポジトリで修正すべきかを把握している。「こっちのリポジトリの方が適切では」と思っても、ユーザーの指定に従うこと
 - **自分で実装作業をしない**: このスキルが発動したら、ファイル編集・コード変更を自分で行ってはならない。仕事は委任内容を確定させることと、プロンプトを構成して `a cc new` コマンドを実行すること。読み取りのみの調査 (設計・原因の確定) はこの禁止に含まれない
-- **委任前にファイルを編集しない**: 「先に少し直してから委任しよう」は禁止。未コミットの変更がある状態で worktree を作ると、委任先にその変更が反映されない
+- **委任前にファイルを編集しない**: 「先に少し直してから委任しよう」は禁止。未コミットの変更がある状態で worktree を作ると、委任先にその変更が反映されない。作業ツリーを共有する direct-commit モード (後述) では逆に、その変更が委任先のコミットに巻き込まれる
 - **SendMessage を進捗確認や催促に使わない**: 委任先は別プロセスだが同じマシン上の Claude Code セッションなので、SendMessage が届く。届くからといって、状況を尋ねる、急かす、作業中に細かく口を出すといった用途に使ってはならない。委任先は対話しながら進める相手ではない。送ってよいのは次の 2 つだけで、いずれも手順は後述の「委任元から委任先に連絡する場合」に従う
 
     - 委任元が渡した前提が誤っていた場合の訂正
@@ -43,10 +43,19 @@ description: Delegate tasks to a separate Claude Code instance in its own git wo
 
 ## 使い方
 
+最初に委任先リポジトリのパスを決め、そのリポジトリが default branch で直接作業する運用かを判定する。
+
+```bash
+repo=$(git root -r)  # 別のリポジトリに委任する場合はそのリポジトリのパス
+direct=$(cd "$repo" && a config get repo.direct_commit)
+```
+
+`direct` が `true` なら後述の「direct-commit モード」で、worktree もブランチも作らない。判定は armyknife の `repos.<owner>/<repo>.direct_commit` が唯一の根拠で、リポジトリの印象や過去の経験で上書きしない。
+
 ```bash
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成 (スキーマは後述の「プロンプト構造 (必須)」参照)
-prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
+prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID="<この委任作業が属する tq タスクの ID。無ければ変数ごと省略>" \
   a cc new --worktree=<branch-name> --agent --label "<title>" --prompt "$prompt"
@@ -62,6 +71,7 @@ DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
     - 悪い例: "バグ修正", "機能実装" (何の? がわからない)
 - `task.yaml`: Write ツールで `$dir` 配下に書く構造化データ。委任先へのプロンプトの元データであり、スキーマは後述の「プロンプト構造 (必須)」を参照。**必ず `mktemp -d` で作った一意なディレクトリ配下に置く** (固定パスは並行セッションと衝突する)
 - `render-task`: `task.yaml` を `--prompt` 用の markdown に変換するスクリプト。`purpose`/`goal` が空だとエラーで停止する
+- `DELEGATE_DIRECT_COMMIT`: 上で求めた `direct` をそのまま渡す環境変数。`render-task` が末尾の締めくくりを「PR を作成するまで」と「commit して push するまで」で切り替える
 - `--prompt`: `render-task` の出力をそのまま渡す
 - `DELEGATE_TASK_PURPOSE`: `task.yaml` の `purpose` をそのまま渡す環境変数。委任先 worktree の post-worktree-create hook がこれを読み `branch.<name>.x-purpose` に書き込み、`create-pr` skill が PR の Why セクション生成時に参照する
 - `DELEGATE_TQ_TASK_ID`: この委任作業が属する tq タスクの ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-task-id` に書き込み、委任先の `create-pr` skill が立てた PR のリンク先に使う。委任先は自分のタスクを作らないため、渡さないと委任先が出した PR がどのタスクにも載らない。**委任元が tq タスクを持っているなら必ず渡す**
@@ -137,12 +147,39 @@ DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
 2. Neovim と Claude Code を含む新しい tmux ウィンドウを開く
 3. Claude Code にプロンプトを自動送信
 
+## direct-commit モード
+
+`repo.direct_commit` が `true` のリポジトリは default branch で直接作業して push する運用なので、worktree もブランチも作らず、そのリポジトリの作業ツリーでセッションを起動する。委任の中身 (task.yaml の書き方、委任前に確定させること、連絡手順) は通常の委任と変わらない。
+
+```bash
+dir=$(mktemp -d /tmp/delegate.XXXXXX)
+# Write ツールで $dir/task.yaml を作成
+prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
+a cc new -R "$repo" --agent --label "<title>" --prompt "$prompt"
+```
+
+- `--worktree` を付けない。worktree 前提のオプション (`--from`、`--force`、`--skip-hooks`) も使えない
+- `-R "$repo"` は委任先が現在のリポジトリでも付ける。worktree 内やサブディレクトリから起動していても、リポジトリ root で作業させられる
+- `DELEGATE_DIRECT_COMMIT=true` を落とすと、プロンプト末尾が「PR を作成するまで」のままになり、委任先が default branch から PR を作ろうとする
+- `DELEGATE_TASK_PURPOSE` / `DELEGATE_TQ_TASK_ID` は渡さない。どちらも worktree 作成時の hook が git config へ書いて初めて効くもので、worktree を作らない以上どこにも記録されない
+
+### 委任前に確認すること
+
+- **対象リポジトリの作業ツリーが clean であること**: `git -C "$repo" status --porcelain` が空であることを確認する。作業ツリーが分離されないため、未コミットの変更は委任先から見え、委任先のコミットに巻き込まれる。dirty なら委任元が先にコミットしてから委任する。stash で隠すのは委任先が作業している間に戻せないので不可
+- **同じリポジトリへの direct-commit 委任を並行させない**: 作業ツリーが 1 つしかないので、2 つのセッションが同じファイルを同時に編集することになる。次の委任は前の委任が push を終えてから出す
+- **委任元もその作業ツリーを触らない**: 委任中に委任元がファイルを編集すれば同じ衝突が起きる
+
+### PR が出ないことの影響
+
+- 成果物は push 済みのコミットで、ユーザーによる diff レビュー (create-pr skill の crit) は挟まらない。`/commit` skill の push 手順に含まれる self-review はそのまま効く
+- 委任元が tq タスクを持っていても、PR 経由でタスクにリンクされない。成果をタスクに残すのは委任元の役目になるが、そのために完了を確認しに行かない (「委任後に完了をポーリングしない」)。ユーザーから完了を聞いたときなど、次に tq を触る節目でコミットを記録する
+
 ## 委任時の注意事項
 
 - **既存ブランチで作業する場合**: 既存のリモートブランチ (例: follow-up PR のブランチ) にそのまま commit したい場合は、ブランチ名をそのまま `<branch-name>` に指定する
     - 例: `a cc new --worktree=follow-up-123-terraform/foo --agent --label "..." --prompt "..."`
 - **ブランチ名**: 新規ブランチを作る場合、ブランチ名に `/` を含めないこと。代わりにハイフンを使う (例: `fix/login-bug` ではなく `fix-login-bug`)。ブランチには `fohte/` がプレフィックスとして付くため、`fix/...` だと `fohte/fix/...` になり冗長
-- 新しいインスタンスは独立した worktree で作業するため、現在の作業と競合しない
+- 新しいインスタンスは独立した worktree で作業するため、現在の作業と競合しない。作業ツリーを共有する direct-commit モードには当てはまらず、前掲の「委任前に確認すること」に従う
 
 ### `--from` の判断ルール (重要)
 
@@ -213,7 +250,7 @@ additionalContext: | # 任意: 上記に当てはまらない文脈の catch-all
 - **`goal` はゴールだけ伝え、手順は指示しない**: 「何を達成してほしいか」を書き、「どうやるか」は委任先に任せる。具体的な実装ステップや中間手順を書かない
 - **`goal` に調査・設計を含めない**: 「原因を調査して直す」「方法を検討して実装する」は委任できる状態に達していないサイン (前述の「委任前に確定させること」)
 - **成果物の中身まで指示しない**: 特に commit message や PR description に何を書くかを `goal` に書かないこと。委任先は `/commit` や `/create-pr` skill に従って書き方を判断する。「PR description に〇〇を書くこと」「△△を注記すること」と書くと、委任先は skill のルールより委任元の指示を優先してしまい、skill で禁止されている内容 (検討経緯、動作確認手順など) が PR description に混入する。伝えるべきはタスクの `goal` だけであり、「ゴールに付随する情報をどう記録するか」は委任先の skill に任せる
-- **commit/PR 作成の完了条件は task.yaml に書かない**: 「`/commit` skill で commit し、`/create-pr` skill で PR を作成するところまで完了させること。」は `render-task` が markdown の末尾に常に付与する固定文であり、task.yaml 側に書く・省略する・変更するという判断は発生しない。「commit 不要」「PR 不要」のような独自判断を `goal` に書き加えることも禁止
+- **commit/PR 作成の完了条件は task.yaml に書かない**: 締めくくりの「`/commit` skill で commit し、`/create-pr` skill で PR を作成するところまで完了させること。」(direct-commit モードでは「`/commit` skill で commit し、push するところまで完了させること。PR は作成しない。」) は `render-task` が markdown の末尾に常に付与する固定文であり、task.yaml 側に書く・省略する・変更するという判断は発生しない。「commit 不要」「PR 不要」のような独自判断を `goal` に書き加えることも禁止
 - **根拠を含める**: `investigated` に書く調査結果や判断には、その根拠 (ログ、コード箇所、エラーメッセージ、ドキュメント URL など) を添える
 - **伝聞を検証済みの事実として書かない**: `investigated` に書いてよいのは自分で確かめた事実に限る。コード中のコメント、Issue や PR の本文、過去の調査メモなど既存の記述を根拠に使う場合は、裏を取ってから書くか、取れていないなら「〜と書かれているが未検証」と出所と検証状況を明示する。委任先はそこに書かれたことを前提として実装し、誤った前提はコード中のコメントや PR description として成果物に定着してしまう。既存の記述が誤診であることは珍しくなく、特に「直せない」「〜が原因」と断定している記述ほど検証する価値が高い
 - **`links` に URL を貼る**: Issue / PR / ドキュメントなど、参考にしたものは URL を `links` に列挙する。特に親 Issue や関連 PR は必須

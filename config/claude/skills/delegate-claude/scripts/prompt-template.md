@@ -33,5 +33,8 @@
 ## ゴール
 
 {{ strings.TrimSpace $task.goal }}
-
+{{ if eq (getenv "DELEGATE_DIRECT_COMMIT" "false") "true" }}
+`/commit` skill で commit し、push するところまで完了させること。PR は作成しない。
+{{- else }}
 `/commit` skill で commit し、`/create-pr` skill で PR を作成するところまで完了させること。
+{{- end }}
