@@ -42,6 +42,26 @@ hs.urlevent.bind('tq-focus', function(_, params)
   hs.application.launchOrFocus('/Applications/Ghostty.app')
 end)
 
+-- tq opens hammerspoon://tq-resume?sessionId=<id> to resume a paused Claude
+-- Code session's tmux pane and jump to it
+hs.urlevent.bind('tq-resume', function(_, params)
+  local sessionId = params.sessionId
+  if not sessionId or not sessionId:match(UUID_PATTERN) then
+    print(string.format('tq-resume: rejected sessionId %q', tostring(sessionId)))
+    return
+  end
+
+  local aBin = os.getenv('HOME') .. '/.cargo/bin/a'
+  -- `peer wake` exits non-zero when the session is not paused; `silent`
+  -- only suppresses the notify_error popup for that expected case
+  local wake = lib:run_command(aBin .. ' cc peer wake ' .. sessionId, { shell = true, silent = true })
+  if not wake.success then
+    print(string.format('tq-resume: peer wake %s: %s', sessionId, wake.output))
+  end
+  lib:run_command(aBin .. ' cc focus ' .. sessionId, { shell = true })
+  hs.application.launchOrFocus('/Applications/Ghostty.app')
+end)
+
 ------------------------------
 --- Applications
 ------------------------------
