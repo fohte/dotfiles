@@ -9,6 +9,40 @@ if not hs.ipc.cliStatus(cliPrefix) then
 end
 
 ------------------------------
+--- URL Handlers
+------------------------------
+local lib = require('lib')
+
+-- hammerspoon:// is reachable from any web page, so sessionId must look like
+-- a UUID before it reaches the shell
+local UUID_PATTERN = '^'
+  .. ('%x'):rep(8)
+  .. '%-'
+  .. ('%x'):rep(4)
+  .. '%-'
+  .. ('%x'):rep(4)
+  .. '%-'
+  .. ('%x'):rep(4)
+  .. '%-'
+  .. ('%x'):rep(12)
+  .. '$'
+
+-- tq (https://tq.fohte.net) opens hammerspoon://tq-focus?sessionId=<id> to
+-- jump to a Claude Code session's tmux pane
+hs.urlevent.bind('tq-focus', function(_, params)
+  local sessionId = params.sessionId
+  if not sessionId or not sessionId:match(UUID_PATTERN) then
+    print(string.format('tq-focus: rejected sessionId %q', tostring(sessionId)))
+    return
+  end
+
+  -- shell = true: `a cc focus` shells out to `tmux`, which only resolves
+  -- via PATH from the user's shell profile
+  lib:run_command(os.getenv('HOME') .. '/.cargo/bin/a cc focus ' .. sessionId, { shell = true })
+  hs.application.launchOrFocus('/Applications/Ghostty.app')
+end)
+
+------------------------------
 --- Applications
 ------------------------------
 local function launchFocusOrCycle(path)
