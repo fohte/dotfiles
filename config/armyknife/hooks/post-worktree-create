@@ -28,7 +28,7 @@ if [[ -n "${DELEGATE_TASK_PURPOSE:-}" ]]; then
     "$DELEGATE_TASK_PURPOSE" || true
 fi
 
-# Read by the delegate's track-in-tq skill as the parent of the task it creates.
+# Read by the delegate's create-pr skill to link its PR to the delegating session's task.
 if [[ -n "${DELEGATE_TQ_TASK_ID:-}" ]]; then
   git -C "$ARMYKNIFE_WORKTREE_PATH" config \
     "branch.${ARMYKNIFE_BRANCH_NAME:-}.x-tq-task-id" \

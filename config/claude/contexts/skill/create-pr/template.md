@@ -258,8 +258,13 @@ title と body に日本語が含まれていないこと。
 複数件リンクされていても、そこに親子関係があるなら子が作業対象なので一意に決まる。
 `tasks[]` の `parentId` が別の linked task の `id` を指していれば親子で、親は捨てて子 (葉) を残す。
 
+リンクが 1 件も無いときは、委任元が `branch.<name>.x-tq-task-id` に残した ID を使う。
+委任先はタスクを作らないので、この作業の記録は委任元のタスクにしかない。
+葉が複数件で一意に決まらないときはこの ID も使わない。
+自分で選び直す前に委任元のタスクへリンクしてしまうと、誤リンクが確定する。
+
 ```bash
-tq_task_id=""
+tq_task_id=$(git config --get "branch.$(git branch --show-current).x-tq-task-id" || true)
 if [ -n "${TQ_SESSION_ID:-}" ]; then
   session_json=$(tq --author <自分のモデル名 (例: claude-opus-5)> session list --session-id "$TQ_SESSION_ID") \
     || echo "tq session list failed" >&2
@@ -270,7 +275,7 @@ if [ -n "${TQ_SESSION_ID:-}" ]; then
     case "$(echo "$leaves" | jq 'length')" in
       0) echo "no tq task linked to this session" >&2 ;;
       1) tq_task_id=$(echo "$leaves" | jq -r '.[0].id') ;;
-      *) echo "pick one yourself: $(echo "$leaves" | jq -r '[.[] | "\(.id) #\(.number) \(.title)"] | join(", ")')" >&2 ;;
+      *) tq_task_id=""; echo "pick one yourself: $(echo "$leaves" | jq -r '[.[] | "\(.id) #\(.number) \(.title)"] | join(", ")')" >&2 ;;
     esac
   fi
 fi
@@ -280,7 +285,7 @@ if [ -n "$tq_task_id" ]; then
 fi
 ```
 
-葉が 0 件 (そもそもリンクが無い) なら何もしない。
+リンクも branch config も無いなら何もしない。
 葉が複数件残る (兄弟タスクが並んでいる) ときは、候補の title と PR の内容を突き合わせて自分で決め、その id で `tq_task_id=<id>` を置いて再実行する。
 ユーザーに聞かない。
 選んだ task と根拠は最後の報告に 1 行で書き、後から誤リンクを見つけられるようにする。
