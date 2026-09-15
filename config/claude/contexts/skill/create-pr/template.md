@@ -254,18 +254,16 @@ title と body に日本語が含まれていないこと。
 
 ## {{ if $repo_specs }}2{{ else }}6{{ end }}. tq タスクへのリンク登録
 
-このセッション (`$TQ_SESSION_ID`) にリンクされている tq タスクから、作成した PR をリンクする先を決める。
+委任元が `branch.<name>.x-tq-task-id` に ID を残していれば、それをリンク先にし、セッション側の結果で上書きしない。
+セッションは複数の作業にまたがり、親タスクにだけリンクされていることがあるので、この branch 専用に書かれた ID の方が正確である。
+
+branch config が無いときは、このセッション (`$TQ_SESSION_ID`) にリンクされている tq タスクから決める。
 複数件リンクされていても、そこに親子関係があるなら子が作業対象なので一意に決まる。
 `tasks[]` の `parentId` が別の linked task の `id` を指していれば親子で、親は捨てて子 (葉) を残す。
 
-リンクが 1 件も無いときは、委任元が `branch.<name>.x-tq-task-id` に残した ID を使う。
-委任先はタスクを作らないので、この作業の記録は委任元のタスクにしかない。
-葉が複数件で一意に決まらないときはこの ID も使わない。
-自分で選び直す前に委任元のタスクへリンクしてしまうと、誤リンクが確定する。
-
 ```bash
 tq_task_id=$(git config --get "branch.$(git branch --show-current).x-tq-task-id" || true)
-if [ -n "${TQ_SESSION_ID:-}" ]; then
+if [ -z "$tq_task_id" ] && [ -n "${TQ_SESSION_ID:-}" ]; then
   session_json=$(tq --author <自分のモデル名 (例: claude-opus-5)> session list --session-id "$TQ_SESSION_ID") \
     || echo "tq session list failed" >&2
   if [ -n "$session_json" ]; then
@@ -275,7 +273,7 @@ if [ -n "${TQ_SESSION_ID:-}" ]; then
     case "$(echo "$leaves" | jq 'length')" in
       0) echo "no tq task linked to this session" >&2 ;;
       1) tq_task_id=$(echo "$leaves" | jq -r '.[0].id') ;;
-      *) tq_task_id=""; echo "pick one yourself: $(echo "$leaves" | jq -r '[.[] | "\(.id) #\(.number) \(.title)"] | join(", ")')" >&2 ;;
+      *) echo "pick one yourself: $(echo "$leaves" | jq -r '[.[] | "\(.id) #\(.number) \(.title)"] | join(", ")')" >&2 ;;
     esac
   fi
 fi
