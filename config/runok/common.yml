@@ -478,12 +478,11 @@ rules:
       - deny: 'until curl -sf https://example.com; do sleep 1; done'
       - allow: 'for i in 1 2 3; do echo $i; done'
 
-  # `cmd & disown` manually detaches a background job. Claude Code's Bash tool
-  # has a run_in_background option for this; disown showing up means that
-  # option was skipped in favor of a shell-level workaround.
+  # `cmd & disown` manually detaches a background job instead of using the
+  # agent's own backgrounding mechanism, so the harness loses track of it.
   - deny: 'disown *'
-    message: 'Manually backgrounding with `&` and `disown` bypasses the Bash tool run_in_background option, so the harness loses track of the job.'
-    fix_suggestion: 'Run the command with run_in_background: true instead of `cmd & disown`.'
+    message: "Manually backgrounding with `&` and `disown` bypasses the agent's own backgrounding mechanism, so the harness loses track of the job."
+    fix_suggestion: 'Claude Code: run the command with run_in_background: true. Codex: run it via exec_command. Either way, drop `& disown`.'
     tests:
       - deny: 'disown'
       - deny: 'disown %1'

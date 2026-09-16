@@ -695,7 +695,7 @@ rules:
       - deny: 'gh issue create --title "foo" --body "bar"'
       - deny: 'gh -R fohte/tq issue edit 123 --body "foo"'
   - deny: 'gh [-R *] pr comment|review *'
-    message: 'Claude Code does not post PR comments or reviews. Report the content to the user instead, or reply to an existing review thread via /check-pr-review.'
+    message: 'The agent does not post PR comments or reviews. Report the content to the user instead, or reply to an existing review thread via /check-pr-review.'
     fix_suggestion: 'a gh pr-review reply pull <pr>, edit the threads file, then a gh pr-review reply push <pr>'
     tests:
       - deny: 'gh pr comment 481 --body-file /tmp/foo.md'
@@ -705,7 +705,7 @@ rules:
       - allow: 'gh pr view 481'
       - allow: 'gh pr diff 481'
   - deny: 'gh [-R *] issue|pr close|reopen * --comment|-c *'
-    message: 'Claude Code does not post PR or issue comments. Close or reopen without --comment.'
+    message: 'The agent does not post PR or issue comments. Close or reopen without --comment.'
     fix_suggestion: 'gh issue close 123'
     tests:
       - deny: 'gh pr close 481 --comment "foo"'
@@ -715,7 +715,7 @@ rules:
       - pass: 'gh issue close 123'
   - deny: 'gh [-R *] api * -X|--method POST|PUT|PATCH|DELETE *'
     when: "args.exists(a, a.contains('comments') || a.contains('/reviews'))"
-    message: 'Claude Code does not create, edit, or delete PR/issue comments and reviews.'
+    message: 'The agent does not create, edit, or delete PR/issue comments and reviews.'
     tests:
       - deny: 'gh api -X POST repos/fohte/tq/issues/481/comments -f body=x'
       - deny: 'gh api repos/fohte/tq/issues/comments/123 -X DELETE'
@@ -740,7 +740,7 @@ rules:
       - deny: 'gh -R fohte/runok pr create --title "foo"'
 
   - deny: 'gh [-R *] pr close|merge *'
-    message: "Merging or closing a PR is the user's decision, not something Claude Code judges on its own."
+    message: "Merging or closing a PR is the user's decision, not something the agent judges on its own."
     fix_suggestion: 'Report the PR and the reason to the user and let them run it.'
     tests:
       - deny: 'gh pr merge'
@@ -748,7 +748,7 @@ rules:
       - deny: 'gh -R fohte/tq pr close 481'
       - allow: 'gh pr view 481'
   - deny: 'gh [-R *] api * -X|--method PUT * repos/*/pulls/*/merge *'
-    message: "Merging a PR is the user's decision, not something Claude Code judges on its own."
+    message: "Merging a PR is the user's decision, not something the agent judges on its own."
     fix_suggestion: 'Report the PR and the reason to the user and let them run it.'
     tests:
       - deny: 'gh api -X PUT repos/fohte/tq/pulls/481/merge'
@@ -760,7 +760,7 @@ rules:
       flag_groups['pr-edit-add-label'].exists(v,
         v == 'vrt-approved' || v.startsWith('vrt-approved,') ||
         v.endsWith(',vrt-approved') || v.contains(',vrt-approved,'))
-    message: '`vrt-approved` means a human visually reviewed the VRT diff and approved it. Claude Code cannot verify a visual diff, so this label must be added by the user.'
+    message: '`vrt-approved` means a human visually reviewed the VRT diff and approved it. The agent cannot verify a visual diff, so this label must be added by the user.'
     fix_suggestion: 'Ask the user to review the VRT report and add the label themselves.'
     tests:
       - deny: 'gh pr edit 25 --add-label vrt-approved'
