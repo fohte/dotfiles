@@ -38,3 +38,5 @@
 {{- else }}
 `/commit` skill で commit し、`/create-pr` skill で PR を作成するところまで完了させること。
 {{- end }}
+
+そこまで終わったら、delegate-claude skill の「委任先から委任元に連絡する場合」に従って委任元に完了を報告すること。
