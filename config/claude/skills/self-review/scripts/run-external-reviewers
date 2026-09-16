@@ -5,12 +5,13 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: run-external-reviewers <manifest-file>" >&2
+  echo "Usage: run-external-reviewers <manifest-file> [reviewer...]" >&2
   exit 2
 }
 
-[ "$#" -eq 1 ] || usage
+[ "$#" -ge 1 ] || usage
 manifest_file="$1"
+shift
 
 [[ -f "$manifest_file" ]] || {
   echo "Error: manifest file not found: $manifest_file" >&2
@@ -99,6 +100,24 @@ done < <(jq -r '.reviewers[].name' "$manifest_file")
 if [ "${#selected[@]}" -eq 0 ]; then
   echo '[]'
   exit 0
+fi
+
+if [ "$#" -gt 0 ]; then
+  for reviewer in "$@"; do
+    case " ${selected[*]} " in
+      *" $reviewer "*) ;;
+      *)
+        echo "Error: reviewer not in manifest: $reviewer" >&2
+        exit 2
+        ;;
+    esac
+  done
+  # A name repeated on the command line would otherwise run that reviewer twice
+  # over one reviewer_dir, and emit its result twice.
+  selected=()
+  while IFS= read -r reviewer; do
+    selected+=("$reviewer")
+  done < <(printf '%s\n' "$@" | LC_ALL=C sort -u)
 fi
 
 # Only ancestor instructions apply to a changed file. Collecting them here
@@ -338,9 +357,9 @@ if [[ "$codex_used" == true ]]; then
 fi
 
 # One reviewer failing must not discard the ones that succeeded: a retry re-runs
-# every reviewer, so anything dropped here is lost for good if the retry fails on
-# a different reviewer. The caller reads which reviewers are missing off the
-# array and treats only those as unevaluated.
+# only the reviewers named on the command line, so anything dropped here is lost
+# for good if that retry fails too. The caller reads which reviewers are missing
+# off the array and treats only those as unevaluated.
 result_files=()
 for reviewer in "${selected[@]}"; do
   result_file="$work_dir/$reviewer/result.json"

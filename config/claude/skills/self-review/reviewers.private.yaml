@@ -2,6 +2,13 @@
 # (via `dot role overlay`). Routes reviewers whose judgment amounts to
 # grading Claude's own prose to a non-Claude model (Antigravity's Gemini),
 # so the judge isn't grading against its own writing style.
+
+agents:
+  # The default high tier spends ~20s per turn on thinking, which puts a
+  # file-reading reviewer past agy's print timeout.
+  agy:
+    model: gemini-3.8-flash-low
+
 reviewers:
   comment:
     agent: agy
