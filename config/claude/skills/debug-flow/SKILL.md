@@ -55,7 +55,7 @@ description: Debug (バグ原因特定→修正モード). Use this skill when f
 
 ### Step 3: 仮説の検証
 
-**複数の仮説は並列で検証する。** Task ツールで複数のサブエージェントを同時に起動し、各仮説を独立に検証する。
+**複数の仮説は並列で検証する。** 複数のサブエージェントを同時に起動し (Claude Code: Task ツール / Codex: `spawn_agent` + `wait_agent`)、各仮説を独立に検証する。
 
 各サブエージェントには以下を指示する:
 
@@ -90,7 +90,7 @@ description: Debug (バグ原因特定→修正モード). Use this skill when f
 
 原因が特定できたら、**ユーザーに確認せず**自動的に修正フェーズに移行する。
 
-**原則: main/master ブランチで直接修正しない。** `/delegate-claude` スキルで修正を委任する。
+**原則: main/master ブランチで直接修正しない。** `/delegate-claude` (Codex: `$delegate-claude`) スキルで修正を委任する。
 
 **直接修正する例外**:
 
@@ -99,7 +99,7 @@ description: Debug (バグ原因特定→修正モード). Use this skill when f
 
 ### 通常 (デフォルト)
 
-`/delegate-claude` スキルで修正を委任する。プロンプトには以下を含めること:
+`/delegate-claude` (Codex: `$delegate-claude`) スキルで修正を委任する。プロンプトには以下を含めること:
 
 - **背景**: 発生している問題と原因
 - **現状**: 原因特定の調査結果
@@ -109,7 +109,7 @@ description: Debug (バグ原因特定→修正モード). Use this skill when f
 
 1. 修正を実装する
 2. テストがあれば実行して修正を検証する
-3. `/commit` スキルでコミットする
+3. `/commit` (Codex: `$commit`) スキルでコミットする
 
 ## 禁止事項 (Phase 1)
 

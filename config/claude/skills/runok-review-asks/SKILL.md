@@ -95,7 +95,12 @@ main がやるのはここまで:
 - 上記 2 種類**以外は全部 sub-agent に回す**。「risk profile は自明」「機械的に ignore で良い」と感じても fast-path に積まない (これが 3a 違反の典型)
 - **fast-path 件数の上限**: 候補総数の 30% 未満を目安。fast-path が多数を占めるなら main で risk 評価を一括している兆候 → 戻ってやり直し
 
-それ以外 (= risk 評価が必要な候補) は **5-10 候補単位の batch** に分け、**`general-purpose` sub-agent を並列で起動**して各 batch を評価させる。並列起動は単一メッセージ内で複数 Agent ツール呼び出しを束ねる。候補総数が 3 件以下のときだけ main 内で処理してよい (overhead が見合わない)。
+それ以外 (= risk 評価が必要な候補) は **5-10 候補単位の batch** に分け、各 batch を評価するサブエージェントを並列で起動する:
+
+- Claude Code: `general-purpose` sub-agent を Agent ツールで並列起動する。並列起動は単一メッセージ内で複数 Agent ツール呼び出しを束ねる
+- Codex: `spawn_agent` を並列に呼び (model は省略して親を継承)、`wait_agent` (最大 1 時間) で各 batch の結果を回収する
+
+候補総数が 3 件以下のときだけ main 内で処理してよい (overhead が見合わない)。
 
 sub-agent prompt には必ず以下を含める (自己完結させる):
 
@@ -278,7 +283,7 @@ tests には最低 1 件、提案を導いた実際のコマンドを入れる�
 
 **wrapper エントリ**: 3d の判断で **preset / dotfiles / repo-local** のいずれかに追加。
 
-- **preset (runok-presets)** に追加するのは README policy を満たす **universal wrapper** のみ。preset PR は別リポジトリ向けなので `/delegate-claude` でデリゲートが定石
+- **preset (runok-presets)** に追加するのは README policy を満たす **universal wrapper** のみ。preset PR は別リポジトリ向けなので `/delegate-claude` (Codex: `$delegate-claude`) でデリゲートが定石
 - **dotfiles** (`config/runok/runok.yml` または `config/runok/{languages,tools}/*.yml`) の `definitions.wrappers` に追加するのは **stack-specific な wrapper** (例: `uvx [--from *] <cmd>` → `languages/python.yml`、`docker exec <c> sh -c <cmd>` → `tools/docker.yml`)
 - **repo-local** (`<repo>/runok.local.yml`) は repo 固有の wrapper のみ。一般的な wrapper はここに置かない
 

@@ -13,7 +13,7 @@ description: Development (実装フルフローモード). Use this skill when i
 2. 設計
 3. 実装を delegate
 
-**原則: main/master ブランチで直接実装しない。** 調査と設計はこのセッションで行い、実装は `/delegate-claude` で別 worktree に委任する。
+**原則: main/master ブランチで直接実装しない。** 調査と設計はこのセッションで行い、実装は `/delegate-claude` (Codex: `$delegate-claude`) で別 worktree に委任する。
 
 **直接実装する例外**:
 
@@ -31,11 +31,11 @@ description: Development (実装フルフローモード). Use this skill when i
 - ディレクトリ構造と命名規則を確認する
 - CLAUDE.md やプロジェクト固有の制約を確認する
 
-複数の観点で調査が必要な場合は、Task ツールで並列にサブエージェントを起動する。
+複数の観点で調査が必要な場合は、並列にサブエージェントを起動する (Claude Code: Task ツール / Codex: `spawn_agent` + `wait_agent`)。
 
 ## Step 2: 設計
 
-`/design` スキルを呼び出し、設計案を検討する。
+`/design` (Codex: `$design`) スキルを呼び出し、設計案を検討する。
 
 **スキップ条件**: 以下の場合はこのステップをスキップしてよい:
 
@@ -47,7 +47,7 @@ description: Development (実装フルフローモード). Use this skill when i
 
 ### 通常 (デフォルト)
 
-**Step 1-2 をこのセッションで完了させた上で**、`/delegate-claude` スキルで実装を委任する。
+**Step 1-2 をこのセッションで完了させた上で**、`/delegate-claude` (Codex: `$delegate-claude`) スキルで実装を委任する。
 
 プロンプトには以下を含めること:
 
@@ -57,7 +57,7 @@ description: Development (実装フルフローモード). Use this skill when i
 
 ### 例外: main で直接作業可能なリポジトリ
 
-このセッション内で実装を行い、完了後に `/commit` スキルでコミットする。
+このセッション内で実装を行い、完了後に `/commit` (Codex: `$commit`) スキルでコミットする。
 
-- テストが存在するプロジェクトでは、`/test-philosophy` スキルの方針に従ってテストも書く
+- テストが存在するプロジェクトでは、`/test-philosophy` (Codex: `$test-philosophy`) スキルの方針に従ってテストも書く
 - 実装中に設計の問題に気づいた場合は、ユーザーに相談する
