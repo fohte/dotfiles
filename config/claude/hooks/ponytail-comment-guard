@@ -1,20 +1,34 @@
 #!/bin/bash
-# Block Edit/Write/MultiEdit that introduce a `ponytail:` marker comment.
+# Block Edit/Write/MultiEdit (Claude Code) and apply_patch (Codex) that
+# introduce a `ponytail:` marker comment.
 # Invoked from pre-tool-use-proxy.bash; PreToolUse JSON on stdin, deny JSON out.
 input=$(cat)
 
-file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
+tool_name=$(echo "$input" | jq -r '.tool_name // empty')
 
-# A guard cannot name the pattern it forbids without matching itself.
-case "$(basename -- "$file_path")" in
-  ponytail-comment-guard) exit 0 ;;
-esac
+if [ "$tool_name" = "apply_patch" ]; then
+  # Codex's patch text marks file sections with `*** ... File:` headers and
+  # `+`-prefixed added lines; skip this guard's own file so it can still
+  # name the pattern it forbids.
+  added=$(echo "$input" | jq -r '.tool_input.command // empty' | awk '
+    /^\*\*\* (Add|Update|Delete) File: / { skip = ($0 ~ /(^|\/)ponytail-comment-guard$/); next }
+    skip { next }
+    /^\+/ { print substr($0, 2) }
+  ')
+else
+  file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
 
-# old_string is left out so removing an existing marker stays possible.
-added=$(echo "$input" | jq -r '
-  [.tool_input.content?, .tool_input.new_string?, (.tool_input.edits[]?.new_string)?]
-  | map(select(type == "string")) | .[]
-')
+  # A guard cannot name the pattern it forbids without matching itself.
+  case "$(basename -- "$file_path")" in
+    ponytail-comment-guard) exit 0 ;;
+  esac
+
+  # old_string is left out so removing an existing marker stays possible.
+  added=$(echo "$input" | jq -r '
+    [.tool_input.content?, .tool_input.new_string?, (.tool_input.edits[]?.new_string)?]
+    | map(select(type == "string")) | .[]
+  ')
+fi
 
 echo "$added" | grep -qEi '(#|//|--|;|\*|<!--)[[:space:]]*ponytail:' || exit 0
 

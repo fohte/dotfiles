@@ -1,15 +1,24 @@
 #!/bin/bash
-# Block Edit/Write/MultiEdit on the repo's default branch unless armyknife
-# config explicitly opts in via `repos.<owner>/<repo>.direct_commit: true`.
+# Block Edit/Write/MultiEdit (Claude Code) and apply_patch (Codex) on the
+# repo's default branch unless armyknife config explicitly opts in via
+# `repos.<owner>/<repo>.direct_commit: true`.
 #
-# Invoked from pre-tool-use-dispatcher.bash; receives the original PreToolUse
+# Invoked from pre-tool-use-proxy.bash; receives the original PreToolUse
 # JSON payload on stdin.
 input=$(cat)
 
-file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
-[ -z "$file_path" ] && exit 0
+tool_name=$(echo "$input" | jq -r '.tool_name // empty')
+if [ "$tool_name" = "apply_patch" ]; then
+  # Codex's apply_patch tool_input has no file_path (just a raw patch-text
+  # `command`); resolve the repo from the session cwd instead.
+  dir=$(echo "$input" | jq -r '.cwd // empty')
+else
+  file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
+  [ -z "$file_path" ] && exit 0
+  dir=$(dirname -- "$file_path")
+fi
+[ -z "$dir" ] && exit 0
 
-dir=$(dirname -- "$file_path")
 repo_root=$(git -C "$dir" rev-parse --show-toplevel 2> /dev/null) || exit 0
 
 branch=$(git -C "$repo_root" branch --show-current)

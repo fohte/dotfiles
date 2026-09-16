@@ -1,16 +1,16 @@
 #!/bin/bash
-# Guards for the Agent tool: block isolation:"worktree", and fill in a safe
-# model when a subagent call would otherwise silently inherit the parent
-# session's model.
+# Guards for Claude Code's Agent tool and Codex's spawn_agent tool: block
+# isolation:"worktree", and fill in a safe model when a subagent call would
+# otherwise silently inherit the parent session's model.
 #
 # Invoked from pre-tool-use-proxy.bash; receives the original PreToolUse
 # JSON payload on stdin.
 input=$(cat)
 
+tool_name=$(echo "$input" | jq -r '.tool_name // empty')
+
 # Agent(isolation:"worktree") creates a git worktree directly via the
-# harness, bypassing Bash and thus runok's git worktree deny rules -- same
-# bypass as EnterWorktree. isolation:"remote" doesn't touch git and stays
-# allowed.
+# harness, bypassing runok's deny rules. isolation:"remote" stays allowed.
 isolation=$(echo "$input" | jq -r '.tool_input.isolation // empty')
 if [ "$isolation" = "worktree" ]; then
   jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "Agent isolation:\"worktree\" is disabled. Use the /delegate-claude skill to spawn work in a worktree."}}'
@@ -32,7 +32,11 @@ fi
 readonly FALLBACK_MODEL='sonnet'
 
 model=$(echo "$input" | jq -r '.tool_input.model // empty')
-subagent_type=$(echo "$input" | jq -r '.tool_input.subagent_type // "general-purpose"')
+if [ "$tool_name" = "spawn_agent" ]; then
+  subagent_type=$(echo "$input" | jq -r '.tool_input.agent_type // empty')
+else
+  subagent_type=$(echo "$input" | jq -r '.tool_input.subagent_type // "general-purpose"')
+fi
 
 # `fork` always mirrors the parent session (model included) and ignores the
 # model parameter entirely, so there is nothing to fill in.
@@ -46,26 +50,49 @@ fi
 agent_def=""
 if [[ "$subagent_type" =~ ^[A-Za-z0-9_-]+$ ]]; then
   cwd=$(echo "$input" | jq -r '.cwd // empty')
-  if [ -n "$cwd" ] && [ -f "$cwd/.claude/agents/$subagent_type.md" ]; then
-    agent_def="$cwd/.claude/agents/$subagent_type.md"
-  elif [ -f "$HOME/.claude/agents/$subagent_type.md" ]; then
-    agent_def="$HOME/.claude/agents/$subagent_type.md"
+  if [ "$tool_name" = "spawn_agent" ]; then
+    if [ -n "$cwd" ] && [ -f "$cwd/.codex/agents/$subagent_type.toml" ]; then
+      agent_def="$cwd/.codex/agents/$subagent_type.toml"
+    elif [ -f "$HOME/.codex/agents/$subagent_type.toml" ]; then
+      agent_def="$HOME/.codex/agents/$subagent_type.toml"
+    fi
   else
-    # Covers plugin-provided subagents (e.g. skill-scoped agents under
-    # <plugin>/skills/<skill>/agents/<name>.md). Built-in agents
-    # (general-purpose, Explore, Plan, ...) have no file anywhere and
-    # correctly fall through to the fallback below.
-    agent_def=$(rg --files "$HOME/.claude/plugins/cache" -g "agents/$subagent_type.md" 2> /dev/null | head -1)
+    if [ -n "$cwd" ] && [ -f "$cwd/.claude/agents/$subagent_type.md" ]; then
+      agent_def="$cwd/.claude/agents/$subagent_type.md"
+    elif [ -f "$HOME/.claude/agents/$subagent_type.md" ]; then
+      agent_def="$HOME/.claude/agents/$subagent_type.md"
+    else
+      # Covers plugin-provided subagents (e.g. skill-scoped agents under
+      # <plugin>/skills/<skill>/agents/<name>.md). Built-in agents
+      # (general-purpose, Explore, Plan, ...) have no file anywhere and
+      # correctly fall through to the fallback below.
+      agent_def=$(rg --files "$HOME/.claude/plugins/cache" -g "agents/$subagent_type.md" 2> /dev/null | head -1)
+    fi
   fi
 fi
 
 pinned_model=""
 if [ -n "$agent_def" ]; then
-  pinned_model=$(awk '
-    /^---$/ { delim++; next }
-    delim == 1 && /^model:/ { sub(/^model:[ \t]*/, ""); print; exit }
-    delim >= 2 { exit }
-  ' "$agent_def")
+  case "$agent_def" in
+    *.toml)
+      pinned_model=$(awk '
+        /^model[[:space:]]*=/ {
+          sub(/^model[[:space:]]*=[[:space:]]*/, "")
+          q = "[" "\042" "\047" "]"
+          gsub("^" q "|" q "$", "")
+          print
+          exit
+        }
+      ' "$agent_def")
+      ;;
+    *)
+      pinned_model=$(awk '
+        /^---$/ { delim++; next }
+        delim == 1 && /^model:/ { sub(/^model:[ \t]*/, ""); print; exit }
+        delim >= 2 { exit }
+      ' "$agent_def")
+      ;;
+  esac
 fi
 
 # A subagent definition pinning model:fable is just as expensive as an
