@@ -127,10 +127,7 @@ while IFS= read -r repo; do
     window_id=$(tmux new-window -d -t "$session:" -c "$repo_path" -P -F '#{window_id}')
     echo "$repo: added window $window_id in $session"
   else
-    # Run from $HOME in case this starts the server: a server permanently keeps
-    # the cwd of the client that started it, and once that directory is deleted
-    # every pane it spawns afterwards gets a dangling cwd.
-    (cd ~ && tmux new-session -d -s "$session" -c "$repo_path")
+    tmux new-session -d -s "$session" -c "$repo_path"
     window_id=$(tmux list-windows -t "$session" -F '#{window_id}' | head -1)
     existing_sessions+=$'\n'"$session"
     echo "$repo: created session $session (window $window_id)"

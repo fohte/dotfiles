@@ -6,10 +6,7 @@ set -e
 . ~/bin/lib/util.sh
 
 if ! is_tmux_running && ! tmux has-session > /dev/null 2>&1; then
-  # The server keeps the cwd of the client that started it for its whole life;
-  # once that directory is gone (a removed worktree, say) every pane it spawns
-  # lands in a dangling cwd and ignores even an explicit -c. $HOME always exists.
-  (cd ~ && tmux new-session)
+  tmux new-session
 else
   selected="$(tmux ls -F '#{session_last_attached} #{session_name}' | sort -k 1 | tail -1 | cut -f2 -d' ')"
   tmux attach-session -t "$selected"
