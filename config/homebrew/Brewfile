@@ -118,8 +118,6 @@ brew 'terminal-notifier'
 
 # ===== AI / LLM =====
 
-# Create, run, and share large language models (LLMs)
-brew 'ollama', link: false
 # AI coding agent, built for the terminal
 brew 'opencode'
 # Fuzzy-search Claude Code conversation history from the terminal
@@ -140,6 +138,8 @@ cask 'aquaskk'
 cask '1password/tap/1password-cli', trusted: true
 # AI coding agent (desktop)
 cask 'codex'
+# Create, run, and share large language models (LLMs)
+cask 'ollama-app'
 # Set of tools to manage resources and applications hosted on Google Cloud
 cask 'gcloud-cli'
 # Screen capture utility
