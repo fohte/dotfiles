@@ -3,10 +3,13 @@
 
 call_agy() {
   local prompt="$1" schema_file="$2" conversation_id="${3:-}"
+  # The default high tier's per-turn thinking cost overruns agy's 5m print
+  # deadline.
+  local model=gemini-3.8-flash-low
   if [ -n "$conversation_id" ]; then
-    agy --print="$prompt" --conversation "$conversation_id" --output-format json --json-schema "$schema_file"
+    agy --print="$prompt" --conversation "$conversation_id" --model "$model" --output-format json --json-schema "$schema_file"
   else
-    agy --print="$prompt" --output-format json --json-schema "$schema_file"
+    agy --print="$prompt" --model "$model" --output-format json --json-schema "$schema_file"
   fi
 }
 
