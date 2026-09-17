@@ -41,3 +41,6 @@
 # directories.
 /config/claude/skills/*
 !/config/claude/skills/*/
+# Skills synced from claude.ai land here as real directories, so the negation
+# above re-includes them.
+/config/claude/skills/synced/
