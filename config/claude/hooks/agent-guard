@@ -106,4 +106,15 @@ fi
 [ -n "$pinned_model" ] && [ "$pinned_model" != "inherit" ] && exit 0
 
 updated_tool_input=$(echo "$input" | jq -c --arg m "$FALLBACK_MODEL" '.tool_input + {model: $m}')
-jq -nc --argjson u "$updated_tool_input" '{hookSpecificOutput: {hookEventName: "PreToolUse", updatedInput: $u}}'
+
+# Codex's PreToolUse parser discards updatedInput unless permissionDecision
+# is also "allow" (codex-rs/hooks/src/engine/output_parser.rs), whereas
+# Claude Code applies updatedInput regardless of permissionDecision. Adding
+# it unconditionally would change Claude Code's behavior too: "allow" there
+# means auto-approve, which currently isn't set so the call still goes
+# through Claude Code's normal permission flow.
+if [ "$tool_name" = "spawn_agent" ]; then
+  jq -nc --argjson u "$updated_tool_input" '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "allow", updatedInput: $u}}'
+else
+  jq -nc --argjson u "$updated_tool_input" '{hookSpecificOutput: {hookEventName: "PreToolUse", updatedInput: $u}}'
+fi

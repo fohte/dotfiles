@@ -63,13 +63,44 @@ if [[ -n "${ARMYKNIFE_REPO_ROOT:-}" ]]; then
   done
 fi
 
+# Only trust worktrees under the user's own repositories.
+is_own_repo=false
+[[ "$ARMYKNIFE_WORKTREE_PATH" == "$HOME/ghq/github.com/fohte/"* ]] && is_own_repo=true
+
 # Register the worktree as a trusted project in Claude Code (~/.claude.json).
 # Without this, Claude Code prompts for trust confirmation on every new worktree.
-# Only trust worktrees under the user's own repositories.
 CLAUDE_JSON="$HOME/.claude.json"
-if [[ "$ARMYKNIFE_WORKTREE_PATH" == "$HOME/ghq/github.com/fohte/"* ]] &&
-  [[ -f "$CLAUDE_JSON" ]]; then
+if [[ "$is_own_repo" == true ]] && [[ -f "$CLAUDE_JSON" ]]; then
   jq --arg path "$ARMYKNIFE_WORKTREE_PATH" \
     '.projects[$path].hasTrustDialogAccepted = true' \
     "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+fi
+
+# Same trust registration for Codex (~/.codex/config.toml [projects."<path>"]
+# trust_level = "trusted"). Round-trips through JSON like
+# config/codex/install-config, since config.toml has no native jq-like editor.
+#
+# Locked with mkdir (flock isn't available on macOS by default) because the
+# delegate skill fans out `a agent new --worktree` calls in parallel, and two
+# concurrent read-modify-write cycles on the same file would otherwise lose
+# whichever one wrote first. `|| true` on the whole block: like
+# DELEGATE_TASK_PURPOSE above, this is non-critical metadata, so a failure
+# here (a stuck lock, a malformed config.toml) must not roll back the worktree.
+CODEX_CONFIG="$HOME/.codex/config.toml"
+if [[ "$is_own_repo" == true ]] && [[ -f "$CODEX_CONFIG" ]]; then
+  (
+    codex_lock="$CODEX_CONFIG.lock"
+    trap 'rmdir "$codex_lock" 2>/dev/null' EXIT
+    for _ in $(seq 50); do
+      mkdir "$codex_lock" 2> /dev/null && break
+      sleep 0.1
+    done
+
+    codex_config_tmp="$(mktemp "${TMPDIR:-/tmp}/codex-config.XXXXXX")"
+    yq -p toml -o json "$CODEX_CONFIG" |
+      jq --arg path "$ARMYKNIFE_WORKTREE_PATH" '.projects[$path].trust_level = "trusted"' |
+      yq -p json -o toml > "$codex_config_tmp"
+    chmod 600 "$codex_config_tmp"
+    mv "$codex_config_tmp" "$CODEX_CONFIG"
+  ) || true
 fi

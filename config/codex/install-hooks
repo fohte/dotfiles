@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Idempotently register this repo's PreToolUse guard hooks
+# (default-branch-edit-guard, ponytail-comment-guard, agent-guard) in Codex's
+# hooks.json.
+#
+# `runok init` registers its own PreToolUse/PermissionRequest entries in the
+# same file (command `runok hook --agent codex`). Both this script and that
+# command only ever append an entry when no existing entry already carries
+# the same `command` string -- neither can clobber the other's entries, so
+# hooks.json can be re-run by both without stepping on the other's additions.
+set -euo pipefail
+
+hooks_path="${1:?Usage: install-hooks <hooks.json path>}"
+
+mkdir -p "$(dirname "$hooks_path")"
+
+if [[ -s "$hooks_path" ]]; then
+  content=$(cat "$hooks_path")
+else
+  content='{}'
+fi
+
+# tab-separated: event, matcher regex, command
+entries=$'PreToolUse\t^apply_patch$\t~/.claude/hooks/default-branch-edit-guard
+PreToolUse\t^apply_patch$\t~/.claude/hooks/ponytail-comment-guard
+PreToolUse\t^spawn_agent$\t~/.claude/hooks/agent-guard'
+
+while IFS=$'\t' read -r event matcher command; do
+  content=$(jq --arg event "$event" --arg matcher "$matcher" --arg command "$command" '
+    (.hooks[$event] // []) as $arr
+    | if ($arr | any(.hooks[]?.command == $command))
+      then .
+      else .hooks[$event] = ($arr + [{matcher: $matcher, hooks: [{type: "command", command: $command}]}])
+      end
+  ' <<< "$content")
+done <<< "$entries"
+
+tmp="$(mktemp "${TMPDIR:-/tmp}/codex-hooks.XXXXXX")"
+printf '%s\n' "$content" | jq . > "$tmp"
+mv "$tmp" "$hooks_path"
