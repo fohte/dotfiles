@@ -120,6 +120,7 @@ if match_tag claude; then
   sym config/claude/commands ~/.claude/commands
   sym config/claude/contexts ~/.claude/contexts
   sym config/claude/skills ~/.claude/skills
+  sym config/claude/skills ~/.agents/skills
   sym config/claude/statusline.ts ~/.claude/statusline.ts
   sym config/claude/hooks ~/.claude/hooks
 fi

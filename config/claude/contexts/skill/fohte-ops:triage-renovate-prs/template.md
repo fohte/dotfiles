@@ -159,7 +159,7 @@ Write ツールで JSON を書き、次を **`run_in_background: true`** で実�
 
 ```bash
 # <data.json> は Write ツールで書いた /tmp/renovate-triage.<採番>.json
-~/.claude/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage <data.json>
+~/.agents/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage <data.json>
 ```
 
 **JSON を書く前にスクリプト冒頭の docstring を読む。** スキーマと各フィールドの意味はそこにある。

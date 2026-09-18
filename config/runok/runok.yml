@@ -47,8 +47,8 @@ definitions:
     claude-skill-scripts:
       type: pattern
       values:
-        - '~/.claude/skills/*/scripts/*'
-        - '~/.claude/skills/*/bin/*'
+        - '~/.agents/skills/*/scripts/*'
+        - '~/.agents/skills/*/bin/*'
         - '~/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
         - '~/.claude/plugins/cache/*/*/*/skills/*/bin/*'
         # Plugin skills are usually invoked with a resolved absolute path. The
@@ -131,12 +131,12 @@ rules:
   # what a skill's own code may do.
   - allow: 'bash <var:claude-skill-scripts>'
     tests:
-      - allow: 'bash ~/.claude/skills/self-review/scripts/render-backend-instructions'
+      - allow: 'bash ~/.agents/skills/self-review/scripts/render-backend-instructions'
       - allow: 'bash /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs'
 
   - allow: 'bash <var:claude-skill-scripts> *'
     tests:
-      - allow: 'bash ~/.claude/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
+      - allow: 'bash ~/.agents/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
       - allow: 'bash /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
 
   # Absolute-path forms of <var:claude-skill-scripts> aren't tested here: bare
@@ -144,12 +144,12 @@ rules:
   # below (Explicit Deny Wins), regardless of this rule's own match.
   - allow: '<var:claude-skill-scripts>'
     tests:
-      - allow: '~/.claude/skills/self-review/scripts/render-backend-instructions'
+      - allow: '~/.agents/skills/self-review/scripts/render-backend-instructions'
       - allow: '~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs'
 
   - allow: '<var:claude-skill-scripts> *'
     tests:
-      - allow: '~/.claude/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
+      - allow: '~/.agents/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
       - allow: '~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
 
   # `rtk <cmd>` strips boilerplate from the inner command's stdout. Any other

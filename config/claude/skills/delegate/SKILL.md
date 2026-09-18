@@ -56,7 +56,7 @@ direct=$(cd "$repo" && a config get repo.direct_commit)
 ```bash
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成 (スキーマは後述の「プロンプト構造 (必須)」参照)
-prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.claude/skills/delegate/scripts/render-task" "$dir/task.yaml")
+prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID="<この委任作業が属する tq タスクの ID>" \
   a agent new --worktree=<branch-name> --agent --label "<title>" --prompt "$prompt"
@@ -113,7 +113,7 @@ for entry in "repo-a 123" "repo-b 456" "repo-c 789"; do
   read repo num <<< "$entry"
   task="$dir/$repo.task.yaml"
   yq eval-all '. as $item ireduce ({}; . * $item)' "$dir/common.yaml" "$dir/$repo.yaml" > "$task"
-  prompt=$("$HOME/.claude/skills/delegate/scripts/render-task" "$task")
+  prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$task")
   DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$task")" \
     a agent new --worktree=<branch> -R ~/ghq/github.com/<org>/$repo \
       --agent --label "<title> $repo#$num" --prompt "$prompt" \
@@ -130,7 +130,7 @@ wait
 # 現在のリポジトリ
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成 (purpose: メール認証ログインが必要な理由, goal: ログイン機能が動くこと, など)
-prompt=$("$HOME/.claude/skills/delegate/scripts/render-task" "$dir/task.yaml")
+prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID=123 \
   a agent new --worktree=feature-login --agent --label "メール認証ログイン実装" --prompt "$prompt"
@@ -138,7 +138,7 @@ DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
 # 別のリポジトリ (-R オプション)
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成 (purpose: API タイムアウトで困っている内容, goal: タイムアウト設定の期待値, など)
-prompt=$("$HOME/.claude/skills/delegate/scripts/render-task" "$dir/task.yaml")
+prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID=124 \
   a agent new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "API タイムアウト修正" --prompt "$prompt"
@@ -157,7 +157,7 @@ DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
 ```bash
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成
-prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.claude/skills/delegate/scripts/render-task" "$dir/task.yaml")
+prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml")
 a agent new -R "$repo" --agent --label "<title>" --prompt "$prompt"
 ```
 
@@ -286,7 +286,7 @@ additionalContext: |
 ```bash
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # 上記の内容で $dir/task.yaml を Write
-prompt=$("$HOME/.claude/skills/delegate/scripts/render-task" "$dir/task.yaml")
+prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID=125 \
   a agent new --worktree=fix-auth-timeout --agent --label "セッション TTL 設定反映修正" --prompt "$prompt"

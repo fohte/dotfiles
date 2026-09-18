@@ -14,7 +14,7 @@ reviewer の選択順、agent、trigger、reference は `reviewers.yaml` を唯�
 - push 前 (`git diff @{u}..HEAD` または `git diff origin/<base>..HEAD`) のレビュー
 - PR 作成・更新時のレビュー
 
-!`runok exec -- '~/.claude/skills/self-review/scripts/render-backend-instructions'`
+!`runok exec -- '~/.agents/skills/self-review/scripts/render-backend-instructions'`
 
 ## 結果集約
 

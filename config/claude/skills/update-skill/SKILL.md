@@ -17,10 +17,11 @@ description: Use this skill whenever creating, editing, or improving a skill fil
 
 ### グローバルスキル (全プロジェクト共通)
 
-dotfiles の `config/claude/skills/` で Git 管理し、`~/.claude/skills/` へ symlink される。
+dotfiles の `config/claude/skills/` で Git 管理し、`~/.claude/skills/` (Claude Code 用) と `~/.agents/skills/` (Codex など他 agent 用) の両方へ symlink される。
+実体は 1 つ。
 
 - **編集先**: `~/ghq/github.com/fohte/dotfiles/config/claude/skills/<skill-name>/SKILL.md`
-- `~/.claude/skills/` は symlink。**必ず dotfiles 側で編集**
+- `~/.claude/skills/` `~/.agents/skills/` はいずれも symlink。**必ず dotfiles 側で編集**
 - コミット先: dotfiles リポジトリ
 
 ### プロジェクトローカルスキル

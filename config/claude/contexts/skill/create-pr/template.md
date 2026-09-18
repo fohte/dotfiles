@@ -79,7 +79,7 @@ EOF
 Claude は本文を読まない。以下のスクリプトが diff・コミットメッセージ・書き方ルールをまとめて agy (Antigravity CLI) に渡し、ルールを満たした本文を 1 回の呼び出しで書かせて `a ai pr-draft new` に投入する。セルフレビューはこの中で完結しており、独立した工程はない。
 
 ```bash
-~/.claude/skills/create-pr/scripts/agy-write-draft
+~/.agents/skills/create-pr/scripts/agy-write-draft
 ```
 
 失敗したら (非 0 終了) 標準エラーを確認して対応する。成功したら Step 2 はないので、そのまま Step 3 (`a ai pr-draft review`) に進む。
@@ -113,7 +113,7 @@ cat <<'EOF' | a ai pr-draft new --title "PRタイトル"
 EOF
 ```
 
-ドラフトは決まったパスに作成される (`~/.claude/skills/create-pr/scripts/draft-path` で確認できる)。以降のコマンドではパス指定不要。
+ドラフトは決まったパスに作成される (`~/.agents/skills/create-pr/scripts/draft-path` で確認できる)。以降のコマンドではパス指定不要。
 
 ### Frontmatter
 
@@ -150,7 +150,7 @@ context 残量の少なさは委任理由にならない。
 
 ### 手順
 
-1. 投入されたファイル (`~/.claude/skills/create-pr/scripts/draft-path` で確認できるパス) を Read する
+1. 投入されたファイル (`~/.agents/skills/create-pr/scripts/draft-path` で確認できるパス) を Read する
 2. **Step 1 で示した全ルールを順に**、各ルールについて以下の形式でユーザーに発話する{{ if $has_design_decisions }} (Rule 1〜14){{ else }} (Rule 1〜8, 10〜14。Rule 9 は省略){{ end }}:
 
     ```
@@ -211,7 +211,7 @@ context 残量の少なさは委任理由にならない。
 対応は以下を実行して agy に任せる。Claude が diff から読むのは `steps` の行だけでよく、本文コメントの解釈はスクリプトの責務。ユーザーのコメントへの対応と、翻訳 (`steps.ready-for-translation: true` になった場合{{ if not $public }}。このリポジトリでは翻訳は発生しない{{ end }}) のどちらが必要かもスクリプトが frontmatter を見て自動判定する。
 
 ```bash
-~/.claude/skills/create-pr/scripts/agy-advance-draft
+~/.agents/skills/create-pr/scripts/agy-advance-draft
 ```
 
 `(no edits)` のときだけは agy に渡すものがないので、ユーザーに何を変更するか確認する。

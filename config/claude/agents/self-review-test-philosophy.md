@@ -11,4 +11,4 @@ description: self-review skill 専用の test-philosophy 観点テストレビ�
    テストの種類分類 (exploratory / regression / specification) の整合、テスト名・構造・前提共有・モックの過剰使用・並列性などを評価する。プロダクションコード本体の指摘は他 group に任せ、ここではテストコードの設計品質に絞る。
 3. 指摘 1 件ごとに **指摘 ID** として `TEST:<file>:<LINE>` を付け、重要度 (Critical / Warning) と症状要約を含めて返す。指摘ゼロなら「指摘なし」と返す。
 
-動作確認のために実際にテストや検証スクリプトを実行したい場合は `~/.claude/skills/self-review/references/_common.md` の「動作原則」に従い、疑っている条件だけを叩く単発実行に限る。
+動作確認のために実際にテストや検証スクリプトを実行したい場合は `~/.agents/skills/self-review/references/_common.md` の「動作原則」に従い、疑っている条件だけを叩く単発実行に限る。
