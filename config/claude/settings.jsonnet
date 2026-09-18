@@ -162,8 +162,9 @@ local env(name) = std.extVar(name);
       'CronDelete',
       'CronList',
 
-      // Omits paused sessions, so a related session silently drops out of the
-      // list and SendMessage gets aimed at whichever one looks closest.
+      // Omits paused sessions, so a related target silently drops out of the
+      // list and `a agent peer notify` gets aimed at whichever session_id
+      // looks closest instead.
       // `a agent peer list` returns paused sessions too.
       'ListAgents',
 
