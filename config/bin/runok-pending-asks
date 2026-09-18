@@ -19,7 +19,7 @@ RAW_FETCH_LIMIT=1000000
 # Extended regular expressions matched against the top-level `.command` field.
 # Matching entries are never proposed for allow-listing.
 IGNORE_COMMANDS=(
-  '^a agent new'
+  '^a (cc|agent) new'
   # Claude Code drives Renovate PR approve -> merge, but a blanket allow
   # is too broad (any PR, not just vetted Renovate ones), so keep ask.
   '^gh (-R [^ ]+ |--repo [^ ]+ )?pr review .* --approve'
