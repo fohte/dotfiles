@@ -36,9 +36,9 @@ hs.urlevent.bind('tq-focus', function(_, params)
     return
   end
 
-  -- shell = true: `a cc focus` shells out to `tmux`, which only resolves
+  -- shell = true: `a agent focus` shells out to `tmux`, which only resolves
   -- via PATH from the user's shell profile
-  lib:run_command(os.getenv('HOME') .. '/.cargo/bin/a cc focus ' .. sessionId, { shell = true })
+  lib:run_command(os.getenv('HOME') .. '/.cargo/bin/a agent focus ' .. sessionId, { shell = true })
   hs.application.launchOrFocus('/Applications/Ghostty.app')
 end)
 

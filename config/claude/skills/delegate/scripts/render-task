@@ -1,5 +1,5 @@
 #!/bin/bash
-# Render a delegate-claude task.yaml into the --prompt markdown that `a cc new`
+# Render a delegate task.yaml into the --prompt markdown that `a agent new`
 # expects. See SKILL.md's "プロンプト構造" for the task.yaml schema.
 set -euo pipefail
 

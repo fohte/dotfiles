@@ -27,8 +27,8 @@ const firedThresholdsFile = (sessionId: string) =>
 // context faster than the work justifies.
 const SPLIT_THRESHOLDS = [20, 25, 30, 40, 50, 60, 70, 80, 90]
 
-// Demand a stated verdict rather than the action itself: /delegate-claude and
-// /handoff-claude only trigger on an explicit user request (see their
+// Demand a stated verdict rather than the action itself: /delegate and
+// /handoff only trigger on an explicit user request (see their
 // SKILL.md), and a silent choice to keep working inline leaves the user
 // nothing to overrule.
 function mainSessionMessage(percentage: number): string {
@@ -50,8 +50,8 @@ Burning context this fast usually means the work is being run the wrong way: don
 - subagents: the default for any self-contained task (investigation, search, review, mechanical edits). A subagent's working context never enters this session, only its summary does, so dispatching is strictly cheaper than doing it inline.
   Go task by task and ask what part of it can be carved out. A single investigation normally becomes several subagents, one per angle (this file's callers / how the upstream tool behaves / what the existing tests cover), dispatched in parallel — splitting by angle is what makes the work parallel and each report small, so it is the normal case, not an optimization.
   What stays here is the part that cannot be carved out: choosing the angles, merging what comes back, and the judgment and edits that need the merged picture. Handing the remaining work to one subagent as a block is the opposite of this verdict — it re-runs the same monolithic session elsewhere, and you get one summary you cannot steer or audit.
-- delegate (/delegate-claude): the remaining work should become its own PR(s).
-- handoff (/handoff-claude): stuck on design or investigation, and this session should be restarted fresh.
+- delegate: the remaining work should become its own PR(s).
+- handoff: stuck on design or investigation, and this session should be restarted fresh.
 - 継続: the remaining tasks genuinely depend on context a subagent or a fresh session would lack.
 
 "あと少しで終わる" is not a verdict: enumerate the tasks first, and let the list show it. "まだ余裕がある" and "引き継ぎが面倒" do not qualify either, since the handoff cost must be weighed against the ongoing cost of carrying this context, not against zero.

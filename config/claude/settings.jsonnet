@@ -164,7 +164,7 @@ local env(name) = std.extVar(name);
 
       // Omits paused sessions, so a related session silently drops out of the
       // list and SendMessage gets aimed at whichever one looks closest.
-      // `a cc peer list` returns paused sessions too.
+      // `a agent peer list` returns paused sessions too.
       'ListAgents',
 
       // Both are busy-wait polling, which is fragile and wastes time.
@@ -191,7 +191,7 @@ local env(name) = std.extVar(name);
     SessionStart: [
       {
         hooks: [
-          { type: 'command', command: 'a cc hook session-start' },
+          { type: 'command', command: 'a agent hook session-start' },
           // config/bin/tq fetches a Cloudflare Access token via 1Password
           // before ever reaching the CLI's own never-fail guarantee
           // (cli/src/commands/hook.ts), so a locked vault or offline network
@@ -221,7 +221,7 @@ local env(name) = std.extVar(name);
     UserPromptSubmit: [
       {
         hooks: [
-          { type: 'command', command: 'a cc hook user-prompt-submit' },
+          { type: 'command', command: 'a agent hook user-prompt-submit' },
         ],
       },
     ],
@@ -238,7 +238,7 @@ local env(name) = std.extVar(name);
     PostToolUse: [
       {
         hooks: [
-          { type: 'command', command: 'a cc hook post-tool-use' },
+          { type: 'command', command: 'a agent hook post-tool-use' },
         ],
       },
       {
@@ -252,21 +252,21 @@ local env(name) = std.extVar(name);
     Notification: [
       {
         hooks: [
-          { type: 'command', command: 'a cc hook notification' },
+          { type: 'command', command: 'a agent hook notification' },
         ],
       },
     ],
     PermissionRequest: [
       {
         hooks: [
-          { type: 'command', command: 'a cc hook permission-request' },
+          { type: 'command', command: 'a agent hook permission-request' },
         ],
       },
     ],
     Stop: [
       {
         hooks: [
-          { type: 'command', command: 'a cc hook stop' },
+          { type: 'command', command: 'a agent hook stop' },
           // See the `|| true` note on the SessionStart entry above.
           { type: 'command', command: 'tq hook Stop || true' },
         ],
@@ -275,7 +275,7 @@ local env(name) = std.extVar(name);
     SessionEnd: [
       {
         hooks: [
-          { type: 'command', command: 'a cc hook session-end' },
+          { type: 'command', command: 'a agent hook session-end' },
           // See the `|| true` note on the SessionStart entry above.
           { type: 'command', command: 'tq hook SessionEnd || true' },
         ],

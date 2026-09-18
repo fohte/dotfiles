@@ -13,12 +13,12 @@ description: Development (実装フルフローモード). Use this skill when i
 2. 設計
 3. 実装を delegate
 
-**原則: main/master ブランチで直接実装しない。** 調査と設計はこのセッションで行い、実装は `/delegate-claude` (Codex: `$delegate-claude`) で別 worktree に委任する。
+**原則: main/master ブランチで直接実装しない。** 調査と設計はこのセッションで行い、実装は `delegate` skill で別 worktree に委任する。
 
 **直接実装する例外**:
 
 - dotfiles のように main で直接作業するリポジトリ
-- `/delegate-claude` によって worktree 内で動作している場合 (既に delegate 済み)
+- `delegate` skill によって worktree 内で動作している場合 (既に delegate 済み)
 
 ---
 
@@ -47,7 +47,7 @@ description: Development (実装フルフローモード). Use this skill when i
 
 ### 通常 (デフォルト)
 
-**Step 1-2 をこのセッションで完了させた上で**、`/delegate-claude` (Codex: `$delegate-claude`) スキルで実装を委任する。
+**Step 1-2 をこのセッションで完了させた上で**、`delegate` スキルで実装を委任する。
 
 プロンプトには以下を含めること:
 

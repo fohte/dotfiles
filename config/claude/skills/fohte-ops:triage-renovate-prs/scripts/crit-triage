@@ -86,7 +86,7 @@ Data format:
             {"level": "warn", "text": "runner の最低バージョンが上がると self-hosted runner のリポジトリが no-look で壊れる"},
             {"level": "ok", "text": "対象リポジトリは全て GitHub-hosted", "evidence": "$ rg runs-on -r ..."}
           ],
-          "on_approve": "/delegate-claude で acme/renovate-config に委任し、PR を立てるところまで"
+          "on_approve": "delegate skill で acme/renovate-config に委任し、PR を立てるところまで"
         }
       ]
     }

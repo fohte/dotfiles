@@ -1,31 +1,31 @@
 ---
-name: delegate-claude
-description: Delegate tasks to a separate Claude Code instance, either in its own git worktree or directly on the default branch for repositories configured that way. Use this skill when the user says "delegate", "/delegate-claude", asks to run a task in parallel in another worktree, wants to spawn a child Claude session, or needs to offload implementation work to an independent Claude Code instance. Also trigger when the user wants to start work on a different repository without leaving the current session, or when breaking down a large task into parallel sub-tasks each handled by separate Claude instances. Also use when a session needs to contact the session that delegated to it, or one it delegated to. This skill also covers repositories that are worked on directly on the default branch without a worktree or a PR — the mode is resolved from armyknife config, so delegate to those repositories with this skill too.
+name: delegate
+description: Delegate tasks to a separate Claude Code or Codex instance, either in its own git worktree or directly on the default branch for repositories configured that way. Use this skill when the user says "delegate", "/delegate", asks to run a task in parallel in another worktree, wants to spawn a child agent session, or needs to offload implementation work to an independent instance. Also trigger when the user wants to start work on a different repository without leaving the current session, or when breaking down a large task into parallel sub-tasks each handled by separate instances. Also use when a session needs to contact the session that delegated to it, or one it delegated to. This skill also covers repositories that are worked on directly on the default branch without a worktree or a PR — the mode is resolved from armyknife config, so delegate to those repositories with this skill too.
 ---
 
 # 別の Claude Code インスタンスにタスクを委任する
 
-`a cc new --prompt` を使って、別の Claude Code インスタンスに処理を委任する。委任先が worktree を作るリポジトリか、default branch で直接作業するリポジトリかで起動の仕方が変わる (後述の「使い方」)。
+`a agent new --prompt` を使って、別の Claude Code インスタンスに処理を委任する。委任先が worktree を作るリポジトリか、default branch で直接作業するリポジトリかで起動の仕方が変わる (後述の「使い方」)。
 
 ## 最優先ルール
 
-- **ユーザーが明示的に delegate を指示した場合は、必ず delegate する**: タスクの規模・複雑さ・難易度に関わらず、ユーザーが `/delegate-claude` や「delegate して」と指示した場合は、自分の判断で「delegate 不要」と判断してはならない。ユーザーには delegate する意図がある。理由を推測せず、指示に従うこと
+- **ユーザーが明示的に delegate を指示した場合は、必ず delegate する**: タスクの規模・複雑さ・難易度に関わらず、ユーザーが `/delegate` や「delegate して」と指示した場合は、自分の判断で「delegate 不要」と判断してはならない。ユーザーには delegate する意図がある。理由を推測せず、指示に従うこと
 - **delegate 不要と判断して自分で作業を始めることは禁止**: このスキルが発動した時点で、タスクの実行方法は delegate に確定している。「これは簡単だから自分でやろう」「PR 不要だから delegate しなくてよい」といった判断は一切してはならない
 - **委任できるのは実装作業だけ**: 何を作るか / 何をどう直すかが確定したタスクのみを委任する。設計が未決のタスク、原因が未特定のバグ、方針を決めるための調査を丸投げしてはならない。確定させるのは委任元の責任 (後述の「委任前に確定させること」)。設計や原因が未確定であることは委任を取りやめる理由にはならない。確定作業を先に済ませてから委任すること
-- **1 委任 = 1 PR の原則**: 1 回の `a cc new` で委任するタスクは 1 PR 分の作業に限定すること。「複数フェーズを一括で」「複数 PR を順次作成」のような複数 PR をまとめた委任は禁止。委任先は単一の Claude Code プロセスで作業するため、複数 PR を順に作る前提では設計しない。委任先がさらに `/delegate-claude` で再委任することも想定しない。大きな計画やフェーズ分割されたタスクの場合は、委任元 (現在のセッション) が split-into-prs skill で 1 PR 単位に分割し、最初の 1 PR だけを委任する。後続の PR は前の PR が merge / 確認された後に、改めて委任元から別途委任する。PR が出ない direct-commit モード (後述) では、この原則を「1 委任 = push される 1 まとまりの変更」と読み替える
+- **1 委任 = 1 PR の原則**: 1 回の `a agent new` で委任するタスクは 1 PR 分の作業に限定すること。「複数フェーズを一括で」「複数 PR を順次作成」のような複数 PR をまとめた委任は禁止。委任先は単一の Claude Code プロセスで作業するため、複数 PR を順に作る前提では設計しない。委任先がさらに `delegate` skill で再委任することも想定しない。大きな計画やフェーズ分割されたタスクの場合は、委任元 (現在のセッション) が split-into-prs skill で 1 PR 単位に分割し、最初の 1 PR だけを委任する。後続の PR は前の PR が merge / 確認された後に、改めて委任元から別途委任する。PR が出ない direct-commit モード (後述) では、この原則を「1 委任 = push される 1 まとまりの変更」と読み替える
 
 ## 絶対禁止事項
 
 - **ユーザーが指定したリポジトリを勝手に変更しない**: ユーザーが委任先リポジトリを明示した場合、自分の判断で別のリポジトリに変更してはならない。ユーザーはどのリポジトリで修正すべきかを把握している。「こっちのリポジトリの方が適切では」と思っても、ユーザーの指定に従うこと
-- **自分で実装作業をしない**: このスキルが発動したら、ファイル編集・コード変更を自分で行ってはならない。仕事は委任内容を確定させることと、プロンプトを構成して `a cc new` コマンドを実行すること。読み取りのみの調査 (設計・原因の確定) はこの禁止に含まれない
+- **自分で実装作業をしない**: このスキルが発動したら、ファイル編集・コード変更を自分で行ってはならない。仕事は委任内容を確定させることと、プロンプトを構成して `a agent new` コマンドを実行すること。読み取りのみの調査 (設計・原因の確定) はこの禁止に含まれない
 - **委任前にファイルを編集しない**: 「先に少し直してから委任しよう」は禁止。未コミットの変更がある状態で worktree を作ると、委任先にその変更が反映されない。作業ツリーを共有する direct-commit モード (後述) では逆に、その変更が委任先のコミットに巻き込まれる
 - **SendMessage を進捗確認や催促に使わない**: 委任先は別プロセスだが同じマシン上の Claude Code セッションなので、SendMessage が届く。届くからといって、状況を尋ねる、急かす、作業中に細かく口を出すといった用途に使ってはならない。委任先は対話しながら進める相手ではない。送ってよいのは次の 2 つだけで、いずれも手順は後述の「委任元から委任先に連絡する場合」に従う
 
     - 委任元が渡した前提が誤っていた場合の訂正
     - 委任先が委任元の管理下にあるもの (別リポジトリの修正、パッケージの publish、先行 PR の merge など) を待って止まっている場合の、解消した旨の通知
 
-- **用が無いのに停止中のセッションを起こさない**: `a cc peer wake` は、送る用件が既に確定していて、連絡先のセッションが停止している場合にだけ使う。状況を見るため、念のため、といった理由で起こしてはならない。`a cc sweep` はアイドルなセッションを意図的に停止しており、それを覆すことになる
-- **委任後に完了をポーリングしない**: 通常の委任の成果は PR として残るので、そこで確認すればよい。PR が出ない direct-commit モードでは委任先から完了報告が来る (後述の「委任先から委任元に連絡する場合」)。どちらも自作のポーリングで先回りしてはならない。委任が始まったことをユーザーに報告したら、そのターンは終わりにする。委任は委任元セッションを解放するための手段であり、張り付いて見守る対象ではない。ユーザーに訊かれて `a cc peer children` で状態を答えるのは構わないが、訊かれてもいないのに状態を確認して報告するのは、それ自体がポーリングにあたる
+- **用が無いのに停止中のセッションを起こさない**: `a agent peer wake` は、送る用件が既に確定していて、連絡先のセッションが停止している場合にだけ使う。状況を見るため、念のため、といった理由で起こしてはならない。`a agent sweep` はアイドルなセッションを意図的に停止しており、それを覆すことになる
+- **委任後に完了をポーリングしない**: 通常の委任の成果は PR として残るので、そこで確認すればよい。PR が出ない direct-commit モードでは委任先から完了報告が来る (後述の「委任先から委任元に連絡する場合」)。どちらも自作のポーリングで先回りしてはならない。委任が始まったことをユーザーに報告したら、そのターンは終わりにする。委任は委任元セッションを解放するための手段であり、張り付いて見守る対象ではない。ユーザーに訊かれて `a agent peer children` で状態を答えるのは構わないが、訊かれてもいないのに状態を確認して報告するのは、それ自体がポーリングにあたる
 
 ## 委任前に確定させること
 
@@ -56,15 +56,15 @@ direct=$(cd "$repo" && a config get repo.direct_commit)
 ```bash
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成 (スキーマは後述の「プロンプト構造 (必須)」参照)
-prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
+prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.claude/skills/delegate/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID="<この委任作業が属する tq タスクの ID>" \
-  a cc new --worktree=<branch-name> --agent --label "<title>" --prompt "$prompt"
+  a agent new --worktree=<branch-name> --agent --label "<title>" --prompt "$prompt"
 ```
 
 - `branch-name`: 新しい環境用に作成するブランチ名
 - `--agent`: **必須**. 委任元 Claude Code セッションからの呼び出しであることを示す。プロンプトを `<delegated-task>` XML でラップし、ブランチ名・base ブランチ・ディレクトリ情報を自動注入する
-- `--label`: **必須**. セッションのタイトル。`cc watch` の TUI でセッション一覧に表示され、コンテキストスイッチ時に「このセッションで何をやっていたか」を素早く思い出すためのもの。以下のルールで生成すること:
+- `--label`: **必須**. セッションのタイトル。`a agent watch` の TUI でセッション一覧に表示され、コンテキストスイッチ時に「このセッションで何をやっていたか」を素早く思い出すためのもの。以下のルールで生成すること:
     - 日本語 2-5 語
     - 具体的な識別子 (PR 番号、ファイル名、機能名、エラー名など) を必ず含める
     - 末尾に句読点を付けない
@@ -80,15 +80,15 @@ DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
 ### オプション
 
 - `--from <ref>`: ベースとなる ref を指定 (デフォルト: main ブランチ)
-    - 例: `a cc new --worktree=feature-x --agent --label "..." --from origin/develop --prompt "..."`
-    - Renovate の PR をテストする場合: `a cc new --worktree=test-upgrade --agent --label "..." --from origin/renovate/some-branch --prompt "..."`
+    - 例: `a agent new --worktree=feature-x --agent --label "..." --from origin/develop --prompt "..."`
+    - Renovate の PR をテストする場合: `a agent new --worktree=test-upgrade --agent --label "..." --from origin/renovate/some-branch --prompt "..."`
 - `-R <path>` / `--repo <path>`: 対象リポジトリのパスを指定。指定するとカレントディレクトリに関係なく、そのリポジトリ上で worktree を作成する
-    - 例: `a cc new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "..." --prompt "..."`
+    - 例: `a agent new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "..." --prompt "..."`
 - `--skip-hooks`: post-worktree-create hook をスキップする。hook 自体が壊れていて worktree 内で直す必要がある場合に使う
 
 #### post-worktree-create hook 失敗時のリトライ
 
-`a cc new` が `Error: hook '...post-worktree-create' exited with status 1` で失敗した場合、worktree とブランチは自動でロールバックされる (新規作成ブランチは削除、既存ブランチを `--force` で上書きしたケースは元の tip に復元)。hook 内のツール (例: チェックアウトしたブランチの設定ファイルがパースエラーで処理できない) が失敗原因で、委任タスク自体とは無関係なことが多い。
+`a agent new` が `Error: hook '...post-worktree-create' exited with status 1` で失敗した場合、worktree とブランチは自動でロールバックされる (新規作成ブランチは削除、既存ブランチを `--force` で上書きしたケースは元の tip に復元)。hook 内のツール (例: チェックアウトしたブランチの設定ファイルがパースエラーで処理できない) が失敗原因で、委任タスク自体とは無関係なことが多い。
 
 リトライは同じコマンドに `--skip-hooks` を付けて再実行するだけでよい。委任先で conflict 解決などにより設定ファイルが正常化すれば、hook が参照するツールも再び使えるようになる。プロンプトにはこの背景 (`--skip-hooks` で作成したこと、設定ファイルが一時的に壊れている理由) を一言添えておくとよい。
 
@@ -113,9 +113,9 @@ for entry in "repo-a 123" "repo-b 456" "repo-c 789"; do
   read repo num <<< "$entry"
   task="$dir/$repo.task.yaml"
   yq eval-all '. as $item ireduce ({}; . * $item)' "$dir/common.yaml" "$dir/$repo.yaml" > "$task"
-  prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$task")
+  prompt=$("$HOME/.claude/skills/delegate/scripts/render-task" "$task")
   DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$task")" \
-    a cc new --worktree=<branch> -R ~/ghq/github.com/<org>/$repo \
+    a agent new --worktree=<branch> -R ~/ghq/github.com/<org>/$repo \
       --agent --label "<title> $repo#$num" --prompt "$prompt" \
       && echo "OK $repo#$num" || echo "FAIL $repo#$num" &
 done
@@ -130,18 +130,18 @@ wait
 # 現在のリポジトリ
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成 (purpose: メール認証ログインが必要な理由, goal: ログイン機能が動くこと, など)
-prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
+prompt=$("$HOME/.claude/skills/delegate/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID=123 \
-  a cc new --worktree=feature-login --agent --label "メール認証ログイン実装" --prompt "$prompt"
+  a agent new --worktree=feature-login --agent --label "メール認証ログイン実装" --prompt "$prompt"
 
 # 別のリポジトリ (-R オプション)
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成 (purpose: API タイムアウトで困っている内容, goal: タイムアウト設定の期待値, など)
-prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
+prompt=$("$HOME/.claude/skills/delegate/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID=124 \
-  a cc new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "API タイムアウト修正" --prompt "$prompt"
+  a agent new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "API タイムアウト修正" --prompt "$prompt"
 ```
 
 実行すると:
@@ -157,8 +157,8 @@ DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
 ```bash
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成
-prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
-a cc new -R "$repo" --agent --label "<title>" --prompt "$prompt"
+prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.claude/skills/delegate/scripts/render-task" "$dir/task.yaml")
+a agent new -R "$repo" --agent --label "<title>" --prompt "$prompt"
 ```
 
 - `--worktree` を付けない。worktree 前提のオプション (`--from`、`--force`、`--skip-hooks`) も使えない
@@ -180,7 +180,7 @@ a cc new -R "$repo" --agent --label "<title>" --prompt "$prompt"
 ## 委任時の注意事項
 
 - **既存ブランチで作業する場合**: 既存のリモートブランチ (例: follow-up PR のブランチ) にそのまま commit したい場合は、ブランチ名をそのまま `<branch-name>` に指定する
-    - 例: `a cc new --worktree=follow-up-123-terraform/foo --agent --label "..." --prompt "..."`
+    - 例: `a agent new --worktree=follow-up-123-terraform/foo --agent --label "..." --prompt "..."`
 - **ブランチ名**: 新規ブランチを作る場合、ブランチ名に `/` を含めないこと。代わりにハイフンを使う (例: `fix/login-bug` ではなく `fix-login-bug`)。ブランチには `fohte/` がプレフィックスとして付くため、`fix/...` だと `fohte/fix/...` になり冗長
 - 新しいインスタンスは独立した worktree で作業するため、現在の作業と競合しない。作業ツリーを共有する direct-commit モードには当てはまらず、前掲の「委任前に確認すること」に従う
 
@@ -210,7 +210,7 @@ a cc new -R "$repo" --agent --label "<title>" --prompt "$prompt"
 - 「現在のブランチで同じファイルを編集した」という理由だけで `--from` が必要だと判断してはいけない。判断基準は「そのファイルを編集したかどうか」ではなく、「委任先が main ブランチ上で同じ修正を適用できるかどうか」。main にあるファイルに対する独立した修正であれば、たとえ現在のブランチでも同じファイルを触っていても `--from` は不要
 - 「ある PR で問題が見つかった」という理由だけで `--from` にその PR のブランチを指定してはいけない。PR は問題の発見契機にすぎない。修正がその PR の変更内容に依存しない限り main ベースで行う
 - **merge 済みの PR/ブランチに対して `--from` を指定してはいけない**。merge 済みということは変更が既に main に取り込まれているため、main ベースで作業すればその変更は含まれている。merge 済みかどうかが不明な場合は、`gh pr view` や `git log` で確認してから判断すること
-- **commit 先 (branch-name) と base ref (`--from`) を混同しない**。既存ブランチに直接 commit したいだけなら `a cc new --worktree=<既存ブランチ名>` で足りる。`--from origin/<同名ブランチ>` の指定は冗長で判断ミスのシグナル
+- **commit 先 (branch-name) と base ref (`--from`) を混同しない**。既存ブランチに直接 commit したいだけなら `a agent new --worktree=<既存ブランチ名>` で足りる。`--from origin/<同名ブランチ>` の指定は冗長で判断ミスのシグナル
 
 間違えて `--from` で現在のブランチを指定すると、関係のない変更が混入して別々の PR にできなくなる。
 
@@ -286,10 +286,10 @@ additionalContext: |
 ```bash
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # 上記の内容で $dir/task.yaml を Write
-prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
+prompt=$("$HOME/.claude/skills/delegate/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID=125 \
-  a cc new --worktree=fix-auth-timeout --agent --label "セッション TTL 設定反映修正" --prompt "$prompt"
+  a agent new --worktree=fix-auth-timeout --agent --label "セッション TTL 設定反映修正" --prompt "$prompt"
 ```
 
 ### 悪い例
@@ -331,10 +331,10 @@ goal: |
 
 ## 委任元から委任先に連絡する場合
 
-1. `a cc peer children` で対象セッションを特定する。`label` と `cwd` でどの委任か判別し、`name` をそのまま `SendMessage` の `to` に渡す
-2. `name` が `null` なら `a cc peer wake <session_id>` を実行し、出力される名前を `to` に使う。停止していれば再開し、停止していなければ現在の名前を返す
+1. `a agent peer children` で対象セッションを特定する。`label` と `cwd` でどの委任か判別し、`name` をそのまま `SendMessage` の `to` に渡す
+2. `name` が `null` なら `a agent peer wake <session_id>` を実行し、出力される名前を `to` に使う。停止していれば再開し、停止していなければ現在の名前を返す
 3. `SendMessage` で送る
-4. 対象が `a cc peer children` に無い、または `wake` が名前を返さない場合にだけ、委任先が失われたとみなす。PR が作成済みならその PR にコメントを残し、まだ無ければユーザーに報告する
+4. 対象が `a agent peer children` に無い、または `wake` が名前を返さない場合にだけ、委任先が失われたとみなす。PR が作成済みならその PR にコメントを残し、まだ無ければユーザーに報告する
 
 ### メッセージに含める内容
 
@@ -353,11 +353,11 @@ goal: |
 - 成果物の所在 (push したコミット)
 - ゴールに届かなかったものがあれば、何が残っているか
 
-ゴールに届かないまま作業を続けられなくなったときは、モードを問わず止まる前に同じ手順で報告する。成果物が無いまま黙って止まると `a cc sweep` にセッションを停止され、報告する機会自体が無くなる。
+ゴールに届かないまま作業を続けられなくなったときは、モードを問わず止まる前に同じ手順で報告する。成果物が無いまま黙って止まると `a agent sweep` にセッションを停止され、報告する機会自体が無くなる。
 
-委任先が委任元に完了報告・訂正・確認を返すときは、`a cc peer parent | jq -r '.[0].name // empty'` で委任元の名前を取り、`SendMessage` の `to` に渡す。
+委任先が委任元に完了報告・訂正・確認を返すときは、`a agent peer parent | jq -r '.[0].name // empty'` で委任元の名前を取り、`SendMessage` の `to` に渡す。
 
-出力が空なら `a cc peer parent | jq -r '.[0].session_id // empty'` を見る。値が返れば委任元は停止しているだけなので、`a cc peer wake <その値>` で再開すると、出力される名前がそのまま `to` に使える。これも空なら委任元自体が記録されていないので、wake は試さない。
+出力が空なら `a agent peer parent | jq -r '.[0].session_id // empty'` を見る。値が返れば委任元は停止しているだけなので、`a agent peer wake <その値>` で再開すると、出力される名前がそのまま `to` に使える。これも空なら委任元自体が記録されていないので、wake は試さない。
 
 それでも名前が取れない場合は、候補を当てにいかずユーザーに報告する。
 

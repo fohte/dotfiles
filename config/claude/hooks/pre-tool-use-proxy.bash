@@ -15,7 +15,7 @@
 input=$(cat)
 
 # Run side-effect hook (ignore stdout, let stderr pass through)
-echo "$input" | a cc hook pre-tool-use > /dev/null
+echo "$input" | a agent hook pre-tool-use > /dev/null
 
 tool_name=$(echo "$input" | jq -r .tool_name)
 
@@ -30,8 +30,8 @@ case "$tool_name" in
     ;;
   EnterWorktree)
     # EnterWorktree is "Permission Required: No" so permissions.deny does not
-    # apply. Worktree creation must go through the /delegate-claude skill.
-    jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "EnterWorktree is disabled. Use the /delegate-claude skill to spawn work in a worktree."}}'
+    # apply. Worktree creation must go through the /delegate skill.
+    jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "EnterWorktree is disabled. Use the delegate skill to spawn work in a worktree."}}'
     exit 0
     ;;
   TaskStop)

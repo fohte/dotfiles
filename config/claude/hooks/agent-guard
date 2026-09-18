@@ -13,7 +13,7 @@ tool_name=$(echo "$input" | jq -r '.tool_name // empty')
 # harness, bypassing runok's deny rules. isolation:"remote" stays allowed.
 isolation=$(echo "$input" | jq -r '.tool_input.isolation // empty')
 if [ "$isolation" = "worktree" ]; then
-  jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "Agent isolation:\"worktree\" is disabled. Use the /delegate-claude skill to spawn work in a worktree."}}'
+  jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "Agent isolation:\"worktree\" is disabled. Use the delegate skill to spawn work in a worktree."}}'
   exit 0
 fi
 

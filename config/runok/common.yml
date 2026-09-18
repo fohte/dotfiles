@@ -347,31 +347,31 @@ rules:
   # Spawning a new Claude session costs real tokens and runs unattended, so it
   # always needs a human decision -- an explicit `ask`, since falling through
   # to pass lets auto mode approve it.
-  - ask: 'a cc new *'
+  - ask: 'a agent new *'
     tests:
-      - ask: 'a cc new'
-      - ask: 'a cc new -R dotfiles'
+      - ask: 'a agent new'
+      - ask: 'a agent new -R dotfiles'
 
   # armyknife (`a`) readonly subcommands. Other mutating subcommands
-  # (a wm delete, a cc resume, etc) fall through to pass.
-  - allow: 'a wm|cc list|ls'
+  # (a wm delete, a agent resume, etc) fall through to pass.
+  - allow: 'a wm|agent list|ls'
     tests:
       - allow: 'a wm list'
       - allow: 'a wm ls'
-      - allow: 'a cc list'
-      - allow: 'a cc ls'
+      - allow: 'a agent list'
+      - allow: 'a agent ls'
 
-  - allow: 'a cc peer parent|children|list *'
+  - allow: 'a agent peer parent|children|list *'
     tests:
-      - allow: 'a cc peer parent'
-      - allow: 'a cc peer children'
-      - allow: 'a cc peer list -R armyknife'
+      - allow: 'a agent peer parent'
+      - allow: 'a agent peer children'
+      - allow: 'a agent peer list -R armyknife'
 
   # `wake` mutates (resumes a paused peer), but only a peer that is already
   # waiting for a message; delegation is unusable if every wake needs approval.
-  - allow: 'a cc peer wake *'
+  - allow: 'a agent peer wake *'
     tests:
-      - allow: 'a cc peer wake abc123'
+      - allow: 'a agent peer wake abc123'
 
   - allow: 'unzip *'
     tests:

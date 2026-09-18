@@ -283,14 +283,14 @@ tests には最低 1 件、提案を導いた実際のコマンドを入れる�
 
 **wrapper エントリ**: 3d の判断で **preset / dotfiles / repo-local** のいずれかに追加。
 
-- **preset (runok-presets)** に追加するのは README policy を満たす **universal wrapper** のみ。preset PR は別リポジトリ向けなので `/delegate-claude` (Codex: `$delegate-claude`) でデリゲートが定石
+- **preset (runok-presets)** に追加するのは README policy を満たす **universal wrapper** のみ。preset PR は別リポジトリ向けなので `delegate` skill でデリゲートが定石
 - **dotfiles** (`config/runok/runok.yml` または `config/runok/{languages,tools}/*.yml`) の `definitions.wrappers` に追加するのは **stack-specific な wrapper** (例: `uvx [--from *] <cmd>` → `languages/python.yml`、`docker exec <c> sh -c <cmd>` → `tools/docker.yml`)
 - **repo-local** (`<repo>/runok.local.yml`) は repo 固有の wrapper のみ。一般的な wrapper はここに置かない
 
 **ignore エントリ**: `config/bin/runok-pending-asks` の `IGNORE_COMMANDS` 配列に正規表現を 1 行追加。元コマンドから機械的に作る:
 
-- `a cc new --worktree=foo --agent ...` → `^a cc new( |$)`
-- 引数違いを許容する場合 (`^a cc new` で前方一致) を基本にする
+- `a agent new --worktree=foo --agent ...` → `^a agent new( |$)`
+- 引数違いを許容する場合 (`^a agent new` で前方一致) を基本にする
 
 ### 6. テスト
 

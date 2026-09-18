@@ -90,16 +90,16 @@ description: Debug (バグ原因特定→修正モード). Use this skill when f
 
 原因が特定できたら、**ユーザーに確認せず**自動的に修正フェーズに移行する。
 
-**原則: main/master ブランチで直接修正しない。** `/delegate-claude` (Codex: `$delegate-claude`) スキルで修正を委任する。
+**原則: main/master ブランチで直接修正しない。** `delegate` スキルで修正を委任する。
 
 **直接修正する例外**:
 
 - dotfiles のように main で直接作業するリポジトリ
-- `/delegate-claude` によって worktree 内で動作している場合 (既に delegate 済み)
+- `delegate` skill によって worktree 内で動作している場合 (既に delegate 済み)
 
 ### 通常 (デフォルト)
 
-`/delegate-claude` (Codex: `$delegate-claude`) スキルで修正を委任する。プロンプトには以下を含めること:
+`delegate` スキルで修正を委任する。プロンプトには以下を含めること:
 
 - **背景**: 発生している問題と原因
 - **現状**: 原因特定の調査結果

@@ -1,16 +1,16 @@
 ---
-name: handoff-claude
-description: Write a Markdown handoff file and start a fresh Claude Code session with it (`a cc new`) so that session picks up the current task — for resetting a session with accumulated context (like a manual auto-compact), switching to a different or more capable model, or getting an independent second opinion from a new session on the same problem. Also use this inside a session that itself was started from a handoff, when the user wants to write up a report to carry back to the session that started it. Trigger ONLY on an explicit, deliberate request for this handoff/report — the user runs `/handoff-claude`, or clearly asks to hand off the session, switch models and continue, or bring results back to the original session. Do not trigger just because context is getting long or a model name comes up in passing conversation — only act when the user explicitly asks for the handoff itself.
+name: handoff
+description: Write a Markdown handoff file and start a fresh Claude Code session with it (`a agent new`) so that session picks up the current task — for resetting a session with accumulated context (like a manual auto-compact), switching to a different or more capable model, or getting an independent second opinion from a new session on the same problem. Also use this inside a session that itself was started from a handoff, when the user wants to write up a report to carry back to the session that started it. Trigger ONLY on an explicit, deliberate request for this handoff/report — the user runs `/handoff`, or clearly asks to hand off the session, switch models and continue, or bring results back to the original session. Do not trigger just because context is getting long or a model name comes up in passing conversation — only act when the user explicitly asks for the handoff itself.
 ---
 
 # 別の Claude Code セッションへ作業を引き継ぐ
 
-現在のセッションのコンテキストを Markdown ファイルに書き出し、`a cc new` で新しいセッションを起動して引き継ぐ。
+現在のセッションのコンテキストを Markdown ファイルに書き出し、`a agent new` で新しいセッションを起動して引き継ぐ。
 
 ## 最優先ルール
 
 - **ユーザーが明示的に依頼した時だけ動く**: 「コンテキストが溜まってきたな」といった独り言や、モデル名が話題に出ただけでは発動しない。発動した以上、引き継ぎ資料の作成自体は迷わず実行する
-- **起動は `a cc new` を使う**: `tmux` や `claude` を直接叩いて起動しない。`a cc new` 経由でないと新セッションが `a cc` の管理下に入らず、親子関係が張られないため持ち帰りの経路 (`a cc peer parent` + SendMessage) が使えなくなる
+- **起動は `a agent new` を使う**: `tmux` や `claude` を直接叩いて起動しない。`a agent new` 経由でないと新セッションが `a agent` の管理下に入らず、親子関係が張られないため持ち帰りの経路 (`a agent peer parent` + SendMessage) が使えなくなる
 
 ## モードの判定
 
@@ -24,7 +24,7 @@ description: Write a Markdown handoff file and start a fresh Claude Code session
 `mktemp -d` で一意なディレクトリを作り、その下に Markdown を書く。固定パスは過去の引き継ぎファイルと衝突するため使わない。
 
 ```bash
-dir=$(mktemp -d -t handoff-claude.XXXXXX)
+dir=$(mktemp -d -t handoff.XXXXXX)
 ```
 
 書き終えたらファイルパスをユーザーに提示する。
@@ -76,11 +76,11 @@ dir=$(mktemp -d -t handoff-claude.XXXXXX)
 - **成立する** → `-R "$(git root -r)"` を付ける。セカンドオピニオンや別トピックの再調査のように、ブランチに依存しない場合はこちら。`git root -r` は worktree 内でも本体リポジトリの root を返すため、worktree や深いサブディレクトリで起動していた影響を受けない
 
 ```bash
-a cc new --prompt "$(cat "$dir/handoff.md")" --label "<タスクの短い要約>"
+a agent new --prompt "$(cat "$dir/handoff.md")" --label "<タスクの短い要約>"
 # ブランチに依存しない場合
-a cc new -R "$(git root -r)" --prompt "$(cat "$dir/handoff.md")" --label "..."
+a agent new -R "$(git root -r)" --prompt "$(cat "$dir/handoff.md")" --label "..."
 # モデルを切り替える場合
-a cc new --prompt "$(cat "$dir/handoff.md")" --label "..." --model <model-id>
+a agent new --prompt "$(cat "$dir/handoff.md")" --label "..." --model <model-id>
 ```
 
 worktree 内から `-R` を付けた場合、その worktree の未コミットの変更は引き継ぎ先から見えない。必要なら handoff.md の「参考情報」に元の cwd を書く。git 管理外のディレクトリでは `git root -r` が失敗するので `-R` を付けない。
@@ -117,12 +117,12 @@ Claude Code から起動した新セッションは、フォーカスを奪わ�
 
 ### 元セッションに渡す
 
-`a cc new` で起動されたセッションなら、元セッションへ直接 SendMessage できる。
+`a agent new` で起動されたセッションなら、元セッションへ直接 SendMessage できる。
 
 ```bash
-a cc peer parent | jq -r '.[0].name // empty'
+a agent peer parent | jq -r '.[0].name // empty'
 ```
 
-得られた名前を `SendMessage` の `to` に渡し、本文には要約とレポートのファイルパスを書く (全文は貼らない)。名前が空なら `a cc peer wake $(a cc peer parent | jq -r '.[0].session_id')` を実行し、出力された名前を `to` に使う。
+得られた名前を `SendMessage` の `to` に渡し、本文には要約とレポートのファイルパスを書く (全文は貼らない)。名前が空なら `a agent peer wake $(a agent peer parent | jq -r '.[0].session_id')` を実行し、出力された名前を `to` に使う。
 
-`a cc peer parent` 自体が空の場合 (`a cc new` 以外で起動されたセッション) と、`wake` がエラーになる場合 (元セッションが `/exit` 済みで resume できない) は、ファイルパスを伝えて元セッションへの受け渡しをユーザーに依頼する。
+`a agent peer parent` 自体が空の場合 (`a agent new` 以外で起動されたセッション) と、`wake` がエラーになる場合 (元セッションが `/exit` 済みで resume できない) は、ファイルパスを伝えて元セッションへの受け渡しをユーザーに依頼する。

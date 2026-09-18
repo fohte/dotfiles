@@ -227,7 +227,7 @@ ok #812 merge
 ```
 
 - `verdict` が `merge` の PR は、approve された時点で `crit-triage` が approve コメント投稿と auto-merge の armed (既にマージ可能な PR ならマージそのもの) まで済ませている。Step 6 で改めてマージ操作をしない
-- `prop-<n>` (`proposals` の 1-based index) は `crit-triage` 自身では何もしない。`--- done ---` にも出てこない。approve された `prop-<n>` は、このセッションが state を確認したあと Claude 自身が実行する (共有 config リポジトリなら `/delegate-claude` で委任、このリポジトリの renovate.json5 ならこのセッションで直接編集)
+- `prop-<n>` (`proposals` の 1-based index) は `crit-triage` 自身では何もしない。`--- done ---` にも出てこない。approve された `prop-<n>` は、このセッションが state を確認したあと Claude 自身が実行する (共有 config リポジトリなら `delegate` skill で委任、このリポジトリの renovate.json5 ならこのセッションで直接編集)
 - `FAILED #<number> <verb>: ...` が出た PR はその操作が実行されていない。原因を潰してから対応する。`review` が失敗した PR は `merge` も armed されない (approve が要るリポジトリでどのみちマージできないため)
 - ユーザーが report を見終えずに crit を終えた場合は `crit ended before the review was finished` で exit 1 する。この場合は state が出ず、何も投稿されない。起動し直す
 - `deny` の理由は crit のコメントに書かれている。調査して crit に返信し、crit を再開して届ける (このループの作法は `plz-explain-with-crit` skill と同じ)。同じ JSON パスで再実行すれば、前ラウンドで処理済みの PR は `skip` される
@@ -240,7 +240,7 @@ ok #812 merge
 - **automerge 化すべきか**: 「直接マージ」と判定した PR について、その根拠が**このパッケージ/エコシステムの一般的な性質** (後方互換を厳守する運用、型定義のみの変更、lockfile 限定の変更など) によるものか、**今回たまたま影響範囲が狭かっただけ**かを区別する。前者のみ automerge 化の候補になる。同じパッケージ/packageRule で過去にも繰り返し同じ判定をしていないか `gh pr list --state merged --search "<package>"` 等で確認すると、実益の大きさを判断しやすい
 - **変更先の判断**: renovate.json5 (または `.github/renovate.json5` 等) の `extends` を確認し、共有設定リポジトリ (renovate-config など) に依存しているか確認する
     - **このリポジトリ固有の事情** (独自の digest pin、特殊な使い方) による判断 → `proposals[].target.shared` を `false` にし、このリポジトリの renovate.json5 への変更として提示する
-    - **他リポジトリでも共通して安全と言える性質** → `proposals[].target.shared` を `true` にし、共有設定リポジトリへの変更として提示する。全リポジトリに影響するため、この場では変更に着手しない。承認後に `/delegate-claude` で委任する (このセッション内で直接 config repo を編集しない)
+    - **他リポジトリでも共通して安全と言える性質** → `proposals[].target.shared` を `true` にし、共有設定リポジトリへの変更として提示する。全リポジトリに影響するため、この場では変更に着手しない。承認後に `delegate` skill で委任する (このセッション内で直接 config repo を編集しない)
 - **出力先**: 検討結果は Step 5 の報告の **`proposals[]` に 1 エントリとして追加する** (PR の行には書かない)。`target.why` (なぜその変更先か) と `risks` (最低 1 件、「これが事故になるとしたら何が起きるか」) は必須。`diff` に `packageRules` (`matchPackageNames` / `matchUpdateTypes` / `automerge` など) の具体的な差分案を書く。各 proposal は PR の判定とは独立した approve/deny toggle を持つので、マージ判定と混同しない
 - **今回の対象 PR への反映**: 今回提案したルールの対象に、今トリアージしている PR 自体が含まれる場合、その PR の対応方針は「automerge に委ねる」とし、このセッションで手動マージしない
 
@@ -287,7 +287,7 @@ release-please 側の `changelog-sections` / `release-as` を直すべきケー�
 - **保留**: 調査で判断がつかない、またはユーザーの判断が必要
 - **automerge に委ねる**: 上の「automerge 化 / Renovate 設定変更の検討」で今回この PR を対象に automerge ルールを新設・拡張した場合。config の変更が反映され次第 Renovate 自身がマージするので、このセッションで手動マージしない
 
-影響範囲が明確で確認項目が少ない PR は、`/delegate-claude` で委任するほどではないことが多い。`merge` に分類してレポートに載せる。
+影響範囲が明確で確認項目が少ない PR は、`delegate` skill で委任するほどではないことが多い。`merge` に分類してレポートに載せる。
 
 **マージ判定を自分で最終決定しない。** `merge` に分類することは提案であって決定ではなく、実際にマージが動くのはユーザーが crit 上でその PR を approve したときだけ。
 
@@ -330,7 +330,7 @@ GitHub Actions 版の `run` は workflow を dispatch した時点で終了す�
 
 ### 委任の場合 (コード修正が必要 / 複数 PR の統合)
 
-`/delegate-claude` スキルで委任する。Renovate のブランチ名をそのまま使う。
+`delegate` スキルで委任する。Renovate のブランチ名をそのまま使う。
 
 複数 PR を統合する場合は、メインとなる PR のブランチで作業し、他の PR の変更も取り込む。統合された側の PR を閉じるのはユーザーの判断なので、**自分で close せず**、どの PR をどこに統合したかをユーザーに報告して委ねる。
 

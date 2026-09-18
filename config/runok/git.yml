@@ -178,7 +178,7 @@ rules:
   # checkout means we're in the main worktree, which is always on the
   # default branch -- merging its own remote tracking ref is the same-branch
   # antipattern that `git pull` should handle instead. Inside a worktree
-  # (`a cc new` / `/delegate-claude`, always a feature branch), merging
+  # (`a agent new` / `/delegate`, always a feature branch), merging
   # origin/main to sync with the default branch is legitimate and stays
   # allowed via the `allow: 'git [-C *] merge origin/main|origin/master *'`
   # rule further down.
@@ -255,42 +255,42 @@ rules:
       - deny: 'git switch main'
       - deny: 'git -C /tmp switch main'
   - deny: 'git [-C *] checkout -b|-B *'
-    message: 'Blocked because creating a branch should go through the `/delegate-claude` skill, which runs the work in an isolated worktree.'
-    fix_suggestion: '/delegate-claude'
+    message: 'Blocked because creating a branch should go through the `delegate` skill, which runs the work in an isolated worktree.'
+    fix_suggestion: 'Use the delegate skill.'
     tests:
       - deny: 'git checkout -b new-branch'
       - deny: 'git checkout -B new-branch'
       - deny: 'git -C /tmp checkout -b new-branch'
-  # Branch creation routes to /delegate-claude. Two patterns are needed:
+  # Branch creation routes to /delegate. Two patterns are needed:
   # an optional `git [-C <dir>]` group would capture switch's own `-C`
   # (force-create) flag, so the bare form and the `git -C <dir>` form are
   # kept separate.
   - deny: 'git switch -c|-C *'
-    message: 'Blocked because creating a branch should go through the `/delegate-claude` skill, which runs the work in an isolated worktree.'
-    fix_suggestion: '/delegate-claude'
+    message: 'Blocked because creating a branch should go through the `delegate` skill, which runs the work in an isolated worktree.'
+    fix_suggestion: 'Use the delegate skill.'
     tests:
       - deny: 'git switch -c new-branch'
       - deny: 'git switch -C new-branch'
   - deny: 'git -C * switch -c|-C *'
-    message: 'Blocked because creating a branch should go through the `/delegate-claude` skill, which runs the work in an isolated worktree.'
-    fix_suggestion: '/delegate-claude'
+    message: 'Blocked because creating a branch should go through the `delegate` skill, which runs the work in an isolated worktree.'
+    fix_suggestion: 'Use the delegate skill.'
     tests:
       - deny: 'git -C /tmp switch -c new-branch'
       - deny: 'git -C /tmp switch -C new-branch'
   # `git branch <name>` doesn't switch the current checkout onto the new
-  # branch, but still creates it outside the `/delegate-claude` flow, so
+  # branch, but still creates it outside the `/delegate` flow, so
   # the same policy applies as `checkout -b`/`switch -c` above.
   - deny: 'git branch *'
     when: 'size(flags) == 0 && size(args) > 1'
-    message: 'Blocked because creating a branch should go through the `/delegate-claude` skill, which runs the work in an isolated worktree.'
-    fix_suggestion: '/delegate-claude'
+    message: 'Blocked because creating a branch should go through the `delegate` skill, which runs the work in an isolated worktree.'
+    fix_suggestion: 'Use the delegate skill.'
     tests:
       - deny: 'git branch "copier-update/v0.8.13"'
       - deny: 'git branch new-test-branch'
       - deny: 'git branch fix-test-expect-split origin/main'
   - deny: 'git [-C *] worktree add *'
-    message: 'Blocked because creating a worktree should go through the `/delegate-claude` skill.'
-    fix_suggestion: '/delegate-claude'
+    message: 'Blocked because creating a worktree should go through the `delegate` skill.'
+    fix_suggestion: 'Use the delegate skill.'
     tests:
       - deny: 'git worktree add ../wt'
       - deny: 'git worktree add ../wt feature-branch'
@@ -301,7 +301,7 @@ rules:
   # --assume-unchanged`) are swept up as collateral.
   - deny: 'git [-C *] hash-object|update-index|read-tree|write-tree|commit-tree|mktree|mktag|fast-import|replace *'
     message: 'Blocked because git plumbing can build and publish a commit without a checkout, bypassing the branch-creation and worktree rules.'
-    fix_suggestion: '/delegate-claude'
+    fix_suggestion: 'Use the delegate skill.'
     tests:
       - deny: 'git hash-object -w /tmp/blob'
       - deny: 'git update-index --add --cacheinfo 100644,abc1234,foo.txt'
@@ -318,7 +318,7 @@ rules:
   - deny: 'git [-C *] push *'
     when: "args.exists(a, a.matches('^[0-9a-f]{7,40}:'))"
     message: 'Blocked because pushing a raw object name creates a remote branch with no local branch behind it, bypassing the branch-creation and worktree rules.'
-    fix_suggestion: '/delegate-claude'
+    fix_suggestion: 'Use the delegate skill.'
     tests:
       - deny: 'git push origin 0123456789abcdef0123456789abcdef01234567:refs/heads/foo'
       - deny: 'git push origin abc1234:refs/heads/foo'
@@ -481,7 +481,7 @@ rules:
   - allow: 'git [-C *] fetch *'
     tests:
       - allow: 'git fetch origin'
-  # Inside a `.worktrees/<name>` checkout (`a cc new` / `/delegate-claude`),
+  # Inside a `.worktrees/<name>` checkout (`a agent new` / `/delegate`),
   # this is the only rule that matches (the cwd-gated deny above requires
   # being outside `.worktrees/`), so it stays allow there.
   - allow: 'git [-C *] merge origin/main|origin/master *'
@@ -648,7 +648,7 @@ rules:
   # rule above, which is about where to read source from.
   - deny: 'gh [-R *] api * -X|--method POST|PUT|PATCH|DELETE * repos/*/contents* *'
     message: 'Blocked because writing through the contents API commits to a branch without a checkout, bypassing the branch-creation and worktree rules.'
-    fix_suggestion: '/delegate-claude'
+    fix_suggestion: 'Use the delegate skill.'
     tests:
       - deny: 'gh api -X PUT repos/fohte/foo/contents/bar.md -f message=m'
       - deny: 'gh api --method PUT repos/fohte/foo/contents/bar.md'
@@ -660,7 +660,7 @@ rules:
   # build an object graph and refs publishes it, with no local repo involved.
   - deny: 'gh [-R *] api * -X|--method POST|PUT|PATCH|DELETE * repos/*/git/* *'
     message: 'Blocked because the git data API creates commits and branches server-side, bypassing the branch-creation and worktree rules.'
-    fix_suggestion: '/delegate-claude'
+    fix_suggestion: 'Use the delegate skill.'
     tests:
       - deny: 'gh api -X POST repos/fohte/foo/git/blobs -f content=x'
       - deny: 'gh api -X POST repos/fohte/foo/git/refs -f ref=refs/heads/x'
@@ -681,7 +681,7 @@ rules:
   - deny: 'gh [-R *] api * graphql *'
     when: "args.exists(a, a.contains('mutation'))"
     message: 'Blocked because a GraphQL mutation (e.g. createCommitOnBranch, createRef) writes to the repo server-side, bypassing the branch-creation and worktree rules.'
-    fix_suggestion: '/delegate-claude'
+    fix_suggestion: 'Use the delegate skill.'
     tests:
       - deny: 'gh api graphql -f query=mutation{createCommitOnBranch}'
       - deny: 'gh api graphql --raw-field query=mutation{createRef}'

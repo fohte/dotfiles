@@ -1,6 +1,6 @@
 #!/bin/bash
 # post-worktree-create hook for armyknife.
-# Called by `a cc new --worktree` after creating a git worktree.
+# Called by `a agent new --worktree` after creating a git worktree.
 #
 # armyknife discovers this file at $XDG_CONFIG_HOME/armyknife/hooks/post-worktree-create
 # (defaults to ~/.config/armyknife/hooks/post-worktree-create).
@@ -19,7 +19,7 @@ if [[ -z "${ARMYKNIFE_WORKTREE_PATH:-}" ]]; then
   exit 0
 fi
 
-# Record the delegated task's motivation (set by delegate-claude skill) so
+# Record the delegated task's motivation (set by delegate skill) so
 # create-pr can use it as the highest-priority source for the PR body's Why.
 # `|| true`: a failure here must not roll back the whole worktree over metadata.
 if [[ -n "${DELEGATE_TASK_PURPOSE:-}" ]]; then

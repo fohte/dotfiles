@@ -27,7 +27,7 @@ description: Split a task into a set of small, single-concern PRs that can be im
 
 ## 出力フォーマット
 
-以下の形式で出力する。委任先へのプロンプトはここでは書かない (delegate-claude の担当)。
+以下の形式で出力する。委任先へのプロンプトはここでは書かない (delegate の担当)。
 
 ```markdown
 ## Batch 1 (今すぐ並列で着手可能)
@@ -47,7 +47,7 @@ description: Split a task into a set of small, single-concern PRs that can be im
 - 依存: PR 1 (<何を待つのか>)
 ```
 
-分割後、そのまま委任に進む場合は delegate-claude に渡す。delegate-claude は 1 委任 = 1 PR なので、着手できるのは Batch 1 のみ。後続 Batch は先行 PR が merge されてから改めて委任する。
+分割後、そのまま委任に進む場合は delegate に渡す。delegate は 1 委任 = 1 PR なので、着手できるのは Batch 1 のみ。後続 Batch は先行 PR が merge されてから改めて委任する。
 
 ## アンチパターン
 

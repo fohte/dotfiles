@@ -69,7 +69,7 @@ format = "$output "
 
 # Shows '⏸' when armyknife auto-paused the Claude Code session in this pane.
 # The flag is materialized as `<TMPDIR>/armyknife-cc-paused-<user>-<pane>` by
-# `a cc hook`; file stat avoids the ~40ms tmux client fork per prompt.
+# `a agent hook`; file stat avoids the ~40ms tmux client fork per prompt.
 [custom.cc_paused]
 command = 'echo ⏸'
 when = '[ -n "$TMUX" ] && [ -e "${TMPDIR:-/tmp}/armyknife-cc-paused-$USER-$TMUX_PANE" ]'

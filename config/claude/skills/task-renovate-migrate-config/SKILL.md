@@ -5,7 +5,7 @@ description: Batch process Renovate migrate-config PRs
 
 # Batch process Renovate migrate-config PRs
 
-Search for `renovate/migrate-config` branch PRs in fohte's GitHub repositories, filter those using `generic-boilerplate` (have `.copier-answers.yml`), and delegate migration work via delegate-claude.
+Search for `renovate/migrate-config` branch PRs in fohte's GitHub repositories, filter those using `generic-boilerplate` (have `.copier-answers.yml`), and delegate migration work via delegate.
 
 ## Steps
 
@@ -13,10 +13,10 @@ Search for `renovate/migrate-config` branch PRs in fohte's GitHub repositories, 
 2. Filter PRs with title "chore(config): migrate Renovate config"
 3. Check `.copier-answers.yml` existence: `gh api repos/fohte/<repo>/contents/.copier-answers.yml`
 4. List qualifying repositories
-5. For each repository, use `delegate-claude` Skill:
+5. For each repository, use `delegate` Skill:
 
 ```bash
-cd ~/ghq/github.com/fohte/<repo> && a cc new --worktree=renovate/migrate-config --prompt "## Background
+cd ~/ghq/github.com/fohte/<repo> && a agent new --worktree=renovate/migrate-config --prompt "## Background
 Renovate created a config migration PR #<number>.
 
 ## Task
