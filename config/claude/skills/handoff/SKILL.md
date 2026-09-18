@@ -10,7 +10,7 @@ description: Write a Markdown handoff file and start a fresh Claude Code session
 ## 最優先ルール
 
 - **ユーザーが明示的に依頼した時だけ動く**: 「コンテキストが溜まってきたな」といった独り言や、モデル名が話題に出ただけでは発動しない。発動した以上、引き継ぎ資料の作成自体は迷わず実行する
-- **起動は `a agent new` を使う**: `tmux` や `claude` を直接叩いて起動しない。`a agent new` 経由でないと新セッションが `a agent` の管理下に入らず、親子関係が張られないため持ち帰りの経路 (`a agent peer parent` + SendMessage) が使えなくなる
+- **起動は `a agent new` を使う**: `tmux` や `claude` を直接叩いて起動しない。`a agent new` 経由でないと新セッションが `a agent` の管理下に入らず、親子関係が張られないため持ち帰りの経路 (`a agent peer parent` + `a agent peer notify`) が使えなくなる
 
 ## モードの判定
 
@@ -117,12 +117,12 @@ Claude Code から起動した新セッションは、フォーカスを奪わ�
 
 ### 元セッションに渡す
 
-`a agent new` で起動されたセッションなら、元セッションへ直接 SendMessage できる。
+`a agent new` で起動されたセッションなら、元セッションへ直接 `a agent peer notify` で送れる。
 
 ```bash
-a agent peer parent | jq -r '.[0].name // empty'
+a agent peer parent | jq -r '.[0].session_id // empty'
 ```
 
-得られた名前を `SendMessage` の `to` に渡し、本文には要約とレポートのファイルパスを書く (全文は貼らない)。名前が空なら `a agent peer wake $(a agent peer parent | jq -r '.[0].session_id')` を実行し、出力された名前を `to` に使う。
+得られた `session_id` を使い、`a agent peer notify --message "<要約とレポートのファイルパス>" <session_id>` で送る (全文は貼らない)。元セッションが `paused` で止まっていても armyknife が内部で再開してから配送する。
 
-`a agent peer parent` 自体が空の場合 (`a agent new` 以外で起動されたセッション) と、`wake` がエラーになる場合 (元セッションが `/exit` 済みで resume できない) は、ファイルパスを伝えて元セッションへの受け渡しをユーザーに依頼する。
+`session_id` が空の場合 (`a agent new` 以外で起動されたセッション) と、`notify` が `ended` エラーで失敗する場合 (元セッションが `/exit` 済み) は、ファイルパスを伝えて元セッションへの受け渡しをユーザーに依頼する。
