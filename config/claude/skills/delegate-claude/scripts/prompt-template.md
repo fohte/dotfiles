@@ -35,8 +35,10 @@
 {{ strings.TrimSpace $task.goal }}
 {{ if eq (getenv "DELEGATE_DIRECT_COMMIT" "false") "true" }}
 `/commit` skill で commit し、push するところまで完了させること。PR は作成しない。
+
+そこまで終わったら、delegate-claude skill の「委任先から委任元に連絡する場合」に従って委任元に完了を報告すること。
 {{- else }}
 `/commit` skill で commit し、`/create-pr` skill で PR を作成するところまで完了させること。
 {{- end }}
 
-そこまで終わったら、delegate-claude skill の「委任先から委任元に連絡する場合」に従って委任元に完了を報告すること。
+ゴールに届かないまま作業を続けられなくなったときは、止まる前に delegate-claude skill の「委任先から委任元に連絡する場合」に従って委任元に報告すること。
