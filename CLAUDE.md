@@ -26,6 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 新規ファイル追加で `symlinks` を更新したとき
 - ビルドが要る tool (例: `config/claude/` の jsonnet → `~/.claude/settings.json`) を変更したとき
+- symlink ではなく copy で配置される tool (`config/colima/`) を変更したとき
 
 その場合はタグで限定して `dot deploy -t <tag>` を実行する (`dot deploy -t claude` など)。`make -C config/<tool>` を直接叩かず `dot deploy` 経由にすること (symlink 配置とビルド・install が揃うため)。
 

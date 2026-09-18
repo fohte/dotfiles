@@ -155,7 +155,17 @@ if match_tag mise; then
 fi
 
 if match_tag colima; then
-  sym config/colima/colima.yaml ~/.colima/default/colima.yaml
+  # `colima start` rewrites the instance config in place, which through a
+  # symlink clobbers this repo's copy (comments dropped, quotes rewritten).
+  # Deploy by copy so colima can own the deployed file — at the cost of
+  # deploy discarding whatever colima wrote there (e.g. `colima start --cpu`
+  # overrides), so persist those here instead.
+  log-exec mkdir -p ~/.colima/default
+  # Staging through .tmp keeps the destination valid if the copy is
+  # interrupted, and `mv` replaces a symlink left by an earlier deploy
+  # instead of following it back into the repo like `cp` would.
+  log-exec cp "$DOTFILES_DIR/config/colima/colima.yaml" ~/.colima/default/colima.yaml.tmp
+  log-exec mv -f ~/.colima/default/colima.yaml.tmp ~/.colima/default/colima.yaml
 fi
 
 if match_tag runok; then
