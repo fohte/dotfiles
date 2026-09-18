@@ -36,6 +36,7 @@ description: Delegate tasks to a separate Claude Code instance, either in its ow
 - **設計判断**: どの仕組みで実現するか。未決なら design skill で案を出し、ユーザーが選んだ案を確定案とする (design skill は決定を下さず選択を求めて終わる)
 - **バグの原因**: どこが原因でどう直すか。未特定なら debug-flow skill で root cause を特定する。特定できた時点で委任に戻り、修正フェーズには進ませない (debug-flow は原因特定後に自動で修正へ移行し、main で直接作業するリポジトリでは委任せず実装してしまう)
 - **方針を決めるための調査**: 選択肢の比較や実現可能性の確認。research skill で調べる
+- **tq タスク**: この委任作業を載せるタスク。まだ無いなら track-in-tq skill を呼んで作る (既存タスクを探す手順もその skill が持つ)。委任先は自分のタスクを作らないので、タスクが無いまま委任すると成果がどこにも記録されない
 
 確定した内容は根拠付きで `investigated` に、達成状態は `goal` に書く。
 
@@ -57,7 +58,7 @@ dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成 (スキーマは後述の「プロンプト構造 (必須)」参照)
 prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
-  DELEGATE_TQ_TASK_ID="<この委任作業が属する tq タスクの ID。無ければ変数ごと省略>" \
+  DELEGATE_TQ_TASK_ID="<この委任作業が属する tq タスクの ID>" \
   a cc new --worktree=<branch-name> --agent --label "<title>" --prompt "$prompt"
 ```
 
@@ -74,7 +75,7 @@ DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
 - `DELEGATE_DIRECT_COMMIT`: 上で求めた `direct` をそのまま渡す環境変数。`render-task` が末尾の締めくくりを「PR を作成するまで」と「commit して push するまで」で切り替える
 - `--prompt`: `render-task` の出力をそのまま渡す
 - `DELEGATE_TASK_PURPOSE`: `task.yaml` の `purpose` をそのまま渡す環境変数。委任先 worktree の post-worktree-create hook がこれを読み `branch.<name>.x-purpose` に書き込み、`create-pr` skill が PR の Why セクション生成時に参照する
-- `DELEGATE_TQ_TASK_ID`: この委任作業が属する tq タスクの ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-task-id` に書き込み、委任先の `create-pr` skill が立てた PR のリンク先に使う。委任先は自分のタスクを作らないため、渡さないと委任先が出した PR がどのタスクにも載らない。**委任元が tq タスクを持っているなら必ず渡す**
+- `DELEGATE_TQ_TASK_ID`: この委任作業が属する tq タスクの ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-task-id` に書き込み、委任先の `create-pr` skill が立てた PR のリンク先に使う。タスクは委任前に必ず用意されている (前述の「委任前に確定させること」) ので、この変数を省略しない
 
 ### オプション
 
@@ -131,6 +132,7 @@ dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成 (purpose: メール認証ログインが必要な理由, goal: ログイン機能が動くこと, など)
 prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
+  DELEGATE_TQ_TASK_ID=123 \
   a cc new --worktree=feature-login --agent --label "メール認証ログイン実装" --prompt "$prompt"
 
 # 別のリポジトリ (-R オプション)
@@ -138,6 +140,7 @@ dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成 (purpose: API タイムアウトで困っている内容, goal: タイムアウト設定の期待値, など)
 prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
+  DELEGATE_TQ_TASK_ID=124 \
   a cc new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "API タイムアウト修正" --prompt "$prompt"
 ```
 
@@ -285,6 +288,7 @@ dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # 上記の内容で $dir/task.yaml を Write
 prompt=$("$HOME/.claude/skills/delegate-claude/scripts/render-task" "$dir/task.yaml")
 DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
+  DELEGATE_TQ_TASK_ID=125 \
   a cc new --worktree=fix-auth-timeout --agent --label "セッション TTL 設定反映修正" --prompt "$prompt"
 ```
 
