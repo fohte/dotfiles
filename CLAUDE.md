@@ -39,7 +39,7 @@ linked worktree (`.worktrees/<name>` など) からの `dot deploy` / `dot refre
 - **`config/agents/AGENTS.md`** → `~/.claude/CLAUDE.md` と `~/.codex/AGENTS.md` (同一ファイルへの symlink): Claude Code / Codex 共通のグローバル指示。エンジン固有の指示は含めない
 - **`rules/<name>.md`** → `~/.claude/rules/`: Claude Code だけが読むグローバル指示 (Codex には見えない)
 - **`skills/<name>/SKILL.md`**: 特定タスク用の skill。`description` で trigger 条件を書く
-- **`contexts/<name>/{config.yaml,template.md}`**: SessionStart hook (`gen-claude-template context`) で動的にレンダされてセッション冒頭に注入される。`config.yaml` の `variables` に shell コマンドを書き、`template.md` (gomplate) でレンダする。マシン依存・gitignored な値 (例: `dot role get repo`) を public repo に書かずに Claude へ渡したいときに使う
+- **`contexts/<name>/{config.yaml,template.md}`**: SessionStart hook (`gen-claude-template context`) で動的にレンダされ、Claude Code と Codex (`config/codex/install-hooks` が登録) の両方のセッション冒頭に注入される。エンジン固有の内容は書かない。`config.yaml` の `variables` に shell コマンドを書き、`template.md` (gomplate) でレンダする。マシン依存・gitignored な値 (例: `dot role get repo`) を public repo に書かずにエージェントへ渡したいときに使う
 - **`settings.jsonnet`**: 権限・hook 設定 (`~/.claude/settings.json` にビルド)
 - **`mcp-servers.jsonnet`**: MCP サーバ定義 (`~/.claude.json` の `mcpServers` にマージ install)
 - 上記 2 つの jsonnet は base + role overlay + local の 3 層マージで、ビルドが要るので変更後は `dot deploy -t claude`。`config/agents/AGENTS.md`、`rules/`、`skills/`、`contexts/` は symlink なので編集だけで反映される
