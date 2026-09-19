@@ -36,7 +36,45 @@ Deploy options:
 EOS
 }
 
+# Set git_dir / common_dir (physical absolute paths) for directory $1. Fails
+# outside a repo or without git. Paths are resolved by hand because
+# `rev-parse --path-format=absolute` needs git >= 2.31 and older git echoes the
+# unknown flag back as if it were a path.
+read_git_dirs() {
+  { read -r git_dir && read -r common_dir; } < <(cd "$1" && git rev-parse --git-dir --git-common-dir 2> /dev/null) || return 1
+  git_dir="$(cd "$1" && cd -P "$git_dir" && pwd)" || return 1
+  common_dir="$(cd "$1" && cd -P "$common_dir" && pwd)" || return 1
+}
+
+# Abort when deploying from a linked git worktree. Symlinks pointing into one
+# dangle once the worktree is removed, and a PATH `dot` from inside one deploys
+# the main checkout, not the worktree's files. Skipped when git is unavailable
+# or DOTFILES_DIR is not a repo, so the initial deploy keeps working.
+refuse_linked_worktree() {
+  local action="$1" git_dir common_dir dot_git dot_common reason
+
+  read_git_dirs "$DOTFILES_DIR" || return 0
+  dot_git="$git_dir" dot_common="$common_dir"
+
+  if [ "$dot_git" != "$dot_common" ]; then
+    reason="$DOTFILES_DIR is a linked git worktree; symlinks under \$HOME would dangle once it is removed."
+  elif read_git_dirs "$PWD" && [ "$git_dir" != "$common_dir" ] && [ "$common_dir" = "$dot_common" ]; then
+    reason="$PWD is a linked git worktree; 'dot $action' would deploy the main repository, not this worktree."
+  else
+    return 0
+  fi
+
+  {
+    echo "Error: $reason"
+    echo "Run it from the main repository instead:"
+    printf '    cd %q && ./config/bin/dot %s\n' "${dot_common%/.git}" "$action"
+  } >&2
+  exit 1
+}
+
 cmd_deploy() {
+  refuse_linked_worktree deploy
+
   # These variables are consumed by helpers in lib/deploy.bash and `symlinks`.
   local tags="" DRYRUN="" FORCE=""
 
@@ -98,6 +136,8 @@ cmd_deploy() {
 }
 
 cmd_refresh() {
+  refuse_linked_worktree refresh
+
   cd "$DOTFILES_DIR"
   mise run refresh "$@"
 }

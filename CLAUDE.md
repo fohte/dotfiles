@@ -30,6 +30,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 その場合はタグで限定して `dot deploy -t <tag>` を実行する (`dot deploy -t claude` など)。`make -C config/<tool>` を直接叩かず `dot deploy` 経由にすること (symlink 配置とビルド・install が揃うため)。
 
+linked worktree (`.worktrees/<name>` など) からの `dot deploy` / `dot refresh` は拒否される (worktree 削除で symlink が dangle するため)。deploy は main checkout で実行する。
+
 ## Claude Code 設定
 
 `config/claude/` 配下は symlink で `~/.claude/` に展開される。主要な拡張ポイント:
