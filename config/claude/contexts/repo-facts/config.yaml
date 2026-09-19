@@ -1,0 +1,13 @@
+variables:
+  repo: gh repo view --json name,visibility,owner --jq .
+  repo_language: a config get repo.language
+  # Reuses the master-push-repos ask rule in config/runok/git.yml so path
+  # membership is defined in one place. Only the working directory matters,
+  # not the probed branch/remote.
+  is_master_push_repo: |
+    runok check --output-format json 'git push origin main' 2>/dev/null | jq -e '.decision == "ask"' > /dev/null && echo true || echo false
+  has_release_please: ~/.agents/skills/create-pr/scripts/has-release-please
+  # Resolved at runtime: the role is machine-dependent (gitignored .role), so
+  # it must not be hard-coded in this public repo.
+  role: dot role get
+template: template.md

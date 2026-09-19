@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # Idempotently register this repo's hooks in Codex's hooks.json:
 # the PreToolUse guards (default-branch-edit-guard, ponytail-comment-guard,
-# agent-guard), the SessionStart context injection (gen-claude-template), and
-# the tq session tracking hooks (SessionStart / Stop / SessionEnd).
+# agent-guard), the SessionStart context injection (all of `gen-claude-template
+# context`, the same set Claude Code gets), and the tq session tracking hooks
+# (SessionStart / Stop / SessionEnd).
 #
 # `runok init` registers its own PreToolUse/PermissionRequest entries in the
-# same file (command `runok hook --agent codex`). Both this script and that
-# command only ever append an entry when no existing entry already carries
-# the same `command` string -- neither can clobber the other's entries, so
-# hooks.json can be re-run by both without stepping on the other's additions.
+# same file (command `runok hook --agent codex`). This script appends an entry
+# only when no existing entry carries the same `command` string, and removes
+# only the commands listed in `legacy_commands`, so it never touches runok's
+# entries and both can re-run without stepping on each other.
 set -euo pipefail
 
 hooks_path="${1:?Usage: install-hooks <hooks.json path>}"
@@ -30,10 +31,21 @@ fi
 entries=$'PreToolUse\t^apply_patch$\t~/.claude/hooks/default-branch-edit-guard
 PreToolUse\t^apply_patch$\t~/.claude/hooks/ponytail-comment-guard
 PreToolUse\t^spawn_agent$\t~/.claude/hooks/agent-guard
-SessionStart\t.*\tgen-claude-template context repo-language-rules
+SessionStart\t.*\tgen-claude-template context
 SessionStart\t.*\ttq hook SessionStart --provider codex || true
 Stop\t.*\ttq hook Stop --provider codex || true
 SessionEnd\t.*\ttq hook SessionEnd --provider codex || true'
+
+# Commands this script used to register. An already-deployed hooks.json still
+# has them, and the append-only loop below would leave both old and new
+# registered (duplicate SessionStart output).
+legacy_commands=$'gen-claude-template context repo-language-rules'
+
+while IFS= read -r command; do
+  content=$(jq --arg command "$command" '
+    if .hooks then .hooks |= map_values(map(select(all(.hooks[]?; .command != $command)))) else . end
+  ' <<< "$content")
+done <<< "$legacy_commands"
 
 while IFS=$'\t' read -r event matcher command; do
   content=$(jq --arg event "$event" --arg matcher "$matcher" --arg command "$command" '
