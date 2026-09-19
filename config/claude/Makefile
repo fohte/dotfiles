@@ -29,7 +29,6 @@ $(strip \
 endef
 
 BUILD_TARGETS := settings.json mcp-servers.json
-LOCK_HELPER := $(CURDIR)/../armyknife/hooks/with-mkdir-lock.bash
 
 # Resolve role overlays at parse time so make tracks them as prerequisites.
 # Without this, edits to the role overlay don't trigger a rebuild and `install`
@@ -85,15 +84,7 @@ check-settings: settings.json
 install: $(BUILD_TARGETS) check-settings
 	cp settings.json ~/.claude/settings.json
 	cp settings.json .settings.json.installed
-	( \
-		source "$(LOCK_HELPER)"; \
-		update_claude_json() { \
-			lock_temp_file "$$HOME/.claude.json" && \
-			jq --argjson mcp "$$(cat mcp-servers.json)" '.mcpServers = $$mcp' ~/.claude.json > "$$lock_temp_path" && \
-			mv "$$lock_temp_path" ~/.claude.json; \
-		}; \
-		with_mkdir_lock "$$HOME/.claude.json.lock" update_claude_json; \
-	)
+	./install-mcp-servers
 
 LOCAL_JSONNET_FILES := settings.local.jsonnet mcp-servers.local.jsonnet
 

@@ -77,6 +77,7 @@ is_own_repo=false
 # worktree creation.
 CLAUDE_JSON="$HOME/.claude.json"
 if [[ "$is_own_repo" == true ]] && [[ -f "$CLAUDE_JSON" ]]; then
+  # lock_temp_path is owned by the surrounding with_mkdir_lock subshell.
   # shellcheck disable=SC2154
   update_claude_json() {
     lock_temp_file "$CLAUDE_JSON" &&
@@ -101,6 +102,7 @@ fi
 # here (a stuck lock, a malformed config.toml) must not roll back the worktree.
 CODEX_CONFIG="$HOME/.codex/config.toml"
 if [[ "$is_own_repo" == true ]] && [[ -f "$CODEX_CONFIG" ]]; then
+  # lock_temp_path is owned by the surrounding with_mkdir_lock subshell.
   # shellcheck disable=SC2154
   update_codex_config() {
     lock_temp_file "$CODEX_CONFIG" &&

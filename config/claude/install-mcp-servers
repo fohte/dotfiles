@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../armyknife/hooks/with-mkdir-lock.bash disable=SC1091
+source "$script_dir/../armyknife/hooks/with-mkdir-lock.bash"
+
+# lock_temp_path is owned by the surrounding with_mkdir_lock subshell.
+# shellcheck disable=SC2154
+update_claude_json() {
+  lock_temp_file "$HOME/.claude.json" &&
+    jq --argjson mcp "$(cat "$script_dir/mcp-servers.json")" \
+      '.mcpServers = $mcp' \
+      "$HOME/.claude.json" > "$lock_temp_path" &&
+    mv "$lock_temp_path" "$HOME/.claude.json"
+}
+
+with_mkdir_lock "$HOME/.claude.json.lock" update_claude_json

@@ -12,6 +12,12 @@ with_mkdir_lock() {
     local lock_acquired=false
     local lock_temp_path=""
 
+    # Invoked by callbacks passed to with_mkdir_lock.
+    # shellcheck disable=SC2329
+    lock_temp_file() {
+      lock_temp_path="$(mktemp "$1.XXXXXX")"
+    }
+
     # shellcheck disable=SC2329
     cleanup_lock() {
       local status=$?
@@ -43,8 +49,4 @@ with_mkdir_lock() {
 
     "$@"
   )
-}
-
-lock_temp_file() {
-  lock_temp_path="$(mktemp "$1.XXXXXX")"
 }
