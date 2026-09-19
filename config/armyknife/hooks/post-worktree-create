@@ -71,9 +71,29 @@ is_own_repo=false
 # Without this, Claude Code prompts for trust confirmation on every new worktree.
 CLAUDE_JSON="$HOME/.claude.json"
 if [[ "$is_own_repo" == true ]] && [[ -f "$CLAUDE_JSON" ]]; then
-  jq --arg path "$ARMYKNIFE_WORKTREE_PATH" \
-    '.projects[$path].hasTrustDialogAccepted = true' \
-    "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+  (
+    claude_json_lock="$CLAUDE_JSON.lock"
+    claude_json_locked=false
+    for _ in $(seq 50); do
+      if mkdir "$claude_json_lock" 2> /dev/null; then
+        claude_json_locked=true
+        break
+      fi
+      sleep 0.1
+    done
+    if [[ "$claude_json_locked" != true ]]; then
+      echo "error: failed to acquire lock for $CLAUDE_JSON" >&2
+      exit 1
+    fi
+
+    trap 'rmdir "$claude_json_lock" 2>/dev/null' EXIT
+    claude_json_tmp="$(mktemp "${TMPDIR:-/tmp}/claude-json.XXXXXX")"
+    trap 'rm -f "$claude_json_tmp"; rmdir "$claude_json_lock" 2>/dev/null' EXIT
+    jq --arg path "$ARMYKNIFE_WORKTREE_PATH" \
+      '.projects[$path].hasTrustDialogAccepted = true' \
+      "$CLAUDE_JSON" > "$claude_json_tmp"
+    mv "$claude_json_tmp" "$CLAUDE_JSON"
+  )
 fi
 
 # Same trust registration for Codex (~/.codex/config.toml [projects."<path>"]

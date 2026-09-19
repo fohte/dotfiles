@@ -84,8 +84,26 @@ check-settings: settings.json
 install: $(BUILD_TARGETS) check-settings
 	cp settings.json ~/.claude/settings.json
 	cp settings.json .settings.json.installed
-	jq --argjson mcp "$$(cat mcp-servers.json)" '.mcpServers = $$mcp' ~/.claude.json > ~/.claude.json.tmp \
-		&& mv ~/.claude.json.tmp ~/.claude.json
+	( \
+		claude_json_lock="$$HOME/.claude.json.lock"; \
+		claude_json_locked=false; \
+		for _ in $$(seq 50); do \
+			if mkdir "$$claude_json_lock" 2>/dev/null; then \
+				claude_json_locked=true; \
+				break; \
+			fi; \
+			sleep 0.1; \
+		done; \
+		if [ "$$claude_json_locked" != true ]; then \
+			echo "error: failed to acquire lock for $$HOME/.claude.json" >&2; \
+			exit 1; \
+		fi; \
+		trap 'rmdir "$$claude_json_lock" 2>/dev/null' EXIT; \
+		claude_json_tmp="$$(mktemp "$${TMPDIR:-/tmp}/claude-json.XXXXXX")"; \
+		trap 'rm -f "$$claude_json_tmp"; rmdir "$$claude_json_lock" 2>/dev/null' EXIT; \
+		jq --argjson mcp "$$(cat mcp-servers.json)" '.mcpServers = $$mcp' ~/.claude.json > "$$claude_json_tmp"; \
+		mv "$$claude_json_tmp" ~/.claude.json; \
+	)
 
 LOCAL_JSONNET_FILES := settings.local.jsonnet mcp-servers.local.jsonnet
 
