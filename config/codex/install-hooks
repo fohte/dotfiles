@@ -3,7 +3,8 @@
 # the PreToolUse guards (default-branch-edit-guard, ponytail-comment-guard,
 # agent-guard), the SessionStart context injection (all of `gen-claude-template
 # context`, the same set Claude Code gets), and the tq session tracking hooks
-# (SessionStart / Stop / SessionEnd).
+# (SessionStart / Stop / SessionEnd), and the armyknife session tracking hooks
+# (`a agent hook`).
 #
 # `runok init` registers its own PreToolUse/PermissionRequest entries in the
 # same file (command `runok hook --agent codex`). This script appends an entry
@@ -22,7 +23,11 @@ else
   content='{}'
 fi
 
-# tab-separated: event, matcher regex, command
+# tab-separated: event, matcher regex, command, [timeout seconds]
+#
+# Append-only: Codex trusts hooks by position (`source_path:event:group:handler`),
+# so inserting before an existing entry would force re-approval of every hook
+# after it. Add new entries at the end of this list.
 #
 # tq hooks: `--provider codex` is required because tq defaults to `claude_code`,
 # which would record Codex sessions as Claude Code. `|| true` is needed because
@@ -34,7 +39,13 @@ PreToolUse\t^spawn_agent$\t~/.claude/hooks/agent-guard
 SessionStart\t.*\tgen-claude-template context
 SessionStart\t.*\ttq hook SessionStart --provider codex || true
 Stop\t.*\ttq hook Stop --provider codex || true
-SessionEnd\t.*\ttq hook SessionEnd --provider codex || true'
+SessionEnd\t.*\ttq hook SessionEnd --provider codex || true
+SessionStart\t.*\ta agent hook session-start --engine codex
+UserPromptSubmit\t.*\ta agent hook user-prompt-submit --engine codex
+PostToolUse\t.*\ta agent hook post-tool-use --engine codex
+PermissionRequest\t.*\ta agent hook permission-request --engine codex
+Stop\t.*\ta agent hook stop --engine codex
+SessionEnd\t.*\ta agent hook session-end --engine codex\t3'
 
 # Commands this script used to register. An already-deployed hooks.json still
 # has them, and the append-only loop below would leave both old and new
@@ -47,12 +58,12 @@ while IFS= read -r command; do
   ' <<< "$content")
 done <<< "$legacy_commands"
 
-while IFS=$'\t' read -r event matcher command; do
-  content=$(jq --arg event "$event" --arg matcher "$matcher" --arg command "$command" '
+while IFS=$'\t' read -r event matcher command timeout; do
+  content=$(jq --arg event "$event" --arg matcher "$matcher" --arg command "$command" --arg timeout "$timeout" '
     (.hooks[$event] // []) as $arr
     | if ($arr | any(.hooks[]?.command == $command))
       then .
-      else .hooks[$event] = ($arr + [{matcher: $matcher, hooks: [{type: "command", command: $command}]}])
+      else .hooks[$event] = ($arr + [{matcher: $matcher, hooks: [{type: "command", command: $command} + (if $timeout == "" then {} else {timeout: ($timeout | tonumber)} end)]}])
       end
   ' <<< "$content")
 done <<< "$entries"
