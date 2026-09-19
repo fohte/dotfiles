@@ -1,5 +1,4 @@
-<<<<<<< before updating
-# CLAUDE.md
+# AGENTS.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -132,8 +131,6 @@ make
 # 特定のディレクトリの Makefile を実行
 make -C config/aquaskk
 ```
-=======
-# AGENTS.md
 
 ## Code organization rules
 
@@ -142,4 +139,3 @@ make -C config/aquaskk
 When a change would push a file's non-test code past ~500 lines, split it along responsibility seams before adding more. Splits must be move-only commits: no logic changes, renames, or reformatting mixed in. Keep external import paths unchanged by keeping the entrypoint file in place and re-exporting the pieces you split out into new files. Tests move together with the code they verify.
 
 Prefer creating a new focused file over appending to the largest existing one.
->>>>>>> after updating
