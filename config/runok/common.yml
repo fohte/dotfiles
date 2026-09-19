@@ -375,12 +375,16 @@ rules:
       - allow: 'a agent peer children'
       - allow: 'a agent peer list -R armyknife'
 
-  # `wake` mutates (resumes a paused peer), but only a peer that is already
-  # waiting for a message; delegation is unusable if every wake needs approval.
-  - allow: 'a cc|agent peer wake *'
+  # `wake` and `notify` mutate, but only against a peer that is already tracked
+  # and waiting to hear from its delegator; delegation is unusable if every
+  # message needs approval. Falling through to pass is not equivalent: under
+  # Codex a pass reaches the native approval prompt instead of being
+  # auto-approved.
+  - allow: 'a cc|agent peer wake|notify *'
     tests:
       - allow: 'a cc peer wake abc123'
       - allow: 'a agent peer wake abc123'
+      - allow: 'a agent peer notify --message hi abc123'
 
   - allow: 'unzip *'
     tests:
