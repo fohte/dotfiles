@@ -375,11 +375,8 @@ rules:
       - allow: 'a agent peer children'
       - allow: 'a agent peer list -R armyknife'
 
-  # `wake` and `notify` mutate, but only against a peer that is already tracked
-  # and waiting to hear from its delegator; delegation is unusable if every
-  # message needs approval. Falling through to pass is not equivalent: under
-  # Codex a pass reaches the native approval prompt instead of being
-  # auto-approved.
+  # Delegation and handoff report-backs are unusable if every message needs
+  # approval.
   - allow: 'a cc|agent peer wake|notify *'
     tests:
       - allow: 'a cc peer wake abc123'
