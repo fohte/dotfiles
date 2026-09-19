@@ -8,6 +8,13 @@ cc:
   auto_compact:
     enabled: false
 
+agent:
+  codex:
+    # Applies to delegated sessions only, so interactive `codex` keeps its own
+    # defaults.
+    model: gpt-5.6-luna
+    reasoning_effort: max
+
 repos:
   fohte/dotfiles:
     # dotfiles is operated directly on the default branch.
