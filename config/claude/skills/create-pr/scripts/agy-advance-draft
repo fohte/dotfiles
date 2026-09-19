@@ -28,7 +28,7 @@ if [ "$ready_for_translation" = "true" ] && rg -q '\p{Hiragana}|\p{Katakana}|\p{
 fi
 
 if [ "$needs_translation" = "true" ]; then
-  translate_rules=$(cat "$HOME/.claude/contexts/skill/create-pr/translate-rules.md")
+  translate_rules=$(cat "$script_dir/../references/translate-rules.md")
   prompt=$(
     cat << PROMPT
 以下の GitHub Pull Request の title と body を英語に翻訳する。以下のルールに厳密に従うこと。narration や説明は不要で、指定した JSON 形式でだけ出力する。

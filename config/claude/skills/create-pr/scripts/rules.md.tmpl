@@ -2,8 +2,7 @@
 {{- $release_please := eq (conv.ToString $v.has_release_please) "true" -}}
 {{- $has_pr_template := ne (conv.ToString $v.pr_template) "" -}}
 {{- $has_design_decisions := and $has_pr_template (strings.Contains "Design decisions" (conv.ToString $v.pr_template)) -}}
-{{- /* Claude が直接読む経路では vars にこのキー自体が無いので、index で欠落を許容する */ -}}
-{{- $has_branch_purpose := index $v "has_branch_purpose" -}}
+{{- $has_branch_purpose := ne (conv.ToString $v.has_branch_purpose) "" -}}
 
 ### PR template の構造
 

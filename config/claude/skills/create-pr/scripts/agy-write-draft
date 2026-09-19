@@ -1,12 +1,10 @@
 #!/bin/bash
 # Draft the PR body via agy in one shot (writing + self-review are the same
-# call — see the "$agy" branch of Step 1 in template.md for why). The diff
-# and the resulting draft never enter Claude's context; only this script
-# sees them.
+# call — see Step 1 of references/draft-agy.md for why). The diff and the
+# resulting draft never enter Claude's context; only this script sees them.
 set -euo pipefail
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
-rules_file="$HOME/.claude/contexts/skill/create-pr/rules.md"
 schema_file="$script_dir/agy-schema.json"
 # shellcheck source=config/claude/skills/create-pr/scripts/call-agy.sh disable=SC1091
 source "$script_dir/call-agy.sh"
@@ -34,15 +32,7 @@ PURPOSE
   )
 fi
 
-has_release_please=$("$script_dir/has-release-please")
-pr_template=$("$script_dir/find-pr-template")
-
-rules=$(
-  jq -n --arg has_release_please "$has_release_please" --arg pr_template "$pr_template" \
-    --arg has_branch_purpose "$purpose" \
-    '{has_release_please:$has_release_please, pr_template:$pr_template, has_branch_purpose:$has_branch_purpose}' |
-    gomplate -d vars=stdin:///vars.json -f "$rules_file"
-)
+rules=$("$script_dir/render-rules" "$purpose")
 
 prompt=$(
   cat << PROMPT
