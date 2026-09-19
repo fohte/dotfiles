@@ -1,7 +1,6 @@
 #!/bin/bash
 # Print the repo's PR template content, or nothing if it has none.
-# Shared by contexts/skill/create-pr/config.yaml's `pr_template` variable and
-# the agy-* scripts, so the candidate path list only lives in one place.
+# Used by render-rules, so the candidate path list only lives in one place.
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel 2> /dev/null) || exit 0
