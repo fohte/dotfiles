@@ -1,8 +1,0 @@
-variables:
-  role: dot role get
-  repo: gh repo view --json name,visibility,owner --jq .
-  has_release_please: ~/.agents/skills/create-pr/scripts/has-release-please
-  repo_language: a config get repo.language
-  pr_template: ~/.agents/skills/create-pr/scripts/find-pr-template
-
-template: template.md

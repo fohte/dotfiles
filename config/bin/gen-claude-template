@@ -4,13 +4,11 @@
 # evaluates variable commands, and renders the final Markdown to stdout.
 #
 # Usage:
-#   gen-claude-template skill <name>   - render a skill template
 #   gen-claude-template context <name> - render a single context template
 #   gen-claude-template context        - render all context templates
 #
 # Directory layout (~/.claude/contexts/):
-#   skill/<name>/config.yaml    - skill templates
-#   <name>/config.yaml          - context templates (everything except skill/)
+#   <name>/config.yaml - context templates
 #
 # config.yaml format:
 #   variables:
@@ -60,13 +58,9 @@ render_template() {
     -f "${template_dir}/${template}"
 }
 
-type="${1:?Usage: gen-claude-template <type> [<name>]}"
+type="${1:?Usage: gen-claude-template context [<name>]}"
 
 case "$type" in
-  skill)
-    name="${2:?Usage: gen-claude-template skill <name>}"
-    render_template "${contexts_dir}/skill/${name}"
-    ;;
   context)
     if [[ -n "${2:-}" ]]; then
       render_template "${contexts_dir}/${2}"
@@ -74,8 +68,6 @@ case "$type" in
       first=true
       for dir in "${contexts_dir}"/*/; do
         [[ -d "$dir" ]] || continue
-        # Skip the skill/ subdirectory
-        [[ "$(basename "$dir")" == "skill" ]] && continue
         if [[ "$first" == true ]]; then
           first=false
         else
@@ -86,7 +78,7 @@ case "$type" in
     fi
     ;;
   *)
-    echo "Error: unknown type '${type}'. Use 'skill' or 'context'." >&2
+    echo "Error: unknown type '${type}'. Use 'context'." >&2
     exit 1
     ;;
 esac

@@ -1,0 +1,4 @@
+variables:
+  # Machine-dependent, so it must not be hard-coded in this public repo.
+  vault_path: obsidian vault=obsidian-v2 vault info=path || true
+template: template.md

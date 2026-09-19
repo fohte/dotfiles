@@ -29,13 +29,6 @@ dotfiles の `config/claude/skills/` で Git 管理し、`~/.claude/skills/` (Cl
 - **編集先**: `<project-root>/.claude/skills/<skill-name>/SKILL.md`
 - 配置基準: 特定プロジェクト専用 → ローカル / 複数プロジェクトで使う → グローバル
 
-### テンプレート生成型スキル (グローバル / ローカル共通)
-
-SKILL.md の本文が `!` + `` `runok exec -- gen-claude-template <type> <name>` `` のようなコマンド実行のみの場合、内容は動的生成される。グローバル / ローカルどちらでも発生しうる。
-
-- **判定**: SKILL.md 本文がコマンド実行のみで構成されているか
-- **編集先**: SKILL.md ではなく `config/claude/contexts/skill/<skill-name>/template.md`
-
 ## SKILL.md の構造
 
 ### YAML Front Matter (必須)
