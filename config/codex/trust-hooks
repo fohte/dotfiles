@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Trust user-layer Codex hooks so the startup hook-review screen doesn't stall
+# unattended sessions after every hook change. Project-layer hooks
+# (<repo>/.codex/hooks.json) are left for review: they come from repos that
+# only received folder trust.
+set -euo pipefail
+
+command -v codex > /dev/null || exit 0
+
+coproc APP { codex app-server; }
+id=0
+
+# rpc <method> <params-json>: set $result to .result; exit on error or if the
+# server stays silent. Must not run in a subshell: bash closes coproc fds there.
+rpc() {
+  id=$((id + 1))
+  jq -nc --argjson id "$id" --arg method "$1" --argjson params "$2" \
+    '{id: $id, method: $method, params: $params}' >&"${APP[1]}"
+  local line
+  while read -r -t 30 -u "${APP[0]}" line; do
+    # Server-initiated requests carry a `method`; skip them and notifications.
+    jq -e --argjson id "$id" '.id == $id and (has("method") | not)' <<< "$line" > /dev/null || continue
+    if jq -e 'has("error")' <<< "$line" > /dev/null; then
+      echo "trust-hooks: $1 failed: $line" >&2
+      exit 1
+    fi
+    result=$(jq -c '.result' <<< "$line")
+    return
+  done
+  echo "trust-hooks: no response to $1" >&2
+  exit 1
+}
+
+rpc initialize '{"clientInfo": {"name": "dotfiles-trust-hooks", "version": "0"}}'
+echo '{"method": "initialized"}' >&"${APP[1]}"
+
+# User-layer hooks don't depend on cwd; $HOME just keeps project hooks out of
+# the way.
+rpc hooks/list "$(jq -nc --arg cwd "$HOME" '{cwds: [$cwd]}')"
+updates=$(jq -c '
+  [.data[].hooks[]
+   | select(.source == "user" and (.trustStatus == "untrusted" or .trustStatus == "modified"))
+   | {key: .key, value: {trusted_hash: .currentHash}}]
+  | from_entries' <<< "$result")
+
+if [[ "$updates" != '{}' ]]; then
+  rpc config/batchWrite "$(jq -nc --argjson value "$updates" '
+    {edits: [{keyPath: "hooks.state", value: $value, mergeStrategy: "upsert"}],
+     reloadUserConfig: true}')"
+  jq -r 'keys[] | "trusted \(.)"' <<< "$updates"
+fi
