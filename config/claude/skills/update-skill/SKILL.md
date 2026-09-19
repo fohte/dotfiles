@@ -80,6 +80,16 @@ SKILL.md と同じディレクトリに置けるサブディレクトリ。役�
 - **`references/`**: 必要時に Claude が読む補助ドキュメント。詳細仕様、スキーマ、domain 別ガイド、長大な例など。本文から「いつ読むか」明示してポインタを張る
 - **`assets/`**: 出力に使う素材 (テンプレ、アイコン、フォント、雛形ファイル等)
 
+## repo 依存の分岐
+
+repo や machine で手順が変わる skill は、SKILL.md を静的に保ち、分岐をエージェントに選ばせる。`!` + `` `cmd` `` は Codex で動かないので使わない。誤読を避けるため、以下の形にそろえる (実例は `check-pr-review`)。
+
+- **条件は SessionStart context `repo-facts` の値をキー名そのままで使う** (`repo.owner`, `repo.visibility`, `is_master_push_repo` など)。別名を付けない。context が無い、または使う値が `unset` のときは `gen-claude-template context repo-facts` で出力し直し、それでも `unset` ならユーザーに聞く (黙って通常フローに進むと、no-op すべき repo で動いてしまう)
+- **複合条件は冒頭の `Conditions` 節で 1 度だけ定義する**。名前は生のキーと紛れないものにする (`repo.visibility: PUBLIC` と紛れる `public` は避け、`english_output` とする)
+- **`Conditions` 節の表は「排他的な 1 つの選択」を表す**。上から最初に一致した行に従い、最終行は `(otherwise)`。Action は「終了する」「`references/<name>.md` を読む」「そのまま続行」のいずれか。独立した条件は表を分ける
+- **値だけが違う分岐**は使用箇所に 1 文で書く (例: `english_output` が true なら英語、false なら日本語)
+- **手順のブロックが違う分岐**は `references/<name>.md` に切り出し、表の Action で指す。該当しない reference は読まれないので、条件外の記述を読み違えることがない
+
 ## ライティングルール
 
 - **imperative form (命令形) で書く**
