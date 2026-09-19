@@ -1,6 +1,6 @@
 ---
 name: self-review
-description: 差分に対する self-review を複数の専門 reviewer で並列実行する。Use this skill when reviewing a staged diff before committing, a branch diff before pushing, or any multi-dimension review of code changes.
+description: 差分を複数の専門 reviewer へ分割して並列レビューし、12 観点の統合レポートを返す。Use this skill when a diff range has already been chosen for review — because the commit skill reached its review step, or because the user asked for a review directly. Running this skill is one step inside the caller's workflow, never a replacement for it.
 ---
 
 # Self Review
@@ -8,11 +8,14 @@ description: 差分に対する self-review を複数の専門 reviewer で並�
 差分レビューを専門 reviewer へ分割して並列実行し、結果を統合する。
 reviewer の選択順、agent、trigger、reference は `reviewers.yaml` を唯一の定義とする。
 
-## いつ使うか
+## 1 回の呼び出しで 1 回だけレビューする
 
-- コミット前 (`git diff --cached`) のレビュー
-- push 前 (`git diff @{u}..HEAD` または `git diff origin/<base>..HEAD`) のレビュー
-- PR 作成・更新時のレビュー
+レビューが十分かどうかを判定するのは呼び出し元であり、この skill ではない。
+自分で次の round を始めると、呼び出し元の手順に戻れなくなる。
+
+- **指摘に対応したあと、同じ差分をレビューし直さない。** 対応で差分が変われば新しい指摘が出るので、繰り返すと終わらない
+- **reviewer が失敗したときの retry は 1 回まで。** それも失敗したら止めて、その reviewer を `⚠️ 未評価` として報告する。同じ差分で 2 回続けて失敗するのは差分ではなく実行環境側の問題なので、起動し直しても結果は変わらない
+- **reviewer が 1 つも結果を返さなかったら、12 観点すべてを `⚠️ 未評価` にし、Summary の件数の代わりにレビュー不能だったことと原因を書く。** 指摘 0 件と同じ出力にすると、呼び出し元がレビュー済みとして先に進む
 
 ## Backend execution
 
