@@ -1,8 +1,15 @@
 model = "gpt-5.6-sol"
 model_reasoning_effort = "low"
 sandbox_mode = "workspace-write"
+
+# Both keys below belong to their table, not the top level. A stray top-level
+# key parses fine and is silently dropped, so the setting looks applied while
+# the default stays in force. `codex exec --strict-config` rejects such keys.
+[sandbox_workspace_write]
 network_access = true
-web_search_request = true
+
+[tools]
+web_search = true
 
 [tui]
 status_line = ["model-with-reasoning", "used-tokens", "context-used", "five-hour-limit", "weekly-limit", "codex-version"]
