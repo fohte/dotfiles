@@ -131,7 +131,7 @@ rules:
   # what a skill's own code may do.
   - allow: 'bash <var:claude-skill-scripts>'
     tests:
-      - allow: 'bash ~/.agents/skills/self-review/scripts/render-backend-instructions'
+      - allow: 'bash ~/.agents/skills/self-review/scripts/select-reviewers'
       - allow: 'bash /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs'
 
   - allow: 'bash <var:claude-skill-scripts> *'
@@ -144,7 +144,7 @@ rules:
   # below (Explicit Deny Wins), regardless of this rule's own match.
   - allow: '<var:claude-skill-scripts>'
     tests:
-      - allow: '~/.agents/skills/self-review/scripts/render-backend-instructions'
+      - allow: '~/.agents/skills/self-review/scripts/select-reviewers'
       - allow: '~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs'
 
   - allow: '<var:claude-skill-scripts> *'

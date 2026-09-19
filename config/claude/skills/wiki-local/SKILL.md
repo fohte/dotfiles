@@ -9,7 +9,7 @@ Obsidian vault をローカルの wiki として使い、知識の参照・蓄�
 
 ## vault
 
-- パス: !`runok exec -- obsidian vault=obsidian-v2 vault info=path`
+- パス: SessionStart context の `Obsidian vault` セクションにある `obsidian-v2 vault path`。見当たらなければ `obsidian vault=obsidian-v2 vault info=path` で取得する
 - 全 `obsidian` コマンドで、サブコマンドの前に `vault=obsidian-v2` をつけること
 - ノートの操作手順やルールは vault の CLAUDE.md を読んで従うこと
 
