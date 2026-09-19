@@ -15,6 +15,10 @@
 # and existing branches overwritten with --force are restored to their prior tip.
 set -euo pipefail
 
+hook_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=with-mkdir-lock.bash disable=SC1091
+source "$hook_dir/with-mkdir-lock.bash"
+
 if [[ -z "${ARMYKNIFE_WORKTREE_PATH:-}" ]]; then
   exit 0
 fi
@@ -73,29 +77,16 @@ is_own_repo=false
 # worktree creation.
 CLAUDE_JSON="$HOME/.claude.json"
 if [[ "$is_own_repo" == true ]] && [[ -f "$CLAUDE_JSON" ]]; then
-  (
-    claude_json_lock="$CLAUDE_JSON.lock"
-    claude_json_locked=false
-    for _ in $(seq 50); do
-      if mkdir "$claude_json_lock" 2> /dev/null; then
-        claude_json_locked=true
-        break
-      fi
-      sleep 0.1
-    done
-    if [[ "$claude_json_locked" != true ]]; then
-      echo "error: failed to acquire lock for $CLAUDE_JSON" >&2
-      exit 1
-    fi
+  # shellcheck disable=SC2154
+  update_claude_json() {
+    lock_temp_file "$CLAUDE_JSON" &&
+      jq --arg path "$ARMYKNIFE_WORKTREE_PATH" \
+        '.projects[$path].hasTrustDialogAccepted = true' \
+        "$CLAUDE_JSON" > "$lock_temp_path" &&
+      mv "$lock_temp_path" "$CLAUDE_JSON"
+  }
 
-    trap 'rmdir "$claude_json_lock" 2>/dev/null' EXIT
-    claude_json_tmp="$(mktemp "$CLAUDE_JSON.XXXXXX")"
-    trap 'rm -f "$claude_json_tmp"; rmdir "$claude_json_lock" 2>/dev/null' EXIT
-    jq --arg path "$ARMYKNIFE_WORKTREE_PATH" \
-      '.projects[$path].hasTrustDialogAccepted = true' \
-      "$CLAUDE_JSON" > "$claude_json_tmp" &&
-      mv "$claude_json_tmp" "$CLAUDE_JSON"
-  ) || true
+  with_mkdir_lock "$CLAUDE_JSON.lock" update_claude_json || true
 fi
 
 # Same trust registration for Codex (~/.codex/config.toml [projects."<path>"]
@@ -110,19 +101,15 @@ fi
 # here (a stuck lock, a malformed config.toml) must not roll back the worktree.
 CODEX_CONFIG="$HOME/.codex/config.toml"
 if [[ "$is_own_repo" == true ]] && [[ -f "$CODEX_CONFIG" ]]; then
-  (
-    codex_lock="$CODEX_CONFIG.lock"
-    trap 'rmdir "$codex_lock" 2>/dev/null' EXIT
-    for _ in $(seq 50); do
-      mkdir "$codex_lock" 2> /dev/null && break
-      sleep 0.1
-    done
-
-    codex_config_tmp="$(mktemp "${TMPDIR:-/tmp}/codex-config.XXXXXX")"
-    yq -p toml -o json "$CODEX_CONFIG" |
+  # shellcheck disable=SC2154
+  update_codex_config() {
+    lock_temp_file "$CODEX_CONFIG" &&
+      yq -p toml -o json "$CODEX_CONFIG" |
       jq --arg path "$ARMYKNIFE_WORKTREE_PATH" '.projects[$path].trust_level = "trusted"' |
-      yq -p json -o toml > "$codex_config_tmp"
-    chmod 600 "$codex_config_tmp"
-    mv "$codex_config_tmp" "$CODEX_CONFIG"
-  ) || true
+        yq -p json -o toml > "$lock_temp_path" &&
+      chmod 600 "$lock_temp_path" &&
+      mv "$lock_temp_path" "$CODEX_CONFIG"
+  }
+
+  with_mkdir_lock "$CODEX_CONFIG.lock" update_codex_config || true
 fi
