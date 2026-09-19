@@ -1,0 +1,19 @@
+#!/bin/bash
+# Print the PR body writing rules for the current repo, with the release-please
+# / PR template / Design decisions branches already resolved. Shared by the
+# create-pr skill and agy-write-draft so the rules text lives in one place.
+#
+# Usage: render-rules [<branch_purpose>]
+set -euo pipefail
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+
+# Assign first: a failure inside `$(...)` used as an argument would not trip `set -e`.
+has_release_please=$("$script_dir/has-release-please")
+pr_template=$("$script_dir/find-pr-template")
+
+jq -n --arg has_release_please "$has_release_please" \
+  --arg pr_template "$pr_template" \
+  --arg has_branch_purpose "${1:-}" \
+  '{has_release_please:$has_release_please, pr_template:$pr_template, has_branch_purpose:$has_branch_purpose}' |
+  gomplate -d vars=stdin:///vars.json -f "$script_dir/rules.md.tmpl"

@@ -232,7 +232,7 @@ rules:
     tests:
       - allow: 'gomplate -f -'
       - allow: 'gomplate -d vars=stdin:///vars.json -f -'
-      - allow: 'gomplate -d vars=stdin:///vars.json -f config/claude/contexts/skill/create-pr/template.md'
+      - allow: 'gomplate -d vars=stdin:///vars.json -f config/claude/skills/create-pr/scripts/rules.md.tmpl'
       # Arbitrary-exec flags stay allowed by the pattern on purpose; the
       # sandbox is what contains them.
       - allow: 'gomplate -i hello --exec-pipe -- cat'
