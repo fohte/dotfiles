@@ -99,9 +99,9 @@ install: $(BUILD_TARGETS) check-settings
 			exit 1; \
 		fi; \
 		trap 'rmdir "$$claude_json_lock" 2>/dev/null' EXIT; \
-		claude_json_tmp="$$(mktemp "$${TMPDIR:-/tmp}/claude-json.XXXXXX")"; \
+		claude_json_tmp="$$(mktemp "$$HOME/.claude.json.XXXXXX")"; \
 		trap 'rm -f "$$claude_json_tmp"; rmdir "$$claude_json_lock" 2>/dev/null' EXIT; \
-		jq --argjson mcp "$$(cat mcp-servers.json)" '.mcpServers = $$mcp' ~/.claude.json > "$$claude_json_tmp"; \
+		jq --argjson mcp "$$(cat mcp-servers.json)" '.mcpServers = $$mcp' ~/.claude.json > "$$claude_json_tmp" && \
 		mv "$$claude_json_tmp" ~/.claude.json; \
 	)
 

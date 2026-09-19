@@ -69,6 +69,8 @@ is_own_repo=false
 
 # Register the worktree as a trusted project in Claude Code (~/.claude.json).
 # Without this, Claude Code prompts for trust confirmation on every new worktree.
+# Trust registration is non-critical metadata, so errors must not roll back the
+# worktree creation.
 CLAUDE_JSON="$HOME/.claude.json"
 if [[ "$is_own_repo" == true ]] && [[ -f "$CLAUDE_JSON" ]]; then
   (
@@ -87,13 +89,13 @@ if [[ "$is_own_repo" == true ]] && [[ -f "$CLAUDE_JSON" ]]; then
     fi
 
     trap 'rmdir "$claude_json_lock" 2>/dev/null' EXIT
-    claude_json_tmp="$(mktemp "${TMPDIR:-/tmp}/claude-json.XXXXXX")"
+    claude_json_tmp="$(mktemp "$CLAUDE_JSON.XXXXXX")"
     trap 'rm -f "$claude_json_tmp"; rmdir "$claude_json_lock" 2>/dev/null' EXIT
     jq --arg path "$ARMYKNIFE_WORKTREE_PATH" \
       '.projects[$path].hasTrustDialogAccepted = true' \
-      "$CLAUDE_JSON" > "$claude_json_tmp"
-    mv "$claude_json_tmp" "$CLAUDE_JSON"
-  )
+      "$CLAUDE_JSON" > "$claude_json_tmp" &&
+      mv "$claude_json_tmp" "$CLAUDE_JSON"
+  ) || true
 fi
 
 # Same trust registration for Codex (~/.codex/config.toml [projects."<path>"]
