@@ -34,12 +34,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `config/claude/` 配下は symlink で `~/.claude/` に展開される。主要な拡張ポイント:
 
-- **`_CLAUDE.md`** → `~/.claude/CLAUDE.md`: グローバルな Claude 向け指示
+- **`config/agents/AGENTS.md`** → `~/.claude/CLAUDE.md` と `~/.codex/AGENTS.md` (同一ファイルへの symlink): Claude Code / Codex 共通のグローバル指示。エンジン固有の指示は含めない
+- **`rules/<name>.md`** → `~/.claude/rules/`: Claude Code だけが読むグローバル指示 (Codex には見えない)
 - **`skills/<name>/SKILL.md`**: 特定タスク用の skill。`description` で trigger 条件を書く
 - **`contexts/<name>/{config.yaml,template.md}`**: SessionStart hook (`gen-claude-template context`) で動的にレンダされてセッション冒頭に注入される。`config.yaml` の `variables` に shell コマンドを書き、`template.md` (gomplate) でレンダする。マシン依存・gitignored な値 (例: `dot role get repo`) を public repo に書かずに Claude へ渡したいときに使う
 - **`settings.jsonnet`**: 権限・hook 設定 (`~/.claude/settings.json` にビルド)
 - **`mcp-servers.jsonnet`**: MCP サーバ定義 (`~/.claude.json` の `mcpServers` にマージ install)
-- 上記 2 つの jsonnet は base + role overlay + local の 3 層マージで、ビルドが要るので変更後は `dot deploy -t claude`。`_CLAUDE.md`、`skills/`、`contexts/` は symlink なので編集だけで反映される
+- 上記 2 つの jsonnet は base + role overlay + local の 3 層マージで、ビルドが要るので変更後は `dot deploy -t claude`。`config/agents/AGENTS.md`、`rules/`、`skills/`、`contexts/` は symlink なので編集だけで反映される
 
 ## ツールバージョン管理
 
@@ -84,10 +85,12 @@ config/
 │       ├── install/         # プラグインマネージャーインストール
 │       └── zinit.rc.zsh     # プラグイン定義
 │
+├── agents/                  # Claude Code / Codex 共通のグローバル指示 (AGENTS.md)
+│
 ├── bin/                     # カスタムスクリプト (PATH が通っている)
 │
 ├── claude/                  # Claude Code 設定 (~/.claude/ に symlink)
-│   ├── _CLAUDE.md           # グローバルな CLAUDE.md (~/.claude/CLAUDE.md)
+│   ├── rules/               # Claude Code 固有のグローバル指示 (~/.claude/rules/)
 │   ├── settings.json        # Claude Code 設定
 │   └── skills/              # カスタム skills (SKILL.md)
 │

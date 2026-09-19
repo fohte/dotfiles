@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Idempotently register this repo's PreToolUse guard hooks
-# (default-branch-edit-guard, ponytail-comment-guard, agent-guard) in Codex's
-# hooks.json.
+# Idempotently register this repo's hooks in Codex's hooks.json:
+# the PreToolUse guards (default-branch-edit-guard, ponytail-comment-guard,
+# agent-guard) and the SessionStart context injection (gen-claude-template).
 #
 # `runok init` registers its own PreToolUse/PermissionRequest entries in the
 # same file (command `runok hook --agent codex`). Both this script and that
@@ -23,7 +23,8 @@ fi
 # tab-separated: event, matcher regex, command
 entries=$'PreToolUse\t^apply_patch$\t~/.claude/hooks/default-branch-edit-guard
 PreToolUse\t^apply_patch$\t~/.claude/hooks/ponytail-comment-guard
-PreToolUse\t^spawn_agent$\t~/.claude/hooks/agent-guard'
+PreToolUse\t^spawn_agent$\t~/.claude/hooks/agent-guard
+SessionStart\t.*\tgen-claude-template context repo-language-rules'
 
 while IFS=$'\t' read -r event matcher command; do
   content=$(jq --arg event "$event" --arg matcher "$matcher" --arg command "$command" '

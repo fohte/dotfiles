@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 - 回答は常に日本語・敬語で行うこと
 
@@ -36,11 +36,10 @@
 - rm: prefer `git rm` for tracked files; never pass `-f`. Repo 内の生成物 (dist, node_modules, `*.gen.*` など ignored なもの) の削除は `rm` でなく `git clean -fdX <path>`、untracked の削除は `git clean -fd <path>` を使う (tracked は消えない。ただし `-X` は ignored な `.env` / `*.local.*` も消しうるので path を必ず絞る)
 - 一時ファイル: `/tmp` 下に置く。固定名は並列セッションが同じパスを共有して互いに上書きするので、`mktemp /tmp/<name>.XXXXXX` で採番する (skill が `/tmp/foo.json` のような固定パス例を示していても同様。`mktemp` 単体や `-t` は `$TMPDIR` に作るため `/tmp` 外に出る)
 - ローカルファイル (HTML など) をブラウザで確認させたい場合: `open` ではなく `crit preview <file>` を使う
-- search: コードの構造 (定義の場所、呼び出し元/呼び出し先、影響範囲) を知りたいときは先に codebase-memory MCP (`search_graph` / `trace_path` / `get_code_snippet`) を使う。文字列そのものを探すときは `rg` (`find`/`grep` より優先)。never search `~` (too heavy)
-- 他の Claude Code セッションを探すとき: `a agent peer list` (`parent` / `children` は絞り込み版)。出力の `session_id` を使い、`a agent peer notify --message <MESSAGE> <session_id>` で送る (停止中でも内部で再開してから配送される)
+- search: 文字列そのものを探すときは `rg` (`find`/`grep` より優先)。never search `~` (too heavy)
+- 他の Claude Code / Codex セッションを探すとき: `a agent peer list` (`parent` / `children` は絞り込み版)。出力の `session_id` を使い、`a agent peer notify --message <MESSAGE> <session_id>` で送る (停止中でも内部で再開してから配送される)
 - json: use `jq`, not `python3 -c 'import json'`
 - coreutils: use `gsed` / `gdate` / `gstat` (GNU) instead of BSD tools
-- `rtk`: a PreToolUse hook auto-rewrites commands to `rtk <cmd>` to save tokens. Use `rtk proxy <cmd>` only when truncation hurts.
 
 ## コードスタイル
 
@@ -57,6 +56,6 @@
     - 丸括弧: `()` を使う (「（）」は禁止)
     - 感嘆符・疑問符: `!` `?` を使う (「！」「？」は禁止)
     - コロン: `:` を使う (「：」は禁止)
-- 半角英数字と全角文字の間には半角スペースを入れること
+- 半角英数字と全角文字の間には半角スペースを入れること (全角文字同士の間にはスペースを入れない)
 - 英語で技術文書を書くときは以下を守ること
     - 「Want to...」「Need to...」で文を始めない。代わりに動詞の命令形 ("Enable...", "Add...") や受動態 ("Automatic restoration is enabled...") を使うこと

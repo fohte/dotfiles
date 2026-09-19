@@ -1,6 +1,8 @@
 {{- $v := ds "vars" -}}
 {{- $lang_override := eq $v.repo_language "ja" -}}
-{{- $public := and (eq $v.repo.visibility "PUBLIC") (not $lang_override) -}}
+{{- $visibility := "" -}}
+{{- if test.IsKind "map" $v.repo }}{{ $visibility = $v.repo.visibility }}{{ end -}}
+{{- $public := and (eq $visibility "PUBLIC") (not $lang_override) -}}
 
 ## Repository language rules
 
