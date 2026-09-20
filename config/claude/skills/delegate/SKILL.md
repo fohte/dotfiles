@@ -44,7 +44,9 @@ description: Delegate tasks to a separate Claude Code or Codex instance, either 
 
 ## Codex に委任するときのモデル
 
-この節は `--engine codex` を指定する委任にだけ当てはまる。既定のエンジンは `claude` で、Codex が使えないマシンもある。
+この節は Codex で起動する委任にだけ当てはまる。
+既定のエンジンはマシンごとに違うので、`--engine` を省略したときにどちらで起動するかは `a config get agent.default_engine` で確かめる。
+`a agent new --help` が出すのはビルド時の既定値で、そのマシンの実効値ではない。
 
 `--model` / `--reasoning-effort` を省略すると armyknife の既定 (表の 1 行目) で起動する。通常の実装はそれでよく、判断や探索が増えるタスクだけ明示的に上げる。
 
