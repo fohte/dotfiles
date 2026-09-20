@@ -199,7 +199,10 @@ if match_tag misc; then
 fi
 
 if match_tag launchd && is_macos; then
-  log-exec mkdir -p ~/.local/state/codex-app-server ~/.local/state/skk-watcher
+  launchd_names=(com.fohte.codex-app-server com.fohte.skk-watcher)
+  for launchd_name in "${launchd_names[@]}"; do
+    log-exec mkdir -p "$HOME/.local/state/${launchd_name#com.fohte.}"
+  done
 
   # One-time cleanup for the decommissioned headroom-proxy job. Removing it
   # from the loop below stops re-bootstrapping it, but a machine that already
@@ -210,17 +213,28 @@ if match_tag launchd && is_macos; then
     log-exec rm -f "$legacy_plist" config/launchd/com.fohte.headroom-proxy.plist
   fi
 
-  # Re-bootstrap on every deploy so plist edits take effect. bootout is
-  # tolerated when the job is not yet loaded.
   launchd_domain="gui/$(id -u)"
-  for launchd_name in com.fohte.codex-app-server com.fohte.skk-watcher; do
+  for launchd_name in "${launchd_names[@]}"; do
     launchd_plist="$HOME/Library/LaunchAgents/$launchd_name.plist"
+    launchd_state="$HOME/.local/state/${launchd_name#com.fohte.}/loaded.plist"
     sym "config/launchd/$launchd_name.plist" "$launchd_plist"
-    log-exec launchctl bootout "$launchd_domain" "$launchd_plist" || true
+
+    launchd_loaded=false
+    launchctl print "$launchd_domain/$launchd_name" > /dev/null 2>&1 && launchd_loaded=true
+    if $launchd_loaded && ! is_force && cmp -s "$launchd_plist" "$launchd_state"; then
+      continue
+    fi
+
+    # launchd keeps using the loaded definition when its plist changes on disk.
+    if $launchd_loaded; then
+      log-exec launchctl bootout "$launchd_domain" "$launchd_plist" || true
+    fi
     log-exec launchctl bootstrap "$launchd_domain" "$launchd_plist" ||
       {
         echo "bootstrap failed for $launchd_name.plist" >&2
         exit 1
       }
+    log-exec cp "$launchd_plist" "$launchd_state.tmp"
+    log-exec mv -f "$launchd_state.tmp" "$launchd_state"
   done
 fi
