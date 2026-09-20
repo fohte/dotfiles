@@ -13,6 +13,14 @@ network_access = true
 [tools]
 web_search = true
 
+# Subagents inherit the parent's model unless told otherwise, so a Sol parent
+# spawns Sol children and a fan-out of three costs more than the parent's own
+# turn. Children only explore and hand back a summary, so the cheapest model
+# with the deepest effort buys the same answer.
+[agents]
+default_subagent_model = "gpt-5.6-luna"
+default_subagent_reasoning_effort = "max"
+
 [tui]
 status_line = ["model-with-reasoning", "used-tokens", "context-used", "five-hour-limit", "weekly-limit", "codex-version"]
 status_line_use_colors = true
