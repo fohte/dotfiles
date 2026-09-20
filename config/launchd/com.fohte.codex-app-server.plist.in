@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.fohte.codex-app-server</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__CODEX__</string>
+    <string>app-server</string>
+    <string>--listen</string>
+    <string>unix://</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>__HOME__/.cargo/bin:__HOME__/bin:__HOME__/.local/bin:__HOME__/.local/share/mise/shims:/usr/bin:/bin</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>__HOME__/.local/state/codex-app-server/app-server.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>__HOME__/.local/state/codex-app-server/app-server.log</string>
+</dict>
+</plist>
