@@ -1,0 +1,3 @@
+# `runok init` appends any missing rules here, writing into this repo through the symlink.
+prefix_rule(pattern = ["runok", "exec"], decision = "allow")
+prefix_rule(pattern = ["runok", "exec", "--ask"], decision = "prompt")

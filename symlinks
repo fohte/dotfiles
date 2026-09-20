@@ -134,6 +134,7 @@ fi
 
 if match_tag codex; then
   sym config/agents/AGENTS.md ~/.codex/AGENTS.md
+  sym config/codex/rules ~/.codex/rules
 fi
 
 if match_tag opencode; then
