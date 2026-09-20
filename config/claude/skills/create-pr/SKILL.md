@@ -63,8 +63,17 @@ git log "origin/$(git main)..HEAD" --oneline
 push の要否にかかわらず、base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。委任先の無人セッションでも待つ。手順は以下の 2 段階:
 
 1. `crit:crit-story` skill で story を作成する。story の文章 (prologue の `title` / `overview` / `key_changes` / `risks`、各 chapter の `title` / `summary`) は**日本語で書く**。`crit story --guide` が返す guide 本文は英語だが、それは出力言語の指定ではない
-    - ingest (`crit story --story-file`) には必ず `--no-open` を付ける。ブラウザを開くのは次のレビュー loop の責務で、両方が開くと同じレビューが 2 タブになる
-2. `crit:crit` skill でレビュー loop を回し、承認を待つ。`crit story` は story を保存して即座に終了するため、承認待ちのブロックは `crit:crit` 側が担う
+    - authoring 用の `crit story` はブラウザを開かない準備工程として扱い、`--guide`、`--prep`、`--story-file` の全てに必ず `--no-open` を付ける。例えば次の形にする:
+
+        ```bash
+        crit story --guide --no-open
+        crit story --prep <path> --no-open
+        crit story --story-file <path> --no-open
+        crit story --refresh --story-file <path> --no-open
+        ```
+
+        `--no-open` なしの authoring command や、bare な `crit story` は実行しない。`crit:crit-story` skill は Step 4 (ingest) までで止め、Step 5 以降の bare `crit` による reconnect と review loop は実行せず、次の 2 に引き継ぐ。
+2. `crit:crit` skill でレビュー loop を回し、承認を待つ。story authoring 後に実行するレビュー loop の起動コマンドだけがブラウザを開く。`crit:crit` が指定する起動コマンドを各 review round で 1 回だけ実行し、`crit` と `crit review` を同じ round で併用しない。`crit story` は story を保存して即座に終了するため、承認待ちのブロックは `crit:crit` 側が担う
 
 指摘への対応は crit の loop 内で完結させる。**loop 中はコミットも push もしない** (= `commit` skill も `self-review` skill も呼ばない)。crit の diff は base branch から working tree までなので、未コミットの修正もそのまま次の round でレビューできる。1 指摘ごとに self-review + コミットを挟むと、承認前の中間状態に重い工程を繰り返すことになる。
 
