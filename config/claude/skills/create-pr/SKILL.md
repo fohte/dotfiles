@@ -63,17 +63,17 @@ git log "origin/$(git main)..HEAD" --oneline
 push の要否にかかわらず、base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。委任先の無人セッションでも待つ。手順は以下の 2 段階:
 
 1. `crit:crit-story` skill で story を作成する。story の文章 (prologue の `title` / `overview` / `key_changes` / `risks`、各 chapter の `title` / `summary`) は**日本語で書く**。`crit story --guide` が返す guide 本文は英語だが、それは出力言語の指定ではない
-    - authoring 用の `crit story` はブラウザを開かない準備工程として扱い、`--guide`、`--prep`、`--story-file` の全てに必ず `--no-open` を付ける。例えば次の形にする:
+    - `crit:crit-story` の ingest では、client と daemon が同じ story を開いてタブを重複させないよう、次の形で実行する:
 
         ```bash
-        crit story --guide --no-open
-        crit story --prep <path> --no-open
+        crit story --guide
+        crit story --prep <path>
         crit story --story-file <path> --no-open
         crit story --refresh --story-file <path> --no-open
         ```
 
-        `--no-open` なしの authoring command や、bare な `crit story` は実行しない。`crit:crit-story` skill は Step 4 (ingest) までで止め、Step 5 以降の bare `crit` による reconnect と review loop は実行せず、次の 2 に引き継ぐ。
-2. `crit:crit` skill でレビュー loop を回し、承認を待つ。story authoring 後に実行するレビュー loop の起動コマンドだけがブラウザを開く。`crit:crit` が指定する起動コマンドを各 review round で 1 回だけ実行し、`crit` と `crit review` を同じ round で併用しない。`crit story` は story を保存して即座に終了するため、承認待ちのブロックは `crit:crit` 側が担う
+        `--guide` と `--prep` は出力後に終了し、ブラウザを開かない。`--story-file` は保存後に review daemon を起動し、daemon が最初のタブを開く場合がある。`--no-open` は client 側による 2 枚目のタブを抑止する。story-file の ingest が完了したら、この段階を終了する。bare な `crit story`、`crit story --no-spend`、`crit`、`crit review` はここで実行しない
+2. `crit:crit` skill でレビュー loop を回し、承認を待つ。`crit:crit` の Step 1-2 に従い、各 review round で bare な `crit` を 1 回だけバックグラウンド実行する。daemon にブラウザが未接続ならこのコマンドが開き、接続済みなら既存のタブを使う。`crit review` を併用したり、同じ round で起動コマンドを再実行したりしない。`crit story` は story を保存して終了するため、承認待ちのブロックは `crit:crit` 側が担う
 
 指摘への対応は crit の loop 内で完結させる。**loop 中はコミットも push もしない** (= `commit` skill も `self-review` skill も呼ばない)。crit の diff は base branch から working tree までなので、未コミットの修正もそのまま次の round でレビューできる。1 指摘ごとに self-review + コミットを挟むと、承認前の中間状態に重い工程を繰り返すことになる。
 
