@@ -63,7 +63,7 @@ git log "origin/$(git main)..HEAD" --oneline
 push の要否にかかわらず、base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。委任先の無人セッションでも待つ。手順は以下の 2 段階:
 
 1. `crit:crit-story` skill で story を作成する。story の文章 (prologue の `title` / `overview` / `key_changes` / `risks`、各 chapter の `title` / `summary`) は**日本語で書く**。`crit story --guide` が返す guide 本文は英語だが、それは出力言語の指定ではない
-    - authoring はブラウザを開かない準備工程として扱う。`crit:crit-story` の例には `--no-open` がないため、そのコマンドをそのまま実行せず、次の形に置き換える:
+    - authoring では、`crit:crit-story` の例に `--no-open` がない場合も、次の形に置き換える:
 
         ```bash
         crit story --guide --no-open
@@ -74,11 +74,12 @@ push の要否にかかわらず、base branch との diff をユーザーにレ
 
         `--guide` と `--prep` は出力後に終了する。
         これらは browser flow に入らないためブラウザを開かず、`--no-open` は no-op だが authoring command の契約を揃えるため付ける。
-        `--story-file` は保存後に review daemon を起動するが、`--no-open` がブラウザ起動を抑止する。
+        `--story-file` は保存後に review daemon を起動し、daemon が最初のタブを開く場合がある。
+        `--no-open` は client 側による 2 枚目のタブを抑止する。
         story-file の ingest が完了したら、この段階を終了する。
         bare な `crit story`、`crit story --no-spend`、`crit`、`crit review` はここで実行しない
 2. `crit:crit` skill でレビュー loop を回し、承認を待つ。
-   authoring 後のレビュー起動だけがブラウザを開く。
+   ingest で daemon が最初のタブを開いた場合、レビュー loop はその daemon に接続する。
    `crit:crit` の Step 1-2 に従い、初回は bare な `crit` をバックグラウンドで 1 回だけ実行する。
    2 round 目以降は finish prompt が指定する次 round 用コマンドを 1 回だけ実行する。
    finish prompt のコマンドを bare な `crit` に置き換えない。
