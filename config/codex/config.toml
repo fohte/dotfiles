@@ -1,6 +1,8 @@
 model = "gpt-5.6-sol"
 model_reasoning_effort = "low"
 sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+approvals_reviewer = "auto_review"
 
 # Both keys below belong to their table, not the top level. A stray top-level
 # key parses fine and is silently dropped, so the setting looks applied while
