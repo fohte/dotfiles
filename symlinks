@@ -200,9 +200,6 @@ fi
 
 if match_tag launchd && is_macos; then
   launchd_names=(com.fohte.codex-app-server com.fohte.skk-watcher)
-  for launchd_name in "${launchd_names[@]}"; do
-    log-exec mkdir -p "$HOME/.local/state/${launchd_name#com.fohte.}"
-  done
 
   # One-time cleanup for the decommissioned headroom-proxy job. Removing it
   # from the loop below stops re-bootstrapping it, but a machine that already
@@ -217,6 +214,7 @@ if match_tag launchd && is_macos; then
   for launchd_name in "${launchd_names[@]}"; do
     launchd_plist="$HOME/Library/LaunchAgents/$launchd_name.plist"
     launchd_state="$HOME/.local/state/${launchd_name#com.fohte.}/loaded.plist"
+    log-exec mkdir -p "${launchd_state%/*}"
     sym "config/launchd/$launchd_name.plist" "$launchd_plist"
 
     launchd_loaded=false
