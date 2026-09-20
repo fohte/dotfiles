@@ -25,6 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ほとんどの設定は symlink 経由なのでファイル編集だけで反映される。再 deploy が必要なのは以下:
 
 - 新規ファイル追加で `symlinks` を更新したとき
+- skill を追加・削除したとき (`~/.agents/skills` は skill ごとに symlink を張るため)
 - ビルドが要る tool (例: `config/claude/` の jsonnet → `~/.claude/settings.json`) を変更したとき
 - symlink ではなく copy で配置される tool (`config/colima/`) を変更したとき
 
@@ -43,6 +44,7 @@ linked worktree (`.worktrees/<name>` など) からの `dot deploy` / `dot refre
 - **`settings.jsonnet`**: 権限・hook 設定 (`~/.claude/settings.json` にビルド)
 - **`mcp-servers.jsonnet`**: MCP サーバ定義 (`~/.claude.json` の `mcpServers` にマージ install)
 - 上記 2 つの jsonnet は base + role overlay + local の 3 層マージで、ビルドが要るので変更後は `dot deploy -t claude`。`config/agents/AGENTS.md`、`rules/`、`skills/`、`contexts/` は symlink なので編集だけで反映される
+- Codex などが読む `~/.agents/skills` だけは skill ごとの symlink を並べた実ディレクトリで、claude.ai の `skills/synced/` を除外している。既存 skill の編集は即反映されるが、**追加・削除は `dot deploy -t claude` を流すまで反映されない**
 
 ## ツールバージョン管理
 

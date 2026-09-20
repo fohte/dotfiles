@@ -39,13 +39,38 @@ log-exec() {
 is_dryrun() { test -n "${DRYRUN:-}"; }
 is_force() { test -n "${FORCE:-}"; }
 
+# sym <src> <dst>        link <dst> to <src>
+# sym <src>... <dstdir>   link each <src> under <dstdir> by its basename
 sym() {
-  src="$1"
+  if [ $# -gt 2 ]; then
+    local dst="${*: -1}"
+    local src link
+    # An earlier deploy may have linked <dstdir> itself elsewhere; linking into
+    # it would then write through that link instead of here.
+    if [ -L "$dst" ]; then
+      log-exec rm "$dst"
+    fi
+    for src in "${@:1:$#-1}"; do
+      sym "${src%/}" "$dst/$(basename "$src")"
+    done
+    # A src that no longer exists leaves its link behind dangling.
+    for link in "$dst"/*; do
+      if [ -L "$link" ] && [ ! -e "$link" ]; then
+        log-exec rm "$link"
+      fi
+    done
+    # `dot` runs under `set -e`, so a bare `return` would abort the deploy by
+    # leaking the last test's status.
+    return 0
+  fi
+
+  local src="$1"
   if [[ "$src" != /* ]]; then
     src="$DOTFILES_DIR/$src"
   fi
 
-  dst="$2"
+  local dst="$2"
+  local dst_dir
   dst_dir="$(dirname "$dst")"
 
   if [ ! -d "$dst_dir" ]; then

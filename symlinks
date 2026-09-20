@@ -2,6 +2,10 @@
 # This script is sourced by `dot deploy` to create symlinks for configuration files.
 # Helper functions (`sym`, `match_tag`, etc.) are provided by the `dot` command.
 
+# Needed for the !(...) glob below. Globs are read when the enclosing `if` is
+# parsed, so this has to sit at the top level, outside any of them.
+shopt -s extglob
+
 if match_tag bin; then
   sym config/bin ~/bin
 fi
@@ -120,7 +124,9 @@ if match_tag claude; then
   sym config/claude/commands ~/.claude/commands
   sym config/claude/contexts ~/.claude/contexts
   sym config/claude/skills ~/.claude/skills
-  sym config/claude/skills ~/.agents/skills
+  # Link per skill, not the whole directory: Codex walks this root recursively
+  # and claude.ai's synced/ cache would eat its skill-metadata budget.
+  sym config/claude/skills/!(synced)/ ~/.agents/skills
   sym config/claude/statusline.ts ~/.claude/statusline.ts
   sym config/claude/hooks ~/.claude/hooks
   sym config/claude/rules ~/.claude/rules
