@@ -34,7 +34,8 @@ BUILD_TARGETS := settings.json mcp-servers.json
 # Without this, edits to the role overlay don't trigger a rebuild and `install`
 # ends up copying a stale json.
 SETTINGS_ROLE_OVERLAY := $(shell dot role overlay $(CURDIR)/settings.jsonnet 2>/dev/null)
-MCP_SERVERS_ROLE_OVERLAY := $(shell dot role overlay $(CURDIR)/mcp-servers.jsonnet 2>/dev/null)
+
+include ../mcp/dependencies.mk
 
 .PHONY: all
 all: $(BUILD_TARGETS) install
@@ -42,8 +43,8 @@ all: $(BUILD_TARGETS) install
 settings.json: settings.jsonnet $(wildcard settings.local.jsonnet) $(SETTINGS_ROLE_OVERLAY)
 	$(call jsonnet,settings.jsonnet) | jq . > $@.tmp && mv $@.tmp $@
 
-mcp-servers.json: mcp-servers.jsonnet $(wildcard mcp-servers.local.jsonnet) $(MCP_SERVERS_ROLE_OVERLAY)
-	$(call jsonnet,mcp-servers.jsonnet) | jq . > $@.tmp && mv $@.tmp $@
+mcp-servers.json: $(MCP_INPUTS)
+	set -o pipefail; $(MCP_RENDER) claude | jq . > $@.tmp && mv $@.tmp $@
 
 # Detect if ~/.claude/settings.json has untracked drift (like terraform detecting drift).
 # Three-way comparison using .settings.json.installed (state), settings.json (desired),
@@ -86,7 +87,7 @@ install: $(BUILD_TARGETS) check-settings
 	cp settings.json .settings.json.installed
 	./install-mcp-servers
 
-LOCAL_JSONNET_FILES := settings.local.jsonnet mcp-servers.local.jsonnet
+LOCAL_JSONNET_FILES := settings.local.jsonnet
 
 .PHONY: init-local
 init-local:
@@ -98,6 +99,14 @@ init-local:
 			echo "Created $$f"; \
 		fi; \
 	done
+	@if [ -f ../mcp/mcp-servers.local.jsonnet ]; then \
+		echo "../mcp/mcp-servers.local.jsonnet already exists, skipping"; \
+	elif [ -f mcp-servers.local.jsonnet ]; then \
+		echo "mcp-servers.local.jsonnet exists at the legacy path, skipping"; \
+	else \
+		echo '{}' > ../mcp/mcp-servers.local.jsonnet; \
+		echo "Created ../mcp/mcp-servers.local.jsonnet"; \
+	fi
 
 .PHONY: clean
 clean:

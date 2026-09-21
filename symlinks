@@ -132,6 +132,10 @@ if match_tag claude; then
   sym config/claude/rules ~/.claude/rules
 fi
 
+if match_tag claude || match_tag codex; then
+  sym config/mcp/cbm-mcp-launcher ~/.config/mcp/cbm-mcp-launcher
+fi
+
 if match_tag codex; then
   sym config/agents/AGENTS.md ~/.codex/AGENTS.md
   sym config/codex/rules ~/.codex/rules

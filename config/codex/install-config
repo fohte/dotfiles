@@ -75,6 +75,12 @@ jq -n \
        | $path];
     ($state[0]) as $state
     | ($actual[0] | delpaths($state | managed_paths)) * $desired[0]
+    | if (.mcp_servers? | type) == "object" then
+        .mcp_servers |= with_entries(
+          select(.value | type == "object" and (has("command") or has("url")))
+        )
+      else .
+      end
   ' > "$task_tmp/merged.json"
 
 yq -p json -o toml "$task_tmp/merged.json" > "$task_tmp/config.toml"

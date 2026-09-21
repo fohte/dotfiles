@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target="${1:?Usage: render <claude|codex|--inputs>}"
+case "$target" in
+  claude | codex | --inputs) ;;
+  *)
+    echo "error: unknown target '$target' (expected: claude, codex, or --inputs)" >&2
+    exit 2
+    ;;
+esac
+
+script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+config_dir="$(cd -P "$script_dir/.." && pwd)"
+base="$script_dir/mcp-servers.jsonnet"
+layers=("$base")
+
+role_overlay="$(dot role overlay "$base" 2> /dev/null || true)"
+if [[ -z "$role_overlay" ]]; then
+  role_overlay="$(dot role overlay "$config_dir/claude/mcp-servers.jsonnet" 2> /dev/null || true)"
+fi
+if [[ -n "$role_overlay" ]]; then
+  layers+=("$role_overlay")
+fi
+
+local_overlay="$script_dir/mcp-servers.local.jsonnet"
+if [[ ! -e "$local_overlay" ]]; then
+  local_overlay="$config_dir/claude/mcp-servers.local.jsonnet"
+fi
+if [[ -e "$local_overlay" ]]; then
+  layers+=("$local_overlay")
+fi
+
+if [[ "$target" == --inputs ]]; then
+  printf '%s\n' "${layers[@]}"
+  exit 0
+fi
+
+merged="(import \"${layers[0]}\")"
+for layer in "${layers[@]:1}"; do
+  merged="$merged + (import \"$layer\")"
+done
+
+env_args=()
+while IFS= read -r name; do
+  env_args+=(--ext-str "$name")
+done < <(
+  rg --no-filename --only-matching "env\\('[^']+'\\)" "${layers[@]}" |
+    sort -u |
+    gsed "s/env('\\(.*\\)')/\\1/"
+)
+
+mise x -- jsonnet "${env_args[@]}" \
+  -e "(import \"$script_dir/render.libsonnet\").$target($merged)"

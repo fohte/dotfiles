@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+base_path="${1:?Usage: build-config <base> <output>}"
+output_path="${2:?Usage: build-config <base> <output>}"
+script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+task_tmp="$(mktemp -d /tmp/codex-config-build.XXXXXX)"
+trap 'rm -rf "$task_tmp"' EXIT
+
+"$script_dir/../mcp/render" codex > "$task_tmp/mcp-servers.json"
+yq -p toml -o json "$base_path" |
+  jq --slurpfile mcp "$task_tmp/mcp-servers.json" '. + {mcp_servers: $mcp[0]}' |
+  yq -p json -o toml > "$task_tmp/config.toml"
+
+mv "$task_tmp/config.toml" "$output_path"
