@@ -11,12 +11,6 @@ local env(name) = std.extVar(name);
       CONTEXT7_API_KEY: 'op://Personal/vzna62vsddi7jiv4dmhum3y7f4/credential',
     },
   },
-  qmd: {
-    type: 'stdio',
-    command: 'qmd',
-    args: ['mcp'],
-    env: {},
-  },
   'codebase-memory': {
     type: 'stdio',
     // MCP clients exec `command` directly without shell expansion, so a literal

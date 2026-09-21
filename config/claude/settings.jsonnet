@@ -117,7 +117,6 @@ local env(name) = std.extVar(name);
       'mcp__gsc__index_inspect',
 
       'mcp__context7',
-      'mcp__qmd',
       'mcp__pencil',
 
       // Only the tools that read the graph or refresh the local SQLite index.
@@ -145,9 +144,6 @@ local env(name) = std.extVar(name);
       // specified anywhere) is handled by the agent-guard hook instead,
       // since permission rules never match an omitted parameter.
       'Agent(model:fable)',
-
-      'mcp__qmd__query',
-      'mcp__qmd__vsearch',
 
       // Wipes the indexed project from the local SQLite cache. Reversible only
       // by re-indexing, but accidental drops cost minutes of rebuild time.
