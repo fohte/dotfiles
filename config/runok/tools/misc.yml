@@ -100,7 +100,15 @@ rules:
 
   # runok
   - allow: 'runok [-c *] check *'
+  # PreToolUse rewrites an `ask` command into `runok exec --ask ...`, and
+  # PermissionRequest is handed that rewrite rather than the original. Allowing
+  # it would answer the very approval the rewrite exists to raise.
+  - ask: 'runok exec --ask *'
+    tests:
+      - ask: 'runok exec --ask --hook-origin abc -- git push'
   - allow: 'runok exec *'
+    tests:
+      - allow: 'runok exec --hook-origin abc -- git status'
 
   # `--engine <file.js>` loads a JS module as the converter, `--config` (`-c` /
   # `--config-file`) points at a config file that may define `engine` as a JS
