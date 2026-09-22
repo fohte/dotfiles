@@ -53,7 +53,7 @@
 "github:mizchi/similarity" = "0.5.0"
 "core:python" = ["3.14.7", "3.13.13"]
 "github:aquaproj/aqua" = "2.60.2"
-"github:tomasz-tomczyk/crit" = "0.19.0"
+"github:tomasz-tomczyk/crit" = "0.20.2"
 
 [settings]
 # disable the idiomatic version file such as Gemfile
