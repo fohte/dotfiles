@@ -1,14 +1,13 @@
 model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
-sandbox_mode = "workspace-write"
+
+# Disabled so runok can apply its own sandbox; nesting the two fails with
+# `sandbox_apply` exit 71. runok only intercepts Bash, so apply_patch writes
+# are no longer confined to the workspace.
+sandbox_mode = "danger-full-access"
+
 approval_policy = "on-request"
 approvals_reviewer = "auto_review"
-
-# Both keys below belong to their table, not the top level. A stray top-level
-# key parses fine and is silently dropped, so the setting looks applied while
-# the default stays in force. `codex exec --strict-config` rejects such keys.
-[sandbox_workspace_write]
-network_access = true
 
 [tools]
 web_search = true
