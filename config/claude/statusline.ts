@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { readFileSync, realpathSync, writeFileSync } from 'node:fs'
+import { readFileSync, realpathSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import {
   AUTO_COMPACT_RATIO,
@@ -196,12 +196,6 @@ function formatRateLimit(
   return `${label}: ${color}${pct}%\x1b[0m${remaining}${pace}`
 }
 
-// context_window_size isn't included in PostToolUse/SessionStart hook input
-// (only statusLine input has it), so it's dropped here as a bridge for
-// hooks/context-split-guard.ts to pick up.
-const contextWindowSizeFile = (sessionId: string) =>
-  `/tmp/claude-ctx-window-size-${sessionId}`
-
 async function main() {
   const input = await Bun.stdin.text()
   const data: SessionData = JSON.parse(input)
@@ -212,12 +206,6 @@ async function main() {
 
   // Auto-compact threshold is 80% of the model's context window
   const contextWindow = data.context_window?.context_window_size ?? 200_000
-  if (data.session_id && data.context_window?.context_window_size) {
-    writeFileSync(
-      contextWindowSizeFile(data.session_id),
-      String(data.context_window.context_window_size),
-    )
-  }
   const autoCompactThreshold = contextWindow * AUTO_COMPACT_RATIO
   const percentage = Math.round((totalTokens / autoCompactThreshold) * 100)
   const color = getColorForPercentage(percentage)
