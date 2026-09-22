@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ "$(uname -s)" != "Darwin" ]; then
+  echo "macOS not detected, skipping tq desktop app install"
+  exit 0
+fi
+
+tq_dir="$(ghq list -e -p fohte/tq)"
+if [ -z "$tq_dir" ]; then
+  echo "fohte/tq not cloned, skipping tq desktop app install"
+  exit 0
+fi
+
+case "$(uname -m)" in
+  arm64) release_dir="mac-arm64" ;;
+  x86_64) release_dir="mac" ;;
+  *)
+    echo "Unsupported macOS architecture: $(uname -m)"
+    exit 1
+    ;;
+esac
+
+app_path="/Applications/tq.app"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/tq-desktop"
+installed_revision_file="$state_dir/installed-revision"
+
+cd "$tq_dir"
+git pull --autostash
+revision="$(git rev-parse HEAD)"
+installed_revision="$(cat "$installed_revision_file" 2> /dev/null || true)"
+
+if [ ! -d "$app_path" ] || [ "$revision" != "$installed_revision" ]; then
+  TQ_ORIGIN="https://tq.fohte.net" \
+    TQ_EXTERNAL_SCHEMES="hammerspoon" \
+    pnpm --filter desktop run package
+
+  built_app="$tq_dir/desktop/release/$release_dir/tq.app"
+  if [ ! -d "$built_app" ]; then
+    echo "Built tq desktop app not found: $built_app" >&2
+    exit 1
+  fi
+
+  install_dir="$(mktemp -d "/Applications/.tq-desktop.XXXXXX")"
+  staged_app="$install_dir/tq.app"
+  backup_app="$install_dir/tq.app.previous"
+  ditto "$built_app" "$staged_app"
+
+  restore_previous_app() {
+    if { [ -e "$backup_app" ] || [ -L "$backup_app" ]; } &&
+      [ ! -e "$app_path" ] && [ ! -L "$app_path" ]; then
+      mv "$backup_app" "$app_path"
+    fi
+  }
+  trap restore_previous_app EXIT
+
+  if [ -e "$app_path" ] || [ -L "$app_path" ]; then
+    mv "$app_path" "$backup_app"
+  fi
+  mv "$staged_app" "$app_path"
+  trap - EXIT
+
+  # The bundle root mtime records the completed swap without modifying signed contents.
+  touch "$app_path"
+  mkdir -p "$state_dir"
+  revision_tmp="$installed_revision_file.$$"
+  printf '%s\n' "$revision" > "$revision_tmp"
+  mv "$revision_tmp" "$installed_revision_file"
+fi
+
+has_stale_process() {
+  local now app_mtime pids pgrep_status pid elapsed started_at
+
+  now="$(date +%s)"
+  app_mtime="$(gstat -c %Y "$app_path")" || return 0
+  case "$app_mtime" in
+    '' | *[!0-9]*) return 0 ;;
+  esac
+
+  if pids="$(pgrep -f '/Applications/tq\.app/Contents/MacOS/tq([[:space:]]|$)' 2> /dev/null)"; then
+    :
+  else
+    pgrep_status=$?
+    case "$pgrep_status" in
+      1) return 1 ;;
+      *) return 0 ;;
+    esac
+  fi
+
+  while IFS= read -r pid; do
+    elapsed="$(ps -o etimes= -p "$pid" 2> /dev/null | tr -d '[:space:]' || true)"
+    case "$elapsed" in
+      '' | *[!0-9]*) return 0 ;;
+    esac
+
+    started_at=$((now - elapsed))
+    if [ "$started_at" -le "$app_mtime" ]; then
+      return 0
+    fi
+  done << EOF
+$pids
+EOF
+
+  return 1
+}
+
+if has_stale_process; then
+  osascript -e 'display notification "Restart tq to apply the update." with title "tq"' ||
+    echo "Unable to display tq restart notification" >&2
+else
+  for previous_install in /Applications/.tq-desktop.*; do
+    [ -d "$previous_install" ] || continue
+    rm -rf "$previous_install"
+  done
+fi
