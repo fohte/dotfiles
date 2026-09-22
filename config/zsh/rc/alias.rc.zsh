@@ -34,6 +34,11 @@ alias cls='claude --model "sonnet[1m]"'
 alias clo='claude --model "opus[1m]" --effort high'
 alias clf='claude --model "fable[1m]"'
 
+# Codex's agent loop runs in a shared app-server daemon outside the pane's
+# process tree, so only this wrapper can record the thread ID on the pane for
+# `a agent resume` to read.
+alias codex='a agent codex'
+
 alias t='tig'
 
 alias g'$'='git cmd-commit'
