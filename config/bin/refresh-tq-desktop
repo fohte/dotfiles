@@ -69,9 +69,8 @@ if [ ! -d "$app_path" ] || [ "$revision" != "$installed_revision" ]; then
 fi
 
 has_stale_process() {
-  local now app_mtime pids pgrep_status pid elapsed started_at
+  local app_mtime pids pgrep_status pid process_start started_at
 
-  now="$(date +%s)"
   app_mtime="$(gstat -c %Y "$app_path")" || return 0
   case "$app_mtime" in
     '' | *[!0-9]*) return 0 ;;
@@ -88,12 +87,8 @@ has_stale_process() {
   fi
 
   while IFS= read -r pid; do
-    elapsed="$(ps -o etimes= -p "$pid" 2> /dev/null | tr -d '[:space:]' || true)"
-    case "$elapsed" in
-      '' | *[!0-9]*) return 0 ;;
-    esac
-
-    started_at=$((now - elapsed))
+    process_start="$(ps -o lstart= -p "$pid" 2> /dev/null)" || return 0
+    started_at="$(gdate -d "$process_start" +%s 2> /dev/null)" || return 0
     if [ "$started_at" -le "$app_mtime" ]; then
       return 0
     fi
