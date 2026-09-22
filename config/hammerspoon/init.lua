@@ -101,11 +101,11 @@ hs.hotkey.bind({ 'alt' }, '2', launchFocusOrCycle('/Applications/Arc.app'))
 
 hs.hotkey.bind({ 'alt' }, '3', launchFocusOrCycle('/Applications/Slack.app'))
 
-hs.hotkey.bind({ 'alt' }, '5', launchFocusOrCycle('/Applications/Claude.app'))
+hs.hotkey.bind({ 'alt' }, '4', launchFocusOrCycle('/Applications/tq.app'))
+
+hs.hotkey.bind({ 'alt' }, '5', launchFocusOrCycle('/Applications/ChatGPT Classic.app'))
 
 hs.hotkey.bind({ 'alt' }, 'o', launchFocusOrCycle('/Applications/Obsidian.app'))
-
-hs.hotkey.bind({ 'alt' }, '8', launchFocusOrCycle('/Applications/Todoist.app'))
 
 hs.hotkey.bind({ 'alt' }, '9', launchFocusOrCycle('/Applications/Fantastical.app'))
 
