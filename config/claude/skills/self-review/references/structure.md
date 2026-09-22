@@ -10,7 +10,7 @@
 
 - **6. 互換性 (Compatibility)**: 後方互換・破壊的変更・API / スキーマ進化・既存呼び出し側への影響。
 - **8. 保守性 (Maintainability)**: 不要な複雑性・重複・抽象化レベル。可読性そのものは linter / formatter の責務なので扱わない。規約ファイルに明文化されているルール (関数の行数上限など) への違反は、規約引用付きで convention reviewer の観点 11 が扱うので扱わない。
-- **9. テスト容易性 (Testability)**: 副作用の分離・mock 可能性・テストの isolation。テスト自体の不足は具体的な漏れシナリオがある場合のみ指摘。
+- **9. テスト容易性 (Testability)**: 副作用の分離・mock 可能性・テストの isolation。テスト自体の有無と品質は test-philosophy reviewer が扱うので扱わない。
 - **12. リファクタリング機会**: 動作を変えずに構造を改善できる箇所。具体的には下記:
     - **重複 / near-duplicate**: 同一ロジックのコピペ、parameterize できるテストケース。可能なら `similarity-rs` / `similarity-ts` / `similarity-py` (mizchi/similarity) を該当パスに走らせて裏取りする
     - **God function / 長すぎる関数**: 1 関数で複数責務を抱えている (例: fetch + validate + calculate + update をまとめて 1 関数)

@@ -29,7 +29,7 @@ reviewer の選択順、agent、trigger、reference は `reviewers.yaml` を唯�
 
 ## 結果集約
 
-base reviewer の評価を 12 観点の通し番号順に並べ、起動した conditional reviewer の評価をその後へ追加する。
+通し番号を持つ 12 観点を番号順に並べ、番号を持たない base reviewer (test-philosophy) の評価をその後へ、起動した conditional reviewer の評価をさらにその後へ追加する。
 未起動の conditional reviewer は出力しない。
 
 ### Dedup ルール
@@ -48,7 +48,7 @@ base reviewer の評価を 12 観点の通し番号順に並べ、起動した c
 
 ### 1. 観点別評価
 
-base reviewer の 12 観点を全件出力し、各項目に以下のいずれかを付ける:
+base reviewer の観点を全件出力し、各項目に以下のいずれかを付ける:
 
 - `✅`: 壊れる可能性を検討した上で問題なし
 - `⚠️ N/A`: この diff に構造上関係しない。理由を 1 行で付ける
@@ -70,6 +70,9 @@ base reviewer の 12 観点を全件出力し、各項目に以下のいずれ�
 10. ドキュメント整合性: <marker> <summary>
 11. プロジェクト規約遵守: <marker> <summary>
 12. リファクタリング機会: <marker> <summary>
+
+- テストの有無: <marker> <summary>
+- テストの書き方: <marker> <summary>
 ```
 
 起動した conditional reviewer の評価は manifest / result の reviewer 順で続ける。

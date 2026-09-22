@@ -33,6 +33,15 @@ reviewers:
       - self-review/references/_common.md
       - self-review/references/convention.md
 
+  # A path trigger on test files cannot fire on the case this reviewer most
+  # needs to catch: a change that should have had tests and got none.
+  test-philosophy:
+    always: true
+    definition: self-review-test-philosophy.md
+    references:
+      - test-philosophy/SKILL.md
+      - self-review/references/_common.md
+
   comment:
     trigger:
       kind: added-lines
@@ -55,16 +64,6 @@ reviewers:
     references:
       - gha-security-review/SKILL.md
       - gha-security-review/references/*.md
-      - self-review/references/_common.md
-
-  test-philosophy:
-    trigger:
-      kind: paths
-      case_insensitive: true
-      pattern: '(^|/)(tests?|__tests__|spec)/|(\.|_)(test|spec|stories)\.[a-zA-Z]+$|_test\.(go|py|rb)$|_spec\.rb$'
-    definition: self-review-test-philosophy.md
-    references:
-      - test-philosophy/SKILL.md
       - self-review/references/_common.md
 
   db-schema:
