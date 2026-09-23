@@ -17,7 +17,7 @@ web_search = true
 # turn. Children only explore and hand back a summary, so the cheapest model
 # with the deepest effort buys the same answer.
 [agents]
-default_subagent_model = "gpt-5.6-luna"
+default_subagent_model = "gpt-6-luna"
 default_subagent_reasoning_effort = "max"
 
 [tui]

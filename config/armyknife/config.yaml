@@ -13,7 +13,7 @@ agent:
     # Applies to delegated sessions only, so interactive `codex` keeps its own
     # defaults. The delegate skill explains why the quota goes to effort rather
     # than to a higher model tier.
-    model: gpt-5.6-luna
+    model: gpt-6-luna
     reasoning_effort: max
 
 repos:

@@ -49,7 +49,7 @@ description: Delegate tasks to a separate Claude Code or Codex instance, either 
 既定のエンジンはマシンごとに違うので、`--engine` を省略したときにどちらで起動するかは `a config get agent.default_engine` で確かめる。
 `a agent new --help` が出すのはビルド時の既定値で、そのマシンの実効値ではない。
 
-**`gpt-5.6-luna` を `--reasoning-effort max` で使う。**
+**luna を `--reasoning-effort max` で使う。**
 どちらも armyknife の既定なので、`--model` も `--reasoning-effort` も指定しない。
 そのマシンでの実効値は `a config get agent.codex.model` と `a config get agent.codex.reasoning_effort` で確かめる。
 タスクの難易度で使い分けない。
