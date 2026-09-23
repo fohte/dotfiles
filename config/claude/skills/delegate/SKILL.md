@@ -62,7 +62,7 @@ description: Delegate tasks to a separate Claude Code or Codex instance, either 
 luna low は delegate skill を一度も開かないまま「完了しました」と言って終わり、既存テストを 2 件壊したまま commit した。
 effort は思考の深さだけでなく、指示に従う程度にも効く。
 
-モデルを上げるのは、`max` で解けなかったものをやり直すときだけ (`--model gpt-5.6-sol --reasoning-effort high`)。
+モデルを上げるのは、`max` で解けなかったものをやり直すときだけ (`--model gpt-6-sol --reasoning-effort high`)。
 
 ## 使い方
 
