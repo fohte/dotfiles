@@ -40,5 +40,3 @@
 {{- else }}
 `commit` skill で commit し、`create-pr` skill で PR を作成するところまで完了させること。
 {{- end }}
-
-ゴールに届かないまま作業を続けられなくなったときは、止まる前に delegate skill の「委任先から委任元に連絡する場合」に従って委任元に報告すること。
