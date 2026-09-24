@@ -492,7 +492,7 @@ rules:
   # agent's own backgrounding mechanism, so the harness loses track of it.
   - deny: 'disown *'
     message: "Manually backgrounding with `&` and `disown` bypasses the agent's own backgrounding mechanism, so the harness loses track of the job."
-    fix_suggestion: 'Claude Code: run the command with run_in_background: true. Codex: run it via exec_command. Either way, drop `& disown`.'
+    fix_suggestion: 'Claude Code: run the command with run_in_background: true. Codex: run it via `a agent bg run -- <command>`. Either way, drop `& disown`.'
     tests:
       - deny: 'disown'
       - deny: 'disown %1'

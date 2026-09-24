@@ -97,7 +97,7 @@ push の要否にかかわらず、base branch との diff をユーザーにレ
 
 ## 1. PR body のドラフトを作成する
 
-ドラフトは **常に日本語で書くこと**。日本語の文体・表現については `japanese-tech-writing` skill の規範に従う (一文一行、LLM っぽい空句の禁止、冗長の排除など)。
+ドラフトは **常に日本語で書くこと**。日本語の文体・表現については `japanese-tech-writing` skill の規範に従う (LLM っぽい空句の禁止、冗長の排除など)。
 
 Conditions の表で選んだ reference の Step 1 に従う。
 
