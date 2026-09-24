@@ -15,7 +15,7 @@
     - Codex: `spawn_agent` (model 省略で親を継承、既定で同時 4、ネスト 1 段) を並列に呼び、`wait_agent` (最大 1 時間) で結果を回収する
 - **バックグラウンド完了待ち**: 委任済みの作業を自分で重複実行しない。中間報告では完了/未完了を明確に区別すること。`[agent completed]` 等の完了テキストを自分で生成したり、出力ファイルを途中 Read して完了とみなすのも禁止
     - Claude Code (`run_in_background: true`): システムからの `<task-notification>` が届くまで結論・要約・次ステップに進まない。通知を待つ間、`sleep` / `true` / `echo waiting` のような no-op コマンドで時間を稼がず、何もツールを呼ばずにターンを終えて待つこと
-    - Codex: 完了通知は無い。`exec_command` は最大 30 秒で制御を返すので、続きは `write_stdin` を空入力で呼んで待つ (1 回最大 5 分、`background_terminal_max_timeout` で変更可)。ツールを呼ばずに待つと処理が進まなくなるため、完了するまで空入力の `write_stdin` を呼び直す
+    - Codex: `a agent bg run -- <command>` で起動し、`write_stdin` などでポーリングせずにターンを終えて待つ。終了すると `<background-task-complete>` メッセージでセッションが再開され、そこに stdout を書き出したファイルのパスが入っている
 
 ## 行動規範
 

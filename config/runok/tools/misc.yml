@@ -46,6 +46,10 @@ rules:
   - allow: 'a gh pr-review reply push *'
   - allow: 'a gh pr-review reply review *'
   - allow: 'a gh issue-agent init|diff|pull|view|review *'
+  - allow: 'a cc|agent bg run -- a gh issue-agent review *'
+    tests:
+      - allow: 'a agent bg run -- a gh issue-agent review /tmp/issue.md'
+      - pass: 'a agent bg run -- a gh issue-agent push 123'
   - allow: 'a gh issue-agent push !--force !--allow-delete *'
     tests:
       - allow: a gh issue-agent push 123

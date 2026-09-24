@@ -107,7 +107,7 @@ Opens a file in an editor (via tmux) for user review. The user must set `submit:
 Run this in the background:
 
 - Claude Code: `run_in_background: true`. Wait for the `<task-notification>`; do not poll.
-- Codex: `exec_command` (returns after 30s), then keep calling `write_stdin` with empty input (up to 5 min per call, `background_terminal_max_timeout` to change) until it returns.
+- Codex: `a agent bg run -- a gh issue-agent review <file-path>`, then end your turn without polling. You will be resumed with a `<background-task-complete>` message.
 
 The command blocks until the user closes the editor. See [Review exit codes](#review-exit-codes) for how to interpret the result.
 
