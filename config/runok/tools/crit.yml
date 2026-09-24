@@ -41,6 +41,39 @@ rules:
       - allow: 'crit stop'
       - allow: 'crit stop plan.md'
 
+  # Review forms block until the human finishes, and Codex can only wait for
+  # that by polling. Codex exports CODEX_SESSION_ID to `runok exec`, not to
+  # the hook process, so this is enforced at exec time.
+  # Inline tests cannot set env: verify with `CODEX_SESSION_ID=x runok check
+  # -- crit`, and run `runok test` without CODEX_SESSION_ID or the review-form
+  # allow tests above fail.
+  - deny: 'crit *'
+    when: >-
+      'CODEX_SESSION_ID' in env
+      && !has(flags.help) && !has(flags.h) && !has(flags.version) && !has(flags.v)
+      && (size(args) == 0 || !(args[0] in [
+      'comment', 'comments', 'share', 'fetch', 'unpublish', 'install',
+      'config', 'check', 'pull', 'push', 'status', 'stop', 'cleanup', 'stats',
+      'auth', 'story', 'plan-hook']))
+    message: >-
+      Do not run blocking crit review commands directly. Run
+      `a agent bg run -- <this crit command>` and end your turn without
+      polling; you will be resumed with a <background-task-complete> message
+      when the review is finished, however long it takes.
+    fix_suggestion: 'a agent bg run -- crit ...'
+
+  # Not a wrapper: the inner `crit` would hit the Codex deny above. Other
+  # commands under `bg run` fall through so they are not auto-approved.
+  - allow: 'a cc|agent bg run -- crit *'
+    when: "!args.exists(a, a in ['share', 'unpublish', 'push', 'stop'])"
+    tests:
+      - allow: 'a agent bg run -- crit'
+      - allow: 'a agent bg run -- crit --session abc123'
+      - allow: 'a cc bg run -- crit --pr 123'
+      - pass: 'a agent bg run -- crit share plan.md'
+      - pass: 'a agent bg run -- crit push 123'
+      - pass: 'a agent bg run -- crit stop --all'
+
   # Posts review comments to a GitHub PR, visible to other collaborators.
   - ask: 'crit push *'
     tests:

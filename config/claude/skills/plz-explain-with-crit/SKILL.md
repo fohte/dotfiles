@@ -45,7 +45,7 @@ crit を「レビューツール」としてではなく、「対象の意味を
 普通に実行すると呼び出し元がブロックされ続ける。
 
 - Claude Code: 必ず `run_in_background: true` で実行すること
-- Codex: `exec_command` で起動する (30 秒で制御が返る)
+- Codex: `a agent bg run -- crit ...` で起動し、すぐに制御が返る (crit を直接実行すると runok が拒否する)
 
 ### ブラウザは自動起動させる
 
@@ -101,7 +101,7 @@ crit stop            # 対象セッションの daemon だけを止める
 バックグラウンドの crit プロセスは、ユーザーがブラウザ側で一定の操作 (Approve など) をすると終了する。
 
 - Claude Code: タスク完了通知が届く。**通知が来るまで sleep やポーリングで待たず、何もツールを呼ばずに待つこと**
-- Codex: 完了通知は無い。`write_stdin` を空入力で呼んで待つ (1 回最大 5 分、`background_terminal_max_timeout` で変更可) ことを、プロセスが終了するまで繰り返す
+- Codex: ポーリングせずにターンを終える。crit が終了すると `<background-task-complete>` メッセージでセッションが再開され、そこに stdout を書き出したファイルのパスが入っている
 
 完了時の stdout に `approved: true/false` と、未解決コメントの一覧が JSON で入っている。
 これがユーザーの質問そのものである。
