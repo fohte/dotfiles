@@ -23,3 +23,16 @@ agy_result_or_die() {
     exit 1
   fi
 }
+
+# Records what agy last wrote so agy-advance-draft can tell whether the user
+# has commented since.
+save_agy_output() {
+  local draft_path="$1" title="$2" body="$3"
+  printf '%s\n%s' "$title" "$body" > "${draft_path}.agy-output"
+}
+
+agy_output_unchanged() {
+  local draft_path="$1" title="$2" body="$3"
+  [ -f "${draft_path}.agy-output" ] \
+    && [ "$(cat "${draft_path}.agy-output")" = "$(printf '%s\n%s' "$title" "$body")" ]
+}

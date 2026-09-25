@@ -50,6 +50,17 @@ PROMPT
   new_body=$(jq -r '.structured_output.pr_body' <<< "$result")
   new_frontmatter=$(NEW_TITLE="$new_title" yq '.title = strenv(NEW_TITLE) | .steps.submit = false' <<< "$frontmatter")
 else
+  if [ "$(yq -r '.steps.submit // false' <<< "$frontmatter")" = "true" ]; then
+    echo "Error: the draft is already approved (steps.submit: true). Run \`a ai pr-draft submit\` instead of rewriting it." >&2
+    exit 1
+  fi
+  # `a ai pr-draft review` resets only `steps` before opening the editor, so
+  # an unchanged title and body means the user has left no comments since agy
+  # last wrote them: the editor may still be open, or no review ran in between.
+  if agy_output_unchanged "$draft_path" "$title" "$body"; then
+    echo "Error: title and body are unchanged since agy last wrote them, so there is nothing to apply. Wait for the review to finish, or ask the user what to change." >&2
+    exit 1
+  fi
   conversation_id=$(cat "${draft_path}.agy-conversation")
   prompt=$(
     cat << PROMPT
@@ -77,3 +88,4 @@ fi
   printf -- '---\n'
   printf '%s' "$new_body"
 } > "$draft_path"
+save_agy_output "$draft_path" "$new_title" "$new_body"
