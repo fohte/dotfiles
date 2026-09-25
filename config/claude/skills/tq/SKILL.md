@@ -32,10 +32,17 @@ tq page create --help   # flags of one subcommand
 
 This is the main reason the CLI exists. Page and comment bodies are often tens of kB; putting them in a command line means paying for the whole body in context. Write the body to a file, then hand over the path — the content never enters the conversation.
 
+Create each temporary file with `mktemp /tmp/tq-<purpose>.XXXXXX`. Use its full output verbatim when writing the file and in later `--file` or `--output` calls. Bash variables do not persist across calls, so do not rediscover the path by filename prefix; another session may have a matching file. Placeholders such as `<design-path>` below stand for the full path printed by `mktemp`.
+
 ```bash
-tq page create 58 '設計' --file /tmp/design.md
-tq page update 58 <pageId> --file /tmp/design.md
-tq comment create 58 --file /tmp/note.md
+# Example: run this first and use its full output as <design-path> below.
+mktemp /tmp/tq-design.XXXXXX
+```
+
+```bash
+tq page create 58 '設計' --file <design-path>
+tq page update 58 <pageId> --file <design-path>
+tq comment create 58 --file <comment-path>
 ```
 
 Content also reads from stdin when `--file` is omitted, which is fine for a couple of lines.
@@ -44,7 +51,7 @@ Reading works the same way in reverse: `--output` writes the body to a file inst
 
 ```bash
 tq page list 58                                   # metadata + pageId, no bodies
-tq page get 58 <pageId> --output /tmp/design.md   # body to disk, not to context
+tq page get 58 <pageId> --output <page-body-path> # body to disk, not to context
 tq page get 58 <pageId>                           # body to stdout, only if it is short
 ```
 
@@ -81,7 +88,7 @@ This bites in summary write-ups (a table of bare PR numbers) and in ordinary pro
 `--format html` renders the page as a full HTML document inside a sandboxed iframe: no access to the app's cookies, localStorage, or API. Inline all CSS and JS instead of referencing external files, since nothing guarantees an external resource is still reachable when the page is opened months later.
 
 ```bash
-tq page create 58 'アーキテクチャ図' --format html --file /tmp/diagram.html
+tq page create 58 'アーキテクチャ図' --format html --file <diagram-path>
 ```
 
 ## Common flows
@@ -95,7 +102,7 @@ tq task search 'CLI' --status todo
 tq page list 58
 
 # Capture an investigation result on the task it belongs to
-tq page create 58 '調査メモ' --file /tmp/findings.md
+tq page create 58 '調査メモ' --file <findings-path>
 
 # Move a task along
 tq task complete 58
