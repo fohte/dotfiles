@@ -404,8 +404,7 @@ rules:
       - allow: 'mise tools'
 
   - deny: 'open *'
-    message: 'Use crit to have a human review the file instead.'
-    fix_suggestion: 'crit preview <file>'
+    message: 'open is denied. Only when the user asks to see the file, show it with `crit preview <file>`; never use crit for your own checks.'
 
   # find is prohibited; use rg, Glob tool, or Grep tool instead
   - deny: 'find *'
