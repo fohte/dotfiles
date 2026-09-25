@@ -23,3 +23,9 @@ default_subagent_reasoning_effort = "max"
 [tui]
 status_line = ["model-with-reasoning", "used-tokens", "context-used", "five-hour-limit", "weekly-limit", "codex-version"]
 status_line_use_colors = true
+
+# The GitHub connector's tools bypass runok, which only hooks Bash; `gh` covers
+# the same ground under runok's rules. This only hides the app from Codex, not
+# from ChatGPT.
+[apps.connector_76869538009648d5b282a4bb21c3d157]
+enabled = false
