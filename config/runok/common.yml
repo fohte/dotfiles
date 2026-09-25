@@ -36,6 +36,10 @@ definitions:
       values:
         - '*.log'
 
+  wrappers:
+    # tools/crit.yml matches this exact string via `shell.wrappers`.
+    - 'a cc|agent bg run -- <cmd>'
+
 rules:
   # `when` excludes safe targets (via the same `definitions.vars` lists the
   # allow rule below references, using runok's `glob_matches`/`definitions`
