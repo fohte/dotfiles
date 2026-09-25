@@ -166,7 +166,7 @@ rules:
   # and skips PATH-based wrappers. Call the command by its bare name; if
   # output truncation is a real problem, wrap it with `rtk proxy <cmd>`.
   - deny: '/* *'
-    message: 'Call the command by its bare name (e.g. `rg`), not by absolute path. If you actually need raw output, use `rtk proxy <cmd>`.'
+    message: 'Absolute paths are denied so they cannot bypass rules and wrappers keyed on command names; this is not a ban on the command itself. For a command on PATH, call it by its bare name (e.g. `rg`), and use `rtk proxy <cmd>` only when you need untruncated output. For a script not on PATH (e.g. a skill script), keep the `~/...` form exactly as the instructions wrote it instead of expanding `~`.'
     tests:
       - deny: '/opt/homebrew/bin/rg foo'
       - deny: '/usr/bin/ls'
