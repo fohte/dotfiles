@@ -24,6 +24,11 @@ agy_result_or_die() {
   fi
 }
 
+instruction_block() {
+  [ -n "$1" ] || return 0
+  printf '\n<additional_instructions>\n%s\n</additional_instructions>\n' "$1"
+}
+
 # Records what agy last wrote so agy-advance-draft can tell whether the user
 # has commented since.
 save_agy_output() {

@@ -1,10 +1,11 @@
 #!/bin/bash
 # Advance a draft that the editor didn't approve: either apply the user's
-# inline comments, or (once `ready-for-translation` is set) translate it to
-# English. Claude never reads the draft file or the comments — this script
-# does, and only ever reports its exit code back.
+# inline comments and the optional instruction, or (once
+# `ready-for-translation` is set) translate it to English.
+# Usage: agy-advance-draft [instruction]
 set -euo pipefail
 
+instruction="${1:-}"
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 schema_file="$script_dir/agy-schema.json"
 # shellcheck source=config/claude/skills/create-pr/scripts/call-agy.sh disable=SC1091
@@ -34,6 +35,7 @@ if [ "$needs_translation" = "true" ]; then
 以下の GitHub Pull Request の title と body を英語に翻訳する。以下のルールに厳密に従うこと。narration や説明は不要で、指定した JSON 形式でだけ出力する。
 
 $translate_rules
+$(instruction_block "$instruction")
 
 <title>
 $title
@@ -57,14 +59,15 @@ else
   # `a ai pr-draft review` resets only `steps` before opening the editor, so
   # an unchanged title and body means the user has left no comments since agy
   # last wrote them: the editor may still be open, or no review ran in between.
-  if agy_output_unchanged "$draft_path" "$title" "$body"; then
-    echo "Error: title and body are unchanged since agy last wrote them, so there is nothing to apply. Wait for the review to finish, or ask the user what to change." >&2
+  if [ -z "$instruction" ] && agy_output_unchanged "$draft_path" "$title" "$body"; then
+    echo "Error: title and body are unchanged since agy last wrote them, so there is nothing to apply. Wait for the review to finish, or pass an instruction as the argument." >&2
     exit 1
   fi
   conversation_id=$(cat "${draft_path}.agy-conversation")
   prompt=$(
     cat << PROMPT
-以下は先ほど書いた GitHub Pull Request の title と body で、レビュアーがコメントを書き込んでいる。コメントで指示された修正だけを適用し、対応済みのコメント本文は削除する。翻訳はしない。narration や説明は不要で、指定した JSON 形式でだけ出力する。
+以下は先ほど書いた GitHub Pull Request の title と body で、レビュアーがコメントを書き込んでいることがある。コメントと追加指示で指示された修正だけを適用し、対応済みのコメント本文は削除する。翻訳はしない。narration や説明は不要で、指定した JSON 形式でだけ出力する。
+$(instruction_block "$instruction")
 
 <title>
 $title
