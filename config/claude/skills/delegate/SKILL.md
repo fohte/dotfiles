@@ -210,6 +210,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.agents/skills/delegate/scripts/rend
     - 例: `a agent new --worktree=follow-up-123-terraform/foo --agent --label "..." --prompt "..."`
 - **ブランチ名**: 新規ブランチを作る場合、ブランチ名に `/` を含めないこと。代わりにハイフンを使う (例: `fix/login-bug` ではなく `fix-login-bug`)。ブランチには `fohte/` がプレフィックスとして付くため、`fix/...` だと `fohte/fix/...` になり冗長
 - 新しいインスタンスは独立した worktree で作業するため、現在の作業と競合しない。作業ツリーを共有する direct-commit モードには当てはまらず、前掲の「委任前に確認すること」に従う
+- **fork リポジトリへの委任**: 委任先が他者のリポジトリの fork (`gh repo view --json isFork -q .isFork` が `true`) なら、`additionalContext` に「oss-contribution skill を読み、commit と push はその手順に従うこと」と書く。fork では commit も push もユーザーが行うので、`render-task` が付ける締めくくりの commit / PR 作成はこの skill の手順で置き換わる。後述の「commit/PR 作成の完了条件は task.yaml に書かない」の例外はこれだけ
 
 ### `--from` の判断ルール (重要)
 

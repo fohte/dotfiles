@@ -6,6 +6,10 @@ definitions:
     # an accidental push has no review safety net. Add more repos here as needed.
     master-push-repos:
       - '~/ghq/github.com/fohte/dotfiles'
+    # Forks of third-party repos: every commit ends up in an upstream PR under
+    # the user's name, so the user reviews each commit message and push.
+    fork-repos:
+      - '~/ghq/github.com/fohte/crit'
 
   flag_groups:
     # Capture every `--add-label` value as a list so a `when` clause can
@@ -131,6 +135,18 @@ rules:
     when: "(has(flags.C) && paths['master-push-repos'].exists(p, flags.C == p || flags.C.startsWith(p + '/'))) || (!has(flags.C) && paths['master-push-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')))"
     message: 'This repo is pushed to directly on the default branch. Confirm before pushing.'
     tests:
+      - allow: 'git -C /tmp push origin main'
+  # Same inline-test gap as the rule above. `env.PWD` is checked even when
+  # `-C` is present because `commit -C <ref>` (reuse message) is also
+  # captured as `flags.C`; this over-denies `git -C <elsewhere> ...` run from
+  # inside a fork, which is the safe direction. `.worktrees/<name>`
+  # checkouts sit under the repo path, so delegated sessions are covered.
+  - deny: 'git [-C *] commit|push *'
+    when: "(has(flags.C) && paths['fork-repos'].exists(p, flags.C == p || flags.C.startsWith(p + '/'))) || paths['fork-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/'))"
+    message: 'This repo is a fork contributed upstream: the user runs every commit and push. Read the oss-contribution skill.'
+    fix_suggestion: 'Write the commit message draft to a mktemp file under /tmp and ask the user to run `git commit -F <path>`.'
+    tests:
+      - allow: 'git -C /tmp commit -m "feat: add feature"'
       - allow: 'git -C /tmp push origin main'
   # Rebasing onto any branch (not just origin/main) rewrites local commit
   # history and can only be published with a force-push, which is denied
