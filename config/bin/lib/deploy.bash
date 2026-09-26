@@ -39,9 +39,84 @@ log-exec() {
 is_dryrun() { test -n "${DRYRUN:-}"; }
 is_force() { test -n "${FORCE:-}"; }
 
+# Link each child directory into a Windows directory with native Windows
+# symlinks. WSL's ln -s creates links that Windows programs cannot follow.
+sym_windows_dir() {
+  local src="$1" dst="$2" win_src win_dst ps_script
+  [[ $src == /* ]] || src="$DOTFILES_DIR/$src"
+
+  win_src="$(wslpath -w "$src")"
+  win_dst="$(wslpath -w "$dst")"
+  # Quote paths as PowerShell single-quoted strings.
+  win_src="${win_src//\'/\'\'}"
+  win_dst="${win_dst//\'/\'\'}"
+
+  if is_dryrun; then
+    echo "[dryrun] link Windows skills from $win_src into $win_dst"
+    return
+  fi
+
+  ps_script=$(
+    cat << 'POWERSHELL'
+param([string]$sourceRoot, [string]$destination)
+$ErrorActionPreference = 'Stop'
+$source = (Resolve-Path -LiteralPath $sourceRoot).Path.TrimEnd('\')
+New-Item -ItemType Directory -Path $destination -Force | Out-Null
+
+function LinkTarget($item) {
+  $target = [string]$item.Target
+  if ($target.StartsWith('UNC\', [StringComparison]::OrdinalIgnoreCase)) {
+    return '\\' + $target.Substring(4)
+  }
+  return $target
+}
+
+$names = @{}
+foreach ($skill in Get-ChildItem -LiteralPath $source -Directory) {
+  if ($skill.Name -eq 'synced') { continue }
+  $names[$skill.Name] = $true
+  $link = Join-Path $destination $skill.Name
+  $existing = Get-Item -LiteralPath $link -Force -ErrorAction SilentlyContinue
+  if ($existing) {
+    if ($existing.LinkType -eq 'SymbolicLink' -and (LinkTarget $existing) -eq $skill.FullName) {
+      continue
+    }
+    if ($existing.LinkType -ne 'SymbolicLink' -or
+        -not (LinkTarget $existing).StartsWith("$source\", [StringComparison]::OrdinalIgnoreCase)) {
+      Write-Warning "Keeping existing skill: $link"
+      continue
+    }
+    Remove-Item -LiteralPath $link -Force
+  }
+  try {
+    New-Item -ItemType SymbolicLink -Path $link -Target $skill.FullName -ErrorAction Stop | Out-Null
+  } catch {
+    throw "Cannot link $link. Enable Windows Developer Mode or run dot deploy from an elevated terminal. $($_.Exception.Message)"
+  }
+  Write-Output "Linked $($skill.Name)"
+}
+
+foreach ($existing in Get-ChildItem -LiteralPath $destination -Force) {
+  if ($existing.LinkType -eq 'SymbolicLink' -and
+      (LinkTarget $existing).StartsWith("$source\", [StringComparison]::OrdinalIgnoreCase) -and
+      -not $names.ContainsKey($existing.Name)) {
+    Remove-Item -LiteralPath $existing.FullName -Force
+    Write-Output "Removed stale skill: $($existing.Name)"
+  }
+}
+POWERSHELL
+  )
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { $ps_script } '$win_src' '$win_dst'"
+}
+
 # sym <src> <dst>        link <dst> to <src>
 # sym <src>... <dstdir>   link each <src> under <dstdir> by its basename
 sym() {
+  if [[ ${1:-} == --windows-dir ]]; then
+    shift
+    sym_windows_dir "$@"
+    return
+  fi
   if [ $# -gt 2 ]; then
     local dst="${*: -1}"
     local src link

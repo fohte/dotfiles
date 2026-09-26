@@ -129,9 +129,7 @@ if match_tag claude; then
   sym config/claude/skills/!(synced)/ ~/.agents/skills
   # Codex running on Windows reads the Windows user skill directory, not WSL's.
   if is_wsl && command -v powershell.exe > /dev/null 2>&1; then
-    log-exec powershell.exe -NoProfile -ExecutionPolicy Bypass \
-      -File "$(wslpath -w "$DOTFILES_DIR/scripts/deploy-windows-skills.ps1")" \
-      -SourceRoot "$(wslpath -w "$DOTFILES_DIR/config/claude/skills")"
+    sym --windows-dir config/claude/skills "$USERPROFILE/.agents/skills"
   fi
   sym config/claude/statusline.ts ~/.claude/statusline.ts
   sym config/claude/hooks ~/.claude/hooks

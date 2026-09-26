@@ -54,7 +54,7 @@ The official mise installer places `mise` in `~/.local/bin`; `scripts/bootstrap`
 
 After the initial deployment, `dot` will be available on your `PATH` (via the `bin` symlink to `~/bin`).
 
-On WSL, `dot deploy -t claude` also links each personal skill into the Windows
+On WSL, `dot deploy -t claude` links each personal skill into the Windows
 user's `.agents/skills` directory, so Codex running on Windows can discover the
 same skills. Creating new Windows symlinks requires Developer Mode or an elevated
 PowerShell. Existing links reflect source updates immediately.
