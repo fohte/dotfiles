@@ -58,7 +58,16 @@ usage_file="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-usage.json"
 auth_file="$HOME/.codex/auth.json"
 
 work_dir=$(mktemp -d -t self-review-external.XXXXXX)
-trap 'rm -rf "$work_dir"' EXIT
+# Exit 1 is reserved for "findings exist"; a `set -e` abort (cp, mkdir, sed, ...)
+# also exits 1, so any other 1 is remapped to the failure status.
+findings_reported=false
+on_exit() {
+  local status=$?
+  rm -rf "$work_dir"
+  [[ "$status" -eq 1 && "$findings_reported" != true ]] && status=3
+  exit "$status"
+}
+trap on_exit EXIT
 
 resolved_range=$(jq -r '.range' "$manifest_file")
 diff_args=("$resolved_range")
@@ -378,4 +387,10 @@ else
   jq -s '.' "${result_files[@]}"
 fi
 
-[[ "$failed" == false ]] || exit 1
+# A failure outranks findings: the caller has to retry before the findings it
+# has are complete.
+[[ "$failed" == false ]] || exit 3
+if [ "${#result_files[@]}" -gt 0 ] && jq -se 'any(.[]; .findings != [])' "${result_files[@]}" > /dev/null; then
+  findings_reported=true
+  exit 1
+fi
