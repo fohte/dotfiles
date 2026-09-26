@@ -72,7 +72,7 @@ if match_tag ghostty; then
   sym config/ghostty ~/.config/ghostty
 fi
 
-if match_tag hammerspoon; then
+if match_tag hammerspoon && is_macos; then
   sym config/hammerspoon/init.lua ~/.hammerspoon/init.lua
   sym config/hammerspoon/lib ~/.hammerspoon/lib
   sym config/hammerspoon/rc ~/.hammerspoon/rc
@@ -109,7 +109,7 @@ if match_tag brew && is_macos; then
   sym config/homebrew/Brewfile ~/.config/homebrew/Brewfile
 fi
 
-if match_tag aquaskk; then
+if match_tag aquaskk && is_macos; then
   sym config/aquaskk/romaji.rule "$HOME/Library/Application Support/AquaSKK/romaji.rule"
   sym config/aquaskk/keymap.conf "$HOME/Library/Application Support/AquaSKK/keymap.conf"
 fi
@@ -167,7 +167,7 @@ if match_tag mise; then
   fi
 fi
 
-if match_tag colima; then
+if match_tag colima && is_macos; then
   # `colima start` rewrites the instance config in place, which through a
   # symlink clobbers this repo's copy (comments dropped, quotes rewritten).
   # Deploy by copy so colima can own the deployed file — at the cost of

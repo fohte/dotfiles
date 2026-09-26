@@ -1,8 +1,12 @@
 SHELL := bash
 
+ifeq ($(shell uname -s),Darwin)
 # iconv: macOS returns NFD paths (e.g. "フ" + "゚") but Claude Code normalizes file_path to NFC
 # internally while leaving permission patterns as-is, so patterns must also be NFC.
 export OBSIDIAN_VAULT_PATH := $(shell obsidian vault name=obsidian-v2 info=path | iconv -f UTF-8-MAC -t UTF-8 | sed "s|^$$HOME|~|")
+else
+export OBSIDIAN_VAULT_PATH :=
+endif
 
 # Build a jsonnet file, merging role and local overlays if they exist.
 # Layers (each can use +: syntax for deep merging, e.g. permissions+: { allow+: [...] }):
@@ -21,7 +25,7 @@ $(strip \
 	import_expr='(import "$(1)")'; \
 	[ -n "$$role_overlay" ] && import_expr="$$import_expr"' + (import "'"$$role_overlay"'")'; \
 	[ -n "$$local_overlay" ] && import_expr="$$import_expr"' + (import "'"$$local_overlay"'")'; \
-	mise x -- jsonnet \
+	mise x aqua:google/go-jsonnet -- jsonnet \
 		$$(grep -oh "env('[^']*')" $(1) $$role_overlay $$local_overlay 2>/dev/null \
 			| sort -u | sed "s/env('\\(.*\\)')/--ext-str \\1/") \
 		-e "$$import_expr" \
@@ -83,6 +87,7 @@ check-settings: settings.json
 # Separated from build to avoid corrupting target files if jsonnet fails.
 .PHONY: install
 install: $(BUILD_TARGETS) check-settings
+	mkdir -p ~/.claude
 	cp settings.json ~/.claude/settings.json
 	cp settings.json .settings.json.installed
 	./install-mcp-servers

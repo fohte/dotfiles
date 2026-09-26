@@ -1,4 +1,5 @@
 local env(name) = std.extVar(name);
+local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
 
 {
   env: {
@@ -72,13 +73,15 @@ local env(name) = std.extVar(name);
       'Edit(//var/folders/**/T/**)',
       'Edit(~/.cache/armyknife/**)',
 
+    ] + (if obsidianVaultPath == '' then [] else [
       // Obsidian vault: both symlink (~/Dropbox) and resolved (~/Library/CloudStorage/Dropbox)
       // paths are required. Claude Code checks both depending on context.
       // Also, the path must be NFC-normalized (done in Makefile via iconv) because
       // macOS returns NFD paths but Claude Code normalizes file_path to NFC internally,
       // while permission patterns are NOT normalized, causing a mismatch.
-      'Edit(' + env('OBSIDIAN_VAULT_PATH') + '/**)',
-      'Edit(' + std.strReplace(env('OBSIDIAN_VAULT_PATH'), '~/Dropbox', '~/Library/CloudStorage/Dropbox') + '/**)',
+      'Edit(' + obsidianVaultPath + '/**)',
+      'Edit(' + std.strReplace(obsidianVaultPath, '~/Dropbox', '~/Library/CloudStorage/Dropbox') + '/**)',
+    ]) + [
 
       'Read(//tmp/**)',
       'Read(//var/folders/**/T/**)',

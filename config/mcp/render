@@ -47,8 +47,8 @@ while IFS= read -r name; do
 done < <(
   rg --no-filename --only-matching "env\\('[^']+'\\)" "${layers[@]}" |
     sort -u |
-    gsed "s/env('\\(.*\\)')/\\1/"
+    sed "s/env('\\(.*\\)')/\\1/"
 )
 
-mise x -- jsonnet "${env_args[@]}" \
+mise x aqua:google/go-jsonnet -- jsonnet --ext-str "DOTFILES_OS=$(uname -s)" "${env_args[@]}" \
   -e "(import \"$script_dir/render.libsonnet\").$target($merged)"

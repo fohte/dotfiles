@@ -8,6 +8,9 @@ source "$script_dir/../armyknife/hooks/with-mkdir-lock.bash"
 # lock_temp_path is owned by the surrounding with_mkdir_lock subshell.
 # shellcheck disable=SC2154
 update_claude_json() {
+  if [[ ! -e "$HOME/.claude.json" ]]; then
+    printf '{}\n' > "$HOME/.claude.json"
+  fi
   lock_temp_file "$HOME/.claude.json" &&
     jq --argjson mcp "$(cat "$script_dir/mcp-servers.json")" \
       '.mcpServers = $mcp' \

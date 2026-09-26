@@ -107,6 +107,8 @@ cmd_deploy() {
   : "$tags" "$DRYRUN" "$FORCE"
 
   cd "$DOTFILES_DIR"
+  # Bootstrap runs in a child process, so a fresh shell may not have mise on PATH.
+  export PATH="${MISE_DATA_DIR:-$HOME/.local/share/mise}/shims:$HOME/.local/bin:$PATH"
 
   # Require .role to be set so overlay-aware tools (zsh, jsonnet builds, etc.) know
   # which machine role to apply.
@@ -123,6 +125,10 @@ cmd_deploy() {
   # (e.g. bypassing drift checks that compare against previously-installed artifacts).
   for dir in config/*/; do
     tag="$(basename "$dir")"
+    # These build steps target macOS services or input methods.
+    if ! is_macos && [[ $tag == aquaskk || $tag == launchd || $tag == macos ]]; then
+      continue
+    fi
     if match_tag "$tag" && [ -f "$dir/Makefile" ]; then
       if is_force && make -C "$dir" -n clean > /dev/null 2>&1; then
         log-exec make -C "$dir" clean

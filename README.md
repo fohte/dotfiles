@@ -38,15 +38,19 @@
 
 ## 🚀 Installation
 
-Clone the repository, set the machine role, and run the `dot` command:
+Install [mise](https://mise.jdx.dev/installing-mise.html) first, then clone the repository and deploy:
 
 ```bash
 git clone https://github.com/fohte/dotfiles ~/ghq/github.com/fohte/dotfiles
 cd ~/ghq/github.com/fohte/dotfiles
 git submodule update --init
 config/bin/dot role set private   # or: dot role set work repo=<owner>/<name>
+config/bin/dot deploy -t bin,mise
+scripts/bootstrap
 config/bin/dot deploy
 ```
+
+The official mise installer places `mise` in `~/.local/bin`; `scripts/bootstrap` finds it there even before shell activation. On WSL, bootstrap installs the four tools needed to generate configuration. On other systems it installs the full configured tool set.
 
 After the initial deployment, `dot` will be available on your `PATH` (via the `bin` symlink to `~/bin`).
 
