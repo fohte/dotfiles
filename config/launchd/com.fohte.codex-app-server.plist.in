@@ -11,7 +11,13 @@
     <string>app-server</string>
     <string>--listen</string>
     <string>unix://</string>
+    <!-- Hidden flag `codex app-server daemon` itself passes: saves loaded threads on shutdown and auto-continues interrupted turns on the next start. -->
+    <string>--managed-daemon</string>
   </array>
+
+  <!-- On SIGTERM app-server drains running turns before exiting; match the grace period of `codex app-server daemon stop` instead of launchd's few-second default before SIGKILL. -->
+  <key>ExitTimeOut</key>
+  <integer>60</integer>
 
   <key>EnvironmentVariables</key>
   <dict>

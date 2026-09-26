@@ -204,7 +204,7 @@ if match_tag misc; then
 fi
 
 if match_tag launchd && is_macos; then
-  launchd_names=(com.fohte.codex-app-server com.fohte.skk-watcher)
+  launchd_names=(com.fohte.codex-app-server com.fohte.codex-app-server-reloader com.fohte.skk-watcher)
 
   # One-time cleanup for the decommissioned headroom-proxy job. Removing it
   # from the loop below stops re-bootstrapping it, but a machine that already

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+
+# usage: codex-app-server-reload <codex-path>
+# Restarts the launchd-managed codex app-server when the installed CLI is newer
+# than the running daemon.
+
+codex="$1"
+label="com.fohte.codex-app-server"
+
+log() {
+  echo "$(date '+%Y-%m-%dT%H:%M:%S%z') $*"
+}
+
+# Fails while brew is mid-upgrade (binary unlinked); the next Caskroom change retries.
+if ! versions=$("$codex" app-server daemon version); then
+  log "codex app-server daemon version failed; skipping"
+  exit 0
+fi
+
+jq -e '.cliVersion == .appServerVersion' <<< "$versions" > /dev/null
+case $? in
+  0) exit 0 ;;
+  1) ;;
+  *)
+    log "unexpected version output; skipping: $versions"
+    exit 0
+    ;;
+esac
+
+log "version mismatch, restarting $label: $versions"
+# `kickstart -k` doesn't document which signal it sends. SIGTERM makes app-server
+# drain and save interrupted turns, and KeepAlive respawns it with the new binary.
+launchctl kill SIGTERM "gui/$(id -u)/$label"

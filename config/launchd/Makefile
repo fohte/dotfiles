@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-PLISTS := com.fohte.codex-app-server.plist com.fohte.skk-watcher.plist
+PLISTS := com.fohte.codex-app-server.plist com.fohte.codex-app-server-reloader.plist com.fohte.skk-watcher.plist
 
 all: $(PLISTS)
 
@@ -9,6 +9,14 @@ com.fohte.codex-app-server.plist: com.fohte.codex-app-server.plist.in
 	@codex=$$(command -v codex) && test -n "$$codex" || { echo "codex not found in PATH" >&2; exit 1; }; \
 	sed -e 's|__HOME__|$(HOME)|g' \
 	    -e "s|__CODEX__|$$codex|g" \
+	    $< > $@.tmp && mv $@.tmp $@
+
+com.fohte.codex-app-server-reloader.plist: com.fohte.codex-app-server-reloader.plist.in
+	@codex=$$(command -v codex) && test -n "$$codex" || { echo "codex not found in PATH" >&2; exit 1; }; \
+	caskroom=$$(brew --caskroom) || exit 1; \
+	sed -e 's|__HOME__|$(HOME)|g' \
+	    -e "s|__CODEX__|$$codex|g" \
+	    -e "s|__CODEX_CASKROOM__|$$caskroom/codex|g" \
 	    $< > $@.tmp && mv $@.tmp $@
 
 com.fohte.skk-watcher.plist: com.fohte.skk-watcher.plist.in

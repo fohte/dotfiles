@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.fohte.codex-app-server-reloader</string>
+
+  <!-- brew upgrade swaps the version directory here, but the running daemon keeps the old binary. -->
+  <key>WatchPaths</key>
+  <array>
+    <string>__CODEX_CASKROOM__</string>
+  </array>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__HOME__/bin/codex-app-server-reload</string>
+    <string>__CODEX__</string>
+  </array>
+
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>__HOME__/.local/state/codex-app-server-reloader/reloader.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>__HOME__/.local/state/codex-app-server-reloader/reloader.log</string>
+</dict>
+</plist>
