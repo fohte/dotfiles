@@ -23,7 +23,7 @@ fi
 
 if match_tag op; then
   is_macos && sym /Applications/1Password.app/Contents/MacOS/op-ssh-sign ~/.local/bin/op-ssh-sign
-  is_wsl && sym "$USERPROFILE"/AppData/Local/1Password/app/8/op-ssh-sign-wsl ~/.local/bin/op-ssh-sign
+  is_wsl && sym "$USERPROFILE"/AppData/Local/Microsoft/WindowsApps/op-ssh-sign-wsl.exe ~/.local/bin/op-ssh-sign
 fi
 
 if match_tag tig; then
