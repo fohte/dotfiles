@@ -19,28 +19,13 @@ diff=$(git diff --no-ext-diff "$base...HEAD")
 }
 commits=$(git log "$base..HEAD")
 
-branch=$(git branch --show-current)
-purpose=$(git config --get "branch.$branch.x-purpose" || true)
-purpose_block=""
-if [ -n "$purpose" ]; then
-  purpose_block=$(
-    cat << PURPOSE
-
-<branch_purpose>
-$purpose
-</branch_purpose>
-PURPOSE
-  )
-fi
-
-rules=$("$script_dir/render-rules" "$purpose")
+rules=$(writing_rules)
 
 prompt=$(
   cat << PROMPT
 GitHub の Pull Request の title と body を日本語で書く。以下のルールに厳密に従うこと。narration や説明は不要で、指定した JSON 形式でだけ出力する。
 
 $rules
-$purpose_block
 $(instruction_block "$instruction")
 
 <diff>
@@ -58,10 +43,7 @@ agy_result_or_die "$result"
 
 title=$(jq -r '.structured_output.pr_title' <<< "$result")
 body=$(jq -r '.structured_output.pr_body' <<< "$result")
-conversation_id=$(jq -r '.conversation_id' <<< "$result")
-
 printf '%s\n' "$body" | a ai pr-draft new --title "$title"
 
 draft_path=$("$script_dir/draft-path")
-printf '%s' "$conversation_id" > "${draft_path}.agy-conversation"
 save_agy_output "$draft_path" "$title" "$body"

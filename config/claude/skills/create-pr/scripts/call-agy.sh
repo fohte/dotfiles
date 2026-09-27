@@ -2,15 +2,10 @@
 # Sourced by agy-write-draft and agy-advance-draft. Not directly executable.
 
 call_agy() {
-  local prompt="$1" schema_file="$2" conversation_id="${3:-}"
+  local prompt="$1" schema_file="$2"
   # The default high tier's per-turn thinking cost overruns agy's 5m print
   # deadline.
-  local model=gemini-3.8-flash-low
-  if [ -n "$conversation_id" ]; then
-    agy --print="$prompt" --conversation "$conversation_id" --model "$model" --output-format json --json-schema "$schema_file"
-  else
-    agy --print="$prompt" --model "$model" --output-format json --json-schema "$schema_file"
-  fi
+  agy --print="$prompt" --model gemini-3.8-flash-low --output-format json --json-schema "$schema_file"
 }
 
 # A tool denied by the permission rules in config/agy leaves `status` at ERROR
@@ -22,6 +17,13 @@ agy_result_or_die() {
     echo "Error: agy failed (status: $(jq -r '.status' <<< "$result"))" >&2
     exit 1
   fi
+}
+
+writing_rules() {
+  local purpose
+  purpose=$(git config --get "branch.$(git branch --show-current).x-purpose" || true)
+  "$(dirname "${BASH_SOURCE[0]}")/render-rules" "$purpose" || return
+  [ -z "$purpose" ] || printf '\n<branch_purpose>\n%s\n</branch_purpose>\n' "$purpose"
 }
 
 instruction_block() {
