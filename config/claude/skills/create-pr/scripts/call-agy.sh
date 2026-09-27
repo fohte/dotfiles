@@ -26,11 +26,6 @@ writing_rules() {
   [ -z "$purpose" ] || printf '\n<branch_purpose>\n%s\n</branch_purpose>\n' "$purpose"
 }
 
-instruction_block() {
-  [ -n "$1" ] || return 0
-  printf '\n<additional_instructions>\n%s\n</additional_instructions>\n' "$1"
-}
-
 # Records what agy last wrote so agy-advance-draft can tell whether the user
 # has commented since.
 save_agy_output() {
@@ -42,4 +37,15 @@ agy_output_unchanged() {
   local draft_path="$1" title="$2" body="$3"
   [ -f "${draft_path}.agy-output" ] \
     && [ "$(cat "${draft_path}.agy-output")" = "$(printf '%s\n%s' "$title" "$body")" ]
+}
+
+# Prints the user's edits since agy last wrote the draft as a unified diff, or
+# nothing when there is no record of agy's output.
+agy_output_diff() {
+  local draft_path="$1" title="$2" body="$3"
+  [ -f "${draft_path}.agy-output" ] || return 0
+  # diff exits 1 whenever the inputs differ, which is the expected case here.
+  diff -u --label before --label after \
+    <(printf '%s\n' "$(< "${draft_path}.agy-output")") \
+    <(printf '%s\n%s\n' "$title" "$body") || true
 }

@@ -1,11 +1,10 @@
 #!/bin/bash
 # Advance a draft that the editor didn't approve: either apply the user's
-# inline comments and the optional instruction, or (once
-# `ready-for-translation` is set) translate it to English.
-# Usage: agy-advance-draft [instruction]
+# inline comments, or (once `ready-for-translation` is set) translate it to
+# English.
+# Usage: agy-advance-draft
 set -euo pipefail
 
-instruction="${1:-}"
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 schema_file="$script_dir/agy-schema.json"
 # shellcheck source=config/claude/skills/create-pr/scripts/call-agy.sh disable=SC1091
@@ -35,7 +34,6 @@ if [ "$needs_translation" = "true" ]; then
 以下の GitHub Pull Request の title と body を英語に翻訳する。以下のルールに厳密に従うこと。narration や説明は不要で、指定した JSON 形式でだけ出力する。
 
 $translate_rules
-$(instruction_block "$instruction")
 
 <title>
 $title
@@ -59,18 +57,22 @@ else
   # `a ai pr-draft review` resets only `steps` before opening the editor, so
   # an unchanged title and body means the user has left no comments since agy
   # last wrote them: the editor may still be open, or no review ran in between.
-  if [ -z "$instruction" ] && agy_output_unchanged "$draft_path" "$title" "$body"; then
-    echo "Error: title and body are unchanged since agy last wrote them, so there is nothing to apply. Wait for the review to finish, or pass an instruction as the argument." >&2
+  if agy_output_unchanged "$draft_path" "$title" "$body"; then
+    echo "Error: title and body are unchanged since agy last wrote them, so there is nothing to apply. Wait for the review to finish." >&2
     exit 1
   fi
+  reviewer_edits=$(agy_output_diff "$draft_path" "$title" "$body")
   diff=$(git diff --no-ext-diff "origin/$(git main)...HEAD")
   rules=$(writing_rules)
   prompt=$(
     cat << PROMPT
-以下は GitHub Pull Request の title と body で、レビュアーが直接編集したり、コメントを書き込んだりしていることがある。この title と body を正とし、コメントと追加指示で指示された修正だけを適用し、対応済みのコメント本文は削除する。レビュアーが削除した内容は、コメントか追加指示で求められない限り diff にあっても復活させない。修正で書く部分は以下のルールに従う。翻訳はしない。narration や説明は不要で、指定した JSON 形式でだけ出力する。
+以下は GitHub Pull Request の title と body で、レビュアーが直接編集したり、コメントを書き込んだりしていることがある。<reviewer_edits> は、前回書かれた title と body (1 行目が title) に対してレビュアーが加えた変更の unified diff で、+ 行はレビュアーが書き込んだコメントか編集、- 行はレビュアーが削除した内容を表す。この title と body を正とし、コメントで指示された修正だけを適用し、対応済みのコメント本文は削除する。レビュアーが削除した内容は、コメントで求められない限り diff にあっても復活させない。修正で書く部分は以下のルールに従う。翻訳はしない。narration や説明は不要で、指定した JSON 形式でだけ出力する。
 
 $rules
-$(instruction_block "$instruction")
+
+<reviewer_edits>
+$reviewer_edits
+</reviewer_edits>
 
 <title>
 $title

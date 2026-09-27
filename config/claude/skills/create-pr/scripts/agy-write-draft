@@ -1,10 +1,9 @@
 #!/bin/bash
 # Draft the PR body via agy in one shot (writing + self-review are the same
 # call — see Step 1 of references/draft-agy.md for why).
-# Usage: agy-write-draft [instruction]
+# Usage: agy-write-draft
 set -euo pipefail
 
-instruction="${1:-}"
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 schema_file="$script_dir/agy-schema.json"
 # shellcheck source=config/claude/skills/create-pr/scripts/call-agy.sh disable=SC1091
@@ -26,7 +25,6 @@ prompt=$(
 GitHub の Pull Request の title と body を日本語で書く。以下のルールに厳密に従うこと。narration や説明は不要で、指定した JSON 形式でだけ出力する。
 
 $rules
-$(instruction_block "$instruction")
 
 <diff>
 $diff
