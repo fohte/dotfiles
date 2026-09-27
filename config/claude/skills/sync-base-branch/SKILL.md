@@ -5,12 +5,12 @@ description: Merge a PR's base branch (master/main, or any other base) into the 
 
 # Sync base branch
 
-worktree で作業中のブランチに base branch (master/main など) の更新を取り込み、conflict を解消し、追従が必要な変更がないか確認したうえで push し、CI の結果を確認するまでを一気に行う。
+worktree で作業中のブランチに base branch (master/main など) の更新を取り込み、conflict を解消し、追従が必要な変更がないか確認したうえで push し、CI が pass するまでを一気に行う。
 
 ## 方針
 
 - **merge のみを使う。rebase はしない。** rebase は force-push を要求するが、force-push は共有履歴や他者の作業を壊しうる破壊的操作であり、このスキルでは行わない。merge なら通常の push で完結する
-- conflict の解消はユーザーに確認せず自律的に進める。判断根拠は最後の報告にまとめ、ユーザーが後から検証できるようにする
+- conflict の解消と CI 失敗の修正はユーザーに確認せず自律的に進める。判断根拠は最後の報告にまとめ、ユーザーが後から検証できるようにする
 - 途中で「force-push が要る」状況に行き着いた場合は前提が崩れているサインなので、押し切らずユーザーに報告する
 
 ## 手順
@@ -92,6 +92,6 @@ gh pr checks --watch
 
 push 直後は check-run が GitHub 側にまだ登録されておらず "no checks reported" で失敗することがある。その場合は数秒待って同じコマンドを再実行する。
 
-全 check が完了するまで待ち、結果をユーザーに報告する。失敗した check があれば、どれが失敗したかを報告する。このスキルの範囲では修正までは行わない。
+全 check が完了するまで待つ。失敗した check があれば原因を修正して commit と push を行い、全 check が pass するまで繰り返す。
 
 手順 1 で PR が見つからなかった場合 (default branch にフォールバックした場合) は、確認対象の PR がないためこの手順はスキップする。
