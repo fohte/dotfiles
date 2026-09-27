@@ -1,0 +1,3 @@
+#!/bin/sh
+# crit's open_cmd takes a single command name with no arguments.
+exec "$HOME/.cargo/bin/a" agent crit add "$1"

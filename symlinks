@@ -31,7 +31,10 @@ if match_tag tig; then
 fi
 
 if match_tag shpool; then
-  sym config/shpool/config.toml ~/.config/shpool/config.toml
+  is_linux && shpool_config_path="$HOME/.config/shpool/config.toml"
+  is_macos && shpool_config_path="$HOME/Library/Application Support/shpool/config.toml"
+
+  sym config/shpool/config.toml "$shpool_config_path"
 fi
 
 if match_tag crit; then
