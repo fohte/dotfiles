@@ -54,6 +54,11 @@
 "core:python" = ["3.14.7", "3.13.13"]
 "github:aquaproj/aqua" = "2.60.2"
 "github:tomasz-tomczyk/crit" = "0.20.2"
+# mise extracts the tarball's AppleDouble xattr entries as ._* files inside the
+# signed .app, which breaks its code signature and makes Gatekeeper report the
+# app as damaged.
+"github:zenbu-labs/terminal-browser" = { version = "0.11.1", postinstall = "find \"$MISE_TOOL_INSTALL_PATH\" -name '._*' -delete" }
+"github:shell-pool/shpool" = "0.11.5"
 
 [settings]
 # disable the idiomatic version file such as Gemfile

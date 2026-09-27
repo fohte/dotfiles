@@ -30,6 +30,10 @@ if match_tag tig; then
   sym config/tig/.tigrc ~/.tigrc
 fi
 
+if match_tag shpool; then
+  sym config/shpool/config.toml ~/.config/shpool/config.toml
+fi
+
 if match_tag crit; then
   sym config/crit/config.json ~/.crit.config.json
 fi
