@@ -1,5 +1,4 @@
 # The daemon does not inherit the attaching client's environment, and
 # terminal-browser exits with "Unsupported terminal" unless it sees TMUX.
 forward_env = ["TMUX"]
-session_restore_mode = "simple"
 prompt_prefix = ""
