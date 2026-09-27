@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # op-run-cached - run a command with op:// secret references resolved from the
-# environment, caching resolved values in the macOS Keychain.
+# environment, caching resolved values in macOS Keychain or Windows DPAPI.
 #
 # usage: op-run-cached <command> [args...]
 #
@@ -9,7 +9,7 @@
 # variable whose value is an op:// reference is replaced by the secret it points
 # at, then <command> is exec'd.
 #
-# The Keychain layer exists because callers re-resolve on every startup: a
+# Caching exists because callers re-resolve on every startup: a
 # Keychain hit costs ~12ms against ~1.4s for a warm 1Password round trip (and
 # several seconds cold, plus a Touch ID prompt per terminal session).
 #
@@ -31,15 +31,21 @@ resolve() {
   local service="${KEYCHAIN_PREFIX}:${ref}"
   local value
 
-  # Windows uses the desktop app for authentication. Keychain exists only on
-  # macOS; on WSL, call the Windows CLI and discard its trailing CR.
+  # WSL stores encrypted entries in the Windows user's DPAPI-protected cache.
+  # The reference is safe to pass as an argument; the secret returns on stdout.
+  if [[ -n ${WSL_DISTRO_NAME:-} ]]; then
+    local script refresh_args=()
+    script=$(wslpath -w "$HOME/bin/op-cache-windows.ps1")
+    [[ -z ${OP_RUN_CACHED_REFRESH:-} ]] || refresh_args=(-Refresh)
+    value=$(powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$script" -Reference "$ref" "${refresh_args[@]}") || return 1
+    value=${value%$'\r'}
+    [[ -n $value ]] || return 1
+    printf '%s' "$value"
+    return 0
+  fi
+
   if [[ $OSTYPE != darwin* ]]; then
-    if [[ -n ${WSL_DISTRO_NAME:-} ]]; then
-      value=$(op-wsl read "$ref") || return 1
-      value=${value%$'\r'}
-    else
-      value=$(op read "$ref") || return 1
-    fi
+    value=$(op read "$ref") || return 1
     [[ -n $value ]] || return 1
     printf '%s' "$value"
     return 0

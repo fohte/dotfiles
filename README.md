@@ -67,6 +67,11 @@ Settings > Developer. WSL uses the Windows CLI through `op-wsl`; the `op` shell
 function and `op-run-cached` use it automatically, so no Linux `op signin`
 session is needed. Enable Windows Hello in the app to approve CLI requests with it.
 
+On WSL, `op-run-cached` stores each resolved secret under
+`%LOCALAPPDATA%\fohte\op-run-cached` on Windows. Files are encrypted with
+Windows DPAPI for the current user; `OP_RUN_CACHED_REFRESH=1` refreshes them.
+Other processes running as the same Windows user can also decrypt these files.
+
 ### 🎭 Machine Roles
 
 `dot deploy` requires a machine role to be set so that overlay files (e.g. extra MCP

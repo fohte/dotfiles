@@ -33,6 +33,15 @@ else
   exit 1
 fi
 
+# The wrapper pins the API origin because it adds production credentials.
+for arg in "$@"; do
+  case $arg in
+    --api-url | --api-url=*)
+      echo 'tq: --api-url is unavailable through the authenticated wrapper' >&2
+      exit 2
+      ;;
+  esac
+done
 headers_json=$(
   CF_ACCESS_CLIENT_ID='op://Personal/2reeyq2igmclr5iwmnzylsg5x4/username' \
     CF_ACCESS_CLIENT_SECRET='op://Personal/2reeyq2igmclr5iwmnzylsg5x4/credential' \
@@ -41,12 +50,10 @@ headers_json=$(
     'CF-Access-Client-Secret=CF_ACCESS_CLIENT_SECRET'
 )
 
-header_args=()
-while IFS=$'\t' read -r name value; do
-  header_args+=(-H "$name: $value")
-done < <(jq -r 'to_entries[] | "\(.key)\t\(.value)"' <<< "$headers_json")
+# Keep the Cloudflare token out of process arguments (visible in process lists).
+export TQ_HEADERS_JSON="$headers_json"
 
-# Pinned rather than defaulted: the header args above carry the service token,
+# Pinned rather than defaulted: TQ_HEADERS_JSON carries the service token,
 # so honouring a caller-supplied TQ_API_URL would send it to an arbitrary host.
 # `TQ_API_URL=... tq ...` is indistinguishable from a plain `tq ...` to runok,
 # which strips leading variable assignments before matching, so this is the
@@ -54,4 +61,4 @@ done < <(jq -r 'to_entries[] | "\(.key)\t\(.value)"' <<< "$headers_json")
 # directly to talk to a non-production API; it needs no token.
 export TQ_API_URL='https://tq.fohte.net'
 
-exec "$real_tq" "${header_args[@]}" "$@"
+exec "$real_tq" "$@"
