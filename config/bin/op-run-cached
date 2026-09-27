@@ -31,6 +31,20 @@ resolve() {
   local service="${KEYCHAIN_PREFIX}:${ref}"
   local value
 
+  # Windows uses the desktop app for authentication. Keychain exists only on
+  # macOS; on WSL, call the Windows CLI and discard its trailing CR.
+  if [[ $OSTYPE != darwin* ]]; then
+    if [[ -n ${WSL_DISTRO_NAME:-} ]]; then
+      value=$(op-wsl read "$ref") || return 1
+      value=${value%$'\r'}
+    else
+      value=$(op read "$ref") || return 1
+    fi
+    [[ -n $value ]] || return 1
+    printf '%s' "$value"
+    return 0
+  fi
+
   if [[ -z "${OP_RUN_CACHED_REFRESH:-}" ]] &&
     value=$(security find-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$service" -w 2> /dev/null) &&
     [[ -n $value ]]; then

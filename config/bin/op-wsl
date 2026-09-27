@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+windows_op="${USERPROFILE:-}/AppData/Local/Microsoft/WinGet/Links/op.exe"
+if [[ ! -x "$windows_op" ]]; then
+  echo "op-wsl: Windows 1Password CLI not found at $windows_op" >&2
+  exit 1
+fi
+
+exec "$windows_op" "$@"

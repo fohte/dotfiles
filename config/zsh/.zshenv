@@ -112,6 +112,11 @@ import_env 'vim.zsh'
 # priotize packages installed with mise
 import_env 'mise.zsh'
 
+# Windows 1Password CLI uses the Windows desktop app and Windows Hello.
+if [[ -n ${WSL_DISTRO_NAME:-} ]]; then
+  op() { "$HOME/bin/op-wsl" "$@"; }
+fi
+
 # fzf is installed by mise, so fzf.zsh must be loaded after mise.zsh
 import_env 'fzf.zsh'
 

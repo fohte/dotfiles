@@ -59,6 +59,14 @@ user's `.agents/skills` directory, so Codex running on Windows can discover the
 same skills. Creating new Windows symlinks requires Developer Mode or an elevated
 PowerShell. Existing links reflect source updates immediately.
 
+### 1Password CLI on WSL
+
+Install the Windows CLI with `winget install --id AgileBits.1Password.CLI --exact`
+and enable **Integrate with 1Password CLI** in the Windows 1Password app's
+Settings > Developer. WSL uses the Windows CLI through `op-wsl`; the `op` shell
+function and `op-run-cached` use it automatically, so no Linux `op signin`
+session is needed. Enable Windows Hello in the app to approve CLI requests with it.
+
 ### 🎭 Machine Roles
 
 `dot deploy` requires a machine role to be set so that overlay files (e.g. extra MCP
