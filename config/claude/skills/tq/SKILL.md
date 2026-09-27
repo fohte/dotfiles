@@ -1,13 +1,13 @@
 ---
 name: tq
-description: 'Read and write the user''s personal task manager (tq, https://tq.fohte.net) with the `tq` CLI. TRIGGER whenever the user refers to their own tasks, projects, or task pages — "タスクに追加して", "今日のタスク", "この調査結果を page に残して", "tq の #58 見て", a tq.fohte.net URL, or a bare task number in that context. Also trigger when writing up a design doc, investigation report, or HTML visualization that should live on a task rather than in a scratch file. SKIP for in-session TODO tracking (use TodoWrite) and for GitHub issues (use the github-issue skill).'
+description: 'Read and write the user''s personal task manager (tq, https://tq.fohte.net) with the `tq` CLI. TRIGGER whenever the user refers to their own tasks, projects, or task pages — "タスクに追加して", "今日のタスク", "この調査結果を page に残して", "tq の #58 見て", a tq.fohte.net URL, or a bare task number in that context. Also trigger when writing up a design doc, investigation report, or HTML visualization that should live on a task rather than in a scratch file, and when attaching a screenshot, image, or video to a task or page. SKIP for in-session TODO tracking (use TodoWrite) and for GitHub issues (use the github-issue skill).'
 ---
 
 # tq CLI
 
 `tq` is the CLI for the user's personal task manager. It covers the whole REST API; use it instead of hitting the API directly.
 
-Resources: `task`, `page`, `comment`, `project`, `label`, `image`, `github`, `today`, `calendar`, `slack`, `health`.
+Resources: `task`, `page`, `comment`, `project`, `label`, `asset`, `github`, `today`, `calendar`, `slack`, `health`.
 
 ## Name yourself with `--author`
 
@@ -89,6 +89,19 @@ This bites in summary write-ups (a table of bare PR numbers) and in ordinary pro
 
 ```bash
 tq page create 58 'アーキテクチャ図' --format html --file <diagram-path>
+```
+
+## Compress images and videos before uploading
+
+`tq asset upload` stores the file as-is, and every page view downloads it at that size. The server also rejects files over its size limit with 413. Shrink the file first, even when the original is under the limit: a page only needs enough resolution to read the content.
+
+- Screenshots and other images: convert to WebP, and scale down when the source is larger than the page shows (e.g. a Retina capture).
+- Videos: re-encode to H.264 MP4 with a lower resolution and frame rate, and drop the audio track unless it matters.
+
+```bash
+magick <src> -resize '1600x1600>' -quality 80 <dst>.webp
+ffmpeg -i <src> -vf 'scale=-2:min(720\,ih),fps=15' -c:v libx264 -crf 28 -preset slow -an -movflags +faststart <dst>.mp4
+tq asset upload <dst>.mp4
 ```
 
 ## Common flows
