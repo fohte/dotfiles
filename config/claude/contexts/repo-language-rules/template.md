@@ -10,7 +10,7 @@
 
 - Code comments: write in English
 - Commit messages: write in English
-  {{- else -}}
+    {{- else -}}
 - Code comments: write in Japanese
 - Commit messages: write in Japanese
-  {{- end }}
+    {{- end }}

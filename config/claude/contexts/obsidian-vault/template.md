@@ -4,4 +4,4 @@
 ## Obsidian vault
 
 - obsidian-v2 vault path: {{ $v.vault_path }}
-  {{- end }}
+    {{- end }}
