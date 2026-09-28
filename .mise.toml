@@ -2,6 +2,14 @@
 
 [tasks.refresh]
 description = "Refresh dotfiles and tools"
+depends = ["refresh:pull"]
+# A nested `mise run` re-reads this file, so tasks added or changed by the pull
+# take effect in the same refresh. -c keeps one failure from SIGTERMing the
+# other tasks mid-way (e.g. `brew upgrade` killed while relinking mise).
+run = "mise run -c refresh:after-pull"
+
+[tasks."refresh:after-pull"]
+description = "Refresh tools after pulling dotfiles"
 depends = [
   "refresh:update-skk",
   "refresh:runok",
@@ -36,7 +44,9 @@ git submodule update --init --recursive
 
 [tasks."refresh:deploy"]
 description = "Deploy dotfiles symlinks"
-depends = ["refresh:pull"]
+# Install tools first: otherwise the `mise x` calls in sub-Makefiles install
+# them concurrently mid-deploy, and a single fetch timeout fails the deploy.
+depends = ["refresh:mise-install"]
 run = "dot deploy"
 
 [tasks."refresh:update-skk"]
@@ -119,7 +129,7 @@ fi
 
 [tasks."refresh:mise-install"]
 description = "Install mise tools"
-depends = ["refresh:deploy", "refresh:mise-self-update"]
+depends = ["refresh:mise-self-update"]
 run = "mise install"
 
 [tasks."refresh:lefthook"]
