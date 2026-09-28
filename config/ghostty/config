@@ -39,6 +39,15 @@ keybind = ctrl+seven=csi:55;5u
 keybind = ctrl+eight=csi:56;5u
 keybind = ctrl+nine=csi:57;5u
 
+# terminal-browser zooms with ctrl+0 / ctrl+equal and crit submits comments
+# with ctrl+enter; like ctrl+number, these lose ctrl in the legacy encoding.
+keybind = ctrl+zero=csi:48;5u
+keybind = ctrl+equal=csi:61;5u
+keybind = ctrl+enter=csi:13;5u
+# tmux cannot relay the super modifier, so reuse ctrl+enter for crit's
+# cmd+enter submit (replaces Ghostty's toggle_fullscreen).
+keybind = super+enter=csi:13;5u
+
 # Prevent AquaSKK mode-switch keys (sent by Karabiner-Elements) from
 # leaking into the terminal as literal characters.
 keybind = ctrl+apostrophe=ignore
