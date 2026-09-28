@@ -21,9 +21,9 @@
 {{- range $links }}
 
 - {{ . }}
-  {{- end }}
-  {{- end }}
-  {{- if $additionalContext }}
+    {{- end }}
+    {{- end }}
+    {{- if $additionalContext }}
 
 ## 現状
 

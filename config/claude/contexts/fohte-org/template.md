@@ -5,7 +5,7 @@
 ## fohte organization context
 
 - No automated PR review bot is configured — `create-pr` and `check-pr-review` treat this org as no-op for review-waiting
-  {{- if $v.repo_note }}
+    {{- if $v.repo_note }}
 
 ## Obsidian notes for {{ $v.repo_name }}
 
@@ -17,5 +17,5 @@
 </details>
 
 - Use `/wiki-local` skill to read/write related notes or explore linked notes in the vault
-  {{- end }}
-  {{- end }}
+    {{- end }}
+    {{- end }}
