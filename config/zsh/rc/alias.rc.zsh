@@ -1,7 +1,12 @@
 alias c='cat'
 
 alias l='ls -l'
-has eza && alias ls='eza -aF' || alias ls='ls -ACFG'
+# Agents parse `ls` output as plain paths: eza silently reinterprets POSIX
+# flags (`-t` takes a timestamp field and swallows the next arg), and `-F`
+# appends `*` to executable names.
+if [[ -z $CLAUDECODE ]]; then
+  has eza && alias ls='eza -aF' || alias ls='ls -ACFG'
+fi
 
 if is_linux; then
   alias pbcopy='xsel --clipboard --input'
