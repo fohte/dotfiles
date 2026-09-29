@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat << 'EOF'
+Usage: link-tq-task --author <model-name>
+
+Link the current pull request to the task configured for this branch or session.
+Set tq_task_id to select a task when the session has multiple leaf tasks.
+EOF
+}
+
+author=
+while (($#)); do
+  case "$1" in
+    --author)
+      if (($# < 2)) || [[ -z "$2" ]]; then
+        echo "Error: --author requires a model name" >&2
+        exit 2
+      fi
+      author="$2"
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Error: unknown argument: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+if [[ -z "$author" ]]; then
+  echo "Error: --author is required" >&2
+  usage >&2
+  exit 2
+fi
+
+branch=$(git branch --show-current)
+if [[ -z "$branch" ]]; then
+  echo "Error: could not determine the current branch" >&2
+  exit 1
+fi
+
+task_id=$(git config --get "branch.$branch.x-tq-task-id" || true)
+if [[ -z "$task_id" ]]; then
+  task_id=${tq_task_id:-}
+fi
+
+if [[ -z "$task_id" && -n "${TQ_SESSION_ID:-}" ]]; then
+  if ! session_json=$(tq --author "$author" session list --session-id "$TQ_SESSION_ID"); then
+    echo "Error: tq session list failed" >&2
+    exit 1
+  fi
+
+  leaves=$(jq -c '
+    (.[0].tasks // []) as $tasks
+    | [$tasks[] | select(.id as $id | any($tasks[]; .parentId == $id) | not)]
+  ' <<< "$session_json")
+
+  case "$(jq 'length' <<< "$leaves")" in
+    0)
+      echo "No tq task is linked to this session; skipping PR linking." >&2
+      exit 0
+      ;;
+    1)
+      task_id=$(jq -r '.[0].id' <<< "$leaves")
+      ;;
+    *)
+      candidates=$(jq -r '[.[] | "\(.id) #\(.number) \(.title)"] | join("\n")' <<< "$leaves")
+      printf 'Multiple leaf tasks are linked to this session. Choose one and rerun with tq_task_id set:\n%s\n' "$candidates" >&2
+      exit 2
+      ;;
+  esac
+fi
+
+if [[ -z "$task_id" ]]; then
+  echo "No tq task ID is configured for this branch or session; skipping PR linking." >&2
+  exit 0
+fi
+
+pr_url=$(gh pr view --json url -q .url)
+if link_output=$(tq --author "$author" github link "$task_id" "$pr_url" 2>&1); then
+  [[ -z "$link_output" ]] || printf '%s\n' "$link_output"
+elif [[ "$link_output" == *"already linked"* ]]; then
+  printf 'PR is already linked to a tq task; leaving the existing link unchanged.\n' >&2
+else
+  printf '%s\n' "$link_output" >&2
+  exit 1
+fi

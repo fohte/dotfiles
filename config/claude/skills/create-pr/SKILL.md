@@ -143,35 +143,16 @@ branch config が無いときは、このセッション (`$TQ_SESSION_ID`) に�
 `tasks[]` の `parentId` が別の linked task の `id` を指していれば親子で、親は捨てて子 (葉) を残す。
 
 ```bash
-tq_task_id=$(git config --get "branch.$(git branch --show-current).x-tq-task-id" || true)
-if [ -z "$tq_task_id" ] && [ -n "${TQ_SESSION_ID:-}" ]; then
-  session_json=$(tq --author <自分のモデル名 (例: claude-opus-5)> session list --session-id "$TQ_SESSION_ID") \
-    || echo "tq session list failed" >&2
-  if [ -n "$session_json" ]; then
-    leaves=$(echo "$session_json" | jq -c '
-      .[0].tasks as $t
-      | [$t[] | select(.id as $id | any($t[]; .parentId == $id) | not)]')
-    case "$(echo "$leaves" | jq 'length')" in
-      0) echo "no tq task linked to this session" >&2 ;;
-      1) tq_task_id=$(echo "$leaves" | jq -r '.[0].id') ;;
-      *) echo "pick one yourself: $(echo "$leaves" | jq -r '[.[] | "\(.id) #\(.number) \(.title)"] | join(", ")')" >&2 ;;
-    esac
-  fi
-fi
-if [ -n "$tq_task_id" ]; then
-  pr_url=$(gh pr view --json url -q .url)
-  tq --author <自分のモデル名 (例: claude-opus-5)> github link "$tq_task_id" "$pr_url"
-fi
+scripts/link-tq-task --author <自分のモデル名>
 ```
 
 リンクも branch config も無いなら何もしない。
-葉が複数件残る (兄弟タスクが並んでいる) ときは、候補の title と PR の内容を突き合わせて自分で決め、その id で `tq_task_id=<id>` を置いて再実行する。
+葉が複数件残る (兄弟タスクが並んでいる) ときは、script が候補を表示して終了する。候補の title と PR の内容を突き合わせて自分で決め、`tq_task_id=<選んだ task ID>` を設定して同じ script を再実行する。
 ユーザーに聞かない。
 選んだ task と根拠は最後の報告に 1 行で書き、後から誤リンクを見つけられるようにする。
 **黙って飛ばして PR 作成を完了扱いにしない。**
 
-`--author` の指定方法は `tq` skill 参照。
-同じ PR に対して既にリンク済みの場合は "already linked" エラーになるが、再実行時の想定内なので無視してよい。
+`--author` には自分のモデル名を渡す (`tq` skill 参照)。同じ PR に対して既にリンク済みの場合、script はその状態を報告して成功扱いにする。
 
 ## 7. CI 実行を監視
 
