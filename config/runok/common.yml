@@ -499,3 +499,23 @@ rules:
     tests:
       - deny: 'disown'
       - deny: 'disown %1'
+
+  # Parallel sessions share /tmp and reuse the same mktemp prefixes, so picking
+  # "the newest match" can hand one session another session's file.
+  - deny: 'ls *'
+    # Fused short flags stay one key (`-lt` -> `lt`), and long flags lose their
+    # dashes, so the character class keeps `--format` / `--sort=size` out.
+    when: >-
+      (flags.exists(k, k.matches('^[1aAlhrRS]*t[1aAlhrRS]*$')) || (has(flags.sort) && flags.sort == 'time')) &&
+      args.exists(a, a.startsWith('/tmp/') || a.startsWith('/private/tmp/'))
+    message: 'The newest file under /tmp may belong to another session.'
+    fix_suggestion: 'Reuse the exact path printed by mktemp. When creating it and writing it in one call, echo "$f" so the path shows up in the output.'
+    tests:
+      - deny: 'ls -t /tmp/tq-comment.*'
+      - deny: 'ls -lt /tmp/tq-comment.*'
+      - deny: 'ls --sort=time /tmp/tq-comment.*'
+      - deny: 'ls -t /private/tmp/tq-comment.*'
+      - allow: 'ls --format=long /tmp/tq-comment.*'
+      - allow: 'ls --sort=size /tmp/tq-comment.*'
+      - allow: 'ls -t target/cargo-timings/'
+      - allow: 'ls -l /tmp/tq-comment.abc123'
