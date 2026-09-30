@@ -325,7 +325,7 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
   // (~967K for Sonnet 5), so compact earlier than the tuned window.
   autoCompactWindow: 300000,
 
-  // sonnet5 xhigh > opus4.8 medium https://www.anthropic.com/news/claude-sonnet-5
-  model: 'claude-sonnet-5[1m]',
+  // Sonnet at xhigh beats Opus at medium https://www.anthropic.com/news/claude-sonnet-5
+  model: 'sonnet[1m]',
   effortLevel: 'xhigh',
 }
