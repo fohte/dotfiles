@@ -15,6 +15,7 @@ depends = [
   "refresh:runok",
   "refresh:tq-cli",
   "refresh:tq-desktop",
+  "refresh:tq-extension",
   "refresh:nvim-restore",
   "refresh:mise-self-update",
   "refresh:mise-install",
@@ -108,6 +109,12 @@ description = "Build and install the tq desktop app"
 # Both tasks update and build from the same tq working tree.
 wait_for = ["refresh:tq-cli"]
 run = "./config/bin/refresh-tq-desktop"
+
+[tasks."refresh:tq-extension"]
+description = "Build the tq browser extension and reload it in Arc"
+# Builds from the working tree refresh:tq-cli pulls.
+wait_for = ["refresh:tq-cli"]
+run = "./config/bin/refresh-tq-extension"
 
 [tasks."refresh:nvim-restore"]
 description = "Restore Neovim plugins"

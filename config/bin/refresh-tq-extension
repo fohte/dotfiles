@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ "$(uname -s)" != "Darwin" ]; then
+  echo "macOS not detected, skipping tq extension install"
+  exit 0
+fi
+
+tq_dir="$(ghq list -e -p fohte/tq)"
+if [ -z "$tq_dir" ]; then
+  echo "fohte/tq not cloned, skipping tq extension install"
+  exit 0
+fi
+
+dist_dir="$tq_dir/extension/dist"
+arc_prefs="$HOME/Library/Application Support/Arc/User Data/Default/Secure Preferences"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/tq-extension"
+loaded_digest_file="$state_dir/loaded-digest"
+
+cd "$tq_dir"
+TQ_ORIGIN="https://tq.fohte.net" pnpm --filter extension run build
+
+if [ ! -f "$arc_prefs" ]; then
+  echo "Arc profile not found, skipping tq extension reload"
+  exit 0
+fi
+
+# Unpacked extension IDs derive from the load path, so look it up instead of pinning it.
+extension_id="$(
+  jq -r --arg path "$dist_dir" \
+    '.extensions.settings // {} | to_entries[] | select(.value.path == $path) | .key' \
+    "$arc_prefs"
+)"
+if [ -z "$extension_id" ]; then
+  echo "tq extension is not loaded in Arc. Open arc://extensions, enable Developer mode, and load unpacked: $dist_dir"
+  exit 0
+fi
+
+digest="$(find "$dist_dir" -type f -exec shasum {} + | sort | shasum)"
+if [ "$digest" = "$(cat "$loaded_digest_file" 2> /dev/null || true)" ]; then
+  exit 0
+fi
+
+save_loaded_digest() {
+  mkdir -p "$state_dir"
+  printf '%s\n' "$digest" > "$loaded_digest_file"
+}
+
+# Arc re-reads unpacked extensions from disk on launch.
+if [ "$(osascript -e 'application "Arc" is running')" != "true" ]; then
+  save_loaded_digest
+  exit 0
+fi
+
+# Arc's AppleScript cannot resolve a stored tab reference, so the new tab is
+# addressed as the active tab, re-checking its URL before touching it.
+reload_result="$(
+  osascript - "$extension_id" << 'EOF'
+on run argv
+  set extensionId to item 1 of argv
+  tell application "Arc"
+    tell front window
+      make new tab with properties {URL:"arc://extensions"}
+      repeat 40 times
+        if URL of active tab starts with "arc://extensions" and not (loading of active tab) then exit repeat
+        delay 0.25
+      end repeat
+      if URL of active tab does not start with "arc://extensions" then return "arc://extensions did not open in the active tab"
+      tell active tab to execute javascript "chrome.developerPrivate.reload('" & extensionId & "', {failQuietly: true}, () => { document.title = chrome.runtime.lastError?.message ?? 'ok' })"
+      delay 1
+      set reloadResult to title of active tab
+      if URL of active tab starts with "arc://extensions" then close active tab
+      return reloadResult
+    end tell
+  end tell
+end run
+EOF
+)"
+
+if [ "$reload_result" != "ok" ]; then
+  echo "Failed to reload tq extension in Arc: $reload_result" >&2
+  exit 1
+fi
+save_loaded_digest
