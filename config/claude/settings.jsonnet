@@ -29,6 +29,13 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
     // dies and has to be reopened. The flag has no per-task scope, so this
     // gives up the reap for every background task, not just those servers.
     CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP: '1',
+
+    // Background Bash tasks are stopped once their `timeout` elapses, capped
+    // at max(2 h, this value). Servers like `crit` wait on human review that
+    // can take far longer, so raise the cap to the largest value Claude Code
+    // accepts (2^31 - 1 ms, a setTimeout limit). The per-task default stays
+    // 30 min, so such commands still need an explicit `timeout`.
+    BASH_MAX_TIMEOUT_MS: '2147483647',
   },
 
   // Parallel work is driven by separate tmux panes/sessions, not the
