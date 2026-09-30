@@ -1,0 +1,28 @@
+#!/bin/bash
+# Default `timeout` for background Bash calls to the maximum. Claude Code stops
+# a background task once its `timeout` elapses, 30 min when omitted, which
+# kills servers waiting on human review (e.g. `crit`) long before the review
+# is done. 2147483647 ms is the largest value Claude Code accepts, and only
+# takes effect because settings.jsonnet raises BASH_MAX_TIMEOUT_MS to match.
+#
+# Usage: bash-bg-timeout-default <upstream-hook-output> < <hook-input>
+# Rewrites the upstream PreToolUse output (empty when it made no decision)
+# instead of emitting its own, because only one `updatedInput` survives.
+input=$(cat)
+upstream=$1
+
+jq -c --arg upstream "$upstream" '
+  ($upstream | if . == "" then {} else fromjson end) as $out
+  # Merge rather than replace: an upstream updatedInput may carry only the
+  # fields it rewrote (e.g. `command`).
+  | (.tool_input + ($out.hookSpecificOutput.updatedInput // {})) as $tool_input
+  | if $tool_input.run_in_background == true and $tool_input.timeout == null then
+      $out
+      | .hookSpecificOutput.hookEventName = "PreToolUse"
+      | .hookSpecificOutput.updatedInput = ($tool_input + {timeout: 2147483647})
+    elif $upstream == "" then
+      empty
+    else
+      $out
+    end
+' <<< "$input"

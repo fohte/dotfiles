@@ -34,7 +34,7 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
     // at max(2 h, this value). Servers like `crit` wait on human review that
     // can take far longer, so raise the cap to the largest value Claude Code
     // accepts (2^31 - 1 ms, a setTimeout limit). The per-task default stays
-    // 30 min, so such commands still need an explicit `timeout`.
+    // 30 min; hooks/bash-bg-timeout-default fills in this cap instead.
     BASH_MAX_TIMEOUT_MS: '2147483647',
   },
 

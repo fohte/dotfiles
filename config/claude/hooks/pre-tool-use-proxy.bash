@@ -57,56 +57,63 @@ if [ "$tool_name" != "Bash" ]; then
   exit 0
 fi
 
-# runok hook emits a hookSpecificOutput JSON with permissionDecision
-# (allow|ask|deny) for a matched rule, and may also include updatedInput
-# when runok rewrites the command. `pass` (no rule matched, deferred to
-# Claude Code's own permission handling) produces empty stdout instead.
-runok_output=$(echo "$input" | runok hook --agent claude-code)
+# Runs in a command substitution below, so each `exit` only ends the branch and
+# its output still flows to bash-bg-timeout-default.
+bash_permission() {
+  # runok hook emits a hookSpecificOutput JSON with permissionDecision
+  # (allow|ask|deny) for a matched rule, and may also include updatedInput
+  # when runok rewrites the command. `pass` (no rule matched, deferred to
+  # Claude Code's own permission handling) produces empty stdout instead.
+  runok_output=$(echo "$input" | runok hook --agent claude-code)
 
-# Empty/non-JSON stdout is indistinguishable between `pass` and runok crashing
-# or returning garbage; both fall through with no hook output (Claude Code
-# treats empty stdout as "no decision"). Without this check, the next jq call
-# would coerce missing fields into "allow" and silently bypass runok on a crash.
-if [ -z "$runok_output" ] || ! echo "$runok_output" | jq -e . > /dev/null 2>&1; then
-  exit 0
-fi
+  # Empty/non-JSON stdout is indistinguishable between `pass` and runok crashing
+  # or returning garbage; both fall through with no hook output (Claude Code
+  # treats empty stdout as "no decision"). Without this check, the next jq call
+  # would coerce missing fields into "allow" and silently bypass runok on a crash.
+  if [ -z "$runok_output" ] || ! echo "$runok_output" | jq -e . > /dev/null 2>&1; then
+    exit 0
+  fi
 
-decision=$(echo "$runok_output" | jq -r '.hookSpecificOutput.permissionDecision // "allow"')
+  decision=$(echo "$runok_output" | jq -r '.hookSpecificOutput.permissionDecision // "allow"')
 
-# ask: defer to the user; do not rewrite (the approval prompt and the executed command
-# must match). deny: rewrite is meaningless. Only allow flows through to rtk.
-if [ "$decision" != "allow" ] || ! command -v rtk > /dev/null 2>&1; then
-  echo "$runok_output"
-  exit 0
-fi
-
-# Use runok's updatedInput as the base if present, else fall back to original tool_input.
-base_input=$(echo "$runok_output" | jq -c '.hookSpecificOutput.updatedInput // empty')
-if [ -z "$base_input" ]; then
-  base_input=$(echo "$input" | jq -c '.tool_input')
-fi
-
-cmd=$(echo "$base_input" | jq -r '.command // empty')
-if [ -z "$cmd" ]; then
-  echo "$runok_output"
-  exit 0
-fi
-
-# Skip multi-line commands (heredocs, embedded newlines): rtk rewrite tokenizes
-# without re-quoting, so reshaping such commands risks changing semantics.
-case "$cmd" in
-  *$'\n'*)
+  # ask: defer to the user; do not rewrite (the approval prompt and the executed command
+  # must match). deny: rewrite is meaningless. Only allow flows through to rtk.
+  if [ "$decision" != "allow" ] || ! command -v rtk > /dev/null 2>&1; then
     echo "$runok_output"
     exit 0
-    ;;
-esac
+  fi
 
-# rtk rewrite's exit code is unstable across versions; rely on stdout content only.
-rewritten=$(rtk rewrite "$cmd" 2> /dev/null || true)
-if [ -z "$rewritten" ] || [ "$rewritten" = "$cmd" ]; then
-  echo "$runok_output"
-  exit 0
-fi
+  # Use runok's updatedInput as the base if present, else fall back to original tool_input.
+  base_input=$(echo "$runok_output" | jq -c '.hookSpecificOutput.updatedInput // empty')
+  if [ -z "$base_input" ]; then
+    base_input=$(echo "$input" | jq -c '.tool_input')
+  fi
 
-updated_input=$(echo "$base_input" | jq -c --arg c "$rewritten" '.command = $c')
-echo "$runok_output" | jq -c --argjson u "$updated_input" '.hookSpecificOutput.updatedInput = $u'
+  cmd=$(echo "$base_input" | jq -r '.command // empty')
+  if [ -z "$cmd" ]; then
+    echo "$runok_output"
+    exit 0
+  fi
+
+  # Skip multi-line commands (heredocs, embedded newlines): rtk rewrite tokenizes
+  # without re-quoting, so reshaping such commands risks changing semantics.
+  case "$cmd" in
+    *$'\n'*)
+      echo "$runok_output"
+      exit 0
+      ;;
+  esac
+
+  # rtk rewrite's exit code is unstable across versions; rely on stdout content only.
+  rewritten=$(rtk rewrite "$cmd" 2> /dev/null || true)
+  if [ -z "$rewritten" ] || [ "$rewritten" = "$cmd" ]; then
+    echo "$runok_output"
+    exit 0
+  fi
+
+  updated_input=$(echo "$base_input" | jq -c --arg c "$rewritten" '.command = $c')
+  echo "$runok_output" | jq -c --argjson u "$updated_input" '.hookSpecificOutput.updatedInput = $u'
+}
+
+output=$(bash_permission)
+exec ~/.claude/hooks/bash-bg-timeout-default "$output" <<< "$input"
