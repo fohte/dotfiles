@@ -43,7 +43,7 @@ conditional reviewer (`reviewers.yaml` の trigger に一致する diff での�
 - 修正案を出す前に、同リポジトリ内に同種の問題を正しく扱っている precedent があるか Grep / Read で確認する。
 - 指摘の根拠は **precedent / 規約引用 / 具体的な失敗シナリオ** のいずれか。憶測で fix を提案しない。
 - 読むだけで確定しない疑いは、自分で実行して確定させてから出す。「要検証」として親や後続に渡さない。
-  手段は疑っている条件だけを叩く単発実行 (該当関数の直接呼び出し、最小の再現スクリプト、`git log` / `git blame` での経緯確認) に限る。
+- 手段は疑っている条件だけを叩く単発実行 (該当関数の直接呼び出し、reviewer 専用 scratch directory での小さな repro、単一ファイルまたはテスト名で絞ったテスト、単一ファイル lint / `terraform fmt -check`、filter 付き `runok test`、`git log` / `git blame` での経緯確認) に限る。
 - 重要度は「ユーザーが実際に困るか」で決める。規約違反でもユーザー影響が無ければ 🟡。
 - 同じ観点が複数箇所に出現する場合は、最も代表的な 1-2 件に絞り「他 N 箇所も同様」と注記する。
 
@@ -64,7 +64,8 @@ group 固有の重要度補足 (例: structure の「動作非依存指摘は原
 - そのコミットで触っていない箇所への out-of-scope 提案
 - 「Consider improving X」「You might want to」のような曖昧表現 (代わりに「X causes Y; do Z」と書く)
 - 抽象的なテストカバレッジ要求 (具体的な漏れシナリオが特定できる場合のみ指摘)
-- 既存テストスイート / lint / build の実行 (分かるのは「今 green か」だけで、どの観点の裏取りにもならない)
+- プロジェクト全体の build / typecheck / clippy / lint / Docker / テストスイート、および package install は実行しない。Bash は 1 回 30 秒以内に収め、バックグラウンド実行は使わない。Claude reviewer は timeout とバックグラウンド実行無効化を設定で強制している。
+- timeout したコマンドは再実行・分割・別コマンドでの言い換えをせず、その点は未検証として扱う。
 
 ## 観点別評価マーカー
 

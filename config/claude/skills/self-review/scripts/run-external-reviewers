@@ -248,6 +248,23 @@ run_agy() {
   jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
 }
 
+# Git's global config and ignore file can resolve into the denied checkout.
+git_global_read_paths() {
+  local ignore
+  ignore=$(git config --global --includes --path --get core.excludesfile || true)
+
+  {
+    git config --global --includes --list --show-origin --name-only |
+      cut -f1 |
+      sed 's/^file://' |
+      sort -u
+    printf '%s\n' "${ignore:-${XDG_CONFIG_HOME:-$HOME/.config}/git/ignore}"
+  } | sort -u | while IFS= read -r path; do
+    [[ -e "$path" ]] || continue
+    printf '%s\n%s\n' "$path" "$(realpath "$path")"
+  done | jq -Rsc 'split("\n") | map(select(length > 0)) | unique'
+}
+
 # Restricting the tool set and enabling the sandbox are not two ways of saying
 # the same thing: the sandbox governs Bash subprocesses only, so Write and Edit
 # have to be dropped from the tool set, while `--tools` says nothing about what
@@ -267,24 +284,36 @@ run_agy() {
 # doubt by running a minimal repro is part of the review, and it is per-reviewer
 # so that parallel reviewers cannot overwrite each other's prompt or result.
 #
-# `--safe-mode` drops CLAUDE.md and skills, which is intended: build_prompt
-# already inlines every instruction file that applies to the diff, so the review
-# contract stays identical to the one codex and agy receive.
+# `--safe-mode` excludes ambient CLAUDE.md, custom skills/plugins, hooks and MCP
+# servers. `--restricted` still loads the explicit settings file while ignoring
+# user and repository settings; `--strict-mcp-config` keeps MCP disabled.
+# build_prompt inlines every instruction file that applies to the diff, so the
+# review contract stays identical to codex and agy.
 #
 # `--json-schema` takes the schema inline and rejects a path, unlike
 # `codex --output-schema` and `agy --json-schema`. It also cannot resolve the
 # `$schema` meta-schema reference the other two accept, and fails the whole run
 # on it, so that key is dropped on the way in rather than removed from the file.
 run_claude() {
-  local reviewer_dir="$1"
+  local reviewer_dir="$1" git_read_paths_json
   mkdir -p "$reviewer_dir/scratch"
+
+  git_read_paths_json=$(git_global_read_paths)
+
+  # Background Bash calls can outlive the command timeout, so disable them too.
   jq -n \
     --arg repo "$repo_root" \
     --arg scratch "$reviewer_dir/scratch" \
     --arg home "$HOME" \
     --arg checkout_root "$HOME/ghq" \
+    --argjson git_read_paths "$git_read_paths_json" \
     '[$home + "/.ssh", $home + "/.aws", $home + "/.gnupg"] as $secrets
      | {
+         env: {
+           BASH_DEFAULT_TIMEOUT_MS: "30000",
+           BASH_MAX_TIMEOUT_MS: "30000",
+           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
+         },
          permissions: {
            deny: ($secrets | map("Read(//\(.)/**)")),
            additionalDirectories: [$scratch]
@@ -296,14 +325,16 @@ run_claude() {
              denyWrite: [$repo],
              allowWrite: [$scratch],
              denyRead: ($secrets + [$checkout_root]),
-             allowRead: [$repo]
+             allowRead: ([$repo] + $git_read_paths)
            }
          }
        }' > "$reviewer_dir/settings.json"
 
   claude \
     --print \
+    --restricted \
     --safe-mode \
+    --strict-mcp-config \
     "${model_args[@]+"${model_args[@]}"}" \
     --tools Bash,Read,Grep,Glob \
     --settings "$reviewer_dir/settings.json" \
