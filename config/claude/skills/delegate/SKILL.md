@@ -201,7 +201,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.agents/skills/delegate/scripts/rend
 
 ### PR が出ないことの影響
 
-- 成果物は push 済みのコミットで、ユーザーによる diff レビュー (create-pr skill の crit) は挟まらない。`/commit` skill の push 手順に含まれる self-review はそのまま効く
+- 成果物は push 済みのコミットで、PR は出ない。ユーザーによる diff レビューは `/commit` skill の手順で self-review の後に `crit-approval-review` skill として挟まり、委任先はコミット前に承認を待つ
 - 委任元が tq タスクを持っていても、PR 経由でタスクにリンクされない。成果をタスクに残すのは委任元の役目になるが、そのために完了を確認しに行かない (「委任後に完了をポーリングしない」)。委任先から完了報告が届いたときや、ユーザーから完了を聞いたときなど、次に tq を触る節目でコミットを記録する
 
 ## 委任時の注意事項

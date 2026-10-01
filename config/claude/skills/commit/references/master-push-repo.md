@@ -14,7 +14,8 @@
 3. `git log --oneline -5` で最近のコミットスタイルを確認
 4. 変更を `git add` でステージング (**この時点ではまだコミットしない**)
 5. **`self-review` skill でレビュー (条件付き必須、1 回のみ)**: `git diff --cached` を対象に実行する。省略可能な条件と、🔴 Critical / 🟡 Warning への対応方針は下記「コミット前レビュー」を参照
-6. 全ての対応が完了したら、実装内容と対応の両方を含めた 1 コミットを作成 (HEREDOC を使用してフォーマットを保持):
+6. **`crit-approval-review` skill でユーザーにレビューしてもらう (条件付き必須)**: 承認されたら loop 中の修正を `git add` する。push すると履歴から取り消せないため、PR の代わりにここで人間のレビューを通す。省略可能な条件は下記「コミット前レビュー」と同じ
+7. 全ての対応が完了したら、実装内容と対応の両方を含めた 1 コミットを作成 (HEREDOC を使用してフォーマットを保持):
 
 ```bash
 git commit -m "$(cat <<'EOF'
@@ -29,11 +30,11 @@ EOF
 )"
 ```
 
-7. `git status` で成功を確認
-8. `git log @{u}..HEAD --oneline` で他に未 push のコミットが残っていないか確認する (upstream が未設定の場合は `git log origin/master..HEAD --oneline` で代替)
+8. `git status` で成功を確認
+9. `git log @{u}..HEAD --oneline` で他に未 push のコミットが残っていないか確認する (upstream が未設定の場合は `git log origin/master..HEAD --oneline` で代替)
     - 今回作った 1 コミットのみ: 既に「コミット前レビュー」で `--cached` レビュー済みなので、追加レビューなしで `git push` する
     - 他にも未 push コミットが残っている場合: それらも含めて下記「push 前レビュー」を 1 回実行してから `git push` する
-9. `git push` (upstream 未設定の場合は `git push -u origin HEAD`)。**「push してよいか」を尋ねて止まらない**
+10. `git push` (upstream 未設定の場合は `git push -u origin HEAD`)。**「push してよいか」を尋ねて止まらない**
 
 ## コミット前レビュー
 
@@ -74,6 +75,7 @@ git diff --cached
 
 **新規に実装をコミットする場合はこのセクションではなく上記「コミット前レビュー」を使う。**
 このセクションは、既に作成済みの未 push コミットをそのまま push する場合 (例: `create-pr` skill からの呼び出し、前セッションからの持ち越し) に使う。
+`crit-approval-review` はここでは呼ばない。既存コミットは作成時の手順 6 で承認を経ている。
 
 `git push` の前に、その push に含まれる全コミットをまとめて `self-review` skill でレビューする。
 skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、12 観点の統合レポートを返す。
