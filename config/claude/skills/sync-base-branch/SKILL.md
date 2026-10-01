@@ -1,17 +1,23 @@
 ---
 name: sync-base-branch
-description: Merge a PR's base branch (master/main, or any other base) into the current worktree branch, resolve any merge conflicts, check whether the incoming changes require follow-up work, push the result, and confirm CI passes on the resulting PR. Use this skill whenever the user asks to bring in, catch up with, or sync with the base branch while working on a branch/worktree — e.g. "base branch 取り込んで", "master 取り込んでコンフリクト直して", "catch up with main", "resolve conflicts with the base branch and push". Always use this skill for that pattern instead of running git merge/push manually.
+description: Sync a PR's base branch when explicitly requested or when a conflict or base-caused CI failure requires it. Merge at most once per instruction, including explicit requests with no conflict; after pushing, base advances never trigger another merge. Resolve conflicts, check for follow-up work, push, and confirm CI. Use this skill for base-branch syncs instead of running git merge/push manually.
 ---
 
 # Sync base branch
 
-worktree で作業中のブランチに base branch (master/main など) の更新を取り込み、conflict を解消し、追従が必要な変更がないか確認したうえで push し、CI が pass するまでを一気に行う。
+ユーザーの明示依頼、または自律 sync の条件を満たす場合に base branch (master/main など) を取り込み、conflict を解消し、追従が必要な変更を確認して push し、CI を確認する。
 
 ## 方針
 
 - **merge のみを使う。rebase はしない。** rebase は force-push を要求するが、force-push は共有履歴や他者の作業を壊しうる破壊的操作であり、このスキルでは行わない。merge なら通常の push で完結する
 - conflict の解消と CI 失敗の修正はユーザーに確認せず自律的に進める。判断根拠は最後の報告にまとめ、ユーザーが後から検証できるようにする
 - 途中で「force-push が要る」状況に行き着いた場合は前提が崩れているサインなので、押し切らずユーザーに報告する
+
+## merge する条件
+
+- 1 つの指示で merge は最大 1 回とする。明示的な sync 依頼があれば conflict の有無にかかわらず 1 回 merge する。一度 merge した後は、push 後の CI 待ちや失敗修正中に base が進んでも再度 merge しない
+- 明示的な依頼がない場合は、PR の `mergeable` が `CONFLICTING`、または CI 失敗が base branch の変更に起因すると確認できたときだけ merge する。base が進んだことや PR が base より遅れていることだけでは merge しない
+- `mergeable` が `UNKNOWN` の場合は 3 秒後に再取得する (最大 3 回)。状態が確定しなければ merge せず、その旨を報告して終了する
 
 ## 手順
 
@@ -31,7 +37,11 @@ git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'
 
 フォールバックした場合は、その旨を一言報告する (確認は不要。何を base として扱ったかを透明にするため)。
 
-### 2. base branch を取り込む
+### 2. merge 条件を確認して base branch を取り込む
+
+明示的な sync 依頼がない場合は、`gh pr view --json mergeable` で PR の状態を確認し、上記の条件に従う。条件を満たさない場合はここで終了する。
+
+明示的な sync 依頼がある場合は、状態確認を省いて merge を 1 回試みる。
 
 ```bash
 git rev-parse HEAD > /tmp/sync-base-branch-pre-merge-sha
@@ -92,6 +102,6 @@ gh pr checks --watch
 
 push 直後は check-run が GitHub 側にまだ登録されておらず "no checks reported" で失敗することがある。その場合は数秒待って同じコマンドを再実行する。
 
-全 check が完了するまで待つ。失敗した check があれば原因を修正して commit と push を行い、全 check が pass するまで繰り返す。
+全 check が完了するまで待つ。失敗した check があれば原因を修正して commit と push を行い、check を再確認する。base branch は上記の merge 条件に従う。
 
 手順 1 で PR が見つからなかった場合 (default branch にフォールバックした場合) は、確認対象の PR がないためこの手順はスキップする。
