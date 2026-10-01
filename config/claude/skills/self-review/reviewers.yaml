@@ -83,7 +83,9 @@ reviewers:
       pattern: '[ぁ-んァ-ヶ一-龯]'
     definition: self-review-japanese-writing.md
     references:
-      - japanese-tech-writing/SKILL.md
+      - yomiyasu/SKILL.md
+      - yomiyasu/references/*.md
+      - yomiyasu/references/domains/*.md
 
   readme:
     trigger:

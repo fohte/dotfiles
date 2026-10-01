@@ -66,7 +66,7 @@ push の要否にかかわらず、`crit-approval-review` skill で base branch 
 
 ## 1. PR body のドラフトを作成する
 
-ドラフトは **常に日本語で書くこと**。日本語の文体・表現については `japanese-tech-writing` skill の規範に従う (LLM っぽい空句の禁止、冗長の排除など)。
+ドラフトは **常に日本語で書くこと**。日本語の文体・表現については `yomiyasu` skill の規範に従う (非生物主語の解体、比喩動詞の具体化など)。
 
 Conditions の表で選んだ reference の Step 1 に従う。
 
