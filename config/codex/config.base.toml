@@ -9,6 +9,9 @@ sandbox_mode = "danger-full-access"
 approval_policy = "on-request"
 approvals_reviewer = "auto_review"
 
+# Codex is upgraded through Homebrew, so the startup update prompt is noise.
+check_for_update_on_startup = false
+
 [tools]
 web_search = true
 
