@@ -288,18 +288,6 @@ def lint_text(text: str) -> Dict[str, Any]:
         # 太字や強調などの装飾記号（**、*、__）を除去した正規化テキストで語彙・比喩を検査
         plain_text = re.sub(r"\*\*|\*|__", "", scan_text)
 
-        # 和欧文間の不自然な半角空白検知（例: 「も yomiyasu で」「この README は」）
-        if re.search(r"([ぁ-んァ-ヶ一-龥])\s+([a-zA-Z0-9_-]{2,})\s+([ぁ-ん])", scan_text):
-            # リンク構文 [text](url) の一部でないことを確認
-            if not re.search(r"\[.*?\]\(.*?\)", scan_text):
-                findings.append({
-                    "rule": "unnatural_halfwidth_space",
-                    "line": line_no,
-                    "severity": "warn",
-                    "message": "英単語の前後に不要な半角空白が空けられています。日本語の助詞と自然に接続させてください。",
-                    "snippet": line.strip()
-                })
-
         # 文末コロン（全角「：」または半角「:」）検知
         if re.search(r"[：:]$", scan_text) and not scan_text.startswith("http"):
             findings.append({
