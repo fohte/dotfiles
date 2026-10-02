@@ -55,7 +55,11 @@ cwd では調査だけして別のリポジトリに PR を出すこともあり
 cwd 以外の 1 つのリポジトリに出るなら、ユーザーが挙げた名前か、そのリポジトリの origin から同じように取る。
 worktree では `git rev-parse --show-toplevel` が `.worktrees/<branch>` を指すことがあり、リポジトリ名の判定には使えない。
 
-付けるラベルは `dev/<リポジトリ名>`。
+付けるラベルは、自分のリポジトリなら `dev/<リポジトリ名>`、それ以外なら `dev/oss`。
+自分のリポジトリとは、origin の owner が SessionStart context の owned orgs に含まれ、かつ fork でないもの。
+判定は `gh repo view "$(git remote get-url origin)" --json owner,isFork` で行う。
+repo を省くと gh は `upstream` remote を優先して読むので、fork clone でも `isFork` が false になる。
+fork は origin の owner が自分でも、成果物は他人のリポジトリへの貢献なので `dev/oss` にする。
 `tq label list` に既にあれば同じものを使い、無ければ `--labels` に渡す。
 未知の名前は API 側で作られるので事前作成は不要。
 成果物の出所が決まっていない、複数のリポジトリにまたがる、どのリポジトリにも紐付かない (調査など)、origin が無くてリポジトリ名が取れないときもラベル無しで作り、そこで作業を止めない。
