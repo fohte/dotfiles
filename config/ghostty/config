@@ -20,6 +20,7 @@ macos-option-as-alt = true
 keybind = clear
 keybind = super+q=quit
 keybind = super+shift+comma=reload_config
+keybind = super+v=paste_from_clipboard
 # terminal-browser zooms the page through the terminal's font size keybinds
 keybind = super+equal=increase_font_size:1
 keybind = super+plus=increase_font_size:1
