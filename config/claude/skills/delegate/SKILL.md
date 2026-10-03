@@ -116,7 +116,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts
 
 リトライは同じコマンドに `--skip-hooks` を付けて再実行するだけでよい。委任先で conflict 解決などにより設定ファイルが正常化すれば、hook が参照するツールも再び使えるようになる。プロンプトにはこの背景 (`--skip-hooks` で作成したこと、設定ファイルが一時的に壊れている理由) を一言添えておくとよい。
 
-worktree 削除自体が失敗した警告が出た場合のみ手動復旧が必要で、`a wm delete <name>` で残骸を削除してからリトライする。
+worktree 削除自体が失敗した警告が出た場合のみ手動復旧が必要で、`a agent close <name>` で残骸を削除してからリトライする。
 
 ### 複数タスクの一括委任
 
