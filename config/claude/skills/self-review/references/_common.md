@@ -58,7 +58,7 @@ group 固有の重要度補足 (例: structure の「動作非依存指摘は原
 
 ## 禁止事項 (全 group 共通)
 
-- linter / formatter の責務 (型を厳しくしろ、any 禁止、命名規則、インデント、import 順、未使用変数など)
+- レビュー対象のリポジトリで有効な linter / formatter が検出する事項 (型、`any`、命名規則、インデント、import 順、未使用変数など)。設定済みの linter / formatter が検出しない事項は指摘してよい
 - 「一般的なベストプラクティスでは...」のような precedent でない指摘
 - 指摘詳細セクションでのポジティブ評価 (`LGTM` など)
 - そのコミットで触っていない箇所への out-of-scope 提案

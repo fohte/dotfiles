@@ -8,9 +8,18 @@ agents:
   # file-reading reviewer past agy's print timeout.
   agy:
     model: gemini-3.8-flash-low
+  codex:
+    model: gpt-6-luna
+    reasoning_effort: max
 
 reviewers:
   comment:
     agent: agy
   japanese-writing:
     agent: agy
+  # These checks match changes against explicit repository rules and test
+  # evidence, so their rule-based reasoning fits the lower-capability Codex model.
+  convention:
+    agent: codex
+  test-philosophy:
+    agent: codex

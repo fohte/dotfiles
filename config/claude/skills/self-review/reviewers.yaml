@@ -11,6 +11,11 @@
 # edit the repository and run the test suite no matter what its reference says.
 default_agent: claude
 
+agents:
+  codex:
+    references:
+      - self-review/references/_codex-investigation.md
+
 reviewers:
   behavior:
     always: true
