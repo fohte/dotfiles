@@ -50,7 +50,7 @@ finish prompt のコマンドを bare な `crit` に置き換えない。
 
 1. 指摘を修正する
 2. `crit comment --reply-to <id>` で対応内容を返信する (作法は `crit:crit-cli` skill)
-3. 修正で diff の構成が変わり story の記述とずれたなら story を作り直す (ingest 時に `--refresh --no-open`)。story の文章が依然として正しい微修正なら作り直さない
+3. 修正で story の記述とずれたなら story を作り直す (ingest 時に `--refresh --no-open`)。ファイルの追加・削除・rename や hunk の増減があれば、文章が正しくても `hunk_refs` が古い hunk を指して chapter が空になるため必ず作り直す。既存 hunk 内だけの微修正で文章も正しいなら作り直さない
 4. 次の round に進む
 
 承認されたら呼び出し元の手順に戻る。
