@@ -343,7 +343,7 @@ if [[ "$range_mode" == commit ]]; then
     --argjson agents "$agents_json" \
     --rawfile diff "$diff_file" \
     --rawfile files "$files_file" \
-    '{status: "ready", range: $range, repo_root: $repo_root, review_branch: $review_branch, review_head: $review_head, previous_review: (if $previous_review_head == "" then null else {head: $previous_review_head, session_expires_at: ($previous_session_expires_at | tonumber?), sessions: $previous_sessions} end), diff: $diff, files: ($files | split("\n") | map(select(length > 0))), agents: $agents, reviewers: .}' \
+    '{status: "ready", range: $range, repo_root: $repo_root, review_branch: $review_branch, review_head: $review_head, previous_review: (if $previous_review_head == "" then null else {head: $previous_review_head, session_expires_at: ($previous_session_expires_at | tonumber? // null), sessions: $previous_sessions} end), diff: $diff, files: ($files | split("\n") | map(select(length > 0))), agents: $agents, reviewers: .}' \
     "$manifest"
 else
   jq -s --arg range "$resolved_range" --arg repo_root "$repo_root" --argjson agents "$agents_json" '{status: "ready", range: $range, repo_root: $repo_root, agents: $agents, reviewers: .}' "$manifest"
