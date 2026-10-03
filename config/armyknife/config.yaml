@@ -3,18 +3,19 @@
 editor:
   terminal: ghostty
 
-cc:
+agent:
   # quota has headroom; losing conversation context hurts more than it saves
   auto_compact:
     enabled: false
-
-agent:
   codex:
     # Applies to delegated sessions only, so interactive `codex` keeps its own
     # defaults. The delegate skill explains why the quota goes to effort rather
     # than to a higher model tier.
     model: gpt-6-luna
     reasoning_effort: max
+  worktree:
+    layout:
+      command: claude
 
 repos:
   fohte/dotfiles:
@@ -22,7 +23,3 @@ repos:
     direct_commit: true
   fohte/t-rader:
     language: ja
-
-wm:
-  layout:
-    command: claude
