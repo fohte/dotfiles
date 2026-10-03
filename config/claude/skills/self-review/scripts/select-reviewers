@@ -115,6 +115,7 @@ if [[ "$range_mode" == commit ]]; then
   review_head="$target"
   review_branch=$(git symbolic-ref --quiet --short HEAD || true)
   reviewed_head=
+  previous_review_state='{}'
 
   if [[ -n "$review_branch" ]]; then
     state=$("$script_dir/review-state" read "$review_branch")
@@ -122,6 +123,7 @@ if [[ "$range_mode" == commit ]]; then
     if [[ -n "$recorded_head" ]] && git cat-file -e "$recorded_head^{commit}" 2> /dev/null &&
       git merge-base --is-ancestor "$recorded_head" "$review_head"; then
       reviewed_head="$recorded_head"
+      previous_review_state="$state"
     fi
   fi
 
@@ -328,15 +330,20 @@ done < <(yq -r '.reviewers | to_entries[] | .key' "$reviewers_file")
 
 agents_json=$(yq -o=json '.agents // {}' "$reviewers_file")
 if [[ "$range_mode" == commit ]]; then
+  previous_sessions=$(jq -c '.sessions // {}' <<< "$previous_review_state")
+  previous_session_expires_at=$(jq -r '.session_expires_at // empty' <<< "$previous_review_state")
   jq -s \
     --arg range "$resolved_range" \
     --arg repo_root "$repo_root" \
     --arg review_branch "$review_branch" \
     --arg review_head "$review_head" \
+    --arg previous_review_head "$reviewed_head" \
+    --arg previous_session_expires_at "$previous_session_expires_at" \
+    --argjson previous_sessions "$previous_sessions" \
     --argjson agents "$agents_json" \
     --rawfile diff "$diff_file" \
     --rawfile files "$files_file" \
-    '{status: "ready", range: $range, repo_root: $repo_root, review_branch: $review_branch, review_head: $review_head, diff: $diff, files: ($files | split("\n") | map(select(length > 0))), agents: $agents, reviewers: .}' \
+    '{status: "ready", range: $range, repo_root: $repo_root, review_branch: $review_branch, review_head: $review_head, previous_review: (if $previous_review_head == "" then null else {head: $previous_review_head, session_expires_at: ($previous_session_expires_at | tonumber?), sessions: $previous_sessions} end), diff: $diff, files: ($files | split("\n") | map(select(length > 0))), agents: $agents, reviewers: .}' \
     "$manifest"
 else
   jq -s --arg range "$resolved_range" --arg repo_root "$repo_root" --argjson agents "$agents_json" '{status: "ready", range: $range, repo_root: $repo_root, agents: $agents, reviewers: .}' "$manifest"

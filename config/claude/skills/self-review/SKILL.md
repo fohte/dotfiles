@@ -13,7 +13,7 @@ reviewer の選択順、agent、trigger、reference は `reviewers.yaml` を唯�
 レビューが十分かどうかを判定するのは呼び出し元であり、この skill ではない。
 自分で次の round を始めると、呼び出し元の手順に戻れなくなる。
 
-commit range のレビューでは、現在の branch に記録された review 済み HEAD が対象 HEAD の祖先なら、その HEAD までの commit を caller range 内から除外する。caller range より前へ範囲を広げない。merge commit は再 merge 結果との差分だけを含めるため、取り込んだ側の変更は除外され、conflict resolution はレビューされる。全 reviewer の成功後に HEAD を記録する。対象 patch が空なら reviewer を起動せず skip し、その HEAD を記録する。記録は 90 日で整理し、`--cached` はこの状態管理の対象外。
+commit range のレビューでは、現在の branch に記録された review 済み HEAD が対象 HEAD の祖先なら、その HEAD までの commit を caller range 内から除外する。caller range より前へ範囲を広げない。merge commit は再 merge 結果との差分だけを含めるため、取り込んだ側の変更は除外され、conflict resolution はレビューされる。全 reviewer の成功後に HEAD と Claude / Codex の session ID を記録する。前回成功レビューから 1 時間以内なら reviewer ごとに session を再開し、失敗した resume は fresh session で再実行する。対象 patch が空なら reviewer を起動せず skip し、その HEAD を記録する。期限切れ session ID と Codex session data、削除済み branch の state と Codex data は次回の state 読み書き時に整理し、HEAD の記録は 90 日で整理する。`--cached` は session 再開と state 更新の対象外。
 
 - **指摘に対応したあと、同じ差分をレビューし直さない。** 対応で差分が変われば新しい指摘が出るので、繰り返すと終わらない
 - **reviewer が失敗したときの retry は 1 回まで。** それも失敗したら止めて、その reviewer を `⚠️ 未評価` として報告する。同じ差分で 2 回続けて失敗するのは差分ではなく実行環境側の問題なので、起動し直しても結果は変わらない

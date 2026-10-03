@@ -1,0 +1,132 @@
+#!/bin/bash
+# shellcheck disable=SC2154 # Functions use state initialized by run-external-reviewers.
+
+configure_review_sessions() {
+  review_branch=$(jq -r '.review_branch // empty' "$1")
+  review_head=$(jq -r '.review_head // empty' "$1")
+  previous_review_head=$(jq -r '.previous_review.head // empty' "$1")
+  previous_session_expires_at=$(jq -r '.previous_review.session_expires_at // empty' "$1")
+  previous_sessions=$(jq -c '.previous_review.sessions // {}' "$1")
+  session_storage_enabled=false
+  session_resume_enabled=false
+
+  if [[ "$resolved_range" != "--cached" && -n "$review_branch" ]]; then
+    session_storage_enabled=true
+    now=$(date +%s)
+    if [[ -n "$previous_review_head" && "$previous_session_expires_at" =~ ^[0-9]+$ ]] &&
+      ((now < previous_session_expires_at)); then
+      session_resume_enabled=true
+    fi
+  fi
+}
+
+review_session_id() {
+  local reviewer="$1" reviewer_agent="$2" saved_agent saved_session_id session_dir
+  [[ "$session_resume_enabled" == true ]] || return 0
+
+  saved_agent=$(jq -r --arg reviewer "$reviewer" '.[$reviewer].agent // empty' <<< "$previous_sessions")
+  saved_session_id=$(jq -r --arg reviewer "$reviewer" '.[$reviewer].session_id // empty' <<< "$previous_sessions")
+  [[ "$saved_agent" == "$reviewer_agent" && -n "$saved_session_id" ]] || return 0
+
+  if [[ "$reviewer_agent" == codex ]]; then
+    session_dir=$("$script_dir/review-state" codex-dir "$review_branch" "$reviewer")
+    [[ -d "$session_dir/home" ]] || return 0
+  fi
+  printf '%s' "$saved_session_id"
+}
+
+clear_reviewer_outputs() {
+  local reviewer_dir="$1" file
+  for file in result.json stdout.log stderr.log session-id; do
+    if [[ -f "$reviewer_dir/$file" ]]; then
+      rm "$reviewer_dir/$file"
+    fi
+  done
+}
+
+run_codex_session() {
+  local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}" resume_session_id="${4:-}"
+  local codex_home="$reviewer_dir/codex-session/home" session_dir
+
+  if [[ -n "$resume_session_id" ]]; then
+    session_dir=$("$script_dir/review-state" codex-dir "$review_branch" "$reviewer")
+    if [[ -d "$session_dir/home" ]]; then
+      mkdir -p "$codex_home"
+      if cp -R "$session_dir/home/." "$codex_home/" &&
+        run_codex "$reviewer" "$reviewer_dir" "$reasoning_effort" "$resume_session_id" true; then
+        return 0
+      fi
+    fi
+    echo "Warning: Codex could not resume $reviewer; starting a fresh session." >&2
+    clear_reviewer_outputs "$reviewer_dir"
+    initialize_codex_home "$codex_home" true
+  else
+    initialize_codex_home "$codex_home" true
+  fi
+
+  run_codex "$reviewer" "$reviewer_dir" "$reasoning_effort" "" true
+}
+
+run_claude_session() {
+  local reviewer="$1" reviewer_dir="$2" resume_session_id="${3:-}"
+  if [[ -n "$resume_session_id" ]]; then
+    if run_claude "$reviewer_dir" "$resume_session_id" true &&
+      jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$reviewer_dir/result.json" > /dev/null; then
+      return 0
+    fi
+    echo "Warning: Claude could not resume $reviewer; starting a fresh session." >&2
+    clear_reviewer_outputs "$reviewer_dir"
+  fi
+  run_claude "$reviewer_dir" "" true &&
+    jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$reviewer_dir/result.json" > /dev/null
+}
+
+run_review_backend() {
+  local reviewer="$1" reviewer_agent="$2" reviewer_dir="$3" reasoning_effort="${4:-}" resume_session_id="${5:-}"
+  case "$reviewer_agent" in
+    codex)
+      if [[ "$session_storage_enabled" == true ]]; then
+        run_codex_session "$reviewer" "$reviewer_dir" "$reasoning_effort" "$resume_session_id"
+      else
+        run_codex "$reviewer" "$reviewer_dir" "$reasoning_effort"
+      fi
+      ;;
+    claude)
+      if [[ "$session_storage_enabled" == true ]]; then
+        run_claude_session "$reviewer" "$reviewer_dir" "$resume_session_id"
+      else
+        run_claude "$reviewer_dir"
+      fi
+      ;;
+    agy) run_agy "$reviewer_dir" ;;
+  esac
+}
+
+save_review_sessions() {
+  local manifest_file="$1" work_dir="$2" reviewer reviewer_agent session_id sessions_json session_expires_at
+  shift 2
+  [[ "$session_storage_enabled" == true && -n "$review_head" ]] || return 0
+
+  sessions_json='{}'
+  for reviewer in "$@"; do
+    reviewer_agent=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .agent' "$manifest_file")
+    case "$reviewer_agent" in
+      claude | codex)
+        session_id=$(cat "$work_dir/$reviewer/session-id" 2> /dev/null || true)
+        if [[ -z "$session_id" ]]; then
+          echo "Error: reviewer session id is missing: $reviewer" >&2
+          return 1
+        fi
+        sessions_json=$(jq -c \
+          --arg reviewer "$reviewer" \
+          --arg agent "$reviewer_agent" \
+          --arg session_id "$session_id" \
+          '. + {($reviewer): {agent: $agent, session_id: $session_id}}' <<< "$sessions_json")
+        ;;
+    esac
+  done
+
+  session_expires_at=$("$script_dir/review-state" session-expiry)
+  "$script_dir/review-state" write \
+    "$review_branch" "$review_head" "$sessions_json" "$session_expires_at" "$work_dir"
+}

@@ -230,26 +230,60 @@ record_codex_usage() {
   mv "$usage_file.$$" "$usage_file"
 }
 
-run_codex() {
-  local reviewer_dir="$1" reasoning_effort="${2:-}" codex_home
-  local config_args=(--config 'cli_auth_credentials_store="file"')
-  codex_home="$reviewer_dir/codex-home"
+initialize_codex_home() {
+  local codex_home="$1" reset="${2:-false}"
+  if [[ "$reset" == true && -d "$codex_home" ]]; then
+    rm -r "$codex_home"
+  fi
   mkdir -p "$codex_home"
 
   # Isolate user instructions and skills while preserving the credentials Codex needs.
-  [[ -f "$auth_file" ]] && ln -s "$auth_file" "$codex_home/auth.json"
+  if [[ -f "$auth_file" && ! -e "$codex_home/auth.json" ]]; then
+    ln -s "$auth_file" "$codex_home/auth.json"
+  fi
+}
+
+run_codex() {
+  local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}"
+  local resume_session_id="${4:-}" persist_session="${5:-false}" codex_home
+  local config_args=(--config 'cli_auth_credentials_store="file"')
+  local codex_args=(exec)
+
+  if [[ "$persist_session" == true ]]; then
+    codex_home="$reviewer_dir/codex-session/home"
+    config_args+=(--config 'sandbox_mode="read-only"')
+  else
+    codex_home="$reviewer_dir/codex-home"
+  fi
+  initialize_codex_home "$codex_home"
   [[ -n "$reasoning_effort" ]] && config_args+=(--config "model_reasoning_effort=\"$reasoning_effort\"")
 
-  HOME="$codex_home" CODEX_HOME="$codex_home" codex exec \
-    --ephemeral \
+  if [[ -n "$resume_session_id" ]]; then
+    codex_args+=(resume "$resume_session_id" --json)
+  else
+    [[ "$persist_session" == true ]] && codex_args+=(--json) || codex_args+=(--ephemeral)
+    codex_args+=(--sandbox read-only --color never)
+  fi
+
+  HOME="$codex_home" CODEX_HOME="$codex_home" codex "${codex_args[@]}" \
     --ignore-user-config \
     "${model_args[@]+"${model_args[@]}"}" \
     "${config_args[@]}" \
-    --sandbox read-only \
     --output-schema "$schema_file" \
     --output-last-message "$reviewer_dir/result.json" \
-    --color never \
-    - < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log"
+    - < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || return 1
+
+  if [[ "$persist_session" == true ]]; then
+    local session_id
+    jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$reviewer_dir/result.json" > /dev/null || return 1
+    if [[ -n "$resume_session_id" ]]; then
+      session_id="$resume_session_id"
+    else
+      session_id=$(jq -er 'select(.type == "thread.started") | .thread_id' "$reviewer_dir/stdout.log" | sed -n '1p') || return 1
+    fi
+    [[ -n "$session_id" ]] || return 1
+    printf '%s\n' "$session_id" > "$reviewer_dir/session-id"
+  fi
 }
 
 # agy has no stdin prompt mode: `--print` (and its `--prompt` alias) takes the
@@ -322,8 +356,10 @@ git_global_read_paths() {
 # `$schema` meta-schema reference the other two accept, and fails the whole run
 # on it, so that key is dropped on the way in rather than removed from the file.
 run_claude() {
-  local reviewer_dir="$1" git_read_paths_json
+  local reviewer_dir="$1" resume_session_id="${2:-}" persist_session="${3:-false}"
+  local git_read_paths_json session_args=() session_id
   mkdir -p "$reviewer_dir/scratch"
+  [[ -n "$resume_session_id" ]] && session_args=(--resume "$resume_session_id")
 
   git_read_paths_json=$(git_global_read_paths)
 
@@ -359,6 +395,7 @@ run_claude() {
 
   claude \
     --print \
+    "${session_args[@]+"${session_args[@]}"}" \
     --restricted \
     --safe-mode \
     --strict-mcp-config \
@@ -370,7 +407,16 @@ run_claude() {
     < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || return 1
   jq -e '.subtype == "success"' "$reviewer_dir/stdout.log" > /dev/null || return 1
   jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
+  if [[ "$persist_session" == true ]]; then
+    session_id=$(jq -er '.session_id | strings | select(length > 0)' "$reviewer_dir/stdout.log") || return 1
+    [[ -z "$resume_session_id" || "$session_id" == "$resume_session_id" ]] || return 1
+    printf '%s\n' "$session_id" > "$reviewer_dir/session-id"
+  fi
 }
+
+# shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
+source "$script_dir/review-sessions"
+configure_review_sessions "$manifest_file"
 
 codex_used=false
 pids=()
@@ -385,6 +431,7 @@ for reviewer in "${selected[@]}"; do
   # role overlay, so this script never reads reviewers.yaml directly.
   model=$(jq -r --arg agent "$reviewer_agent" '.agents[$agent].model // empty' "$manifest_file")
   reasoning_effort=$(jq -r --arg agent "$reviewer_agent" '.agents[$agent].reasoning_effort // empty' "$manifest_file")
+  resume_session_id=$(review_session_id "$reviewer" "$reviewer_agent")
 
   # None of the agents require a model: an unset one just means "use the CLI's
   # own default" (checked once here so run_codex/run_agy/run_claude don't
@@ -396,11 +443,7 @@ for reviewer in "${selected[@]}"; do
 
   (
     cd "$repo_root"
-    case "$reviewer_agent" in
-      codex) run_codex "$reviewer_dir" "$reasoning_effort" ;;
-      agy) run_agy "$reviewer_dir" ;;
-      claude) run_claude "$reviewer_dir" ;;
-    esac
+    run_review_backend "$reviewer" "$reviewer_agent" "$reviewer_dir" "$reasoning_effort" "$resume_session_id"
   ) &
   pids+=("$!")
 done
@@ -451,12 +494,9 @@ if [ "${#result_files[@]}" -gt 0 ] && jq -se 'any(.[]; .findings != [])' "${resu
   findings_reported=true
 fi
 
-if [[ "$resolved_range" != "--cached" ]]; then
-  review_branch=$(jq -r '.review_branch // empty' "$manifest_file")
-  review_head=$(jq -r '.review_head // empty' "$manifest_file")
-  if [[ -n "$review_branch" && -n "$review_head" ]]; then
-    "$script_dir/review-state" write "$review_branch" "$review_head"
-  fi
+if ! save_review_sessions "$manifest_file" "$work_dir" "${selected[@]}"; then
+  echo "Error: failed to save reviewer session state." >&2
+  exit 3
 fi
 
 [[ "$findings_reported" != true ]] || exit 1

@@ -1,53 +1,229 @@
 #!/bin/bash
 set -euo pipefail
 
+state_max_age=$((90 * 24 * 60 * 60))
+session_ttl=3600
+codex_sessions_root="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-sessions"
+
 usage() {
-  echo "Usage: review-state read <branch> | write <branch> <commit>" >&2
+  echo "Usage: review-state read <branch> | write <branch> <commit> [sessions-json <expires-at> <staging-root>] | codex-dir <branch> <reviewer> | session-expiry" >&2
   exit 2
 }
 
-cleanup_stale_state() {
-  local now max_age state_key state reviewed_at
+state_key_for_branch() {
+  printf 'branch.%s.self-review' "$1"
+}
+
+codex_session_dir() {
+  local branch="$1" reviewer="$2"
+  git check-ref-format "refs/heads/$branch" > /dev/null || return 2
+  [[ "$reviewer" =~ ^[A-Za-z0-9_-]+$ ]] || return 2
+  printf '%s/%s/%s' "$codex_sessions_root" "$branch" "$reviewer"
+}
+
+remove_codex_session_dir() {
+  local path="$1" parent
+  [[ -d "$path" ]] || return 0
+  rm -r "$path"
+  parent=$(dirname "$path")
+  while [[ "$parent" == "$codex_sessions_root/"* ]]; do
+    rmdir "$parent" 2> /dev/null || break
+    parent=$(dirname "$parent")
+  done
+}
+
+prune_state_records() {
+  local now state_key branch state reviewed_at expires_at
   now=$(date +%s)
-  max_age=$((90 * 24 * 60 * 60))
   while IFS= read -r state_key; do
+    branch=${state_key#branch.}
+    branch=${branch%.self-review}
     state=$(git config --local --get "$state_key" || true)
     reviewed_at=$(jq -r '.reviewed_at // empty' <<< "$state" 2> /dev/null || true)
-    if [[ ! "$reviewed_at" =~ ^[0-9]+$ ]] || ((now - reviewed_at > max_age)); then
+
+    if ! git show-ref --verify --quiet "refs/heads/$branch" ||
+      [[ ! "$reviewed_at" =~ ^[0-9]+$ ]] || ((now - reviewed_at > state_max_age)); then
       git config --local --unset-all "$state_key" || true
+      continue
+    fi
+
+    expires_at=$(jq -r '.session_expires_at // empty' <<< "$state" 2> /dev/null || true)
+    if [[ ! "$expires_at" =~ ^[0-9]+$ ]] || ((now >= expires_at)); then
+      if jq -e 'has("sessions") or has("session_expires_at")' <<< "$state" > /dev/null 2>&1; then
+        state=$(jq -c 'del(.sessions, .session_expires_at)' <<< "$state")
+        git config --local --replace-all "$state_key" "$state"
+      fi
     fi
   done < <(git config --local --name-only --get-regexp '^branch\..*\.self-review$' || true)
 }
 
-[[ "$#" -ge 2 ]] || usage
+prune_codex_session_data() {
+  local now metadata home session_dir branch reviewer session_id expires_at state state_key saved_session_id saved_expiry
+  [[ -d "$codex_sessions_root" ]] || return 0
+  now=$(date +%s)
+
+  while IFS= read -r home; do
+    session_dir=$(dirname "$home")
+    [[ -f "$session_dir/session.json" ]] || remove_codex_session_dir "$session_dir"
+  done < <(find "$codex_sessions_root" -type d -name home -print)
+
+  while IFS= read -r metadata; do
+    session_dir=$(dirname "$metadata")
+    branch=$(jq -r '.branch // empty' "$metadata" 2> /dev/null || true)
+    reviewer=$(jq -r '.reviewer // empty' "$metadata" 2> /dev/null || true)
+    session_id=$(jq -r '.session_id // empty' "$metadata" 2> /dev/null || true)
+    expires_at=$(jq -r '.expires_at // empty' "$metadata" 2> /dev/null || true)
+
+    if [[ -z "$branch" || -z "$reviewer" || -z "$session_id" ]] ||
+      [[ ! "$expires_at" =~ ^[0-9]+$ ]] || ((now >= expires_at)) ||
+      ! git show-ref --verify --quiet "refs/heads/$branch" ||
+      [[ ! -d "$session_dir/home" ]]; then
+      remove_codex_session_dir "$session_dir"
+      continue
+    fi
+
+    state_key=$(state_key_for_branch "$branch")
+    state=$(git config --local --get "$state_key" || true)
+    saved_session_id=$(jq -r --arg reviewer "$reviewer" '.sessions[$reviewer].session_id // empty' <<< "$state" 2> /dev/null || true)
+    saved_expiry=$(jq -r '.session_expires_at // empty' <<< "$state" 2> /dev/null || true)
+    if [[ "$session_dir" != "$(codex_session_dir "$branch" "$reviewer" 2> /dev/null || true)" ]] ||
+      [[ "$saved_session_id" != "$session_id" || "$saved_expiry" != "$expires_at" ]]; then
+      remove_codex_session_dir "$session_dir"
+    fi
+  done < <(find "$codex_sessions_root" -type f -name session.json -print)
+
+  find "$codex_sessions_root" -depth -type d -empty -exec rmdir {} + 2> /dev/null || true
+}
+
+cleanup_stale_state() {
+  prune_state_records
+  prune_codex_session_data
+}
+
+can_write_state() {
+  local branch="$1" head="$2" state_key current_state current_head
+  state_key=$(state_key_for_branch "$branch")
+  current_state=$(git config --local --get "$state_key" || true)
+  current_head=$(jq -r '.head // empty' <<< "$current_state" 2> /dev/null || true)
+
+  if [[ -n "$current_head" ]] && git cat-file -e "$current_head^{commit}" 2> /dev/null &&
+    git merge-base --is-ancestor "$current_head" "refs/heads/$branch" &&
+    git merge-base --is-ancestor "$head" "$current_head"; then
+    return 1
+  fi
+  return 0
+}
+
+validate_sessions() {
+  local sessions="$1"
+  jq -e '
+    type == "object" and
+    all(to_entries[];
+      (.key | test("^[A-Za-z0-9_-]+$")) and
+      (.value.agent == "claude" or .value.agent == "codex") and
+      (.value.session_id | type == "string" and length > 0)
+    )
+  ' <<< "$sessions" > /dev/null
+}
+
+promote_codex_sessions() {
+  local branch="$1" sessions="$2" expires_at="$3" staging_root="$4"
+  local reviewer session_id session_dir staging_dir metadata
+
+  while IFS= read -r reviewer; do
+    [[ -n "$reviewer" ]] || continue
+    session_id=$(jq -r --arg reviewer "$reviewer" '.[$reviewer].session_id' <<< "$sessions")
+    session_dir=$(codex_session_dir "$branch" "$reviewer")
+    staging_dir="$staging_root/$reviewer/codex-session"
+    [[ -d "$staging_dir/home" ]] || {
+      echo "Error: Codex session data is missing for $reviewer." >&2
+      return 1
+    }
+    metadata=$(jq -cn \
+      --arg branch "$branch" \
+      --arg reviewer "$reviewer" \
+      --arg session_id "$session_id" \
+      --argjson expires_at "$expires_at" \
+      '{branch: $branch, reviewer: $reviewer, session_id: $session_id, expires_at: $expires_at}')
+    printf '%s\n' "$metadata" > "$staging_dir/session.json"
+    mkdir -p "$(dirname "$session_dir")"
+    if [[ -d "$session_dir" ]]; then
+      rm -r "$session_dir"
+    fi
+    mv "$staging_dir" "$session_dir"
+  done < <(jq -r 'to_entries[] | select(.value.agent == "codex") | .key' <<< "$sessions")
+}
+
+[[ "$#" -ge 1 ]] || usage
 command="$1"
-branch="$2"
-state_key="branch.$branch.self-review"
 
 case "$command" in
   read)
     [[ "$#" -eq 2 ]] || usage
     cleanup_stale_state
-    git config --local --get "$state_key" || true
+    git config --local --get "$(state_key_for_branch "$2")" || true
     ;;
   write)
-    [[ "$#" -eq 3 ]] || usage
+    [[ "$#" -eq 3 || "$#" -eq 6 ]] || usage
+    branch="$2"
     head="$3"
-    cleanup_stale_state
+    sessions='{}'
+    expires_at=
+    staging_root=
+    if [[ "$#" -eq 6 ]]; then
+      sessions="$4"
+      expires_at="$5"
+      staging_root="$6"
+      validate_sessions "$sessions" || {
+        echo "Error: invalid reviewer sessions." >&2
+        exit 2
+      }
+      if [[ "$(jq 'length' <<< "$sessions")" -gt 0 ]]; then
+        if [[ ! "$expires_at" =~ ^[0-9]+$ ]]; then
+          echo "Error: invalid session expiration." >&2
+          exit 2
+        fi
+        if ((expires_at <= $(date +%s))); then
+          sessions='{}'
+        fi
+      fi
+      prune_state_records
+    else
+      cleanup_stale_state
+    fi
+
     git show-ref --verify --quiet "refs/heads/$branch" || exit 0
     git merge-base --is-ancestor "$head" "refs/heads/$branch" || exit 0
-
-    current_state=$(git config --local --get "$state_key" || true)
-    current_head=$(jq -r '.head // empty' <<< "$current_state" 2> /dev/null || true)
-    if [[ -n "$current_head" ]] && git cat-file -e "$current_head^{commit}" 2> /dev/null &&
-      git merge-base --is-ancestor "$current_head" "refs/heads/$branch" &&
-      git merge-base --is-ancestor "$head" "$current_head"; then
+    if ! can_write_state "$branch" "$head"; then
+      [[ "$#" -eq 6 ]] && cleanup_stale_state
       exit 0
     fi
 
+    if [[ "$#" -eq 6 && "$(jq 'length' <<< "$sessions")" -gt 0 ]]; then
+      promote_codex_sessions "$branch" "$sessions" "$expires_at" "$staging_root"
+    fi
+
     reviewed_at=$(date +%s)
-    state=$(jq -cn --arg head "$head" --argjson reviewed_at "$reviewed_at" '{head: $head, reviewed_at: $reviewed_at}')
-    git config --local --replace-all "$state_key" "$state"
+    if [[ "$(jq 'length' <<< "$sessions")" -gt 0 ]]; then
+      state=$(jq -cn \
+        --arg head "$head" \
+        --argjson reviewed_at "$reviewed_at" \
+        --argjson expires_at "$expires_at" \
+        --argjson sessions "$sessions" \
+        '{head: $head, reviewed_at: $reviewed_at, session_expires_at: $expires_at, sessions: $sessions}')
+    else
+      state=$(jq -cn --arg head "$head" --argjson reviewed_at "$reviewed_at" '{head: $head, reviewed_at: $reviewed_at}')
+    fi
+    git config --local --replace-all "$(state_key_for_branch "$branch")" "$state"
+    cleanup_stale_state
+    ;;
+  codex-dir)
+    [[ "$#" -eq 3 ]] || usage
+    codex_session_dir "$2" "$3"
+    ;;
+  session-expiry)
+    [[ "$#" -eq 1 ]] || usage
+    echo "$(($(date +%s) + session_ttl))"
     ;;
   *) usage ;;
 esac
