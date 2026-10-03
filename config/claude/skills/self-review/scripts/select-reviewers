@@ -10,6 +10,10 @@ usage() {
 
 [ "$#" -eq 1 ] || usage
 
+range_mode=
+requested_base=
+target=
+
 for required_command in git jq yq dot; do
   command -v "$required_command" > /dev/null || {
     echo "Error: required command not found: $required_command" >&2
@@ -19,6 +23,7 @@ done
 
 case "$1" in
   --cached)
+    range_mode=cached
     diff_args=(--cached)
     resolved_range=--cached
     ;;
@@ -29,8 +34,10 @@ case "$1" in
     [[ -n "$left" && -n "$right" ]] || usage
     left=$(git rev-parse --verify "$left^{commit}")
     right=$(git rev-parse --verify "$right^{commit}")
+    range_mode=commit
+    target="$right"
+    requested_base=$(git merge-base "$left" "$right")
     resolved_range="$left...$right"
-    diff_args=("$resolved_range")
     ;;
   *..*)
     left=${1%%..*}
@@ -38,12 +45,16 @@ case "$1" in
     [[ -n "$left" && -n "$right" ]] || usage
     left=$(git rev-parse --verify "$left^{commit}")
     right=$(git rev-parse --verify "$right^{commit}")
+    range_mode=commit
+    target="$right"
+    requested_base="$left"
     resolved_range="$left..$right"
-    diff_args=("$resolved_range")
     ;;
   *)
-    resolved_range=$(git rev-parse --verify "$1^{commit}")
-    diff_args=("$resolved_range")
+    range_mode=commit
+    target=$(git rev-parse --verify "$1^{commit}")
+    requested_base=$(git rev-parse --verify "$target^" 2> /dev/null || true)
+    resolved_range="$target"
     ;;
 esac
 
@@ -55,6 +66,142 @@ repo_root=$(git rev-parse --show-toplevel)
 
 work_dir=$(mktemp -d -t self-review-select.XXXXXX)
 trap 'rm -rf "$work_dir"' EXIT
+
+review_diff_for_commit() {
+  local mode="$1" commit="$2" path="${3:-}" parent_count parent path_args=()
+  if [[ -n "$path" ]]; then
+    path_args=(-- "$path")
+  fi
+  parent_count=$(git rev-list --parents -n 1 "$commit" | awk '{ print NF - 1 }')
+
+  case "$parent_count" in
+    0)
+      git diff-tree --root --no-commit-id --no-ext-diff "$mode" "$commit" "${path_args[@]+${path_args[@]}}"
+      ;;
+    1)
+      parent=$(git rev-parse "$commit^1")
+      git diff --no-ext-diff "$mode" "$parent" "$commit" "${path_args[@]+${path_args[@]}}"
+      ;;
+    2)
+      git show --remerge-diff --format= --no-ext-diff "$mode" "$commit" "${path_args[@]+${path_args[@]}}"
+      ;;
+    *)
+      echo "Error: unsupported merge commit with $parent_count parents: $commit" >&2
+      return 2
+      ;;
+  esac
+}
+
+flush_review_segment() {
+  [[ -n "$segment_start" ]] || return 0
+  git diff --no-ext-diff "$segment_start" "$segment_end" >> "$diff_file"
+  git diff --no-ext-diff --name-only "$segment_start" "$segment_end" >> "$files_file"
+  printf 'range %s %s\n' "$segment_start" "$segment_end" >> "$review_units_file"
+  segment_start=
+  segment_end=
+}
+
+review_branch=
+review_base="$requested_base"
+review_head=
+diff_file="$work_dir/diff.patch"
+files_file="$work_dir/files.txt"
+review_units_file="$work_dir/units.txt"
+: > "$diff_file"
+: > "$files_file"
+: > "$review_units_file"
+
+if [[ "$range_mode" == commit ]]; then
+  review_head="$target"
+  review_branch=$(git symbolic-ref --quiet --short HEAD || true)
+  reviewed_head=
+
+  if [[ -n "$review_branch" ]]; then
+    state=$("$script_dir/review-state" read "$review_branch")
+    recorded_head=$(jq -r '.head // empty' <<< "$state" 2> /dev/null || true)
+    if [[ -n "$recorded_head" ]] && git cat-file -e "$recorded_head^{commit}" 2> /dev/null &&
+      git merge-base --is-ancestor "$recorded_head" "$review_head"; then
+      reviewed_head="$recorded_head"
+    fi
+  fi
+
+  review_commits=()
+  if [[ -n "$review_base" ]]; then
+    while IFS= read -r commit; do
+      [[ -n "$commit" ]] || continue
+      if [[ -n "$reviewed_head" ]] && git merge-base --is-ancestor "$commit" "$reviewed_head"; then
+        continue
+      fi
+      review_commits+=("$commit")
+    done < <(git rev-list --first-parent --reverse "$review_base..$review_head")
+  else
+    while IFS= read -r commit; do
+      [[ -n "$commit" ]] || continue
+      if [[ -n "$reviewed_head" ]] && git merge-base --is-ancestor "$commit" "$reviewed_head"; then
+        continue
+      fi
+      review_commits+=("$commit")
+    done < <(git rev-list --first-parent --reverse "$review_head")
+  fi
+
+  segment_start=
+  segment_end=
+  for commit in "${review_commits[@]+${review_commits[@]}}"; do
+    parent_count=$(git rev-list --parents -n 1 "$commit" | awk '{ print NF - 1 }')
+    case "$parent_count" in
+      0)
+        flush_review_segment
+        review_diff_for_commit -p "$commit" >> "$diff_file"
+        review_diff_for_commit --name-only "$commit" >> "$files_file"
+        printf 'commit %s\n' "$commit" >> "$review_units_file"
+        ;;
+      1)
+        parent=$(git rev-parse "$commit^1")
+        if [[ -n "$segment_end" && "$parent" != "$segment_end" ]]; then
+          flush_review_segment
+        fi
+        if [[ -z "$segment_start" ]]; then
+          segment_start="$parent"
+        fi
+        segment_end="$commit"
+        ;;
+      2)
+        flush_review_segment
+        review_diff_for_commit -p "$commit" >> "$diff_file"
+        review_diff_for_commit --name-only "$commit" >> "$files_file"
+        printf 'merge %s\n' "$commit" >> "$review_units_file"
+        ;;
+      *)
+        echo "Error: unsupported merge commit with $parent_count parents: $commit" >&2
+        exit 2
+        ;;
+    esac
+  done
+  flush_review_segment
+  LC_ALL=C sort -u "$files_file" -o "$files_file"
+else
+  source_index=${GIT_INDEX_FILE:-$(git rev-parse --git-path index)}
+  cp "$source_index" "$work_dir/index"
+  export GIT_INDEX_FILE="$work_dir/index"
+  diff_args=(--cached)
+  git diff --stat "${diff_args[@]}" > /dev/null
+  if git diff --quiet --no-ext-diff "${diff_args[@]}"; then
+    echo "Error: review diff is empty." >&2
+    exit 2
+  fi
+  git diff --name-only --no-ext-diff "${diff_args[@]}" > "$files_file"
+fi
+
+if [[ "$range_mode" == commit && ! -s "$diff_file" ]]; then
+  "$script_dir/review-state" write "$review_branch" "$review_head"
+  jq -n \
+    --arg range "$resolved_range" \
+    --arg repo_root "$repo_root" \
+    --arg review_branch "$review_branch" \
+    --arg review_head "$review_head" \
+    '{status: "skipped", reason: "no_unreviewed_changes", range: $range, repo_root: $repo_root, review_branch: $review_branch, review_head: $review_head}'
+  exit 0
+fi
 
 # `dot role overlay` resolves the overlay file by role + filename, not by
 # content, so a role overlay of this file can define its own `agent:` routing.
@@ -76,23 +223,6 @@ codex_over_limit() {
     'any(.[]; $now < .reset_at and .used_percent >= 100)' \
     "$codex_usage_file" > /dev/null
 }
-
-# A copied index keeps every selector read on the same staged snapshot even
-# when another process stages files concurrently.
-if [[ "$resolved_range" == --cached ]]; then
-  source_index=${GIT_INDEX_FILE:-$(git rev-parse --git-path index)}
-  cp "$source_index" "$work_dir/index"
-  export GIT_INDEX_FILE="$work_dir/index"
-fi
-
-git diff --stat "${diff_args[@]}" > /dev/null
-if git diff --quiet --no-ext-diff "${diff_args[@]}"; then
-  echo "Error: review diff is empty." >&2
-  exit 2
-fi
-
-files_file="$work_dir/files.txt"
-git diff --name-only --no-ext-diff "${diff_args[@]}" > "$files_file"
 
 matches_trigger() {
   local reviewer="$1" targets_file="$2" kind pattern paths exclude case_insensitive file grep_options
@@ -121,7 +251,18 @@ matches_trigger() {
       while IFS= read -r file; do
         [[ -n "$exclude" && "$file" =~ $exclude ]] && continue
         [[ -n "$paths" && ! "$file" =~ $paths ]] && continue
-        if git diff --no-ext-diff "${diff_args[@]}" -- "$file" |
+        if {
+          if [[ "$range_mode" == cached ]]; then
+            git diff --no-ext-diff "${diff_args[@]}" -- "$file"
+          else
+            while read -r unit_kind first second; do
+              case "$unit_kind" in
+                range) git diff --no-ext-diff "$first" "$second" -- "$file" ;;
+                commit | merge) review_diff_for_commit -p "$first" "$file" ;;
+              esac
+            done < "$review_units_file"
+          fi
+        } |
           awk '/^\+\+\+ / { next } /^\+/ { sub(/^\+/, ""); print }' |
           grep "${grep_options[@]}" "$pattern" > /dev/null; then
           printf '%s\n' "$file" >> "$targets_file"
@@ -186,4 +327,17 @@ while IFS= read -r reviewer; do
 done < <(yq -r '.reviewers | to_entries[] | .key' "$reviewers_file")
 
 agents_json=$(yq -o=json '.agents // {}' "$reviewers_file")
-jq -s --arg range "$resolved_range" --arg repo_root "$repo_root" --argjson agents "$agents_json" '{range: $range, repo_root: $repo_root, agents: $agents, reviewers: .}' "$manifest"
+if [[ "$range_mode" == commit ]]; then
+  jq -s \
+    --arg range "$resolved_range" \
+    --arg repo_root "$repo_root" \
+    --arg review_branch "$review_branch" \
+    --arg review_head "$review_head" \
+    --argjson agents "$agents_json" \
+    --rawfile diff "$diff_file" \
+    --rawfile files "$files_file" \
+    '{status: "ready", range: $range, repo_root: $repo_root, review_branch: $review_branch, review_head: $review_head, diff: $diff, files: ($files | split("\n") | map(select(length > 0))), agents: $agents, reviewers: .}' \
+    "$manifest"
+else
+  jq -s --arg range "$resolved_range" --arg repo_root "$repo_root" --argjson agents "$agents_json" '{status: "ready", range: $range, repo_root: $repo_root, agents: $agents, reviewers: .}' "$manifest"
+fi

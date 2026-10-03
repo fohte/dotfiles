@@ -24,6 +24,17 @@ command -v jq > /dev/null || {
   exit 127
 }
 
+manifest_status=$(jq -r '.status // "ready"' "$manifest_file")
+if [[ "$manifest_status" == skipped ]]; then
+  echo '[]'
+  echo "Review skipped: no unreviewed changes remain." >&2
+  exit 0
+fi
+[[ "$manifest_status" == ready ]] || {
+  echo "Error: unsupported manifest status: $manifest_status" >&2
+  exit 2
+}
+
 # Reject an unknown agent, or one whose executable is missing, before any
 # reviewer is spawned; the dispatch below would otherwise surface it as N
 # background reviewers that simply failed.
@@ -85,16 +96,18 @@ manifest_repo_root=$(jq -r '.repo_root // empty' "$manifest_file")
 # usage-limit fallback that flips between the two calls, silently dropping a
 # reviewer the caller already committed to (no error, no fallback_reason —
 # it just never runs on any backend).
+diff_file="$work_dir/diff.patch"
+files_file="$work_dir/files.txt"
 if [[ "$resolved_range" == --cached ]]; then
   source_index=${GIT_INDEX_FILE:-$(git rev-parse --git-path index)}
   cp "$source_index" "$work_dir/index"
   export GIT_INDEX_FILE="$work_dir/index"
+  git diff --no-ext-diff "${diff_args[@]}" > "$diff_file"
+  git diff --name-only --no-ext-diff "${diff_args[@]}" > "$files_file"
+else
+  jq -er '.diff' "$manifest_file" > "$diff_file"
+  jq -er '.files[]' "$manifest_file" > "$files_file"
 fi
-
-diff_file="$work_dir/diff.patch"
-files_file="$work_dir/files.txt"
-git diff --no-ext-diff "${diff_args[@]}" > "$diff_file"
-git diff --name-only --no-ext-diff "${diff_args[@]}" > "$files_file"
 
 [ -s "$diff_file" ] || {
   echo "Error: review diff is empty." >&2
@@ -436,5 +449,14 @@ fi
 [[ "$failed" == false ]] || exit 3
 if [ "${#result_files[@]}" -gt 0 ] && jq -se 'any(.[]; .findings != [])' "${result_files[@]}" > /dev/null; then
   findings_reported=true
-  exit 1
 fi
+
+if [[ "$resolved_range" != "--cached" ]]; then
+  review_branch=$(jq -r '.review_branch // empty' "$manifest_file")
+  review_head=$(jq -r '.review_head // empty' "$manifest_file")
+  if [[ -n "$review_branch" && -n "$review_head" ]]; then
+    "$script_dir/review-state" write "$review_branch" "$review_head"
+  fi
+fi
+
+[[ "$findings_reported" != true ]] || exit 1

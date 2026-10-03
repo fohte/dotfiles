@@ -1,0 +1,53 @@
+#!/bin/bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: review-state read <branch> | write <branch> <commit>" >&2
+  exit 2
+}
+
+cleanup_stale_state() {
+  local now max_age state_key state reviewed_at
+  now=$(date +%s)
+  max_age=$((90 * 24 * 60 * 60))
+  while IFS= read -r state_key; do
+    state=$(git config --local --get "$state_key" || true)
+    reviewed_at=$(jq -r '.reviewed_at // empty' <<< "$state" 2> /dev/null || true)
+    if [[ ! "$reviewed_at" =~ ^[0-9]+$ ]] || ((now - reviewed_at > max_age)); then
+      git config --local --unset-all "$state_key" || true
+    fi
+  done < <(git config --local --name-only --get-regexp '^branch\..*\.self-review$' || true)
+}
+
+[[ "$#" -ge 2 ]] || usage
+command="$1"
+branch="$2"
+state_key="branch.$branch.self-review"
+
+case "$command" in
+  read)
+    [[ "$#" -eq 2 ]] || usage
+    cleanup_stale_state
+    git config --local --get "$state_key" || true
+    ;;
+  write)
+    [[ "$#" -eq 3 ]] || usage
+    head="$3"
+    cleanup_stale_state
+    git show-ref --verify --quiet "refs/heads/$branch" || exit 0
+    git merge-base --is-ancestor "$head" "refs/heads/$branch" || exit 0
+
+    current_state=$(git config --local --get "$state_key" || true)
+    current_head=$(jq -r '.head // empty' <<< "$current_state" 2> /dev/null || true)
+    if [[ -n "$current_head" ]] && git cat-file -e "$current_head^{commit}" 2> /dev/null &&
+      git merge-base --is-ancestor "$current_head" "refs/heads/$branch" &&
+      git merge-base --is-ancestor "$head" "$current_head"; then
+      exit 0
+    fi
+
+    reviewed_at=$(date +%s)
+    state=$(jq -cn --arg head "$head" --argjson reviewed_at "$reviewed_at" '{head: $head, reviewed_at: $reviewed_at}')
+    git config --local --replace-all "$state_key" "$state"
+    ;;
+  *) usage ;;
+esac
