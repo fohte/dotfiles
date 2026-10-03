@@ -1,0 +1,224 @@
+#!/bin/bash
+# post-worktree-delete hook for armyknife.
+# Called by armyknife after removing a worktree.
+#
+# Only ARMYKNIFE_MERGED and ARMYKNIFE_REPO_ROOT are used: deleting a merged
+# branch may advance the base, so every remaining worktree is checked.
+set -euo pipefail
+
+if [[ "${ARMYKNIFE_MERGED:-false}" != "true" || -z "${ARMYKNIFE_REPO_ROOT:-}" ]]; then
+  exit 0
+fi
+
+repo_root="$ARMYKNIFE_REPO_ROOT"
+if [[ ! -d "$repo_root" ]]; then
+  exit 0
+fi
+
+hook_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=with-mkdir-lock.bash disable=SC1091
+source "$hook_dir/with-mkdir-lock.bash"
+
+git_common_dir="$(git -C "$repo_root" rev-parse --git-common-dir)" || exit 0
+if [[ "$git_common_dir" != /* ]]; then
+  git_common_dir="$repo_root/$git_common_dir"
+fi
+git_common_dir="$(cd -P "$git_common_dir" && pwd)" || exit 0
+
+state_dir="$git_common_dir/armyknife/post-worktree-delete"
+state_file="$state_dir/notified.json"
+state_lock="$state_dir/notified.lock"
+mkdir -p "$state_dir" || exit 0
+
+resolve_base_ref() {
+  local repo_root="$1"
+  local base_ref
+
+  base_ref="$(git -C "$repo_root" for-each-ref --format='%(symref:short)' refs/remotes/origin/HEAD)"
+  case "$base_ref" in
+    origin/main | origin/master)
+      if git -C "$repo_root" rev-parse --verify --quiet "$base_ref^{commit}" > /dev/null; then
+        printf '%s\n' "$base_ref"
+        return 0
+      fi
+      ;;
+  esac
+
+  if git -C "$repo_root" rev-parse --verify --quiet 'refs/remotes/origin/main^{commit}' > /dev/null; then
+    if git -C "$repo_root" rev-parse --verify --quiet 'refs/remotes/origin/master^{commit}' > /dev/null; then
+      return 1
+    fi
+    printf '%s\n' origin/main
+  elif git -C "$repo_root" rev-parse --verify --quiet 'refs/remotes/origin/master^{commit}' > /dev/null; then
+    printf '%s\n' origin/master
+  else
+    return 1
+  fi
+}
+
+claim_notification() {
+  local state_file="$1"
+  local notification_id="$2"
+  local conflict_key="$3"
+  local state_json='{}'
+  local previous_key
+
+  if [[ -f "$state_file" ]]; then
+    state_json="$(cat "$state_file")" || return 1
+    jq -e 'type == "object"' > /dev/null <<< "$state_json" || state_json='{}'
+  fi
+
+  previous_key="$(jq -r --arg id "$notification_id" '.[$id] // empty' <<< "$state_json")" || return 1
+  if [[ "$previous_key" == "$conflict_key" ]]; then
+    printf '%s\n' duplicate
+    return 0
+  fi
+
+  lock_temp_file "$state_file" || return 1
+  # lock_temp_path is set by the enclosing with_mkdir_lock subshell.
+  # shellcheck disable=SC2154
+  if ! jq --arg id "$notification_id" --arg key "$conflict_key" '.[$id] = $key' <<< "$state_json" > "$lock_temp_path"; then
+    return 1
+  fi
+  if ! mv "$lock_temp_path" "$state_file"; then
+    return 1
+  fi
+
+  printf 'claimed:%s\n' "$previous_key"
+}
+
+rollback_notification() {
+  local state_file="$1"
+  local notification_id="$2"
+  local conflict_key="$3"
+  local previous_key="$4"
+  local state_json
+  local current_key
+
+  [[ -f "$state_file" ]] || return 0
+  state_json="$(cat "$state_file")" || return 1
+  jq -e 'type == "object"' > /dev/null <<< "$state_json" || return 0
+  current_key="$(jq -r --arg id "$notification_id" '.[$id] // empty' <<< "$state_json")" || return 1
+  [[ "$current_key" == "$conflict_key" ]] || return 0
+
+  lock_temp_file "$state_file" || return 1
+  # lock_temp_path is set by the enclosing with_mkdir_lock subshell.
+  # shellcheck disable=SC2154
+  if [[ -n "$previous_key" ]]; then
+    jq --arg id "$notification_id" --arg key "$previous_key" '.[$id] = $key' <<< "$state_json" > "$lock_temp_path" || return 1
+  else
+    jq --arg id "$notification_id" 'del(.[$id])' <<< "$state_json" > "$lock_temp_path" || return 1
+  fi
+  mv "$lock_temp_path" "$state_file"
+}
+
+check_worktree_conflicts() {
+  local repo_root="$1"
+  local base_ref="$2"
+  local base_oid="$3"
+  local worktree_path="$4"
+  local branch_name="$5"
+  local peers_json="$6"
+  local state_file="$7"
+  local state_lock="$8"
+  local branch_oid
+  local merge_status
+  local worktree_real_path
+  local conflict_key
+  local peers_tsv
+  local session_id
+  local session_cwd
+  local session_worktree_root
+  local session_real_worktree_root
+  local notification_id
+  local claim_result
+  local previous_key
+  local message
+
+  [[ -n "$branch_name" && -d "$worktree_path" ]] || return 0
+  worktree_real_path="$(cd -P "$worktree_path" && pwd)" || return 0
+  branch_oid="$(git -C "$repo_root" rev-parse --verify "refs/heads/$branch_name^{commit}")" || return 0
+
+  if git -C "$repo_root" merge-tree --write-tree "$branch_oid" "$base_oid" > /dev/null; then
+    return 0
+  else
+    merge_status=$?
+  fi
+  if [[ "$merge_status" -ne 1 ]]; then
+    printf 'warning: git merge-tree failed for %s against %s (exit %s)\n' \
+      "$branch_name" "$base_ref" "$merge_status" >&2
+    return 0
+  fi
+
+  conflict_key="$base_ref:$base_oid:$branch_name:$branch_oid"
+  peers_tsv="$(jq -r '.[] | select(.status != "ended") | select((.session_id | type) == "string") | select((.cwd | type) == "string") | [.session_id, .cwd] | @tsv' <<< "$peers_json")" || return 0
+
+  while IFS=$'\t' read -r session_id session_cwd; do
+    [[ -n "$session_id" && -n "$session_cwd" ]] || continue
+    session_worktree_root="$(git -C "$session_cwd" rev-parse --show-toplevel)" || continue
+    session_real_worktree_root="$(cd -P "$session_worktree_root" && pwd)" || continue
+    [[ "$session_real_worktree_root" == "$worktree_real_path" ]] || continue
+
+    notification_id="$(printf '%s\0%s' "$session_id" "$worktree_real_path" | git -C "$repo_root" hash-object --stdin)" || continue
+    claim_result="$(with_mkdir_lock "$state_lock" claim_notification "$state_file" "$notification_id" "$conflict_key" 2> /dev/null)" || continue
+    case "$claim_result" in
+      claimed:*) previous_key="${claim_result#claimed:}" ;;
+      *) continue ;;
+    esac
+
+    message="<armyknife-post-worktree-delete>
+This message was sent automatically by an armyknife hook. It was not requested by a human or the delegating session.
+
+Branch: $branch_name
+Base: $base_ref
+
+The branch conflicts with the base. Run the sync-base-branch skill to resolve the conflict.
+</armyknife-post-worktree-delete>"
+    if ! a agent peer notify --message "$message" "$session_id"; then
+      with_mkdir_lock "$state_lock" rollback_notification \
+        "$state_file" "$notification_id" "$conflict_key" "$previous_key" > /dev/null 2>&1 || true
+    fi
+  done <<< "$peers_tsv"
+}
+
+notify_conflicts_in_remaining_worktrees() {
+  local repo_root="$1"
+  local base_ref
+  local base_oid
+  local peers_json
+  local worktrees
+  local line
+  local worktree_path=""
+  local branch_name=""
+
+  GIT_TERMINAL_PROMPT=0 git -C "$repo_root" fetch --quiet origin || return 0
+  base_ref="$(resolve_base_ref "$repo_root")" || return 0
+  base_oid="$(git -C "$repo_root" rev-parse --verify "$base_ref^{commit}")" || return 0
+  peers_json="$(a agent peer list)" || return 0
+  jq -e 'type == "array"' > /dev/null <<< "$peers_json" || return 0
+  worktrees="$(git -C "$repo_root" worktree list --porcelain)" || return 0
+  worktrees+=$'\n'
+
+  while IFS= read -r line; do
+    case "$line" in
+      'worktree '*)
+        worktree_path="${line#worktree }"
+        branch_name=""
+        ;;
+      'branch refs/heads/'*)
+        branch_name="${line#branch refs/heads/}"
+        ;;
+      '')
+        if [[ -n "$worktree_path" ]]; then
+          check_worktree_conflicts \
+            "$repo_root" "$base_ref" "$base_oid" "$worktree_path" "$branch_name" \
+            "$peers_json" "$state_file" "$state_lock"
+          worktree_path=""
+          branch_name=""
+        fi
+        ;;
+    esac
+  done <<< "$worktrees"
+}
+
+notify_conflicts_in_remaining_worktrees "$repo_root"
