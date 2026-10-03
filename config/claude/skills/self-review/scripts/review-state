@@ -3,7 +3,10 @@ set -euo pipefail
 
 state_max_age=$((90 * 24 * 60 * 60))
 session_ttl=3600
-codex_sessions_root="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-sessions"
+# Pruning judges sessions by this repo's branches and git config, so a root
+# shared across repos would delete other repos' live sessions.
+repo_id=$(git rev-parse --path-format=absolute --git-common-dir | git hash-object --stdin)
+codex_sessions_root="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-sessions/$repo_id"
 
 usage() {
   echo "Usage: review-state read <branch> | write <branch> <commit> [sessions-json <expires-at> <staging-root>] | codex-dir <branch> <reviewer> | session-expiry" >&2
@@ -24,7 +27,9 @@ codex_session_dir() {
 remove_codex_session_dir() {
   local path="$1" parent
   [[ -d "$path" ]] || return 0
-  rm -r "$path"
+  # Parallel sessions in other worktrees of the same repo may prune the same
+  # directory concurrently.
+  rm -rf "$path"
   parent=$(dirname "$path")
   while [[ "$parent" == "$codex_sessions_root/"* ]]; do
     rmdir "$parent" 2> /dev/null || break
