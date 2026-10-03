@@ -51,6 +51,10 @@ keybind = super+enter=csi:13;5u
 # accepts as ctrl+[ / ctrl+].
 keybind = super+bracket_left=csi:91;5u
 keybind = super+bracket_right=csi:93;5u
+# Sent as ctrl+alt+<key> for tmux to turn back into cmd+<key> for
+# terminal-browser (see tmux.conf).
+keybind = super+a=csi:97;7u
+keybind = super+c=csi:99;7u
 
 # Prevent AquaSKK mode-switch keys (sent by Karabiner-Elements) from
 # leaking into the terminal as literal characters.
