@@ -106,7 +106,7 @@ sub-agent prompt には必ず以下を含める (自己完結させる):
 
 - 担当 batch の候補リスト (元コマンドと頻度)
 - 本 skill の「最重要原則: 最小権限」セクション全文
-- 下の「4a. 各 disposition は固定チェックリストに具体事実で答える」全文 (**SKILL.md の現行版をそのまま転記すること。prompt テンプレに固定化しない**。4a の唯一の source of truth は SKILL.md)
+- 下の「4a. 各 disposition は固定チェックリストに具体事実で答える」全文 (**SKILL.md の現行バージョンをそのまま転記すること。prompt テンプレに固定化しない**。4a の唯一の source of truth は SKILL.md)
 - 下の「3c. disposition 決定ルール」全文 (同上 — disposition 選択フロー)
 - 出力フォーマット: 候補ごとに `{disposition, pattern, rationale, risk_profile, suggested_tests, writeto}` を返させる。`rationale` は 4a の R1-R5 / Q1-Q2 / D1-D2 を全件埋めた構造化データとして返すこと
 - 強制ルール: 「4a のチェック項目を具体事実で埋められない場合は ignore を選べ。buzzword (`readonly` / `安全` / `狭い` 等の根拠なし語) で埋めるのは違反」
