@@ -14,18 +14,16 @@ command = zsh -c tmux-attach
 # Both Option keys act as Alt for tmux/neovim keybindings
 macos-option-as-alt = true
 
-# Disable default keybinds that conflict with tmux workflow
-keybind = ctrl+shift+equal=unbind
-keybind = ctrl+shift+minus=unbind
-keybind = alt+enter=unbind
-keybind = super+t=unbind
-
-# Ghostty defaults alt+arrow to word movement (esc:b/esc:f),
-# unbind so tmux receives them for pane navigation
-keybind = alt+arrow_left=unbind
-keybind = alt+arrow_right=unbind
-keybind = alt+arrow_up=unbind
-keybind = alt+arrow_down=unbind
+# tmux handles tabs, splits, search and scrollback, so drop every default
+# keybind and redefine only the few still needed. Unbound keys then reach
+# tmux (e.g. alt+arrow for pane navigation).
+keybind = clear
+keybind = super+q=quit
+# terminal-browser zooms the page through the terminal's font size keybinds
+keybind = super+equal=increase_font_size:1
+keybind = super+plus=increase_font_size:1
+keybind = super+minus=decrease_font_size:1
+keybind = super+zero=reset_font_size
 
 # Send CSI u sequences for ctrl+number keys (tmux pane selection).
 # unbind alone doesn't work because ctrl+number has no legacy escape sequence.
@@ -45,7 +43,7 @@ keybind = ctrl+zero=csi:48;5u
 keybind = ctrl+equal=csi:61;5u
 keybind = ctrl+enter=csi:13;5u
 # tmux cannot relay the super modifier, so reuse ctrl+enter for crit's
-# cmd+enter submit (replaces Ghostty's toggle_fullscreen).
+# cmd+enter submit.
 keybind = super+enter=csi:13;5u
 
 # Prevent AquaSKK mode-switch keys (sent by Karabiner-Elements) from
