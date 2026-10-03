@@ -126,3 +126,14 @@ a agent peer parent | jq -r '.[0].session_id // empty'
 得られた `session_id` を使い、`a agent peer notify --message "<要約とレポートのファイルパス>" <session_id>` で送る (全文は貼らない)。元セッションが `paused` で止まっていても armyknife が内部で再開してから配送する。
 
 `session_id` が空の場合 (`a agent new` 以外で起動されたセッション) と、`notify` が `ended` エラーで失敗する場合 (元セッションが `/exit` 済み) は、ファイルパスを伝えて元セッションへの受け渡しをユーザーに依頼する。
+
+### 元セッション側で子セッションを閉じる
+
+レポートを受け取ったら、元セッションで子の `session_id` を確認し、`a agent close` で閉じる。
+
+```bash
+a agent peer children
+a agent close <session_id>
+```
+
+`a agent close` はセッションと pane を閉じ、linked worktree 上のセッションなら worktree とブランチも片付ける。子が実行中・入力待ち、pending task、未送信 draft のいずれかを持つと close は拒否されるため、子が完了してから再実行する。未 merge の worktree を削除する確認が出た場合は、内容を確認して判断する。未完了の作業を破棄するときだけ `--force` を付ける。

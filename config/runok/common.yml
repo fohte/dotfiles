@@ -359,12 +359,21 @@ rules:
       - ask: 'a agent new'
       - ask: 'a agent new -R dotfiles'
 
-  # armyknife (`a`) readonly subcommands. Other mutating subcommands
-  # (a wm delete, a agent resume, etc) fall through to pass.
-  - allow: 'a wm|cc|agent list|ls'
+  # Closing an agent can terminate its session and remove a linked worktree, so
+  # require an explicit ask for both canonical and abbreviated commands.
+  - ask: 'a ag|cc|agent close|c *'
     tests:
-      - allow: 'a wm list'
-      - allow: 'a wm ls'
+      - ask: 'a cc close'
+      - ask: 'a cc close example-session'
+      - ask: 'a agent close'
+      - ask: 'a agent close example-session'
+      - ask: 'a ag c'
+      - ask: 'a ag c example-session'
+
+  # armyknife (`a`) readonly subcommands. Other mutating subcommands
+  # (a agent resume, etc) fall through to pass.
+  - allow: 'a cc|agent list|ls'
+    tests:
       - allow: 'a cc list'
       - allow: 'a cc ls'
       - allow: 'a agent list'

@@ -1,6 +1,6 @@
 #!/bin/bash
 # pre-worktree-delete hook for armyknife.
-# Called by `a wm delete` (aliases: d, rm) before removing the worktree directory.
+# Called by `a agent close` and `a agent clean` before removing the worktree directory.
 #
 # armyknife discovers this file at $XDG_CONFIG_HOME/armyknife/hooks/pre-worktree-delete
 # (defaults to ~/.config/armyknife/hooks/pre-worktree-delete).
