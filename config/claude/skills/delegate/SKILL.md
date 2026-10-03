@@ -81,7 +81,7 @@ dir=$(mktemp -d /tmp/delegate.XXXXXX)
 prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
   DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID="<この委任作業が属する tq タスクの ID>" \
-  a agent new --worktree=<branch-name> --agent --label "<title>" --prompt "$prompt"
+  a agent new --worktree=<branch-name> --agent --kind development --label "<title>" --prompt "$prompt"
 ```
 
 **`render-task` と `a agent new` は必ず `&&` でつなぐ。** `prompt=$(...)` は独立した文にすると、失敗しても次の文が `--prompt ""` で走り、何の指示も持たない委任先が起動する。`&&` なら `render-task` の stderr を出したまま `a agent new` に進まない。
@@ -104,10 +104,10 @@ prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts
 ### オプション
 
 - `--from <ref>`: ベースとなる ref を指定 (デフォルト: main ブランチ)
-    - 例: `a agent new --worktree=feature-x --agent --label "..." --from origin/develop --prompt "..."`
-    - Renovate の PR をテストする場合: `a agent new --worktree=test-upgrade --agent --label "..." --from origin/renovate/some-branch --prompt "..."`
+    - 例: `a agent new --worktree=feature-x --agent --kind development --label "..." --from origin/develop --prompt "..."`
+    - Renovate の PR をテストする場合: `a agent new --worktree=test-upgrade --agent --kind development --label "..." --from origin/renovate/some-branch --prompt "..."`
 - `-R <path>` / `--repo <path>`: 対象リポジトリのパスを指定。指定するとカレントディレクトリに関係なく、そのリポジトリ上で worktree を作成する
-    - 例: `a agent new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "..." --prompt "..."`
+    - 例: `a agent new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --kind development --label "..." --prompt "..."`
 - `--skip-hooks`: post-worktree-create hook をスキップする。hook 自体が壊れていて worktree 内で直す必要がある場合に使う
 
 #### post-worktree-create hook 失敗時のリトライ
@@ -141,7 +141,7 @@ for entry in "repo-a 123" "repo-b 456" "repo-c 789"; do
     || { echo "FAIL $repo#$num (render-task)"; continue; }
   DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$task")" \
     a agent new --worktree=<branch> -R ~/ghq/github.com/<org>/$repo \
-      --agent --label "<title> $repo#$num" --prompt "$prompt" \
+      --agent --kind development --label "<title> $repo#$num" --prompt "$prompt" \
       && echo "OK $repo#$num" || echo "FAIL $repo#$num" &
 done
 wait
@@ -160,7 +160,7 @@ dir=$(mktemp -d /tmp/delegate.XXXXXX)
 prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
   DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID=123 \
-  a agent new --worktree=feature-login --agent --label "メール認証ログイン実装" --prompt "$prompt"
+  a agent new --worktree=feature-login --agent --kind development --label "メール認証ログイン実装" --prompt "$prompt"
 
 # 別のリポジトリ (-R オプション)
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
@@ -168,7 +168,7 @@ dir=$(mktemp -d /tmp/delegate.XXXXXX)
 prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
   DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID=124 \
-  a agent new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --label "API タイムアウト修正" --prompt "$prompt"
+  a agent new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --kind development --label "API タイムアウト修正" --prompt "$prompt"
 ```
 
 実行すると:
@@ -185,7 +185,7 @@ prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成
 prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
-  a agent new -R "$repo" --agent --label "<title>" --prompt "$prompt"
+  a agent new -R "$repo" --agent --kind development --label "<title>" --prompt "$prompt"
 ```
 
 - `--worktree` を付けない。worktree 前提のオプション (`--from`、`--force`、`--skip-hooks`) も使えない
@@ -207,7 +207,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.agents/skills/delegate/scripts/rend
 ## 委任時の注意事項
 
 - **既存ブランチで作業する場合**: 既存のリモートブランチ (例: follow-up PR のブランチ) にそのまま commit したい場合は、ブランチ名をそのまま `<branch-name>` に指定する
-    - 例: `a agent new --worktree=follow-up-123-terraform/foo --agent --label "..." --prompt "..."`
+    - 例: `a agent new --worktree=follow-up-123-terraform/foo --agent --kind development --label "..." --prompt "..."`
 - **ブランチ名**: 新規ブランチを作る場合、ブランチ名に `/` を含めないこと。代わりにハイフンを使う (例: `fix/login-bug` ではなく `fix-login-bug`)。ブランチには `fohte/` がプレフィックスとして付くため、`fix/...` だと `fohte/fix/...` になり冗長
 - 新しいインスタンスは独立した worktree で作業するため、現在の作業と競合しない。作業ツリーを共有する direct-commit モードには当てはまらず、前掲の「委任前に確認すること」に従う
 - **fork リポジトリへの委任**: 委任先が他者のリポジトリの fork (`gh repo view --json isFork -q .isFork` が `true`) なら、`additionalContext` に「oss-contribution skill を読み、commit と push はその手順に従うこと」と書く。fork では commit も push もユーザーが行うので、`render-task` が付ける締めくくりの commit / PR 作成はこの skill の手順で置き換わる。後述の「commit/PR 作成の完了条件は task.yaml に書かない」の例外はこれだけ
@@ -238,7 +238,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.agents/skills/delegate/scripts/rend
 - 「現在のブランチで同じファイルを編集した」という理由だけで `--from` が必要だと判断してはいけない。判断基準は「そのファイルを編集したかどうか」ではなく、「委任先が main ブランチ上で同じ修正を適用できるかどうか」。main にあるファイルに対する独立した修正であれば、たとえ現在のブランチでも同じファイルを触っていても `--from` は不要
 - 「ある PR で問題が見つかった」という理由だけで `--from` にその PR のブランチを指定してはいけない。PR は問題の発見契機にすぎない。修正がその PR の変更内容に依存しない限り main ベースで行う
 - **merge 済みの PR/ブランチに対して `--from` を指定してはいけない**。merge 済みということは変更が既に main に取り込まれているため、main ベースで作業すればその変更は含まれている。merge 済みかどうかが不明な場合は、`gh pr view` や `git log` で確認してから判断すること
-- **commit 先 (branch-name) と base ref (`--from`) を混同しない**。既存ブランチに直接 commit したいだけなら `a agent new --worktree=<既存ブランチ名>` で足りる。`--from origin/<同名ブランチ>` の指定は冗長で判断ミスのシグナル
+- **commit 先 (branch-name) と base ref (`--from`) を混同しない**。既存ブランチに直接 commit したいだけなら `a agent new --worktree=<既存ブランチ名> --agent --kind development` で足りる。`--from origin/<同名ブランチ>` の指定は冗長で判断ミスのシグナル
 
 間違えて `--from` で現在のブランチを指定すると、関係のない変更が混入して別々の PR にできなくなる。
 
@@ -317,7 +317,7 @@ dir=$(mktemp -d /tmp/delegate.XXXXXX)
 prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
   DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID=125 \
-  a agent new --worktree=fix-auth-timeout --agent --label "セッション TTL 設定反映修正" --prompt "$prompt"
+  a agent new --worktree=fix-auth-timeout --agent --kind development --label "セッション TTL 設定反映修正" --prompt "$prompt"
 ```
 
 ### 悪い例

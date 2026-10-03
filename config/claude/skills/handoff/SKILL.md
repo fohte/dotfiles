@@ -70,18 +70,22 @@ dir=$(mktemp -d -t handoff.XXXXXX)
 
 `--worktree` は付けない。引き継ぎはブランチを作る作業ではないため。
 
+引き継ぐ作業を現在進めている workflow skill の名前が `a config get agent.work_types` のキーに含まれていれば、その skill 名を `--kind` に渡す。含まれない場合は `--kind` を省略する。
+
 起動ディレクトリは「引き継ぐ作業が、今の作業ディレクトリの状態 (現在のブランチの変更、未コミットの変更) がないと成立するか」で決める。
 
 - **成立しない** → `-R` を付けない。今の cwd がそのまま引き継がれる。コンテキストリセットやモデル切り替えのように、同じブランチの作業を続ける場合はこちら
 - **成立する** → `-R "$(git root -r)"` を付ける。セカンドオピニオンや別トピックの再調査のように、ブランチに依存しない場合はこちら。`git root -r` は worktree 内でも本体リポジトリの root を返すため、worktree や深いサブディレクトリで起動していた影響を受けない
 
 ```bash
-a agent new --prompt "$(cat "$dir/handoff.md")" --label "<タスクの短い要約>"
+a agent new --kind <workflow-skill> --prompt "$(cat "$dir/handoff.md")" --label "<タスクの短い要約>"
 # ブランチに依存しない場合
-a agent new -R "$(git root -r)" --prompt "$(cat "$dir/handoff.md")" --label "..."
+a agent new -R "$(git root -r)" --kind <workflow-skill> --prompt "$(cat "$dir/handoff.md")" --label "..."
 # モデルを切り替える場合
-a agent new --prompt "$(cat "$dir/handoff.md")" --label "..." --model <model-id>
+a agent new --kind <workflow-skill> --prompt "$(cat "$dir/handoff.md")" --label "..." --model <model-id>
 ```
+
+workflow skill が該当しない場合は、例から `--kind <workflow-skill>` を外す。
 
 worktree 内から `-R` を付けた場合、その worktree の未コミットの変更は引き継ぎ先から見えない。必要なら handoff.md の「参考情報」に元の cwd を書く。git 管理外のディレクトリでは `git root -r` が失敗するので `-R` を付けない。
 

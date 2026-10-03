@@ -7,6 +7,23 @@ agent:
   # quota has headroom; losing conversation context hurts more than it saves
   auto_compact:
     enabled: false
+  # Glyph names are listed at https://www.nerdfonts.com/cheat-sheet.
+  work_types:
+    development:
+      icon: "\uEAC4" # nf-cod-code
+      color: [135, 215, 135] # green (#87D787)
+    design:
+      icon: "\uEA91" # nf-cod-symbol_structure
+      color: [215, 175, 255] # purple (#D7AFFF)
+    research:
+      icon: "\uEA6D" # nf-cod-search
+      color: [95, 175, 215] # blue (#5FAFD7)
+    debug-flow:
+      icon: "\uEAAF" # nf-cod-bug
+      color: [255, 135, 135] # red (#FF8787)
+    project-manager:
+      icon: "\U000F0849" # nf-md-account_group
+      color: [255, 215, 135] # yellow (#FFD787)
   codex:
     # Applies to delegated sessions only, so interactive `codex` keeps its own
     # defaults. The delegate skill explains why the quota goes to effort rather
