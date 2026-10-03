@@ -1,5 +1,8 @@
 {
   "share_url": "",
   "open_cmd": "crit-open",
-  "login_hint_shown": true
+  "login_hint_shown": true,
+  "hooks": {
+    "on_finish_approved": "inline:(sleep 5; kill $PPID) </dev/null >/dev/null 2>&1 &"
+  }
 }
