@@ -5,4 +5,9 @@
 if root=$(git root -r 2> /dev/null); then
   cd "$root" || exit 1
 fi
+# The default runtime dir lives under /tmp, where macOS's daily tmp_cleaner
+# deletes lock and identity files left untouched for 3 days by a long-running
+# daemon. Every later CBM process then refuses to start.
+export CBM_RUNTIME_DIR="${CBM_RUNTIME_DIR:-$HOME/.cache/codebase-memory-mcp/runtime}"
+mkdir -p "$CBM_RUNTIME_DIR"
 exec codebase-memory-mcp "$@"

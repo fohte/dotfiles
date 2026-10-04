@@ -46,6 +46,8 @@ if command -v codebase-memory-mcp > /dev/null; then
   # An unindexed worktree is the common case, and it answers not_found on stderr
   # with a non-zero exit. --json moves that onto stdout and CBM_LOG_LEVEL drops
   # the startup lines, so only a real failure reaches armyknife's warning path.
-  CBM_LOG_LEVEL=error codebase-memory-mcp cli --json delete_project \
+  # The launcher sets the runtime dir; without it the CLI talks to a different
+  # daemon than the MCP servers.
+  CBM_LOG_LEVEL=error ~/.config/mcp/cbm-mcp-launcher cli --json delete_project \
     --project="$cbm_project" > /dev/null || true
 fi
