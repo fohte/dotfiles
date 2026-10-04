@@ -1,0 +1,470 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CHECKS_TIMEOUT_SECONDS=300
+
+pr_number=""
+pr_title=""
+active_session_id=""
+active_client_tty=""
+active_window_id=""
+
+sanitize_text() {
+  printf '%s' "$1" | tr '\r\n' '  ' | tr -d '\000-\010\013\014\016-\037\177'
+}
+
+lua_quote() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  value="${value//$'\n'/\\n}"
+  value="${value//$'\r'/\\r}"
+  printf '"%s"' "$value"
+}
+
+ensure_notification_icon() {
+  local kind="$1" icon_name color cache_dir icon_path temp_dir
+  case "$kind" in
+    success)
+      icon_name='git-merge-24'
+      color='#a371f7'
+      ;;
+    failure)
+      icon_name='git-pull-request-closed-24'
+      color='#f85149'
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+
+  cache_dir="$HOME/.cache/tmux-pr-merge-close"
+  icon_path="$cache_dir/$icon_name.png"
+  if [ -s "$icon_path" ]; then
+    printf '%s' "$icon_path"
+    return 0
+  fi
+  command -v curl > /dev/null 2>&1 || return 1
+  command -v magick > /dev/null 2>&1 || return 1
+  mkdir -p "$cache_dir" || return 1
+  temp_dir="$(mktemp -d /tmp/tmux-pr-merge-close-icon.XXXXXX)" || return 1
+
+  if ! (
+    trap 'rm -r -- "$temp_dir"' EXIT
+    curl -fsSL --connect-timeout 5 --max-time 15 \
+      "https://raw.githubusercontent.com/primer/octicons/main/icons/$icon_name.svg" \
+      -o "$temp_dir/$icon_name.svg" > /dev/null 2>&1 || exit 1
+    sed "s/<svg /<svg fill=\"$color\" /" "$temp_dir/$icon_name.svg" \
+      > "$temp_dir/$icon_name-colored.svg" || exit 1
+    rg -q --fixed-strings "fill=\"$color\"" "$temp_dir/$icon_name-colored.svg" || exit 1
+    magick -background none -density 1024 "$temp_dir/$icon_name-colored.svg" \
+      -resize 256x256 "$temp_dir/$icon_name.png" > /dev/null 2>&1 || exit 1
+    [ -s "$temp_dir/$icon_name.png" ] || exit 1
+    mv "$temp_dir/$icon_name.png" "$icon_path" || exit 1
+  ); then
+    return 1
+  fi
+
+  [ -s "$icon_path" ] || return 1
+  printf '%s' "$icon_path"
+}
+
+notify() {
+  local notification_title message subtitle lua tag focus_command focus_session_id outcome icon_path
+  notification_title="$(sanitize_text "$1")"
+  message="$(sanitize_text "$2")"
+  outcome="$3"
+  focus_session_id="${4:-}"
+  subtitle="PR #${pr_number:-?}"
+  if [ -n "$pr_title" ]; then
+    subtitle+=" $pr_title"
+  fi
+
+  icon_path=""
+  if icon_path="$(ensure_notification_icon "$outcome")"; then
+    :
+  else
+    icon_path=""
+  fi
+
+  if [ -n "$focus_session_id" ]; then
+    tag="tmux-pr-merge-close-$$-$(date +%s)"
+    focus_command="a agent focus \"\$1\"; osascript -e 'tell application \"Ghostty\"' -e 'activate (first window whose name is \"👻\")' -e 'activate' -e 'end tell'"
+    lua="local tag = $(lua_quote "$tag"); hs.notify.register(tag, function() local t = hs.task.new(\"/bin/sh\", function() end, {\"-c\", $(lua_quote "$focus_command"), \"tmux-pr-merge-close\", $(lua_quote "$focus_session_id")}); t:setEnvironment({PATH = $(lua_quote "${PATH:-}"), HOME = $(lua_quote "${HOME:-}")}); t:start() end); local n = hs.notify.new(tag); n:hasActionButton(true); n:title($(lua_quote "$notification_title")); n:subTitle($(lua_quote "$subtitle")); n:informativeText($(lua_quote "$message")); n:withdrawAfter(0); n:send()"
+  else
+    lua="local n = hs.notify.new(); n:title($(lua_quote "$notification_title")); n:subTitle($(lua_quote "$subtitle")); n:informativeText($(lua_quote "$message")); n:withdrawAfter(0); n:send()"
+  fi
+
+  if [ -n "$icon_path" ]; then
+    lua="${lua%; n:send()}; pcall(function() local image = hs.image.imageFromPath($(lua_quote "$icon_path")); if image then n:contentImage(image) end end); n:send()"
+  fi
+
+  if command -v hs > /dev/null 2>&1; then
+    hs -c "$lua" ||
+      printf 'Unable to display notification: %s\n' "$message" >&2
+  else
+    printf 'Hammerspoon notification unavailable: %s\n' "$message" >&2
+  fi
+}
+
+short_output() {
+  local value
+  value="$(sanitize_text "$1")"
+  printf '%s' "${value:0:240}"
+}
+
+set_pr_merge_status() {
+  local state="$1" value
+  [ -n "$active_window_id" ] || return 0
+  value="#[bg=yellow,fg=black,bold] #${pr_number:-?} $state #[default]"
+  tmux set-option -w -t "$active_window_id" @pr-merge-status "$value" > /dev/null 2>&1 || true
+  tmux refresh-client -S > /dev/null 2>&1 || true
+}
+
+clear_pr_merge_status() {
+  [ -n "$active_window_id" ] || return 0
+  tmux set-option -w -u -t "$active_window_id" @pr-merge-status > /dev/null 2>&1 || true
+  tmux refresh-client -S > /dev/null 2>&1 || true
+}
+
+fail() {
+  local message display_message
+  message="PR #${pr_number:-?}"
+  if [ -n "$pr_title" ]; then
+    message+=" (${pr_title})"
+  fi
+  message+=" failed: $1"
+  clear_pr_merge_status
+  display_message="${message//#/##}"
+  if [ -n "$active_client_tty" ]; then
+    tmux display-message -d 0 -c "$active_client_tty" "$display_message" > /dev/null 2>&1 || true
+  else
+    tmux display-message -d 0 "$display_message" > /dev/null 2>&1 || true
+  fi
+  notify 'tmux PR merge failed' "$message" failure "${active_session_id:-}"
+  printf '%s\n' "$message" >&2
+  exit 1
+}
+
+json_field() {
+  jq -r "$2" <<< "$1"
+}
+
+resolve_sibling_session_id() {
+  local pane_id="$1" pane_path="$2" candidate_pane candidate_path candidate_session
+  local matched_session_id=""
+
+  while IFS= read -r candidate_pane; do
+    [ "$candidate_pane" = "$pane_id" ] && continue
+    if ! candidate_path="$(tmux display-message -p -t "$candidate_pane" '#{pane_current_path}' 2> /dev/null)"; then
+      continue
+    fi
+    [ "$candidate_path" = "$pane_path" ] || continue
+
+    candidate_session="$(tmux show-option -p -qv -t "$candidate_pane" @armyknife-last-agent-session-id 2> /dev/null || true)"
+    if [ -z "$candidate_session" ]; then
+      candidate_session="$(tmux show-option -p -qv -t "$candidate_pane" @armyknife-last-claude-code-session-id 2> /dev/null || true)"
+    fi
+    [ -n "$candidate_session" ] || continue
+
+    if [ -n "$matched_session_id" ] && [ "$matched_session_id" != "$candidate_session" ]; then
+      return 2
+    fi
+    matched_session_id="$candidate_session"
+  done < <(tmux list-panes -t "$pane_id" -F '#{pane_id}' 2> /dev/null)
+
+  [ -n "$matched_session_id" ] || return 1
+  printf '%s' "$matched_session_id"
+}
+
+read_pr() {
+  local result
+  if ! result="$(gh pr view "$1" --json state,headRefOid,mergeStateStatus,mergedAt 2>&1)"; then
+    printf '%s' "$result" >&2
+    return 1
+  fi
+  printf '%s' "$result"
+}
+
+ensure_pr_is_safe() {
+  local current="$1" expected_head="$2" phase="$3"
+  local current_head merge_state reason
+
+  current_head="$(json_field "$current" '.headRefOid')"
+  merge_state="$(json_field "$current" '.mergeStateStatus')"
+  if [ "$current_head" != "$expected_head" ]; then
+    reason="The PR head changed $phase."
+  elif [ "$merge_state" = 'DIRTY' ]; then
+    reason="The PR has merge conflicts $phase."
+  else
+    return 0
+  fi
+
+  fail "$reason"
+}
+
+prepare() {
+  local pane_id="$1" session_id="$2" client_tty="$3" window_id="$4" mode="${5:-}"
+  local dry_run=false pane_path repo_root pr_json vrt_enabled payload prompt command escaped_title script_path resolution_status
+  active_client_tty="$client_tty"
+  if [ "$mode" = '--dry-run' ]; then
+    dry_run=true
+  elif [ -n "$mode" ]; then
+    fail 'Invalid prepare mode.'
+  fi
+
+  if [ -z "$window_id" ]; then
+    window_id="$(tmux display-message -p -t "$pane_id" '#{window_id}' 2> /dev/null || true)"
+  fi
+  active_window_id="$window_id"
+  clear_pr_merge_status
+
+  if [ -n "$client_tty" ]; then
+    tmux display-message -d 0 -c "$client_tty" '#[bg=yellow,fg=black,bold] Fetching PR… ' > /dev/null 2>&1 || true
+  else
+    tmux display-message -d 0 '#[bg=yellow,fg=black,bold] Fetching PR… ' > /dev/null 2>&1 || true
+  fi
+
+  if [ -z "$client_tty" ]; then
+    fail 'The invoking tmux client could not be identified.'
+  fi
+
+  if ! pane_path="$(tmux display-message -p -t "$pane_id" '#{pane_current_path}' 2>&1)"; then
+    fail "Unable to read the pane working directory: $(short_output "$pane_path")"
+  fi
+  if [ -z "$session_id" ]; then
+    if session_id="$(resolve_sibling_session_id "$pane_id" "$pane_path")"; then
+      :
+    else
+      resolution_status="$?"
+      if [ "$resolution_status" -eq 2 ]; then
+        fail 'Multiple agent sessions share this pane directory; run the command from the intended agent pane.'
+      fi
+    fi
+  fi
+  active_session_id="$session_id"
+  if [ -z "$session_id" ]; then
+    fail 'No armyknife agent session is associated with this pane or a matching pane in the same window.'
+  fi
+  if ! repo_root="$(git -C "$pane_path" rev-parse --show-toplevel 2> /dev/null)"; then
+    fail 'The pane is not inside a Git repository.'
+  fi
+  if ! pr_json="$(cd "$repo_root" && gh pr view --json number,title,url,state,headRefOid,mergeStateStatus 2>&1)"; then
+    fail "Unable to read PR details: $(short_output "$pr_json")"
+  fi
+
+  pr_number="$(json_field "$pr_json" '.number')"
+  pr_title="$(sanitize_text "$(json_field "$pr_json" '.title')")"
+  local pr_url state head_sha merge_state
+  pr_url="$(json_field "$pr_json" '.url')"
+  state="$(json_field "$pr_json" '.state')"
+  head_sha="$(json_field "$pr_json" '.headRefOid')"
+  merge_state="$(json_field "$pr_json" '.mergeStateStatus')"
+
+  if [ "$state" != 'OPEN' ]; then
+    fail "The PR is not open (state: $state)."
+  fi
+  if [ "$merge_state" = 'DIRTY' ]; then
+    fail 'The PR has merge conflicts.'
+  fi
+  if [ -z "$pr_url" ] || [ -z "$head_sha" ] || [ "$head_sha" = 'null' ]; then
+    fail 'The PR is missing its URL or head commit.'
+  fi
+
+  vrt_enabled=false
+  if [ -f "$repo_root/.github/workflows/vrt-approval.yml" ]; then
+    vrt_enabled=true
+  fi
+
+  payload="$(jq -cn \
+    --arg session_id "$session_id" \
+    --arg repo_root "$repo_root" \
+    --arg pr_number "$pr_number" \
+    --arg pr_title "$pr_title" \
+    --arg pr_url "$pr_url" \
+    --arg head_sha "$head_sha" \
+    --arg vrt_enabled "$vrt_enabled" \
+    --arg dry_run "$dry_run" \
+    --arg client_tty "$client_tty" \
+    --arg window_id "$window_id" \
+    '{session_id:$session_id,repo_root:$repo_root,pr_number:$pr_number,pr_title:$pr_title,pr_url:$pr_url,head_sha:$head_sha,vrt_enabled:$vrt_enabled,dry_run:$dry_run,client_tty:$client_tty,window_id:$window_id}' | base64 | tr -d '\r\n')"
+
+  escaped_title="${pr_title//#/##}"
+  prompt="#[bg=red,fg=black,bold] Merge ##$pr_number $escaped_title? (y/n) "
+  script_path="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+  command="run-shell -b '\"$script_path\" run $payload'"
+  if ! tmux confirm-before -y -t "$client_tty" -p "$prompt" "$command"; then
+    fail 'Unable to show the tmux confirmation prompt.'
+  fi
+}
+
+wait_for_required_checks() {
+  local log_file checks_pid started_at elapsed exit_status
+
+  if ! log_file="$(mktemp /tmp/tmux-pr-merge-close-checks.XXXXXX)"; then
+    fail 'Unable to create a log file for required checks.'
+  fi
+
+  gh pr checks "$pr_number" --required --watch --fail-fast > "$log_file" 2>&1 &
+  checks_pid="$!"
+  started_at="$SECONDS"
+
+  while kill -0 "$checks_pid" 2> /dev/null; do
+    elapsed="$((SECONDS - started_at))"
+    if [ "$elapsed" -ge "$CHECKS_TIMEOUT_SECONDS" ]; then
+      kill -KILL "$checks_pid" 2> /dev/null || true
+      wait "$checks_pid" 2> /dev/null || true
+      checks_output="$(cat "$log_file" 2> /dev/null || true)"
+      rm -- "$log_file"
+      return 124
+    fi
+    sleep 0.2
+  done
+
+  if wait "$checks_pid"; then
+    exit_status=0
+  else
+    exit_status="$?"
+  fi
+  checks_output="$(cat "$log_file" 2> /dev/null || true)"
+  rm -- "$log_file"
+  return "$exit_status"
+}
+
+run_merge() {
+  local encoded_payload="$1" payload_json repo_root session_id pr_url head_sha vrt_enabled
+  local current state output dry_run checks_status
+  local checks_output=''
+
+  if ! payload_json="$(printf '%s' "$encoded_payload" | base64 -D 2> /dev/null)"; then
+    payload_json="$(printf '%s' "$encoded_payload" | base64 -d 2> /dev/null)" ||
+      fail 'The confirmation payload could not be decoded.'
+  fi
+
+  pr_number="$(json_field "$payload_json" '.pr_number')"
+  pr_title="$(json_field "$payload_json" '.pr_title')"
+  repo_root="$(json_field "$payload_json" '.repo_root')"
+  session_id="$(json_field "$payload_json" '.session_id')"
+  active_client_tty="$(json_field "$payload_json" '.client_tty')"
+  active_session_id="$session_id"
+  pr_url="$(json_field "$payload_json" '.pr_url')"
+  head_sha="$(json_field "$payload_json" '.head_sha')"
+  vrt_enabled="$(json_field "$payload_json" '.vrt_enabled')"
+  dry_run="$(json_field "$payload_json" '.dry_run')"
+  active_window_id="$(json_field "$payload_json" '.window_id')"
+
+  if ! cd "$repo_root"; then
+    fail 'The repository directory is no longer available.'
+  fi
+
+  if ! current="$(read_pr "$pr_url" 2>&1)"; then
+    fail "Unable to read PR status: $(short_output "$current")"
+  fi
+  state="$(json_field "$current" '.state')"
+  if [ "$dry_run" = 'true' ]; then
+    if [ "$state" = 'MERGED' ]; then
+      notify 'tmux PR merge dry run' "PR #$pr_number ($pr_title) is already merged. Dry run did not close the agent session." success
+      return
+    fi
+    if [ "$state" != 'OPEN' ]; then
+      fail "The PR is not open (state: $state)."
+    fi
+    ensure_pr_is_safe "$current" "$head_sha" 'after confirmation'
+    if [ "$vrt_enabled" = 'true' ]; then
+      notify 'tmux PR merge dry run' "PR #$pr_number ($pr_title) is open and has no merge conflicts. Would add vrt-approved, wait for required checks, squash merge, and close the agent session. No changes were made." success
+    else
+      notify 'tmux PR merge dry run' "PR #$pr_number ($pr_title) is open and has no merge conflicts. Would wait for required checks, squash merge, and close the agent session. No changes were made." success
+    fi
+    return
+  fi
+
+  if [ "$state" = 'MERGED' ]; then
+    close_merged_session "$session_id"
+    return
+  fi
+  if [ "$state" != 'OPEN' ]; then
+    fail "The PR was closed before it could be merged (state: $state)."
+  fi
+
+  ensure_pr_is_safe "$current" "$head_sha" 'after confirmation'
+
+  set_pr_merge_status 'waiting for checks'
+  if [ "$vrt_enabled" = 'true' ]; then
+    if ! output="$(gh pr edit "$pr_url" --add-label vrt-approved 2>&1)"; then
+      fail "Unable to add the vrt-approved label: $(short_output "$output")"
+    fi
+  fi
+
+  if wait_for_required_checks; then
+    :
+  else
+    checks_status="$?"
+    if [ "$checks_status" -eq 124 ]; then
+      fail "Timed out after ${CHECKS_TIMEOUT_SECONDS}s waiting for required checks. $(short_output "$checks_output")"
+    fi
+    fail "Required checks failed: $(short_output "$checks_output")"
+  fi
+
+  if ! current="$(read_pr "$pr_url" 2>&1)"; then
+    fail "Unable to read PR status after required checks: $(short_output "$current")"
+  fi
+  state="$(json_field "$current" '.state')"
+  if [ "$state" = 'MERGED' ]; then
+    close_merged_session "$session_id"
+    return
+  fi
+  if [ "$state" != 'OPEN' ]; then
+    fail "The PR was closed before it could be merged (state: $state)."
+  fi
+  ensure_pr_is_safe "$current" "$head_sha" 'after required checks'
+
+  set_pr_merge_status 'merging'
+  if ! output="$(gh pr merge "$pr_number" --squash 2>&1)"; then
+    if current="$(read_pr "$pr_url" 2>&1)" && [ "$(json_field "$current" '.state')" = 'MERGED' ]; then
+      close_merged_session "$session_id"
+      return
+    fi
+    fail "Unable to squash merge the PR: $(short_output "$output")"
+  fi
+
+  if ! current="$(read_pr "$pr_url" 2>&1)"; then
+    fail "The squash merge command succeeded, but PR status could not be verified: $(short_output "$current")"
+  fi
+  state="$(json_field "$current" '.state')"
+  if [ "$state" != 'MERGED' ]; then
+    fail "The squash merge command succeeded, but the PR is not merged (state: $state)."
+  fi
+
+  close_merged_session "$session_id"
+}
+
+close_merged_session() {
+  local target_session_id="$1" close_output
+  set_pr_merge_status 'cleaning up'
+  if ! close_output="$("$HOME/.cargo/bin/a" agent close "$target_session_id" 2>&1)"; then
+    fail "The PR was merged, but the agent session could not be closed: $(short_output "$close_output")"
+  fi
+
+  notify 'tmux PR merge succeeded' "PR #$pr_number ($pr_title) was merged and the agent session was closed." success
+}
+
+case "${1:-}" in
+  prepare)
+    { [ "$#" -ge 4 ] && [ "$#" -le 6 ]; } || fail 'Invalid prepare arguments.'
+    window_id="${5:-}"
+    mode="${6:-}"
+    if [ "$#" -eq 5 ] && [ "$window_id" = '--dry-run' ]; then
+      window_id=''
+      mode='--dry-run'
+    fi
+    prepare "$2" "$3" "$4" "$window_id" "$mode"
+    ;;
+  run)
+    [ "$#" -eq 2 ] || fail 'Invalid run arguments.'
+    run_merge "$2"
+    ;;
+  *)
+    printf 'Usage: %s prepare <pane-id> <session-id> <client-tty> [window-id] [--dry-run] | run <payload>\n' "$0" >&2
+    exit 2
+    ;;
+esac
