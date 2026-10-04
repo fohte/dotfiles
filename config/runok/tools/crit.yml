@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
 rules:
-  - allow: 'crit *'
+  - allow: 'crit|crit-approval *'
     tests:
       - allow: 'crit'
       - allow: 'crit plan.md'
@@ -12,6 +12,16 @@ rules:
       - allow: 'crit status'
       - allow: 'crit pull 123'
       - allow: 'crit plan-hook'
+      - allow: 'crit-approval'
+      - allow: 'crit-approval check'
+      - allow: 'crit-approval --range main..HEAD'
+      - allow: 'crit-approval comment --author "Codex" foo.md:5 body'
+  - allow: 'crit-approval-check'
+    tests:
+      - allow: 'crit-approval-check'
+  - allow: './config/bin/crit-approval-check'
+    tests:
+      - allow: './config/bin/crit-approval-check'
 
   # Uploads review content to crit's hosted service and prints a public
   # (or org-scoped) URL -- never publish outside the local machine unattended.
@@ -20,19 +30,22 @@ rules:
   # are args[0] (see dispatchWithRegistry in crit's cli_dispatch.go); a
   # leading global flag like `--port 8080` makes crit fall through to the
   # bare-review path instead, so no `<opts>`/`*` prefix is needed here.
-  - deny: 'crit share *'
+  - deny: 'crit|crit-approval share *'
     message: 'crit share is disabled globally via ~/.crit.config.json (share_url=""), so this would not publish even if run yourself.'
     tests:
       - deny: 'crit share plan.md'
+      - deny: 'crit-approval share plan.md'
       - allow: 'crit comment file.md:5 share'
-  - deny: 'crit unpublish *'
+      - allow: 'crit-approval comment file.md:5 share'
+  - deny: 'crit|crit-approval unpublish *'
     message: 'Paired with crit share, which is also disabled globally (see crit share message).'
     tests:
       - deny: 'crit unpublish plan.md'
+      - deny: 'crit-approval unpublish plan.md'
 
   # Kills every crit daemon on the machine, including ones owned by other
   # Claude Code sessions.
-  - deny: 'crit stop --all *'
+  - deny: 'crit|crit-approval stop --all *'
     message: 'crit stop --all kills daemons of other sessions too.'
     fix_suggestion: 'Run `crit stop` (current session) or `crit stop <file>` instead.'
     tests:
@@ -40,15 +53,19 @@ rules:
       - deny: 'crit stop plan.md --all'
       - allow: 'crit stop'
       - allow: 'crit stop plan.md'
+      - deny: 'crit-approval stop --all'
+      - deny: 'crit-approval stop plan.md --all'
+      - allow: 'crit-approval stop'
+      - allow: 'crit-approval stop plan.md'
 
   # Review forms block until the human finishes, and Codex can only wait for
   # that by polling. Codex exports CODEX_SESSION_ID to `runok exec`, not to
   # the hook process, so this is enforced at exec time.
   # Inline tests cannot set env: verify with `CODEX_SESSION_ID=x runok check`
-  # that `crit` is denied and `a agent bg run -- crit` is allowed, and run
-  # `runok test` without CODEX_SESSION_ID or the review-form allow tests above
-  # fail.
-  - deny: 'crit *'
+  # that `crit` and `crit-approval` are denied directly and their `a agent bg
+  # run --` forms are allowed, and run `runok test` without CODEX_SESSION_ID
+  # or the review-form allow tests above fail.
+  - deny: 'crit|crit-approval *'
     when: >-
       'CODEX_SESSION_ID' in env
       && !shell.wrappers.exists(w, w == 'a cc|agent bg run -- <cmd>')
@@ -71,8 +88,10 @@ rules:
       - ask: 'a agent bg run -- crit push 123'
 
   # Posts review comments to a GitHub PR, visible to other collaborators.
-  - ask: 'crit push *'
+  - ask: 'crit|crit-approval push *'
     tests:
       - ask: 'crit push --dry-run'
       - ask: 'crit push 123'
+      - ask: 'crit-approval push 123'
       - allow: 'crit comment --author push foo.md:5 body'
+      - allow: 'crit-approval comment --author push foo.md:5 body'

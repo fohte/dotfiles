@@ -70,6 +70,9 @@ pre-commit:
       glob: 'config/aquaskk/romaji.jsonnet'
       run: make -C config/aquaskk && git add -u
 
+    crit-approval:
+      run: ./config/bin/crit-approval-check
+
 commit-msg:
   commands:
     commitlint:

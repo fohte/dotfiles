@@ -38,11 +38,13 @@ bare な `crit story`、`crit story --no-spend`、`crit`、`crit review` はこ�
 `crit:crit` skill でレビュー loop を回し、承認を待つ。委任先の無人セッションでも待つ。
 
 ingest で daemon が最初のタブを開いた場合、レビュー loop はその daemon に接続する。
-`crit:crit` の Step 1-2 に従い、初回は bare な `crit` をバックグラウンドで 1 回だけ実行する。
-2 round 目以降は finish prompt が指定する次 round 用コマンドを 1 回だけ実行する。
-finish prompt のコマンドを bare な `crit` に置き換えない。
-`crit` と `crit review` を同じ round で併用したり、起動コマンドを再実行したりしない。
+`crit:crit` の Step 1-2 に従い、初回は `crit-approval` をバックグラウンドで 1 回だけ実行する。
+Codex では `a agent bg run -- crit-approval [args...]` を使い、完了通知まで待つ。
+2 round 目以降は finish prompt が指定する次 round 用コマンドを 1 回だけ実行し、先頭の `crit` を `crit-approval` に置き換える。
+`crit-approval` と `crit review` を同じ round で併用したり、起動コマンドを再実行したりしない。
 `crit story` は story を保存して終了するため、承認待ちのブロックは `crit:crit` 側が担う。
+
+wrapper は `approved: true` の出力を検出すると、その時点の `HEAD` を Git metadata に記録する。
 
 ## 3. 指摘に対応する
 
@@ -53,4 +55,4 @@ finish prompt のコマンドを bare な `crit` に置き換えない。
 3. 修正で story の記述とずれたなら story を作り直す (ingest 時に `--refresh --no-open`)。ファイルの追加・削除・rename や hunk の増減があれば、文章が正しくても `hunk_refs` が古い hunk を指して chapter が空になるため必ず作り直す。既存 hunk 内だけの微修正で文章も正しいなら作り直さない
 4. 次の round に進む
 
-承認されたら呼び出し元の手順に戻る。
+承認されたら wrapper が記録を保存したことを前提に、呼び出し元の手順に戻る。

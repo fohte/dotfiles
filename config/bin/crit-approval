@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+tmp_stdout=
+tmp_stderr=
+
+cleanup() {
+  if [[ -n "$tmp_stdout" && -e "$tmp_stdout" ]]; then
+    rm "$tmp_stdout"
+  fi
+  if [[ -n "$tmp_stderr" && -e "$tmp_stderr" ]]; then
+    rm "$tmp_stderr"
+  fi
+}
+trap cleanup EXIT
+
+approval_path() {
+  local repo_root="${1:-.}" git_dir
+  git_dir="$(git -C "$repo_root" rev-parse --absolute-git-dir 2> /dev/null)" || return 1
+  printf '%s/crit-approval-head\n' "$git_dir"
+}
+
+record_approval() {
+  local head path
+  head="$(git rev-parse --verify HEAD)" || return 1
+  path="$(approval_path)" || return 1
+  printf '%s\n' "$head" > "$path"
+}
+
+check_approval() {
+  local repo_root branch default_branch default_ref default_candidates current_head approved_head path
+
+  if [[ -z "${CLAUDECODE:-}" && -z "${CODEX_THREAD_ID:-}" ]]; then
+    return 0
+  fi
+
+  repo_root="$(git rev-parse --show-toplevel 2> /dev/null)" || return 0
+  branch="$(git -C "$repo_root" branch --show-current)"
+  [[ -n "$branch" ]] || return 0
+
+  default_ref="$(git -C "$repo_root" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2> /dev/null || true)"
+  default_branch="${default_ref#origin/}"
+  if [[ -z "$default_branch" ]]; then
+    default_candidates="$(git -C "$repo_root" branch -l master main | sed 's/^[*+ ]*//')"
+    case "$default_candidates" in
+      master | main) default_branch="$default_candidates" ;;
+      *)
+        printf 'Skipping crit approval check: set origin/HEAD to identify the default branch.\n' >&2
+        return 0
+        ;;
+    esac
+  fi
+  [[ -n "$default_branch" && "$branch" == "$default_branch" ]] || return 0
+
+  if git -C "$repo_root" diff --cached --numstat |
+    awk -F '\t' '
+      $1 == "-" || $2 == "-" { too_large = 1; next }
+      { files++; lines += $1 + $2 }
+      END { exit !(files <= 1 && lines <= 5 && !too_large) }
+    '; then
+    return 0
+  fi
+
+  current_head="$(git -C "$repo_root" rev-parse --verify HEAD)"
+  path="$(approval_path "$repo_root")"
+  approved_head="$(cat "$path" 2> /dev/null || true)"
+  if [[ "$approved_head" != "$current_head" ]]; then
+    printf 'Blocked: agent commits on the default branch require crit approval for the current HEAD.\n' >&2
+    printf 'Run the crit-approval-review skill, then retry the commit.\n' >&2
+    return 1
+  fi
+}
+
+if [[ "${DOTFILES_CRIT_APPROVAL_CHECK:-}" == "1" ]]; then
+  if [[ $# -gt 0 ]]; then
+    printf 'Unexpected arguments for crit-approval-check.\n' >&2
+    exit 2
+  fi
+  check_approval
+  exit
+fi
+
+tmp_stdout="$(mktemp /tmp/crit-approval-stdout.XXXXXX)"
+tmp_stderr="$(mktemp /tmp/crit-approval-stderr.XXXXXX)"
+
+set +e
+crit "$@" > >(tee "$tmp_stdout") 2> >(tee "$tmp_stderr" >&2)
+crit_status=$?
+wait
+set -e
+
+if grep -Eq '^[[:space:]]*(\{[[:space:]]*)?"?approved"?[[:space:]]*:[[:space:]]*"?true"?([[:space:]]*\})?[[:space:]]*$' "$tmp_stdout" "$tmp_stderr"; then
+  record_approval
+fi
+
+cleanup
+trap - EXIT
+exit "$crit_status"
