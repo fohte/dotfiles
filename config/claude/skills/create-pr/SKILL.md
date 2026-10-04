@@ -113,7 +113,7 @@ branch config が無いときは、このセッション (`$TQ_SESSION_ID`) に�
 `tasks[]` の `parentId` が別の linked task の `id` を指していれば親子で、親は捨てて子 (葉) を残す。
 
 ```bash
-scripts/link-tq-task --author <自分のモデル名>
+~/.agents/skills/create-pr/scripts/link-tq-task --author <自分のモデル名>
 ```
 
 リンクも branch config も無いなら何もしない。
