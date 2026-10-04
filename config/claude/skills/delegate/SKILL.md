@@ -25,6 +25,8 @@ description: Delegate tasks to a separate Claude Code or Codex instance, either 
     - 委任元が渡した前提が誤っていた場合の訂正
     - 委任先が委任元の管理下にあるもの (別リポジトリの修正、パッケージの publish、先行 PR の merge など) を待って止まっている場合の、解消した旨の通知
 
+    例外として、後述の「委任先の PR が merge された場合」の merge 保留とその解除は、子でない並行セッションにも送る
+
 - **用が無いのに停止中のセッションを起こさない**: `a agent peer notify` は宛先セッションが `paused` (`a agent sweep` などで自動停止済み) の場合、内部で自動的に再開してから配送する。この再開は送る用件が既に確定している場合の副作用としてのみ許容され、状況を見るため、念のため、といった理由で `notify` を呼んではならない。`a agent sweep` はアイドルなセッションを意図的に停止しており、それを覆すことになる
 - **委任後に完了をポーリングしない**: 通常の委任の成果は PR として残るので、そこで確認すればよい。PR が出ない direct-commit モードでは委任先から完了報告が来る (後述の「委任先から委任元に連絡する場合」)。どちらも自作のポーリングで先回りしてはならない。委任が始まったことをユーザーに報告したら、そのターンは終わりにする。委任は委任元セッションを解放するための手段であり、張り付いて見守る対象ではない。ユーザーに訊かれて `a agent peer children` で状態を答えるのは構わないが、訊かれてもいないのに状態を確認して報告するのは、それ自体がポーリングにあたる
 
@@ -371,6 +373,19 @@ goal: |
 訂正の場合はこれに加えて、プロンプトのどの記述が誤りかを引用して特定し、正しい事実の根拠 (ファイルパス、行番号、出典) を添える。委任先が自分で再検証できる状態にすること。訂正のついでにスコープが膨らむのを防ぐため、範囲外のままにするものも書く。
 
 解消の通知の場合はこれに加えて、委任先が何を待っていて、それがどう解消したのかを特定する。
+
+## 委任先の PR が merge された場合
+
+armyknife から `<delegation-update>` で merge 通知が来たら、default branch の CI が通るまで見届ける。merge 後の default branch が壊れていると、並行する PR も merge 後に同じ失敗を踏む。
+
+1. `gh pr view <PR> --json mergeCommit` で merge commit を取り、`gh run list --commit <sha>` の run を `gh run watch <run-id> --exit-status` で待つ。merge 直後は run がまだ作られていないことがあるので、空でも CI 無しとは判断せず、default branch への push で動く workflow が `.github/workflows/` に無いときだけ 3 に進む
+2. 失敗したら:
+    1. `a agent peer list -R <owner>/<repo>/.worktrees/` で同じリポジトリの worktree で動くセッションを洗い出し、`ended` 以外の全員に merge 保留を `a agent peer notify` する。宛先は委任元の子に限らない。送った session_id は解除の通知に使うので控える
+    2. 原因を特定し (flaky なら `gh run rerun --failed` して 1 からやり直す)、修正をこの skill で委任する
+    3. 修正 PR の merge 通知が来たら、この手順を最初から実行する
+3. 通ったら、2-1 で merge 保留を送ったセッションがあれば全員に解除を通知する。その後、この merge を待って止まっていた作業があれば続ける
+
+merge 保留のメッセージには、委任元からの連絡であること、どの PR の merge 後に default branch の CI が落ちているか、解除の通知が来るまで merge しないこと、merge 以外の作業は続けてよいこと、自分の PR の CI が同じ原因で落ちていても直さないことを書く。解除のメッセージには、どの修正で直ったか、merge してよいことを書く。
 
 ## 委任先から委任元に連絡する場合
 

@@ -4,6 +4,17 @@ editor:
   terminal: ghostty
 
 agent:
+  merge_notification: |
+    <delegation-update>
+    armyknife による自動送信です。人間や委任先からの依頼ではありません。
+
+    委任先の PR が merge されました。
+
+    - Branch: {branch}
+    - PR: {pr_url}
+
+    delegate skill の「委任先の PR が merge された場合」に従ってください。
+    </delegation-update>
   # quota has headroom; losing conversation context hurts more than it saves
   auto_compact:
     enabled: false
