@@ -41,6 +41,16 @@ definitions:
     - 'a cc|agent bg run -- <cmd>'
 
 rules:
+  # Piping `yes` auto-answers interactive confirmation prompts, bypassing
+  # them.
+  - deny: 'yes *'
+    message: 'Blocked because yes auto-answers confirmation prompts and can saturate the CPU'
+    fix_suggestion: "Pass the command's non-interactive flag (e.g. --yes, -y, --force) instead"
+    tests:
+      - deny: 'yes'
+      - deny: 'yes y'
+      - deny: 'yes | rm -i foo'
+
   # `when` excludes safe targets (via the same `definitions.vars` lists the
   # allow rule below references, using runok's `glob_matches`/`definitions`
   # when-clause helpers) so recursive+force stays blocked everywhere else
