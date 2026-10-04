@@ -1,6 +1,6 @@
 ---
 name: sync-base-branch
-description: Sync a PR's base branch when explicitly requested or when a conflict or base-caused CI failure requires it. Merge at most once per instruction, including explicit requests with no conflict; after pushing, base advances never trigger another merge. Resolve conflicts, check for follow-up work, push, and confirm CI. Use this skill for base-branch syncs instead of running git merge/push manually.
+description: Sync a PR's base branch when explicitly requested or when a conflict or base-caused CI failure requires it. Merge once per explicit request even with no conflict; after pushing, base advances trigger another merge only when the PR becomes CONFLICTING. Resolve conflicts, check for follow-up work, push, and confirm CI. Use this skill for base-branch syncs instead of running git merge/push manually.
 ---
 
 # Sync base branch
@@ -15,8 +15,8 @@ description: Sync a PR's base branch when explicitly requested or when a conflic
 
 ## merge する条件
 
-- 1 つの指示で merge は最大 1 回とする。明示的な sync 依頼があれば conflict の有無にかかわらず 1 回 merge する。一度 merge した後は、push 後の CI 待ちや失敗修正中に base が進んでも再度 merge しない
-- 明示的な依頼がない場合は、PR の `mergeable` が `CONFLICTING`、または CI 失敗が base branch の変更に起因すると確認できたときだけ merge する。base が進んだことや PR が base より遅れていることだけでは merge しない
+- 明示的な sync 依頼があれば conflict の有無にかかわらず 1 回 merge する
+- それ以外は、PR の `mergeable` が `CONFLICTING` のとき (直前に merge 済みでも。conflict が残ったままでは PR を merge できないため)、またはまだ merge していない状態で CI 失敗が base branch の変更に起因すると確認できたときだけ merge する。base が進んだことや PR が base より遅れていることだけでは merge しない
 - `mergeable` が `UNKNOWN` の場合は 3 秒後に再取得する (最大 3 回)。状態が確定しなければ merge せず、その旨を報告して終了する
 
 ## 手順
@@ -103,5 +103,7 @@ gh pr checks --watch
 push 直後は check-run が GitHub 側にまだ登録されておらず "no checks reported" で失敗することがある。その場合は数秒待って同じコマンドを再実行する。
 
 全 check が完了するまで待つ。失敗した check があれば原因を修正して commit と push を行い、check を再確認する。base branch は上記の merge 条件に従う。
+
+全 check が完了したら `gh pr view --json mergeable -q .mergeable` を再取得する (`UNKNOWN` の扱いは merge 条件と同じ)。`gh pr checks` の出力には conflict が現れないため。`CONFLICTING` なら手順 2 に戻る。
 
 手順 1 で PR が見つからなかった場合 (default branch にフォールバックした場合) は、確認対象の PR がないためこの手順はスキップする。
