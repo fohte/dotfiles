@@ -90,7 +90,7 @@ For each thread:
 - **Threads addressed with code changes**: Change `- [ ] resolve` to `- [x] resolve`, then append a draft reply `Fixed in <commit-hash>.` after the last `<!-- /comment -->` line, where `<commit-hash>` is the short hash of the commit that addressed the comment. If the fix involved additional context worth mentioning, append a brief explanation after the period (e.g., `Fixed in abc1234. Switched to using X instead of Y as suggested.`).
 - **"Won't fix" threads**: Change `- [ ] resolve` to `- [x] resolve`, then append a draft reply after the last `<!-- /comment -->` line explaining why the concern does not apply.
 - **Threads that should remain open**: Leave as-is.
-- Do NOT resolve threads from Devin (Devin auto-resolves its own threads).
+- Handle Devin threads the same way. Devin auto-resolves its threads only when it re-runs on the same PR, which usually does not happen, so they stay open unless you reply and resolve them.
 
 Example of the correct reply position:
 
