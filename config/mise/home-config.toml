@@ -57,7 +57,7 @@
 # mise extracts the tarball's AppleDouble xattr entries as ._* files inside the
 # signed .app, which breaks its code signature and makes Gatekeeper report the
 # app as damaged.
-"github:zenbu-labs/terminal-browser" = { version = "0.13.4", postinstall = "find \"$MISE_TOOL_INSTALL_PATH\" -name '._*' -delete" }
+"github:zenbu-labs/terminal-browser" = { version = "0.13.4", postinstall = "find \"$MISE_TOOL_INSTALL_PATH\" -name '._*' -delete && \"$(dot path)/config/mise/scripts/terminal-browser-pin-profile\" \"$MISE_TOOL_INSTALL_PATH\"" }
 "github:shell-pool/shpool" = "0.11.5"
 
 [settings]

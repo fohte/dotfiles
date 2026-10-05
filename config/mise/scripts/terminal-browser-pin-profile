@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Usage: terminal-browser-pin-profile <install-dir>
+#
+# terminal-browser names its profile dirs terminal-browser-<hash of install
+# dir>, and mise installs every version into a new dir, so each upgrade would
+# start with an empty profile (logged out everywhere). Point the dirs of the
+# given install at one stable dir instead.
+
+set -euo pipefail
+
+install_dir="$(cd "$1" && pwd -P)"
+hash="$(printf '%s' "$install_dir" | shasum -a 256 | cut -c1-8)"
+
+if [[ "$(uname)" == Darwin ]]; then
+  app_data="$HOME/Library/Application Support"
+else
+  app_data="${XDG_CONFIG_HOME:-$HOME/.config}"
+fi
+
+for parent in "$app_data" "${XDG_DATA_HOME:-$HOME/.local/share}"; do
+  dir="$parent/terminal-browser-$hash"
+  stable="$parent/terminal-browser-mise"
+  [[ -L "$dir" ]] && continue
+  if [[ -e "$dir" ]]; then
+    if [[ -e "$stable" ]]; then
+      echo "terminal-browser-pin-profile: both $dir and $stable exist; leaving $dir as is" >&2
+      continue
+    fi
+    # Adopt the profile of the first pinned install so its logins carry over.
+    mv "$dir" "$stable"
+  fi
+  mkdir -p "$stable"
+  ln -s "$stable" "$dir"
+done
