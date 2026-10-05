@@ -446,7 +446,8 @@ run_merge() {
 close_merged_session() {
   local target_session_id="$1" close_output
   set_pr_merge_status 'cleaning up'
-  if ! close_output="$("$HOME/.cargo/bin/a" agent close "$target_session_id" 2>&1)"; then
+  # The user already confirmed the merge, so a busy session or unsent draft must not block cleanup
+  if ! close_output="$("$HOME/.cargo/bin/a" agent close --force "$target_session_id" 2>&1)"; then
     fail "The PR was merged, but the agent session could not be closed: $(short_output "$close_output")"
   fi
 
