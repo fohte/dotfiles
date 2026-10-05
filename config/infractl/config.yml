@@ -23,3 +23,7 @@ targets:
     namespace: databases
     cluster: main
     database: meshi
+  litellm:
+    namespace: databases
+    cluster: main
+    database: litellm
