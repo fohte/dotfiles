@@ -328,6 +328,11 @@ wait_for_required_checks() {
   fi
   checks_output="$(cat "$log_file" 2> /dev/null || true)"
   rm -- "$log_file"
+  # gh は required checks が 1 つも無いブランチ (CI 自体が無い場合を含む) でも失敗と同じ exit 1 を返すため、メッセージで区別する
+  if [ "$exit_status" -ne 0 ] &&
+    [[ "$checks_output" == *'no required checks reported'* || "$checks_output" == *'no checks reported on the'* ]]; then
+    return 0
+  fi
   return "$exit_status"
 }
 
