@@ -41,9 +41,12 @@ fi
 
 # Run bootstrap script if present (e.g. mise install, dependency install).
 # --worktree skips lefthook install since worktrees share the parent's .git/hooks.
+# Non-fatal: branches under repair often carry a stale lockfile, and a rollback
+# here pushes callers to --skip-hooks, which also drops the trust registration below.
 bootstrap="$ARMYKNIFE_WORKTREE_PATH/scripts/bootstrap"
 if [[ -x "$bootstrap" ]]; then
-  "$bootstrap" --worktree
+  "$bootstrap" --worktree ||
+    echo "warning: $bootstrap failed; dependencies may be missing in $ARMYKNIFE_WORKTREE_PATH" >&2
 fi
 
 # Create .marksman.toml in new worktrees so that marksman LSP can detect the project root.

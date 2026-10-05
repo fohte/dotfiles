@@ -110,13 +110,13 @@ prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts
     - Renovate の PR をテストする場合: `a agent new --worktree=test-upgrade --agent --kind development --label "..." --from origin/renovate/some-branch --prompt "..."`
 - `-R <path>` / `--repo <path>`: 対象リポジトリのパスを指定。指定するとカレントディレクトリに関係なく、そのリポジトリ上で worktree を作成する
     - 例: `a agent new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --kind development --label "..." --prompt "..."`
-- `--skip-hooks`: post-worktree-create hook をスキップする。hook 自体が壊れていて worktree 内で直す必要がある場合に使う
+- `--skip-hooks`: post-worktree-create hook をスキップする。hook は worktree の trust 登録も担う。skip すると、main repo root を trust していない Codex の委任先が trust ダイアログで止まり、`a agent new` は Codex app-server の `thread/started` 待ちのタイムアウト (`os error 35`) で失敗する。使わないこと
 
-#### post-worktree-create hook 失敗時のリトライ
+#### post-worktree-create hook の失敗
 
-`a agent new` が `Error: hook '...post-worktree-create' exited with status 1` で失敗した場合、worktree とブランチは自動でロールバックされる (新規作成ブランチは削除、既存ブランチを `--force` で上書きしたケースは元の tip に復元)。hook 内のツール (例: チェックアウトしたブランチの設定ファイルがパースエラーで処理できない) が失敗原因で、委任タスク自体とは無関係なことが多い。
+hook 内の bootstrap (依存インストール) の失敗は警告だけで続行する。`a agent new` の出力に `warning: .../scripts/bootstrap failed` が出たら、プロンプトに「依存のインストールが失敗している」と原因を添えて委任先に直させる。
 
-リトライは同じコマンドに `--skip-hooks` を付けて再実行するだけでよい。委任先で conflict 解決などにより設定ファイルが正常化すれば、hook が参照するツールも再び使えるようになる。プロンプトにはこの背景 (`--skip-hooks` で作成したこと、設定ファイルが一時的に壊れている理由) を一言添えておくとよい。
+それでも `a agent new` が `Error: hook '...post-worktree-create' exited with status 1` で失敗した場合、worktree とブランチは自動でロールバックされる (新規作成ブランチは削除、既存ブランチを `--force` で上書きしたケースは元の tip に復元)。これは hook 自体の不具合なので、`--skip-hooks` で回避せずユーザーに報告する。
 
 worktree 削除自体が失敗した警告が出た場合のみ手動復旧が必要で、`a agent close <name>` で残骸を削除してからリトライする。
 
@@ -274,7 +274,7 @@ goal: | # 必須: 完了状態の定義
     `report export --share` で共有 URL が標準出力に出る。
 
 additionalContext: | # 任意: 上記に当てはまらない文脈の catch-all
-    hook が壊れているので --skip-hooks で worktree を作った。
+    worktree 作成時の bootstrap が lockfile のずれで失敗したので、依存はまだインストールされていない。
 ```
 
 ### 書き方のルール
