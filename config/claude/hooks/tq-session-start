@@ -1,0 +1,29 @@
+#!/bin/bash
+# Usage: tq-session-start [--provider codex]
+#
+# Both steps share one script because `tq link` fails until `tq hook
+# SessionStart` has registered the session, and hooks registered as separate
+# entries run in parallel.
+set -uo pipefail
+
+input=$(cat)
+
+# config/bin/tq exits non-zero when the 1Password vault is locked or the
+# network is down; a SessionStart hook must not surface that on every session.
+tq hook SessionStart "$@" <<< "$input" || exit 0
+
+cwd=$(jq -r '.cwd' <<< "$input")
+session_id=$(jq -r '.session_id' <<< "$input")
+
+# Written by config/armyknife/hooks/post-worktree-create from the delegator's
+# DELEGATE_TQ_TASK_ID.
+branch=$(git -C "$cwd" branch --show-current) || exit 0
+task_id=$(git -C "$cwd" config --get "branch.$branch.x-tq-task-id") || exit 0
+
+# `tq link` picks the session from these env vars, which in a hook still hold
+# whatever the launching shell exported (e.g. the delegator's session).
+if [[ " $* " == *' --provider codex '* ]]; then
+  CODEX_SESSION_ID=$session_id tq --author tq-session-start link "$task_id" > /dev/null || true
+else
+  CODEX_SESSION_ID='' TQ_SESSION_ID=$session_id tq --author tq-session-start link "$task_id" > /dev/null || true
+fi

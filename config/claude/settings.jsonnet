@@ -199,12 +199,7 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
       {
         hooks: [
           { type: 'command', command: 'a agent hook session-start' },
-          // config/bin/tq fetches a Cloudflare Access token via 1Password
-          // before ever reaching the CLI's own never-fail guarantee
-          // (cli/src/commands/hook.ts), so a locked vault or offline network
-          // makes the wrapper itself exit non-zero under `set -e`. `|| true`
-          // keeps that failure from surfacing on every session.
-          { type: 'command', command: 'tq hook SessionStart || true' },
+          { type: 'command', command: '~/.claude/hooks/tq-session-start' },
           { type: 'command', command: 'gen-claude-template context' },
         ],
       },
@@ -259,7 +254,11 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
       {
         hooks: [
           { type: 'command', command: 'a agent hook stop' },
-          // See the `|| true` note on the SessionStart entry above.
+          // config/bin/tq fetches a Cloudflare Access token via 1Password
+          // before ever reaching the CLI's own never-fail guarantee
+          // (cli/src/commands/hook.ts), so a locked vault or offline network
+          // makes the wrapper itself exit non-zero under `set -e`. `|| true`
+          // keeps that failure from surfacing on every session.
           { type: 'command', command: 'tq hook Stop || true' },
         ],
       },
@@ -268,7 +267,7 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
       {
         hooks: [
           { type: 'command', command: 'a agent hook session-end' },
-          // See the `|| true` note on the SessionStart entry above.
+          // See the `|| true` note on the Stop entry above.
           { type: 'command', command: 'tq hook SessionEnd || true' },
         ],
       },

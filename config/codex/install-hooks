@@ -37,7 +37,7 @@ entries=$'PreToolUse\t^apply_patch$\t~/.claude/hooks/default-branch-edit-guard
 PreToolUse\t^apply_patch$\t~/.claude/hooks/ponytail-comment-guard
 PreToolUse\t^spawn_agent$\t~/.claude/hooks/agent-guard
 SessionStart\t.*\tgen-claude-template context
-SessionStart\t.*\ttq hook SessionStart --provider codex || true
+SessionStart\t.*\t~/.claude/hooks/tq-session-start --provider codex
 Stop\t.*\ttq hook Stop --provider codex || true
 SessionEnd\t.*\ttq hook SessionEnd --provider codex || true
 SessionStart\t.*\ta agent hook session-start --engine codex
@@ -52,11 +52,22 @@ SessionEnd\t.*\ta agent hook session-end --engine codex\t3'
 # registered (duplicate SessionStart output).
 legacy_commands=$'gen-claude-template context repo-language-rules'
 
+# tab-separated: old command, new command. Rewritten in place instead of
+# removed via legacy_commands, which would shift every later hook's position
+# and force its re-approval.
+replaced_commands=$'tq hook SessionStart --provider codex || true\t~/.claude/hooks/tq-session-start --provider codex'
+
 while IFS= read -r command; do
   content=$(jq --arg command "$command" '
     if .hooks then .hooks |= map_values(map(select(all(.hooks[]?; .command != $command)))) else . end
   ' <<< "$content")
 done <<< "$legacy_commands"
+
+while IFS=$'\t' read -r old new; do
+  content=$(jq --arg old "$old" --arg new "$new" '
+    if .hooks then .hooks |= map_values(map(.hooks |= map(if .command == $old then .command = $new else . end))) else . end
+  ' <<< "$content")
+done <<< "$replaced_commands"
 
 while IFS=$'\t' read -r event matcher command timeout; do
   content=$(jq --arg event "$event" --arg matcher "$matcher" --arg command "$command" --arg timeout "$timeout" '
