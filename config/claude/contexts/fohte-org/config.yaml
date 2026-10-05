@@ -6,7 +6,8 @@ variables:
   # (Japanese is 3 bytes/char), cutting at a line boundary to keep UTF-8 intact.
   repo_note: |
     repo_name=$(git remote get-url origin | sed 's#.*/##; s#\.git$##') &&
-    out=$(obsidian vault=obsidian-v2 read file="$repo_name" 2>/dev/null) && [[ "$out" != Error:* ]] && printf '%s\n' "$out" | sed '/^---$/,/^---$/d' | LC_ALL=C awk -v max=6000 -v name="$repo_name" '
+    # The obsidian CLI has no timeout and occasionally hangs waiting for Obsidian.app.
+    out=$(timeout 5 obsidian vault=obsidian-v2 read file="$repo_name" 2>/dev/null) && [[ "$out" != Error:* ]] && printf '%s\n' "$out" | sed '/^---$/,/^---$/d' | LC_ALL=C awk -v max=6000 -v name="$repo_name" '
       { n += length($0) + 1 }
       n > max { print "[Truncated. Read the full note with /wiki-local: notes/inbox/" name ".md]"; exit }
       { print }
