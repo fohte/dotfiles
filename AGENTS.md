@@ -91,7 +91,7 @@ config/
 │
 ├── agents/                  # Claude Code / Codex 共通のグローバル指示 (AGENTS.md)
 │
-├── bin/                     # カスタムスクリプト (PATH が通っている)
+├── bin/                     # 人間がコマンドとして実行するスクリプト (PATH が通っている)。hook や postinstall からしか呼ばないものは呼び出し元の config/<tool>/ に置く
 │
 ├── claude/                  # Claude Code 設定 (~/.claude/ に symlink)
 │   ├── rules/               # Claude Code 固有のグローバル指示 (~/.claude/rules/)
