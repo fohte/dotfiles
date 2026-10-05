@@ -78,12 +78,12 @@ dir=$(mktemp -d -t handoff.XXXXXX)
 - **成立する** → `-R "$(git root -r)"` を付ける。セカンドオピニオンや別トピックの再調査のように、ブランチに依存しない場合はこちら。`git root -r` は worktree 内でも本体リポジトリの root を返すため、worktree や深いサブディレクトリで起動していた影響を受けない
 
 ```bash
-a agent new --kind <workflow-skill> --prompt "$(cat "$dir/handoff.md")" --label "<タスクの短い要約>"
+a agent new --engine claude --model opus --kind <workflow-skill> --prompt "$(cat "$dir/handoff.md")" --label "<タスクの短い要約>"
 # ブランチに依存しない場合
-a agent new -R "$(git root -r)" --kind <workflow-skill> --prompt "$(cat "$dir/handoff.md")" --label "..."
-# モデルを切り替える場合
-a agent new --kind <workflow-skill> --prompt "$(cat "$dir/handoff.md")" --label "..." --model <model-id>
+a agent new -R "$(git root -r)" --engine claude --model opus --kind <workflow-skill> --prompt "$(cat "$dir/handoff.md")" --label "..."
 ```
+
+`--engine claude --model opus` は常に付ける。`agent.default_engine` は delegate 向けにマシンごとに codex になっていることがあり、省略すると引き継ぎ先が Codex で起動する。ユーザーが別のモデルやエンジンを指定した場合だけ、その値に置き換える。
 
 workflow skill が該当しない場合は、例から `--kind <workflow-skill>` を外す。
 
