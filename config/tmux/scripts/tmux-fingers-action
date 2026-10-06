@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+# tmux-fingers-action - tmux-fingers main action for the match given on stdin
+#
+# - session UUID: jump to the pane of that agent session
+# - digits (from a bare "#123"): jump to the pane of an agent session linked to tq task 123
+# - anything else (URL): open it
+#
+# With several candidate panes, pick one with fzf in a popup.
+
+set -euo pipefail
+
+# tmux-fingers only appends this script's stderr to its own log file, so
+# failures must be shown in tmux to be noticed.
+fail() {
+  tmux display-message "tmux-fingers-action: $1"
+  exit 1
+}
+
+match="$(cat)"
+
+if [[ "$match" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
+  session_ids="$(jq -nc --arg id "$match" '[$id]')"
+elif [[ "$match" =~ ^[0-9]+$ ]]; then
+  tq_sessions="$(tq session list)" || fail "tq session list failed"
+  session_ids="$(jq -c --argjson n "$match" '[.[] | select(any(.tasks[]?; .number == $n)) | .sessionId]' <<< "$tq_sessions")"
+else
+  open "$match"
+  exit 0
+fi
+
+peers="$(a agent peer list)" || fail "a agent peer list failed"
+candidates="$(jq -r --argjson ids "$session_ids" '
+  .[] | select(.session_id as $s | $ids | index($s)) | select(.pane_id != null)
+  | [.pane_id, .status, (.name // "-"), (.label // "-")] | @tsv' <<< "$peers")"
+
+if [[ -z "$candidates" ]]; then
+  tmux display-message "tmux-fingers-action: no agent pane for $match"
+  exit 0
+fi
+
+if [[ "$(wc -l <<< "$candidates")" -eq 1 ]]; then
+  tmux switch-client -t "$(cut -f1 <<< "$candidates")"
+  exit 0
+fi
+
+list="$(mktemp /tmp/tmux-fingers-action.XXXXXX)"
+printf '%s\n' "$candidates" > "$list"
+tmux display-popup -E -w80% -h50% \
+  "fzf --delimiter='\t' --with-nth=2.. < '$list' | cut -f1 | xargs -r tmux switch-client -t; rm -f '$list'"
