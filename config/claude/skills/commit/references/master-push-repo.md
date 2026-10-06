@@ -14,7 +14,7 @@
 3. `git log --oneline -5` で最近のコミットスタイルを確認
 4. 変更を `git add` でステージング (**この時点ではまだコミットしない**)
 5. **`self-review` skill でレビュー (条件付き必須、1 回のみ)**: `git diff --cached` を対象に実行する。省略可能な条件と、🔴 Critical / 🟡 Warning への対応方針は下記「コミット前レビュー」を参照
-6. **`crit-approval-review` skill でユーザーにレビューしてもらう (条件付き必須)**: 承認されたら loop 中の修正を `git add` する。push すると履歴から取り消せないため、PR の代わりにここで人間のレビューを通す。省略可能な条件は下記「コミット前レビュー」の crit approval 節を参照
+6. **`crit-approval-review` skill でユーザーにレビューしてもらう (必須)**: 承認されたら loop 中の修正を `git add` する。push すると履歴から取り消せないため、PR の代わりにここで人間のレビューを通す
 7. 全ての対応が完了したら、実装内容と対応の両方を含めた 1 コミットを作成 (HEREDOC を使用してフォーマットを保持):
 
 ```bash
@@ -57,8 +57,6 @@ git diff --cached
 
 「小さいから」「単純だから」「明らかに問題ないから」「効率を優先したい」「変更が局所的だから」を理由とした自己判断のスキップは禁止。条件に少しでも当てはまらないなら実行する。判断に迷うなら実行する。
 
-`crit-approval-review` を省略可能なのは、変更ファイルが 1 つ以下で追加・削除合わせて 5 行以下の場合のみ。hook はファイル数と行数だけで判定し、変更内容は判定しない。ユーザーが明示的に skip を指示した場合も省略できる。
-
 - 🔴 Critical: 該当コードを修正し `git add` する
 - 🟡 Warning: `SKILL.md` の「🟡 Warning の判断ルール」に従い Claude が自分で判断して対応し、対応内容があれば `git add` する
 
@@ -77,7 +75,7 @@ git diff --cached
 
 **新規に実装をコミットする場合はこのセクションではなく上記「コミット前レビュー」を使う。**
 このセクションは、既に作成済みの未 push コミットをそのまま push する場合 (例: `create-pr` skill からの呼び出し、前セッションからの持ち越し) に使う。
-既存コミットは作成時の手順 6 で承認を経ているため、そのコミット自体には `crit-approval-review` を再実行しない。self-review の指摘対応で新しいコミットを作る場合、default branch 上では staged diff に対して `crit-approval-review` を実行してからコミットする。ただし「コミット前レビュー」の crit approval 節にある省略条件を満たす場合は除く。
+既存コミットは作成時の手順 6 で承認を経ているため、そのコミット自体には `crit-approval-review` を再実行しない。self-review の指摘対応で新しいコミットを作る場合、default branch 上では staged diff に対して `crit-approval-review` を実行してからコミットする。
 
 `git push` の前に、その push に含まれる全コミットをまとめて `self-review` skill でレビューする。
 skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、12 観点の統合レポートを返す。

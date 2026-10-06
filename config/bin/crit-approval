@@ -53,15 +53,6 @@ check_approval() {
   fi
   [[ -n "$default_branch" && "$branch" == "$default_branch" ]] || return 0
 
-  if git -C "$repo_root" diff --cached --numstat |
-    awk -F '\t' '
-      $1 == "-" || $2 == "-" { too_large = 1; next }
-      { files++; lines += $1 + $2 }
-      END { exit !(files <= 1 && lines <= 5 && !too_large) }
-    '; then
-    return 0
-  fi
-
   current_head="$(git -C "$repo_root" rev-parse --verify HEAD)"
   path="$(approval_path "$repo_root")"
   approved_head="$(cat "$path" 2> /dev/null || true)"
