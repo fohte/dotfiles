@@ -67,6 +67,7 @@ repo_root=$(git rev-parse --show-toplevel)
 schema_file="$skill_dir/review-output-schema.json"
 usage_file="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-usage.json"
 auth_file="$HOME/.codex/auth.json"
+shared_codex_home="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-home"
 
 work_dir=$(mktemp -d -t self-review-external.XXXXXX)
 # Exit 1 is reserved for "findings exist"; a `set -e` abort (cp, mkdir, sed, ...)
@@ -231,31 +232,28 @@ record_codex_usage() {
 }
 
 initialize_codex_home() {
-  local codex_home="$1" reset="${2:-false}"
-  if [[ "$reset" == true && -d "$codex_home" ]]; then
-    rm -r "$codex_home"
-  fi
-  mkdir -p "$codex_home"
+  mkdir -p "$shared_codex_home"
 
   # Isolate user instructions and skills while preserving the credentials Codex needs.
-  if [[ -f "$auth_file" && ! -e "$codex_home/auth.json" ]]; then
-    ln -s "$auth_file" "$codex_home/auth.json"
+  if [[ -f "$auth_file" && ! -e "$shared_codex_home/auth.json" && ! -L "$shared_codex_home/auth.json" ]]; then
+    if ! ln -s "$auth_file" "$shared_codex_home/auth.json" 2> /dev/null &&
+      [[ ! -e "$shared_codex_home/auth.json" && ! -L "$shared_codex_home/auth.json" ]]; then
+      echo "Error: unable to link Codex credentials into $shared_codex_home/auth.json." >&2
+      return 1
+    fi
   fi
 }
 
 run_codex() {
   local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}"
-  local resume_session_id="${4:-}" persist_session="${5:-false}" codex_home
+  local resume_session_id="${4:-}" persist_session="${5:-false}"
   local config_args=(--config 'cli_auth_credentials_store="file"')
   local codex_args=(exec)
 
   if [[ "$persist_session" == true ]]; then
-    codex_home="$reviewer_dir/codex-session/home"
     config_args+=(--config 'sandbox_mode="read-only"')
-  else
-    codex_home="$reviewer_dir/codex-home"
   fi
-  initialize_codex_home "$codex_home"
+  initialize_codex_home
   [[ -n "$reasoning_effort" ]] && config_args+=(--config "model_reasoning_effort=\"$reasoning_effort\"")
 
   if [[ -n "$resume_session_id" ]]; then
@@ -265,7 +263,7 @@ run_codex() {
     codex_args+=(--sandbox read-only --color never)
   fi
 
-  HOME="$codex_home" CODEX_HOME="$codex_home" codex "${codex_args[@]}" \
+  HOME="$shared_codex_home" CODEX_HOME="$shared_codex_home" codex "${codex_args[@]}" \
     --ignore-user-config \
     "${model_args[@]+"${model_args[@]}"}" \
     "${config_args[@]}" \
@@ -417,6 +415,14 @@ run_claude() {
 # shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
 source "$script_dir/review-sessions"
 configure_review_sessions "$manifest_file"
+
+for reviewer in "${selected[@]}"; do
+  reviewer_agent=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .agent' "$manifest_file")
+  if [[ "$reviewer_agent" == codex ]]; then
+    "$script_dir/prune-expired-codex-rollouts" "$shared_codex_home"
+    break
+  fi
+done
 
 codex_used=false
 pids=()

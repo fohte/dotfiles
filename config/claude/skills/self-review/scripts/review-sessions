@@ -21,17 +21,13 @@ configure_review_sessions() {
 }
 
 review_session_id() {
-  local reviewer="$1" reviewer_agent="$2" saved_agent saved_session_id session_dir
+  local reviewer="$1" reviewer_agent="$2" saved_agent saved_session_id
   [[ "$session_resume_enabled" == true ]] || return 0
 
   saved_agent=$(jq -r --arg reviewer "$reviewer" '.[$reviewer].agent // empty' <<< "$previous_sessions")
   saved_session_id=$(jq -r --arg reviewer "$reviewer" '.[$reviewer].session_id // empty' <<< "$previous_sessions")
   [[ "$saved_agent" == "$reviewer_agent" && -n "$saved_session_id" ]] || return 0
 
-  if [[ "$reviewer_agent" == codex ]]; then
-    session_dir=$("$script_dir/review-state" codex-dir "$review_branch" "$reviewer")
-    [[ -d "$session_dir/home" ]] || return 0
-  fi
   printf '%s' "$saved_session_id"
 }
 
@@ -46,22 +42,13 @@ clear_reviewer_outputs() {
 
 run_codex_session() {
   local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}" resume_session_id="${4:-}"
-  local codex_home="$reviewer_dir/codex-session/home" session_dir
 
   if [[ -n "$resume_session_id" ]]; then
-    session_dir=$("$script_dir/review-state" codex-dir "$review_branch" "$reviewer")
-    if [[ -d "$session_dir/home" ]]; then
-      mkdir -p "$codex_home"
-      if cp -R "$session_dir/home/." "$codex_home/" &&
-        run_codex "$reviewer" "$reviewer_dir" "$reasoning_effort" "$resume_session_id" true; then
-        return 0
-      fi
+    if run_codex "$reviewer" "$reviewer_dir" "$reasoning_effort" "$resume_session_id" true; then
+      return 0
     fi
     echo "Warning: Codex could not resume $reviewer; starting a fresh session." >&2
     clear_reviewer_outputs "$reviewer_dir"
-    initialize_codex_home "$codex_home" true
-  else
-    initialize_codex_home "$codex_home" true
   fi
 
   run_codex "$reviewer" "$reviewer_dir" "$reasoning_effort" "" true
@@ -128,5 +115,5 @@ save_review_sessions() {
 
   session_expires_at=$("$script_dir/review-state" session-expiry)
   "$script_dir/review-state" write \
-    "$review_branch" "$review_head" "$sessions_json" "$session_expires_at" "$work_dir"
+    "$review_branch" "$review_head" "$sessions_json" "$session_expires_at"
 }

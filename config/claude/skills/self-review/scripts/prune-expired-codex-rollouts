@@ -1,0 +1,19 @@
+#!/bin/bash
+set -euo pipefail
+
+[[ "$#" -eq 1 ]] || {
+  echo "Usage: prune-expired-codex-rollouts <codex-home>" >&2
+  exit 2
+}
+
+sessions_dir="$1/sessions"
+[[ -d "$sessions_dir" ]] || exit 0
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+expires_at=$("$script_dir/review-state" session-expiry)
+now=$(date +%s)
+max_age_minutes=$(((expires_at - now + 59) / 60))
+
+# Parallel reviews may try to remove the same expired rollout.
+find "$sessions_dir" -type f -name 'rollout-*.jsonl' -mmin "+$max_age_minutes" -delete 2> /dev/null || true
+find "$sessions_dir" -depth -type d -empty -delete 2> /dev/null || true
