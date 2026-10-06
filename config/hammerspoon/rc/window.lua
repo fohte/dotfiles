@@ -6,6 +6,11 @@ hs.window.animationDuration = 0
 -- window sizes for maximize/restore functionality
 local windowSizes = {}
 local sideWindowTitle = 'tq (Side Window)'
+local edgeTolerance = 10
+
+local function touchedEdges(f, bounds)
+  return math.abs(f.x - bounds.x) <= edgeTolerance, math.abs(f.x + f.w - (bounds.x + bounds.w)) <= edgeTolerance
+end
 
 local function usableFrame(screen, win)
   local frame = screen:frame()
@@ -20,17 +25,16 @@ local function usableFrame(screen, win)
   end
 
   local screenID = screen:id()
-  local rightEdge = frame.x + frame.w
   local leftInset = 0
   local rightInset = 0
-  local tolerance = 10
 
   for _, candidate in ipairs(tqApplication:visibleWindows()) do
     if candidate:title() == sideWindowTitle and candidate:screen():id() == screenID then
       local candidateFrame = candidate:frame()
-      if math.abs(candidateFrame.x - frame.x) <= tolerance then
+      local touchesLeft, touchesRight = touchedEdges(candidateFrame, frame)
+      if touchesLeft then
         leftInset = candidateFrame.w
-      elseif math.abs(candidateFrame.x + candidateFrame.w - rightEdge) <= tolerance then
+      elseif touchesRight then
         rightInset = candidateFrame.w
       end
     end
@@ -39,7 +43,28 @@ local function usableFrame(screen, win)
   return hs.geometry.rect(frame.x + leftInset, frame.y, frame.w - leftInset - rightInset, frame.h)
 end
 
+-- Caps the side window at its current width so that half/third layouts move
+-- it to the target edge instead of stretching the sidebar.
+local function sideWindowFrame(win, bounds, targetFrame)
+  local currentFrame = win:frame()
+  local w = math.min(targetFrame.w, currentFrame.w)
+  local touchesLeft, touchesRight = touchedEdges(targetFrame, bounds)
+
+  local x = targetFrame.x
+  if touchesLeft and touchesRight then
+    x = currentFrame.x
+  elseif touchesRight then
+    x = bounds.x + bounds.w - w
+  end
+
+  return hs.geometry.rect(x, targetFrame.y, w, targetFrame.h)
+end
+
 local function setFrameWithinBounds(win, bounds, targetFrame)
+  if win:title() == sideWindowTitle then
+    targetFrame = sideWindowFrame(win, bounds, targetFrame)
+  end
+
   win:setFrame(targetFrame)
 
   local actualFrame = win:frame()
