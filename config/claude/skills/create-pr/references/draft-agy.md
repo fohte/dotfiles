@@ -2,11 +2,11 @@
 
 SKILL.md の Step 1 と Step 4 の中身。この flow に Step 2 はない。
 
-本文を書き換えるのは agy だけ。Claude が draft ファイルを直接編集したり、コメントを書き込んだりはしない。agy への入力は diff・コミット・ユーザーの review 結果だけで、Claude から指示は渡せない。Claude の解釈が混ざると、ユーザーが求めていない内容が本文に入るため。
+本文を書き換えるのは agy だけ。Claude が draft ファイルを直接編集したり、コメントを書き込んだりはしない。agy への入力は diff・コミット・書き方ルール・ユーザーの review 結果で、現在のブランチに open な Pull Request があれば既存 body も含む。Claude の解釈が混ざると、ユーザーが求めていない内容が本文に入るため。
 
 ## 1. ドラフトを作成する
 
-以下のスクリプトが diff・コミットメッセージ・書き方ルールをまとめて agy (Antigravity CLI) に渡し、ルールを満たした本文を 1 回の呼び出しで書かせて `a ai pr-draft new` に投入する。agy 側の書き方ルールの照合はこの呼び出しの中で完結する。
+以下のスクリプトが diff・コミットメッセージ・書き方ルールをまとめて agy (Antigravity CLI) に渡し、ルールを満たした本文を 1 回の呼び出しで書かせて `a ai pr-draft new` に投入する。現在のブランチに open な Pull Request がある場合は、その body も渡して見出し構造と自動生成された案内文・引用を維持し、各節の本文を現在の diff とコミットに合わせて更新する。agy 側の書き方ルールの照合はこの呼び出しの中で完結する。
 
 ```bash
 ~/.agents/skills/create-pr/scripts/agy-write-draft
