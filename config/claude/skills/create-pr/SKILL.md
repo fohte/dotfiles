@@ -21,11 +21,10 @@ Derived value:
 
 Flow: find the first row that matches and follow its action. Read the reference before starting Step 1.
 
-| Condition              | Action                                                                                                                 |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `repo.name` is `specs` | Read `references/specs.md`. It replaces Step 1. Steps 2-5 do not exist for this repo; continue at Step 6 after Step 1. |
-| `role` is `private`    | Read `references/draft-agy.md`. It covers Steps 1 and 4. Step 2 does not exist.                                        |
-| (otherwise)            | Read `references/draft-manual.md`. It covers Steps 1, 2 and 4.                                                         |
+| Condition           | Action                                                                          |
+| ------------------- | ------------------------------------------------------------------------------- |
+| `role` is `private` | Read `references/draft-agy.md`. It covers Steps 1 and 4. Step 2 does not exist. |
+| (otherwise)         | Read `references/draft-manual.md`. It covers Steps 1, 2 and 4.                  |
 
 The rows below are independent of the flow above and of each other. Apply every row whose condition holds.
 
@@ -72,7 +71,7 @@ Conditions の表で選んだ reference の Step 1 に従う。
 
 ## 2. セルフレビュー (必須・スキップ禁止)
 
-`references/draft-manual.md` を選んだ場合のみの Step。`references/draft-agy.md` (agy の中で完結する) と `references/specs.md` にはこの Step はない。
+`references/draft-manual.md` を選んだ場合のみの Step。`references/draft-agy.md` (agy の中で完結する) にはこの Step はない。
 
 `references/draft-manual.md` の Step 2 に従う。
 

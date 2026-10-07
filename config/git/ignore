@@ -87,8 +87,4 @@ context_portal/
 # marksman (auto-created in worktrees for project root detection)
 .marksman.toml
 
-# cc-sdd
-**/.kiro/
-**/.kiro
-
 runok.local.yml

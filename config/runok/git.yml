@@ -739,7 +739,6 @@ rules:
       - deny: 'gh api --method PATCH repos/fohte/tq/pulls/comments/123 -f body=x'
       - allow: 'gh api -X GET repos/fohte/tq/issues/481/comments'
   - deny: 'gh [-R *] pr edit * --body|-b|--body-file|-F *'
-    when: '!env.PWD.startsWith(env.HOME + "/ghq/github.com/fohte/specs")'
     message: 'Use /create-pr skill to edit PR body.'
     tests:
       - deny: 'gh pr edit 285 --body "foo"'
@@ -749,7 +748,6 @@ rules:
       - pass: 'gh pr edit 285 --title "foo"'
       - pass: 'gh -R fohte/runok pr edit 285 --title "foo"'
   - deny: 'gh [-R *] pr create *'
-    when: '!env.PWD.startsWith(env.HOME + "/ghq/github.com/fohte/specs")'
     message: 'Use /create-pr skill to create PRs.'
     tests:
       - deny: 'gh pr create --title "foo" --body "bar"'
