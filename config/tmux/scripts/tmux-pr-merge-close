@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CHECKS_TIMEOUT_SECONDS=300
+WAIT_TIMEOUT_SECONDS=300
 
 pr_number=""
 pr_title=""
@@ -203,9 +203,24 @@ ensure_pr_is_safe() {
   fail "$reason"
 }
 
+ensure_pr_is_open_and_safe() {
+  local current="$1" expected_head="$2" session_id="$3" phase="$4"
+  local state
+
+  state="$(json_field "$current" '.state')"
+  if [ "$state" = 'MERGED' ]; then
+    close_merged_session "$session_id"
+    return 1
+  fi
+  if [ "$state" != 'OPEN' ]; then
+    fail "The PR was closed before it could be merged (state: $state)."
+  fi
+  ensure_pr_is_safe "$current" "$expected_head" "$phase"
+}
+
 prepare() {
   local pane_id="$1" session_id="$2" client_tty="$3" window_id="$4" mode="${5:-}"
-  local dry_run=false pane_path repo_root pr_json vrt_enabled payload prompt command escaped_title script_path resolution_status
+  local dry_run=false pane_path repo_root pr_json pr_repo vrt_enabled payload prompt command escaped_title script_path resolution_status
   active_client_tty="$client_tty"
   if [ "$mode" = '--dry-run' ]; then
     dry_run=true
@@ -257,6 +272,7 @@ prepare() {
   pr_title="$(sanitize_text "$(json_field "$pr_json" '.title')")"
   local pr_url state head_sha merge_state
   pr_url="$(json_field "$pr_json" '.url')"
+  pr_repo="$(json_field "$pr_json" '.url | sub("^https?://[^/]+/"; "") | split("/") | .[0:2] | join("/")')"
   state="$(json_field "$pr_json" '.state')"
   head_sha="$(json_field "$pr_json" '.headRefOid')"
   merge_state="$(json_field "$pr_json" '.mergeStateStatus')"
@@ -282,12 +298,13 @@ prepare() {
     --arg pr_number "$pr_number" \
     --arg pr_title "$pr_title" \
     --arg pr_url "$pr_url" \
+    --arg pr_repo "$pr_repo" \
     --arg head_sha "$head_sha" \
     --arg vrt_enabled "$vrt_enabled" \
     --arg dry_run "$dry_run" \
     --arg client_tty "$client_tty" \
     --arg window_id "$window_id" \
-    '{session_id:$session_id,repo_root:$repo_root,pr_number:$pr_number,pr_title:$pr_title,pr_url:$pr_url,head_sha:$head_sha,vrt_enabled:$vrt_enabled,dry_run:$dry_run,client_tty:$client_tty,window_id:$window_id}' | base64 | tr -d '\r\n')"
+    '{session_id:$session_id,repo_root:$repo_root,pr_number:$pr_number,pr_title:$pr_title,pr_url:$pr_url,pr_repo:$pr_repo,head_sha:$head_sha,vrt_enabled:$vrt_enabled,dry_run:$dry_run,client_tty:$client_tty,window_id:$window_id}' | base64 | tr -d '\r\n')"
 
   escaped_title="${pr_title//#/##}"
   prompt="#[bg=red,fg=black,bold] Merge ##$pr_number $escaped_title? (y/n) "
@@ -311,7 +328,7 @@ wait_for_required_checks() {
 
   while kill -0 "$checks_pid" 2> /dev/null; do
     elapsed="$((SECONDS - started_at))"
-    if [ "$elapsed" -ge "$CHECKS_TIMEOUT_SECONDS" ]; then
+    if [ "$elapsed" -ge "$WAIT_TIMEOUT_SECONDS" ]; then
       kill -KILL "$checks_pid" 2> /dev/null || true
       wait "$checks_pid" 2> /dev/null || true
       checks_output="$(cat "$log_file" 2> /dev/null || true)"
@@ -336,9 +353,59 @@ wait_for_required_checks() {
   return "$exit_status"
 }
 
+read_vrt_commit_status() {
+  local repo="$1" sha="$2" statuses
+  if ! statuses="$(gh api "repos/$repo/commits/$sha/statuses?per_page=100" 2>&1)"; then
+    fail "Unable to read the VRT commit status: $(short_output "$statuses")"
+  fi
+  vrt_status="$(jq -r '[.[] | select((.context | ascii_downcase) == "vrt")] | if length == 0 then "absent" else .[0].state end' <<< "$statuses")"
+}
+
+read_vrt_check_pending() {
+  local repo="$1" sha="$2" check_runs
+  if ! check_runs="$(gh api "repos/$repo/commits/$sha/check-runs?check_name=vrt&per_page=100" 2>&1)"; then
+    fail "Unable to read the VRT check run: $(short_output "$check_runs")"
+  fi
+  vrt_check_pending="$(jq -r '[.check_runs[] | select(.name == "vrt" and .status != "completed")] | length > 0' <<< "$check_runs")"
+}
+
+wait_for_vrt_status() {
+  local repo="$1" sha="$2" phase="$3" started_at="$SECONDS" elapsed
+
+  while true; do
+    read_vrt_commit_status "$repo" "$sha"
+    case "$phase:$vrt_status" in
+      result:pending | approval:pending | approval:failure | approval:absent)
+        ;;
+      result:absent)
+        read_vrt_check_pending "$repo" "$sha"
+        [ "$vrt_check_pending" = 'true' ] || return 0
+        ;;
+      result:success | result:failure | result:error | approval:success)
+        return 0
+        ;;
+      approval:error)
+        fail 'The VRT status entered error while waiting for approval.'
+        ;;
+      *)
+        fail "Unexpected VRT commit status while waiting for $phase: $vrt_status"
+        ;;
+    esac
+
+    elapsed="$((SECONDS - started_at))"
+    if [ "$elapsed" -ge "$WAIT_TIMEOUT_SECONDS" ]; then
+      if [ "$phase" = 'approval' ]; then
+        fail "Timed out after ${WAIT_TIMEOUT_SECONDS}s waiting for the VRT status to succeed."
+      fi
+      fail "Timed out after ${WAIT_TIMEOUT_SECONDS}s waiting for the VRT result (status: $vrt_status)."
+    fi
+    sleep 5
+  done
+}
+
 run_merge() {
-  local encoded_payload="$1" payload_json repo_root session_id pr_url head_sha vrt_enabled
-  local current state output dry_run checks_status
+  local encoded_payload="$1" payload_json repo_root session_id pr_url pr_repo head_sha vrt_enabled
+  local current state output dry_run checks_status vrt_status vrt_check_pending
   local checks_output=''
 
   if ! payload_json="$(printf '%s' "$encoded_payload" | base64 -D 2> /dev/null)"; then
@@ -353,6 +420,7 @@ run_merge() {
   active_client_tty="$(json_field "$payload_json" '.client_tty')"
   active_session_id="$session_id"
   pr_url="$(json_field "$payload_json" '.pr_url')"
+  pr_repo="$(json_field "$payload_json" '.pr_repo')"
   head_sha="$(json_field "$payload_json" '.head_sha')"
   vrt_enabled="$(json_field "$payload_json" '.vrt_enabled')"
   dry_run="$(json_field "$payload_json" '.dry_run')"
@@ -376,36 +444,45 @@ run_merge() {
     fi
     ensure_pr_is_safe "$current" "$head_sha" 'after confirmation'
     if [ "$vrt_enabled" = 'true' ]; then
-      notify 'tmux PR merge dry run' "PR #$pr_number ($pr_title) is open and has no merge conflicts. Would add vrt-approved, wait for required checks, squash merge, and close the agent session. No changes were made." success
+      notify 'tmux PR merge dry run' "PR #$pr_number ($pr_title) is open and has no merge conflicts. Would wait for the VRT result, add vrt-approved only if the vrt status is failure and wait for it to succeed, then wait for required checks, squash merge, and close the agent session. No changes were made." success
     else
       notify 'tmux PR merge dry run' "PR #$pr_number ($pr_title) is open and has no merge conflicts. Would wait for required checks, squash merge, and close the agent session. No changes were made." success
     fi
     return
   fi
 
-  if [ "$state" = 'MERGED' ]; then
-    close_merged_session "$session_id"
-    return
-  fi
-  if [ "$state" != 'OPEN' ]; then
-    fail "The PR was closed before it could be merged (state: $state)."
+  if ! ensure_pr_is_open_and_safe "$current" "$head_sha" "$session_id" 'after confirmation'; then
+    return 0
   fi
 
-  ensure_pr_is_safe "$current" "$head_sha" 'after confirmation'
-
-  set_pr_merge_status 'waiting for checks'
   if [ "$vrt_enabled" = 'true' ]; then
-    if ! output="$(gh pr edit "$pr_url" --add-label vrt-approved 2>&1)"; then
-      fail "Unable to add the vrt-approved label: $(short_output "$output")"
+    set_pr_merge_status 'waiting for VRT'
+    wait_for_vrt_status "$pr_repo" "$head_sha" result
+
+    if ! current="$(read_pr "$pr_url" 2>&1)"; then
+      fail "Unable to read PR status after the VRT result: $(short_output "$current")"
+    fi
+    if ! ensure_pr_is_open_and_safe "$current" "$head_sha" "$session_id" 'after the VRT result'; then
+      return 0
+    fi
+
+    if [ "$vrt_status" = 'failure' ]; then
+      set_pr_merge_status 'approving VRT'
+      if ! output="$(gh pr edit "$pr_url" --add-label vrt-approved 2>&1)"; then
+        fail "Unable to add the vrt-approved label: $(short_output "$output")"
+      fi
+      set_pr_merge_status 'waiting for VRT approval'
+      wait_for_vrt_status "$pr_repo" "$head_sha" approval
     fi
   fi
 
+  set_pr_merge_status 'waiting for checks'
   if wait_for_required_checks; then
     :
   else
     checks_status="$?"
     if [ "$checks_status" -eq 124 ]; then
-      fail "Timed out after ${CHECKS_TIMEOUT_SECONDS}s waiting for required checks. $(short_output "$checks_output")"
+      fail "Timed out after ${WAIT_TIMEOUT_SECONDS}s waiting for required checks. $(short_output "$checks_output")"
     fi
     fail "Required checks failed: $(short_output "$checks_output")"
   fi
@@ -413,15 +490,9 @@ run_merge() {
   if ! current="$(read_pr "$pr_url" 2>&1)"; then
     fail "Unable to read PR status after required checks: $(short_output "$current")"
   fi
-  state="$(json_field "$current" '.state')"
-  if [ "$state" = 'MERGED' ]; then
-    close_merged_session "$session_id"
-    return
+  if ! ensure_pr_is_open_and_safe "$current" "$head_sha" "$session_id" 'after required checks'; then
+    return 0
   fi
-  if [ "$state" != 'OPEN' ]; then
-    fail "The PR was closed before it could be merged (state: $state)."
-  fi
-  ensure_pr_is_safe "$current" "$head_sha" 'after required checks'
 
   set_pr_merge_status 'merging'
   if ! output="$(gh pr merge "$pr_number" --squash 2>&1)"; then
