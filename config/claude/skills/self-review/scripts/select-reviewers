@@ -68,7 +68,7 @@ work_dir=$(mktemp -d -t self-review-select.XXXXXX)
 trap 'rm -rf "$work_dir"' EXIT
 
 review_diff_for_commit() {
-  local mode="$1" commit="$2" path="${3:-}" parent_count parent path_args=()
+  local mode="$1" commit="$2" path="${3:-}" parent_count parent path_args=() diff_options=(--no-ext-diff --irreversible-delete)
   if [[ -n "$path" ]]; then
     path_args=(-- "$path")
   fi
@@ -76,14 +76,14 @@ review_diff_for_commit() {
 
   case "$parent_count" in
     0)
-      git diff-tree --root --no-commit-id --no-ext-diff "$mode" "$commit" "${path_args[@]+${path_args[@]}}"
+      git diff-tree --root --no-commit-id "${diff_options[@]}" "$mode" "$commit" "${path_args[@]+${path_args[@]}}"
       ;;
     1)
       parent=$(git rev-parse "$commit^1")
-      git diff --no-ext-diff "$mode" "$parent" "$commit" "${path_args[@]+${path_args[@]}}"
+      git diff "${diff_options[@]}" "$mode" "$parent" "$commit" "${path_args[@]+${path_args[@]}}"
       ;;
     2)
-      git show --remerge-diff --format= --no-ext-diff "$mode" "$commit" "${path_args[@]+${path_args[@]}}"
+      git show --remerge-diff --format= "${diff_options[@]}" "$mode" "$commit" "${path_args[@]+${path_args[@]}}"
       ;;
     *)
       echo "Error: unsupported merge commit with $parent_count parents: $commit" >&2
@@ -94,7 +94,7 @@ review_diff_for_commit() {
 
 flush_review_segment() {
   [[ -n "$segment_start" ]] || return 0
-  git diff --no-ext-diff "$segment_start" "$segment_end" >> "$diff_file"
+  git diff --no-ext-diff --irreversible-delete "$segment_start" "$segment_end" >> "$diff_file"
   git diff --no-ext-diff --name-only "$segment_start" "$segment_end" >> "$files_file"
   printf 'range %s %s\n' "$segment_start" "$segment_end" >> "$review_units_file"
   segment_start=

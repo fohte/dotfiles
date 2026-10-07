@@ -103,7 +103,7 @@ if [[ "$resolved_range" == --cached ]]; then
   source_index=${GIT_INDEX_FILE:-$(git rev-parse --git-path index)}
   cp "$source_index" "$work_dir/index"
   export GIT_INDEX_FILE="$work_dir/index"
-  git diff --no-ext-diff "${diff_args[@]}" > "$diff_file"
+  git diff --no-ext-diff --irreversible-delete "${diff_args[@]}" > "$diff_file"
   git diff --name-only --no-ext-diff "${diff_args[@]}" > "$files_file"
 else
   jq -er '.diff' "$manifest_file" > "$diff_file"
