@@ -5,7 +5,7 @@ usage() {
   cat << 'EOF'
 Usage: link-tq-task --author <model-name>
 
-Link the current pull request to the task configured for this branch or session.
+Link the current pull request to the checklist item or task configured for this branch or session.
 Set tq_task_id to select a task when the session has multiple leaf tasks.
 EOF
 }
@@ -45,47 +45,56 @@ if [[ -z "$branch" ]]; then
   exit 1
 fi
 
-task_id=$(git config --get "branch.$branch.x-tq-task-id" || true)
-if [[ -z "$task_id" ]]; then
-  task_id=${tq_task_id:-}
-fi
-
-if [[ -z "$task_id" && -n "${TQ_SESSION_ID:-}" ]]; then
-  if ! session_json=$(tq --author "$author" session list --session-id "$TQ_SESSION_ID"); then
-    echo "Error: tq session list failed" >&2
-    exit 1
+checklist_item_id=$(git config --get "branch.$branch.x-tq-checklist-item-id" || true)
+if [[ -z "$checklist_item_id" ]]; then
+  task_id=$(git config --get "branch.$branch.x-tq-task-id" || true)
+  if [[ -z "$task_id" ]]; then
+    task_id=${tq_task_id:-}
   fi
 
-  leaves=$(jq -c '
-    (.[0].tasks // []) as $tasks
-    | [$tasks[] | select(.id as $id | any($tasks[]; .parentId == $id) | not)]
-  ' <<< "$session_json")
+  if [[ -z "$task_id" && -n "${TQ_SESSION_ID:-}" ]]; then
+    if ! session_json=$(tq --author "$author" session list --session-id "$TQ_SESSION_ID"); then
+      echo "Error: tq session list failed" >&2
+      exit 1
+    fi
 
-  case "$(jq 'length' <<< "$leaves")" in
-    0)
-      echo "No tq task is linked to this session; skipping PR linking." >&2
-      exit 0
-      ;;
-    1)
-      task_id=$(jq -r '.[0].id' <<< "$leaves")
-      ;;
-    *)
-      candidates=$(jq -r '[.[] | "\(.id) #\(.number) \(.title)"] | join("\n")' <<< "$leaves")
-      printf 'Multiple leaf tasks are linked to this session. Choose one and rerun with tq_task_id set:\n%s\n' "$candidates" >&2
-      exit 2
-      ;;
-  esac
-fi
+    leaves=$(jq -c '
+      (.[0].tasks // []) as $tasks
+      | [$tasks[] | select(.id as $id | any($tasks[]; .parentId == $id) | not)]
+    ' <<< "$session_json")
 
-if [[ -z "$task_id" ]]; then
-  echo "No tq task ID is configured for this branch or session; skipping PR linking." >&2
-  exit 0
+    case "$(jq 'length' <<< "$leaves")" in
+      0)
+        echo "No tq task is linked to this session; skipping PR linking." >&2
+        exit 0
+        ;;
+      1)
+        task_id=$(jq -r '.[0].id' <<< "$leaves")
+        ;;
+      *)
+        candidates=$(jq -r '[.[] | "\(.id) #\(.number) \(.title)"] | join("\n")' <<< "$leaves")
+        printf 'Multiple leaf tasks are linked to this session. Choose one and rerun with tq_task_id set:\n%s\n' "$candidates" >&2
+        exit 2
+        ;;
+    esac
+  fi
+
+  if [[ -z "$task_id" ]]; then
+    echo "No tq task ID is configured for this branch or session; skipping PR linking." >&2
+    exit 0
+  fi
 fi
 
 pr_url=$(gh pr view --json url -q .url)
-if link_output=$(tq --author "$author" github link "$task_id" "$pr_url" 2>&1); then
+if [[ -n "$checklist_item_id" ]]; then
+  link_args=(checklist item update "$checklist_item_id" --github "$pr_url")
+else
+  link_args=(github link "$task_id" "$pr_url")
+fi
+
+if link_output=$(tq --author "$author" "${link_args[@]}" 2>&1); then
   [[ -z "$link_output" ]] || printf '%s\n' "$link_output"
-elif [[ "$link_output" == *"already linked"* ]]; then
+elif [[ -z "$checklist_item_id" && "$link_output" == *"already linked"* ]]; then
   printf 'PR is already linked to a tq task; leaving the existing link unchanged.\n' >&2
 else
   printf '%s\n' "$link_output" >&2

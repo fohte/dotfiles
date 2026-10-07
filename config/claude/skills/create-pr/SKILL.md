@@ -104,10 +104,10 @@ a ai pr-draft submit [--base main]
 
 ## 6. tq タスクへのリンク登録
 
-委任元が `branch.<name>.x-tq-task-id` に ID を残していれば、それをリンク先にし、セッション側の結果で上書きしない。
-セッションは複数の作業にまたがり、親タスクにだけリンクされていることがあるので、この branch 専用に書かれた ID の方が正確である。
+委任元が `branch.<name>.x-tq-checklist-item-id` に PR 項目 ID を残していれば、`tq checklist item update <itemId> --github <pr_url>` でその項目にリンクする。これにより tq task にも GitHub link が作られる。項目 ID が無い場合は、`branch.<name>.x-tq-task-id` に ID があればそれをタスクのリンク先にし、セッション側の結果で上書きしない。
+branch の task ID は worktree 専用で、session は複数作業にまたがることがあるため、branch の task ID を `TQ_SESSION_ID` からの推定より優先する。
 
-branch config が無いときは、このセッション (`$TQ_SESSION_ID`) にリンクされている tq タスクから決める。
+task ID の branch config が無いときは、このセッション (`$TQ_SESSION_ID`) にリンクされている tq タスクから決める。
 複数件リンクされていても、そこに親子関係があるなら子が作業対象なので一意に決まる。
 `tasks[]` の `parentId` が別の linked task の `id` を指していれば親子で、親は捨てて子 (葉) を残す。
 
@@ -121,7 +121,7 @@ branch config が無いときは、このセッション (`$TQ_SESSION_ID`) に�
 選んだ task と根拠は最後の報告に 1 行で書き、後から誤リンクを見つけられるようにする。
 **黙って飛ばして PR 作成を完了扱いにしない。**
 
-`--author` には自分のモデル名を渡す (`tq` skill 参照)。同じ PR に対して既にリンク済みの場合、script はその状態を報告して成功扱いにする。
+`--author` には自分のモデル名を渡す (`tq` skill 参照)。同じ PR をチェックリスト項目に再度紐付けても、tq は既存の task link を使って項目を更新する。別タスクにリンク済みの PR などで紐付けに失敗した場合は、script がエラーを返すので調査する。
 
 ## 7. CI 実行を監視
 

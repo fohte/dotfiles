@@ -19,7 +19,7 @@ description: 'Keep a piece of work tracked in tq (the user''s personal task mana
 | 作業に着手する                   | 既存タスクを探し、使う / 作る / 作らないを判定する。使うか作るなら `tq link` でセッションを紐付ける |
 | 設計・調査がまとまった           | page を作る                                                                                         |
 | 設計が変わった                   | 既存 page を更新する                                                                                |
-| PR が merged になった            | 残作業の有無を確認する                                                                              |
+| PR が merged になった            | `tq task get <id>` でチェックリスト進捗を確認し、項目に紐付かない PR も確認する                     |
 | 残作業が無くなった               | まとめコメントを書いて `complete` する                                                              |
 | 残作業があるのに完了扱いになった | `todo` に戻す                                                                                       |
 
@@ -96,12 +96,12 @@ fork は origin の owner が自分でも、成果物は他人のリポジトリ
 
 ## 閉じる
 
-`complete` してよいのは次の両方を満たすときだけ。
+`complete` してよいのは次の条件を満たすときだけ。
 
-- 立てた PR が全部 merged になっている。PR を伴わない調査だけの作業なら、この条件は無い
+- `tq --author <model> task get <id>` の `githubLinks` を確認し、立てた PR が全部 merged になっている。チェックリスト項目に紐付く PR はチェックリストツリーと `checklistCompletionCount` で確認し、`completed` が `total` と同じで、すべての葉項目がチェック済みであることを確かめる。項目に紐付かない PR も `githubLinks` で状態を確認する。PR を伴わない調査だけの作業なら、この条件は無い
 - 落とした項目 (「今回やらないこと」) が別タスクになっているか、ユーザーに提示済み
 
-片方でも欠けるなら `complete` せず `tq task status <id> todo` に戻す。
+条件を満たさない場合は `complete` せず、既に完了扱いになっているなら `tq task status <id> todo` に戻す。
 残作業をまとめコメントに書いた上で完了にすると、閉じたタスクの中に未着手の作業が埋まる。
 
 PR 番号は下記のように tq task へのリンク化を避けた形で書く。

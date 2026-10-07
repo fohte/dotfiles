@@ -77,12 +77,15 @@ direct=$(cd "$repo" && a config get repo.direct_commit)
 
 `direct` が `true` なら後述の「direct-commit モード」で、worktree もブランチも作らない。判定は armyknife の `repos.<owner>/<repo>.direct_commit` が唯一の根拠で、リポジトリの印象や過去の経験で上書きしない。
 
+承認済みの PR 分割チェックリストがある場合は、委任する PR に対応する葉項目 ID も環境変数で渡す。項目が無い委任では省略する。
+
 ```bash
 dir=$(mktemp -d /tmp/delegate.XXXXXX)
 # Write ツールで $dir/task.yaml を作成 (スキーマは後述の「プロンプト構造 (必須)」参照)
 prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
   DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
   DELEGATE_TQ_TASK_ID="<この委任作業が属する tq タスクの ID>" \
+  DELEGATE_TQ_CHECKLIST_ITEM_ID="<この PR に対応する葉項目の ID>" \
   a agent new --worktree=<branch-name> --agent --kind development --label "<title>" --prompt "$prompt"
 ```
 
@@ -102,6 +105,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts
 - `--prompt`: `render-task` の出力をそのまま渡す
 - `DELEGATE_TASK_PURPOSE`: `task.yaml` の `purpose` をそのまま渡す環境変数。委任先 worktree の post-worktree-create hook がこれを読み `branch.<name>.x-purpose` に書き込み、`create-pr` skill が PR の Why セクション生成時に参照する
 - `DELEGATE_TQ_TASK_ID`: この委任作業が属する tq タスクの ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-task-id` に書き込み、委任先の `create-pr` skill が立てた PR のリンク先に使う。タスクは委任前に必ず用意されている (前述の「委任前に確定させること」) ので、この変数を省略しない
+- `DELEGATE_TQ_CHECKLIST_ITEM_ID`: 承認済みの PR 分割チェックリストがある場合、この委任に対応する葉項目 ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-checklist-item-id` に書き込み、委任先の `create-pr` skill が PR をその項目に紐付ける。対応する項目が無い場合は省略する。Batch の親項目 ID は渡さない
 
 ### オプション
 
@@ -123,6 +127,8 @@ worktree 削除自体が失敗した警告が出た場合のみ手動復旧が�
 ### 複数タスクの一括委任
 
 複数のタスクをまとめて委任する場合、Bash ツールを委任数だけ呼び分けず、**1 回の bash 呼び出し内で `for` ループを使う**こと。委任先ごとに Bash ツール呼び出しを分けるとツール許可プロンプトが委任数だけ発生し、途中 1 件の拒否で以降が止まる。1 つの bash にまとめれば許可は 1 回で済む。for ループは dispatch の手段であり、各イテレーションは依然として独立した 1 委任 = 1 PR なので「1 委任 = 1 PR の原則」とは衝突しない。
+
+PR ごとのチェックリスト項目 ID がある場合は、ループの各委任に対応する葉項目 ID を `DELEGATE_TQ_CHECKLIST_ITEM_ID` として渡す。項目が無い委任ではこの環境変数を省略する。
 
 各委任先で task.yaml の内容が異なる場合は、共通する field (`investigated`/`links`/`additionalContext` など) を `common.yaml` に、差分のある field (`purpose`/`goal` など) を per-task の `<repo>.yaml` に分けて Write し、`yq` でマージしてから `render-task` に渡す。task.yaml を Bash 引数に直接埋め込まず、必ず Write ツールでファイルに書いてから渡すこと。
 
@@ -193,7 +199,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.agents/skills/delegate/scripts/rend
 - `--worktree` を付けない。worktree 前提のオプション (`--from`、`--force`、`--skip-hooks`) も使えない
 - `-R "$repo"` は委任先が現在のリポジトリでも付ける。worktree 内やサブディレクトリから起動していても、リポジトリ root で作業させられる
 - `DELEGATE_DIRECT_COMMIT=true` を落とすと、プロンプト末尾が「PR を作成するまで」のままになり、委任先が default branch から PR を作ろうとする
-- `DELEGATE_TASK_PURPOSE` / `DELEGATE_TQ_TASK_ID` は渡さない。どちらも worktree 作成時の hook が git config へ書いて初めて効くもので、worktree を作らない以上どこにも記録されない
+- `DELEGATE_TASK_PURPOSE` / `DELEGATE_TQ_TASK_ID` / `DELEGATE_TQ_CHECKLIST_ITEM_ID` は渡さない。どれも worktree 作成時の hook が git config へ書いて初めて効くもので、worktree を作らない以上どこにも記録されない
 
 ### 委任前に確認すること
 

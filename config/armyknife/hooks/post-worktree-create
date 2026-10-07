@@ -39,6 +39,13 @@ if [[ -n "${DELEGATE_TQ_TASK_ID:-}" ]]; then
     "$DELEGATE_TQ_TASK_ID" || true
 fi
 
+# Keep the item ID on its branch so parallel delegates cannot link to the wrong checklist item.
+if [[ -n "${DELEGATE_TQ_CHECKLIST_ITEM_ID:-}" ]]; then
+  git -C "$ARMYKNIFE_WORKTREE_PATH" config \
+    "branch.${ARMYKNIFE_BRANCH_NAME:-}.x-tq-checklist-item-id" \
+    "$DELEGATE_TQ_CHECKLIST_ITEM_ID" || true
+fi
+
 # Run bootstrap script if present (e.g. mise install, dependency install).
 # --worktree skips lefthook install since worktrees share the parent's .git/hooks.
 # Non-fatal: branches under repair often carry a stale lockfile, and a rollback

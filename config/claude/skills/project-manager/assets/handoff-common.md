@@ -9,6 +9,7 @@
 5. **実装が必要なら `/delegate` で委任する。** 自分で実装しない。委任してよいのは設計が approve され、原因が特定できてからである。1 委任 = 1 PR。複数 PR に分かれる規模なら `/split-into-prs` で分割し、最初の 1 PR だけ委任して、残りは前の PR が merge されてから改めて委任する
     - **委任先の engine は既定のままにする。** `--engine` を指定しない
     - **`DELEGATE_TQ_TASK_ID` に上記タスクの ID を必ず渡す。** 渡さないと委任先の PR がどのタスクにも載らない
+    - PR 分割の実装チェックリストがある場合は、委任する PR に対応する葉項目 ID を `DELEGATE_TQ_CHECKLIST_ITEM_ID` に渡す。Batch 親の ID は使わない
 6. **節目ごとに引き継ぎ元 (PM セッション) に報告する。** 設計の approve 待ちになったとき、PR が出た / merge されたとき、止まったとき、終わったとき。`a agent peer parent | jq -r '.[0].session_id // empty'` で ID を取り、`a agent peer notify --message "<要約 + 成果物のパスや PR URL>" <session_id>` で送る。全文は貼らない
 
 ## 全体の文脈

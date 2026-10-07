@@ -7,7 +7,9 @@ description: 'Read and write the user''s personal task manager (tq, https://tq.f
 
 `tq` is the CLI for the user's personal task manager. It covers the whole REST API; use it instead of hitting the API directly.
 
-Resources: `task`, `page`, `comment`, `project`, `label`, `asset`, `github`, `today`, `calendar`, `slack`, `health`.
+Resources: `task`, `page`, `comment`, `project`, `label`, `asset`, `github`, `checklist`, `today`, `calendar`, `slack`, `health`.
+
+`tq task get <id>` includes checklist trees and leaf-item progress for completion checks.
 
 ## Name yourself with `--author`
 
