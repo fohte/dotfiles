@@ -55,6 +55,8 @@ keybind = super+bracket_right=csi:93;5u
 # terminal-browser (see tmux.conf).
 keybind = super+a=csi:97;7u
 keybind = super+c=csi:99;7u
+# Handled by tmux itself: opens terminal-browser's page in the default browser.
+keybind = super+o=csi:111;7u
 
 # Prevent AquaSKK mode-switch keys (sent by Karabiner-Elements) from
 # leaking into the terminal as literal characters.

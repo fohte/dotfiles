@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+#
+# tmux-terminal-browser-open-external - open the page shown by terminal-browser
+# in the given pane with the default browser
+
+set -euo pipefail
+
+pane="$1"
+
+if ! url="$(TMUX_PANE="$pane" terminal-browser action -- get url)"; then
+  # A browser started inside shpool has no pane recorded, so fall back to the
+  # URL it was opened with. Pages navigated to afterwards are not followed.
+  url="$(tmux display-message -p -t "$pane" '#{pane_start_command}' | grep -oE 'https?://[^ '\''"]+' | head -n1)" ||
+    {
+      tmux display-message "tmux-terminal-browser-open-external: no URL found in $pane"
+      exit 1
+    }
+fi
+
+open "$url"
