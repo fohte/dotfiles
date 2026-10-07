@@ -1,5 +1,5 @@
 variables:
   # Machine-dependent, so it must not be hard-coded in this public repo.
   # The obsidian CLI has no timeout and occasionally hangs waiting for Obsidian.app.
-  vault_path: timeout 5 obsidian vault=obsidian-v2 vault info=path || true
+  vault_path: timeout -k 1 5 obsidian vault=obsidian-v2 vault info=path || true
 template: template.md
