@@ -1,5 +1,4 @@
 local env(name) = std.extVar(name);
-local isMacos = std.extVar('DOTFILES_OS') == 'Darwin';
 
 {
   context7: {
@@ -23,10 +22,4 @@ local isMacos = std.extVar('DOTFILES_OS') == 'Darwin';
     // the cheaper path.
     alwaysLoad: true,
   },
-} + (if isMacos then {
-  pencil: {
-    command: '/Applications/Pencil.app/Contents/Resources/app.asar.unpacked/out/mcp-server-darwin-arm64',
-    args: ['--app', 'desktop'],
-    env: {},
-  },
-} else {})
+}

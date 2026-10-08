@@ -127,7 +127,6 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
       'mcp__gsc__index_inspect',
 
       'mcp__context7',
-      'mcp__pencil',
 
       // Only the tools that read the graph or refresh the local SQLite index.
       // manage_adr and ingest_traces write into the repo tree, so they are left
