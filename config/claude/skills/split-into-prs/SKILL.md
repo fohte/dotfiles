@@ -1,6 +1,6 @@
 ---
 name: split-into-prs
-description: Split a task into a set of small, single-concern PRs that can be implemented in parallel by independent sessions. Use this skill whenever the user asks to break down, decompose, or split a task ("タスク分解して", "PR 分割して", "分割して並列で進めたい", "break this down", "split into PRs"), and always before delegating a multi-PR task to separate Claude Code instances. Also trigger when the user describes a feature or refactor large enough that a single PR would be hard to review, even if they don't say "split".
+description: Split a task into a set of small, single-concern PRs that can be implemented in parallel by independent sessions. Use this skill whenever the user asks to break down, decompose, or split a task ("タスク分解して", "PR 分割して", "分割して並列で進めたい", "break this down", "split into PRs"), and always before delegating to a repository whose `repo.direct_commit` is not true, even if the user doesn't ask to split (skip only when the user has already specified or approved the split). Also trigger when the user describes a feature or refactor large enough that a single PR would be hard to review, even if they don't say "split".
 ---
 
 # タスクを PR 単位に分割する
