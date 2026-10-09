@@ -25,11 +25,34 @@ rules:
     tests:
       - deny: 'git commit --amend'
       - deny: 'git -C /tmp commit --amend --no-edit'
-  - deny: 'git [-C *] commit --no-gpg-sign *'
-    message: 'Blocked to ensure commits are always GPG signed'
-    fix_suggestion: 'git commit -m "..."'
+  - deny: 'git [-C *] commit|cherry-pick|revert|am|merge|rebase|pull --no-gpg-sign *'
+    message: 'Blocked to ensure commits are always GPG signed. Re-run the same command without --no-gpg-sign.'
     tests:
       - deny: 'git commit --no-gpg-sign -m "test"'
+      - deny: 'git cherry-pick --no-gpg-sign abc123'
+      - deny: 'git revert --no-gpg-sign abc123'
+      - deny: 'git am --no-gpg-sign /tmp/x.patch'
+      - deny: 'git pull --no-gpg-sign'
+  # Setting/unsetting commit.gpgsign (or dropping the `commit` section)
+  # disables signing for every later plain `git commit`, which other rules
+  # allow. Reads of the key are denied too; use `git config --list` instead.
+  - deny: 'git [-C *] config * commit.gpgsign|commit.gpgSign|commit *'
+    message: 'Blocked to ensure commits are always signed. If signing fails, report the error to the user instead of disabling signing.'
+    tests:
+      - deny: 'git config --local commit.gpgsign false'
+      - deny: 'git config commit.gpgSign false'
+      - deny: 'git config --file .git/config commit.gpgsign false'
+      - deny: 'git config set commit.gpgsign false'
+      - deny: 'git config --global --unset commit.gpgsign'
+      - deny: 'git config unset --global commit.gpgsign'
+      - deny: 'git config --global --remove-section commit'
+      - pass: 'git config core.hooksPath .githooks'
+      - allow: 'git config --list'
+  - deny: 'git [-C *] config -e|--edit|edit *'
+    message: 'Blocked because editing the config file can disable commit signing.'
+    tests:
+      - deny: 'git config --global --edit'
+      - deny: 'git config edit'
   - deny: 'git [-C *] commit -n|--no-verify *'
     message: 'Blocked to ensure pre-commit hooks always run'
     fix_suggestion: 'git commit -m "..."'
@@ -425,6 +448,11 @@ rules:
     tests:
       - deny: 'git -c user.name=foo commit -m "test"'
       - deny: 'git -c commit.gpgsign=false commit -m "test"'
+  - deny: 'git --config-env *'
+    message: 'Blocked because `git --config-env <key>=<envvar>` overrides config inline like `-c`. Run the command without `--config-env`.'
+    tests:
+      - deny: 'git --config-env commit.gpgsign=FOO commit -m "test"'
+      - deny: 'git --config-env=commit.gpgsign=FOO commit -m "test"'
   # `args.size() > 2` requires an actual value token beyond `config` +
   # `user.name`/`user.email` — runok quirk: `args` covers every positional,
   # non-flag token matched by the pattern, subcommand and matched literals
