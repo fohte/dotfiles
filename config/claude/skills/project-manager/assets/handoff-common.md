@@ -11,7 +11,7 @@
     - **委任先の engine は既定のままにする。** `--engine` を指定しない
     - **`DELEGATE_TQ_TASK_ID` に上記タスクの ID を必ず渡す。** 渡さないと委任先の PR がどのタスクにも載らない
     - PR 分割の実装チェックリストがある場合は、委任する PR に対応する葉項目 ID を `DELEGATE_TQ_CHECKLIST_ITEM_ID` に渡す。Batch 親の ID は使わない
-6. **節目ごとに引き継ぎ元 (PM セッション) に報告する。** 設計の approve 待ちになったとき、PR が出た / merge されたとき、止まったとき、終わったとき。`a agent peer parent | jq -r '.[0].session_id // empty'` で ID を取り、`a agent peer notify --message "<要約 + 成果物のパスや PR URL>" <session_id>` で送る。全文は貼らない
+6. **ユーザーが見ていない節目だけ引き継ぎ元 (PM セッション) に報告する。** 報告するのは、PR が merge されたとき、範囲が変わったとき、止まったとき、終わったとき。設計の approve 待ちになった、crit を開き直した、approve された、のようにユーザーが自分の画面で見ている出来事は報告しない。PM がそれをユーザーに中継し、同じ通知が二重に届いてトークンと費用の無駄になるため。`a agent peer parent | jq -r '.[0].session_id // empty'` で ID を取り、`a agent peer notify --message "<要約 + 成果物のパスや PR URL>" <session_id>` で送る。全文は貼らない
 
 ## 全体の文脈
 
