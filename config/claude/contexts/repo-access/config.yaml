@@ -1,3 +1,4 @@
 variables:
-  work_org: dot role get repo 2>/dev/null | cut -d/ -f1 || true
+  # fohte plus the orgs listed in the role overlay config/github-orgs (one per line), deduplicated.
+  owned_orgs: (echo fohte; f=$(dot role overlay config/github-orgs) && cat "$f") | awk 'NF && !seen[$0]++' || true
 template: template.md

@@ -78,8 +78,16 @@ if [[ -n "${ARMYKNIFE_REPO_ROOT:-}" ]]; then
 fi
 
 # Only trust worktrees under the user's own repositories.
+own_orgs=(fohte)
+if overlay="$(dot role overlay config/github-orgs)"; then
+  while IFS= read -r org || [[ -n "$org" ]]; do
+    [[ -n "$org" ]] && own_orgs+=("$org")
+  done < "$overlay"
+fi
 is_own_repo=false
-[[ "$ARMYKNIFE_WORKTREE_PATH" == "$HOME/ghq/github.com/fohte/"* ]] && is_own_repo=true
+for org in "${own_orgs[@]}"; do
+  [[ "$ARMYKNIFE_WORKTREE_PATH" == "$HOME/ghq/github.com/$org/"* ]] && is_own_repo=true
+done
 
 # Register the worktree as a trusted project in Claude Code (~/.claude.json).
 # Without this, Claude Code prompts for trust confirmation on every new worktree.

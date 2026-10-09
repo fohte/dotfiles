@@ -29,18 +29,20 @@ fi
 
 # Allowed orgs: PR target owner + every org the user owns.
 # Owned orgs come from the same source as contexts/repo-access (fohte hardcoded,
-# work overlay org from `dot role get repo`), so the hook agrees with the rule
+# plus the role overlay config/github-orgs), so the hook agrees with the rule
 # the skill prose teaches Claude.
 collected_orgs=()
 [[ -n "${ARMYKNIFE_PR_OWNER:-}" ]] && collected_orgs+=("$ARMYKNIFE_PR_OWNER")
 collected_orgs+=("fohte")
-if work_repo="$(dot role get repo 2> /dev/null)" && [[ -n "$work_repo" ]]; then
-  collected_orgs+=("${work_repo%%/*}")
+if overlay="$(dot role overlay config/github-orgs)"; then
+  while IFS= read -r org || [[ -n "$org" ]]; do
+    collected_orgs+=("$org")
+  done < "$overlay"
 fi
 
 # Deduplicate. Avoid `mapfile` since macOS still ships bash 3.2 which lacks it.
 allowed_orgs=()
-while IFS= read -r org; do
+while IFS= read -r org || [[ -n "$org" ]]; do
   allowed_orgs+=("$org")
 done < <(printf '%s\n' "${collected_orgs[@]}" | awk 'NF && !seen[$0]++')
 
