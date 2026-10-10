@@ -16,7 +16,6 @@ local env(name) = std.extVar(name);
     // MCP clients exec `command` directly without shell expansion, so a literal
     // ~ would not resolve.
     command: env('HOME') + '/.config/mcp/cbm-mcp-launcher',
-    args: [],
     env: {},
     // Exempt from tool-search deferral: a ToolSearch step would make Grep/Read
     // the cheaper path.
