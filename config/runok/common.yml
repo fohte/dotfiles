@@ -36,6 +36,16 @@ definitions:
       values:
         - '*.log'
 
+    # Unexpanded spellings of the home directory as they reach runok.
+    home-roots:
+      values:
+        - '~'
+        - '~/'
+        - '$HOME'
+        - '$HOME/'
+        - '${HOME}'
+        - '${HOME}/'
+
   wrappers:
     # tools/crit.yml matches this exact string via `shell.wrappers`.
     - 'a cc|agent bg run -- <cmd>'
@@ -433,19 +443,30 @@ rules:
       - deny: 'find . -name "*.ts"'
       - deny: 'find ~ -name "*.js"'
 
-  # Block rg/fd on home directory (~ or $HOME)
-  - deny: 'rg|fd * ~'
-    message: 'Searching from home directory is extremely slow. Narrow the search to a specific subdirectory.'
+  # Walking all of home also enters TCC-protected dirs (Music, Photos, other
+  # apps' containers) and pops a macOS permission dialog for each. A stray
+  # space (`~/ .agents/x`) turns any argument position into a home root.
+  # args[0] is the search pattern unless `rg --files` takes none, so a
+  # literal search for `~/` is not a home root.
+  - deny: 'rg|fd *'
+    when: >-
+      size(args) > 0 &&
+      size(args.filter(a, a in definitions.vars["home-roots"] + [env.HOME, env.HOME + "/"])) >
+        (!("files" in flags) && args[0] in definitions.vars["home-roots"] + [env.HOME, env.HOME + "/"] ? 1 : 0)
+    message: 'Searching from home directory is extremely slow and can trigger a permission dialog per protected directory on macOS. Narrow the search to a specific subdirectory (check for a stray space after `~/`).'
     fix_suggestion: 'Specify a project directory, e.g., rg pattern ./src'
     tests:
       - deny: 'rg pattern ~'
       - deny: 'fd "*.ts" ~'
-  - deny: 'rg|fd *'
-    when: 'args[size(args)-1] == env.HOME'
-    message: 'Searching from home directory is extremely slow. Narrow the search to a specific subdirectory.'
-    fix_suggestion: 'Specify a project directory, e.g., rg pattern ./src'
-    tests:
+      - deny: 'rg -n pattern ~/.agents/a.md ~/ .agents/b.md'
+      - deny: 'rg pattern $HOME/'
+      - deny: 'rg pattern ${HOME}'
+      - deny: 'fd x ~ -t f'
+      - deny: "rg '~' ~"
+      - deny: 'rg --files ~'
+      - allow: "rg -F '~/' config"
       - allow: 'rg pattern ./src'
+      - allow: 'rg pattern ~/.agents/skills'
 
   # `-r*` only catches the fused short flag; the literal `--replace` does not
   # start with `-r`, so the long form stays open for deliberate replacement.
