@@ -51,7 +51,11 @@ description: Split a task into a set of small, single-concern PRs that can be im
 
 ## tq チェックリストへの記録
 
-分割案を提示した時点では tq を更新しない。ユーザーが案を承認した後、`track-in-tq` が選んだ作業タスクの ID がある場合だけ、PR の一覧をチェックリストに記録する。タスクが無い場合はチャットに案を出すだけにする。
+分割案を提示した時点では tq を更新しない。ユーザーが案を承認した後、次の優先順で記録先の task ID を決め、以降の checklist 操作に使う。
+
+- `project-manager` の handoff に「担当タスク」として tq task ID が記載されていれば、その ID を使う。`track-in-tq` が別の ID を選んでいても、handoff の ID を記録先として優先する
+- それ以外では、`track-in-tq` が選んだ作業タスクの ID があれば使う
+- どちらにも ID がなければ tq を更新せず、チャットに案を出す
 
 1. `tq checklist list <taskId>` で既存のチェックリストを確認する。名前が `実装` のものが無ければ `tq checklist create <taskId> --name 実装` で作り、あれば既存のチェックリストを更新する
 2. 承認された分割案に残る PR 項目は既存の葉項目 ID を保ち、本文と note を更新する。Batch の構成が変わったら `tq checklist item move` で親項目または root に移す。merged の PR 項目を残す場合はその checked 状態を保つ
