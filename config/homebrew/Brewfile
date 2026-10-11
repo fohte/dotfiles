@@ -153,7 +153,7 @@ cask 'slack'
 # Tool for powerful automation of macOS
 cask 'hammerspoon'
 # Powerful menu bar manager
-cask 'jordanbaird-ice'
+cask 'thaw'
 # System monitor for the menu bar
 cask 'stats'
 # Screencast tool with keystroke visualization
