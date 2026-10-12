@@ -54,6 +54,6 @@ A report must contain the PR URL, checklist item ID, and head SHA. For a CI repa
 - The delegated default-branch CI repair fails.
 - A required VRT approval is missing, or the checklist, PR, or delegate cannot be identified safely.
 
-When stopping, send a PushNotification explaining the reason and the next decision needed, then run `a agent status set decide`. Leave vibe mode on and wait for the user's direction. Do not continue merging or dispatching work while waiting.
+When stopping, send a PushNotification explaining the reason and the next decision needed, then run `a agent status set you "default-branch merge direction"`. Leave vibe mode on and wait for the user's direction. Do not continue merging or dispatching work while waiting.
 
 When every leaf is checked, report completion to the user and run `a agent vibe off`.

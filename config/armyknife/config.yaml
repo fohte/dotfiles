@@ -4,6 +4,13 @@ editor:
   terminal: ghostty
 
 agent:
+  statuses:
+    you:
+      state: user
+    wait:
+      state: waiting
+    done:
+      state: done
   merge_notification: |
     <delegation-update>
     armyknife による自動送信です。人間や委任先からの依頼ではありません。
@@ -17,15 +24,13 @@ agent:
     </delegation-update>
   stop_hook_instruction: |
     Set your status with `a agent status set <kind> <note>` before stopping.
-    Write a one-line note describing what you need or what is complete.
-    The first five kinds mean it is the user's turn; `done` and `wait` do not:
-    - `decide`: Ask the user to choose between options or set a direction.
-    - `read`: Answer the user's question and finish.
-    - `do`: Wait for the user to perform a manual action, such as verification or registration.
-    - `idle`: Wait for the user's next instruction.
-    - `close`: Only closing remains; it is not urgent.
-    - `done`: Report completion to the parent agent.
-    - `wait`: Wait for another session, CI, or other external work to finish.
+    Use `you` when the next step belongs to the user, including a decision, manual action, answer, diff or design review, or PR merge.
+    Use `wait` when waiting for another session, CI, or other external work.
+    Use `done` when no work remains.
+    For `you` and `wait`, write the note as one noun phrase describing only the user's next action or the party you are waiting for. For `done`, use `next user instruction` as the note.
+    Do not mention completed work, history, or use completion wording such as "done".
+    Include the repository name whenever you refer to a numbered item. Avoid labels that only make sense inside the current session.
+    Examples: "alert method selection (A: webhook addition / B: reminder adjustment)", "secret store registration for a generated token", "merge of sample-repo PR 42", "next user instruction".
     After setting your status, stop immediately without writing a final message or any other text.
   # quota has headroom; losing conversation context hurts more than it saves
   auto_compact:
