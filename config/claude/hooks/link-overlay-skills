@@ -12,8 +12,11 @@ overlay_dir=$(dot role overlay config/claude/skills 2> /dev/null || true)
 [ -z "$overlay_dir" ] && exit 0
 [ -d "$overlay_dir" ] || exit 0
 
-mkdir -p "$HOME/.claude/skills"
+mkdir -p "$HOME/.claude/skills" "$HOME/.agents/skills"
 for d in "$overlay_dir"/*/; do
   [ -d "$d" ] || continue
   ln -sfn "$d" "$HOME/.claude/skills/$(basename "$d")"
+  # `dot deploy` skips symlinked skills, so Codex only sees overlay skills
+  # through this link.
+  ln -sfn "$d" "$HOME/.agents/skills/$(basename "$d")"
 done

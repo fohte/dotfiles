@@ -133,7 +133,14 @@ if match_tag claude; then
   sym config/claude/skills ~/.claude/skills
   # Link per skill, not the whole directory: Codex walks this root recursively
   # and claude.ai's synced/ cache would eat its skill-metadata budget.
-  sym config/claude/skills/!(synced)/ ~/.agents/skills
+  # Symlinked skills come from external tools (e.g. terminal-browser) or the
+  # link-overlay-skills hook, which link them into ~/.agents/skills
+  # themselves; claiming them here makes the two fight.
+  skills=()
+  for skill in config/claude/skills/!(synced)/; do
+    [ -L "${skill%/}" ] || skills+=("$skill")
+  done
+  sym "${skills[@]}" ~/.agents/skills
   # Codex running on Windows reads the Windows user skill directory, not WSL's.
   if is_wsl && command -v powershell.exe > /dev/null 2>&1; then
     sym --windows-dir config/claude/skills "$USERPROFILE/.agents/skills"
