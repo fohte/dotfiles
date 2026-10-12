@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# Called by `a gh pr-merge` before required checks and the squash merge.
+# A non-zero exit prevents the PR from being merged.
+set -euo pipefail
+
+WAIT_TIMEOUT_SECONDS=300
+vrt_status=""
+vrt_check_pending=""
+
+if [[ -z "${ARMYKNIFE_PR_OWNER:-}" ||
+  -z "${ARMYKNIFE_PR_REPO:-}" ||
+  -z "${ARMYKNIFE_PR_URL:-}" ||
+  -z "${ARMYKNIFE_PR_HEAD_SHA:-}" ]]; then
+  printf 'pre-pr-merge: required ARMYKNIFE_PR_* variables are missing.\n' >&2
+  exit 1
+fi
+
+pr_repo="$ARMYKNIFE_PR_OWNER/$ARMYKNIFE_PR_REPO"
+
+report_tmux_status() {
+  if [[ -n "${TMUX_PR_MERGE_STATUS_FILE:-}" ]]; then
+    printf '%s\n' "$1" > "$TMUX_PR_MERGE_STATUS_FILE"
+  fi
+}
+
+if ! workflow_response="$(gh api --include --silent "repos/$pr_repo/contents/.github/workflows/vrt-approval.yml" 2>&1)"; then
+  if [[ "$workflow_response" =~ HTTP/[0-9.]+[[:space:]]404 || "$workflow_response" == *'HTTP 404'* ]]; then
+    report_tmux_status 'waiting for checks'
+    exit 0
+  fi
+  printf 'pre-pr-merge: unable to check for the VRT workflow: %s\n' "$workflow_response" >&2
+  exit 1
+fi
+
+read_vrt_commit_status() {
+  local statuses
+  if ! statuses="$(gh api "repos/$pr_repo/commits/$ARMYKNIFE_PR_HEAD_SHA/statuses?per_page=100" 2>&1)"; then
+    printf 'pre-pr-merge: unable to read the VRT commit status: %s\n' "$statuses" >&2
+    exit 1
+  fi
+  vrt_status="$(jq -r '[.[] | select((.context | ascii_downcase) == "vrt")] | if length == 0 then "absent" else .[0].state end' <<< "$statuses")"
+}
+
+read_vrt_check_pending() {
+  local check_runs
+  if ! check_runs="$(gh api "repos/$pr_repo/commits/$ARMYKNIFE_PR_HEAD_SHA/check-runs?check_name=vrt&per_page=100" 2>&1)"; then
+    printf 'pre-pr-merge: unable to read the VRT check run: %s\n' "$check_runs" >&2
+    exit 1
+  fi
+  vrt_check_pending="$(jq -r '[.check_runs[] | select(.name == "vrt" and .status != "completed")] | length > 0' <<< "$check_runs")"
+}
+
+wait_for_vrt_status() {
+  local phase="$1" started_at="$SECONDS" elapsed
+
+  while true; do
+    read_vrt_commit_status
+    case "$phase:$vrt_status" in
+      result:pending | approval:pending | approval:failure | approval:absent)
+        ;;
+      result:absent)
+        read_vrt_check_pending
+        [[ "$vrt_check_pending" == 'true' ]] || return 0
+        ;;
+      result:success | result:failure | result:error | approval:success)
+        return 0
+        ;;
+      approval:error)
+        printf 'pre-pr-merge: the VRT status entered error while waiting for approval.\n' >&2
+        exit 1
+        ;;
+      *)
+        printf 'pre-pr-merge: unexpected VRT status while waiting for %s: %s\n' "$phase" "$vrt_status" >&2
+        exit 1
+        ;;
+    esac
+
+    elapsed="$((SECONDS - started_at))"
+    if [[ "$elapsed" -ge "$WAIT_TIMEOUT_SECONDS" ]]; then
+      if [[ "$phase" == 'approval' ]]; then
+        printf 'pre-pr-merge: timed out after %ss waiting for the VRT status to succeed.\n' "$WAIT_TIMEOUT_SECONDS" >&2
+      else
+        printf 'pre-pr-merge: timed out after %ss waiting for the VRT result (status: %s).\n' "$WAIT_TIMEOUT_SECONDS" "$vrt_status" >&2
+      fi
+      exit 1
+    fi
+    sleep 5
+  done
+}
+
+report_tmux_status 'waiting for VRT'
+wait_for_vrt_status result
+
+if [[ "$vrt_status" == 'failure' ]]; then
+  if [[ -n "${ARMYKNIFE_SESSION_ID:-}" || -n "${CODEX_SESSION_ID:-}" ]]; then
+    printf 'pre-pr-merge: VRT reported visual differences for %s. A human must review the result before merging.\n' "$ARMYKNIFE_PR_URL" >&2
+    exit 1
+  fi
+
+  report_tmux_status 'approving VRT'
+  if ! output="$(gh pr edit "$ARMYKNIFE_PR_URL" --add-label vrt-approved 2>&1)"; then
+    printf 'pre-pr-merge: unable to add the vrt-approved label: %s\n' "$output" >&2
+    exit 1
+  fi
+  report_tmux_status 'waiting for VRT approval'
+  wait_for_vrt_status approval
+fi
+
+report_tmux_status 'waiting for checks'
