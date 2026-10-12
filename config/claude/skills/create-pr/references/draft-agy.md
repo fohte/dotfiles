@@ -2,7 +2,9 @@
 
 SKILL.md の Step 1 と Step 4 の中身。この flow に Step 2 はない。
 
-本文を書き換えるのは agy だけ。Claude が draft ファイルを直接編集したり、コメントを書き込んだりはしない。agy への入力は diff・コミット・書き方ルール・ユーザーの review 結果で、現在のブランチに open な Pull Request があれば既存 body も含む。Claude の解釈が混ざると、ユーザーが求めていない内容が本文に入るため。
+通常フローで本文を書き換えるのは agy だけ。Claude は draft を直接編集せず、ユーザーのコメントは agy に入力する。vibe mode で委任元の指摘を反映するときだけ、agy に渡すコメントを draft に追加する。agy への入力は diff・コミット・書き方ルール・review 結果で、現在のブランチに open な Pull Request があれば既存 body も含む。
+
+vibe mode で委任元から PR 本文の指摘を受けた場合は、指摘を draft にコメントとして加える。submit 後は draft が消えているため、まず `agy-write-draft` で既存 PR body を含む draft を作り直す。`steps.ready-for-translation` が true の場合は false に戻してから、各指摘を `<!-- ... -->` 形式で追加して `agy-advance-draft` を実行し、agy が指摘を反映したことを確認する。`english_output` が true の場合は、その後 `steps.ready-for-translation` を true にして再度 `agy-advance-draft` を実行し、翻訳後に flag を false に戻す。title と body が英語であることを確認し、editor review を開かず `a ai pr-draft submit --no-review` で再 submit する。
 
 ## 1. ドラフトを作成する
 

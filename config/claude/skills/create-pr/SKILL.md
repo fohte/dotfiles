@@ -18,6 +18,7 @@ Resolve these before anything else. Values come from the `## Repository facts` l
 Derived value:
 
 - `english_output`: true when `repo.visibility` is `PUBLIC` **and** `repo.language` is not `ja`, otherwise false. `repo.visibility: PUBLIC` alone does not make it true.
+- `vibe_mode`: when the delegated prompt contains `## Vibe coding mode`, run `a agent vibe status`; true only if it exits 0. If the marker is missing, the command is unavailable, or it exits non-zero, use the normal flow.
 
 Flow: find the first row that matches and follow its action. Read the reference before starting Step 1.
 
@@ -30,6 +31,7 @@ The rows below are independent of the flow above and of each other. Apply every 
 
 | Condition                                        | Effect                                                                                                                                    |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `vibe_mode` is true                              | Skip crit and editor approval waits, submit with `--no-review`, and report PR ready after CI passes. Keep self-review and CI monitoring.  |
 | `english_output` is true                         | Translation to English is required. The reference covers it in Step 4; Step 5 requires a Japanese-free title and body.                    |
 | `english_output` is false                        | No translation happens.                                                                                                                   |
 | `repo.owner` is `fohte`                          | Skip Step 8.                                                                                                                              |
@@ -39,16 +41,18 @@ The rows below are independent of the flow above and of each other. Apply every 
 
 ## 開始時の宣言 (必須・最初の応答で実行)
 
-create-pr skill を起動したら、**最初の応答で**以下の必須ステップを列挙し、これから実行する旨を宣言すること。宣言なしに Step 1 以降に進むのは禁止。
+create-pr skill を起動したら、**最初の応答で**適用される必須ステップを列挙し、これから実行する旨を宣言すること。宣言なしに Step 1 以降に進むのは禁止。
 
-- Step 0: 未 push コミットの push (`commit` skill の push 手順に従う) と、branch の diff の crit レビュー (`crit-approval-review` skill)
+- Step 0: 未 push コミットの push (`commit` skill の push 手順に従う) と、branch の diff の crit レビュー (`crit-approval-review` skill)。`vibe_mode` では push のみ実施し、crit レビューを省く
 - Step 2 (`references/draft-manual.md` を読む場合のみ): PR body セルフレビュー (全ルール照合 + 原則照合 + 減算の独立 3 工程)
+- Step 3-4: editor によるレビューと指示への対応。通常フローで実施し、`vibe_mode` では editor を開かず、委任元の指摘を受けたときだけ Step 4 の修正手順を使う
 
 「小さい PR だから」「変更が単純だから」「明らかに問題ないから」「効率を優先したい」を理由としたスキップは禁止。これらは典型的な自己判断スキップシグナルで、検出したら必ず実行する。skill のテキストに「必須」「スキップ禁止」と書かれているステップを Claude 側の判断で省略しない。スキップしてよいのはユーザーが該当ステップを名指しで明示的に skip 指示した場合のみ。
 
 ## 0. push と diff の crit レビュー (必須)
 
 未 push のコミットがあれば `commit` skill の push 手順 (`self-review` skill でのレビュー → 🔴/🟡 対応 → `git push`) に従って push する。
+`vibe_mode` では `crit-approval-review` を実行しない。push と commit skill の self-review は通常どおり行う。
 `self-review` はこの skill から直接呼び出さない。呼び出しは `commit` skill 側の責務とし、二重実行を避ける。
 
 ```bash
@@ -59,9 +63,9 @@ git log "origin/$(git main)..HEAD" --oneline
 
 未 push のコミットがなければ push は不要。
 
-push の要否にかかわらず、`crit-approval-review` skill で base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。
+`vibe_mode` でない場合は、push の要否にかかわらず `crit-approval-review` skill で base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。
 
-承認された時点で初めて、`commit` skill の push 手順に従って loop 中の修正をまとめてコミット・push し、Step 1 に進む。
+通常フローでは承認後に `commit` skill の push 手順に従って loop 中の修正をまとめてコミット・push し、Step 1 に進む。`vibe_mode` では crit 承認を待たずに Step 1 に進む。
 
 ## 1. PR body のドラフトを作成する
 
@@ -77,6 +81,8 @@ Conditions の表で選んだ reference の Step 1 に従う。
 
 ## 3. レビュー
 
+`vibe_mode` ではこの Step で editor を開かない。`english_output` が true の場合は Step 4 の翻訳手順を実行してから Step 5 に進み、それ以外は Step 5 に進む。
+
 `a ai pr-draft review` を **バックグラウンドで** (`run_in_background: true`) 実行。完了を待ち、exit code で判断する:
 
 - exit code 0 / 1: エディタが閉じた。0 は `steps` のいずれかが変わったこと、1 は変わらなかったことしか意味せず、**どちらも承認を意味しない**。次に進んでよいかは stdout を読んで Step 4 で判断する
@@ -87,6 +93,9 @@ Conditions の表で選んだ reference の Step 1 に従う。
 **polling 禁止**: バックグラウンドで起動した後は `<task-notification>` の完了通知が届くまで何もしない。`while`/`sleep` ループや出力ファイルの繰り返し読み取りで進捗確認してはならない。これは `a ai pr-draft review` だけでなく `a ai review wait` や `gh pr checks --watch` など本スキル内のすべてのバックグラウンドコマンドに共通。
 
 ## 4. ユーザーの指示に応じた対応
+
+`vibe_mode` では editor を開かない。委任元から PR 本文の指摘を受けたら、選択した draft reference の修正手順を使う。ドラフトに指摘をコメントとして加え、Step 4 と同じ手順で反映してから Step 5 へ進む。
+`vibe_mode` で `english_output` が true の場合は、各 submit 前に翻訳する。初回は draft の `steps.ready-for-translation` を true にして翻訳する。差し戻し後は、まず指摘を反映し、その後に同じ翻訳手順を実行する。翻訳後は flag を false に戻し、title と body が英語であることを確認する。
 
 **バックグラウンド実行の stdout を必ず読んでから分岐する。** stdout はエディタ編集前後の unified diff (無編集なら `(no edits)`) で、frontmatter の `steps` の変化とユーザーが本文に書き込んだコメントの両方が出る。review はエディタを開く前に `steps` を全て false に戻すので、この diff だけで今どの段階かが確定する。
 
@@ -99,7 +108,8 @@ Conditions の表で選んだ reference の Step 1 に従う。
 a ai pr-draft submit [--base main]
 ```
 
-既存 PR がある場合は title と body を更新する。submit はユーザー承認済みの場合のみ成功する。
+既存 PR がある場合は title と body を更新する。通常フローではユーザー承認済みの場合のみ submit する。
+`vibe_mode` では `a agent vibe status` が exit 0 であることを確かめ、`a ai pr-draft submit --no-review` を使う。通常の委任では承認なしで submit しない。
 `english_output` が true のときは、title と body に日本語が含まれていないこと。
 
 ## 6. tq タスクへのリンク登録
@@ -126,6 +136,17 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 ## 7. CI 実行を監視
 
 `gh pr checks --watch` で CI を監視。失敗したら調査・修正して再 push。
+`vibe_mode` では CI が green になった後、次の形式で委任元へ報告する。PR URL とチェックリスト項目 ID は実際の値に置き換える。
+
+```text
+<vibe-pr-ready>
+PR: <PR URL>
+tq checklist item ID: <branch.<name>.x-tq-checklist-item-id の値>
+enable-vibe-coding skill の『PR ready を受けたら』の手順に従う。
+</vibe-pr-ready>
+```
+
+差し戻しを反映して再 submit した場合も、CI が green になってから同じ形式で再報告する。
 
 ## 8. レビューコメントを確認して対応する
 
