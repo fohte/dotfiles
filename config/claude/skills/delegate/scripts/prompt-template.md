@@ -47,11 +47,7 @@ PR が残らないので、報告しない限り委任が終わったことが�
 
 この委任は vibe coding モードである。`create-pr` skill を使う前に `a agent vibe status` を実行し、終了コードが 0 の場合だけ以下の手順を適用する。コマンドが見つからない場合を含め、終了コードが 0 以外なら通常の委任として扱う。
 
-vibe の場合は crit 承認と editor 承認を待たずに submit する。`commit` skill の self-review と CI 監視は続ける。`create-pr` skill の手順に従い、PR 本文への親レビューも draft を使って反映する。
-
-PR の CI が green になったら、`create-pr` skill の Step 7 にある `<vibe-pr-ready>` 形式で委任元に `notify` する。チェックリスト項目 ID は現在のブランチの `branch.<name>.x-tq-checklist-item-id` から取得し、値がなければ項目 ID が見つからない前提誤りとして委任元に連絡する。
-
-この報告後は委任元のレビューを待つ。差し戻しの `notify` を受けたら指摘に対応し、コードを変更した場合は `commit` skill に従って commit と push を行う。PR 本文の指摘は draft にコメントとして加え、選択された draft reference の Step 4 に従って反映してから `a ai pr-draft submit --no-review` を実行する。再 submit 後も CI が green になってから同じ形式で PR ready を報告する。
+vibe の場合も `commit` skill の self-review と commit / push の手順は続ける。`create-pr` skill の Step 0 では push だけを行い、crit 承認は待たない。Step 1 (manual flow では Step 2 も) から Step 7 までは `create-pr` skill の vibe 手順に従い、draft ready 通知後は委任元の「draft にコメントを書いた」「コードを直して」「承認」の返答に応じる。明示的な「承認」を受けるまで submit しない。
 {{- else }}
 PR の作成・完了は委任元に `notify` しない。
 merge 後に worktree が片付けられると armyknife が委任元に自動で通知する。
@@ -61,15 +57,14 @@ merge 後に worktree が片付けられると armyknife が委任元に自動�
 ## 委任元への連絡
 
 {{- if and (eq (getenv "DELEGATE_DIRECT_COMMIT" "false") "false") (eq (getenv "DELEGATE_VIBE" "false") "true") }}
-これらの連絡ルールは `a agent vibe status` が exit 0 の場合に限り適用する。0 以外なら通常の連絡ルールに戻り、前提誤り以外は `notify` しない。PR 作成・完了、進捗、質問、待ち状態を連絡せず、ターンを終える際に成果物、停止理由、待っているものをユーザーに報告する。
+これらの連絡ルールは `a agent vibe status` が exit 0 の場合に限り適用する。0 以外なら通常の連絡ルールに戻り、前提誤り以外は `notify` しない。draft ready と PR ready の報告以外に、進捗、質問、待ち状態を連絡せず、ターンを終える際に成果物、停止理由、待っているものをユーザーに報告する。
 
-委任元に `notify` してよいのは、この指示の前提が誤っていると判明したときと、上記の PR ready 報告に限る。
-進捗報告や質問は送らない。親レビューを待つことも連絡しない。
+委任元に `notify` してよいのは、draft ready の報告、CI green 後の PR ready 報告、この指示の前提が誤っていると判明したときに限る。draft ready の返答として「draft にコメントを書いた」「コードを直して」「承認」を待つ。進捗報告や質問は送らない。
 
-PR ready を報告するときと、差し戻しを反映して再報告するときは、委任元の session_id を `a agent peer parent | jq -r '.[0].session_id // empty'` で取り、`a agent peer notify --message <MESSAGE> <SESSION_ID>` で送る。
+draft ready、PR ready、および前提誤りを報告するときは、委任元の session_id を `a agent peer parent | jq -r '.[0].session_id // empty'` で取り、`a agent peer notify --message <MESSAGE> <SESSION_ID>` で送る。
 session_id が空、または `notify` が `ended` エラーで失敗した場合は委任元が失われているので、宛先を推測せずユーザーに報告する。
 
-委任元からの差し戻しを受けたら、その指摘に対応して再度 PR ready を報告する。
+委任元の返答に対応し、コメント反映後は draft ready を再送する。コード修正後は draft を作り直して draft ready を送る。承認後は submit し、CI green になってから PR ready を送る。
 {{- else }}
 委任元に連絡してよいのは、この指示の前提が誤っていると判明したときと、上で報告するよう指示したときに限る。
 進捗報告、質問、作業を続けられずに止まることの報告は送らない。
