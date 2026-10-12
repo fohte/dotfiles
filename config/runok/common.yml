@@ -368,16 +368,25 @@ rules:
       - allow: 'dot role get'
       - allow: 'dot role overlay'
 
-  # Spawning a new Claude session costs real tokens and runs unattended, so it
-  # always needs a human decision -- an explicit `ask`, since falling through
-  # to pass lets auto mode approve it.
-  # `cc` is armyknife's hidden alias for `agent`, so every rule below matches both.
-  - ask: 'a cc|agent new *'
+  # Spawning a new agent session costs real tokens and runs unattended, so
+  # requests without `--vibe` always need a human decision. Armyknife checks
+  # that vibe is enabled before accepting the guarded invocation below.
+  # `ag` and `cc` are armyknife's hidden aliases for `agent`, so both rules
+  # match all three command names.
+  - allow: 'a ag|cc|agent new --vibe *'
+    tests:
+      - allow: 'a agent new --vibe'
+      - allow: 'a cc new --vibe --worktree=example'
+      - allow: 'a ag new --vibe'
+  - ask: 'a ag|cc|agent new !--vibe *'
     tests:
       - ask: 'a cc new'
       - ask: 'a cc new -R dotfiles'
       - ask: 'a agent new'
       - ask: 'a agent new -R dotfiles'
+      - ask: 'a cc new --worktree=example'
+      - ask: 'a ag new'
+      - ask: 'a ag new -R example-repo'
 
   # Closing an agent can terminate its session and remove a linked worktree, so
   # require an explicit ask for both canonical and abbreviated commands.
