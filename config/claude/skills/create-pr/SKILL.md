@@ -20,14 +20,9 @@ Derived value:
 - `english_output`: true when `repo.visibility` is `PUBLIC` **and** `repo.language` is not `ja`, otherwise false. `repo.visibility: PUBLIC` alone does not make it true.
 - `vibe_mode`: when the delegated prompt contains `## Vibe coding mode`, run `a agent vibe status`; true only if it exits 0. If the marker is missing, the command is unavailable, or it exits non-zero, use the normal flow.
 
-Flow: find the first row that matches and follow its action. Read the reference before starting Step 1.
+Read `references/draft-manual.md` before starting Step 1. It covers Steps 1, 2 and 4.
 
-| Condition           | Action                                                                          |
-| ------------------- | ------------------------------------------------------------------------------- |
-| `role` is `private` | Read `references/draft-agy.md`. It covers Steps 1 and 4. Step 2 does not exist. |
-| (otherwise)         | Read `references/draft-manual.md`. It covers Steps 1, 2 and 4.                  |
-
-The rows below are independent of the flow above and of each other. Apply every row whose condition holds.
+Apply every row below whose condition holds. The rows are independent of each other.
 
 | Condition                                        | Effect                                                                                                                                                                                          |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -44,7 +39,7 @@ The rows below are independent of the flow above and of each other. Apply every 
 create-pr skill を起動したら、**最初の応答で**適用される必須ステップを列挙し、これから実行する旨を宣言すること。宣言なしに Step 1 以降に進むのは禁止。
 
 - Step 0: 未 push コミットの push (`commit` skill の push 手順に従う) と、branch の diff の crit レビュー (`crit-approval-review` skill)。`vibe_mode` では push のみ実施し、crit レビューを省く
-- Step 2 (`references/draft-manual.md` を読む場合のみ): PR body セルフレビュー (全ルール照合 + 原則照合 + 減算の独立 3 工程)
+- Step 2: PR body セルフレビュー (全ルール照合 + 原則照合 + 減算の独立 3 工程)
 - Step 3-4: editor によるレビューと指示への対応。通常フローで実施し、`vibe_mode` では draft を添えて委任元へ通知し、明示的な承認を受けるまで submit しない
 
 「小さい PR だから」「変更が単純だから」「明らかに問題ないから」「効率を優先したい」を理由としたスキップは禁止。これらは典型的な自己判断スキップシグナルで、検出したら必ず実行する。skill のテキストに「必須」「スキップ禁止」と書かれているステップを Claude 側の判断で省略しない。スキップしてよいのはユーザーが該当ステップを名指しで明示的に skip 指示した場合のみ。
@@ -71,11 +66,9 @@ git log "origin/$(git main)..HEAD" --oneline
 
 ドラフトは **常に日本語で書くこと**。日本語の文体・表現については `yomiyasu` skill の規範に従う (非生物主語の解体、比喩動詞の具体化など)。
 
-Conditions の表で選んだ reference の Step 1 に従う。
+`references/draft-manual.md` の Step 1 に従う。
 
 ## 2. セルフレビュー (必須・スキップ禁止)
-
-`references/draft-manual.md` を選んだ場合のみの Step。`references/draft-agy.md` (agy の中で完結する) にはこの Step はない。
 
 `references/draft-manual.md` の Step 2 に従う。
 
@@ -110,16 +103,16 @@ enable-vibe-coding skill の『draft ready を受けたら』の手順に従う�
 
 `vibe_mode` では Step 3 の委任元の返答に応じて対応する。
 
-- 「draft にコメントを書いた」: 委任元が draft に直接コメントを書いている。コメントを重ねて追加せず、選択した draft reference の Step 4 で反映する。更新した draft を確認し、Step 3 に戻って `<vibe-draft-ready>` を再度送る。
+- 「draft にコメントを書いた」: 委任元が draft に直接コメントを書いている。コメントを重ねて追加せず、`references/draft-manual.md` の Step 4 で反映する。更新した draft を確認し、Step 3 に戻って `<vibe-draft-ready>` を再度送る。
 - 「コードを直して」: 指摘に合わせてコードを修正し、`commit` skill の手順で commit と push を行う。Step 1 から draft を作り直す。
-- 「承認」: `english_output` が true の場合は選択した draft reference の Step 4 で翻訳する。翻訳後は flag を false に戻し、title と body が英語であることを確認して Step 5 に進む。`english_output` が false の場合は翻訳せず Step 5 に進む。
+- 「承認」: `english_output` が true の場合は `references/draft-manual.md` の Step 4 で翻訳する。翻訳後は flag を false に戻し、title と body が英語であることを確認して Step 5 に進む。`english_output` が false の場合は翻訳せず Step 5 に進む。
 
 以下の editor review の stdout 判定は `vibe_mode` でない通常フローに適用する。
 
 **バックグラウンド実行の stdout を必ず読んでから分岐する。** stdout はエディタ編集前後の unified diff (無編集なら `(no edits)`) で、frontmatter の `steps` の変化とユーザーが本文に書き込んだコメントの両方が出る。review はエディタを開く前に `steps` を全て false に戻すので、この diff だけで今どの段階かが確定する。
 
 - diff に `submit: true` がある: Step 5 へ
-- ない (`ready-for-translation: true` のみ、本文へのコメント、`(no edits)`): まだ途中段階。Conditions の表で選んだ reference の Step 4 の対応をして Step 3 に戻る。`submit: true` が出るまで何周でも回す
+- ない (`ready-for-translation: true` のみ、本文へのコメント、`(no edits)`): まだ途中段階。`references/draft-manual.md` の Step 4 の対応をして Step 3 に戻る。`submit: true` が出るまで何周でも回す
 
 ## 5. Submit
 

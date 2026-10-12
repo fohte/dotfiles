@@ -1,7 +1,6 @@
 #!/bin/bash
 # Print the deterministic path of the current branch's PR draft file, matching
-# the layout `a ai pr-draft new` creates it at. Lets the agy-* scripts locate
-# the file without asking Claude for it.
+# the layout `a ai pr-draft new` creates it at.
 set -euo pipefail
 
 owner=$(gh repo view --json owner --jq .owner.login)
