@@ -35,6 +35,10 @@ rules:
   - allow: 'a ai draft *'
   - allow: 'a ai pr-draft *'
   - allow: 'a ai review wait *'
+  # The dedicated wrapper validates vibe mode and merge conditions itself.
+  - allow: 'a gh pr-merge *'
+    tests:
+      - allow: 'a gh pr-merge 123'
   - deny: 'a ai review request *'
     message: 'AI review requests cost money and must not be run casually.'
     tests:

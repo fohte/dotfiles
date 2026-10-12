@@ -20,7 +20,7 @@ description: Delegate tasks to a separate Claude Code or Codex instance, either 
 - **ユーザーが決めたことを委任時に変えない**: 委任先リポジトリ、PR の分割、各 PR のスコープなど、ユーザーが指定・承認した内容を自分の判断で変えてはならない。ユーザーはどのリポジトリで修正すべきか、どこで PR を切るべきかを把握している。「こっちのリポジトリの方が適切では」「まとめた方が綺麗では」と思ったら、`a agent new` を実行する前に提案して判断を仰ぐ。起動してから事後報告するのは、ユーザーが反対する機会を奪ったことになる
 - **自分で実装作業をしない**: このスキルが発動したら、ファイル編集・コード変更を自分で行ってはならない。仕事は委任内容を確定させることと、プロンプトを構成して `a agent new` コマンドを実行すること。読み取りのみの調査 (設計・原因の確定) はこの禁止に含まれない
 - **委任前にファイルを編集しない**: 「先に少し直してから委任しよう」は禁止。未コミットの変更がある状態で worktree を作ると、委任先にその変更が反映されない。作業ツリーを共有する direct-commit モード (後述) では逆に、その変更が委任先のコミットに巻き込まれる
-- **`a agent peer notify` を進捗確認や催促に使わない**: 委任先は別プロセスだが同じマシン上の Claude Code セッションなので、`a agent peer notify` でメッセージが届く。届くからといって、状況を尋ねる、急かす、作業中に細かく口を出すといった用途に使ってはならない。委任先は対話しながら進める相手ではない。送ってよいのは次の 2 つだけで、いずれも手順は後述の「委任元から委任先に連絡する場合」に従う
+- **`a agent peer notify` を進捗確認や催促に使わない**: 委任先は別プロセスだが同じマシン上の Claude Code セッションなので、`a agent peer notify` でメッセージが届く。届くからといって、状況を尋ねる、急かす、作業中に細かく口を出すといった用途に使ってはならない。委任先は対話しながら進める相手ではない。送ってよいのは次の 2 つだけで、いずれも手順は後述の「委任元から委任先に連絡する場合」に従う。vibe 中は、これらに加えて draft review の差し戻し、コード修正の依頼、レビュー承認を通知してよい
 
     - 委任元が渡した前提が誤っていた場合の訂正
     - 委任先が委任元の管理下にあるもの (別リポジトリの修正、パッケージの publish、先行 PR の merge など) を待って止まっている場合の、解消した旨の通知
@@ -103,10 +103,11 @@ prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts
 - `task.yaml`: Write ツールで `$dir` 配下に書く構造化データ。委任先へのプロンプトの元データであり、スキーマは後述の「プロンプト構造 (必須)」を参照。**必ず `mktemp -d` で作った一意なディレクトリ配下に置く** (固定パスは並行セッションと衝突する)
 - `render-task`: `task.yaml` を `--prompt` 用の markdown に変換するスクリプト。`purpose`/`goal` が空だとエラーで停止する
 - `DELEGATE_DIRECT_COMMIT`: 上で求めた `direct` をそのまま渡す環境変数。`render-task` が末尾の締めくくりを「PR を作成するまで」と「commit して push するまで」で切り替える
+- vibe 中に委任する場合は、`render-task` の呼び出しに `DELEGATE_VIBE=true` を加える。通常の委任では省略する。この値で委任先プロンプトに vibe 用の PR ready 通知手順を含める。チェックリスト項目がある委任では、その項目 ID も `DELEGATE_TQ_CHECKLIST_ITEM_ID` として `render-task` に渡し、プロンプトに正しい項目 ID が入るようにする
 - `--prompt`: `render-task` の出力をそのまま渡す
 - `DELEGATE_TASK_PURPOSE`: `task.yaml` の `purpose` をそのまま渡す環境変数。委任先 worktree の post-worktree-create hook がこれを読み `branch.<name>.x-purpose` に書き込み、`create-pr` skill が PR の Why セクション生成時に参照する
 - `DELEGATE_TQ_TASK_ID`: この委任作業が属する tq タスクの ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-task-id` に書き込み、委任先の `create-pr` skill が立てた PR のリンク先に使う。タスクは委任前に必ず用意されている (前述の「委任前に確定させること」) ので、この変数を省略しない
-- `DELEGATE_TQ_CHECKLIST_ITEM_ID`: 承認済みの PR 分割チェックリストがある場合、この委任に対応する葉項目 ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-checklist-item-id` に書き込み、委任先の `create-pr` skill が PR をその項目に紐付ける。対応する項目が無い場合は省略する。Batch の親項目 ID は渡さない
+- `DELEGATE_TQ_CHECKLIST_ITEM_ID`: 承認済みの PR 分割チェックリストがある場合、この委任に対応する葉項目 ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-checklist-item-id` に書き込み、委任先の `create-pr` skill が PR をその項目に紐付ける。vibe 中は `render-task` と `a agent new` の両方に渡す。Batch の親項目 ID は渡さない。vibe の CI 修復のように項目が無い場合は、PR ready 通知に `none` を入れるため `render-task` にだけ `DELEGATE_TQ_CHECKLIST_ITEM_ID=none` を渡し、`a agent new` には渡さない。通常の委任では項目 ID が無ければ省略する
 
 ### オプション
 
@@ -129,7 +130,7 @@ worktree 削除自体が失敗した警告が出た場合のみ手動復旧が�
 
 複数のタスクをまとめて委任する場合、Bash ツールを委任数だけ呼び分けず、**1 回の bash 呼び出し内で `for` ループを使う**こと。委任先ごとに Bash ツール呼び出しを分けるとツール許可プロンプトが委任数だけ発生し、途中 1 件の拒否で以降が止まる。1 つの bash にまとめれば許可は 1 回で済む。for ループは dispatch の手段であり、各イテレーションは依然として独立した 1 委任 = 1 PR なので「1 委任 = 1 PR の原則」とは衝突しない。
 
-PR ごとのチェックリスト項目 ID がある場合は、ループの各委任に対応する葉項目 ID を `DELEGATE_TQ_CHECKLIST_ITEM_ID` として渡す。項目が無い委任ではこの環境変数を省略する。
+PR ごとのチェックリスト項目 ID がある場合は、ループの各委任に対応する葉項目 ID を `DELEGATE_TQ_CHECKLIST_ITEM_ID` として `render-task` と `a agent new` の両方に渡す。項目が無い通常の委任ではこの環境変数を省略する。vibe の CI 修復では `render-task` にだけ `DELEGATE_TQ_CHECKLIST_ITEM_ID=none` を渡し、`a agent new` には渡さない。
 
 各委任先で task.yaml の内容が異なる場合は、共通する field (`investigated`/`links`/`additionalContext` など) を `common.yaml` に、差分のある field (`purpose`/`goal` など) を per-task の `<repo>.yaml` に分けて Write し、`yq` でマージしてから `render-task` に渡す。task.yaml を Bash 引数に直接埋め込まず、必ず Write ツールでファイルに書いてから渡すこと。
 
@@ -385,6 +386,8 @@ goal: |
 
 armyknife から `<delegation-update>` で merge 通知が来たら、default branch の CI が通るまで見届ける。merge 後の default branch が壊れていると、並行する PR も merge 後に同じ失敗を踏む。
 
+vibe 中に自分で merge した PR について後から届く `<delegation-update>` は処理済みとして扱い、この手順を繰り返さない。
+
 1. `gh pr view <PR> --json mergeCommit` で merge commit を取り、`gh run list --commit <sha>` の run を `gh run watch <run-id> --exit-status` で待つ。merge 直後は run がまだ作られていないことがあるので、空でも CI 無しとは判断せず、default branch への push で動く workflow が `.github/workflows/` に無いときだけ 3 に進む
 2. 失敗したら:
     1. `a agent peer list -R <owner>/<repo>/.worktrees/` で同じリポジトリの worktree で動くセッションを洗い出し、`ended` 以外の全員に merge 保留を `a agent peer notify` する。宛先は委任元の子に限らない。送った session_id は解除の通知に使うので控える
@@ -398,7 +401,7 @@ merge 保留のメッセージには、委任元からの連絡であること�
 
 連絡してよい条件、完了報告に含めるもの、送信手順は `scripts/prompt-template.md` が委任先のプロンプトに注入する。委任先はそれに従う。
 
-委任先から連絡が来るのは、前提の誤りが判明したときと、direct-commit モードで push まで終えたときだけ。通常の委任では成果物の PR が残るため、完了報告は来ない。
+委任先から連絡が来るのは、前提の誤りが判明したとき、direct-commit モードで push まで終えたとき、または vibe 中に `<vibe-draft-ready>` / `<vibe-pr-ready>` を報告するとき。vibe 報告の形式と委任元の対応手順は `enable-vibe-coding` skill を参照する。通常の委任では成果物の PR が残るため、完了報告は来ない。
 
 ## 委任後に前提の誤りが判明した場合
 
