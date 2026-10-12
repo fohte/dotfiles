@@ -390,6 +390,16 @@ rules:
       - ask: 'a ag c'
       - ask: 'a ag c example-session'
 
+  # Enabling vibe coding grants the session authority to merge PRs, so it
+  # always needs an explicit user decision.
+  - ask: 'a ag|cc|agent vibe on'
+    tests:
+      - ask: 'a agent vibe on'
+      - ask: 'a cc vibe on'
+      - ask: 'a ag vibe on'
+      - pass: 'a agent vibe off'
+      - pass: 'a agent vibe status'
+
   # armyknife (`a`) readonly subcommands. Other mutating subcommands
   # (a agent resume, etc) fall through to pass.
   - allow: 'a cc|agent list|ls'
