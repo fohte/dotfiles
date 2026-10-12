@@ -15,6 +15,18 @@ agent:
 
     delegate skill の「委任先の PR が merge された場合」に従ってください。
     </delegation-update>
+  stop_hook_instruction: |
+    Set your status with `a agent status set <kind> <note>` before stopping.
+    Write a one-line note describing what you need or what is complete.
+    The first five kinds mean it is the user's turn; `done` and `wait` do not:
+    - `decide`: Ask the user to choose between options or set a direction.
+    - `read`: Answer the user's question and finish.
+    - `do`: Wait for the user to perform a manual action, such as verification or registration.
+    - `idle`: Wait for the user's next instruction.
+    - `close`: Only closing remains; it is not urgent.
+    - `done`: Report completion to the parent agent.
+    - `wait`: Wait for another session, CI, or other external work to finish.
+    After setting your status, stop immediately without writing a final message or any other text.
   # quota has headroom; losing conversation context hurts more than it saves
   auto_compact:
     enabled: false
