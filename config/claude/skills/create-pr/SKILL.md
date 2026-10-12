@@ -32,7 +32,7 @@ Apply every row below whose condition holds. The rows are independent of each ot
 | `repo.owner` is `fohte`                          | Skip Step 8.                                                                                                                                                                                    |
 | `has_release_please` is `true`                   | Rule 1 uses Conventional Commits; otherwise `<scope>: <description>`. `scripts/render-rules` already applies it when it prints the rules.                                                       |
 | `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.                                                           |
-| ... and the template contains `Design decisions` | The rules include Rule 9 and Step 2 checks Rule 1-14; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                  |
+| ... and the template contains `Design decisions` | The rules include Rule 9 and Step 2 checks Rule 1-15; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                  |
 
 ## 開始時の宣言 (必須・最初の応答で実行)
 
