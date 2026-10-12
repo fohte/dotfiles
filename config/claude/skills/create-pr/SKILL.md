@@ -29,15 +29,15 @@ Flow: find the first row that matches and follow its action. Read the reference 
 
 The rows below are independent of the flow above and of each other. Apply every row whose condition holds.
 
-| Condition                                        | Effect                                                                                                                                    |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `vibe_mode` is true                              | Skip crit and editor approval waits, submit with `--no-review`, and report PR ready after CI passes. Keep self-review and CI monitoring.  |
-| `english_output` is true                         | Translation to English is required. The reference covers it in Step 4; Step 5 requires a Japanese-free title and body.                    |
-| `english_output` is false                        | No translation happens.                                                                                                                   |
-| `repo.owner` is `fohte`                          | Skip Step 8.                                                                                                                              |
-| `has_release_please` is `true`                   | Rule 1 uses Conventional Commits; otherwise `<scope>: <description>`. `scripts/render-rules` already applies it when it prints the rules. |
-| `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.     |
-| ... and the template contains `Design decisions` | The rules include Rule 9 and Step 2 checks Rule 1-14; otherwise there is no Rule 9. `scripts/render-rules` already applies it.            |
+| Condition                                        | Effect                                                                                                                                                                                          |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vibe_mode` is true                              | Skip crit review, notify the delegator with the draft and wait for explicit approval before submitting with `--no-review`; report PR ready after CI passes. Keep self-review and CI monitoring. |
+| `english_output` is true                         | Translation to English is required. The reference covers it in Step 4; Step 5 requires a Japanese-free title and body.                                                                          |
+| `english_output` is false                        | No translation happens.                                                                                                                                                                         |
+| `repo.owner` is `fohte`                          | Skip Step 8.                                                                                                                                                                                    |
+| `has_release_please` is `true`                   | Rule 1 uses Conventional Commits; otherwise `<scope>: <description>`. `scripts/render-rules` already applies it when it prints the rules.                                                       |
+| `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.                                                           |
+| ... and the template contains `Design decisions` | The rules include Rule 9 and Step 2 checks Rule 1-14; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                  |
 
 ## 開始時の宣言 (必須・最初の応答で実行)
 
@@ -45,7 +45,7 @@ create-pr skill を起動したら、**最初の応答で**適用される必須
 
 - Step 0: 未 push コミットの push (`commit` skill の push 手順に従う) と、branch の diff の crit レビュー (`crit-approval-review` skill)。`vibe_mode` では push のみ実施し、crit レビューを省く
 - Step 2 (`references/draft-manual.md` を読む場合のみ): PR body セルフレビュー (全ルール照合 + 原則照合 + 減算の独立 3 工程)
-- Step 3-4: editor によるレビューと指示への対応。通常フローで実施し、`vibe_mode` では editor を開かず、委任元の指摘を受けたときだけ Step 4 の修正手順を使う
+- Step 3-4: editor によるレビューと指示への対応。通常フローで実施し、`vibe_mode` では draft を添えて委任元へ通知し、明示的な承認を受けるまで submit しない
 
 「小さい PR だから」「変更が単純だから」「明らかに問題ないから」「効率を優先したい」を理由としたスキップは禁止。これらは典型的な自己判断スキップシグナルで、検出したら必ず実行する。skill のテキストに「必須」「スキップ禁止」と書かれているステップを Claude 側の判断で省略しない。スキップしてよいのはユーザーが該当ステップを名指しで明示的に skip 指示した場合のみ。
 
@@ -81,7 +81,21 @@ Conditions の表で選んだ reference の Step 1 に従う。
 
 ## 3. レビュー
 
-`vibe_mode` ではこの Step で editor を開かない。`english_output` が true の場合は Step 4 の翻訳手順を実行してから Step 5 に進み、それ以外は Step 5 に進む。
+`vibe_mode` では editor を開かず、draft を作成した後に委任元のレビューを待つ。draft の絶対パス、ブランチ名、現在の HEAD SHA、チェックリスト項目 ID を含む次の形式で `<vibe-draft-ready>` を作り、委任元へ `notify` する。draft のパスは `~/.agents/skills/create-pr/scripts/draft-path` の出力、ブランチ名は `git branch --show-current`、HEAD SHA は `git rev-parse HEAD` で取得する。チェックリスト項目 ID は `branch.<ブランチ名>.x-tq-checklist-item-id` から取得する。値が無い場合は前提誤りとして委任元に連絡し、先へ進まない。
+
+```text
+<vibe-draft-ready>
+Draft: <draft-path の出力>
+Branch: <ブランチ名>
+Head SHA: <HEAD SHA>
+tq checklist item ID: <チェックリスト項目 ID>
+enable-vibe-coding skill の『draft ready を受けたら』の手順に従う。
+</vibe-draft-ready>
+```
+
+委任元の session ID は `a agent peer parent | jq -r '.[0].session_id // empty'` で取得し、`a agent peer notify --message <MESSAGE> <SESSION_ID>` で送る。session ID が空、または `notify` が `ended` エラーで失敗した場合は宛先を推測せず、ユーザーに報告する。通知後は委任元から返答があるまで待ち、承認なしに Step 5 へ進まない。
+
+`vibe_mode` でない通常フローでは、次の `a ai pr-draft review` 手順で editor を開く。
 
 `a ai pr-draft review` を **バックグラウンドで** (`run_in_background: true`) 実行。完了を待ち、exit code で判断する:
 
@@ -94,8 +108,13 @@ Conditions の表で選んだ reference の Step 1 に従う。
 
 ## 4. ユーザーの指示に応じた対応
 
-`vibe_mode` では editor を開かない。委任元から PR 本文の指摘を受けたら、選択した draft reference の修正手順を使う。ドラフトに指摘をコメントとして加え、Step 4 と同じ手順で反映してから Step 5 へ進む。
-`vibe_mode` で `english_output` が true の場合は、各 submit 前に翻訳する。初回は draft の `steps.ready-for-translation` を true にして翻訳する。差し戻し後は、まず指摘を反映し、その後に同じ翻訳手順を実行する。翻訳後は flag を false に戻し、title と body が英語であることを確認する。
+`vibe_mode` では Step 3 の委任元の返答に応じて対応する。
+
+- 「draft にコメントを書いた」: 委任元が draft に直接コメントを書いている。コメントを重ねて追加せず、選択した draft reference の Step 4 で反映する。更新した draft を確認し、Step 3 に戻って `<vibe-draft-ready>` を再度送る。
+- 「コードを直して」: 指摘に合わせてコードを修正し、`commit` skill の手順で commit と push を行う。Step 1 から draft を作り直す。
+- 「承認」: `english_output` が true の場合は選択した draft reference の Step 4 で翻訳する。翻訳後は flag を false に戻し、title と body が英語であることを確認して Step 5 に進む。`english_output` が false の場合は翻訳せず Step 5 に進む。
+
+以下の editor review の stdout 判定は `vibe_mode` でない通常フローに適用する。
 
 **バックグラウンド実行の stdout を必ず読んでから分岐する。** stdout はエディタ編集前後の unified diff (無編集なら `(no edits)`) で、frontmatter の `steps` の変化とユーザーが本文に書き込んだコメントの両方が出る。review はエディタを開く前に `steps` を全て false に戻すので、この diff だけで今どの段階かが確定する。
 
@@ -109,7 +128,7 @@ a ai pr-draft submit [--base main]
 ```
 
 既存 PR がある場合は title と body を更新する。通常フローではユーザー承認済みの場合のみ submit する。
-`vibe_mode` では `a agent vibe status` が exit 0 であることを確かめ、`a ai pr-draft submit --no-review` を使う。通常の委任では承認なしで submit しない。
+`vibe_mode` では Step 3 で委任元の明示的な承認を受けた後、`a agent vibe status` が exit 0 であることを確かめ、`a ai pr-draft submit --no-review` を使う。通常の委任では承認なしで submit しない。
 `english_output` が true のときは、title と body に日本語が含まれていないこと。
 
 ## 6. tq タスクへのリンク登録
@@ -141,6 +160,7 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 ```text
 <vibe-pr-ready>
 PR: <PR URL>
+Head SHA: <git rev-parse HEAD の値>
 tq checklist item ID: <branch.<name>.x-tq-checklist-item-id の値>
 enable-vibe-coding skill の『PR ready を受けたら』の手順に従う。
 </vibe-pr-ready>
