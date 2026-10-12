@@ -1,4 +1,4 @@
-# Claude がドラフトを書く flow (`role` が `private` 以外)
+# Claude がドラフトを書く flow
 
 SKILL.md の Step 1, 2, 4 の中身。
 

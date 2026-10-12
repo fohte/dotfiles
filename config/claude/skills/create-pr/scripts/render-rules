@@ -1,7 +1,6 @@
 #!/bin/bash
 # Print the PR body writing rules for the current repo, with the release-please
-# / PR template / Design decisions branches already resolved. Shared by the
-# create-pr skill and the agy scripts so the rules text lives in one place.
+# / PR template / Design decisions branches already resolved.
 #
 # Usage: render-rules [<branch_purpose>]
 set -euo pipefail
