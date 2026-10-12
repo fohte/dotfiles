@@ -108,11 +108,16 @@ context 残量の少なさは委任理由にならない。
 
 ## 4. ユーザーの指示に応じた対応
 
+`vibe_mode` では editor を開かず、委任元の返答に応じて対応する。
+
+- 「draft にコメントを書いた」: draft にある委任元のコメントを反映し、コメント行を削除して create-pr skill の Step 3 に戻る。更新した draft を委任元に再提示するため、`a ai pr-draft review` は実行しない。
+- 「承認」: `english_output` が true の場合は `steps.ready-for-translation` を true にし、`references/translate-rules.md` に従って title と body を英訳する。翻訳後は `steps.ready-for-translation` と `steps.submit` を false に戻し、title と body が英語であることを確認して create-pr skill の Step 5 に進む。`english_output` が false の場合は翻訳せず Step 5 に進む。
+
 diff の内容で以下に振り分ける。
 
 ### 修正指示の場合
 
-修正のみ行い**翻訳は行わない**。ユーザーが本文に書き込んだコメント行は対応後に削除する。修正後は再度 `a ai pr-draft review` をバックグラウンドで実行。
+修正のみ行い**翻訳は行わない**。ユーザーが本文に書き込んだコメント行は対応後に削除する。修正後は通常フローでは再度 `a ai pr-draft review` をバックグラウンドで実行し、vibe mode では create-pr skill の Step 3 に戻る。
 
 diff が `(no edits)` なら対応するものがないので、ユーザーに何を変更するか確認する。
 
@@ -120,6 +125,6 @@ diff が `(no edits)` なら対応するものがないので、ユーザーに�
 
 `english_output` が false のリポジトリでは翻訳は発生しない。この節は読み飛ばす。
 
-`english_output` が true のリポジトリでは翻訳必須。`steps.ready-for-translation: true` になったら title と body を英語に翻訳し、`steps.submit: false` に変更して保存。`a ai pr-draft review` をバックグラウンドで実行。すでに英語に翻訳済みなら再翻訳しない。
+`english_output` が true のリポジトリでは翻訳必須。`steps.ready-for-translation: true` になったら title と body を英語に翻訳し、`steps.ready-for-translation` と `steps.submit` を false に変更して保存。通常フローでは `a ai pr-draft review` をバックグラウンドで実行し、vibe mode では create-pr skill の Step 5 に進む。すでに英語に翻訳済みなら再翻訳しない。
 
 翻訳ルールは `references/translate-rules.md` を読んで従う。
