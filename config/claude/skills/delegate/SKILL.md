@@ -103,7 +103,8 @@ prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts
 - `task.yaml`: Write ツールで `$dir` 配下に書く構造化データ。委任先へのプロンプトの元データであり、スキーマは後述の「プロンプト構造 (必須)」を参照。**必ず `mktemp -d` で作った一意なディレクトリ配下に置く** (固定パスは並行セッションと衝突する)
 - `render-task`: `task.yaml` を `--prompt` 用の markdown に変換するスクリプト。`purpose`/`goal` が空だとエラーで停止する
 - `DELEGATE_DIRECT_COMMIT`: 上で求めた `direct` をそのまま渡す環境変数。`render-task` が末尾の締めくくりを「PR を作成するまで」と「commit して push するまで」で切り替える
-- vibe 中に委任する場合は、`render-task` の呼び出しに `DELEGATE_VIBE=true` を加える。通常の委任では省略する。この値で委任先プロンプトに vibe 用の PR ready 通知手順を含める。チェックリスト項目がある委任では、その項目 ID も `DELEGATE_TQ_CHECKLIST_ITEM_ID` として `render-task` に渡し、プロンプトに正しい項目 ID が入るようにする
+- vibe 中に委任する場合は、`render-task` の呼び出しに `DELEGATE_VIBE=true` を加える。この値で委任先プロンプトに vibe 用の PR ready 通知手順を含める。チェックリスト項目がある委任では、その項目 ID も `DELEGATE_TQ_CHECKLIST_ITEM_ID` として `render-task` に渡し、プロンプトに正しい項目 ID が入るようにする
+- `a agent new` に `--vibe` を付けるのは vibe 中の委任だけにする。armyknife は起動前に vibe の有効状態を検証するため、通常の委任ではこのフラグを省略する
 - `--prompt`: `render-task` の出力をそのまま渡す
 - `DELEGATE_TASK_PURPOSE`: `task.yaml` の `purpose` をそのまま渡す環境変数。委任先 worktree の post-worktree-create hook がこれを読み `branch.<name>.x-purpose` に書き込み、`create-pr` skill が PR の Why セクション生成時に参照する
 - `DELEGATE_TQ_TASK_ID`: この委任作業が属する tq タスクの ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-task-id` に書き込み、委任先の `create-pr` skill が立てた PR のリンク先に使う。タスクは委任前に必ず用意されている (前述の「委任前に確定させること」) ので、この変数を省略しない
