@@ -74,7 +74,7 @@ function checkSentenceEnd(content: string, lineno: number, report: Report) {
     report(
       lineno,
       'Rule 15',
-      'write one sentence per item; split the rest into items or sub-bullets',
+      'write one sentence per item; cut it down instead of splitting',
     )
   }
   if (content.endsWith('。')) {
