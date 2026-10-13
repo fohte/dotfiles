@@ -262,6 +262,13 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
         ],
       },
     ],
+    StopFailure: [
+      {
+        hooks: [
+          { type: 'command', command: 'a agent hook stop-failure' },
+        ],
+      },
+    ],
     SessionEnd: [
       {
         hooks: [
