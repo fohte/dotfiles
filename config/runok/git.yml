@@ -826,6 +826,10 @@ rules:
       - allow: 'gh pr edit 25 --remove-label "bump:minor"'
       - allow: 'gh -R fohte/runok pr edit 25 --add-label foo'
       - deny: 'gh pr edit 25 --body "foo" --add-label bar'
+  - allow: 'gh [-R *] label create vrt-agent-reviewed *'
+    tests:
+      - allow: 'gh label create vrt-agent-reviewed --repo fohte/tq --description "VRT diff reviewed by an agent"'
+      - pass: 'gh label create unrelated --repo fohte/tq'
 
   - allow: 'gh [-R *] * list *'
   - allow: 'gh [-R *] * view *'
