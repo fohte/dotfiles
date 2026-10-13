@@ -38,7 +38,7 @@ A report must contain the PR URL, checklist item ID, and head SHA. For a CI repa
     - If any visual change is unintended, do not add `vrt-agent-reviewed`. Notify the delegate with the affected images and concrete findings, ask it to fix the code, and review the new `<vibe-pr-ready>` report.
     - If the report or its images cannot be opened, or `vrt` fails without a visual diff report, notify the delegate to restore or fix the report and send a fresh `<vibe-pr-ready>` report. Do not ask the user to review the VRT.
 3. Verify with `gh pr checks <pr>` that all required checks are green. If checks are pending, wait for the delegate to finish them; do not merge yet. If a check failed, notify the delegate with the failed check and wait for a corrected ready report.
-4. Immediately before merging, repeat `gh pr view <pr> --json headRefOid -q .headRefOid` and require an exact match with the approved SHA. If the SHA changed, do not merge; ask the delegate for a fresh PR-ready report and review the new changes. If the SHA still matches and required checks are green, run `a gh pr-merge <pr>` from the target repository. Do not use `gh pr merge`.
+4. Before merging, read the title with `gh pr view <pr> --json title -q .title`. If it matches Conventional Commits breaking-change syntax (`type!:` or `type(scope)!:`), stop under `Stop conditions` without attempting the merge and ask the user to merge this PR. Otherwise, repeat `gh pr view <pr> --json headRefOid -q .headRefOid` immediately before merging and require an exact match with the approved SHA. If the SHA changed, do not merge; ask the delegate for a fresh PR-ready report and review the new changes. If the SHA still matches and required checks are green, run `a gh pr-merge <pr>` from the target repository. Do not use `gh pr merge`.
 
 ## After a merge
 
@@ -50,15 +50,16 @@ A report must contain the PR URL, checklist item ID, and head SHA. For a CI repa
 
 ## When something goes wrong
 
-Resolve these yourself and keep the loop running; do not ask the user.
+Resolve these yourself and keep the loop running; do not ask the user unless a `Stop condition` applies.
 
 - A delegate reports that a supplied premise is wrong: re-investigate, correct the premise (update the item note or design page when they were wrong), and notify the delegate with the correction.
-- `a gh pr-merge` fails: for a conflict, tell the delegate to sync the base branch with the `sync-base-branch` skill; for a failed required check, tell the delegate to fix it; for any other failure, read the error and fix its cause or have the delegate fix it. Then handle its next PR-ready report.
+- `a gh pr-merge` fails: if a `Stop condition` applies, stop as instructed there. Otherwise, for a conflict, tell the delegate to sync the base branch with the `sync-base-branch` skill; for a failed required check, tell the delegate to fix it; for any other failure, read the error and fix its cause or have the delegate fix it. Then handle its next PR-ready report.
 - A report, PR, or delegate cannot be matched: identify it from `a agent peer children`, the branch's `x-tq-checklist-item-id`, and `gh pr list`, then continue.
 
 ## Stop conditions
 
 - A file or command required for draft review is unavailable.
+- The PR title marks a breaking change. Do not attempt the merge; ask the user to merge the PR.
 
 When stopping, report the reason and the next decision needed to the user, then run `a agent status set you "<the decision needed, as a noun phrase>"`. Leave vibe mode on and wait for the user's direction. Do not continue merging or dispatching work while waiting.
 
