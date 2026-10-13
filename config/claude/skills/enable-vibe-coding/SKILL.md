@@ -50,10 +50,10 @@ A report must contain the PR URL, checklist item ID, and head SHA. For a CI repa
 
 ## When something goes wrong
 
-Resolve these yourself and keep the loop running; do not ask the user.
+Resolve these yourself and keep the loop running; do not ask the user unless a `Stop condition` applies.
 
 - A delegate reports that a supplied premise is wrong: re-investigate, correct the premise (update the item note or design page when they were wrong), and notify the delegate with the correction.
-- `a gh pr-merge` fails: for a conflict, tell the delegate to sync the base branch with the `sync-base-branch` skill; for a failed required check, tell the delegate to fix it; for any other failure, read the error and fix its cause or have the delegate fix it. Then handle its next PR-ready report.
+- `a gh pr-merge` fails: if a `Stop condition` applies, stop as instructed there. Otherwise, for a conflict, tell the delegate to sync the base branch with the `sync-base-branch` skill; for a failed required check, tell the delegate to fix it; for any other failure, read the error and fix its cause or have the delegate fix it. Then handle its next PR-ready report.
 - A report, PR, or delegate cannot be matched: identify it from `a agent peer children`, the branch's `x-tq-checklist-item-id`, and `gh pr list`, then continue.
 
 ## Stop conditions
