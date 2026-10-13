@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
 // Check a PR body draft against the rules that can be judged mechanically.
 //
-// Usage: lint-draft.ts [--owner <org>] [<draft>]
+// Usage: lint-draft.ts [--owner <org>] [--visibility <PUBLIC|PRIVATE>] [<draft>]
 //
 // Prints one line per violation and exits 1 if any is found.
-// <draft> defaults to the output of `draft-path`, <org> to the current repo's owner.
+// <draft> defaults to the output of `draft-path`, <org> and <visibility> to the
+// current repo's. In a public repo, every URL is fetched without credentials.
 
 import { execFileSync } from 'node:child_process'
 import { readFileSync, realpathSync } from 'node:fs'
@@ -261,9 +262,120 @@ export function lint(text: string, owner: string): [number, string][] {
   return errors
 }
 
+const URL_IN_TEXT = /https?:\/\/[^\s<>()`'"]+[^\s<>()`'".,;:!?]/g
+const MAX_REDIRECTS = 5
+
+// Redirects that stay public: github.com serves attachments from
+// githubusercontent.com, and redirect.github.com forwards to github.com.
+const ALLOWED_HOPS: [RegExp, RegExp][] = [
+  [/^github\.com$/, /\.githubusercontent\.com$/],
+  [/^redirect\.github\.com$/, /^github\.com$/],
+]
+
+const isAllowedHop = (from: string, to: string) =>
+  from === to ||
+  from === `www.${to}` ||
+  to === `www.${from}` ||
+  ALLOWED_HOPS.some(([f, t]) => f.test(from) && t.test(to))
+
+const PRIVATE_ADDRESS =
+  /^(10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/
+
+// Ask a public resolver, not this machine's, so hosts that only resolve over a
+// VPN or local DNS are caught.
+async function publicDnsError(host: string): Promise<string | undefined> {
+  // No public page is linked by an IPv6 literal, and the brackets in
+  // URL.hostname would defeat an address match anyway.
+  if (host.startsWith('[')) return 'is an IP address, not a public site'
+  if (/^[\d.]+$/.test(host)) {
+    return PRIVATE_ADDRESS.test(host)
+      ? 'points to a private address'
+      : undefined
+  }
+  const addresses: string[] = []
+  for (const type of ['A', 'AAAA']) {
+    const res = await fetch(
+      `https://cloudflare-dns.com/dns-query?name=${host}&type=${type}`,
+      {
+        headers: { accept: 'application/dns-json' },
+        signal: AbortSignal.timeout(10_000),
+      },
+    )
+    if (!res.ok) throw new Error(`public DNS returned ${res.status}`)
+    const body = (await res.json()) as {
+      Answer?: { type: number; data: string }[]
+    }
+    for (const a of body.Answer ?? []) {
+      if (a.type === 1) addresses.push(a.data)
+      // Any IPv6 address outside 2000::/3 is not globally routable.
+      if (a.type === 28 && !/^[23]/.test(a.data)) {
+        return `${host} resolves to a private address`
+      }
+    }
+  }
+  if (addresses.length === 0) return `${host} does not resolve in public DNS`
+  if (addresses.some((a) => PRIVATE_ADDRESS.test(a))) {
+    return `${host} resolves to a private address`
+  }
+  return undefined
+}
+
+// Without credentials, a private page answers 401/403/404 or redirects to a
+// login page. Anything that cannot be confirmed public fails, because a leak
+// cannot be undone after the PR is posted.
+async function publicReachError(url: string): Promise<string | undefined> {
+  try {
+    let current = new URL(url)
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      const dnsError = await publicDnsError(current.hostname)
+      if (dnsError) return dnsError
+      const res = await fetch(current, {
+        redirect: 'manual',
+        signal: AbortSignal.timeout(10_000),
+      })
+      if (res.status >= 300 && res.status < 400) {
+        const next = new URL(res.headers.get('location') ?? '', current)
+        if (!isAllowedHop(current.hostname, next.hostname)) {
+          return `redirects to ${next.hostname}, likely a login page`
+        }
+        current = next
+        continue
+      }
+      if (!res.ok) return `returns ${res.status} without credentials`
+      return undefined
+    }
+    return 'redirects too many times'
+  } catch (e) {
+    return `could not be confirmed public (${(e as Error).message}); retry, or remove it`
+  }
+}
+
+export async function lintPublicUrls(text: string) {
+  const found = text.split('\n').flatMap((line, i) =>
+    [...line.matchAll(URL_IN_TEXT)].map((m) => ({
+      lineno: i + 1,
+      url: m[0],
+    })),
+  )
+  const reaches = await Promise.all(found.map((f) => publicReachError(f.url)))
+  const errors: [number, string][] = []
+  for (const [i, error] of reaches.entries()) {
+    const { lineno, url } = found[i]
+    if (error) {
+      errors.push([
+        lineno,
+        `Rule 5: ${url} ${error}; a public PR must link only to public pages`,
+      ])
+    }
+  }
+  return errors
+}
+
+const VISIBILITIES = ['PUBLIC', 'PRIVATE', 'INTERNAL']
+
 if (import.meta.main) {
   const { values, positionals } = parseArgs({
-    options: { owner: { type: 'string' } },
+    options: { owner: { type: 'string' }, visibility: { type: 'string' } },
     allowPositionals: true,
   })
 
@@ -271,17 +383,29 @@ if (import.meta.main) {
   const draft =
     positionals[0] ??
     execFileSync(join(scriptDir, 'draft-path'), { encoding: 'utf8' }).trim()
-  const owner =
-    values.owner ??
-    execFileSync(
-      'gh',
-      ['repo', 'view', '--json', 'owner', '--jq', '.owner.login'],
-      {
-        encoding: 'utf8',
-      },
-    ).trim()
+  const repo =
+    values.owner && values.visibility
+      ? undefined
+      : (JSON.parse(
+          execFileSync('gh', ['repo', 'view', '--json', 'owner,visibility'], {
+            encoding: 'utf8',
+          }),
+        ) as { owner: { login: string }; visibility: string })
+  const owner = values.owner ?? repo!.owner.login
+  const visibility = (values.visibility ?? repo!.visibility).toUpperCase()
+  if (!VISIBILITIES.includes(visibility)) {
+    console.error(
+      `Error: --visibility must be one of ${VISIBILITIES.join(', ')}`,
+    )
+    process.exit(2)
+  }
 
-  const errors = lint(readFileSync(draft, 'utf8'), owner)
+  const text = readFileSync(draft, 'utf8')
+  const errors = lint(text, owner)
+  if (visibility === 'PUBLIC') {
+    errors.push(...(await lintPublicUrls(text)))
+    errors.sort((a, b) => a[0] - b[0])
+  }
   for (const [lineno, message] of errors) {
     console.log(`${draft}:${lineno}: ${message}`)
   }
