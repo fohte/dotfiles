@@ -1,12 +1,11 @@
 ---
 name: enable-vibe-coding
-description: Start the user-requested autonomous implementation loop from a tq checklist through design review, PR merge, and the next delegation. Use only when the user explicitly invokes /enable-vibe-coding.
-disable-model-invocation: true
+description: Start the user-requested autonomous implementation loop from a tq checklist through design review, PR merge, and the next delegation. Use when the user invokes /enable-vibe-coding or asks to run the implementation in vibe coding mode.
 ---
 
 # Enable Vibe Coding
 
-Run the implementation checklist as a sequence of delegated PRs. The user must invoke this skill explicitly because it enables unattended PR merges.
+Run the implementation checklist as a sequence of delegated PRs. runok asks the user before `a agent vibe on`, which is the point where unattended PR merges become possible.
 
 ## Start
 
