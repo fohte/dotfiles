@@ -3,6 +3,9 @@
 editor:
   terminal: ghostty
 
+notification:
+  enabled: false
+
 agent:
   statuses:
     you:
