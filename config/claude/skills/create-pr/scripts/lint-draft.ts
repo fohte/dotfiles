@@ -15,6 +15,8 @@ type Report = (lineno: number, rule: string, message: string) => void
 
 const TITLE_MAX = 50
 const SECTION_MAX_ITEMS = 2
+// Why and What only: Design decisions may need a longer table.
+const LIMITED_SECTIONS = 2
 
 const LIST_ITEM = /^(\s*)(?:[-*+]|\d+[.)])\s+(.*)$/
 const FENCE = /^\s*(```|~~~)/
@@ -115,7 +117,7 @@ export function lint(text: string, owner: string): [number, string][] {
     return { line, isCode: inFence }
   })
 
-  let firstHeadingSeen = false
+  let headingIndex = 0
   let inWhy = true
   let prevInList = false
   let blankSincePrev = false
@@ -133,8 +135,6 @@ export function lint(text: string, owner: string): [number, string][] {
     fromBlock = undefined
   }
 
-  // Only the Why and What sections: Design decisions may need a longer table.
-  let sectionCount = 0
   let section: { lineno: number; items: number } | undefined
   const closeSection = () => {
     if (section && section.items > SECTION_MAX_ITEMS) {
@@ -201,9 +201,14 @@ export function lint(text: string, owner: string): [number, string][] {
 
     if (line.startsWith('## ')) {
       closeSection()
-      if (firstHeadingSeen) inWhy = false
-      firstHeadingSeen = true
-      if (++sectionCount <= 2) section = { lineno, items: 0 }
+      headingIndex++
+      inWhy = headingIndex <= 1
+      if (headingIndex <= LIMITED_SECTIONS) section = { lineno, items: 0 }
+      continue
+    }
+    // Template subsections such as Reproduction steps are not counted.
+    if (line.startsWith('### ')) {
+      closeSection()
       continue
     }
 
