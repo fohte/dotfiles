@@ -5,19 +5,21 @@ description: Start the user-requested autonomous implementation loop from a tq c
 
 # Enable Vibe Coding
 
-Run the implementation checklist as a sequence of delegated PRs. runok asks the user before `a agent vibe on`, which is the point where unattended PR merges become possible.
+Run the implementation checklist as a sequence of delegated PRs. `runok` asks the user before `a agent vibe on`, which is the point where unattended PR merges become possible. Armyknife repository policy further limits unattended review and merge to repositories where `repo.vibe` is `true`.
 
 ## Start
 
 1. Resolve the tq task ID in this order: use `$ARGUMENTS` when supplied; otherwise use the current branch's `branch.<name>.x-tq-task-id` when set; otherwise use the unique leaf task linked to `$TQ_SESSION_ID` via `tq session list`. Reduce linked tasks to leaves with `jq`; if no single task remains, ask the user which task to run.
-2. Resolve each leaf's target repository from its note. Delegate every leaf through a worktree and a PR, even when the repository's `repo.direct_commit` is `true`; the delegate skill's vibe rules cover this.
+2. Resolve each leaf's target repository from its note. In that repository, run `a config get repo.vibe` and record the effective result for the leaf. Require a boolean result; if the command fails or returns anything else, treat the result as `false` and use normal delegation for that leaf. Continue with other leaves. Never assume vibe is allowed. Delegate every leaf through a worktree and a PR, even when the repository's `repo.direct_commit` is `true`; the delegate skill's vibe rules cover this.
 3. Pass your model name with `--author` on every `tq` command. Read the task with `tq task get <task-id>`. Require exactly one checklist named `実装` and read its leaves and notes. Read the task's design page with `tq page list` and `tq page get`; stop if there is no design page. Use `--output` and a unique `/tmp` path for a long page.
 4. Confirm the `実装` checklist has at least one unchecked leaf. If every leaf is checked, report that the task is already complete and do not enable vibe mode.
-5. Follow the `delegate` skill to prepare the prompts for every unchecked leaf whose `依存` note is resolved. Render each with `DELEGATE_VIBE=true` and `DELEGATE_TQ_CHECKLIST_ITEM_ID=<item-id>`. Before enabling vibe, confirm each rendered prompt contains the `## Vibe coding mode` section, and that `~/.agents/skills/create-pr/SKILL.md` defines both the `<vibe-draft-ready>` and `<vibe-pr-ready>` report formats. The delegate reads the report formats from `create-pr` and the item ID from the branch's `x-tq-checklist-item-id`, which `DELEGATE_TQ_CHECKLIST_ITEM_ID` sets, so the rendered prompt itself does not contain them. If any requirement is missing, stop and tell the user the installed skills do not support the required vibe reports yet. Keep the prepared payloads for dispatch; do not start delegates during this check.
-6. Run `a agent vibe on` and confirm `a agent vibe status` succeeds. If either command fails, stop before delegating. The armyknife command may not be released in older installations.
-7. Dispatch the prepared prompts in parallel through the `delegate` skill, passing the task ID and each leaf's checklist item ID through `a agent new`. For later newly ready leaves, perform the same rendered-prompt check before dispatch. Do not delegate parent items or leaves with unresolved dependencies.
+5. Follow the `delegate` skill to prepare the prompts for every unchecked leaf whose `依存` note is resolved. For a leaf whose target repo has `repo.vibe: true`, render with `DELEGATE_VIBE=true` and `DELEGATE_TQ_CHECKLIST_ITEM_ID=<item-id>`. For `repo.vibe: false`, leave `DELEGATE_VIBE` unset and render a normal delegation prompt. Before enabling vibe, confirm each vibe-enabled prompt contains the `## Vibe coding mode` section, and that `~/.agents/skills/create-pr/SKILL.md` defines both the `<vibe-draft-ready>` and `<vibe-pr-ready>` report formats. The delegate reads the report formats from `create-pr` and the item ID from the branch's `x-tq-checklist-item-id`, which `DELEGATE_TQ_CHECKLIST_ITEM_ID` sets, so the rendered prompt itself does not contain them. If a vibe-specific requirement is missing, hold only vibe-enabled leaves and tell the user the installed skills do not support the required vibe reports yet; normal leaves can still be dispatched. Keep all prepared payloads for dispatch; do not start delegates during this check.
+6. If at least one ready leaf has `repo.vibe: true`, run `a agent vibe on` and confirm `a agent vibe status` succeeds before dispatching those leaves. If either command fails, hold the vibe-enabled leaves and continue with normal leaves. If every ready leaf has `repo.vibe: false`, skip these commands and use the normal delegation flow.
+7. Dispatch each prepared prompt through the `delegate` skill, passing the task ID and leaf's checklist item ID through `a agent new`. Add `--vibe` only for leaves whose target repo has `repo.vibe: true`; omit it for normal leaves. A normal delegate follows the regular human review and merge flow. The user reviews and merges its PR; do not handle it as a vibe report, submit it, or merge it. Keep dispatching other ready leaves and handling active vibe delegates without waiting for a normal PR. Only leaves that depend on a normal PR remain blocked until the user merges it and the checklist reflects completion. For every later newly ready leaf, repeat the repo policy check and prompt selection; before dispatching a vibe-enabled leaf, repeat the vibe report checks from step 5 and ensure step 6 succeeded. Do not delegate parent items or leaves with unresolved dependencies.
 
 Treat a dependency as resolved only when the referenced checklist work is checked and any stated release or merge requirement is satisfied. When a note has no dependency, or says `依存: なし`, the leaf is ready. If a dependency is ambiguous, leave that leaf undispatched until it can be verified.
+
+The following vibe report and merge procedures apply only to checklist leaves or CI repairs whose target repo has `repo.vibe: true`. A normal delegate, including a repair in a repo where vibe is disabled, does not send vibe reports. Leave its review and merge to the user, and do not run `a gh pr-merge` for its PR.
 
 ## When a `<vibe-draft-ready>` report arrives
 
@@ -42,11 +44,11 @@ A report must contain the PR URL, checklist item ID, and head SHA. For a CI repa
 
 ## After a merge
 
-1. Follow the `delegate` skill's merge procedure to confirm CI on the default branch is green. A merge notification for a PR this skill already merged is informational; do not process it as a new merge.
-2. If default-branch CI fails, pause merges and new delegations. Notify active repository sessions to hold their merges, then delegate a CI repair through the `delegate` skill with `DELEGATE_VIBE=true`. Do not associate the repair with a checklist item. Review its draft and PR with the same draft-ready and PR-ready procedures, then check default-branch CI again. If the repair delegation fails, delegate another repair. Resume held sessions after CI is green.
+1. Follow the `delegate` skill's merge procedure to confirm CI on the default branch is green. This also applies after the user merges a normal delegate's PR; do not merge that PR yourself. A merge notification for a PR this skill already merged is informational; do not process it as a new merge.
+2. If default-branch CI fails, pause merges and new delegations. Notify active repository sessions to hold their merges. Resolve the affected repo's policy using the `a config get repo.vibe` lookup in `Start` step 2. If it resolves to `true`, delegate a CI repair with `DELEGATE_VIBE=true`, then review and merge it through the vibe draft and PR procedures; otherwise, delegate a normal repair without `DELEGATE_VIBE` or `--vibe`, which the user reviews and merges. Do not associate the repair with a checklist item. After the repair merges, check default-branch CI again and resume held sessions when it is green. If the repair delegation fails, retry using the same repo policy.
 3. Refresh `tq task get <task-id>` and confirm the merged checklist leaf is checked. If it remains unchecked, stop before redispatching that item and resolve the tq state.
 4. Re-read the checklist. Dispatch every newly ready unchecked leaf in parallel, using the `Start` procedure's dependency rules. Keep already active delegates running.
-5. Continue handling ready reports, merges, CI, and newly unblocked leaves until all leaves in `実装` are checked.
+5. Continue handling ready reports, merges, CI, and newly unblocked leaves until all leaves in `実装` are checked. When waiting for a normal PR's user review or merge, continue any independent ready work; only its dependents wait.
 
 ## When something goes wrong
 
@@ -63,4 +65,4 @@ Resolve these yourself and keep the loop running; do not ask the user unless a `
 
 When stopping, report the reason and the next decision needed to the user, then run `a agent status set you "<the decision needed, as a noun phrase>"`. Leave vibe mode on and wait for the user's direction. Do not continue merging or dispatching work while waiting.
 
-When every leaf is checked, report completion to the user and run `a agent vibe off`.
+When every leaf is checked, report completion to the user. Run `a agent vibe off` only if this invocation enabled vibe mode.

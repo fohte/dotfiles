@@ -69,9 +69,16 @@ agent:
     layout:
       command: claude
 
+orgs:
+  fohte:
+    vibe: true
+
 repos:
   fohte/dotfiles:
     # dotfiles is operated directly on the default branch.
     direct_commit: true
+  fohte/runok:
+    # External contributors require human review before merging.
+    vibe: false
   fohte/t-rader:
     language: ja
