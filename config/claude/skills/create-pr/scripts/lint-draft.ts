@@ -66,6 +66,17 @@ function parseTitle(frontmatter: string[]) {
 }
 
 function checkSentenceEnd(content: string, lineno: number, report: Report) {
+  // Quoted text such as an error message may contain its own 。.
+  const prose = content
+    .replace(/。$/, '')
+    .replace(/`[^`]*`|「[^「」]*」|『[^『』]*』/g, '')
+  if (prose.includes('。')) {
+    report(
+      lineno,
+      'Rule 15',
+      'write one sentence per item; split the rest into items or sub-bullets',
+    )
+  }
   if (content.endsWith('。')) {
     report(lineno, 'Rule 15', 'drop the trailing `。`')
   } else if (POLITE_END.test(content)) {
