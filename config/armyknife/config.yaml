@@ -55,6 +55,9 @@ agent:
   work_type_fallback:
     icon: "\uF141" # nf-fa-ellipsis_h
     color: [135, 135, 135] # gray (#878787)
+  vibe_marker:
+    icon: "\U000F140B" # nf-md-lightning_bolt
+    color: [255, 135, 215] # pink (#FF87D7)
   codex:
     # Applies to delegated sessions only, so interactive `codex` keeps its own
     # defaults. The delegate skill explains why the quota goes to effort rather
