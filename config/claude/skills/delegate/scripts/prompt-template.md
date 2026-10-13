@@ -49,8 +49,6 @@ PR が残らないので、報告しない限り委任が終わったことが�
 
 vibe の場合も `commit` skill の self-review と commit / push の手順は続ける。`create-pr` skill の Step 0 では push だけを行い、crit 承認は待たない。Step 1 (manual flow では Step 2 も) から Step 7 までは `create-pr` skill の vibe 手順に従い、draft ready 通知後は委任元の「draft にコメントを書いた」「コードを直して」「承認」の返答に応じる。明示的な「承認」を受けるまで submit しない。
 
-`<vibe-draft-ready>` または `<vibe-pr-ready>` を通知して委任元を待つ間は、`a agent status set wait "<note>"` で status を `wait` にして turn を止める。待機中の note は委任元のレビューまたは merge を示す名詞句にする。
-
 default branch へ直接 push する運用のリポジトリ (`is_master_push_repo` が true) でも、この委任では今のブランチで作業して PR を作り、default branch へは push しない。
 {{- else }}
 PR の作成・完了は委任元に `notify` しない。
