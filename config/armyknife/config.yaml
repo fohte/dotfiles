@@ -24,6 +24,7 @@ agent:
     </delegation-update>
   stop_hook_instruction: |
     Set your status with `a agent status set <kind> <note>` before stopping.
+    During vibe coding (`a agent vibe status` exits 0), use `wait` after sending `<vibe-draft-ready>` or `<vibe-pr-ready>` while waiting for the delegator's response, review, or merge. This rule takes precedence for those waits.
     Use `you` when the next step belongs to the user, including a decision, manual action, answer, diff or design review, or PR merge.
     Use `wait` when waiting for another session, CI, or other external work.
     Use `done` when no work remains.
