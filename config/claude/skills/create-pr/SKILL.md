@@ -39,7 +39,7 @@ Apply every row below whose condition holds. The rows are independent of each ot
 create-pr skill を起動したら、**最初の応答で**適用される必須ステップを列挙し、これから実行する旨を宣言すること。宣言なしに Step 1 以降に進むのは禁止。
 
 - Step 0: 未 push コミットの push (`commit` skill の push 手順に従う) と、branch の diff の crit レビュー (`crit-approval-review` skill)。`vibe_mode` では push のみ実施し、crit レビューを省く
-- Step 2: PR body セルフレビュー (`lint-draft` の検査 + ルール照合 + 原則照合 + 減算の独立 4 工程)
+- Step 2: PR body セルフレビュー (`lint-draft.ts` の検査 + ルール照合 + 原則照合 + 減算の独立 4 工程)
 - Step 3-4: editor によるレビューと指示への対応。通常フローで実施し、`vibe_mode` では draft を添えて委任元へ通知し、明示的な承認を受けるまで submit しない
 
 「小さい PR だから」「変更が単純だから」「明らかに問題ないから」「効率を優先したい」を理由としたスキップは禁止。これらは典型的な自己判断スキップシグナルで、検出したら必ず実行する。skill のテキストに「必須」「スキップ禁止」と書かれているステップを Claude 側の判断で省略しない。スキップしてよいのはユーザーが該当ステップを名指しで明示的に skip 指示した場合のみ。

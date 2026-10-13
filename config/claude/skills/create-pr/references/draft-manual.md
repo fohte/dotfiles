@@ -72,7 +72,7 @@ context 残量の少なさは委任理由にならない。
 1. 機械的に判定できるルールをスクリプトで検査する。違反があれば内容を出力して非 0 で終わるので、ファイルを直して exit 0 になるまで繰り返す
 
     ```bash
-    ~/.agents/skills/create-pr/scripts/lint-draft
+    ~/.agents/skills/create-pr/scripts/lint-draft.ts
     ```
 
     検査するのは次の項目で、これらは手順 3 の照合の対象にしない:
