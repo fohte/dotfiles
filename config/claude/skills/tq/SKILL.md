@@ -47,8 +47,6 @@ tq page update 58 <pageId> --file <design-path>
 tq comment create 58 --file <comment-path>
 ```
 
-Content also reads from stdin when `--file` is omitted, which is fine for a couple of lines.
-
 Reading works the same way in reverse: `--output` writes the body to a file instead of stdout, so you can grep or read only the part you need.
 
 ```bash
