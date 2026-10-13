@@ -159,8 +159,6 @@ enable-vibe-coding skill の『PR ready を受けたら』の手順に従う。
 </vibe-pr-ready>
 ```
 
-通知後は `a agent status set wait "review or merge of <repo-name> PR <number>"` を実行して turn を止め、委任元のレビューまたは merge を待つ。
-
 差し戻しを反映して再 submit した場合も、CI が green になってから同じ形式で再報告する。
 
 ## 8. レビューコメントを確認して対応する
@@ -170,3 +168,7 @@ enable-vibe-coding skill の『PR ready を受けたら』の手順に従う。
 **CI や bot のチェックが `pass` でもレビューコメントは付く。CI pass = レビュー指摘なし ではない。** submit 後は必ず `/check-pr-review` skill を実行し、CodeRabbit / Devin 等の自動レビューと人間のコメントを確認して対応する。
 
 `check-pr-review` skill の中断・省略は禁止。
+
+## 9. vibe mode の PR ready 後の待機
+
+`vibe_mode` で `<vibe-pr-ready>` を通知した後は、Step 8 が適用される場合はその確認と対応を終えてから、`a agent status set wait "review or merge of <repo-name> PR <number>"` を実行して turn を止める。`repo.owner` が `fohte` で Step 8 を skip した場合は、通知直後に status を設定する。
