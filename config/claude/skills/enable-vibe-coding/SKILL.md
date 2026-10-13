@@ -35,7 +35,7 @@ A report must contain the PR URL, checklist item ID, and head SHA. For a CI repa
 1. Confirm that `gh pr view <pr> --json headRefOid -q .headRefOid` exactly matches the reported head SHA. If it does not, do not review or merge that report; ask the delegate for a fresh PR-ready report with the current SHA. Compare the reported SHA with the SHA approved during draft review. If they differ and the approved SHA is an ancestor of the reported SHA, obtain the incremental diff with `git diff <approved-sha>..<reported-head-sha>`. If the approved SHA is not an ancestor, the branch was rebased or rewritten; obtain the current PR-only diff with `git diff origin/$(git main)...<reported-head-sha>` and review that full diff against the design. Ask a read-only subagent to compare the applicable diff with the approved design page and item note, or the failed run and repair task for a CI repair. If the comparison has findings, notify the delegate to fix the code. If it passes, record the reported head SHA as approved.
 2. Verify with `gh pr checks <pr>` that required checks are green. If checks are pending, wait for the delegate to finish them; do not merge yet. If a check failed, notify the delegate with the failed check and wait for a corrected ready report.
 3. Confirm any required VRT approval is already present. If it is missing, stop and notify the user. Never add the `vrt-approved` label; visual review remains a human approval gate.
-4. Immediately before merging, repeat `gh pr view <pr> --json headRefOid -q .headRefOid` and require an exact match with the approved SHA. If the SHA changed, do not merge; ask the delegate for a fresh PR-ready report and review the new changes. If the SHA still matches, required checks are green, and any required VRT approval is present, run `a gh pr-merge <pr>` from the target repository. Do not use `gh pr merge`.
+4. Before merging, read the title with `gh pr view <pr> --json title -q .title`. If it matches Conventional Commits breaking-change syntax (`type!:` or `type(scope)!:`), stop under `Stop conditions` without attempting the merge and ask the user to merge this PR. Otherwise, repeat `gh pr view <pr> --json headRefOid -q .headRefOid` immediately before merging and require an exact match with the approved SHA. If the SHA changed, do not merge; ask the delegate for a fresh PR-ready report and review the new changes. If the SHA still matches, required checks are green, and any required VRT approval is present, run `a gh pr-merge <pr>` from the target repository. Do not use `gh pr merge`.
 
 ## After a merge
 
@@ -51,12 +51,14 @@ Resolve these yourself and keep the loop running; do not ask the user.
 
 - A delegate reports that a supplied premise is wrong: re-investigate, correct the premise (update the item note or design page when they were wrong), and notify the delegate with the correction.
 - `a gh pr-merge` fails: for a conflict, tell the delegate to sync the base branch with the `sync-base-branch` skill; for a failed required check, tell the delegate to fix it; for any other failure, read the error and fix its cause or have the delegate fix it. Then handle its next PR-ready report.
+- `a gh pr-merge` refuses because the PR title marks a breaking change: stop under `Stop conditions` and ask the user to merge the PR.
 - A report, PR, or delegate cannot be matched: identify it from `a agent peer children`, the branch's `x-tq-checklist-item-id`, and `gh pr list`, then continue.
 
 ## Stop conditions
 
 - A required VRT approval is missing.
 - A file or command required for draft review is unavailable.
+- The PR title marks a breaking change. Do not attempt the merge; ask the user to merge the PR.
 
 When stopping, report the reason and the next decision needed to the user, then run `a agent status set you "<the decision needed, as a noun phrase>"`. Leave vibe mode on and wait for the user's direction. Do not continue merging or dispatching work while waiting.
 

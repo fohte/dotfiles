@@ -17,6 +17,18 @@ fi
 
 pr_repo="$ARMYKNIFE_PR_OWNER/$ARMYKNIFE_PR_REPO"
 
+if [[ -n "${ARMYKNIFE_SESSION_ID:-}" || -n "${CODEX_SESSION_ID:-}" ]]; then
+  if ! pr_title="$(gh pr view "$ARMYKNIFE_PR_URL" --json title --jq .title 2>&1)"; then
+    printf 'pre-pr-merge: unable to read the title for %s: %s\n' "$ARMYKNIFE_PR_URL" "$pr_title" >&2
+    exit 1
+  fi
+
+  if [[ "$pr_title" =~ ^[[:alnum:]][[:alnum:]._-]*(\([^()]+\))?!: ]]; then
+    printf 'pre-pr-merge: refusing to merge breaking-change PR %s (title: %q). A human must merge this PR.\n' "$ARMYKNIFE_PR_URL" "$pr_title" >&2
+    exit 1
+  fi
+fi
+
 report_tmux_status() {
   if [[ -n "${TMUX_PR_MERGE_STATUS_FILE:-}" ]]; then
     printf '%s\n' "$1" > "$TMUX_PR_MERGE_STATUS_FILE"
