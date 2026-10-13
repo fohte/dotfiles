@@ -53,7 +53,7 @@ agent:
       icon: "\U000F0849" # nf-md-account_group
       color: [255, 215, 135] # yellow (#FFD787)
   work_type_fallback:
-    icon: "\uF111" # nf-fa-circle
+    icon: "\uF141" # nf-fa-ellipsis_h
     color: [135, 135, 135] # gray (#878787)
   codex:
     # Applies to delegated sessions only, so interactive `codex` keeps its own
