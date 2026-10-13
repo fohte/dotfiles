@@ -48,6 +48,8 @@ PR が残らないので、報告しない限り委任が終わったことが�
 この委任は vibe coding モードである。`create-pr` skill を使う前に `a agent vibe status` を実行し、終了コードが 0 の場合だけ以下の手順を適用する。コマンドが見つからない場合を含め、終了コードが 0 以外なら通常の委任として扱う。
 
 vibe の場合も `commit` skill の self-review と commit / push の手順は続ける。`create-pr` skill の Step 0 では push だけを行い、crit 承認は待たない。Step 1 (manual flow では Step 2 も) から Step 7 までは `create-pr` skill の vibe 手順に従い、draft ready 通知後は委任元の「draft にコメントを書いた」「コードを直して」「承認」の返答に応じる。明示的な「承認」を受けるまで submit しない。
+
+default branch へ直接 push する運用のリポジトリ (`is_master_push_repo` が true) でも、この委任では今のブランチで作業して PR を作り、default branch へは push しない。
 {{- else }}
 PR の作成・完了は委任元に `notify` しない。
 merge 後に worktree が片付けられると armyknife が委任元に自動で通知する。

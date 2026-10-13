@@ -78,6 +78,8 @@ direct=$(cd "$repo" && a config get repo.direct_commit)
 
 `direct` が `true` なら後述の「direct-commit モード」で、worktree もブランチも作らない。判定は armyknife の `repos.<owner>/<repo>.direct_commit` が唯一の根拠で、リポジトリの印象や過去の経験で上書きしない。
 
+vibe 中の委任だけは例外で、`direct` が `true` でも worktree と PR で委任し、`DELEGATE_DIRECT_COMMIT=false` を渡す。vibe のループは委任先の PR を委任元がレビューして merge する流れで回るため。
+
 承認済みの PR 分割チェックリストがある場合は、委任する PR に対応する葉項目 ID も環境変数で渡す。項目が無い委任では省略する。
 
 ```bash
