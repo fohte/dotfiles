@@ -52,6 +52,9 @@ agent:
     project-manager:
       icon: "\U000F0849" # nf-md-account_group
       color: [255, 215, 135] # yellow (#FFD787)
+  work_type_fallback:
+    icon: "\uF111" # nf-fa-circle
+    color: [135, 135, 135] # gray (#878787)
   codex:
     # Applies to delegated sessions only, so interactive `codex` keeps its own
     # defaults. The delegate skill explains why the quota goes to effort rather
