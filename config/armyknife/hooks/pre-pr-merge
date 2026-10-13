@@ -17,7 +17,12 @@ fi
 
 pr_repo="$ARMYKNIFE_PR_OWNER/$ARMYKNIFE_PR_REPO"
 
+is_agent_session=0
 if [[ -n "${ARMYKNIFE_SESSION_ID:-}" || -n "${CODEX_SESSION_ID:-}" ]]; then
+  is_agent_session=1
+fi
+
+if ((is_agent_session)); then
   if ! pr_title="$(gh pr view "$ARMYKNIFE_PR_URL" --json title --jq .title 2>&1)"; then
     printf 'pre-pr-merge: unable to read the title for %s: %s\n' "$ARMYKNIFE_PR_URL" "$pr_title" >&2
     exit 1
@@ -104,7 +109,7 @@ report_tmux_status 'waiting for VRT'
 wait_for_vrt_status result
 
 if [[ "$vrt_status" == 'failure' ]]; then
-  if [[ -n "${ARMYKNIFE_SESSION_ID:-}" || -n "${CODEX_SESSION_ID:-}" ]]; then
+  if ((is_agent_session)); then
     printf 'pre-pr-merge: VRT reported visual differences for %s. A human must review the result before merging.\n' "$ARMYKNIFE_PR_URL" >&2
     exit 1
   fi
