@@ -1,7 +1,7 @@
 #!/bin/bash
-# Ask a reviewer that shares no context with the writer whether the PR draft
-# holds up on its own. The writer fills gaps in the body with what it already
-# knows, so it cannot judge this itself.
+# Ask a reviewer without the drafting session's context whether the PR draft
+# holds up on its own. The drafting session reads causes the body omits out of
+# the task and investigation still in its context, so it cannot judge this.
 #
 # Usage: review-draft [<base_branch>]
 set -euo pipefail

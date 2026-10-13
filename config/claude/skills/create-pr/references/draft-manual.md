@@ -69,7 +69,7 @@ steps:
     ~/.agents/skills/create-pr/scripts/lint-draft.ts
     ```
 
-2. 書き手と文脈を共有しないレビュアーに draft を読ませる。書き手は本文に書かれていない因果を頭の中で補ってしまうので、意味の判定はレビュアーに任せる。次のスクリプトを実行すると、title と body、base branch との diff だけを渡されたレビュアーが、困りごとが変更でなぜ解消されるかと、不要な行や引用があるかに自由回答で答える。base branch が default branch でないときは引数で渡す
+2. draft を書いたセッションの context を持たないレビュアーに draft を読ませる。書いたセッションは、本文に書かれていない因果も context にある委任内容や調査結果から読み取ってしまうので、意味の判定はレビュアーに任せる。次のスクリプトを実行すると、title と body、base branch との diff だけを渡されたレビュアーが、困りごとが変更でなぜ解消されるかと、不要な行や引用があるかに自由回答で答える。base branch が default branch でないときは引数で渡す
 
     ```bash
     ~/.agents/skills/create-pr/scripts/review-draft [<base_branch>]
