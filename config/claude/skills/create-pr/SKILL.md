@@ -32,14 +32,14 @@ Apply every row below whose condition holds. The rows are independent of each ot
 | `repo.owner` is `fohte`                          | Skip Step 8.                                                                                                                                                                                    |
 | `has_release_please` is `true`                   | Rule 1 uses Conventional Commits; otherwise `<scope>: <description>`. `scripts/render-rules` already applies it when it prints the rules.                                                       |
 | `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.                                                           |
-| ... and the template contains `Design decisions` | The rules include Rule 9 and Step 2 checks Rule 9; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                     |
+| ... and the template contains `Design decisions` | The rules include Rule 9; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                                              |
 
 ## 開始時の宣言 (必須・最初の応答で実行)
 
 create-pr skill を起動したら、**最初の応答で**適用される必須ステップを列挙し、これから実行する旨を宣言すること。宣言なしに Step 1 以降に進むのは禁止。
 
 - Step 0: 未 push コミットの push (`commit` skill の push 手順に従う) と、branch の diff の crit レビュー (`crit-approval-review` skill)。`vibe_mode` では push のみ実施し、crit レビューを省く
-- Step 2: PR body セルフレビュー (`lint-draft.ts` の検査 + ルール照合 + 原則照合 + 減算の独立 4 工程)
+- Step 2: `lint-draft.ts` による機械的な検査と、文脈を持たないレビュアーによる PR body のレビュー
 - Step 3-4: editor によるレビューと指示への対応。通常フローで実施し、`vibe_mode` では draft を添えて委任元へ通知し、明示的な承認を受けるまで submit しない
 
 「小さい PR だから」「変更が単純だから」「明らかに問題ないから」「効率を優先したい」を理由としたスキップは禁止。これらは典型的な自己判断スキップシグナルで、検出したら必ず実行する。skill のテキストに「必須」「スキップ禁止」と書かれているステップを Claude 側の判断で省略しない。スキップしてよいのはユーザーが該当ステップを名指しで明示的に skip 指示した場合のみ。
@@ -68,7 +68,7 @@ git log "origin/$(git main)..HEAD" --oneline
 
 `references/draft-manual.md` の Step 1 に従う。
 
-## 2. セルフレビュー (必須・スキップ禁止)
+## 2. ドラフトのレビュー (必須・スキップ禁止)
 
 `references/draft-manual.md` の Step 2 に従う。
 
