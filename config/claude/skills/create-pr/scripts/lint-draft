@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+"""Check a PR body draft against the rules that can be judged mechanically.
+
+Usage: lint-draft [--owner <org>] [<draft>]
+
+Prints one line per violation and exits 1 if any is found.
+<draft> defaults to the output of `draft-path`, <org> to the current repo's owner.
+"""
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+
+TITLE_MAX = 50
+
+LIST_ITEM = re.compile(r"^(\s*)(?:[-*+]|\d+[.)])\s+(.*)$")
+FENCE = re.compile(r"^\s*(```|~~~)")
+# Only the opening clause matters: "〜とき、" / "〜ので、" put the condition before the subject.
+WHY_CONDITIONAL = re.compile(r"^[^、。]*(とき|時|ので)(は|に|には)?、|^(When|If|Since|Because|Without)\b")
+BARE_URL = re.compile(r"^https?://\S+$")
+# The lookbehind skips redirect.github.com and other subdomains.
+GITHUB_ORG = re.compile(r"(?<![\w.-])github\.com/([\w.-]+)")
+BLOB_REF = re.compile(r"github\.com/[\w.-]+/[\w.-]+/blob/([^/\s)]+)/")
+SHA = re.compile(r"^[0-9a-f]{7,40}$")
+# Requires a space before "(" so a trailing markdown link `[text](url)` does not match.
+TRAILING_PAREN = re.compile(r"(\s\([^()]*\)|（[^（）]*）)$")
+POLITE_END = re.compile(r"(です|ます|ました|でした|ません|ましょう|でしょう|ください)$")
+
+
+def split_frontmatter(text):
+    lines = text.split("\n")
+    if lines and lines[0] == "---":
+        for i in range(1, len(lines)):
+            if lines[i] == "---":
+                return lines[1:i], lines[i + 1 :], i + 1
+    return [], lines, 0
+
+
+def parse_title(frontmatter):
+    for i, line in enumerate(frontmatter):
+        m = re.match(r"^title:\s*(.*)$", line)
+        if m:
+            value = m.group(1).strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+                quote = value[0]
+                value = value[1:-1]
+                if quote == "'":
+                    value = value.replace("''", "'")
+            # +2 for the opening `---` and 1-based numbering.
+            return value, i + 2
+    return None, None
+
+
+def indent_of(line):
+    return len(line) - len(line.lstrip(" \t"))
+
+
+def lint(text, owner):
+    errors = []
+
+    def report(lineno, rule, message):
+        errors.append((lineno, f"{rule}: {message}"))
+
+    frontmatter, body, offset = split_frontmatter(text)
+
+    title, title_lineno = parse_title(frontmatter)
+    if title is not None and len(title) > TITLE_MAX:
+        report(title_lineno, "Rule 1", f"title is {len(title)} characters (max {TITLE_MAX})")
+
+    # Tag fenced code instead of dropping it: examples inside are not linted, but
+    # a fence inside a list item still counts as list content for Rule 12.
+    lines = []
+    in_fence = False
+    for line in body:
+        if FENCE.match(line):
+            in_fence = not in_fence
+            lines.append((line, True))
+        else:
+            lines.append((line, in_fence))
+
+    first_heading_seen = False
+    in_why = True
+    in_list = False
+    prev_in_list = False
+    blank_since_prev = False
+    from_block = None
+
+    def close_from_block():
+        nonlocal from_block
+        if from_block is None:
+            return
+        lineno, _, children = from_block
+        if len(children) < 2:
+            report(lineno, "Rule 5", "write a single `from:` link on one line as `- from: <URL>`")
+        from_block = None
+
+    for i, (line, is_code) in enumerate(lines):
+        lineno = i + 1 + offset
+        stripped = line.strip()
+
+        if not stripped:
+            if not is_code:
+                blank_since_prev = True
+            continue
+
+        item = None if is_code else LIST_ITEM.match(line)
+        indent = indent_of(line)
+        continues_list = item is not None or (in_list and indent > 0)
+
+        if blank_since_prev and prev_in_list and continues_list:
+            report(lineno, "Rule 12", "remove the blank line inside the list")
+        blank_since_prev = False
+        in_list = prev_in_list = continues_list
+
+        if is_code:
+            continue
+
+        if "<!--" in line:
+            report(lineno, "template", "remove the template comment")
+
+        for m in GITHUB_ORG.finditer(line):
+            if m.group(1).lower() != owner.lower():
+                report(lineno, "Rule 5", f"link to `{m.group(1)}` via redirect.github.com")
+        for m in BLOB_REF.finditer(line):
+            if not SHA.match(m.group(1)):
+                report(lineno, "Rule 5", f"use a commit SHA permalink instead of `blob/{m.group(1)}/`")
+
+        if from_block is not None:
+            if indent > from_block[1] and item is not None:
+                if BARE_URL.match(item.group(2)):
+                    from_block[2].append(item.group(2))
+                else:
+                    report(lineno, "Rule 5", "list only bare URLs under `from:`")
+                continue
+            close_from_block()
+
+        if line.startswith("## "):
+            if first_heading_seen:
+                in_why = False
+            first_heading_seen = True
+            continue
+
+        if item is not None:
+            content = item.group(2).rstrip()
+            m = re.match(r"^from:\s*(.*)$", content)
+            if m:
+                rest = m.group(1)
+                if rest == "":
+                    from_block = (lineno, indent, [])
+                elif not BARE_URL.match(rest) or "," in rest:
+                    report(lineno, "Rule 5", "write `from:` as `- from: <URL>` with a bare URL and nothing else")
+                continue
+
+            if in_why and WHY_CONDITIONAL.match(content):
+                report(lineno, "Rule 3", "start with the subject and conclusion, not a condition")
+            if TRAILING_PAREN.search(content):
+                report(lineno, "Rule 10", "move the trailing parenthetical into a sub-bullet")
+            check_sentence_end(content, lineno, report)
+        elif stripped.startswith("|"):
+            cells = [c.strip() for c in stripped.strip("|").split("|")]
+            if not all(re.fullmatch(r":?-+:?", c) for c in cells):
+                for cell in cells:
+                    check_sentence_end(cell, lineno, report)
+
+    close_from_block()
+    return errors
+
+
+def check_sentence_end(content, lineno, report):
+    if content.endswith("。"):
+        report(lineno, "Rule 15", "drop the trailing `。`")
+    elif POLITE_END.search(content):
+        report(lineno, "Rule 15", "write in plain form, not です/ます")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("draft", nargs="?")
+    parser.add_argument("--owner")
+    args = parser.parse_args()
+
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    draft = args.draft or subprocess.check_output([os.path.join(script_dir, "draft-path")], text=True).strip()
+    owner = (
+        args.owner
+        or subprocess.check_output(["gh", "repo", "view", "--json", "owner", "--jq", ".owner.login"], text=True).strip()
+    )
+
+    with open(draft, encoding="utf-8") as f:
+        errors = lint(f.read(), owner)
+
+    for lineno, message in errors:
+        print(f"{draft}:{lineno}: {message}")
+    sys.exit(1 if errors else 0)
+
+
+if __name__ == "__main__":
+    main()
