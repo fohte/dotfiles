@@ -802,8 +802,8 @@ rules:
       flag_groups['pr-edit-add-label'].exists(v,
         v == 'vrt-approved' || v.startsWith('vrt-approved,') ||
         v.endsWith(',vrt-approved') || v.contains(',vrt-approved,'))
-    message: '`vrt-approved` means a human visually reviewed the VRT diff and approved it. The agent cannot verify a visual diff, so this label must be added by the user.'
-    fix_suggestion: 'Ask the user to review the VRT report and add the label themselves.'
+    message: '`vrt-approved` records human visual approval. Agents that review a VRT diff must use `vrt-agent-reviewed` instead.'
+    fix_suggestion: 'Use `vrt-agent-reviewed` after reviewing the diff, or ask the user to apply `vrt-approved` after their own review.'
     tests:
       - deny: 'gh pr edit 25 --add-label vrt-approved'
       - deny: 'gh pr edit 25 --add-label=vrt-approved'
@@ -822,6 +822,7 @@ rules:
   - allow: 'gh [-R *] pr edit * --add-label|--remove-label *'
     tests:
       - allow: 'gh pr edit 25 --add-label "bump:minor"'
+      - allow: 'gh pr edit 25 --add-label vrt-agent-reviewed'
       - allow: 'gh pr edit 25 --remove-label "bump:minor"'
       - allow: 'gh -R fohte/runok pr edit 25 --add-label foo'
       - deny: 'gh pr edit 25 --body "foo" --add-label bar'
