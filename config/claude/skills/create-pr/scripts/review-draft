@@ -1,0 +1,52 @@
+#!/bin/bash
+# Ask a reviewer that shares no context with the writer whether the PR draft
+# holds up on its own. The writer fills gaps in the body with what it already
+# knows, so it cannot judge this itself.
+#
+# Usage: review-draft [<base_branch>]
+set -euo pipefail
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+
+# Assign first: a failure inside `$(...)` used as an argument would not trip `set -e`.
+draft=$("$script_dir/draft-path")
+base=${1:-$(git main)}
+[[ -f "$draft" ]] || {
+  echo "Error: draft not found: $draft" >&2
+  exit 1
+}
+
+title=$(yq --front-matter=extract -r '.title' "$draft")
+# The frontmatter also holds the review steps, which are not part of the PR.
+body=$(sed '1,/^---$/d' "$draft")
+diff=$(git diff "origin/$base...HEAD")
+
+prompt=$(
+  cat << EOF
+あなたはこの Pull Request のレビュアーです。以下の title と body、base branch との diff だけを読み、次の 2 点に自由回答で答えてください。
+
+1. body の冒頭の節 (Purpose や Why など) に書かれた困りごとが、続く節 (Approach や What など) の変更でなぜ解消されるのかを、body の記述だけから説明できますか。説明できるなら、その説明を書いてください。diff を読まないと説明できない、または説明できないなら、body に何が欠けているかを書いてください
+2. レビューの判断に不要な行や引用はありますか。あれば該当箇所を引用し、なぜ不要かを書いてください
+
+指摘がなければ「指摘なし」と書いてください。
+
+<title>
+$title
+</title>
+
+<body>
+$body
+</body>
+
+<diff>
+$diff
+</diff>
+EOF
+)
+
+# No tools, so the reviewer reads nothing beyond the prompt; safe mode keeps the
+# user's CLAUDE.md and hooks out of its context.
+work_dir=$(mktemp -d -t review-draft.XXXXXX)
+trap 'rm -rf "$work_dir"' EXIT
+cd "$work_dir"
+claude --print --model haiku --safe-mode --strict-mcp-config --tools "" <<< "$prompt"
