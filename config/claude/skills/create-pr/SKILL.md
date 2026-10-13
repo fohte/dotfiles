@@ -159,7 +159,7 @@ enable-vibe-coding skill の『PR ready を受けたら』の手順に従う。
 </vibe-pr-ready>
 ```
 
-通知後は `a agent status set wait "review or merge of <repo-name> PR <number>"` を実行して turn を止め、`<repo-name>` には `repo.name`、`<number>` には PR URL の末尾の番号を入れ、委任元の返答で再開後に Step 8 が適用される場合は Step 8 を実行する。
+通知後は `a agent status set wait "merge of <repo-name> PR <number>"` を実行 (`<repo-name>`=`repo.name`、`<number>`=PR URL 末尾の番号)、該当時は Step 8 を実行する。
 
 差し戻しを反映して再 submit した場合も、CI が green になってから同じ形式で再報告する。
 

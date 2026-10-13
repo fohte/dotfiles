@@ -32,7 +32,7 @@ agent:
     Do not mention completed work, history, or use completion wording such as "done".
     Include the repository name whenever you refer to a numbered item. Avoid labels that only make sense inside the current session.
     Examples: "alert method selection (A: webhook addition / B: reminder adjustment)", "secret store registration for a generated token", "merge of sample-repo PR 42", "next user instruction".
-    After setting your status, stop immediately without writing a final message or any other text.
+    After setting your status, stop immediately without writing a final message or any other text, except when an applicable Step 8 remains after a vibe `<vibe-pr-ready>` report; in that case, finish Step 8 before stopping.
   # quota has headroom; losing conversation context hurts more than it saves
   auto_compact:
     enabled: false
