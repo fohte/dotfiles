@@ -19,7 +19,7 @@ Run the implementation checklist as a sequence of delegated PRs. Armyknife repos
 
 Treat a dependency as resolved only when the referenced checklist work is checked and any stated release or merge requirement is satisfied. When a note has no dependency, or says `依存: なし`, the leaf is ready. If a dependency is ambiguous, leave that leaf undispatched until it can be verified.
 
-The following vibe report and merge procedures apply only to leaves whose target repo has `repo.vibe: true`. A normal delegate does not send vibe reports. Leave its review and merge to the user, and do not run `a gh pr-merge` for its PR.
+The following vibe report and merge procedures apply only to checklist leaves or CI repairs whose target repo has `repo.vibe: true`. A normal delegate, including a repair in a repo where vibe is disabled, does not send vibe reports. Leave its review and merge to the user, and do not run `a gh pr-merge` for its PR.
 
 ## When a `<vibe-draft-ready>` report arrives
 
@@ -45,7 +45,7 @@ A report must contain the PR URL, checklist item ID, and head SHA. For a CI repa
 ## After a merge
 
 1. Follow the `delegate` skill's merge procedure to confirm CI on the default branch is green. This also applies after the user merges a normal delegate's PR; do not merge that PR yourself. A merge notification for a PR this skill already merged is informational; do not process it as a new merge.
-2. If default-branch CI fails, pause merges and new delegations. Notify active repository sessions to hold their merges, then delegate a CI repair through the `delegate` skill with `DELEGATE_VIBE=true`. Do not associate the repair with a checklist item. Review its draft and PR with the same draft-ready and PR-ready procedures, then check default-branch CI again. If the repair delegation fails, delegate another repair. Resume held sessions after CI is green.
+2. If default-branch CI fails, pause merges and new delegations. Notify active repository sessions to hold their merges. In the affected repo, run `a config get repo.vibe`. If it returns `true`, delegate a CI repair with `DELEGATE_VIBE=true`, then review and merge it through the vibe draft and PR procedures. If it returns `false` or the lookup fails, delegate a normal repair without `DELEGATE_VIBE` or `--vibe`; the user reviews and merges it. Do not associate the repair with a checklist item. After the repair merges, check default-branch CI again and resume held sessions when it is green. If the repair delegation fails, retry using the same repo policy.
 3. Refresh `tq task get <task-id>` and confirm the merged checklist leaf is checked. If it remains unchecked, stop before redispatching that item and resolve the tq state.
 4. Re-read the checklist. Dispatch every newly ready unchecked leaf in parallel, using the `Start` procedure's dependency rules. Keep already active delegates running.
 5. Continue handling ready reports, merges, CI, and newly unblocked leaves until all leaves in `実装` are checked. When waiting for a normal PR's user review or merge, continue any independent ready work; only its dependents wait.
