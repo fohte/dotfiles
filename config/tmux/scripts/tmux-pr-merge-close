@@ -127,13 +127,8 @@ clear_pr_merge_status() {
   tmux refresh-client -S > /dev/null 2>&1 || true
 }
 
-fail() {
-  local message display_message
-  message="PR #${pr_number:-?}"
-  if [ -n "$pr_title" ]; then
-    message+=" (${pr_title})"
-  fi
-  message+=" failed: $1"
+report_to_user() {
+  local title="$1" outcome="$2" message="$3" display_message
   clear_pr_merge_status
   display_message="${message//#/##}"
   if [ -n "$active_client_tty" ]; then
@@ -141,8 +136,18 @@ fail() {
   else
     tmux display-message -d 0 "$display_message" > /dev/null 2>&1 || true
   fi
-  notify 'tmux PR merge failed' "$message" failure "${active_session_id:-}"
+  notify "$title" "$message" "$outcome" "${active_session_id:-}"
   printf '%s\n' "$message" >&2
+}
+
+fail() {
+  local message
+  message="PR #${pr_number:-?}"
+  if [ -n "$pr_title" ]; then
+    message+=" (${pr_title})"
+  fi
+  message+=" failed: $1"
+  report_to_user 'tmux PR merge failed' failure "$message"
   exit 1
 }
 
@@ -430,6 +435,7 @@ run_pr_merge() {
 pr_merge_close_failure_reason() {
   local line
 
+  # armyknife writes this diagnostic when merged-worktree cleanup fails.
   while IFS= read -r line; do
     case "$line" in
       "Could not close worktree for merged PR #${pr_number} "*)
@@ -443,7 +449,7 @@ pr_merge_close_failure_reason() {
 }
 
 notify_merged_close_failure() {
-  local close_reason="$1" message display_message
+  local close_reason="$1" message
   message="PR #${pr_number:-?}"
   if [ -n "$pr_title" ]; then
     message+=" ($pr_title)"
@@ -455,15 +461,7 @@ notify_merged_close_failure() {
     message+='.'
   fi
 
-  clear_pr_merge_status
-  display_message="${message//#/##}"
-  if [ -n "$active_client_tty" ]; then
-    tmux display-message -d 0 -c "$active_client_tty" "$display_message" > /dev/null 2>&1 || true
-  else
-    tmux display-message -d 0 "$display_message" > /dev/null 2>&1 || true
-  fi
-  notify 'tmux PR merge succeeded' "$message" success "${active_session_id:-}"
-  printf '%s\n' "$message" >&2
+  report_to_user 'tmux PR merge succeeded' success "$message"
 }
 
 close_merged_session() {
