@@ -21,18 +21,18 @@ Treat a dependency as resolved only when the referenced checklist work is checke
 
 ## When a `<vibe-draft-ready>` report arrives
 
-Handle each report once. A report must contain the absolute draft path, branch name, head SHA, checklist item ID, and the sentence `enable-vibe-coding skill の『draft ready を受けたら』の手順に従う`. Match the item ID to an active delegate and its task note. A default-branch CI repair has no checklist item; its report must identify that repair and include `checklist item ID: none`. Match it to the active repair delegate. If a report is malformed or does not match an active delegate, stop and notify the user.
+Handle each report once. A report must contain the absolute draft path, branch name, head SHA, checklist item ID, and the sentence `enable-vibe-coding skill の『draft ready を受けたら』の手順に従う`. Match the item ID to an active delegate and its task note. A default-branch CI repair has no checklist item; its report must identify that repair and include `checklist item ID: none`. Match it to the active repair delegate. If a report is malformed, ask the delegate to resend it in the `create-pr` format; if it does not match an active delegate, resolve it as described under `When something goes wrong`.
 
-1. Confirm the reported head SHA exists in the target repository and is the tip of the reported branch. Read the draft from its absolute path and obtain the diff with `git diff origin/$(git main)...<head-sha>`. For a checklist PR, read the exact tq design page and item note. For a CI repair, use the failed run and repair task as the review context instead. Read `~/.agents/skills/create-pr/SKILL.md` and `~/.agents/skills/create-pr/references/draft-manual.md`. Run `~/.agents/skills/create-pr/scripts/render-rules` from the target repository root. If any required file or command is unavailable, stop and notify the user.
+1. Confirm the reported head SHA exists in the target repository and is the tip of the reported branch. Read the draft from its absolute path and obtain the diff with `git diff origin/$(git main)...<head-sha>`. For a checklist PR, read the exact tq design page and item note. For a CI repair, use the failed run and repair task as the review context instead. Read `~/.agents/skills/create-pr/SKILL.md` and `~/.agents/skills/create-pr/references/draft-manual.md`. Run `~/.agents/skills/create-pr/scripts/render-rules` from the target repository root. If any required file or command is unavailable, stop as described under `Stop conditions`.
 2. Ask a read-only subagent to review the draft as the user would in Step 3 of `create-pr`. Give it the draft, diff, applicable tq or CI repair context, `create-pr/SKILL.md`, `create-pr/references/draft-manual.md`, and the rendered rules; tell it to read the skill and reference. Require separate findings for PR content and design conformance, with concrete evidence. Tell the subagent not to edit files or interact with GitHub. Limit design review to whether the implementation follows the approved design; leave general code quality to the delegate's self-review.
 3. If the PR body has findings, insert plain-language comments at the relevant places in the reported draft, as a reviewer would in the `a ai pr-draft review` editor. There is no special marker. Then notify the delegate that the draft contains comments and must be revised through the `create-pr` skill's Step 4. If the diff has findings, notify the delegate to fix the code. Include both sets of findings when both reviews fail. Do not approve the draft while either review has findings.
-4. If both reviews pass, record the approved head SHA for this PR and notify the delegate that it is approved and may be submitted. Count any review attempt with findings as a failure for that PR, as defined under `Stop conditions`.
+4. If both reviews pass, record the approved head SHA for this PR and notify the delegate that it is approved and may be submitted.
 
 ## When a `<vibe-pr-ready>` report arrives
 
-A report must contain the PR URL, checklist item ID, and head SHA. For a CI repair, require `checklist item ID: none`. Match the report to the active delegate and its approved draft review. If the report is malformed or does not match an active delegate, stop and notify the user.
+A report must contain the PR URL, checklist item ID, and head SHA. For a CI repair, require `checklist item ID: none`. Match the report to the active delegate and its approved draft review. If a report is malformed, ask the delegate to resend it in the `create-pr` format; if it does not match an active delegate, resolve it as described under `When something goes wrong`.
 
-1. Confirm that `gh pr view <pr> --json headRefOid -q .headRefOid` exactly matches the reported head SHA. If it does not, do not review or merge that report; ask the delegate for a fresh PR-ready report with the current SHA. Compare the reported SHA with the SHA approved during draft review. If they differ and the approved SHA is an ancestor of the reported SHA, obtain the incremental diff with `git diff <approved-sha>..<reported-head-sha>`. If the approved SHA is not an ancestor, the branch was rebased or rewritten; obtain the current PR-only diff with `git diff origin/$(git main)...<reported-head-sha>` and review that full diff against the design. Ask a read-only subagent to compare the applicable diff with the approved design page and item note, or the failed run and repair task for a CI repair. If the comparison has findings, notify the delegate to fix the code and count the attempt as failed under `Stop conditions`. If it passes, record the reported head SHA as approved.
+1. Confirm that `gh pr view <pr> --json headRefOid -q .headRefOid` exactly matches the reported head SHA. If it does not, do not review or merge that report; ask the delegate for a fresh PR-ready report with the current SHA. Compare the reported SHA with the SHA approved during draft review. If they differ and the approved SHA is an ancestor of the reported SHA, obtain the incremental diff with `git diff <approved-sha>..<reported-head-sha>`. If the approved SHA is not an ancestor, the branch was rebased or rewritten; obtain the current PR-only diff with `git diff origin/$(git main)...<reported-head-sha>` and review that full diff against the design. Ask a read-only subagent to compare the applicable diff with the approved design page and item note, or the failed run and repair task for a CI repair. If the comparison has findings, notify the delegate to fix the code. If it passes, record the reported head SHA as approved.
 2. Verify with `gh pr checks <pr>` that required checks are green. If checks are pending, wait for the delegate to finish them; do not merge yet. If a check failed, notify the delegate with the failed check and wait for a corrected ready report.
 3. Confirm any required VRT approval is already present. If it is missing, stop and notify the user. Never add the `vrt-approved` label; visual review remains a human approval gate.
 4. Immediately before merging, repeat `gh pr view <pr> --json headRefOid -q .headRefOid` and require an exact match with the approved SHA. If the SHA changed, do not merge; ask the delegate for a fresh PR-ready report and review the new changes. If the SHA still matches, required checks are green, and any required VRT approval is present, run `a gh pr-merge <pr>` from the target repository. Do not use `gh pr merge`.
@@ -40,19 +40,24 @@ A report must contain the PR URL, checklist item ID, and head SHA. For a CI repa
 ## After a merge
 
 1. Follow the `delegate` skill's merge procedure to confirm CI on the default branch is green. A merge notification for a PR this skill already merged is informational; do not process it as a new merge.
-2. If default-branch CI fails, pause merges and new delegations. Notify active repository sessions to hold their merges, then delegate a CI repair through the `delegate` skill with `DELEGATE_VIBE=true`. Do not associate the repair with a checklist item. Review its draft and PR with the same draft-ready and PR-ready procedures, then check default-branch CI again. If the repair delegation fails, stop and notify the user. Resume held sessions after CI is green.
+2. If default-branch CI fails, pause merges and new delegations. Notify active repository sessions to hold their merges, then delegate a CI repair through the `delegate` skill with `DELEGATE_VIBE=true`. Do not associate the repair with a checklist item. Review its draft and PR with the same draft-ready and PR-ready procedures, then check default-branch CI again. If the repair delegation fails, delegate another repair. Resume held sessions after CI is green.
 3. Refresh `tq task get <task-id>` and confirm the merged checklist leaf is checked. If it remains unchecked, stop before redispatching that item and resolve the tq state.
 4. Re-read the checklist. Dispatch every newly ready unchecked leaf in parallel, using the `Start` procedure's dependency rules. Keep already active delegates running.
 5. Continue handling ready reports, merges, CI, and newly unblocked leaves until all leaves in `実装` are checked.
 
+## When something goes wrong
+
+Resolve these yourself and keep the loop running; do not ask the user.
+
+- A delegate reports that a supplied premise is wrong: re-investigate, correct the premise (update the item note or design page when they were wrong), and notify the delegate with the correction.
+- `a gh pr-merge` fails: for a conflict, tell the delegate to sync the base branch with the `sync-base-branch` skill; for a failed required check, tell the delegate to fix it; for any other failure, read the error and fix its cause or have the delegate fix it. Then handle its next PR-ready report.
+- A report, PR, or delegate cannot be matched: identify it from `a agent peer children`, the branch's `x-tq-checklist-item-id`, and `gh pr list`, then continue.
+
 ## Stop conditions
 
-- Each draft review or design comparison with findings counts as one failed attempt for that PR. Stop and notify the user when the same PR reaches two failed attempts across both review stages.
-- A delegate reports that a supplied premise is wrong.
-- `a gh pr-merge` fails, including a conflict or failed required check.
-- The delegated default-branch CI repair fails.
-- A required VRT approval is missing, or the checklist, PR, or delegate cannot be identified safely.
+- A required VRT approval is missing.
+- A file or command required for draft review is unavailable.
 
-When stopping, send a PushNotification explaining the reason and the next decision needed, then run `a agent status set you "default-branch merge direction"`. Leave vibe mode on and wait for the user's direction. Do not continue merging or dispatching work while waiting.
+When stopping, report the reason and the next decision needed to the user, then run `a agent status set you "<the decision needed, as a noun phrase>"`. Leave vibe mode on and wait for the user's direction. Do not continue merging or dispatching work while waiting.
 
 When every leaf is checked, report completion to the user and run `a agent vibe off`.

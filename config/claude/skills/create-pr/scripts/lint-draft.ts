@@ -14,6 +14,7 @@ import { parseArgs } from 'node:util'
 type Report = (lineno: number, rule: string, message: string) => void
 
 const TITLE_MAX = 50
+const SECTION_MAX_ITEMS = 2
 
 const LIST_ITEM = /^(\s*)(?:[-*+]|\d+[.)])\s+(.*)$/
 const FENCE = /^\s*(```|~~~)/
@@ -132,6 +133,20 @@ export function lint(text: string, owner: string): [number, string][] {
     fromBlock = undefined
   }
 
+  // Only the Why and What sections: Design decisions may need a longer table.
+  let sectionCount = 0
+  let section: { lineno: number; items: number } | undefined
+  const closeSection = () => {
+    if (section && section.items > SECTION_MAX_ITEMS) {
+      report(
+        section.lineno,
+        'Rule 14',
+        `section has ${section.items} items (max ${SECTION_MAX_ITEMS}); drop what the reviewer does not need`,
+      )
+    }
+    section = undefined
+  }
+
   for (const [i, { line, isCode }] of lines.entries()) {
     const lineno = i + 1 + offset
     const stripped = line.trim()
@@ -185,14 +200,17 @@ export function lint(text: string, owner: string): [number, string][] {
     }
 
     if (line.startsWith('## ')) {
+      closeSection()
       if (firstHeadingSeen) inWhy = false
       firstHeadingSeen = true
+      if (++sectionCount <= 2) section = { lineno, items: 0 }
       continue
     }
 
     if (item) {
       const content = item[2].trimEnd()
       const from = content.match(/^from:\s*(.*)$/)
+      if (section && !from) section.items++
       if (from) {
         const rest = from[1]
         if (rest === '') {
@@ -234,6 +252,7 @@ export function lint(text: string, owner: string): [number, string][] {
   }
 
   closeFromBlock()
+  closeSection()
   return errors
 }
 
