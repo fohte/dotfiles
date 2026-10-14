@@ -379,7 +379,11 @@ rules:
       - allow: 'a cc new --vibe --worktree=example'
       - allow: 'a ag new --vibe'
   - ask: 'a ag|cc|agent new !--vibe *'
+    # `--help` is exempt so the global `* --help` allow can apply.
+    when: '!has(flags.help)'
     tests:
+      - allow: 'a agent new --help'
+      - allow: 'a cc new -R dotfiles --help'
       - ask: 'a cc new'
       - ask: 'a cc new -R dotfiles'
       - ask: 'a agent new'
@@ -391,7 +395,10 @@ rules:
   # Closing an agent can terminate its session and remove a linked worktree, so
   # require an explicit ask for both canonical and abbreviated commands.
   - ask: 'a ag|cc|agent close|c *'
+    # `--help` is exempt so the global `* --help` allow can apply.
+    when: '!has(flags.help)'
     tests:
+      - allow: 'a agent close --help'
       - ask: 'a cc close'
       - ask: 'a cc close example-session'
       - ask: 'a agent close'
