@@ -234,6 +234,20 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
           { type: 'command', command: 'a agent hook post-tool-use' },
         ],
       },
+      {
+        matcher: 'Bash',
+        hooks: [
+          {
+            type: 'command',
+            command: 'a agent bg reminder-hook',
+            asyncRewake: true,
+            // Keep this above agent.bg_task_reminder.timeout in
+            // config/armyknife/config.yaml, or Claude Code kills the hook
+            // before it can send the reminder.
+            timeout: 660,
+          },
+        ],
+      },
     ],
     Notification: [
       {
