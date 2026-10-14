@@ -7,6 +7,7 @@ active_session_id=""
 active_client_tty=""
 active_window_id=""
 pr_merge_output=""
+pr_merge_error_output=""
 
 sanitize_text() {
   printf '%s' "$1" | tr '\r\n' '  ' | tr -d '\000-\010\013\014\016-\037\177'
@@ -126,13 +127,8 @@ clear_pr_merge_status() {
   tmux refresh-client -S > /dev/null 2>&1 || true
 }
 
-fail() {
-  local message display_message
-  message="PR #${pr_number:-?}"
-  if [ -n "$pr_title" ]; then
-    message+=" (${pr_title})"
-  fi
-  message+=" failed: $1"
+report_to_user() {
+  local title="$1" outcome="$2" message="$3" display_message
   clear_pr_merge_status
   display_message="${message//#/##}"
   if [ -n "$active_client_tty" ]; then
@@ -140,8 +136,18 @@ fail() {
   else
     tmux display-message -d 0 "$display_message" > /dev/null 2>&1 || true
   fi
-  notify 'tmux PR merge failed' "$message" failure "${active_session_id:-}"
+  notify "$title" "$message" "$outcome" "${active_session_id:-}"
   printf '%s\n' "$message" >&2
+}
+
+fail() {
+  local message
+  message="PR #${pr_number:-?}"
+  if [ -n "$pr_title" ]; then
+    message+=" (${pr_title})"
+  fi
+  message+=" failed: $1"
+  report_to_user 'tmux PR merge failed' failure "$message"
   exit 1
 }
 
@@ -308,7 +314,7 @@ prepare() {
 
 run_merge() {
   local encoded_payload="$1" payload_json repo_root session_id pr_url head_sha
-  local current state output dry_run
+  local current state output dry_run close_error
 
   if ! payload_json="$(printf '%s' "$encoded_payload" | base64 -D 2> /dev/null)"; then
     payload_json="$(printf '%s' "$encoded_payload" | base64 -d 2> /dev/null)" ||
@@ -343,7 +349,7 @@ run_merge() {
       fail "The PR is not open (state: $state)."
     fi
     ensure_pr_is_safe "$current" "$head_sha" 'after confirmation'
-    notify 'tmux PR merge dry run' "PR #$pr_number ($pr_title) is open and has no merge conflicts. Would run a gh pr-merge, including its pre-pr-merge hook and required-check wait, then close the agent session after the squash merge. No changes were made." success
+    notify 'tmux PR merge dry run' "PR #$pr_number ($pr_title) is open and has no merge conflicts. Would run a gh pr-merge, including its pre-pr-merge hook and required-check wait, then let it close the agent session after the squash merge if the safety checks pass. No changes were made." success
     return
   fi
 
@@ -354,17 +360,26 @@ run_merge() {
   set_pr_merge_status 'running a gh pr-merge'
   if ! run_pr_merge; then
     output="$pr_merge_output"
+    if [ -n "$pr_merge_error_output" ]; then
+      output+=$'\n'"$pr_merge_error_output"
+    fi
     if current="$(read_pr "$pr_url" 2>&1)" && [ "$(json_field "$current" '.state')" = 'MERGED' ]; then
       close_merged_session "$session_id"
       return
     fi
     fail "Unable to safely merge the PR: $(short_output "$output")"
   fi
-  close_merged_session "$session_id"
+
+  if close_error="$(pr_merge_close_failure_reason)"; then
+    notify_merged_close_failure "$close_error"
+  else
+    clear_pr_merge_status
+    notify 'tmux PR merge succeeded' "PR #$pr_number ($pr_title) was merged." success
+  fi
 }
 
 run_pr_merge() {
-  local status_file output_file merge_pid exit_status status last_status=''
+  local status_file output_file error_file merge_pid exit_status status last_status=''
 
   if ! status_file="$(mktemp /tmp/tmux-pr-merge-close-status.XXXXXX)"; then
     pr_merge_output='Unable to create a status file for the merge command.'
@@ -375,8 +390,13 @@ run_pr_merge() {
     pr_merge_output='Unable to create a log file for the merge command.'
     return 1
   fi
+  if ! error_file="$(mktemp /tmp/tmux-pr-merge-close-error.XXXXXX)"; then
+    rm -- "$status_file" "$output_file"
+    pr_merge_output='Unable to create an error log file for the merge command.'
+    return 1
+  fi
 
-  TMUX_PR_MERGE_STATUS_FILE="$status_file" "$HOME/.cargo/bin/a" gh pr-merge "$pr_number" > "$output_file" 2>&1 &
+  TMUX_PR_MERGE_STATUS_FILE="$status_file" "$HOME/.cargo/bin/a" gh pr-merge "$pr_number" > "$output_file" 2> "$error_file" &
   merge_pid="$!"
   while kill -0 "$merge_pid" 2> /dev/null; do
     if IFS= read -r status < "$status_file"; then
@@ -407,16 +427,49 @@ run_pr_merge() {
     esac
   fi
   pr_merge_output="$(cat "$output_file" 2> /dev/null || true)"
-  rm -- "$status_file" "$output_file"
+  pr_merge_error_output="$(cat "$error_file" 2> /dev/null || true)"
+  rm -- "$status_file" "$output_file" "$error_file"
   return "$exit_status"
+}
+
+pr_merge_close_failure_reason() {
+  local line
+
+  # armyknife writes this diagnostic when merged-worktree cleanup fails.
+  while IFS= read -r line; do
+    case "$line" in
+      "Could not close worktree for merged PR #${pr_number} "*)
+        printf '%s' "${line#*): }"
+        return 0
+        ;;
+    esac
+  done <<< "$pr_merge_error_output"
+
+  return 1
+}
+
+notify_merged_close_failure() {
+  local close_reason="$1" message
+  message="PR #${pr_number:-?}"
+  if [ -n "$pr_title" ]; then
+    message+=" ($pr_title)"
+  fi
+  message+=" was merged, but the agent session could not be closed"
+  if [ -n "$close_reason" ]; then
+    message+=": $(short_output "$close_reason")"
+  else
+    message+='.'
+  fi
+
+  report_to_user 'tmux PR merge succeeded' success "$message"
 }
 
 close_merged_session() {
   local target_session_id="$1" close_output
   set_pr_merge_status 'cleaning up'
-  # The user already confirmed the merge, so a busy session or unsent draft must not block cleanup
-  if ! close_output="$("$HOME/.cargo/bin/a" agent close --force "$target_session_id" 2>&1)"; then
-    fail "The PR was merged, but the agent session could not be closed: $(short_output "$close_output")"
+  if ! close_output="$("$HOME/.cargo/bin/a" agent close "$target_session_id" 2>&1)"; then
+    notify_merged_close_failure "$close_output"
+    exit 1
   fi
 
   notify 'tmux PR merge succeeded' "PR #$pr_number ($pr_title) was merged and the agent session was closed." success
