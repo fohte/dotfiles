@@ -234,6 +234,17 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
           { type: 'command', command: 'a agent hook post-tool-use' },
         ],
       },
+      {
+        matcher: 'Bash',
+        hooks: [
+          {
+            type: 'command',
+            command: 'a agent bg reminder-hook',
+            asyncRewake: true,
+            timeout: 660,
+          },
+        ],
+      },
     ],
     Notification: [
       {

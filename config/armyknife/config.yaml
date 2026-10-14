@@ -7,6 +7,15 @@ notification:
   enabled: false
 
 agent:
+  bg_task_reminder:
+    timeout: 10m
+    excluded_commands:
+      - 'a gh issue-agent review'
+      - 'a gh pr-review reply review'
+      - 'a ai pr-draft review'
+      - 'a ai draft'
+      # Bare `crit` waits for review and cannot be matched more narrowly.
+      - crit
   statuses:
     you:
       state: user
