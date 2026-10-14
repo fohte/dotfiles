@@ -62,6 +62,7 @@ merge 後に worktree が片付けられると armyknife が委任元に自動�
 これらの連絡ルールは `a agent vibe status` が exit 0 の場合に限り適用する。0 以外なら通常の連絡ルールに戻り、前提誤り以外は `notify` しない。draft ready と PR ready の報告以外に、進捗、質問、待ち状態を連絡せず、ターンを終える際に成果物、停止理由、待っているものをユーザーに報告する。
 
 委任元に `notify` してよいのは、draft ready の報告、CI green 後の PR ready 報告、この指示の前提が誤っていると判明したときに限る。draft ready の返答として「draft にコメントを書いた」「コードを直して」「承認」を待つ。進捗報告や質問は送らない。
+`notify` を送ったらターンを終えて待つ。返答は新しいターンとして届く。`sleep` ツールやコマンドでターン内に留まって待つと session が running のままになり、merge 後に `a agent close` で閉じられない。
 
 draft ready、PR ready、および前提誤りを報告するときは、委任元の session_id を `a agent peer parent | jq -r '.[0].session_id // empty'` で取り、`a agent peer notify --message <MESSAGE> <SESSION_ID>` で送る。
 session_id が空、または `notify` が `ended` エラーで失敗した場合は委任元が失われているので、宛先を推測せずユーザーに報告する。

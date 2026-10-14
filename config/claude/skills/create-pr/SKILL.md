@@ -86,7 +86,7 @@ enable-vibe-coding skill の『draft ready を受けたら』の手順に従う�
 </vibe-draft-ready>
 ```
 
-委任元の session ID は `a agent peer parent | jq -r '.[0].session_id // empty'` で取得し、`a agent peer notify --message <MESSAGE> <SESSION_ID>` で送る。session ID が空、または `notify` が `ended` エラーで失敗した場合は宛先を推測せず、ユーザーに報告する。通知後は `a agent status set wait "review of <repo-name> PR draft"` を実行して turn を止める (`<repo-name>` は `repo.name`)。委任元の返答で再開するまで待ち、再開後も承認なしに Step 5 へ進まない。
+委任元の session ID は `a agent peer parent | jq -r '.[0].session_id // empty'` で取得し、`a agent peer notify --message <MESSAGE> <SESSION_ID>` で送る。session ID が空、または `notify` が `ended` エラーで失敗した場合は宛先を推測せず、ユーザーに報告する。通知後は `a agent status set wait "review of <repo-name> PR draft"` を実行して turn を止める (`<repo-name>` は `repo.name`)。`sleep` ツールやコマンドで turn 内に留まって待たない。委任元の返答は新しい turn として届く。返答で再開するまで待ち、再開後も承認なしに Step 5 へ進まない。
 
 `vibe_mode` でない通常フローでは、次の `a ai pr-draft review` 手順で editor を開く。
 
@@ -148,7 +148,7 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 ## 7. CI 実行を監視
 
 `gh pr checks --watch` で CI を監視。失敗したら調査・修正して再 push。
-`vibe_mode` では CI が green になった後、次の形式で委任元へ報告する。PR URL とチェックリスト項目 ID は実際の値に置き換える。
+`vibe_mode` では CI が green になり、該当時は Step 8 も済ませた後、次の形式で委任元へ報告する。PR URL とチェックリスト項目 ID は実際の値に置き換える。
 
 ```text
 <vibe-pr-ready>
@@ -159,7 +159,7 @@ enable-vibe-coding skill の『PR ready を受けたら』の手順に従う。
 </vibe-pr-ready>
 ```
 
-通知後は `a agent status set wait "merge of <repo-name> PR <number>"` を実行 (`<repo-name>`=`repo.name`、`<number>`=PR URL 末尾の番号)、該当時は Step 8 を実行する。
+通知後は `a agent status set wait "merge of <repo-name> PR <number>"` を実行 (`<repo-name>`=`repo.name`、`<number>`=PR URL 末尾の番号) して turn を止める。draft ready のときと同じく turn 内に留まって待たない。turn が続いている session は merge 後に `a agent close` で閉じられない。
 
 差し戻しを反映して再 submit した場合も、CI が green になってから同じ形式で再報告する。
 
