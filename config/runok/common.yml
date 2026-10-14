@@ -402,7 +402,9 @@ rules:
       - ask: 'a cc close --child --force example-session'
       - ask: 'a agent close'
       - ask: 'a agent close example-session'
+      - ask: 'a agent close --force example-session'
       - ask: 'a agent close --child --force example-session'
+      - ask: 'a agent close example-session --child --force'
       - ask: 'a ag c'
       - ask: 'a ag c example-session'
       - ask: 'a ag c --child --force example-session'
@@ -418,6 +420,7 @@ rules:
     when: 'has(flags.child) && !has(flags.force) && !has(flags.help)'
     tests:
       - allow: 'a agent close --child example-session'
+      - allow: 'a agent close example-session --child'
       - allow: 'a ag close --child example-session'
       - allow: 'a cc close --child example-session'
       - allow: 'a agent c --child example-session'
