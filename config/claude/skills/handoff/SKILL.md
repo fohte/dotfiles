@@ -133,11 +133,11 @@ a agent peer parent | jq -r '.[0].session_id // empty'
 
 ### 元セッション側で子セッションを閉じる
 
-レポートを受け取ったら、元セッションで子の `session_id` を確認し、`a agent close` で閉じる。
+レポートを受け取ったら、元セッションで子の `session_id` を確認し、直接の子であることを検証しながら閉じる。
 
 ```bash
 a agent peer children
-a agent close <session_id>
+a agent close --child <session_id>
 ```
 
-`a agent close` はセッションと pane を閉じ、linked worktree 上のセッションなら worktree とブランチも片付ける。子が実行中・入力待ち、pending task、未送信 draft のいずれかを持つと close は拒否されるため、子が完了してから再実行する。未 merge の worktree を削除する確認が出た場合は、内容を確認して判断する。未完了の作業を破棄するときだけ `--force` を付ける。
+`--child` は対象が呼び出し元の直接の子でなければ、セッションや pane を閉じる前に拒否する。孫セッションは対象外で、`--force` を付けてもこの検証は外れない。子が実行中・入力待ち、pending task、未送信 draft のいずれかを持つと close は拒否されるため、子が完了してから再実行する。未 merge の worktree を削除する確認が出た場合は、内容を確認して判断する。未完了の作業を破棄するときだけ `--force` を付ける。

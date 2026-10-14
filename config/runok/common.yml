@@ -392,19 +392,40 @@ rules:
       - ask: 'a ag new'
       - ask: 'a ag new -R example-repo'
 
-  # Closing an agent can terminate its session and remove a linked worktree, so
-  # require an explicit ask for both canonical and abbreviated commands.
+  # Closing an agent can terminate its session and remove a linked worktree.
   - ask: 'a ag|cc|agent close|c *'
-    # `--help` is exempt so the global `* --help` allow can apply.
-    when: '!has(flags.help)'
+    when: '!has(flags.help) && (!has(flags.child) || has(flags.force))'
     tests:
       - allow: 'a agent close --help'
       - ask: 'a cc close'
       - ask: 'a cc close example-session'
+      - ask: 'a cc close --child --force example-session'
       - ask: 'a agent close'
       - ask: 'a agent close example-session'
+      - ask: 'a agent close --force example-session'
+      - ask: 'a agent close --child --force example-session'
+      - ask: 'a agent close example-session --child --force'
       - ask: 'a ag c'
       - ask: 'a ag c example-session'
+      - ask: 'a ag c --child --force example-session'
+      - ask: 'a ag close example-session'
+      - ask: 'a ag close --child --force example-session'
+      - ask: 'a agent c example-session'
+      - ask: 'a agent c --child --force example-session'
+      - ask: 'a cc c example-session'
+      - ask: 'a cc c --child --force example-session'
+
+  # Armyknife verifies the target is a direct child before closing it.
+  - allow: 'a ag|cc|agent close|c *'
+    when: 'has(flags.child) && !has(flags.force) && !has(flags.help)'
+    tests:
+      - allow: 'a agent close --child example-session'
+      - allow: 'a agent close example-session --child'
+      - allow: 'a ag close --child example-session'
+      - allow: 'a cc close --child example-session'
+      - allow: 'a agent c --child example-session'
+      - allow: 'a ag c --child example-session'
+      - allow: 'a cc c --child example-session'
 
   # Enabling vibe coding grants the session authority to merge PRs, so it
   # always needs an explicit user decision.
