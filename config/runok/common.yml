@@ -368,29 +368,36 @@ rules:
       - allow: 'dot role get'
       - allow: 'dot role overlay'
 
-  # Spawning a new agent session costs real tokens and runs unattended, so
-  # requests without `--vibe` always need a human decision. Armyknife checks
-  # that vibe is enabled before accepting the guarded invocation below.
-  # `ag` and `cc` are armyknife's hidden aliases for `agent`, so both rules
-  # match all three command names.
+  # Spawning a delegated session (`--agent` / `--worktree`) costs real tokens
+  # and runs unattended, so requests without `--vibe` need a human decision.
+  # Armyknife checks that vibe is enabled before accepting the guarded
+  # invocation below. `ag` and `cc` are armyknife's hidden aliases for
+  # `agent`, so the rules match all three command names.
   - allow: 'a ag|cc|agent new --vibe *'
     tests:
       - allow: 'a agent new --vibe'
       - allow: 'a cc new --vibe --worktree=example'
       - allow: 'a ag new --vibe'
+  # The handoff skill (also used by project-manager) starts a session without
+  # `--agent` / `--worktree` only on an explicit user request. This relies on
+  # delegate always passing `--agent`; runok cannot tell the caller skill.
+  - allow: 'a ag|cc|agent new *'
+    when: '!has(flags.agent) && !has(flags.worktree)'
+    tests:
+      - allow: 'a agent new --engine claude --model opus --kind development --prompt "hello" --label example'
+      - allow: 'a cc new -R example-repo --engine claude --model opus --prompt "hello"'
   - ask: 'a ag|cc|agent new !--vibe *'
     # `--help` is exempt so the global `* --help` allow can apply.
-    when: '!has(flags.help)'
+    when: '!has(flags.help) && (has(flags.agent) || has(flags.worktree))'
     tests:
       - allow: 'a agent new --help'
-      - allow: 'a cc new -R dotfiles --help'
-      - ask: 'a cc new'
-      - ask: 'a cc new -R dotfiles'
-      - ask: 'a agent new'
-      - ask: 'a agent new -R dotfiles'
+      - allow: 'a cc new -R dotfiles --agent --help'
+      - ask: 'a cc new --agent'
+      - ask: 'a agent new -R dotfiles --agent --kind development --prompt "hello"'
+      - ask: 'a agent new --worktree=example --agent --kind development --prompt "hello"'
       - ask: 'a cc new --worktree=example'
-      - ask: 'a ag new'
-      - ask: 'a ag new -R example-repo'
+      - ask: 'a cc new --worktree'
+      - ask: 'a ag new --worktree --agent'
 
   # Closing an agent can terminate its session and remove a linked worktree.
   - ask: 'a ag|cc|agent close|c *'
