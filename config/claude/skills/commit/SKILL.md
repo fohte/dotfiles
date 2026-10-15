@@ -13,11 +13,11 @@ Resolve these before anything else. Values come from the `## Repository facts` l
 
 Find the first row that matches, read only the file it names, and follow it for the commit procedure and the review steps. Never read the other file: the two differ in when `self-review` runs and how many commits it produces.
 
-| Condition                                                                        | Action                                     |
-| -------------------------------------------------------------------------------- | ------------------------------------------ |
-| The delegated prompt has `## Vibe coding mode` and `a agent vibe status` exits 0 | Read `references/non-master-push-repo.md`. |
-| `is_master_push_repo` is `true`                                                  | Read `references/master-push-repo.md`.     |
-| (otherwise)                                                                      | Read `references/non-master-push-repo.md`. |
+| Condition                       | Action                                     |
+| ------------------------------- | ------------------------------------------ |
+| `a agent vibe status` exits 0   | Read `references/non-master-push-repo.md`. |
+| `is_master_push_repo` is `true` | Read `references/master-push-repo.md`.     |
+| (otherwise)                     | Read `references/non-master-push-repo.md`. |
 
 ## 絶対禁止事項
 
