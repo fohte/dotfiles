@@ -167,7 +167,7 @@ rules:
   - deny: 'git [-C *] commit|push *'
     when: "(has(flags.C) && paths['fork-repos'].exists(p, flags.C == p || flags.C.startsWith(p + '/'))) || paths['fork-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/'))"
     message: 'This repo is a fork contributed upstream: the user runs every commit and push. Read the oss-contribution skill.'
-    fix_suggestion: 'Write the commit message draft to a mktemp file under /tmp and ask the user to run `git commit -F <path>`.'
+    fix_suggestion: 'Write the commit message draft to a file created with mktemp "$AGENT_TMPDIR/commit-msg.XXXXXX" and ask the user to run `git commit -F <path>`.'
     tests:
       - allow: 'git -C /tmp commit -m "feat: add feature"'
       - allow: 'git -C /tmp push origin main'

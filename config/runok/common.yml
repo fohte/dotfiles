@@ -323,6 +323,33 @@ rules:
       - pass: 'curl -s -X POST http://localhost:3001/api/tasks --unix-socket /var/run/docker.sock'
   - allow: 'bats *'
   - allow: 'bc *'
+  # Parallel sessions share /tmp and $TMPDIR, so a temp file created there and
+  # later rediscovered by name may belong to another session.
+  # config/zsh/env/agent.zsh sets $AGENT_TMPDIR per session; runok sees the
+  # variable unexpanded.
+  - deny: 'mktemp *'
+    # Prefix checks alone allow `..` and flags that redirect output elsewhere.
+    when: >-
+      args.size() == 0 ||
+      !args.all(a,
+        (a.startsWith('$AGENT_TMPDIR/') || a.startsWith('${AGENT_TMPDIR}/')) &&
+        !a.contains('/../') && !a.endsWith('/..')) ||
+      has(flags.t) || has(flags.p) || has(flags.tmpdir)
+    message: 'Temp files outside $AGENT_TMPDIR can collide with other sessions.'
+    fix_suggestion: 'Use mktemp "$AGENT_TMPDIR/<name>.XXXXXX" (or mktemp -d "$AGENT_TMPDIR/<name>.XXXXXX").'
+    tests:
+      - deny: 'mktemp'
+      - deny: 'mktemp -d'
+      - deny: 'mktemp /tmp/tq-desc.XXXXXX'
+      - deny: 'mktemp -t tq-desc'
+      - deny: 'mktemp -t "$AGENT_TMPDIR/tq-desc"'
+      - deny: 'mktemp -p /tmp "$AGENT_TMPDIR/tq-desc.XXXXXX"'
+      - deny: 'mktemp -p "$AGENT_TMPDIR/.." shared.XXXXXX'
+      - deny: 'mktemp "$AGENT_TMPDIR/../tq-desc.XXXXXX"'
+      - deny: 'mktemp "$AGENT_TMPDIR/nested/../../tq-desc.XXXXXX"'
+      - deny: 'mktemp "$AGENT_TMPDIR/safe.XXXXXX" /tmp/tq-desc.XXXXXX'
+      - allow: 'mktemp "$AGENT_TMPDIR/tq-desc.XXXXXX"'
+      - allow: 'mktemp -d "${AGENT_TMPDIR}/delegate.XXXXXX"'
   - allow: 'mktemp *'
   - allow: 'rmdir *'
     tests:
@@ -611,29 +638,3 @@ rules:
     tests:
       - deny: 'disown'
       - deny: 'disown %1'
-
-  # Parallel sessions share /tmp and reuse the same mktemp prefixes, so picking
-  # "the newest match" (or the first glob match) can hand one session another
-  # session's file.
-  - deny: 'ls *'
-    # Fused short flags stay one key (`-lt` -> `lt`), and long flags lose their
-    # dashes, so the character class keeps `--format` / `--sort=size` out.
-    when: >-
-      args.exists(a, (a.startsWith('/tmp/') || a.startsWith('/private/tmp/')) && (a.contains('*') || a.contains('?') || a.contains('['))) ||
-      ((flags.exists(k, k.matches('^[1aAlhrRS]*t[1aAlhrRS]*$')) || (has(flags.sort) && flags.sort == 'time')) &&
-      args.exists(a, a.startsWith('/tmp/') || a.startsWith('/private/tmp/')))
-    message: 'A file found by listing /tmp may belong to another session.'
-    fix_suggestion: 'Reuse the exact path printed by mktemp. When creating it and writing it in one call, echo "$f" so the path shows up in the output.'
-    tests:
-      - deny: 'ls -t /tmp/tq-comment.*'
-      - deny: 'ls -lt /tmp/tq-comment.*'
-      - deny: 'ls --sort=time /tmp/tq-comment.*'
-      - deny: 'ls -t /private/tmp/tq-comment.*'
-      - deny: 'ls /tmp/tq-desc.*'
-      - deny: 'ls -l /private/tmp/tq-desc.??????'
-      - deny: 'ls /tmp/tq-desc.[ab]'
-      - allow: 'ls target/*.ts'
-      - allow: 'ls --format=long /tmp/tq-comment.abc123'
-      - allow: 'ls --sort=size /tmp/tq-comment.abc123'
-      - allow: 'ls -t target/cargo-timings/'
-      - allow: 'ls -l /tmp/tq-comment.abc123'

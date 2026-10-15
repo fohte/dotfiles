@@ -44,7 +44,7 @@ git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'
 明示的な sync 依頼がある場合は、状態確認を省いて merge を 1 回試みる。
 
 ```bash
-git rev-parse HEAD > /tmp/sync-base-branch-pre-merge-sha
+git rev-parse HEAD > "$AGENT_TMPDIR/sync-base-branch-pre-merge-sha"
 git fetch origin <base>
 git merge origin/<base>
 ```
@@ -75,7 +75,7 @@ git commit --no-edit
 conflict なく取り込めた場合 (fast-forward や自動 merge も含む) でも、base 側の変更が自分の作業に影響しないとは限らない。何が入ってきたかを確認する。
 
 ```bash
-PRE_MERGE_SHA=$(cat /tmp/sync-base-branch-pre-merge-sha)
+PRE_MERGE_SHA=$(cat "$AGENT_TMPDIR/sync-base-branch-pre-merge-sha")
 git log $PRE_MERGE_SHA..origin/<base> --oneline
 git diff $PRE_MERGE_SHA HEAD --stat
 ```

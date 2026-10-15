@@ -199,6 +199,7 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
       {
         hooks: [
           { type: 'command', command: 'a agent hook session-start' },
+          { type: 'command', command: '~/.claude/hooks/agent-tmpdir' },
           { type: 'command', command: '~/.claude/hooks/tq-session-start' },
           { type: 'command', command: 'gen-claude-template context' },
         ],

@@ -174,7 +174,7 @@ chart の場合も同様に、確認した values.yaml/template の具体的な�
 Write ツールで JSON を書き、次を **`run_in_background: true`** で実行する (crit はユーザーが approve するまで終了しない)。起動ログに出た URL の文字列をそのままユーザーに案内する。
 
 ```bash
-# <data.json> は Write ツールで書いた /tmp/renovate-triage.<採番>.json
+# <data.json> は mktemp "$AGENT_TMPDIR/renovate-triage.XXXXXX.json" で作り、Write ツールで書いた JSON
 ~/.agents/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage <data.json>
 ```
 

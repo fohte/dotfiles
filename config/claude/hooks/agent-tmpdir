@@ -1,0 +1,16 @@
+#!/bin/bash
+# Pins $AGENT_TMPDIR (see config/zsh/env/agent.zsh) to this Claude Code
+# session. CLAUDE_ENV_FILE is applied after ~/.zshenv on every Bash call, so
+# this wins over a CODEX_THREAD_ID inherited from a Codex session that
+# launched Claude.
+set -euo pipefail
+
+[[ -n ${CLAUDE_ENV_FILE:-} ]] || exit 0
+
+session_id=$(jq -r '.session_id')
+dir=/tmp/agent-$session_id
+mkdir -p "$dir"
+chmod 700 "$dir"
+# Append: other hooks write to the same file, and on `claude -c` the later
+# "resume" event carries the real session ID.
+echo "export AGENT_TMPDIR=$dir" >> "$CLAUDE_ENV_FILE"
