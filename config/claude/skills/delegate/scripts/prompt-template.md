@@ -42,7 +42,7 @@ PR が残らないので、報告しない限り委任が終わったことが�
 {{- else }}
 `commit` skill で commit し、`create-pr` skill で PR を作成するところまで完了させること。
 
-PR の作成・完了は委任元に `notify` しない。
+通常の委任では PR の作成・完了を委任元に `notify` しない。
 merge 後に worktree が片付けられると armyknife が委任元に自動で通知する。
 {{- end }}
 

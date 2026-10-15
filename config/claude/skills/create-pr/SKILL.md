@@ -78,7 +78,7 @@ git log "origin/$(git main)..HEAD" --oneline
 
 draft ready、PR ready、前提誤りを通知するときは、`a agent peer parent | jq -r '.[0].session_id // empty'` で委任元の session ID を取得し、`a agent peer notify --message <MESSAGE> <SESSION_ID>` で送る。session ID が空、または `notify` が `ended` エラーで失敗した場合は、宛先を推測せずユーザーに報告する。
 
-draft の絶対パス、ブランチ名、現在の HEAD SHA、チェックリスト項目 ID を含む次の形式で `<vibe-draft-ready>` を作る。draft のパスは `~/.agents/skills/create-pr/scripts/draft-path` の出力、ブランチ名は `git branch --show-current`、HEAD SHA は `git rev-parse HEAD` で取得する。チェックリスト項目 ID は `branch.<ブランチ名>.x-tq-checklist-item-id` から取得する。チェックリスト項目のない委任では `none` を使う。項目があるはずなのに値が無い場合は前提誤りとして委任元に連絡し、先へ進まない。
+draft の絶対パス、ブランチ名、現在の HEAD SHA、チェックリスト項目 ID を含む次の形式で `<vibe-draft-ready>` を作る。draft のパスは `~/.agents/skills/create-pr/scripts/draft-path` の出力、ブランチ名は `git branch --show-current`、HEAD SHA は `git rev-parse HEAD` で取得する。チェックリスト項目 ID は `branch.<ブランチ名>.x-tq-checklist-item-id` から取得する。値が無い場合は `none` を使う。チェックリスト leaf の項目 ID は委任元が報告を照合するときに検証する。
 
 ```text
 <vibe-draft-ready>
