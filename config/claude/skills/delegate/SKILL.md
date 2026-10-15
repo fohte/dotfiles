@@ -96,6 +96,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts
 
 - `branch-name`: 新しい環境用に作成するブランチ名
 - `--agent`: **必須**. 委任元 Claude Code セッションからの呼び出しであることを示す。プロンプトを `<delegated-task>` XML でラップし、ブランチ名・base ブランチ・ディレクトリ情報を自動注入する
+- vibe 中の委任では `a agent new` に `--vibe` を付ける。通常の委任では省略する
 - `--label`: **必須**. セッションのタイトル。`a agent watch` の TUI でセッション一覧に表示され、コンテキストスイッチ時に「このセッションで何をやっていたか」を素早く思い出すためのもの。以下のルールで生成すること:
     - 日本語 2-5 語
     - 具体的な識別子 (PR 番号、ファイル名、機能名、エラー名など) を必ず含める
@@ -105,12 +106,10 @@ prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts
 - `task.yaml`: Write ツールで `$dir` 配下に書く構造化データ。委任先へのプロンプトの元データであり、スキーマは後述の「プロンプト構造 (必須)」を参照。**必ず `mktemp -d` で作った一意なディレクトリ配下に置く** (固定パスは並行セッションと衝突する)
 - `render-task`: `task.yaml` を `--prompt` 用の markdown に変換するスクリプト。`purpose`/`goal` が空だとエラーで停止する
 - `DELEGATE_DIRECT_COMMIT`: 上で求めた `direct` をそのまま渡す環境変数。`render-task` が末尾の締めくくりを「PR を作成するまで」と「commit して push するまで」で切り替える
-- vibe 中に委任する場合は、`render-task` の呼び出しに `DELEGATE_VIBE=true` を加える。この値で委任先プロンプトに vibe 用の PR ready 通知手順を含める。チェックリスト項目がある委任では、その項目 ID も `DELEGATE_TQ_CHECKLIST_ITEM_ID` として `render-task` に渡し、プロンプトに正しい項目 ID が入るようにする
-- `a agent new` に `--vibe` を付けるのは vibe 中の委任だけにする。armyknife は起動前に vibe の有効状態を検証するため、通常の委任ではこのフラグを省略する
 - `--prompt`: `render-task` の出力をそのまま渡す
 - `DELEGATE_TASK_PURPOSE`: `task.yaml` の `purpose` をそのまま渡す環境変数。委任先 worktree の post-worktree-create hook がこれを読み `branch.<name>.x-purpose` に書き込み、`create-pr` skill が PR の Why セクション生成時に参照する
 - `DELEGATE_TQ_TASK_ID`: この委任作業が属する tq タスクの ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-task-id` に書き込み、委任先の `create-pr` skill が立てた PR のリンク先に使う。タスクは委任前に必ず用意されている (前述の「委任前に確定させること」) ので、この変数を省略しない
-- `DELEGATE_TQ_CHECKLIST_ITEM_ID`: 承認済みの PR 分割チェックリストがある場合、この委任に対応する葉項目 ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-checklist-item-id` に書き込み、委任先の `create-pr` skill が PR をその項目に紐付ける。vibe 中は `render-task` と `a agent new` の両方に渡す。Batch の親項目 ID は渡さない。vibe の CI 修復のように項目が無い場合は、PR ready 通知に `none` を入れるため `render-task` にだけ `DELEGATE_TQ_CHECKLIST_ITEM_ID=none` を渡し、`a agent new` には渡さない。通常の委任では項目 ID が無ければ省略する
+- `DELEGATE_TQ_CHECKLIST_ITEM_ID`: 承認済みの PR 分割チェックリストがある場合、この委任に対応する葉項目 ID を `a agent new` に渡す環境変数。同じ hook が `branch.<name>.x-tq-checklist-item-id` に書き込み、委任先の `create-pr` skill が PR をその項目に紐付ける。Batch の親項目 ID は渡さない。項目が無い場合は省略する
 
 ### オプション
 
@@ -133,7 +132,7 @@ worktree 削除自体が失敗した警告が出た場合のみ手動復旧が�
 
 複数のタスクをまとめて委任する場合、Bash ツールを委任数だけ呼び分けず、**1 回の bash 呼び出し内で `for` ループを使う**こと。委任先ごとに Bash ツール呼び出しを分けるとツール許可プロンプトが委任数だけ発生し、途中 1 件の拒否で以降が止まる。1 つの bash にまとめれば許可は 1 回で済む。for ループは dispatch の手段であり、各イテレーションは依然として独立した 1 委任 = 1 PR なので「1 委任 = 1 PR の原則」とは衝突しない。
 
-PR ごとのチェックリスト項目 ID がある場合は、ループの各委任に対応する葉項目 ID を `DELEGATE_TQ_CHECKLIST_ITEM_ID` として `render-task` と `a agent new` の両方に渡す。項目が無い通常の委任ではこの環境変数を省略する。vibe の CI 修復では `render-task` にだけ `DELEGATE_TQ_CHECKLIST_ITEM_ID=none` を渡し、`a agent new` には渡さない。
+PR ごとのチェックリスト項目 ID がある場合は、ループの各委任に対応する葉項目 ID を `DELEGATE_TQ_CHECKLIST_ITEM_ID` として `a agent new` に渡す。項目が無い場合は省略する。
 
 各委任先で task.yaml の内容が異なる場合は、共通する field (`investigated`/`links`/`additionalContext` など) を `common.yaml` に、差分のある field (`purpose`/`goal` など) を per-task の `<repo>.yaml` に分けて Write し、`yq` でマージしてから `render-task` に渡す。task.yaml を Bash 引数に直接埋め込まず、必ず Write ツールでファイルに書いてから渡すこと。
 
@@ -403,7 +402,7 @@ merge 保留のメッセージには、委任元からの連絡であること�
 
 ## 委任先から委任元に連絡する場合
 
-連絡してよい条件、完了報告に含めるもの、送信手順は `scripts/prompt-template.md` が委任先のプロンプトに注入する。委任先はそれに従う。
+通常委任の連絡条件、完了報告に含めるもの、送信手順は `scripts/prompt-template.md` が委任先のプロンプトに注入する。vibe 中の draft / PR 報告は `create-pr` skill の手順に従う。
 
 委任先から連絡が来るのは、前提の誤りが判明したとき、direct-commit モードで push まで終えたとき、または vibe 中に `<vibe-draft-ready>` / `<vibe-pr-ready>` を報告するとき。vibe 報告の形式と委任元の対応手順は `enable-vibe-coding` skill を参照する。通常の委任では成果物の PR が残るため、完了報告は来ない。
 

@@ -18,21 +18,21 @@ Resolve these before anything else. Values come from the `## Repository facts` l
 Derived value:
 
 - `english_output`: true when `repo.visibility` is `PUBLIC` **and** `repo.language` is not `ja`, otherwise false. `repo.visibility: PUBLIC` alone does not make it true.
-- `vibe_mode`: when the delegated prompt contains `## Vibe coding mode`, run `a agent vibe status`; true only if it exits 0. If the marker is missing, the command is unavailable, or it exits non-zero, use the normal flow.
+- `vibe_mode`: run `a agent vibe status`; true only if it exits 0. If the command is unavailable or exits non-zero, use the normal flow.
 
 Read `references/draft-manual.md` before starting Step 1. It covers Steps 1, 2 and 4.
 
 Apply every row below whose condition holds. The rows are independent of each other.
 
-| Condition                                        | Effect                                                                                                                                                                                                                       |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vibe_mode` is true                              | Skip crit review, notify the delegator with the draft and wait for explicit approval before submitting with `--no-review`; report PR ready after CI passes or only `vrt` fails (Step 7). Keep self-review and CI monitoring. |
-| `english_output` is true                         | Translation to English is required. The reference covers it in Step 4; Step 5 requires a Japanese-free title and body.                                                                                                       |
-| `english_output` is false                        | No translation happens.                                                                                                                                                                                                      |
-| `repo.owner` is `fohte`                          | Skip Step 8.                                                                                                                                                                                                                 |
-| `has_release_please` is `true`                   | Rule 1 uses Conventional Commits; otherwise `<scope>: <description>`. `scripts/render-rules` already applies it when it prints the rules.                                                                                    |
-| `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.                                                                                        |
-| ... and the template contains `Design decisions` | The rules include Rule 9; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                                                                           |
+| Condition                                        | Effect                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vibe_mode` is true                              | Skip crit review, notify the delegator with the draft and wait for explicit approval before submitting with `--no-review`; report PR ready after CI passes or only `vrt` fails (Step 7). Keep self-review and CI monitoring. Even when `is_master_push_repo` is true, create a PR from the current branch and never push to the default branch. |
+| `english_output` is true                         | Translation to English is required. The reference covers it in Step 4; Step 5 requires a Japanese-free title and body.                                                                                                                                                                                                                          |
+| `english_output` is false                        | No translation happens.                                                                                                                                                                                                                                                                                                                         |
+| `repo.owner` is `fohte`                          | Skip Step 8.                                                                                                                                                                                                                                                                                                                                    |
+| `has_release_please` is `true`                   | Rule 1 uses Conventional Commits; otherwise `<scope>: <description>`. `scripts/render-rules` already applies it when it prints the rules.                                                                                                                                                                                                       |
+| `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.                                                                                                                                                                                                           |
+| ... and the template contains `Design decisions` | The rules include Rule 9; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                                                                                                                                                                                              |
 
 ## 開始時の宣言 (必須・最初の応答で実行)
 
@@ -74,7 +74,11 @@ git log "origin/$(git main)..HEAD" --oneline
 
 ## 3. レビュー
 
-`vibe_mode` では editor を開かず、draft を作成した後に委任元のレビューを待つ。draft の絶対パス、ブランチ名、現在の HEAD SHA、チェックリスト項目 ID を含む次の形式で `<vibe-draft-ready>` を作り、委任元へ `notify` する。draft のパスは `~/.agents/skills/create-pr/scripts/draft-path` の出力、ブランチ名は `git branch --show-current`、HEAD SHA は `git rev-parse HEAD` で取得する。チェックリスト項目 ID は `branch.<ブランチ名>.x-tq-checklist-item-id` から取得する。値が無い場合は前提誤りとして委任元に連絡し、先へ進まない。
+`vibe_mode` では editor を開かず、draft を作成した後に委任元のレビューを待つ。委任元に `notify` してよいのは draft ready、PR ready、またはこの指示の前提が誤っていると判明した場合だけとする。進捗、質問、待ち状態は通知しない。通知後はターンを終えて委任元の返答を待つ。
+
+draft ready、PR ready、前提誤りを通知するときは、`a agent peer parent | jq -r '.[0].session_id // empty'` で委任元の session ID を取得し、`a agent peer notify --message <MESSAGE> <SESSION_ID>` で送る。session ID が空、または `notify` が `ended` エラーで失敗した場合は、宛先を推測せずユーザーに報告する。
+
+draft の絶対パス、ブランチ名、現在の HEAD SHA、チェックリスト項目 ID を含む次の形式で `<vibe-draft-ready>` を作る。draft のパスは `~/.agents/skills/create-pr/scripts/draft-path` の出力、ブランチ名は `git branch --show-current`、HEAD SHA は `git rev-parse HEAD` で取得する。チェックリスト項目 ID は `branch.<ブランチ名>.x-tq-checklist-item-id` から取得する。チェックリスト項目のない委任では `none` を使う。項目があるはずなのに値が無い場合は前提誤りとして委任元に連絡し、先へ進まない。
 
 ```text
 <vibe-draft-ready>
@@ -86,7 +90,7 @@ enable-vibe-coding skill の『draft ready を受けたら』の手順に従う�
 </vibe-draft-ready>
 ```
 
-委任元の session ID は `a agent peer parent | jq -r '.[0].session_id // empty'` で取得し、`a agent peer notify --message <MESSAGE> <SESSION_ID>` で送る。session ID が空、または `notify` が `ended` エラーで失敗した場合は宛先を推測せず、ユーザーに報告する。通知後は `a agent status set wait "review of <repo-name> PR draft"` を実行して turn を止める (`<repo-name>` は `repo.name`)。`sleep` ツールやコマンドで turn 内に留まって待たない。委任元の返答は新しい turn として届く。返答で再開するまで待ち、再開後も承認なしに Step 5 へ進まない。
+通知後は `a agent status set wait "review of <repo-name> PR draft"` を実行して turn を止める (`<repo-name>` は `repo.name`)。`sleep` ツールやコマンドで turn 内に留まって待たない。委任元の返答は新しい turn として届く。返答で再開するまで待ち、再開後も承認なしに Step 5 へ進まない。
 
 `vibe_mode` でない通常フローでは、次の `a ai pr-draft review` 手順で editor を開く。
 
@@ -148,7 +152,7 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 ## 7. CI 実行を監視
 
 `gh pr checks --watch` で CI を監視。失敗したら調査・修正して再 push。
-`vibe_mode` では CI が green になり、該当時は Step 8 も済ませた後、次の形式で委任元へ報告する。PR URL とチェックリスト項目 ID は実際の値に置き換える。
+`vibe_mode` では CI が green になり、該当時は Step 8 も済ませた後、次の形式で委任元へ報告する。PR URL とチェックリスト項目 ID は実際の値に置き換える。チェックリスト項目のない委任では `none` を使う。
 
 `vrt` commit status 以外がすべて green で、`vrt` だけが失敗しているときも報告する。VRT 差分の確認と承認ラベルの付与は委任元が担うため、委任先はユーザーに VRT レビューを頼まず、`vrt-approved` を待たず、自分でも付けない。リポジトリの規約が「VRT 差分はユーザーにレビューを頼む」としていても、vibe ではこの報告がその依頼の代わりになる。
 
