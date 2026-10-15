@@ -44,14 +44,12 @@ git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'
 明示的な sync 依頼がある場合は、状態確認を省いて merge を 1 回試みる。
 
 ```bash
-sha_file=$(mktemp "$AGENT_TMPDIR/sync-base-branch-pre-merge-sha.XXXXXX")
-git rev-parse HEAD > "$sha_file"
-printf 'pre-merge SHA file: %s\n' "$sha_file"
+git rev-parse HEAD > "$AGENT_TMPDIR/sync-base-branch-pre-merge-sha"
 git fetch origin <base>
 git merge origin/<base>
 ```
 
-SHA をファイルに退避するのは、"Already up to date." の場合 `HEAD` も reflog も動かず、`HEAD@{1}` のような相対参照では取り込み前の状態を指せないため。出力されたパスを記録し、後続の手順ではそのパスを使う。実行ごとに別のパスを使うことで、同一セッション内の並行した実行が互いの SHA を上書きしない。
+SHA をファイルに退避するのは、"Already up to date." の場合 `HEAD` も reflog も動かず、`HEAD@{1}` のような相対参照では取り込み前の状態を指せないため。
 
 #### conflict が発生した場合
 
@@ -77,8 +75,7 @@ git commit --no-edit
 conflict なく取り込めた場合 (fast-forward や自動 merge も含む) でも、base 側の変更が自分の作業に影響しないとは限らない。何が入ってきたかを確認する。
 
 ```bash
-sha_file="<step 2 で出力された SHA ファイルのパス>"
-PRE_MERGE_SHA=$(cat "$sha_file")
+PRE_MERGE_SHA=$(cat "$AGENT_TMPDIR/sync-base-branch-pre-merge-sha")
 git log $PRE_MERGE_SHA..origin/<base> --oneline
 git diff $PRE_MERGE_SHA HEAD --stat
 ```
