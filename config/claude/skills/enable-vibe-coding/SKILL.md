@@ -65,4 +65,4 @@ Resolve these yourself and keep the loop running; do not ask the user unless a `
 
 When stopping, report the reason and the next decision needed to the user, then run `a agent status set you "<the decision needed, as a noun phrase>"`. Leave vibe mode on and wait for the user's direction. Do not continue merging or dispatching work while waiting.
 
-When every leaf is checked, report completion to the user. Run `a agent vibe off` only if this invocation enabled vibe mode.
+When every leaf is checked, report completion to the user. Leave vibe mode on; the user may still give follow-up work in this session. Run `a agent vibe off` only when the user asks for it.
