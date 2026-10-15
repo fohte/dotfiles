@@ -24,15 +24,15 @@ Read `references/draft-manual.md` before starting Step 1. It covers Steps 1, 2 a
 
 Apply every row below whose condition holds. The rows are independent of each other.
 
-| Condition                                        | Effect                                                                                                                                                                                          |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vibe_mode` is true                              | Skip crit review, notify the delegator with the draft and wait for explicit approval before submitting with `--no-review`; report PR ready after CI passes. Keep self-review and CI monitoring. |
-| `english_output` is true                         | Translation to English is required. The reference covers it in Step 4; Step 5 requires a Japanese-free title and body.                                                                          |
-| `english_output` is false                        | No translation happens.                                                                                                                                                                         |
-| `repo.owner` is `fohte`                          | Skip Step 8.                                                                                                                                                                                    |
-| `has_release_please` is `true`                   | Rule 1 uses Conventional Commits; otherwise `<scope>: <description>`. `scripts/render-rules` already applies it when it prints the rules.                                                       |
-| `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.                                                           |
-| ... and the template contains `Design decisions` | The rules include Rule 9; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                                              |
+| Condition                                        | Effect                                                                                                                                                                                                                       |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vibe_mode` is true                              | Skip crit review, notify the delegator with the draft and wait for explicit approval before submitting with `--no-review`; report PR ready after CI passes or only `vrt` fails (Step 7). Keep self-review and CI monitoring. |
+| `english_output` is true                         | Translation to English is required. The reference covers it in Step 4; Step 5 requires a Japanese-free title and body.                                                                                                       |
+| `english_output` is false                        | No translation happens.                                                                                                                                                                                                      |
+| `repo.owner` is `fohte`                          | Skip Step 8.                                                                                                                                                                                                                 |
+| `has_release_please` is `true`                   | Rule 1 uses Conventional Commits; otherwise `<scope>: <description>`. `scripts/render-rules` already applies it when it prints the rules.                                                                                    |
+| `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.                                                                                        |
+| ... and the template contains `Design decisions` | The rules include Rule 9; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                                                                           |
 
 ## 開始時の宣言 (必須・最初の応答で実行)
 
@@ -150,6 +150,8 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 `gh pr checks --watch` で CI を監視。失敗したら調査・修正して再 push。
 `vibe_mode` では CI が green になり、該当時は Step 8 も済ませた後、次の形式で委任元へ報告する。PR URL とチェックリスト項目 ID は実際の値に置き換える。
 
+`vrt` commit status 以外がすべて green で、`vrt` だけが失敗しているときも報告する。VRT 差分の確認と承認ラベルの付与は委任元が担うため、委任先はユーザーに VRT レビューを頼まず、`vrt-approved` を待たず、自分でも付けない。リポジトリの規約が「VRT 差分はユーザーにレビューを頼む」としていても、vibe ではこの報告がその依頼の代わりになる。
+
 ```text
 <vibe-pr-ready>
 PR: <PR URL>
@@ -161,7 +163,7 @@ enable-vibe-coding skill の『PR ready を受けたら』の手順に従う。
 
 通知後は `a agent status set wait "merge of <repo-name> PR <number>"` を実行 (`<repo-name>`=`repo.name`、`<number>`=PR URL 末尾の番号) して turn を止める。draft ready のときと同じく turn 内に留まって待たない。turn が続いている session は merge 後に `a agent close` で閉じられない。
 
-差し戻しを反映して再 submit した場合も、CI が green になってから同じ形式で再報告する。
+差し戻しを反映して再 submit した場合も、同じ条件で同じ形式で再報告する。
 
 ## 8. レビューコメントを確認して対応する
 
