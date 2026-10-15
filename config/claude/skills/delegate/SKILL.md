@@ -394,9 +394,10 @@ vibe 中に自分で merge した PR について後から届く `<delegation-up
 1. `gh pr view <PR> --json mergeCommit` で merge commit を取り、`gh run list --commit <sha>` の run を `gh run watch <run-id> --exit-status` で待つ。merge 直後は run がまだ作られていないことがあるので、空でも CI 無しとは判断せず、default branch への push で動く workflow が `.github/workflows/` に無いときだけ 3 に進む
 2. 失敗したら:
     1. `a agent peer list -R <owner>/<repo>/.worktrees/` で同じリポジトリの worktree で動くセッションを洗い出し、`ended` 以外の全員に merge 保留を `a agent peer notify` する。宛先は委任元の子に限らない。送った session_id は解除の通知に使うので控える
-    2. 原因を特定し (flaky なら `gh run rerun --failed` して 1 からやり直す)、修正をこの skill で委任する
-    3. 修正 PR の merge 通知が来たら、この手順を最初から実行する
-3. 通ったら、2-1 で merge 保留を送ったセッションがあれば全員に解除を通知する。その後、この merge を待って止まっていた作業があれば続ける
+    2. 失敗した run ごとに、`tq --author <model> task search "<run の URL>" --status todo` で CI 失敗タスクを探して控える。default branch の CI が落ちると、run の URL を説明文に含むタスクが自動で作られる。このタスクを使わないと、誰も知らないまま放置される。作成は CI の完了とほぼ同時なので、見つからなければ 1 分ほど空けて探し直す
+    3. 原因を特定し (flaky なら `gh run rerun --failed` して 1 からやり直す)、修正をこの skill で委任する。2-2 のタスクを `DELEGATE_TQ_TASK_ID` に渡すと、修正 PR がそのタスクにリンクされる。同じ原因で落ちた他の run のタスクは `tq --author <model> task complete <id> --reason duplicate --duplicate-of <渡したタスク>` で閉じる。2-2 でタスクが見つからなければ、通常どおり track-in-tq skill で用意する
+    4. 修正 PR の merge 通知が来たら、この手順を最初から実行する
+3. 通ったら、これまでの 2-2 で控えたタスクのうち未完了のものに原因と対応 (直した PR、または flaky と判断した根拠) をコメントして close する。2-1 で merge 保留を送ったセッションがあれば全員に解除を通知する。その後、この merge を待って止まっていた作業があれば続ける
 
 merge 保留のメッセージには、委任元からの連絡であること、どの PR の merge 後に default branch の CI が落ちているか、解除の通知が来るまで merge しないこと、merge 以外の作業は続けてよいこと、自分の PR の CI が同じ原因で落ちていても直さないことを書く。解除のメッセージには、どの修正で直ったか、merge してよいことを書く。
 
