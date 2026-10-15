@@ -585,6 +585,24 @@ rules:
       - deny: 'until curl -sf https://example.com; do sleep 1; done'
       - allow: 'for i in 1 2 3; do echo $i; done'
 
+  # A long sleep blocks the whole session for its duration. Short ones (letting
+  # tmux redraw, waiting for a killed process to exit) stay allowed.
+  - deny: 'sleep *'
+    when: >-
+      args.size() != 1 || !args[0].matches('^([0-4](\\.[0-9]*)?|5(\\.0*)?|\\.[0-9]+)s?$')
+    message: 'Only a single sleep duration of 5 seconds or less is allowed; longer sleeps block the session while they wait.'
+    fix_suggestion: 'Use a native --watch/wait flag (gh pr checks --watch, gh run watch, kubectl wait, ...), or run the command in the background and end the turn to wait for its completion notification. To check back later in Claude Code, use ScheduleWakeup.'
+    tests:
+      - deny: 'sleep 10'
+      - deny: 'sleep 1m'
+      - deny: 'sleep 5.5'
+      - deny: 'sleep 1 1'
+      - deny: 'sleep 3; sleep 30'
+      - allow: 'sleep 1'
+      - allow: 'sleep 0.2'
+      - allow: 'sleep 5'
+      - allow: 'sleep 3s'
+
   # `cmd & disown` manually detaches a background job instead of using the
   # agent's own backgrounding mechanism, so the harness loses track of it.
   - deny: 'disown *'

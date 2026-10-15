@@ -158,11 +158,12 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
       // by re-indexing, but accidental drops cost minutes of rebuild time.
       'mcp__codebase-memory__delete_project',
 
-      // Block self-scheduling tools. Claude sometimes defers the current task
-      // by scheduling itself ("I'll check this again later") instead of doing
-      // it now, or schedules a "follow-up check" a day out when the right
-      // answer is to act immediately. Removing the tools forecloses that path.
-      'ScheduleWakeup',
+      // Block cron scheduling. Claude sometimes defers the current task by
+      // scheduling itself ("I'll check this again later") instead of doing it
+      // now, or schedules a "follow-up check" a day out when the right answer
+      // is to act immediately. ScheduleWakeup is left allowed despite the same
+      // risk because runok denies long `sleep` and points to it as the way to
+      // wait.
       'CronCreate',
       'CronDelete',
       'CronList',
