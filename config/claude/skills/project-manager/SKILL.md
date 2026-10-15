@@ -26,7 +26,7 @@ description: Run the current session as a project manager (PM) that never does h
 起動手順そのものは `/handoff` (送り出しモード) に従う。PM では次の形に固定する。
 
 ```bash
-dir=$(mktemp -d /tmp/handoff.XXXXXX)
+dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 ```
 
 - `$dir/_common.md`: 全タスク共通の進め方と全体の文脈。[assets/handoff-common.md](assets/handoff-common.md) をコピーし、`<...>` のリポジトリ固有部分を埋める
@@ -76,7 +76,7 @@ PM セッションから切り出した作業セッション。PM は手を動�
 
 ### 3. 進捗表を作る
 
-起点タスクに tq page を作り、進捗表を置く。更新は `tq page update <task> <page_id> --file <file>` で行い、ファイルは `mktemp /tmp/tq-pm-progress.XXXXXX` で作る。`--author` などの tq の作法は `/tq` に従う。
+起点タスクに tq page を作り、進捗表を置く。更新は `tq page update <task> <page_id> --file <file>` で行い、ファイルは `mktemp "$AGENT_TMPDIR/tq-pm-progress.XXXXXX"` で作る。`--author` などの tq の作法は `/tq` に従う。
 
 形式は表にせず、見出しと箇条書きにする (表は読みにくいとユーザーから指摘があった)。
 

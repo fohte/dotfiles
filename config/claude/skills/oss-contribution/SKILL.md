@@ -17,7 +17,7 @@ commit / create-pr skill や委任プロンプトが commit・push を指示し�
 commit の区切り (1 つの修正、1 つのテスト追加など、それ単体で意味の通るまとまり) ごとに以下を行い、そのまま次の作業に進む。
 
 1. その区切りの変更を `git add` でステージングする
-2. commit message の草稿を `mktemp /tmp/commit-msg.XXXXXX` で作ったファイルに書く
+2. commit message の草稿を `mktemp "$AGENT_TMPDIR/commit-msg.XXXXXX"` で作ったファイルに書く
     - 書式は upstream の `git log` に合わせる。自分の repo 用の書式 (action line など) は使わない
 3. ユーザーに草稿のパスと `git commit -F <path>` を伝える
 4. ユーザーが commit するまで、次の区切りの変更は `git add` しない。ステージ済みの区切りに混ざり、草稿と中身がずれるため

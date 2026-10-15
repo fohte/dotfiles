@@ -24,7 +24,7 @@ description: Write a Markdown handoff file and start a fresh Claude Code session
 `mktemp -d` で一意なディレクトリを作り、その下に Markdown を書く。固定パスは過去の引き継ぎファイルと衝突するため使わない。
 
 ```bash
-dir=$(mktemp -d -t handoff.XXXXXX)
+dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 ```
 
 書き終えたらファイルパスをユーザーに提示する。

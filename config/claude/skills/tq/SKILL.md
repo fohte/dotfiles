@@ -34,11 +34,11 @@ tq page create --help   # flags of one subcommand
 
 This is the main reason the CLI exists. Page and comment bodies are often tens of kB; putting them in a command line means paying for the whole body in context. Write the body to a file, then hand over the path — the content never enters the conversation.
 
-Create each temporary file with `mktemp /tmp/tq-<purpose>.XXXXXX`. Use its full output verbatim when writing the file and in later `--file` or `--output` calls. Bash variables do not persist across calls, so do not rediscover the path by filename prefix; another session may have a matching file. Placeholders such as `<design-path>` below stand for the full path printed by `mktemp`.
+Create each temporary file with `mktemp "$AGENT_TMPDIR/tq-<purpose>.XXXXXX"`. Use its full output verbatim when writing the file and in later `--file` or `--output` calls. Placeholders such as `<design-path>` below stand for the full path printed by `mktemp`.
 
 ```bash
 # Example: run this first and use its full output as <design-path> below.
-mktemp /tmp/tq-design.XXXXXX
+mktemp "$AGENT_TMPDIR/tq-design.XXXXXX"
 ```
 
 ```bash

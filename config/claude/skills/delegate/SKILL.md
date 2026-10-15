@@ -83,7 +83,7 @@ vibe 中の委任だけは例外で、`direct` が `true` でも worktree と PR
 承認済みの PR 分割チェックリストがある場合は、委任する PR に対応する葉項目 ID も環境変数で渡す。項目が無い委任では省略する。
 
 ```bash
-dir=$(mktemp -d /tmp/delegate.XXXXXX)
+dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
 # Write ツールで $dir/task.yaml を作成 (スキーマは後述の「プロンプト構造 (必須)」参照)
 prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
   DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
@@ -103,7 +103,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts
     - 末尾に句読点を付けない
     - 良い例: "PR #40 CI 修正", "セッション一覧 TUI 実装", "Renovate 設定デバッグ", "ラベル生成プロンプト改善"
     - 悪い例: "バグ修正", "機能実装" (何の? がわからない)
-- `task.yaml`: Write ツールで `$dir` 配下に書く構造化データ。委任先へのプロンプトの元データであり、スキーマは後述の「プロンプト構造 (必須)」を参照。**必ず `mktemp -d` で作った一意なディレクトリ配下に置く** (固定パスは並行セッションと衝突する)
+- `task.yaml`: Write ツールで `$dir` 配下に書く構造化データ。委任先へのプロンプトの元データであり、スキーマは後述の「プロンプト構造 (必須)」を参照。**必ず `mktemp -d` で作った一意なディレクトリ配下に置く** (固定パスは同じセッションの別の委任と衝突する)
 - `render-task`: `task.yaml` を `--prompt` 用の markdown に変換するスクリプト。`purpose`/`goal` が空だとエラーで停止する
 - `DELEGATE_DIRECT_COMMIT`: 上で求めた `direct` をそのまま渡す環境変数。`render-task` が末尾の締めくくりを「PR を作成するまで」と「commit して push するまで」で切り替える
 - `--prompt`: `render-task` の出力をそのまま渡す
@@ -136,15 +136,15 @@ PR ごとのチェックリスト項目 ID がある場合は、ループの各�
 
 各委任先で task.yaml の内容が異なる場合は、共通する field (`investigated`/`links`/`additionalContext` など) を `common.yaml` に、差分のある field (`purpose`/`goal` など) を per-task の `<repo>.yaml` に分けて Write し、`yq` でマージしてから `render-task` に渡す。task.yaml を Bash 引数に直接埋め込まず、必ず Write ツールでファイルに書いてから渡すこと。
 
-**task.yaml は必ず `mktemp -d` で作った一意なディレクトリ配下に置く。** `/tmp/delegate-1.yaml` のような固定名は、過去セッションや並行セッションと衝突して別タスクの内容を上書き / 読み込みする事故につながる。事前に 1 回だけ `dir=$(mktemp -d /tmp/delegate.XXXXXX)` を実行し、以降の Write・マージ結果はすべてその `$dir` 配下のパスを使う。
+**task.yaml は必ず `mktemp -d` で作った一意なディレクトリ配下に置く。** `$AGENT_TMPDIR/delegate-1.yaml` のような固定名は、同じセッションの別の委任と衝突して別タスクの内容を上書き / 読み込みする事故につながる。事前に 1 回だけ `dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")` を実行し、以降の Write・マージ結果はすべてその `$dir` 配下のパスを使う。
 
 ```bash
 # 事前準備: 一意な作業ディレクトリを作り、その下に common.yaml と <repo>.yaml を Write する
-#   dir=$(mktemp -d /tmp/delegate.XXXXXX); echo "$dir"
-#   → 例: /tmp/delegate.AbC123
+#   dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX"); echo "$dir"
+#   → 例: /tmp/agent-<session-id>/delegate.AbC123
 #   その後 Write tool で $dir/common.yaml (共通 field), $dir/repo-a.yaml (差分 field) ... を作成
 
-dir=/tmp/delegate.AbC123  # 上で作成したパスをそのまま使う
+dir=/tmp/agent-<session-id>/delegate.AbC123  # 上で作成したパスをそのまま使う
 for entry in "repo-a 123" "repo-b 456" "repo-c 789"; do
   read repo num <<< "$entry"
   task="$dir/$repo.task.yaml"
@@ -167,7 +167,7 @@ wait
 
 ```bash
 # 現在のリポジトリ
-dir=$(mktemp -d /tmp/delegate.XXXXXX)
+dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
 # Write ツールで $dir/task.yaml を作成 (purpose: メール認証ログインが必要な理由, goal: ログイン機能が動くこと, など)
 prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
   DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
@@ -175,7 +175,7 @@ prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &
   a agent new --worktree=feature-login --agent --kind development --label "メール認証ログイン実装" --prompt "$prompt"
 
 # 別のリポジトリ (-R オプション)
-dir=$(mktemp -d /tmp/delegate.XXXXXX)
+dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
 # Write ツールで $dir/task.yaml を作成 (purpose: API タイムアウトで困っている内容, goal: タイムアウト設定の期待値, など)
 prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
   DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
@@ -194,7 +194,7 @@ prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &
 `repo.direct_commit` が `true` のリポジトリは default branch で直接作業して push する運用なので、worktree もブランチも作らず、そのリポジトリの作業ツリーでセッションを起動する。委任の中身 (task.yaml の書き方、委任前に確定させること、連絡手順) は通常の委任と変わらない。
 
 ```bash
-dir=$(mktemp -d /tmp/delegate.XXXXXX)
+dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
 # Write ツールで $dir/task.yaml を作成
 prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
   a agent new -R "$repo" --agent --kind development --label "<title>" --prompt "$prompt"
@@ -324,7 +324,7 @@ additionalContext: |
 ```
 
 ```bash
-dir=$(mktemp -d /tmp/delegate.XXXXXX)
+dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
 # 上記の内容で $dir/task.yaml を Write
 prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
   DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
