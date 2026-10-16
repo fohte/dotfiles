@@ -308,6 +308,10 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
     'rust-analyzer-lsp@claude-plugins-official': true,
     'skill-creator@claude-plugins-official': true,
   },
+  pluginConfigs: {
+    // The ledger keeps writing per-turn CSVs even when the band is hidden.
+    'ponytail@ponytail': { options: { ledger: false } },
+  },
   extraKnownMarketplaces: {
     crit: {
       source: {

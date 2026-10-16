@@ -145,6 +145,9 @@ if match_tag claude; then
   if is_wsl && command -v powershell.exe > /dev/null 2>&1; then
     sym --windows-dir config/claude/skills "$USERPROFILE/.agents/skills"
   fi
+  # `/ponytail band on` unlinks this symlink and the next deploy restores it,
+  # so change the band visibility by editing the repo file instead.
+  sym config/claude/ponytail-band ~/.claude/.ponytail-band
   sym config/claude/statusline.ts ~/.claude/statusline.ts
   sym config/claude/hooks ~/.claude/hooks
   sym config/claude/rules ~/.claude/rules
