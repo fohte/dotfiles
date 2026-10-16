@@ -426,6 +426,16 @@ rules:
       - ask: 'a cc new --worktree'
       - ask: 'a ag new --worktree --agent'
 
+  # Delegated (`--agent`) sessions could otherwise hand a hook-denied
+  # operation to a fresh session; the handoff form is denied too so a
+  # non-delegated session can't serve as a relay.
+  # Inline tests cannot set env: verify with
+  # `ARMYKNIFE_SESSION_DELEGATED=1 runok check -- a agent new --vibe`.
+  - deny: 'a ag|cc|agent new *'
+    when: "has(env.ARMYKNIFE_SESSION_DELEGATED) && env.ARMYKNIFE_SESSION_DELEGATED != '' && !has(flags.help)"
+    message: 'Blocked because this session was delegated (`a agent new --agent`); delegated sessions must not start further sessions.'
+    fix_suggestion: 'Do not work around a blocked operation with another session; stop and state in your response what was blocked.'
+
   # Closing an agent can terminate its session and remove a linked worktree.
   - ask: 'a ag|cc|agent close|c *'
     when: '!has(flags.help) && (!has(flags.child) || has(flags.force))'
