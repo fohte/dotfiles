@@ -55,6 +55,10 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
   // Agent tool are unaffected.
   disableWorkflows: true,
 
+  // Submits only the options already selected; the timer pauses while the
+  // terminal window is focused.
+  askUserQuestionTimeout: '5m',
+
   // Every key is opt-out: unset means the attribution is attached.
   // https://code.claude.com/docs/en/settings-reference.md#attribution
   attribution: {
