@@ -7,6 +7,8 @@ description: Start the user-requested autonomous implementation loop from a tq c
 
 Run the implementation checklist as a sequence of delegated PRs. The `/enable-vibe-coding` entry point may enable session vibe mode before this skill runs. Armyknife repository policy limits unattended review and merge to repositories where `repo.vibe` is `true`.
 
+When this session acts as a PM and the user asks to start vibe coding (including via `/enable-vibe-coding`), do not run the loop here. Follow the `project-manager` skill's procedure to grant vibe to the target worker session and notify it to run this skill, leaving the loop with the worker.
+
 ## Start
 
 1. Resolve the tq task ID in this order: use `$ARGUMENTS` when supplied; otherwise use the current branch's `branch.<name>.x-tq-task-id` when set; otherwise use the unique leaf task linked to `$TQ_SESSION_ID` via `tq session list`. Reduce linked tasks to leaves with `jq`. If more than one leaf remains, ask the user which task to run. If none remains, follow the `track-in-tq` skill's start procedure to find or create the task and link this session, without asking the user: invoking this skill already means the work should run, and `track-in-tq` owns the find-or-create decision. Create a task only when this session has an agreed design; otherwise stop before creating one, because step 3 would stop on it anyway and leave an empty task behind.

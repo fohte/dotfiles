@@ -471,6 +471,18 @@ rules:
       - pass: 'a agent vibe off'
       - pass: 'a agent vibe status'
 
+  # `*` can match zero tokens; runok counts each subcommand token in `args`,
+  # so four means one session ID.
+  # Armyknife verifies the target is a descendant before granting vibe inheritance.
+  - allow: 'a ag|cc|agent vibe grant *'
+    when: 'args.size() == 4'
+    tests:
+      - allow: 'a agent vibe grant example-session'
+      - allow: 'a ag vibe grant example-session'
+      - allow: 'a cc vibe grant example-session'
+      - pass: 'a agent vibe grant'
+      - pass: 'a agent vibe grant session-a session-b'
+
   # armyknife (`a`) readonly subcommands. Other mutating subcommands
   # (a agent resume, etc) fall through to pass.
   - allow: 'a cc|agent list|ls'
