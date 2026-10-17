@@ -1,0 +1,22 @@
+#!/bin/bash
+# pre-session-start hook for armyknife.
+# Called immediately before starting a Claude Code or Codex session.
+#
+# armyknife discovers this file at $XDG_CONFIG_HOME/armyknife/hooks/pre-session-start
+# (defaults to ~/.config/armyknife/hooks/pre-session-start).
+# See: https://github.com/fohte/armyknife/blob/master/docs/hooks.md
+#
+# Environment variables set by armyknife:
+#   ARMYKNIFE_SESSION_CWD - absolute path of the directory used to start the session
+set -euo pipefail
+
+if [[ -z "${ARMYKNIFE_SESSION_CWD:-}" ]]; then
+  exit 0
+fi
+
+hook_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Trust registration is best-effort metadata and must not block session startup.
+# shellcheck source=register-project-trust.bash disable=SC1091
+if source "$hook_dir/register-project-trust.bash"; then
+  register_project_trust "$ARMYKNIFE_SESSION_CWD" || true
+fi
