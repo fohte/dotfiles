@@ -15,8 +15,6 @@
 # and existing branches overwritten with --force are restored to their prior tip.
 set -euo pipefail
 
-hook_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 if [[ -z "${ARMYKNIFE_WORKTREE_PATH:-}" ]]; then
   exit 0
 fi
@@ -46,8 +44,8 @@ fi
 
 # Run bootstrap script if present (e.g. mise install, dependency install).
 # --worktree skips lefthook install since worktrees share the parent's .git/hooks.
-# Non-fatal: branches under repair often carry a stale lockfile, and a rollback
-# here pushes callers to --skip-hooks, which also drops the trust registration below.
+# Non-fatal: branches under repair often carry a stale lockfile, and rolling
+# back here pushes callers to --skip-hooks.
 bootstrap="$ARMYKNIFE_WORKTREE_PATH/scripts/bootstrap"
 if [[ -x "$bootstrap" ]]; then
   "$bootstrap" --worktree ||
@@ -73,11 +71,4 @@ if [[ -n "${ARMYKNIFE_REPO_ROOT:-}" ]]; then
       cp "$f" "$ARMYKNIFE_WORKTREE_PATH/$basename"
     fi
   done
-fi
-
-# Trust registration is non-critical metadata, so errors must not roll back the
-# worktree creation.
-# shellcheck source=register-project-trust.bash disable=SC1091
-if source "$hook_dir/register-project-trust.bash"; then
-  register_project_trust "$ARMYKNIFE_WORKTREE_PATH" || true
 fi
