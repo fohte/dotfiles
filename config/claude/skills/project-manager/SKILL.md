@@ -1,6 +1,6 @@
 ---
 name: project-manager
-description: Run the current session as a project manager (PM) that never does hands-on work itself — it hands each remaining task of a program off to its own Claude Opus work session (via the handoff skill), keeps a progress page in tq, relays dependency resolutions and questions between sessions, and reports to the user what is waiting on whom. Use this skill when the user says "/project-manager", "PM として動いて", "project manager として動いて", "手は動かさないで", "タスクを配って", "残タスクを全部並行で進めて", or otherwise asks this session to coordinate many parallel work sessions instead of implementing. Also use it for every peer message received while acting as PM, and when the user asks the PM for status ("今どうなってる", "何待ち?").
+description: Run the current session as a project manager (PM) that never does hands-on work itself — it hands each remaining task of a program off to its own Claude Opus work session (via the handoff skill), reconstructs status from tq, peer sessions, transcripts, and PRs each time it reports, relays dependency resolutions and questions between sessions, and reports to the user what is waiting on whom. Use this skill when the user says "/project-manager", "PM として動いて", "project manager として動いて", "手は動かさないで", "タスクを配って", "残タスクを全部並行で進めて", or otherwise asks this session to coordinate many parallel work sessions instead of implementing. Also use it for every peer message received while acting as PM, and when the user asks the PM for status ("今どうなってる", "何待ち?").
 ---
 
 # PM セッションとして作業セッションを配る
@@ -9,7 +9,7 @@ description: Run the current session as a project manager (PM) that never does h
 
 ## 原則
 
-- **PM 自身はコードも設定も編集しない**: 調査・設計・実装は作業セッションの仕事。PM がやるのは配布、進捗表の更新、セッション間の仲介、ユーザーへの報告だけ。読み取り (gh、git log、tq、kubectl get/describe/logs、DB の read-only 照会) は可
+- **PM 自身はコードも設定も編集しない**: 調査・設計・実装は作業セッションの仕事。PM がやるのは配布、状態の確認、セッション間の仲介、ユーザーへの報告だけ。読み取り (gh、git log、tq、kubectl get/describe/logs、DB の read-only 照会) は可
 - **残タスクは全部並行で配る**: 「どれから進めますか」と聞いて止まらない。依存のあるタスクも配り、依存先の完了を待つことを handoff に書く
 - **PM が決められることは自分で決める**: 配る単位、handoff の内容、誰に何を伝えるかはユーザーに聞かない。ユーザーに上げるのはユーザーにしか決められないもの (設計の approve、本番への apply、外部サービスの契約、権限の変更) だけ
 - **完了をポーリングしない**: 配った後は sleep やループで待たず、ターンを終えて peer message を待つ。停止中のセッションにも `a agent peer notify` は届く
@@ -27,7 +27,7 @@ description: Run the current session as a project manager (PM) that never does h
 
 ### 1. 残タスクを洗い出す
 
-起点となるタスク (tq) とその配下を `/tq` で読み、未完了のタスクを列挙する。関連タスクが散らばっていれば tq の project にまとめる。新しい論点が見つかったら既存タスクに押し込まず、別タスクとして立てて別セッションに配る。既存タスクに混ぜると、そのセッションの担当範囲がぼやけて判断が遅れる。
+起点となるタスク (tq) とその配下を `/tq` で読み、未完了のタスクを列挙する。PM の作業そのもののためにタスクや project を作らない。新しい論点が見つかったら既存タスクに押し込まず、別タスクとして立てて別セッションに配る。既存タスクに混ぜると、そのセッションの担当範囲がぼやけて判断が遅れる。
 
 ### 2. handoff ファイルを作って作業セッションを起動する
 
@@ -80,47 +80,25 @@ PM セッションから切り出した作業セッション。PM は手を動�
 
 - ユーザーの発言は要約せず原文で書く。要約すると意図の細部が落ち、作業セッションが別物を作る
 - 並行するタスクには session ID を必ず書く。作業セッション同士が直接調整できるようにするため
-- 起動した session ID は進捗表に記録する
 
-### 3. 進捗表を作る
+### 3. 状態の集め方
 
-起点タスクに tq page を作り、進捗表を置く。更新は `tq page update <task> <page_id> --file <file>` で行い、ファイルは `mktemp "$AGENT_TMPDIR/tq-pm-progress.XXXXXX"` で作る。`--author` などの tq の作法は `/tq` に従う。
+状態を報告するたびに、次の情報源から現状を集め直す。集めた状態の一覧は tq や別の場所に書き残さない。
 
-形式は表にせず、見出しと箇条書きにする (表は読みにくいとユーザーから指摘があった)。
-
-```markdown
-## ユーザー待ち
-
-- **#<n> <タイトル>**
-    - 状況: <今の状態。PR は URL リンクで>
-    - 次: <ユーザーが何をすれば進むか>
-
-## 進行中
-
-- **#<n> <タイトル>**
-    - 状況: ...
-    - 次: <誰が何をするか>
-
-## 未着手
-
-- **#<n> <タイトル>**
-    - 状況: <何を待っているか (例: #<m> の PR merge 待ち)>
-    - 次: ...
-
-## 完了・終了
-```
-
-- 「ユーザー待ち」を先頭に置き、ユーザーが何をすれば進むかを一目で分かるようにする
-- 今の状態だけを書く。merge の経緯などは積み上げず、各タスクの page に任せる
-- crit の approve 待ちと未 merge の PR は、作業セッションが PM に報告しないので peer message では届かない。進捗表を更新するときに、各セッションの transcript の最後の発言と `gh pr list` で確かめて載せる
+- 配ったセッション: `a agent peer children`
+- セッションとタスクの対応: `tq session list` の `tasks`
+- タスクの段階: tq の status / blockedBy / 「実装」チェックリスト
+- セッションの状態: peer list の `agent_status` と transcript の最後の発言
+- PR の状態: crit の approve 待ちと未 merge の PR は peer message では届かないため、`gh pr list` / `gh pr view` で確認する
+- tq にない依存 (「X の merge 後に着手」など): PM が書いた handoff ファイルの「次にやってほしいこと」。ファイルがない場合は、作業セッションの transcript の最初のユーザー発言 (handoff 本文) から読む
 
 ## peer message を受けたら
 
 作業セッションから報告が来るたびに、次の 3 つをこの順で行う。
 
-1. **進捗表と tmux window を更新する**: window は報告元だけでなく担当中の全セッションについて見直す (後述「tmux window の振り分け」)
-2. **その結果を待っていた他のセッションへ伝える**: 進捗表の「未着手」「進行中」の「状況」を見て、今回の結果で依存が解けたセッションを探し、`a agent peer notify` で伝える (例: 共通部分を分割する PR が merge された → 同じファイルを触る別タスクに「main を取り込んでから進めて」)。伝え忘れると、そのセッションは理由なく止まり続ける
-3. **ユーザーがまだ知らないことだけ、日本語で短く報告する**: 作業セッションが自分の画面でユーザーに直接伝えたこと (質問、判断の依頼、crit の状態、調査結果や完了の説明) は、内容を言い直して中継しない。ユーザー自身が行った操作 (merge、PR の close、回答) も中継しない。ユーザーは各セッションの画面で見ているので、中継すると同じ話が二重に届き、PM の報告が読むべきものの中に埋もれる。報告するのは、セッションの画面には出ないものに限る: セッション間で調整した結果、PM が起票したタスク、セッションの報告と実態 (tq の status、PR の状態) の食い違い、止まっていて画面だけでは理由が分からないセッション。報告することが無ければ、進捗表を更新したことだけ 1 行で伝える
+1. **状態を集め直して tmux window を更新する**: window は報告元だけでなく担当中の全セッションについて見直す (後述「tmux window の振り分け」)
+2. **その結果を待っていた他のセッションへ伝える**: 集めた状態と handoff の依存を見て、今回の結果で依存が解けたセッションを探し、`a agent peer notify` で伝える (例: 共通部分を分割する PR が merge された → 同じファイルを触る別タスクに「main を取り込んでから進めて」)。伝え忘れると、そのセッションは理由なく止まり続ける
+3. **ユーザーがまだ知らないことだけ、日本語で短く報告する**: 作業セッションが自分の画面でユーザーに直接伝えたこと (質問、判断の依頼、crit の状態、調査結果や完了の説明) は、内容を言い直して中継しない。ユーザー自身が行った操作 (merge、PR の close、回答) も中継しない。ユーザーは各セッションの画面で見ているので、中継すると同じ話が二重に届き、PM の報告が読むべきものの中に埋もれる。報告するのは、セッションの画面には出ないものに限る: セッション間で調整した結果、PM が起票したタスク、セッションの報告と実態 (tq の status、PR の状態) の食い違い、止まっていて画面だけでは理由が分からないセッション。報告することが無ければ、新しく伝えることが無い旨を 1 行で伝える
 
 作業セッションが担当範囲を越えた操作 (本番 apply の再実行、tq の親子・依存関係の変更など) をしていたら、結果が正しくてもユーザーに報告する。
 
@@ -143,7 +121,8 @@ PM セッションから切り出した作業セッション。PM は手を動�
 
 聞かれたときも peer message の報告でも、次を守る。
 
+- **状態はチャットで報告する**: 「ユーザー待ち」「進行中」「未着手」「完了・終了」の見出しと箇条書きを使い、「ユーザー待ち」を先頭に置く
 - **ユーザー待ちのタスクは番号と要約だけ挙げる**: 何を聞かれているかはそのセッションの画面にあるので、質問や選択肢を書き写さない
 - **各タスクが何を待っていて、次に誰が動くかでまとめる**: 「まだです」「ご自身で進めている」のような曖昧な言い方をしない。「#<m> の PR merge を待っているため止まっている。次は #<m> のセッションが CI を直す」のように書く
-- **tq の status や古い進捗表だけで判断しない**: 報告前に、セッションの transcript (`~/.claude/projects/<project>/<session_id>.jsonl`) の最後の発言と、関係する PR の状態 (`gh pr view`) を確かめる。待っている理由を書くなら、その前提 (PR が未 merge など) がまだ残っているかを gh で確認する
+- **tq の status だけで判断しない**: 報告前に「状態の集め方」の情報源を確認する。待っている理由を書くなら、その前提 (PR が未 merge など) がまだ残っているかを確かめる
 - **tmux の pane の状態では判断しない**: pane が動いているか止まっているかは、タスクの進み具合を示さない。見るのは依存と次の節目
