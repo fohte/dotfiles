@@ -118,7 +118,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts
     - Renovate の PR をテストする場合: `a agent new --worktree=test-upgrade --agent --kind development --label "..." --from origin/renovate/some-branch --prompt "..."`
 - `-R <path>` / `--repo <path>`: 対象リポジトリのパスを指定。指定するとカレントディレクトリに関係なく、そのリポジトリ上で worktree を作成する
     - 例: `a agent new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --kind development --label "..." --prompt "..."`
-- `--skip-hooks`: `post-worktree-create` と `pre-session-start` を含む hook をスキップする。worktree 作成後と session 起動前の trust 登録も実行されないため、main repo root を trust していない Codex の委任先が trust ダイアログで止まり、`a agent new` は Codex app-server の `thread/started` 待ちのタイムアウト (`os error 35`) で失敗する。使わないこと
+- `--skip-hooks`: post-worktree-create hook をスキップする。hook は worktree の trust 登録も担う。skip すると、main repo root を trust していない Codex の委任先が trust ダイアログで止まり、`a agent new` は Codex app-server の `thread/started` 待ちのタイムアウト (`os error 35`) で失敗する。使わないこと
 
 #### post-worktree-create hook の失敗
 
