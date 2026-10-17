@@ -479,6 +479,7 @@ rules:
     tests:
       - allow: 'a agent vibe grant example-session'
       - pass: 'a agent vibe grant'
+      - pass: 'a agent vibe grant session-a session-b'
 
   # armyknife (`a`) readonly subcommands. Other mutating subcommands
   # (a agent resume, etc) fall through to pass.
