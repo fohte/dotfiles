@@ -46,8 +46,6 @@ PR が残らないので、報告しない限り委任が終わったことが�
 merge 後に worktree が片付けられると armyknife が委任元に自動で通知する。
 {{- end }}
 
-hook に拒否された操作 (ブランチ作成、worktree 追加など) を、`a agent new` で別セッションを起動するなどの手段で回避しない。止まった理由として応答に書く。
-
 ## 委任元への連絡
 
 `a agent vibe status` が exit 0 の場合は、`create-pr` skill の vibe 手順にある連絡ルールを優先する。以下の制限は `a agent vibe status` が exit 0 以外の場合に適用する。
