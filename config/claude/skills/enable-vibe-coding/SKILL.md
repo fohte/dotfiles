@@ -7,7 +7,7 @@ description: Start the user-requested autonomous implementation loop from a tq c
 
 Run the implementation checklist as a sequence of delegated PRs. The `/enable-vibe-coding` entry point may enable session vibe mode before this skill runs. Armyknife repository policy limits unattended review and merge to repositories where `repo.vibe` is `true`.
 
-PM として動いている session で vibe coding の開始を頼まれた場合 (`/enable-vibe-coding` の入力を含む)、この session では loop を回さず、`project-manager` skill の手順に従って対象の作業 session に許可を渡し、この skill を実行するよう通知する。
+When this session acts as a PM and the user asks to start vibe coding (including via `/enable-vibe-coding`), do not run the loop here. Follow the `project-manager` skill's procedure to grant vibe to the target worker session and notify it to run this skill, leaving the loop with the worker.
 
 ## Start
 
