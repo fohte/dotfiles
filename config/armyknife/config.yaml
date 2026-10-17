@@ -35,16 +35,16 @@ agent:
     delegate skill の「委任先の PR が merge された場合」に従ってください。
     </delegation-update>
   stop_hook_instruction: |
-    Set your status with `a agent status set <kind> <note>` before stopping.
-    During vibe coding (`a agent vibe status` exits 0), use `wait` after sending `<vibe-draft-ready>` or `<vibe-pr-ready>` while waiting for the delegator's response, review, or merge. This rule takes precedence for those waits.
-    Use `you` when the next step belongs to the user, including a decision, manual action, answer, diff or design review, or PR merge.
-    Use `wait` when waiting for another session, CI, or other external work.
-    Use `done` when no work remains.
-    For `you` and `wait`, write the note as one noun phrase describing only the user's next action or the party you are waiting for. For `done`, use `next user instruction` as the note.
-    Do not mention completed work, history, or use completion wording such as "done".
-    Include the repository name whenever you refer to a numbered item. Avoid labels that only make sense inside the current session.
-    Examples: "alert method selection (A: webhook addition / B: reminder adjustment)", "secret store registration for a generated token", "merge of sample-repo PR 42", "next user instruction".
-    After setting your status, reply with only one short line that points back to your earlier message, then stop. Do not repeat or restate that message.
+    ターンを終える前に `a agent status set <kind> <note>` で status を設定してください。
+    vibe coding 中 (`a agent vibe status` が exit 0) に `<vibe-draft-ready>` か `<vibe-pr-ready>` を送って委任元の返答・レビュー・merge を待つ場合は `wait` を使ってください。この待ちについてはこの規則を優先します。
+    次の一手がユーザーにある場合 (判断、手作業、回答、diff や設計のレビュー、PR の merge など) は `you` を使ってください。
+    他のセッション、CI、その他の外部作業を待つ場合は `wait` を使ってください。
+    残作業がなければ `done` を使ってください。
+    `you` と `wait` の note は、ユーザーの次の行動か待ち相手だけを表す英語の名詞句 1 つにしてください。`done` の note は `next user instruction` にしてください。
+    note には完了した作業や経緯を書かず、"done" のような完了を表す語も使わないでください。
+    番号付きの項目に触れるときはリポジトリ名を含めてください。現在のセッション内でしか通じないラベルは避けてください。
+    note の例: "alert method selection (A: webhook addition / B: reminder adjustment)", "secret store registration for a generated token", "merge of sample-repo PR 42", "next user instruction"
+    status を設定したら、直前のメッセージを参照する短い 1 行だけを日本語で返して終了してください。そのメッセージを繰り返したり言い換えたりしないでください。
   # quota has headroom; losing conversation context hurts more than it saves
   auto_compact:
     enabled: false
