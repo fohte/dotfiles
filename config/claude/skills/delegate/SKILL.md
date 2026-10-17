@@ -200,7 +200,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.agents/skills/delegate/scripts/rend
   a agent new -R "$repo" --agent --kind development --label "<title>" --prompt "$prompt"
 ```
 
-- `--worktree` を付けない。worktree 前提のオプション (`--from`、`--force`、`--skip-hooks`) も使えない
+- `--worktree` を付けない。worktree 前提のオプション (`--from`、`--force`) も使えない
 - `-R "$repo"` は委任先が現在のリポジトリでも付ける。worktree 内やサブディレクトリから起動していても、リポジトリ root で作業させられる
 - `DELEGATE_DIRECT_COMMIT=true` を落とすと、プロンプト末尾が「PR を作成するまで」のままになり、委任先が default branch から PR を作ろうとする
 - `DELEGATE_TASK_PURPOSE` / `DELEGATE_TQ_TASK_ID` / `DELEGATE_TQ_CHECKLIST_ITEM_ID` は渡さない。どれも worktree 作成時の hook が git config へ書いて初めて効くもので、worktree を作らない以上どこにも記録されない
