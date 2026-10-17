@@ -92,7 +92,7 @@ PM セッションから切り出した作業セッション。PM は手を動�
 - PR の状態: crit の approve 待ちと未 merge の PR は peer message では届かないため、`gh pr list` / `gh pr view` で確認する
 - tq にない依存 (「X の merge 後に着手」など): PM が書いた handoff ファイルの「次にやってほしいこと」。ファイルがない場合は、作業セッションの transcript の最初のユーザー発言 (handoff 本文) から読む
 
-セッション引き取りのトリアージでは、`tq session list` の `tasks` と `a agent peer children` を使って担当を対応付ける。担当セッションが `a agent peer children` に含まれない場合は `a agent peer adopt <session_id>` で引き取る。親が生きているため拒否された場合は `--force` で再試行せず、拒否されたことを記録せずにユーザーへ伝える
+セッション引き取りのトリアージでは、`tq session list` の `tasks` と `a agent peer children` で担当を対応付ける。担当セッションが `a agent peer children` にいない場合は `a agent peer adopt <session_id>` で引き取る。親が生存しているため `adopt` が拒否された場合は `--force` で再試行しない。拒否は記録せず、ユーザーへ伝える。
 
 ## peer message を受けたら
 
@@ -109,7 +109,8 @@ PM セッションから切り出した作業セッション。PM は手を動�
 作業セッションの pane は、段階ごとの window (例: 保留中 / 設計中 / 実装中 / 完了) にまとめる。ユーザーは window でどのセッションを見に行くかを決めるので、段階と window がずれると、実装中のセッションを設計中の中から探すことになる。
 
 - 段階は tq で上から順に判定する: タスクが completed で、セッションの `agent_status` も `done` なら完了 (completed でもユーザーの判断や確認が残っていれば完了にしない)、未完了の blockedBy があるか、他タスクの完了待ちで止まっていれば保留中、「実装」チェックリストがあれば実装中、それ以外は設計中。保留中を分けるのは、ユーザーが今は見に行っても何もできないセッションを、手が要るセッションの中から除くため
-- セッションを完了 window に移したら、`a agent close --child <session_id>` で閉じる
+- 完了 window に移したセッションは、ユーザーが完了報告を確認するまで pane を残す
+- ユーザーが確認した後、pending task と未送信 draft がないことを確かめて `a agent close --child <session_id>` で閉じる。close が拒否された場合は `--force` を使わず、拒否理由をユーザーに伝える
 - 起動時と完了時だけでなく、peer message を受けるたびに担当中の全セッションを見直す。設計が承認されて実装に入ったことは、作業セッションが報告しない (ユーザーが画面で見ている節目なので) ため、PM が tq を見に行かない限り気づけない
 - 対応表は `a agent peer list` の `pane_id` と `tmux list-panes -a -F '#{pane_id} #{window_id} #{window_name}'` で作り、`tmux join-pane -d -s <pane> -t <移動先 window の pane>` で移す。移動先に floating pane があると join に失敗するので、floating でない pane を `-t` に指定する
 - 段階の window が無くなっていたら `tmux break-pane -d -s <pane> -n <window 名>` で作る

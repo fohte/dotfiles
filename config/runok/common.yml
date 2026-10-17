@@ -506,22 +506,26 @@ rules:
   - ask: 'a ag|cc|agent peer adopt *'
     when: '!has(flags.help) && has(flags.force) && args.size() == 4'
     tests:
+      - allow: 'a agent peer adopt --force --help'
+      - allow: 'a cc peer adopt --help'
+      - allow: 'a ag peer adopt --help'
+      - pass: 'a agent peer adopt --force'
+      - pass: 'a agent peer adopt --force session-a session-b'
       - ask: 'a agent peer adopt --force example-session'
       - ask: 'a agent peer adopt example-session --force'
       - ask: 'a cc peer adopt --force example-session'
       - ask: 'a ag peer adopt --force example-session'
   - allow: 'a ag|cc|agent peer adopt *'
-    when: 'has(flags.help) || (!has(flags.force) && args.size() == 4)'
+    when: '!has(flags.help) && !has(flags.force) && args.size() == 4'
     tests:
       - allow: 'a agent peer adopt example-session'
       - allow: 'a cc peer adopt example-session'
       - allow: 'a ag peer adopt example-session'
       - allow: 'a agent peer adopt --help'
-      - allow: 'a agent peer adopt --force --help'
-      - allow: 'a cc peer adopt --help'
-      - allow: 'a ag peer adopt --help'
       - pass: 'a agent peer adopt'
       - pass: 'a agent peer adopt example-session another-session'
+      - pass: 'a cc peer adopt --force'
+      - pass: 'a ag peer adopt --force session-a session-b'
 
   # Delegation and handoff report-backs are unusable if every message needs
   # approval.
