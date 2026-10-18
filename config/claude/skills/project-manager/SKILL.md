@@ -46,7 +46,7 @@ a agent new -R "$(git root -r)" --kind design \
   --prompt "$(cat "$dir/<n>.handoff.md")" --label "<タスクの短い要約>"
 ```
 
-設計作業セッションは `--kind design` で起動し、engine、model、reasoning effort は指定しない。起動先の実効値は `a agent profile show design` で確認し、切り替える場合は `a agent profile use design codex` または `a agent profile use design claude` を使う。ユーザーが起動値を明示した場合は、その値を CLI option で渡す。設計セッションから先の実装委任 (`delegate` skill) は engine、model、reasoning effort を指定せず、既定値を使う。
+設計作業セッションは `--kind design` で起動する。engine、model、reasoning effort の確認・切替は handoff skill の起動手順に従う。設計セッションから先の実装委任 (`delegate` skill) は engine、model、reasoning effort を指定せず、既定値を使う。
 
 `<n>.md` の構成:
 

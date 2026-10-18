@@ -78,14 +78,18 @@ dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 - **成立する** → `-R "$(git root -r)"` を付ける。セカンドオピニオンや別トピックの再調査のように、ブランチに依存しない場合はこちら。`git root -r` は worktree 内でも本体リポジトリの root を返すため、worktree や深いサブディレクトリで起動していた影響を受けない
 
 ```bash
+# 設計 handoff
 a agent new --kind design --prompt "$(cat "$dir/handoff.md")" --label "<タスクの短い要約>"
 # ブランチに依存しない場合
 a agent new -R "$(git root -r)" --kind design --prompt "$(cat "$dir/handoff.md")" --label "..."
+
+# 設計以外の handoff
+a agent new --engine claude --model opus --kind <workflow-skill> --prompt "$(cat "$dir/handoff.md")" --label "..."
 ```
 
 設計 handoff では engine、model、reasoning effort を指定せず、`design` profile の選択値を使う。実効値は `a agent profile show design` で確認し、切り替える場合は `a agent profile use design codex` または `a agent profile use design claude` を使う。ユーザーが起動値を明示した場合は、その値を CLI option で渡す。設計以外の handoff では従来どおり Claude/Opus を指定し、ユーザーの明示値があればそれを優先する。
 
-design 以外の workflow skill が該当する場合は、例の `--kind design` をその skill 名に置き換える。該当する workflow skill がない場合は `--kind` を省略する。
+設計以外では、該当する workflow skill があれば例の `--kind <workflow-skill>` にその skill 名を渡す。該当する skill がない場合は `--kind` を省略する。ユーザーが起動値を明示した場合は、該当する CLI option を Claude/Opus の指定より優先する。
 
 worktree 内から `-R` を付けた場合、その worktree の未コミットの変更は引き継ぎ先から見えない。必要なら handoff.md の「参考情報」に元の cwd を書く。git 管理外のディレクトリでは `git root -r` が失敗するので `-R` を付けない。
 
