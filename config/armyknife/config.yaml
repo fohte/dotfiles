@@ -77,6 +77,14 @@ agent:
     # than to a higher model tier.
     model: gpt-6-luna
     reasoning_effort: max
+  launch_profiles:
+    design:
+      engine: claude
+      claude:
+        model: opus
+      codex:
+        model: gpt-6.1-sol
+        reasoning_effort: high
   worktree:
     layout:
       command: claude
