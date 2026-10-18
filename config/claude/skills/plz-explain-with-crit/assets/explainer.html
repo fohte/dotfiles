@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{TITLE}}</title>
+    <style id="shared-styles">
+      :root {
+        color-scheme: dark;
+        --bg: #16181d;
+        --panel: #1c1f26;
+        --line: #3a3f4b;
+        --text: #d8dde6;
+        --muted: #a2aab8;
+        --green: #a3d6a3;
+        --blue: #9fbede;
+        --amber: #e5c58a;
+        --code: #111318;
+        --font-sans:
+          -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+        --font-mono: Menlo, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        max-width: 980px;
+        margin: 32px auto;
+        padding: 0 20px 64px;
+        background: var(--bg);
+        color: var(--text);
+        font: 15px/1.65 var(--font-sans);
+      }
+      h1 {
+        margin: 0 0 20px;
+        font-size: 22px;
+        line-height: 1.4;
+      }
+      h2 {
+        margin: 36px 0 16px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 6px;
+        font-size: 18px;
+      }
+      h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+      }
+      p {
+        margin: 8px 0;
+      }
+      a {
+        color: var(--blue);
+      }
+      code {
+        border-radius: 3px;
+        padding: 2px 4px;
+        background: var(--code);
+        font: 13px/1.6 var(--font-mono);
+      }
+      figure {
+        margin: 0;
+      }
+      figcaption,
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      figcaption {
+        margin: 10px 0;
+      }
+      .summary {
+        border-left: 4px solid var(--green);
+        padding: 12px 16px;
+        background: #202a23;
+      }
+      .summary p {
+        margin: 3px 0;
+      }
+      .label {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .source-list {
+        padding-left: 22px;
+        font-size: 13px;
+      }
+      .source-list li {
+        margin: 7px 0;
+      }
+      svg {
+        display: block;
+        max-width: 100%;
+        height: auto;
+      }
+      svg text {
+        font-family: var(--font-sans);
+      }
+
+      @media (max-width: 720px) {
+        body {
+          margin: 20px auto;
+          padding: 0 16px 40px;
+        }
+      }
+    </style>
+    <style id="diagram-styles">
+      /* Add diagram-specific styles here. */
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>{{TITLE}}</h1>
+      <div class="summary">
+        <p>
+          <span class="label">目的</span
+          ><!-- State what the reader should understand or decide. -->
+        </p>
+        <p>
+          <span class="label">結論</span
+          ><!-- State the answer or recommendation. -->
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <section aria-labelledby="overview-title">
+        <h2 id="overview-title">全体図</h2>
+        <figure>
+          <!-- Add a labelled HTML or SVG diagram. -->
+          <figcaption>
+            <!-- Add a concise caption that contributes information beyond the diagram. -->
+          </figcaption>
+        </figure>
+      </section>
+      <!-- Add only topic-specific sections that help explain the diagram. -->
+    </main>
+
+    <footer>
+      <section aria-labelledby="sources-title">
+        <h2 id="sources-title">出典</h2>
+        <ul class="source-list">
+          <!-- Link to primary sources and describe what each link supports. -->
+        </ul>
+      </section>
+    </footer>
+  </body>
+</html>
