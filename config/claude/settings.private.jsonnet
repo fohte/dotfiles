@@ -33,11 +33,10 @@
       'mcp__sentry__find*',
       'mcp__sentry__get*',
       'mcp__sentry__search*',
-    ],
-    deny+: [
-      // Sentry MCP: writes and other high-risk operations.
       'mcp__sentry__update*',
       'mcp__sentry__execute_sentry_tool',
+    ],
+    deny+: [
       'mcp__sentry__analyze_issue_with_seer',
     ],
   },
