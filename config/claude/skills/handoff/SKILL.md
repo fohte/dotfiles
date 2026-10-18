@@ -1,9 +1,9 @@
 ---
 name: handoff
-description: Write a Markdown handoff file and start a fresh Claude Code session with it (`a agent new`) so that session picks up the current task — for resetting a session with accumulated context (like a manual auto-compact), switching to a different or more capable model, or getting an independent second opinion from a new session on the same problem. Also use this inside a session that itself was started from a handoff, when the user wants to write up a report to carry back to the session that started it. Trigger ONLY on an explicit, deliberate request for this handoff/report — the user runs `/handoff`, or clearly asks to hand off the session, switch models and continue, or bring results back to the original session. Do not trigger just because context is getting long or a model name comes up in passing conversation — only act when the user explicitly asks for the handoff itself.
+description: Write a Markdown handoff file and start a fresh agent session with it (`a agent new`) so that session picks up the current task — for resetting a session with accumulated context (like a manual auto-compact), switching to a different or more capable model, or getting an independent second opinion from a new session on the same problem. Also use this inside a session that itself was started from a handoff, when the user wants to write up a report to carry back to the session that started it. Trigger ONLY on an explicit, deliberate request for this handoff/report — the user runs `/handoff`, or clearly asks to hand off the session, switch models and continue, or bring results back to the original session. Do not trigger just because context is getting long or a model name comes up in passing conversation — only act when the user explicitly asks for the handoff itself.
 ---
 
-# 別の Claude Code セッションへ作業を引き継ぐ
+# 別の agent session へ作業を引き継ぐ
 
 現在のセッションのコンテキストを Markdown ファイルに書き出し、`a agent new` で新しいセッションを起動して引き継ぐ。
 
@@ -70,7 +70,7 @@ dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 
 `--worktree` は付けない。引き継ぎはブランチを作る作業ではないため。
 
-引き継ぐ作業を現在進めている workflow skill の名前が `a config get agent.work_types` のキーに含まれていれば、その skill 名を `--kind` に渡す。含まれない場合は `--kind` を省略する。
+引き継ぐ作業を現在進めている workflow skill の名前が `a config get agent.work_types` のキーに含まれていれば、その skill 名を `--kind` に渡す。設計 handoff では `--kind design` を指定する。
 
 起動ディレクトリは「引き継ぐ作業が、今の作業ディレクトリの状態 (現在のブランチの変更、未コミットの変更) がないと成立するか」で決める。
 
@@ -78,14 +78,14 @@ dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 - **成立する** → `-R "$(git root -r)"` を付ける。セカンドオピニオンや別トピックの再調査のように、ブランチに依存しない場合はこちら。`git root -r` は worktree 内でも本体リポジトリの root を返すため、worktree や深いサブディレクトリで起動していた影響を受けない
 
 ```bash
-a agent new --engine claude --model opus --kind <workflow-skill> --prompt "$(cat "$dir/handoff.md")" --label "<タスクの短い要約>"
+a agent new --kind design --prompt "$(cat "$dir/handoff.md")" --label "<タスクの短い要約>"
 # ブランチに依存しない場合
-a agent new -R "$(git root -r)" --engine claude --model opus --kind <workflow-skill> --prompt "$(cat "$dir/handoff.md")" --label "..."
+a agent new -R "$(git root -r)" --kind design --prompt "$(cat "$dir/handoff.md")" --label "..."
 ```
 
-`--engine claude --model opus` は常に付ける。`agent.default_engine` は delegate 向けにマシンごとに codex になっていることがあり、省略すると引き継ぎ先が Codex で起動する。ユーザーが別のモデルやエンジンを指定した場合だけ、その値に置き換える。
+設計 handoff では engine、model、reasoning effort を指定せず、`design` profile の選択値を使う。実効値は `a agent profile show design` で確認し、切り替える場合は `a agent profile use design codex` または `a agent profile use design claude` を使う。ユーザーが起動値を明示した場合は、その値を CLI option で渡す。設計以外の handoff では従来どおり Claude/Opus を指定し、ユーザーの明示値があればそれを優先する。
 
-workflow skill が該当しない場合は、例から `--kind <workflow-skill>` を外す。
+design 以外の workflow skill が該当する場合は、例の `--kind design` をその skill 名に置き換える。該当する workflow skill がない場合は `--kind` を省略する。
 
 worktree 内から `-R` を付けた場合、その worktree の未コミットの変更は引き継ぎ先から見えない。必要なら handoff.md の「参考情報」に元の cwd を書く。git 管理外のディレクトリでは `git root -r` が失敗するので `-R` を付けない。
 

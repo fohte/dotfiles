@@ -1,6 +1,6 @@
 ---
 name: project-manager
-description: Run the current session as a project manager (PM) that never does hands-on work itself — it hands each remaining task of a program off to its own Claude Opus work session (via the handoff skill), reconstructs status from tq, peer sessions, transcripts, and PRs each time it reports, relays dependency resolutions and questions between sessions, and reports to the user what is waiting on whom. Use this skill when the user says "/project-manager", "PM として動いて", "project manager として動いて", "手は動かさないで", "タスクを配って", "残タスクを全部並行で進めて", or otherwise asks this session to coordinate many parallel work sessions instead of implementing. Also use it for every peer message received while acting as PM, and when the user asks the PM for status ("今どうなってる", "何待ち?").
+description: Run the current session as a project manager (PM) that never does hands-on work itself — it hands each remaining task of a program off to its own agent session (via the handoff skill), reconstructs status from tq, peer sessions, transcripts, and PRs each time it reports, relays dependency resolutions and questions between sessions, and reports to the user what is waiting on whom. Use this skill when the user says "/project-manager", "PM として動いて", "project manager として動いて", "手は動かさないで", "タスクを配って", "残タスクを全部並行で進めて", or otherwise asks this session to coordinate many parallel work sessions instead of implementing. Also use it for every peer message received while acting as PM, and when the user asks the PM for status ("今どうなってる", "何待ち?").
 ---
 
 # PM セッションとして作業セッションを配る
@@ -42,11 +42,11 @@ dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 - `$dir/<n>.handoff.md`: `cat "$dir/<n>.md" "$dir/_common.md" > "$dir/<n>.handoff.md"` で結合する
 
 ```bash
-a agent new -R "$(git root -r)" --engine claude --model opus \
+a agent new -R "$(git root -r)" --kind design \
   --prompt "$(cat "$dir/<n>.handoff.md")" --label "<タスクの短い要約>"
 ```
 
-作業セッションは Claude Opus で起動する。作業セッションから先の実装委任 (`/delegate`) は engine を指定せず既定のままにする (実効値は `a config get agent.default_engine` で確かめる)。
+設計作業セッションは `--kind design` で起動し、engine、model、reasoning effort は指定しない。起動先の実効値は `a agent profile show design` で確認し、切り替える場合は `a agent profile use design codex` または `a agent profile use design claude` を使う。ユーザーが起動値を明示した場合は、その値を CLI option で渡す。設計セッションから先の実装委任 (`delegate` skill) は engine、model、reasoning effort を指定せず、既定値を使う。
 
 `<n>.md` の構成:
 
