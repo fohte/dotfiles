@@ -1,6 +1,15 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
 
 rules:
+  # The clipboard often holds passwords the user just copied.
+  - deny: 'pbcopy|pbpaste *'
+    message: 'Blocked to keep the clipboard private. Write to a file instead, and ask the user to copy or paste manually.'
+    tests:
+      - deny: 'pbpaste'
+      - deny: 'pbcopy'
+      - deny: 'echo hi | pbcopy'
+      - deny: 'pbpaste -Prefer txt | cat'
+
   - allow: 'defaults read *'
   - allow: 'pmset -g *'
   - allow: 'log show *'
