@@ -395,36 +395,30 @@ rules:
       - allow: 'dot role get'
       - allow: 'dot role overlay'
 
-  # Spawning a delegated session (`--agent` / `--worktree`) costs real tokens
-  # and runs unattended, so requests without `--vibe` need a human decision.
-  # Armyknife checks that vibe is enabled before accepting the guarded
-  # invocation below. `ag` and `cc` are armyknife's hidden aliases for
-  # `agent`, so the rules match all three command names.
-  - allow: 'a ag|cc|agent new --vibe *'
+  # Session creation must go through a purpose-specific skill launcher.
+  # Help and dry-run remain available for inspecting the Armyknife interface.
+  - allow: 'a ag|cc|agent new --dry-run *'
     tests:
-      - allow: 'a agent new --vibe'
-      - allow: 'a cc new --vibe --worktree=example'
-      - allow: 'a ag new --vibe'
-  # The handoff skill (also used by project-manager) starts a session without
-  # `--agent` / `--worktree` only on an explicit user request. This relies on
-  # delegate always passing `--agent`; runok cannot tell the caller skill.
-  - allow: 'a ag|cc|agent new *'
-    when: '!has(flags.agent) && !has(flags.worktree)'
+      - allow: 'a agent new --dry-run'
+      - allow: 'a cc new --dry-run --agent'
+  - allow: 'a ag|cc|agent new * --dry-run *'
     tests:
-      - allow: 'a agent new --engine claude --model opus --kind development --prompt "hello" --label example'
-      - allow: 'a cc new -R example-repo --engine claude --model opus --prompt "hello"'
-  - ask: 'a ag|cc|agent new !--vibe *'
-    # `--help` is exempt so the global `* --help` allow can apply.
-    when: '!has(flags.help) && (has(flags.agent) || has(flags.worktree))'
+      - allow: 'a ag new --agent --dry-run'
+  - allow: 'a ag|cc|agent new -h *'
     tests:
+      - allow: 'a agent new -h'
+      - allow: 'a cc new -h --agent'
+  - deny: 'a ag|cc|agent new !--help !-h !--dry-run *'
+    tests:
+      - deny: 'a agent new'
+      - deny: 'a agent new --vibe'
+      - deny: 'a cc new --worktree=example'
+      - deny: 'a ag new --agent --kind development --prompt "hello"'
+      - deny: 'a agent new --type delegate --child-launch deny'
+      - deny: 'a agent new --type handoff --child-launch allow'
+      - deny: 'a agent new --helpful'
       - allow: 'a agent new --help'
-      - allow: 'a cc new -R dotfiles --agent --help'
-      - ask: 'a cc new --agent'
-      - ask: 'a agent new -R dotfiles --agent --kind development --prompt "hello"'
-      - ask: 'a agent new --worktree=example --agent --kind development --prompt "hello"'
-      - ask: 'a cc new --worktree=example'
-      - ask: 'a cc new --worktree'
-      - ask: 'a ag new --worktree --agent'
+      - allow: 'a cc new --agent --help'
 
   # Closing an agent can terminate its session and remove a linked worktree.
   - ask: 'a ag|cc|agent close|c *'

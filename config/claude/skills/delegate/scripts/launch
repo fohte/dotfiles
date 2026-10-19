@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat << 'EOF'
+Usage: launch --task <task.yaml> --label <label> [options]
+
+Options:
+  --repo <path>                     Target repository (default: current repository)
+  --branch <name>                   Existing or new worktree branch name
+  --from <ref>                      Worktree base ref
+  --tq-task-id <id>                 tq task ID
+  --tq-checklist-item-id <id>       tq checklist leaf ID
+  --vibe                            Start through Armyknife's vibe guard
+  --dry-run                         Validate settings without starting a session
+  -h, --help                        Show this help
+EOF
+}
+
+fail() {
+  printf 'Error: %s\n' "$1" >&2
+  exit 2
+}
+
+if [[ $# -eq 1 && ($1 == --help || $1 == -h) ]]; then
+  usage
+  exit 0
+fi
+
+task_file=
+label=
+target_repo=
+branch=
+from_ref=
+tq_task_id=
+tq_checklist_item_id=
+vibe=false
+dry_run=false
+seen_task=false
+seen_label=false
+seen_repo=false
+seen_branch=false
+seen_from=false
+seen_tq_task=false
+seen_tq_checklist=false
+
+while (($#)); do
+  case "$1" in
+    --task)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_task == false ]] || fail "--task requires one file path and may appear once."
+      task_file=$2
+      seen_task=true
+      shift 2
+      ;;
+    --label)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_label == false ]] || fail "--label requires one value and may appear once."
+      label=$2
+      seen_label=true
+      shift 2
+      ;;
+    --repo)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_repo == false ]] || fail "--repo requires one path and may appear once."
+      target_repo=$2
+      seen_repo=true
+      shift 2
+      ;;
+    --branch)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_branch == false ]] || fail "--branch requires one name and may appear once."
+      branch=$2
+      seen_branch=true
+      shift 2
+      ;;
+    --from)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_from == false ]] || fail "--from requires one ref and may appear once."
+      from_ref=$2
+      seen_from=true
+      shift 2
+      ;;
+    --tq-task-id)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_tq_task == false ]] || fail "--tq-task-id requires one ID and may appear once."
+      tq_task_id=$2
+      seen_tq_task=true
+      shift 2
+      ;;
+    --tq-checklist-item-id)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_tq_checklist == false ]] || fail "--tq-checklist-item-id requires one ID and may appear once."
+      tq_checklist_item_id=$2
+      seen_tq_checklist=true
+      shift 2
+      ;;
+    --vibe)
+      [[ $vibe == false ]] || fail "--vibe may appear once."
+      vibe=true
+      shift
+      ;;
+    --dry-run)
+      [[ $dry_run == false ]] || fail "--dry-run may appear once."
+      dry_run=true
+      shift
+      ;;
+    *)
+      fail "Unknown option: $1"
+      ;;
+  esac
+done
+
+[[ $seen_task == true ]] || fail "--task is required."
+[[ $seen_label == true && -n ${label//[[:space:]]/} ]] || fail "--label is required and must not be empty."
+[[ -f $task_file && -s $task_file ]] || fail "task.yaml must be a non-empty file."
+[[ $seen_tq_checklist == false || $seen_tq_task == true ]] || fail "--tq-checklist-item-id requires --tq-task-id."
+
+if ! yq -o=json '.' "$task_file" |
+  jq -es '
+    length == 1 and
+    (.[0] | type == "object" and
+      ((keys - ["purpose", "investigated", "links", "goal", "additionalContext"]) | length == 0) and
+      (.purpose | type == "string" and test("\\S")) and
+      (.goal | type == "string" and test("\\S")) and
+      ((has("investigated") | not) or (.investigated | type == "string")) and
+      ((has("links") | not) or (.links | type == "array" and all(.[]; type == "string" and test("\\S")))) and
+      ((has("additionalContext") | not) or (.additionalContext | type == "string")))
+  ' > /dev/null; then
+  fail "task.yaml must contain non-empty string fields purpose and goal, with only documented optional fields and valid types."
+fi
+
+if [[ $seen_repo == true ]]; then
+  [[ -d $target_repo ]] || fail "--repo must name an existing repository directory."
+else
+  target_repo=$PWD
+fi
+
+if ! target_repo=$(cd "$target_repo" && git root -r); then
+  fail "Could not resolve the target repository root."
+fi
+
+if ! direct_commit=$(cd "$target_repo" && a config get repo.direct_commit); then
+  fail "Could not read repo.direct_commit for the target repository."
+fi
+case "$direct_commit" in
+  true | false) ;;
+  *) fail "repo.direct_commit must resolve to true or false." ;;
+esac
+[[ $vibe == true ]] && direct_commit=false
+
+if [[ $direct_commit == true && ($seen_branch == true || $seen_from == true) ]]; then
+  fail "--branch and --from require worktree mode, but repo.direct_commit is true."
+fi
+
+if [[ $direct_commit == false && $seen_branch == true ]] && ! git -C "$target_repo" check-ref-format --branch "$branch" > /dev/null 2>&1; then
+  fail "--branch is not a valid Git branch name."
+fi
+
+direct_prompt=false
+[[ $direct_commit == true && $vibe == false ]] && direct_prompt=true
+if ! prompt=$(DELEGATE_DIRECT_COMMIT="$direct_prompt" "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/render-task" "$task_file"); then
+  exit 1
+fi
+[[ -n ${prompt//[[:space:]]/} ]] || fail "Rendered prompt is empty."
+
+cmd=(agent new --type delegate --child-launch deny --kind development)
+[[ $vibe == true ]] && cmd+=(--vibe)
+if [[ $direct_commit == false ]]; then
+  if [[ $seen_branch == true ]]; then
+    cmd+=("--worktree=$branch")
+  else
+    cmd+=(--worktree)
+  fi
+  [[ $seen_from == true ]] && cmd+=(--from "$from_ref")
+fi
+cmd+=(-R "$target_repo" --label "$label" --prompt "$prompt")
+[[ $dry_run == true ]] && cmd+=(--dry-run)
+
+unset DELEGATE_TASK_PURPOSE DELEGATE_TQ_TASK_ID DELEGATE_TQ_CHECKLIST_ITEM_ID
+if [[ $direct_commit == false ]]; then
+  export DELEGATE_TASK_PURPOSE
+  DELEGATE_TASK_PURPOSE=$(yq -r '.purpose' "$task_file")
+  if [[ $seen_tq_task == true ]]; then
+    export DELEGATE_TQ_TASK_ID=$tq_task_id
+  fi
+  if [[ $seen_tq_checklist == true ]]; then
+    export DELEGATE_TQ_CHECKLIST_ITEM_ID=$tq_checklist_item_id
+  fi
+fi
+
+exec a "${cmd[@]}"

@@ -13,22 +13,31 @@ Search for `renovate/migrate-config` branch PRs in fohte's GitHub repositories, 
 2. Filter PRs with title "chore(config): migrate Renovate config"
 3. Check `.copier-answers.yml` existence: `gh api repos/fohte/<repo>/contents/.copier-answers.yml`
 4. List qualifying repositories
-5. For each repository, use `delegate` Skill:
+5. For each PR, write PR-specific details in a structured task file. Example:
+
+```yaml
+purpose: Renovate opened a configuration migration PR that needs review.
+investigated: The PR is open and targets the configuration in example-owner/example-repo.
+links:
+    - https://github.com/example-owner/example-repo/pull/42
+goal: Apply the migration and leave the PR ready for human review.
+additionalContext: |
+    Inspect the PR diff with `gh pr diff 42`.
+    Run `npx --yes --package renovate -- renovate-config-validator --strict renovate.json5`.
+    Do not merge the PR; a human will review and merge it.
+```
+
+Then use `delegate` to launch the task in a unique directory:
 
 ```bash
-cd ~/ghq/github.com/fohte/<repo> && a agent new --worktree=renovate/migrate-config --prompt "## Background
-Renovate created a config migration PR #<number>.
-
-## Task
-1. Check PR diff: gh pr diff <number>
-2. Investigate what migration is needed
-3. Make necessary changes and push to make the PR ready for merge
-4. Validate config: npx --yes --package renovate -- renovate-config-validator --strict renovate.json5
-   - The --strict flag fails if migration is still needed
-   - Ensure validation passes before finishing
-
-## Important
-- Do NOT merge the PR. Human will review and merge manually."
+cd ~/ghq/github.com/fohte/<repo>
+repo=$(git root -r)
+dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
+# Write the PR-specific task fields above to $dir/task.yaml.
+# Keep the PR on its existing Renovate branch.
+~/.agents/skills/delegate/scripts/launch \
+  --task "$dir/task.yaml" --repo "$repo" \
+  --branch renovate/migrate-config --label "Renovate PR #42 移行"
 ```
 
 ## Notes

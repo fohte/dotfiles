@@ -1,16 +1,16 @@
 ---
 name: handoff
-description: Write a Markdown handoff file and start a fresh agent session with it (`a agent new`) so that session picks up the current task — for resetting a session with accumulated context (like a manual auto-compact), switching to a different or more capable model, or getting an independent second opinion from a new session on the same problem. Also use this inside a session that itself was started from a handoff, when the user wants to write up a report to carry back to the session that started it. Trigger ONLY on an explicit, deliberate request for this handoff/report — the user runs `/handoff`, or clearly asks to hand off the session, switch models and continue, or bring results back to the original session. Do not trigger just because context is getting long or a model name comes up in passing conversation — only act when the user explicitly asks for the handoff itself.
+description: Write a Markdown handoff file and start a fresh agent session with it (`handoff/scripts/launch`) so that session picks up the current task — for resetting a session with accumulated context (like a manual auto-compact), switching to a different or more capable model, or getting an independent second opinion from a new session on the same problem. Also use this inside a session that itself was started from a handoff, when the user wants to write up a report to carry back to the session that started it. Trigger ONLY on an explicit, deliberate request for this handoff/report — the user runs `/handoff`, or clearly asks to hand off the session, switch models and continue, or bring results back to the original session. Do not trigger just because context is getting long or a model name comes up in passing conversation — only act when the user explicitly asks for the handoff itself.
 ---
 
 # 別の agent session へ作業を引き継ぐ
 
-現在のセッションのコンテキストを Markdown ファイルに書き出し、`a agent new` で新しいセッションを起動して引き継ぐ。
+現在のセッションのコンテキストを Markdown ファイルに書き出し、`scripts/launch` で新しいセッションを起動して引き継ぐ。
 
 ## 最優先ルール
 
 - **ユーザーが明示的に依頼した時だけ動く**: 「コンテキストが溜まってきたな」といった独り言や、モデル名が話題に出ただけでは発動しない。発動した以上、引き継ぎ資料の作成自体は迷わず実行する
-- **起動は `a agent new` を使う**: `tmux` や `claude` を直接叩いて起動しない。`a agent new` 経由でないと新セッションが `a agent` の管理下に入らず、親子関係が張られないため持ち帰りの経路 (`a agent peer parent` + `a agent peer notify`) が使えなくなる
+- **起動は handoff の `scripts/launch` を使う**: `tmux` や `claude` を直接叩いて起動しない。launcher が内部で `a agent new --type handoff` を実行し、新セッションを `a agent` の管理下に置いて親子関係を作るため、持ち帰りの経路 (`a agent peer parent` + `a agent peer notify`) を使える
 
 ## モードの判定
 
@@ -68,32 +68,32 @@ dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 
 ### 新しいセッションを起動する
 
-`--worktree` は付けない。引き継ぎはブランチを作る作業ではないため。
+handoff launcher は文書本文を prompt にし、`--type handoff` と親子関係を固定する。委任扱い、worktree、engine/model/effort の上書きは渡さない。
 
-引き継ぐ作業を現在進めている workflow skill の名前が `a config get agent.work_types` のキーに含まれていれば、その skill 名を `--kind` に渡す。設計 handoff では `--kind design` を指定する。
+`--kind` には引き継ぐ workflow の表示名を渡す。設計 handoff では `design` を指定する。profile 選択は `--type handoff` が行うため、`--kind` は起動設定を変えない。
 
-起動ディレクトリは「引き継ぐ作業が、今の作業ディレクトリの状態 (現在のブランチの変更、未コミットの変更) がないと成立するか」で決める。
+引き継ぐ作業が現在の作業ディレクトリの状態を必要とする場合は `--repo` を省略する。独立した調査のように repo root から始める場合は `--repo "$(git root -r)"` を指定する。repo を指定するときは worktree の root ではなく main repository root を渡す。
 
-- **成立しない** → `-R` を付けない。今の cwd がそのまま引き継がれる。コンテキストリセットやモデル切り替えのように、同じブランチの作業を続ける場合はこちら
-- **成立する** → `-R "$(git root -r)"` を付ける。セカンドオピニオンや別トピックの再調査のように、ブランチに依存しない場合はこちら。`git root -r` は worktree 内でも本体リポジトリの root を返すため、worktree や深いサブディレクトリで起動していた影響を受けない
+- **現在の状態が必要** → `--repo` を省略する。コンテキストリセットやモデル切り替えのように、同じブランチの作業を続ける場合はこちら
+- **現在の状態が不要** → `--repo "$(git root -r)"` を指定する。セカンドオピニオンや別トピックの再調査のように、branch に依存しない場合はこちら
 
 ```bash
-# 設計 handoff
-a agent new --kind design --prompt "$(cat "$dir/handoff.md")" --label "<タスクの短い要約>"
-# ブランチに依存しない場合
-a agent new -R "$(git root -r)" --kind design --prompt "$(cat "$dir/handoff.md")" --label "..."
+~/.agents/skills/handoff/scripts/launch \
+  --handoff "$dir/handoff.md" --kind design --label "<タスクの短い要約>"
 
-# 設計以外の handoff
-a agent new --engine claude --model opus --kind <workflow-skill> --prompt "$(cat "$dir/handoff.md")" --label "..."
+# branch に依存しない場合
+~/.agents/skills/handoff/scripts/launch \
+  --handoff "$dir/handoff.md" --repo "$(git root -r)" \
+  --kind research --label "<タスクの短い要約>"
 ```
 
-設計 handoff では engine、model、reasoning effort を指定せず、`design` profile の選択値を使う。実効値は `a agent profile show design` で確認し、切り替える場合は `a agent profile use design codex` または `a agent profile use design claude` を使う。ユーザーが起動値を明示した場合は、その値を CLI option で渡す。設計以外の handoff では従来どおり Claude/Opus を指定し、ユーザーの明示値があればそれを優先する。
+profile の確認と切り替えは `a agent profile show handoff` と `a agent profile use handoff <engine>` で行う。launcher は `--type handoff` を固定し、engine、model、reasoning effort の上書きは受け付けない。
 
-設計以外では、該当する workflow skill があれば例の `--kind <workflow-skill>` にその skill 名を渡す。該当する skill がない場合は `--kind` を省略する。ユーザーが起動値を明示した場合は、該当する CLI option を Claude/Opus の指定より優先する。
+引き継ぎ元へ報告してほしい場合は、後述のとおり handoff.md 本文に書く。
 
-worktree 内から `-R` を付けた場合、その worktree の未コミットの変更は引き継ぎ先から見えない。必要なら handoff.md の「参考情報」に元の cwd を書く。git 管理外のディレクトリでは `git root -r` が失敗するので `-R` を付けない。
+worktree 内から `--repo` を指定した場合、元 worktree の未コミット変更は引き継ぎ先から見えない。必要なら handoff.md の「参考情報」に元の cwd を書く。git 管理外のディレクトリでは repo を指定しない。
 
-`--agent` は使わない。委任用の context が被さり、「完了報告を送るな」という指示まで新セッションに入ってしまうため。引き継ぎ元へ報告してほしい場合は、後述のとおり handoff.md 本文に書く。
+launcher は `--help` と `--dry-run` に対応する。`--child-launch allow` を固定し、引き継ぎ先が必要に応じて子 session を起動できるようにする。この権限は完了報告の指示を変えない。「完了報告を送るな」という文は `delegate/scripts/prompt-template.md` の通常 delegate prompt にあり、Armyknife の起動フラグが追加するものではない。
 
 Claude Code から起動した新セッションは、フォーカスを奪わないよう、同じ tmux window を分割した隣の pane にバックグラウンドで開く。ユーザーには起動した旨とファイルパスを伝え、別 window に分けたい場合は `break-pane` で切り出せる旨を添える。元のセッションを `/clear` するかそのまま残すかはユーザーの判断に委ねる。
 

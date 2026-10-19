@@ -42,11 +42,12 @@ dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 - `$dir/<n>.handoff.md`: `cat "$dir/<n>.md" "$dir/_common.md" > "$dir/<n>.handoff.md"` で結合する
 
 ```bash
-a agent new -R "$(git root -r)" --kind design \
-  --prompt "$(cat "$dir/<n>.handoff.md")" --label "<タスクの短い要約>"
+~/.agents/skills/handoff/scripts/launch \
+  --handoff "$dir/<n>.handoff.md" --repo "$(git root -r)" \
+  --kind design --label "<タスクの短い要約>"
 ```
 
-設計作業セッションは `--kind design` で起動する。engine、model、reasoning effort の確認・切替は handoff skill の起動手順に従う。設計セッションから先の実装委任 (`delegate` skill) は engine、model、reasoning effort を指定せず、既定値を使う。
+設計作業セッションは `--kind design` で起動する。profile は handoff launcher の固定 `--type handoff` が選ぶ。設計セッションから先の実装委任 (`delegate` skill) は engine、model、reasoning effort を指定せず、既定値を使う。
 
 `<n>.md` の構成:
 
@@ -65,7 +66,7 @@ PM セッションから切り出した作業セッション。PM は手を動�
 
 <目的。何が決まる / できるようになれば終わりか>
 
-## これまでに分かっていること (PM が確認した範囲。裏を取ってから使うこと)
+## これまでの進捗
 
 <出典付きで>
 
@@ -73,7 +74,11 @@ PM セッションから切り出した作業セッション。PM は手を動�
 
 <番号付きで。依存があれば「#<m> の PR merge 後に着手」と書く>
 
-## 並行するタスク
+## 参考情報
+
+<関連する task ID、page、URL、確認コマンド>
+
+### 並行するタスク
 
 - tq #<m> (<要約>、session `<session_id>`): <このタスクとどう関わるか。触るファイルが重なるなら調整すること>
 ```

@@ -5,20 +5,20 @@ description: Delegate tasks to a separate Claude Code or Codex instance, either 
 
 # 別の Claude Code インスタンスにタスクを委任する
 
-`a agent new --prompt` を使って、別の Claude Code インスタンスに処理を委任する。委任先が worktree を作るリポジトリか、default branch で直接作業するリポジトリかで起動の仕方が変わる (後述の「使い方」)。
+`scripts/launch` から別の agent session を起動して処理を委任する。起動方式は対象 repo の設定と vibe に応じて script が選ぶ。
 
 ## 最優先ルール
 
 - **ユーザーが明示的に delegate を指示した場合は、必ず delegate する**: タスクの規模・複雑さ・難易度に関わらず、ユーザーが `/delegate` や「delegate して」と指示した場合は、自分の判断で「delegate 不要」と判断してはならない。ユーザーには delegate する意図がある。理由を推測せず、指示に従うこと
 - **delegate 不要と判断して自分で作業を始めることは禁止**: このスキルが発動した時点で、タスクの実行方法は delegate に確定している。「これは簡単だから自分でやろう」「PR 不要だから delegate しなくてよい」といった判断は一切してはならない
 - **委任できるのは実装作業だけ**: 何を作るか / 何をどう直すかが確定したタスクのみを委任する。設計が未決のタスク、原因が未特定のバグ、方針を決めるための調査を丸投げしてはならない。確定させるのは委任元の責任 (後述の「委任前に確定させること」)。設計や原因が未確定であることは委任を取りやめる理由にはならない。確定作業を先に済ませてから委任すること
-- **1 委任 = 1 PR の原則**: 1 回の `a agent new` で委任するタスクは 1 PR 分の作業に限定すること。「複数フェーズを一括で」「複数 PR を順次作成」のような複数 PR をまとめた委任は禁止。委任先は単一の Claude Code プロセスで作業するため、複数 PR を順に作る前提では設計しない。委任先がさらに `delegate` skill で再委任することも想定しない。PR が出ない direct-commit モード (後述) では、この原則を「1 委任 = push される 1 まとまりの変更」と読み替える
+- **1 委任 = 1 PR の原則**: 1 回の delegate launcher 呼び出しで委任するタスクは 1 PR 分の作業に限定すること。「複数フェーズを一括で」「複数 PR を順次作成」のような複数 PR をまとめた委任は禁止。委任先は単一の Claude Code プロセスで作業するため、複数 PR を順に作る前提では設計しない。委任先がさらに `delegate` skill で再委任することも想定しない。PR が出ない direct-commit モード (後述) では、この原則を「1 委任 = push される 1 まとまりの変更」と読み替える
 - **依存のある PR は委任せず先送りする**: 大きな計画やフェーズ分割されたタスクは、委任元 (現在のセッション) が split-into-prs skill で 1 PR 単位に分割し、単体で merge しても壊れない PR (Batch 1) だけを委任する。複数あれば後述の「複数タスクの一括委任」に従い、1 PR = 1 委任のまま並列に dispatch してよい。先行 PR の merge / 確認を待つ PR は、待ちが解けてから改めて委任元が別途委任する。**依存のある PR を先行 PR と 1 本にまとめ直しても「1 委任 = 1 PR」を満たしたことにはならない**。まとめる方が筋が良いと思っても委任元の裁量では決めず、後述の「ユーザーが決めたことを委任時に変えない」に従って起動前に諮る。どちらに振り分けるかは番号順ではなく依存順で決まる。計画に「B が無いと A は効かない」に類する記述があれば、番号に関わらず A が後回し
 
 ## 絶対禁止事項
 
-- **ユーザーが決めたことを委任時に変えない**: 委任先リポジトリ、PR の分割、各 PR のスコープなど、ユーザーが指定・承認した内容を自分の判断で変えてはならない。ユーザーはどのリポジトリで修正すべきか、どこで PR を切るべきかを把握している。「こっちのリポジトリの方が適切では」「まとめた方が綺麗では」と思ったら、`a agent new` を実行する前に提案して判断を仰ぐ。起動してから事後報告するのは、ユーザーが反対する機会を奪ったことになる
-- **自分で実装作業をしない**: このスキルが発動したら、ファイル編集・コード変更を自分で行ってはならない。仕事は委任内容を確定させることと、プロンプトを構成して `a agent new` コマンドを実行すること。読み取りのみの調査 (設計・原因の確定) はこの禁止に含まれない
+- **ユーザーが決めたことを委任時に変えない**: 委任先リポジトリ、PR の分割、各 PR のスコープなど、ユーザーが指定・承認した内容を自分の判断で変えてはならない。ユーザーはどのリポジトリで修正すべきか、どこで PR を切るべきかを把握している。「こっちのリポジトリの方が適切では」「まとめた方が綺麗では」と思ったら、launcher を実行する前に提案して判断を仰ぐ。起動してから事後報告するのは、ユーザーが反対する機会を奪ったことになる
+- **自分で実装作業をしない**: このスキルが発動したら、ファイル編集・コード変更を自分で行ってはならない。仕事は委任内容を確定させることと、launcher に渡す prompt を構成して実行すること。読み取りのみの調査 (設計・原因の確定) はこの禁止に含まれない
 - **委任前にファイルを編集しない**: 「先に少し直してから委任しよう」は禁止。未コミットの変更がある状態で worktree を作ると、委任先にその変更が反映されない。作業ツリーを共有する direct-commit モード (後述) では逆に、その変更が委任先のコミットに巻き込まれる
 - **`a agent peer notify` を進捗確認や催促に使わない**: 委任先は別プロセスだが同じマシン上の Claude Code セッションなので、`a agent peer notify` でメッセージが届く。届くからといって、状況を尋ねる、急かす、作業中に細かく口を出すといった用途に使ってはならない。委任先は対話しながら進める相手ではない。送ってよいのは次の 2 つだけで、いずれも手順は後述の「委任元から委任先に連絡する場合」に従う。vibe 中は、これらに加えて draft review の差し戻し、コード修正の依頼、レビュー承認を通知してよい
 
@@ -69,62 +69,45 @@ effort は思考の深さだけでなく、指示に従う程度にも効く。
 
 ## 使い方
 
-最初に委任先リポジトリのパスを決め、そのリポジトリが default branch で直接作業する運用かを判定する。
-
-```bash
-repo=$(git root -r)  # 別のリポジトリに委任する場合はそのリポジトリのパス
-direct=$(cd "$repo" && a config get repo.direct_commit)
-```
-
-`direct` が `true` なら後述の「direct-commit モード」で、worktree もブランチも作らない。判定は armyknife の `repos.<owner>/<repo>.direct_commit` が唯一の根拠で、リポジトリの印象や過去の経験で上書きしない。
-
-vibe 中の委任だけは例外で、`direct` が `true` でも worktree と PR で委任し、`DELEGATE_DIRECT_COMMIT=false` を渡す。vibe のループは委任先の PR を委任元がレビューして merge する流れで回るため。
-
-承認済みの PR 分割チェックリストがある場合は、委任する PR に対応する葉項目 ID も環境変数で渡す。項目が無い委任では省略する。
+`task.yaml` を一意なディレクトリに書き、対象 repo、label、tq metadata とともに launcher に渡す。
 
 ```bash
 dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
-# Write ツールで $dir/task.yaml を作成 (スキーマは後述の「プロンプト構造 (必須)」参照)
-prompt=$(DELEGATE_DIRECT_COMMIT="$direct" "$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
-  DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
-  DELEGATE_TQ_TASK_ID="<この委任作業が属する tq タスクの ID>" \
-  DELEGATE_TQ_CHECKLIST_ITEM_ID="<この PR に対応する葉項目の ID>" \
-  a agent new --worktree=<branch-name> --agent --kind development --label "<title>" --prompt "$prompt"
+# Write ツールで $dir/task.yaml を作成
+~/.agents/skills/delegate/scripts/launch \
+  --task "$dir/task.yaml" --branch "<branch-name>" \
+  --label "<title>" --tq-task-id "<task-id>" \
+  --tq-checklist-item-id "<leaf-item-id>"
 ```
 
-**`render-task` と `a agent new` は必ず `&&` でつなぐ。** `prompt=$(...)` は独立した文にすると、失敗しても次の文が `--prompt ""` で走り、何の指示も持たない委任先が起動する。`&&` なら `render-task` の stderr を出したまま `a agent new` に進まない。
+launcher は入力と描画後の prompt を検証してから Armyknife を起動する。`render-task` が失敗したときに空 prompt で session が起動することはない。
 
-- `branch-name`: 新しい環境用に作成するブランチ名
-- `--agent`: **必須**. 委任元 Claude Code セッションからの呼び出しであることを示す。プロンプトを `<delegated-task>` XML でラップし、ブランチ名・base ブランチ・ディレクトリ情報を自動注入する
-- vibe 中の委任では `a agent new` に `--vibe` を付ける。通常の委任では省略する
+- `--task`: `purpose` と `goal` が空でない文字列で、任意 field の型も正しい task.yaml。launcher が既存の `render-task` で本文を作る
+- `--repo`: 対象 repo。省略時は現在の repo を使う
+- `--branch`: 既存または新規の worktree branch 名。省略時は Armyknife が prompt から作る
+- `--from`: 必要なときだけ使う base ref。direct-commit 運用では拒否される
+- `--tq-task-id`: この委任作業を記録する tq task ID。対応 task がある通常委任では必ず渡す
+- `--tq-checklist-item-id`: 対応する実装チェックリストの leaf ID。無い場合は省略する
+- `--vibe`: 対象 repo の `repo.vibe` が `true` で、起動元 session が vibe を許可されている場合だけ渡す。Armyknife が両方を検査する
+- `--dry-run`: 入力と選択した profile を確認し、session は起動しない
 - `--label`: **必須**. セッションのタイトル。`a agent watch` の TUI でセッション一覧に表示され、コンテキストスイッチ時に「このセッションで何をやっていたか」を素早く思い出すためのもの。以下のルールで生成すること:
     - 日本語 2-5 語
     - 具体的な識別子 (PR 番号、ファイル名、機能名、エラー名など) を必ず含める
     - 末尾に句読点を付けない
     - 良い例: "PR #40 CI 修正", "セッション一覧 TUI 実装", "Renovate 設定デバッグ", "ラベル生成プロンプト改善"
     - 悪い例: "バグ修正", "機能実装" (何の? がわからない)
-- `task.yaml`: Write ツールで `$dir` 配下に書く構造化データ。委任先へのプロンプトの元データであり、スキーマは後述の「プロンプト構造 (必須)」を参照。**必ず `mktemp -d` で作った一意なディレクトリ配下に置く** (固定パスは同じセッションの別の委任と衝突する)
-- `render-task`: `task.yaml` を `--prompt` 用の markdown に変換するスクリプト。`purpose`/`goal` が空だとエラーで停止する
-- `DELEGATE_DIRECT_COMMIT`: 上で求めた `direct` をそのまま渡す環境変数。`render-task` が末尾の締めくくりを「PR を作成するまで」と「commit して push するまで」で切り替える
-- `--prompt`: `render-task` の出力をそのまま渡す
-- `DELEGATE_TASK_PURPOSE`: `task.yaml` の `purpose` をそのまま渡す環境変数。委任先 worktree の post-worktree-create hook がこれを読み `branch.<name>.x-purpose` に書き込み、`create-pr` skill が PR の Why セクション生成時に参照する
-- `DELEGATE_TQ_TASK_ID`: この委任作業が属する tq タスクの ID を渡す環境変数。同じ hook が `branch.<name>.x-tq-task-id` に書き込み、委任先の `create-pr` skill が立てた PR のリンク先に使う。タスクは委任前に必ず用意されている (前述の「委任前に確定させること」) ので、この変数を省略しない
-- `DELEGATE_TQ_CHECKLIST_ITEM_ID`: 承認済みの PR 分割チェックリストがある場合、この委任に対応する葉項目 ID を `a agent new` に渡す環境変数。同じ hook が `branch.<name>.x-tq-checklist-item-id` に書き込み、委任先の `create-pr` skill が PR をその項目に紐付ける。Batch の親項目 ID は渡さない。項目が無い場合は省略する
+- `task.yaml`: `$AGENT_TMPDIR` 内の一意なディレクトリに作る。schema は後述の「プロンプト構造 (必須)」を参照
+- `render-task`: launcher が `task.yaml` を `--prompt` 用 markdown に変換する
+- `DELEGATE_DIRECT_COMMIT`: launcher が repo policy と vibe に基づいて設定し、prompt の完了条件を PR または push に合わせる
+- `DELEGATE_TASK_PURPOSE` / `DELEGATE_TQ_TASK_ID` / `DELEGATE_TQ_CHECKLIST_ITEM_ID`: launcher が worktree 作成時だけ環境に設定する。hook が branch config に記録し、`create-pr` skill が使う
 
-### オプション
-
-- `--from <ref>`: ベースとなる ref を指定 (デフォルト: main ブランチ)
-    - 例: `a agent new --worktree=feature-x --agent --kind development --label "..." --from origin/develop --prompt "..."`
-    - Renovate の PR をテストする場合: `a agent new --worktree=test-upgrade --agent --kind development --label "..." --from origin/renovate/some-branch --prompt "..."`
-- `-R <path>` / `--repo <path>`: 対象リポジトリのパスを指定。指定するとカレントディレクトリに関係なく、そのリポジトリ上で worktree を作成する
-    - 例: `a agent new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --kind development --label "..." --prompt "..."`
-- `--skip-hooks`: `post-worktree-create` と `pre-session-start` hook の両方をスキップする。trust 登録は worktree の有無にかかわらず、起動直前に `pre-session-start` が行う。このオプションを使うと登録されず、trust が未登録の project を開く Codex は trust ダイアログで止まり、`a agent new` は Codex app-server の `thread/started` 待ちでタイムアウト (`os error 35`) することがある。使わないこと
+launcher は `--type delegate`、`--child-launch deny`、`--kind development` を固定する。`repo.direct_commit` が `true` で通常 delegate の場合は worktree を使わず、prompt を direct-commit 用に描画する。vibe delegate は `repo.direct_commit` に関わらず worktree と PR を使い、Armyknife の `--vibe` guard を通す。engine、model、effort、Armyknife の `--agent`、`--child-launch`、`--worktree` は直接指定しない。
 
 #### post-worktree-create hook の失敗
 
-hook 内の bootstrap (依存インストール) の失敗は警告だけで続行する。`a agent new` の出力に `warning: .../scripts/bootstrap failed` が出たら、プロンプトに「依存のインストールが失敗している」と原因を添えて委任先に直させる。
+hook 内の bootstrap (依存インストール) の失敗は警告だけで続行する。launcher の出力に `warning: .../scripts/bootstrap failed` が出たら、プロンプトに「依存のインストールが失敗している」と原因を添えて委任先に直させる。
 
-それでも `a agent new` が `Error: hook '...post-worktree-create' exited with status 1` で失敗した場合、worktree とブランチは自動でロールバックされる (新規作成ブランチは削除、既存ブランチを `--force` で上書きしたケースは元の tip に復元)。これは hook 自体の不具合なので、`--skip-hooks` で回避せずユーザーに報告する。
+それでも launcher が `Error: hook '...post-worktree-create' exited with status 1` で失敗した場合、worktree とブランチは自動でロールバックされる (新規作成ブランチは削除、既存ブランチを上書きしたケースは元の tip に復元)。hook 自体の不具合なので、回避せずユーザーに報告する。
 
 worktree 削除自体が失敗した警告が出た場合のみ手動復旧が必要で、`a agent close <name>` で残骸を削除してからリトライする。
 
@@ -132,55 +115,53 @@ worktree 削除自体が失敗した警告が出た場合のみ手動復旧が�
 
 複数のタスクをまとめて委任する場合、Bash ツールを委任数だけ呼び分けず、**1 回の bash 呼び出し内で `for` ループを使う**こと。委任先ごとに Bash ツール呼び出しを分けるとツール許可プロンプトが委任数だけ発生し、途中 1 件の拒否で以降が止まる。1 つの bash にまとめれば許可は 1 回で済む。for ループは dispatch の手段であり、各イテレーションは依然として独立した 1 委任 = 1 PR なので「1 委任 = 1 PR の原則」とは衝突しない。
 
-PR ごとのチェックリスト項目 ID がある場合は、ループの各委任に対応する葉項目 ID を `DELEGATE_TQ_CHECKLIST_ITEM_ID` として `a agent new` に渡す。項目が無い場合は省略する。
+PR ごとのチェックリスト項目 ID がある場合は、各委任に対応する leaf ID を launcher の `--tq-checklist-item-id` に渡す。項目が無い場合は省略する。
 
-各委任先で task.yaml の内容が異なる場合は、共通する field (`investigated`/`links`/`additionalContext` など) を `common.yaml` に、差分のある field (`purpose`/`goal` など) を per-task の `<repo>.yaml` に分けて Write し、`yq` でマージしてから `render-task` に渡す。task.yaml を Bash 引数に直接埋め込まず、必ず Write ツールでファイルに書いてから渡すこと。
+各委任先で task.yaml の内容が異なる場合は、共通する field (`investigated`/`links`/`additionalContext` など) を `common.yaml` に、差分のある field (`purpose`/`goal` など) を per-task の `<repo>.yaml` に分けて Write し、`yq` でマージしてから launcher に渡す。task.yaml を Bash 引数に直接埋め込まず、必ず Write ツールでファイルに書いてから渡すこと。
 
 **task.yaml は必ず `mktemp -d` で作った一意なディレクトリ配下に置く。** `$AGENT_TMPDIR/delegate-1.yaml` のような固定名は、同じセッションの別の委任と衝突して別タスクの内容を上書き / 読み込みする事故につながる。事前に 1 回だけ `dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")` を実行し、以降の Write・マージ結果はすべてその `$dir` 配下のパスを使う。
 
 ```bash
 # 事前準備: 一意な作業ディレクトリを作り、その下に common.yaml と <repo>.yaml を Write する
 #   dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX"); echo "$dir"
-#   → 例: /tmp/agent-<session-id>/delegate.AbC123
+#   → 例: $AGENT_TMPDIR/delegate.AbC123
 #   その後 Write tool で $dir/common.yaml (共通 field), $dir/repo-a.yaml (差分 field) ... を作成
 
-dir=/tmp/agent-<session-id>/delegate.AbC123  # 上で作成したパスをそのまま使う
-for entry in "repo-a 123" "repo-b 456" "repo-c 789"; do
-  read repo num <<< "$entry"
+dir=<mktemp で作成したディレクトリ>
+for entry in \
+  "repo-a 514 a2000000-0000-4000-8000-000000000514 b2000000-0000-4000-8000-000000000514" \
+  "repo-b 515 a2000000-0000-4000-8000-000000000515 b2000000-0000-4000-8000-000000000515"; do
+  read repo pr task_id item_id <<< "$entry"
   task="$dir/$repo.task.yaml"
   yq eval-all '. as $item ireduce ({}; . * $item)' "$dir/common.yaml" "$dir/$repo.yaml" > "$task"
-  prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$task") \
-    || { echo "FAIL $repo#$num (render-task)"; continue; }
-  DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$task")" \
-    a agent new --worktree=<branch> -R ~/ghq/github.com/<org>/$repo \
-      --agent --kind development --label "<title> $repo#$num" --prompt "$prompt" \
-      && echo "OK $repo#$num" || echo "FAIL $repo#$num" &
+  ~/.agents/skills/delegate/scripts/launch \
+    --task "$task" --repo ~/ghq/github.com/example/$repo \
+    --branch "migration-$repo" --label "<title> $repo $pr" \
+    --tq-task-id "$task_id" --tq-checklist-item-id "$item_id" \
+    && echo "OK $repo $pr" || echo "FAIL $repo $pr" &
 done
 wait
 ```
 
 末尾の `&` + `wait` で worktree 作成と Claude Code 起動を並列化する (委任数が多いほど効果が大きい)。`wait` の終了コードは最後に待ったジョブのものしか反映しないため、失敗特定のために各イテレーションで `OK`/`FAIL` のマーカーを必ず出力し、終了後に `grep FAIL` で再実行対象を抽出する。
 
-`render-task` が失敗した委任だけ `FAIL` を出して `continue` し、起動しない。残りの委任は回り続ける。`|| { ...; continue; }` を外すと、失敗した委任が空のプロンプトで起動する。
+launcher が失敗した委任だけ `FAIL` を出し、他の委任は続ける。launcher は空 prompt のまま session を起動しない。
 
 ### 例
 
 ```bash
 # 現在のリポジトリ
 dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
-# Write ツールで $dir/task.yaml を作成 (purpose: メール認証ログインが必要な理由, goal: ログイン機能が動くこと, など)
-prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
-  DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
-  DELEGATE_TQ_TASK_ID=123 \
-  a agent new --worktree=feature-login --agent --kind development --label "メール認証ログイン実装" --prompt "$prompt"
+# Write ツールで $dir/task.yaml を作成
+~/.agents/skills/delegate/scripts/launch --task "$dir/task.yaml" \
+  --branch feature-login --label "サインイン機能実装" --tq-task-id "<tq-task-number-or-uuid>"
 
 # 別のリポジトリ (-R オプション)
 dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
-# Write ツールで $dir/task.yaml を作成 (purpose: API タイムアウトで困っている内容, goal: タイムアウト設定の期待値, など)
-prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
-  DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
-  DELEGATE_TQ_TASK_ID=124 \
-  a agent new --worktree=fix-api-timeout -R ~/ghq/github.com/fohte/other-repo --agent --kind development --label "API タイムアウト修正" --prompt "$prompt"
+# Write ツールで $dir/task.yaml を作成
+~/.agents/skills/delegate/scripts/launch --task "$dir/task.yaml" \
+  --repo ~/ghq/github.com/example/api --branch fix-api-timeout \
+  --label "API 接続待ち時間修正" --tq-task-id "<tq-task-number-or-uuid>"
 ```
 
 実行すると:
@@ -191,19 +172,9 @@ prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &
 
 ## direct-commit モード
 
-`repo.direct_commit` が `true` のリポジトリは default branch で直接作業して push する運用なので、worktree もブランチも作らず、そのリポジトリの作業ツリーでセッションを起動する。委任の中身 (task.yaml の書き方、委任前に確定させること、連絡手順) は通常の委任と変わらない。
+`repo.direct_commit` が `true` の場合は、通常 delegate launcher が worktree を作らず、prompt を commit と push 用に描画する。vibe delegate では worktree と PR を使う。
 
-```bash
-dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
-# Write ツールで $dir/task.yaml を作成
-prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
-  a agent new -R "$repo" --agent --kind development --label "<title>" --prompt "$prompt"
-```
-
-- `--worktree` を付けない。worktree 前提のオプション (`--from`、`--force`) も使えない
-- `-R "$repo"` は委任先が現在のリポジトリでも付ける。worktree 内やサブディレクトリから起動していても、リポジトリ root で作業させられる
-- `DELEGATE_DIRECT_COMMIT=true` を落とすと、プロンプト末尾が「PR を作成するまで」のままになり、委任先が default branch から PR を作ろうとする
-- `DELEGATE_TASK_PURPOSE` / `DELEGATE_TQ_TASK_ID` / `DELEGATE_TQ_CHECKLIST_ITEM_ID` は渡さない。どれも worktree 作成時の hook が git config へ書いて初めて効くもので、worktree を作らない以上どこにも記録されない
+direct-commit では branch と base ref を指定しない。worktree hook 用の TQ metadata も記録されない。
 
 ### 委任前に確認すること
 
@@ -218,8 +189,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.agents/skills/delegate/scripts/rend
 
 ## 委任時の注意事項
 
-- **既存ブランチで作業する場合**: 既存のリモートブランチ (例: follow-up PR のブランチ) にそのまま commit したい場合は、ブランチ名をそのまま `<branch-name>` に指定する
-    - 例: `a agent new --worktree=follow-up-123-terraform/foo --agent --kind development --label "..." --prompt "..."`
+- **既存ブランチで作業する場合**: 既存のリモートブランチ (例: follow-up PR のブランチ) にそのまま commit したい場合は、launcher の `--branch` にそのブランチ名を渡す
 - **ブランチ名**: 新規ブランチを作る場合、ブランチ名に `/` を含めないこと。代わりにハイフンを使う (例: `fix/login-bug` ではなく `fix-login-bug`)。ブランチには `fohte/` がプレフィックスとして付くため、`fix/...` だと `fohte/fix/...` になり冗長
 - 新しいインスタンスは独立した worktree で作業するため、現在の作業と競合しない。作業ツリーを共有する direct-commit モードには当てはまらず、前掲の「委任前に確認すること」に従う
 - **fork リポジトリへの委任**: 委任先が他者のリポジトリの fork (`gh repo view --json isFork -q .isFork` が `true`) なら、`additionalContext` に「oss-contribution skill を読み、commit と push はその手順に従うこと」と書く。fork では commit も push もユーザーが行うので、`render-task` が付ける締めくくりの commit / PR 作成はこの skill の手順で置き換わる。後述の「commit/PR 作成の完了条件は task.yaml に書かない」の例外はこれだけ
@@ -250,7 +220,7 @@ prompt=$(DELEGATE_DIRECT_COMMIT=true "$HOME/.agents/skills/delegate/scripts/rend
 - 「現在のブランチで同じファイルを編集した」という理由だけで `--from` が必要だと判断してはいけない。判断基準は「そのファイルを編集したかどうか」ではなく、「委任先が main ブランチ上で同じ修正を適用できるかどうか」。main にあるファイルに対する独立した修正であれば、たとえ現在のブランチでも同じファイルを触っていても `--from` は不要
 - 「ある PR で問題が見つかった」という理由だけで `--from` にその PR のブランチを指定してはいけない。PR は問題の発見契機にすぎない。修正がその PR の変更内容に依存しない限り main ベースで行う
 - **merge 済みの PR/ブランチに対して `--from` を指定してはいけない**。merge 済みということは変更が既に main に取り込まれているため、main ベースで作業すればその変更は含まれている。merge 済みかどうかが不明な場合は、`gh pr view` や `git log` で確認してから判断すること
-- **commit 先 (branch-name) と base ref (`--from`) を混同しない**。既存ブランチに直接 commit したいだけなら `a agent new --worktree=<既存ブランチ名> --agent --kind development` で足りる。`--from origin/<同名ブランチ>` の指定は冗長で判断ミスのシグナル
+- **commit 先 (`--branch`) と base ref (`--from`) を混同しない**。既存ブランチに直接 commit したいだけなら launcher の `--branch` だけで足りる。`--from origin/<同名ブランチ>` の指定は冗長で判断ミスのシグナル
 
 間違えて `--from` で現在のブランチを指定すると、関係のない変更が混入して別々の PR にできなくなる。
 
@@ -326,11 +296,11 @@ additionalContext: |
 ```bash
 dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
 # 上記の内容で $dir/task.yaml を Write
-prompt=$("$HOME/.agents/skills/delegate/scripts/render-task" "$dir/task.yaml") &&
-  DELEGATE_TASK_PURPOSE="$(yq -r .purpose "$dir/task.yaml")" \
-  DELEGATE_TQ_TASK_ID=125 \
-  a agent new --worktree=fix-auth-timeout --agent --kind development --label "セッション TTL 設定反映修正" --prompt "$prompt"
+~/.agents/skills/delegate/scripts/launch --task "$dir/task.yaml" \
+  --branch fix-auth-timeout --label "セッション期限修正" --tq-task-id "<tq-task-number-or-uuid>"
 ```
+
+`<tq-task-number-or-uuid>` は実在する tq task number または UUID に置き換える。
 
 ### 悪い例
 
@@ -394,7 +364,7 @@ vibe 中に自分で merge した PR について後から届く `<delegation-up
 2. 失敗したら:
     1. `a agent peer list -R <owner>/<repo>/.worktrees/` で同じリポジトリの worktree で動くセッションを洗い出し、`ended` 以外の全員に merge 保留を `a agent peer notify` する。宛先は委任元の子に限らない。送った session_id は解除の通知に使うので控える
     2. 失敗した run ごとに、`tq --author <model> task search "<run の URL>" --status todo` で CI 失敗タスクを探して控える。default branch の CI が落ちると、run の URL を説明文に含むタスクが自動で作られる。このタスクを使わないと、誰も知らないまま放置される。作成は CI の完了とほぼ同時なので、見つからなければ 1 分ほど空けて探し直す
-    3. 原因を特定し (flaky なら `gh run rerun --failed` して 1 からやり直す)、修正をこの skill で委任する。2-2 のタスクを `DELEGATE_TQ_TASK_ID` に渡すと、修正 PR がそのタスクにリンクされる。同じ原因で落ちた他の run のタスクは `tq --author <model> task complete <id> --reason duplicate --duplicate-of <渡したタスク>` で閉じる。2-2 でタスクが見つからなければ、通常どおり track-in-tq skill で用意する
+    3. 原因を特定し (flaky なら `gh run rerun --failed` して 1 からやり直す)、修正をこの skill で委任する。2-2 のタスク ID を launcher の `--tq-task-id` に渡すと、修正 PR がそのタスクにリンクされる。同じ原因で落ちた他の run のタスクは `tq --author <model> task complete <id> --reason duplicate --duplicate-of <渡したタスク>` で閉じる。2-2 でタスクが見つからなければ、通常どおり track-in-tq skill で用意する
     4. 修正 PR の merge 通知が来たら、この手順を最初から実行する
 3. 通ったら、これまでの 2-2 で控えたタスクのうち未完了のものに原因と対応 (直した PR、または flaky と判断した根拠) をコメントして close する。2-1 で merge 保留を送ったセッションがあれば全員に解除を通知する。その後、この merge を待って止まっていた作業があれば続ける
 
