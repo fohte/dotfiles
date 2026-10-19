@@ -87,7 +87,7 @@ handoff launcher は文書本文を prompt にし、`--type handoff` と親子�
   --kind research --label "<タスクの短い要約>"
 ```
 
-profile の確認と切り替えは `a agent profile show handoff` と `a agent profile use handoff <engine>` で行う。launcher は `--type handoff` を固定し、engine、model、reasoning effort の上書きは受け付けない。
+`a agent profile show` で選択中 profile と各 type の設定を確認し、切り替える場合は `a agent profile use <PROFILE>` を使う。launcher は `--type handoff` を固定するため、engine、model、reasoning effort は選択中 profile の `handoff` type 設定で決まる。起動時の flag による上書きは受け付けない。
 
 引き継ぎ元へ報告してほしい場合は、後述のとおり handoff.md 本文に書く。
 

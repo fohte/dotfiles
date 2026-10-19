@@ -49,12 +49,11 @@ description: Delegate tasks to a separate Claude Code or Codex instance, either 
 ## Codex に委任するときのモデル
 
 この節は Codex で起動する委任にだけ当てはまる。
-既定のエンジンはマシンごとに違うので、`--engine` を省略したときにどちらで起動するかは `a config get agent.default_engine` で確かめる。
-`a agent new --help` が出すのはビルド時の既定値で、そのマシンの実効値ではない。
+launcher は `--type delegate` を固定する。engine、model、reasoning effort は選択中 profile の `delegate` type 設定で決まる。
+`a agent profile show` で選択中 profile と各 type の設定を確認し、切り替える場合は `a agent profile use <PROFILE>` を使う。
 
-**luna を `--reasoning-effort max` で使う。**
-どちらも armyknife の既定なので、`--model` も `--reasoning-effort` も指定しない。
-そのマシンでの実効値は `a config get agent.codex.model` と `a config get agent.codex.reasoning_effort` で確かめる。
+**luna を reasoning effort `max` で使う。**
+起動時に `--engine`、`--model`、`--reasoning-effort` は指定しない。
 タスクの難易度で使い分けない。
 
 モデルを 1 段上げると枠の消費は 10 倍になる。
@@ -65,7 +64,8 @@ description: Delegate tasks to a separate Claude Code or Codex instance, either 
 luna low は delegate skill を一度も開かないまま「完了しました」と言って終わり、既存テストを 2 件壊したまま commit した。
 effort は思考の深さだけでなく、指示に従う程度にも効く。
 
-モデルを上げるのは、`max` で解けなかったものをやり直すときだけ (`--model <config/codex/config.base.toml の model> --reasoning-effort high`)。
+モデルを上げるのは、`max` で解けなかった作業をやり直すときだけ。
+その場合は必要な engine、model、reasoning effort を設定した profile を `a agent profile use <PROFILE>` で選ぶ。起動時の flag で上書きしない。
 
 ## 使い方
 
