@@ -4,9 +4,9 @@ font-size = 12
 # Half-width glyphs look too wide without this
 adjust-cell-width = -7%
 
-# Base16 variant of Material Darker. The built-in "Material Darker" theme
-# has different ANSI palette values (e.g. black=#000000 vs #212121).
-theme = material-darker-base16
+# Force dark theme reporting because a single Ghostty theme can be reported as light.
+# ref: https://github.com/ghostty-org/ghostty/issues/13604
+theme = light:material-darker-base16,dark:material-darker-base16
 
 window-decoration = none
 command = zsh -c tmux-attach
