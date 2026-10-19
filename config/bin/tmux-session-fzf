@@ -219,14 +219,14 @@ run_switch_mode() {
       dir="$(ghq root)/github.com/$repo_name"
       session_name="$(tmux-name session "$dir")"
       tmux new-session -s "$session_name" -d -c "$dir"
-      tmux switch -t "$session_name"
+      tmux switch-client -t "$session_name"
       # create a second window
       tmux new-window -t "$session_name" -c "$dir"
       ;;
 
     "$EXISTING_PREFIX"*)
       session_name="$(extract_session_name "$selected")"
-      tmux switch -t "$session_name"
+      tmux switch-client -t "$session_name"
       ;;
 
     "$KILL_PREFIX"*)
