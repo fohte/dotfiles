@@ -71,6 +71,17 @@ agent:
   vibe_marker:
     icon: "\U000F140B" # nf-md-lightning_bolt
     color: [255, 135, 215] # pink (#FF87D7)
+  active_profile: default
+  profiles:
+    default:
+      handoff:
+        engine: claude
+        model: opus
+        reasoning_effort: xhigh
+      delegate:
+        engine: codex
+        model: gpt-6-luna
+        reasoning_effort: max
   codex:
     # Applies to delegated sessions only, so interactive `codex` keeps its own
     # defaults. The delegate skill explains why the quota goes to effort rather

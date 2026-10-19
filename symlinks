@@ -169,7 +169,34 @@ fi
 if match_tag armyknife; then
   sym config/armyknife/config.yaml ~/.config/armyknife/config.yaml
   sym config/armyknife/hooks ~/.config/armyknife/hooks
+  if match_role private; then
+    sym config/armyknife/config.private.yaml ~/.config/armyknife/private.yaml
+  elif [ -L "$HOME/.config/armyknife/private.yaml" ]; then
+    log-exec rm "$HOME/.config/armyknife/private.yaml"
+  fi
   sym_role_file config-overlays/armyknife/work.yaml ~/.config/armyknife/work.yaml
+
+  selection_file="$HOME/.config/armyknife/zz-agent-profiles.local.yaml"
+  if [ -f "$selection_file" ] && [ ! -L "$selection_file" ]; then
+    active_profile="$(yq -r '.agent.active_profile // ""' "$selection_file")"
+    legacy_engine="$(yq -r '.agent.launch_profiles.design.engine // ""' "$selection_file")"
+    if [ -z "$active_profile" ] && [ -n "$legacy_engine" ]; then
+      case "$legacy_engine" in
+        codex)
+          if match_role private; then
+            profile=codex
+          else
+            profile=default
+          fi
+          ;;
+        claude) profile=default ;;
+        *) profile="" ;;
+      esac
+      if [ -n "$profile" ]; then
+        log-exec a agent profile use "$profile"
+      fi
+    fi
+  fi
 fi
 
 if match_tag infractl; then

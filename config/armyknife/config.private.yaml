@@ -1,0 +1,11 @@
+agent:
+  profiles:
+    codex:
+      handoff:
+        engine: codex
+        model: gpt-6.1-sol
+        reasoning_effort: high
+      delegate:
+        engine: codex
+        model: gpt-6-luna
+        reasoning_effort: max
