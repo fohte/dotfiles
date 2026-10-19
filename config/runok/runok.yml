@@ -152,6 +152,29 @@ rules:
       - allow: '~/.agents/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
       - allow: '~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
 
+  - ask: '~/.agents/skills/delegate/scripts/launch *'
+    when: '!has(flags.vibe) && !("dry-run" in flags) && !has(flags.help) && !has(flags.h)'
+    tests:
+      - ask: '~/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
+      - allow: '~/.agents/skills/delegate/scripts/launch --vibe --task task.yaml --label example'
+      - allow: '~/.agents/skills/delegate/scripts/launch --task task.yaml --label example --dry-run'
+      - allow: '~/.agents/skills/delegate/scripts/launch --help'
+      - allow: '~/.agents/skills/delegate/scripts/launch -h'
+
+  - ask: 'bash ~/.agents/skills/delegate/scripts/launch *'
+    when: '!has(flags.vibe) && !("dry-run" in flags) && !has(flags.help) && !has(flags.h)'
+    tests:
+      - ask: 'bash ~/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
+      - allow: 'bash ~/.agents/skills/delegate/scripts/launch --vibe --task task.yaml --label example'
+      - allow: 'bash ~/.agents/skills/delegate/scripts/launch --task task.yaml --label example --dry-run'
+      - allow: 'bash ~/.agents/skills/delegate/scripts/launch --help'
+      - allow: 'bash ~/.agents/skills/delegate/scripts/launch -h'
+
+  - allow: '~/.agents/skills/handoff/scripts/launch *'
+    tests:
+      - allow: '~/.agents/skills/handoff/scripts/launch --handoff handoff.md --label example'
+      - allow: 'bash ~/.agents/skills/handoff/scripts/launch --handoff handoff.md --label example'
+
   # `rtk <cmd>` strips boilerplate from the inner command's stdout. Any other
   # rtk subcommand should go through `rtk proxy <cmd>`, which is registered
   # as a wrapper above so the inner command is evaluated against normal rules.

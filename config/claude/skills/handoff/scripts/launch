@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat << 'EOF'
+Usage: launch --handoff <handoff.md> --label <label> [options]
+
+Options:
+  --repo <path>       Start from this repository root
+  --kind <kind>       Display work type
+  --dry-run           Validate settings without starting a session
+  -h, --help          Show this help
+EOF
+}
+
+fail() {
+  printf 'Error: %s\n' "$1" >&2
+  exit 2
+}
+
+if [[ $# -eq 1 && ($1 == --help || $1 == -h) ]]; then
+  usage
+  exit 0
+fi
+
+handoff_file=
+label=
+target_repo=
+kind=
+dry_run=false
+seen_handoff=false
+seen_label=false
+seen_repo=false
+seen_kind=false
+
+while (($#)); do
+  case "$1" in
+    --handoff)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_handoff == false ]] || fail "--handoff requires one file path and may appear once."
+      handoff_file=$2
+      seen_handoff=true
+      shift 2
+      ;;
+    --label)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_label == false ]] || fail "--label requires one value and may appear once."
+      label=$2
+      seen_label=true
+      shift 2
+      ;;
+    --repo)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_repo == false ]] || fail "--repo requires one path and may appear once."
+      target_repo=$2
+      seen_repo=true
+      shift 2
+      ;;
+    --kind)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_kind == false ]] || fail "--kind requires one value and may appear once."
+      kind=$2
+      seen_kind=true
+      shift 2
+      ;;
+    --dry-run)
+      [[ $dry_run == false ]] || fail "--dry-run may appear once."
+      dry_run=true
+      shift
+      ;;
+    *)
+      fail "Unknown option: $1"
+      ;;
+  esac
+done
+
+[[ $seen_handoff == true ]] || fail "--handoff is required."
+[[ $seen_label == true && -n ${label//[[:space:]]/} ]] || fail "--label is required and must not be empty."
+[[ -f $handoff_file && -s $handoff_file ]] || fail "handoff.md must be a non-empty file."
+
+if ! awk '
+  BEGIN {
+    required[1] = "## 引き継ぐ理由"
+    required[2] = "## 背景と目的"
+    required[3] = "## これまでの進捗"
+    required[4] = "## 次にやってほしいこと"
+    required[5] = "## 参考情報"
+    second_opinion[1] = "## 引き継ぐ理由"
+    second_opinion[2] = "## 背景と目的"
+    second_opinion[3] = "## 次にやってほしいこと"
+    second_opinion[4] = "## 参考情報"
+    second_opinion[5] = "## これまでの進捗"
+  }
+  NR == 1 {
+    if ($0 !~ /^# [^[:space:]]/) invalid = 1
+    next
+  }
+  /^## / {
+    if (section > 0 && section <= 5 && !has_content) invalid = 1
+    section++
+    heading[section] = $0
+    has_content = 0
+    next
+  }
+  section > 0 && section <= 5 && /[^[:space:]]/ { has_content = 1 }
+  END {
+    if (invalid || NR == 0 || section < 5 || (section <= 5 && !has_content)) exit 1
+    standard_order = 1
+    second_opinion_order = 1
+    for (i = 1; i <= 5; i++) {
+      if (heading[i] != required[i]) standard_order = 0
+      if (heading[i] != second_opinion[i]) second_opinion_order = 0
+    }
+    if (!standard_order && !second_opinion_order) exit 1
+    if (second_opinion_order && section > 5) exit 1
+  }
+' "$handoff_file"; then
+  fail "handoff.md must have a title and the five required sections in the standard or second-opinion order, each with content. Additional sections may follow the standard order."
+fi
+
+prompt=$(cat "$handoff_file")
+[[ -n ${prompt//[[:space:]]/} ]] || fail "Rendered prompt is empty."
+
+cmd=(agent new --type handoff --child-launch allow)
+[[ $seen_kind == true ]] && cmd+=(--kind "$kind")
+if [[ $seen_repo == true ]]; then
+  [[ -d $target_repo ]] || fail "--repo must name an existing repository directory."
+  if ! target_repo=$(cd "$target_repo" && git root -r); then
+    fail "Could not resolve --repo as a repository."
+  fi
+  cmd+=(-R "$target_repo")
+fi
+cmd+=(--label "$label" --prompt "$prompt")
+[[ $dry_run == true ]] && cmd+=(--dry-run)
+
+unset DELEGATE_TASK_PURPOSE DELEGATE_TQ_TASK_ID DELEGATE_TQ_CHECKLIST_ITEM_ID
+
+exec a "${cmd[@]}"

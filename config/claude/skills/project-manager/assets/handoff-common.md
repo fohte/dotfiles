@@ -9,8 +9,8 @@
 4. **approve された内容を tq の page に書く。** 設計・調査結果・根拠はここに置く。task description には書かない。PR 分割も approve されたら、handoff の「担当タスク」に記載した ID の「実装」チェックリストへ、split-into-prs の手順で Batch / PR 項目を記録する
 5. **実装が必要なら delegate skill で委任する。** 自分で実装しない。委任してよいのは設計が approve され、原因が特定できてからである。1 委任 = 1 PR。approve 済みの PR 分割に従い、最初の 1 PR だけ委任して、残りは前の PR が merge されてから改めて委任する
     - **委任先の engine は既定のままにする。** `--engine` を指定しない
-    - **`DELEGATE_TQ_TASK_ID` に上記タスクの ID を必ず渡す。** 渡さないと委任先の PR がどのタスクにも載らない
-    - PR 分割の実装チェックリストがある場合は、委任する PR に対応する葉項目 ID を `DELEGATE_TQ_CHECKLIST_ITEM_ID` に渡す。Batch 親の ID は使わない
+    - **delegate launcher に `--tq-task-id` で上記タスクの ID を必ず渡す。** 渡さないと委任先の PR がどのタスクにも載らない
+    - PR 分割の実装チェックリストがある場合は、委任する PR に対応する葉項目 ID を delegate launcher の `--tq-checklist-item-id` に渡す。Batch 親の ID は使わない
 6. **ユーザーが見ていない節目だけ引き継ぎ元 (PM セッション) に報告する。** 報告するのは、PR が merge されたとき、範囲が変わったとき、止まったとき、終わったとき。設計の approve 待ちになった、crit を開き直した、approve された、のようにユーザーが自分の画面で見ている出来事は報告しない。PM がそれをユーザーに中継し、同じ通知が二重に届いてトークンと費用の無駄になるため。`a agent peer parent | jq -r '.[0].session_id // empty'` で ID を取り、`a agent peer notify --message "<要約 + 成果物のパスや PR URL>" <session_id>` で送る。全文は貼らない
 
 ## 全体の文脈
