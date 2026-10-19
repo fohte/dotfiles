@@ -47,9 +47,3 @@ Group by decision axis. Use one H4 per axis, even if there is only one axis. Eac
 | Rejected |        |      |      |
 
 </details>
-
-### Breaking changes
-
-<!--
-Include only when this PR breaks compatibility. State what breaks and what consumers need to do to adapt. Delete this entire subsection if there are no breaking changes.
--->
