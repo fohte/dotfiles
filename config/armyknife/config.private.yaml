@@ -1,0 +1,12 @@
+agent:
+  profiles:
+    codex:
+      # Each profile must define both types because `--type` has no fallback.
+      handoff:
+        engine: codex
+        model: gpt-6.1-sol
+        reasoning_effort: high
+      delegate:
+        engine: codex
+        model: gpt-6-luna
+        reasoning_effort: max

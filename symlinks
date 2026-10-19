@@ -169,7 +169,14 @@ fi
 if match_tag armyknife; then
   sym config/armyknife/config.yaml ~/.config/armyknife/config.yaml
   sym config/armyknife/hooks ~/.config/armyknife/hooks
+  if match_role private; then
+    sym config/armyknife/config.private.yaml ~/.config/armyknife/private.yaml
+  elif [ -L "$HOME/.config/armyknife/private.yaml" ]; then
+    log-exec rm "$HOME/.config/armyknife/private.yaml"
+  fi
   sym_role_file config-overlays/armyknife/work.yaml ~/.config/armyknife/work.yaml
+  log-exec bash "$DOTFILES_DIR/config/armyknife/migrate-profile-selection.bash" \
+    "$("$DOTFILES_DIR/config/bin/dot-role" get name)"
 fi
 
 if match_tag infractl; then
