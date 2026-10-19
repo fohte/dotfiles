@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+#
+# Toggle the agent's Crit review from tmux Alt-r. Repair stale tmux cell pixel
+# sizes first so terminal-browser does not shrink the entire review page.
+# Arguments: source pane ID and invoking client name, supplied by the binding.
+
+set -euo pipefail
+
+pane="$1"
+client="$2"
+
+repair_tmux() {
+  tmux "$@" || {
+    printf 'tmux %s failed\n' "$1" >&2
+    return 1
+  }
+}
+
+repair_cell_size() {
+  local window width size window_x window_y client_x client_y current_window
+  read -r window width size window_x window_y client_x client_y < <(
+    repair_tmux display-message -p -c "$client" -t "$pane" \
+      '#{window_id} #{window_width} #{window-size} #{window_cell_width} #{window_cell_height} #{client_cell_width} #{client_cell_height}'
+  ) || return 1
+
+  # Other sizing policies may deliberately differ from this client's dimensions.
+  [[ "$size" == latest ]] || return 0
+  [[ "$client_x" -gt 0 && "$client_y" -gt 0 ]] || return 0
+  [[ "$window_x" != "$client_x" || "$window_y" != "$client_y" ]] || return 0
+
+  current_window="$(repair_tmux display-message -p -c "$client" '#{window_id}')" || return 1
+  [[ "$current_window" == "$window" ]] || return 0
+
+  local local_size
+  local_size="$(repair_tmux show-options -wqv -t "$window" window-size)" || return 1
+
+  # tmux skips pixel-only changes when the window's rows and columns match.
+  # A column change forces it to refresh the cached cell size from the client.
+  repair_tmux resize-window -t "$window" -x "$((width + 1))" || return 1
+  if [[ -n "$local_size" ]]; then
+    repair_tmux set-option -w -t "$window" window-size "$local_size" || return 1
+  else
+    repair_tmux set-option -uw -t "$window" window-size || return 1
+  fi
+
+  # Floating panes retain their dimensions during a window resize, so their
+  # PTYs need a separate resize to receive the corrected pixel size.
+  local floating floating_width floating_panes
+  floating_panes="$(repair_tmux list-panes -t "$window" -f '#{pane_floating_flag}' -F '#{pane_id} #{pane_width}')" || return 1
+  while read -r floating floating_width; do
+    [[ -n "$floating" ]] || continue
+    # -x includes the two border columns; pane_width excludes them.
+    repair_tmux resize-pane -t "$floating" -x "$((floating_width + 3))" || return 1
+    repair_tmux resize-pane -t "$floating" -x "$((floating_width + 2))" || return 1
+  done <<< "$floating_panes"
+}
+
+if ! repair_error="$(repair_cell_size 2>&1)"; then
+  tmux display-message "Could not refresh Crit terminal dimensions: $repair_error" || true
+fi
+
+exec "$HOME/.cargo/bin/a" agent crit open --pane "$pane"
