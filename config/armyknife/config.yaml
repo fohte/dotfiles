@@ -84,9 +84,8 @@ agent:
         reasoning_effort: max
   # Keep this fallback for `a agent new` calls without `--type`.
   codex:
-    # Applies to delegated sessions only, so interactive `codex` keeps its own
-    # defaults. The delegate skill explains why the quota goes to effort rather
-    # than to a higher model tier.
+    # Model and effort fallback for `a agent new` without `--type` when its
+    # legacy resolver selects Codex.
     model: gpt-6-luna
     reasoning_effort: max
   # Keep kind-based settings for `a agent new` calls without `--type`.
