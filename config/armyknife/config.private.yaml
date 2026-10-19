@@ -1,6 +1,7 @@
 agent:
   profiles:
     codex:
+      # Each profile must define both types because `--type` has no fallback.
       handoff:
         engine: codex
         model: gpt-6.1-sol
