@@ -47,7 +47,7 @@ dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
   --kind design --label "<タスクの短い要約>"
 ```
 
-設計作業セッションは `--kind design` で起動する。profile は handoff launcher の固定 `--type handoff` が選ぶ。設計セッションから先の実装委任 (`delegate` skill) は engine、model、reasoning effort を指定せず、既定値を使う。
+設計作業セッションは `--kind design` で起動する。handoff launcher の `--type handoff` は選択中 profile の `handoff` type 設定を使う。設計セッションから先の実装委任 (`delegate` skill) は engine、model、reasoning effort を指定せず、選択中 profile の `delegate` type 設定を使う。
 
 `<n>.md` の構成:
 

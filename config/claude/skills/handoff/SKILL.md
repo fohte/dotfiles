@@ -70,7 +70,7 @@ dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 
 handoff launcher は文書本文を prompt にし、`--type handoff` と親子関係を固定する。委任扱い、worktree、engine/model/effort の上書きは渡さない。
 
-`--kind` には引き継ぐ workflow の表示名を渡す。設計 handoff では `design` を指定する。profile 選択は `--type handoff` が行うため、`--kind` は起動設定を変えない。
+`--kind` には引き継ぐ workflow の表示名を渡す。設計 handoff では `design` を指定する。`--type handoff` は選択中 profile の `handoff` type 設定を使い、`--kind` は表示名だけを変える。
 
 引き継ぐ作業が現在の作業ディレクトリの状態を必要とする場合は `--repo` を省略する。独立した調査のように repo root から始める場合は `--repo "$(git root -r)"` を指定する。repo を指定するときは worktree の root ではなく main repository root を渡す。
 
