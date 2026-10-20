@@ -238,3 +238,29 @@ sym_role_file() {
     log-exec rm -f "$dst"
   fi
 }
+
+# Symlink each file in <src_dir> and in its role overlay dir into <dst_dir>,
+# for tools that read one directory but take entries from both. Links left by
+# a removed file or a previous role's overlay are dropped; plain files in
+# <dst_dir> (e.g. written by the tool itself) are left alone.
+sym_role_overlay_dir() {
+  local src_dir="$1"
+  local dst_dir="$2"
+  local overlay_dir src link target_dir
+
+  overlay_dir="$("$DOTFILES_DIR/config/bin/dot-role" overlay "$DOTFILES_DIR/$src_dir" 2> /dev/null)" || overlay_dir=""
+
+  for src in "$DOTFILES_DIR/$src_dir"/* ${overlay_dir:+"$overlay_dir"/*}; do
+    [ -e "$src" ] || continue
+    sym "$src" "$dst_dir/$(basename "$src")"
+  done
+
+  for link in "$dst_dir"/*; do
+    [ -L "$link" ] || continue
+    target_dir="$(dirname "$(readlink "$link")")"
+    if [ -e "$link" ] && { [ "$target_dir" = "$DOTFILES_DIR/$src_dir" ] || [ "$target_dir" = "$overlay_dir" ]; }; then
+      continue
+    fi
+    log-exec rm "$link"
+  done
+}
