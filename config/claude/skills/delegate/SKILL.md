@@ -88,7 +88,7 @@ launcher は入力と描画後の prompt を検証してから Armyknife を起�
 - `--from`: 必要なときだけ使う base ref。direct-commit 運用では拒否される
 - `--tq-task-id`: この委任作業を記録する tq task ID。対応 task がある通常委任では必ず渡す
 - `--tq-checklist-item-id`: 対応する実装チェックリストの leaf ID。無い場合は省略する
-- `--vibe`: 対象 repo の `repo.vibe` が `true` で、起動元 session が vibe を許可されている場合だけ渡す。Armyknife が両方を検査する
+- `--vibe`: 対象 repo の root で `a config get repo.vibe` が成功して boolean `true` を返し、起動元 session の `a agent vibe status` も成功する場合だけ渡す。取得失敗、`false`、boolean 以外の場合は `--vibe` を省略して通常委任にする。Armyknife が両方を検査する
 - `--dry-run`: 入力と選択した profile を確認し、session は起動しない
 - `--label`: **必須**. セッションのタイトル。`a agent watch` の TUI でセッション一覧に表示され、コンテキストスイッチ時に「このセッションで何をやっていたか」を素早く思い出すためのもの。以下のルールで生成すること:
     - 日本語 2-5 語
