@@ -11,6 +11,9 @@ Options:
   --from <ref>                      Worktree base ref
   --tq-task-id <id>                 tq task ID
   --tq-checklist-item-id <id>       tq checklist leaf ID
+  --engine <engine>                 Override the selected profile's engine for this session
+  --model <model>                   Override the selected profile's model for this session
+  --reasoning-effort <effort>       Override the selected profile's reasoning effort for this session
   --vibe                            Start through Armyknife's vibe guard
   --dry-run                         Validate settings without starting a session
   -h, --help                        Show this help
@@ -34,6 +37,9 @@ branch=
 from_ref=
 tq_task_id=
 tq_checklist_item_id=
+engine=
+model=
+reasoning_effort=
 vibe=false
 dry_run=false
 seen_task=false
@@ -43,6 +49,9 @@ seen_branch=false
 seen_from=false
 seen_tq_task=false
 seen_tq_checklist=false
+seen_engine=false
+seen_model=false
+seen_reasoning_effort=false
 
 while (($#)); do
   case "$1" in
@@ -86,6 +95,24 @@ while (($#)); do
       [[ $# -ge 2 && -n $2 && $2 != --* && $seen_tq_checklist == false ]] || fail "--tq-checklist-item-id requires one ID and may appear once."
       tq_checklist_item_id=$2
       seen_tq_checklist=true
+      shift 2
+      ;;
+    --engine)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_engine == false ]] || fail "--engine requires one value and may appear once."
+      engine=$2
+      seen_engine=true
+      shift 2
+      ;;
+    --model)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_model == false ]] || fail "--model requires one value and may appear once."
+      model=$2
+      seen_model=true
+      shift 2
+      ;;
+    --reasoning-effort)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_reasoning_effort == false ]] || fail "--reasoning-effort requires one value and may appear once."
+      reasoning_effort=$2
+      seen_reasoning_effort=true
       shift 2
       ;;
     --vibe)
@@ -158,6 +185,9 @@ fi
 [[ -n ${prompt//[[:space:]]/} ]] || fail "Rendered prompt is empty."
 
 cmd=(agent new --type delegate --child-launch deny --kind development)
+[[ $seen_engine == true ]] && cmd+=(--engine "$engine")
+[[ $seen_model == true ]] && cmd+=(--model "$model")
+[[ $seen_reasoning_effort == true ]] && cmd+=(--reasoning-effort "$reasoning_effort")
 [[ $vibe == true ]] && cmd+=(--vibe)
 if [[ $direct_commit == false ]]; then
   if [[ $seen_branch == true ]]; then
