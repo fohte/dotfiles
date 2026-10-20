@@ -48,7 +48,7 @@ merge 後に worktree が片付けられると armyknife が委任元に自動�
 
 ## 委任元への連絡
 
-連絡時点で起動元 session の `a agent vibe status` と対象 repo root での `a config get repo.vibe` の両方が成功し、`repo.vibe` が boolean `true` の場合だけ、`create-pr` skill の vibe 手順にある連絡ルールを優先する。設定の取得失敗、`false`、boolean 以外の場合は通常フローとして以下の制限を適用する。session の vibe status だけでは vibe 報告を有効にしない。
+連絡時点で `~/.agents/skills/delegate/references/vibe-policy.md` に従って `vibe_mode` を再確認する。初回判定時から許可が続いている場合だけ、`create-pr` skill の vibe 手順にある連絡ルールを優先する。それ以外は通常フローとして以下の制限を適用する。
 
 委任元に連絡してよいのは、この指示の前提が誤っていると判明したときと、上で報告するよう指示したときに限る。
 進捗報告、質問、作業を続けられずに止まることの報告は送らない。
