@@ -244,9 +244,6 @@ async function loadSessionSnapshot(path: string, now: number) {
     return undefined
   }
 
-  if (JSON.stringify(samples) !== JSON.stringify(stored)) {
-    await writeSnapshot(path, samples)
-  }
   return samples
 }
 

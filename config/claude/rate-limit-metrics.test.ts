@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { mkdtemp, readdir, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
@@ -106,6 +106,52 @@ describe('mergeRateLimitSamples', () => {
 })
 
 describe('exportRateLimitMetrics', () => {
+  it('does not rewrite a snapshot when one window expires', async () => {
+    const stateDir = await mkdtemp(join(tmpdir(), 'claude-rate-limits-'))
+
+    try {
+      const snapshotPath = join(stateDir, 'session_a.json')
+      await recordRateLimitSnapshot(
+        stateDir,
+        'session_a',
+        {
+          five_hour: { used_percentage: 80, resets_at: 950 },
+          seven_day: { used_percentage: 20, resets_at: 8_000 },
+        },
+        900,
+      )
+      const snapshotBeforeExport = await readFile(snapshotPath, 'utf8')
+
+      let requestBody = ''
+      const send: typeof fetch = async (_input, init) => {
+        requestBody = String(init?.body)
+        return new Response(null, { status: 200 })
+      }
+
+      await exportRateLimitMetrics(stateDir, 1_000, send)
+
+      const metrics =
+        JSON.parse(requestBody).resourceMetrics[0].scopeMetrics[0].metrics
+      expect(
+        metrics.map(
+          (metric: {
+            gauge: {
+              dataPoints: Array<{
+                attributes: Array<{ value: { stringValue: string } }>
+              }>
+            }
+          }) =>
+            metric.gauge.dataPoints.map(
+              (point) => point.attributes[0].value.stringValue,
+            ),
+        ),
+      ).toEqual([['seven_day'], ['seven_day'], ['seven_day']])
+      expect(await readFile(snapshotPath, 'utf8')).toBe(snapshotBeforeExport)
+    } finally {
+      await rm(stateDir, { recursive: true, force: true })
+    }
+  })
+
   it('exports the selected session samples as OTLP gauges', async () => {
     const stateDir = await mkdtemp(join(tmpdir(), 'claude-rate-limits-'))
 
