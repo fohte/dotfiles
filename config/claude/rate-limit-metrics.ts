@@ -8,13 +8,16 @@ import {
   stat,
   writeFile,
 } from 'node:fs/promises'
-import { readFileSync, realpathSync } from 'node:fs'
+import { readFileSync, realpathSync, type Dirent } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 
 const OTLP_METRICS_URL =
   'https://alloy-otlp-home-k8s.tail8f0aa.ts.net/v1/metrics'
 const SESSION_ID_PATTERN = /^[A-Za-z0-9_-]+$/
+const TEMPORARY_FILE_PATTERN = /\.json\.\d+\.[0-9a-f-]+\.tmp$/
+const TEMPORARY_FILE_MAX_AGE_SECONDS = 600
+const MAX_SENDER_LOG_BYTES = 64 * 1024
 const WINDOW_NAMES = ['five_hour', 'seven_day'] as const
 
 export type RateLimitWindowName = (typeof WINDOW_NAMES)[number]
@@ -155,7 +158,7 @@ async function isDirectory(path: string) {
   }
 }
 
-function getRole() {
+export function getRole(): string | null {
   try {
     const scriptPath = realpathSync(import.meta.path)
     const dotfilesDir = resolve(dirname(scriptPath), '..', '..')
@@ -169,6 +172,10 @@ function getRole() {
     return null
   }
   return null
+}
+
+export function getRateLimitStateDir(): string {
+  return join(homedir(), '.local', 'state', 'claude-rate-limits')
 }
 
 export async function recordRateLimitSnapshot(
@@ -205,43 +212,56 @@ function parseSnapshot(value: unknown, now: number): RateLimitSamples {
   return samples
 }
 
-async function readAndPruneSessions(stateDir: string, now: number) {
+async function pruneStaleTemporaryFiles(
+  stateDir: string,
+  entries: readonly Dirent[],
+  now: number,
+) {
+  for (const entry of entries) {
+    if (!entry.isFile() || !TEMPORARY_FILE_PATTERN.test(entry.name)) continue
+
+    const path = join(stateDir, entry.name)
+    try {
+      const details = await stat(path)
+      if (
+        now - Math.floor(details.mtimeMs / 1000) >
+        TEMPORARY_FILE_MAX_AGE_SECONDS
+      ) {
+        await rm(path, { force: true })
+      }
+    } catch {
+      // A concurrent statusline update may already have renamed the file.
+    }
+  }
+}
+
+async function loadSessionSnapshot(path: string, now: number) {
+  const stored = await readSnapshot(path)
+  const samples = parseSnapshot(stored, now)
+
+  if (Object.keys(samples).length === 0) {
+    await rm(path, { force: true })
+    return undefined
+  }
+
+  if (JSON.stringify(samples) !== JSON.stringify(stored)) {
+    await writeSnapshot(path, samples)
+  }
+  return samples
+}
+
+async function loadCurrentSessions(stateDir: string, now: number) {
   const sessions: RateLimitSamples[] = []
   const entries = await readdir(stateDir, { withFileTypes: true })
+  await pruneStaleTemporaryFiles(stateDir, entries, now)
 
   for (const entry of entries) {
-    if (!entry.isFile()) continue
-
-    if (/^[A-Za-z0-9_-]+\.json\.\d+\.[0-9a-f-]+\.tmp$/.test(entry.name)) {
-      const path = join(stateDir, entry.name)
-      try {
-        const details = await stat(path)
-        if (now - Math.floor(details.mtimeMs / 1000) > 600) {
-          await rm(path, { force: true })
-        }
-      } catch {
-        // A concurrent statusline update may already have renamed the file.
-      }
-      continue
-    }
-
-    if (!entry.name.endsWith('.json')) continue
+    if (!entry.isFile() || !entry.name.endsWith('.json')) continue
     const sessionId = entry.name.slice(0, -'.json'.length)
     if (!SESSION_ID_PATTERN.test(sessionId)) continue
 
-    const path = join(stateDir, entry.name)
-    const stored = await readSnapshot(path)
-    const samples = parseSnapshot(stored, now)
-
-    if (Object.keys(samples).length === 0) {
-      await rm(path, { force: true })
-      continue
-    }
-
-    if (JSON.stringify(samples) !== JSON.stringify(stored)) {
-      await writeSnapshot(path, samples)
-    }
-    sessions.push(samples)
+    const samples = await loadSessionSnapshot(join(stateDir, entry.name), now)
+    if (samples) sessions.push(samples)
   }
 
   return sessions
@@ -299,7 +319,7 @@ export async function exportRateLimitMetrics(
 ) {
   if (!(await isDirectory(stateDir))) return
 
-  const sessions = await readAndPruneSessions(stateDir, now)
+  const sessions = await loadCurrentSessions(stateDir, now)
   const samples = selectRateLimitSamples(sessions, now)
   if (Object.keys(samples).length === 0) return
 
@@ -320,13 +340,28 @@ export async function exportRateLimitMetrics(
 async function main() {
   if (getRole() !== 'private') return
 
-  const stateDir = join(homedir(), '.local', 'state', 'claude-rate-limits')
+  const stateDir = getRateLimitStateDir()
+  await trimSenderLog(stateDir)
   await exportRateLimitMetrics(stateDir)
+}
+
+async function trimSenderLog(stateDir: string) {
+  const path = join(stateDir, 'sender.log')
+  try {
+    if ((await stat(path)).size > MAX_SENDER_LOG_BYTES) {
+      await writeFile(path, '')
+    }
+  } catch {
+    // launchd may not have created the log yet.
+  }
 }
 
 if (import.meta.main) {
   main().catch((error) => {
-    console.error(error)
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(
+      `Claude rate limit export failed: ${message.replace(/\s+/g, ' ').slice(0, 500)}`,
+    )
     process.exitCode = 1
   })
 }

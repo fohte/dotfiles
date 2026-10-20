@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'bun:test'
+import { mkdtemp, readdir, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import {
+  exportRateLimitMetrics,
   mergeRateLimitSamples,
+  recordRateLimitSnapshot,
   selectRateLimitSamples,
   type RateLimitSamples,
 } from './rate-limit-metrics.ts'
@@ -97,5 +102,112 @@ describe('mergeRateLimitSamples', () => {
       five_hour: { usedPercentage: 20, resetsAt: 300, observedAt: 130 },
       seven_day: existing.seven_day,
     })
+  })
+})
+
+describe('exportRateLimitMetrics', () => {
+  it('exports the selected session samples as OTLP gauges', async () => {
+    const stateDir = await mkdtemp(join(tmpdir(), 'claude-rate-limits-'))
+
+    try {
+      await recordRateLimitSnapshot(
+        stateDir,
+        'session_a',
+        {
+          five_hour: { used_percentage: 80, resets_at: 2_000 },
+          seven_day: { used_percentage: 20, resets_at: 8_000 },
+        },
+        900,
+      )
+      await recordRateLimitSnapshot(
+        stateDir,
+        'session_b',
+        {
+          five_hour: { used_percentage: 30, resets_at: 3_000 },
+          seven_day: { used_percentage: 50, resets_at: 8_000 },
+        },
+        950,
+      )
+      await recordRateLimitSnapshot(
+        stateDir,
+        'expired_session',
+        { five_hour: { used_percentage: 99, resets_at: 950 } },
+        900,
+      )
+
+      let requestUrl = ''
+      let requestInit: RequestInit | undefined
+      const send: typeof fetch = async (input, init) => {
+        requestUrl = String(input)
+        requestInit = init
+        return new Response(null, { status: 200 })
+      }
+
+      await exportRateLimitMetrics(stateDir, 1_000, send)
+
+      const payload = JSON.parse(String(requestInit?.body))
+      const metrics = payload.resourceMetrics[0].scopeMetrics[0].metrics
+
+      expect({
+        requestUrl,
+        method: requestInit?.method,
+        sessionFiles: (await readdir(stateDir)).sort(),
+        metricNames: metrics.map((metric: { name: string }) => metric.name),
+        hasUnits: metrics.some((metric: { unit?: string }) => 'unit' in metric),
+        dataPoints: metrics.map(
+          (metric: {
+            gauge: {
+              dataPoints: Array<{
+                attributes: Array<{
+                  key: string
+                  value: { stringValue: string }
+                }>
+                asDouble: number
+                timeUnixNano: string
+              }>
+            }
+          }) =>
+            metric.gauge.dataPoints.map((point) => ({
+              window: point.attributes[0].value.stringValue,
+              value: point.asDouble,
+              timeUnixNano: point.timeUnixNano,
+            })),
+        ),
+      }).toEqual({
+        requestUrl: 'https://alloy-otlp-home-k8s.tail8f0aa.ts.net/v1/metrics',
+        method: 'POST',
+        sessionFiles: ['session_a.json', 'session_b.json'],
+        metricNames: [
+          'claude_rate_limit_used_percent',
+          'claude_rate_limit_reset_at_seconds',
+          'claude_rate_limit_observed_at_seconds',
+        ],
+        hasUnits: false,
+        dataPoints: [
+          [
+            { window: 'five_hour', value: 30, timeUnixNano: '1000000000000' },
+            { window: 'seven_day', value: 50, timeUnixNano: '1000000000000' },
+          ],
+          [
+            {
+              window: 'five_hour',
+              value: 3_000,
+              timeUnixNano: '1000000000000',
+            },
+            {
+              window: 'seven_day',
+              value: 8_000,
+              timeUnixNano: '1000000000000',
+            },
+          ],
+          [
+            { window: 'five_hour', value: 950, timeUnixNano: '1000000000000' },
+            { window: 'seven_day', value: 950, timeUnixNano: '1000000000000' },
+          ],
+        ],
+      })
+    } finally {
+      await rm(stateDir, { recursive: true, force: true })
+    }
   })
 })

@@ -1,13 +1,14 @@
 #!/usr/bin/env bun
 
-import { readFileSync, realpathSync } from 'node:fs'
-import { homedir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
 import {
   AUTO_COMPACT_RATIO,
   readTotalTokens,
 } from './hooks/lib/transcript-usage.ts'
-import { recordRateLimitSnapshot } from './rate-limit-metrics.ts'
+import {
+  getRateLimitStateDir,
+  getRole,
+  recordRateLimitSnapshot,
+} from './rate-limit-metrics.ts'
 
 interface SessionData {
   model: {
@@ -93,25 +94,6 @@ const WINDOW_DURATION_SEC = {
   five_hour: 5 * 3600,
   seven_day: 7 * 86400,
 } as const
-
-// Resolve the active role from the dotfiles `.role` file. Returns null on any failure.
-function getRole(): string | null {
-  try {
-    // statusline.ts is symlinked from <DOTFILES_DIR>/config/claude/statusline.ts;
-    // resolve the symlink so we can read .role at the dotfiles root.
-    const scriptPath = realpathSync(import.meta.path)
-    const dotfilesDir = resolve(dirname(scriptPath), '..', '..')
-    const content = readFileSync(`${dotfilesDir}/.role`, 'utf8')
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith('#')) continue
-      return trimmed.split(/\s+/)[0] || null
-    }
-  } catch {
-    // No .role, unreadable, or unexpected layout: behave as if role is unset.
-  }
-  return null
-}
 
 // Sum of seconds within Mon-Fri (local time) over [startSec, endSec).
 function weekdaySeconds(startSec: number, endSec: number): number {
@@ -264,11 +246,14 @@ async function main() {
   process.stdout.write(parts.join(' | '))
 
   if (role === 'private' && data.session_id && data.rate_limits) {
-    const stateDir = join(homedir(), '.local', 'state', 'claude-rate-limits')
+    const stateDir = getRateLimitStateDir()
     try {
       await recordRateLimitSnapshot(stateDir, data.session_id, data.rate_limits)
-    } catch {
-      // Local metric persistence must not interrupt the statusline.
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(
+        `Could not record Claude rate limits: ${message.replace(/\s+/g, ' ').slice(0, 500)}`,
+      )
     }
   }
 }
