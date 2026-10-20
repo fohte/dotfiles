@@ -16,7 +16,7 @@ reviewer の選択順、agent、trigger、reference は `reviewers.yaml` を唯�
 commit range のレビューでは、現在の branch に記録された review 済み HEAD が対象 HEAD の祖先なら、その HEAD までの commit を caller range 内から除外する。caller range より前へ範囲を広げない。merge commit は再 merge 結果との差分だけを含めるため、取り込んだ側の変更は除外され、conflict resolution はレビューされる。全 reviewer の成功後に HEAD と Claude / Codex の session ID を記録する。前回成功レビューから 1 時間以内なら reviewer ごとに session を再開し、失敗した resume は fresh session で再実行する。Codex reviewer はユーザーの指示と skills から分離した共有 `CODEX_HOME` を使い、1 時間を過ぎた rollout は Codex reviewer の起動時に整理する。対象 patch が空なら reviewer を起動せず skip し、その HEAD を記録する。`--cached` は session 再開と state 更新の対象外。
 
 - **指摘に対応したあと、同じ差分をレビューし直さない。** 対応で差分が変われば新しい指摘が出るので、繰り返すと終わらない
-- **reviewer が失敗したときの retry は 1 回まで。** それも失敗したら止めて、その reviewer を `⚠️ 未評価` として報告する。同じ差分で 2 回続けて失敗するのは差分ではなく実行環境側の問題なので、起動し直しても結果は変わらない
+- **reviewer が失敗したときの retry は 1 回まで。** それも失敗したら止めて、その reviewer を `⚠️ 未評価` として報告し、失敗出力にある原因を添える。同じ差分で 2 回続けて失敗するなら、差分が reviewer のコンテキストに収まらない場合 (`Prompt is too long`) を含め、起動し直しても結果は変わらない
 - **reviewer が 1 つも結果を返さなかったら、12 観点すべてを `⚠️ 未評価` にし、Summary の件数の代わりにレビュー不能だったことと原因を書く。** 指摘 0 件と同じ出力にすると、呼び出し元がレビュー済みとして先に進む
 
 ## Backend execution
