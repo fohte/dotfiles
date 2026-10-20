@@ -1,11 +1,13 @@
 #!/usr/bin/env bun
 
 import { readFileSync, realpathSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { homedir } from 'node:os'
+import { dirname, join, resolve } from 'node:path'
 import {
   AUTO_COMPACT_RATIO,
   readTotalTokens,
 } from './hooks/lib/transcript-usage.ts'
+import { recordRateLimitSnapshot } from './rate-limit-metrics.ts'
 
 interface SessionData {
   model: {
@@ -209,6 +211,7 @@ async function main() {
   const autoCompactThreshold = contextWindow * AUTO_COMPACT_RATIO
   const percentage = Math.round((totalTokens / autoCompactThreshold) * 100)
   const color = getColorForPercentage(percentage)
+  const role = getRole()
 
   // Format output: Opus 4.7 [1M] (high) | 1.0k tok (10%) | 5h: 33% (4h50m) / 7d: 6% (1d17h) | v2.1.119 (Claude Code)
   const reset = '\x1b[0m'
@@ -234,7 +237,7 @@ async function main() {
 
   // In the work role, treat weekends as non-active so the 7d pace projection
   // matches the realistic Mon-Fri usage pattern instead of assuming uniform 7-day consumption.
-  const isWorkRole = getRole() === 'work'
+  const isWorkRole = role === 'work'
 
   const sessionPart = formatRateLimit(
     '5h',
@@ -259,6 +262,15 @@ async function main() {
   }
 
   process.stdout.write(parts.join(' | '))
+
+  if (role === 'private' && data.session_id && data.rate_limits) {
+    const stateDir = join(homedir(), '.local', 'state', 'claude-rate-limits')
+    try {
+      await recordRateLimitSnapshot(stateDir, data.session_id, data.rate_limits)
+    } catch {
+      // Local metric persistence must not interrupt the statusline.
+    }
+  }
 }
 
 main().catch(console.error)

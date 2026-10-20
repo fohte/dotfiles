@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.fohte.claude-rate-limits</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__BUN__</string>
+    <string>__HOME__/.claude/rate-limit-metrics.ts</string>
+  </array>
+
+  <key>StartInterval</key>
+  <integer>180</integer>
+
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>__HOME__/.local/state/claude-rate-limits/sender.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>__HOME__/.local/state/claude-rate-limits/sender.log</string>
+</dict>
+</plist>
