@@ -8,6 +8,10 @@ Usage: launch --handoff <handoff.md> --label <label> [options]
 Options:
   --repo <path>       Start from this repository root
   --kind <kind>       Display work type
+  --engine <engine>   Override the selected profile's engine for this session
+  --model <model>     Override the selected profile's model for this session
+  --reasoning-effort <effort>
+                      Override the selected profile's reasoning effort for this session
   --dry-run           Validate settings without starting a session
   -h, --help          Show this help
 EOF
@@ -27,11 +31,17 @@ handoff_file=
 label=
 target_repo=
 kind=
+engine=
+model=
+reasoning_effort=
 dry_run=false
 seen_handoff=false
 seen_label=false
 seen_repo=false
 seen_kind=false
+seen_engine=false
+seen_model=false
+seen_reasoning_effort=false
 
 while (($#)); do
   case "$1" in
@@ -57,6 +67,24 @@ while (($#)); do
       [[ $# -ge 2 && -n $2 && $2 != --* && $seen_kind == false ]] || fail "--kind requires one value and may appear once."
       kind=$2
       seen_kind=true
+      shift 2
+      ;;
+    --engine)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_engine == false ]] || fail "--engine requires one value and may appear once."
+      engine=$2
+      seen_engine=true
+      shift 2
+      ;;
+    --model)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_model == false ]] || fail "--model requires one value and may appear once."
+      model=$2
+      seen_model=true
+      shift 2
+      ;;
+    --reasoning-effort)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_reasoning_effort == false ]] || fail "--reasoning-effort requires one value and may appear once."
+      reasoning_effort=$2
+      seen_reasoning_effort=true
       shift 2
       ;;
     --dry-run)
@@ -119,6 +147,9 @@ prompt=$(cat "$handoff_file")
 
 cmd=(agent new --type handoff --child-launch allow)
 [[ $seen_kind == true ]] && cmd+=(--kind "$kind")
+[[ $seen_engine == true ]] && cmd+=(--engine "$engine")
+[[ $seen_model == true ]] && cmd+=(--model "$model")
+[[ $seen_reasoning_effort == true ]] && cmd+=(--reasoning-effort "$reasoning_effort")
 if [[ $seen_repo == true ]]; then
   [[ -d $target_repo ]] || fail "--repo must name an existing repository directory."
   if ! target_repo=$(cd "$target_repo" && git root -r); then

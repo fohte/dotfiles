@@ -49,11 +49,10 @@ description: Delegate tasks to a separate Claude Code or Codex instance, either 
 ## Codex に委任するときのモデル
 
 この節は Codex で起動する委任にだけ当てはまる。
-launcher は `--type delegate` を固定する。engine、model、reasoning effort は選択中 profile の `delegate` type 設定で決まる。
-`a agent profile show` で選択中 profile と各 type の設定を確認し、切り替える場合は `a agent profile use <PROFILE>` を使う。
+launcher は `--type delegate` を固定する。engine、model、reasoning effort は通常は選択中 profile の `delegate` type 設定で決まる。
+`a agent profile show` で選択中 profile と各 type の既定値を確認できる。ユーザーが engine、model、reasoning effort のいずれかを明示した場合だけ、対応する launcher flag を渡す。1 回の起動のために `a agent profile use` で全体の選択を書き換えない。
 
 **luna を reasoning effort `max` で使う。**
-起動時に `--engine`、`--model`、`--reasoning-effort` は指定しない。
 タスクの難易度で使い分けない。
 
 モデルを 1 段上げると枠の消費は 10 倍になる。
@@ -64,8 +63,7 @@ launcher は `--type delegate` を固定する。engine、model、reasoning effo
 luna low は delegate skill を一度も開かないまま「完了しました」と言って終わり、既存テストを 2 件壊したまま commit した。
 effort は思考の深さだけでなく、指示に従う程度にも効く。
 
-モデルを上げるのは、`max` で解けなかった作業をやり直すときだけ。
-その場合は必要な engine、model、reasoning effort を設定した profile を `a agent profile use <PROFILE>` で選ぶ。起動時の flag で上書きしない。
+ユーザーが別の engine、model、reasoning effort を明示した場合は、その値を launcher flag で渡す。タスクの難易度を理由に自分の判断で切り替えない。
 
 ## 使い方
 
@@ -88,6 +86,7 @@ launcher は入力と描画後の prompt を検証してから Armyknife を起�
 - `--from`: 必要なときだけ使う base ref。direct-commit 運用では拒否される
 - `--tq-task-id`: この委任作業を記録する tq task ID。対応 task がある通常委任では必ず渡す
 - `--tq-checklist-item-id`: 対応する実装チェックリストの leaf ID。無い場合は省略する
+- `--engine`、`--model`、`--reasoning-effort`: ユーザーが明示した値だけを渡す。省略時は選択中 profile の `delegate` type 設定を使う
 - `--vibe`: `~/.agents/skills/delegate/references/vibe-policy.md` の `vibe_mode` が true の場合だけ渡す。Armyknife が両方の許可を検査する
 - `--dry-run`: 入力と選択した profile を確認し、session は起動しない
 - `--label`: **必須**. セッションのタイトル。`a agent watch` の TUI でセッション一覧に表示され、コンテキストスイッチ時に「このセッションで何をやっていたか」を素早く思い出すためのもの。以下のルールで生成すること:
@@ -101,7 +100,7 @@ launcher は入力と描画後の prompt を検証してから Armyknife を起�
 - `DELEGATE_DIRECT_COMMIT`: launcher が repo policy と vibe に基づいて設定し、prompt の完了条件を PR または push に合わせる
 - `DELEGATE_TASK_PURPOSE` / `DELEGATE_TQ_TASK_ID` / `DELEGATE_TQ_CHECKLIST_ITEM_ID`: launcher が worktree 作成時だけ環境に設定する。hook が branch config に記録し、`create-pr` skill が使う
 
-launcher は `--type delegate`、`--child-launch deny`、`--kind development` を固定する。`repo.direct_commit` が `true` で通常 delegate の場合は worktree を使わず、prompt を direct-commit 用に描画する。vibe delegate は `repo.direct_commit` に関わらず worktree と PR を使い、Armyknife の `--vibe` guard を通す。engine、model、effort、Armyknife の `--agent`、`--child-launch`、`--worktree` は直接指定しない。
+launcher は `--type delegate`、`--child-launch deny`、`--kind development` を固定する。`repo.direct_commit` が `true` で通常 delegate の場合は worktree を使わず、prompt を direct-commit 用に描画する。vibe delegate は `repo.direct_commit` に関わらず worktree と PR を使い、Armyknife の `--vibe` guard を通す。engine、model、reasoning effort はユーザーが明示した場合だけ launcher flag で渡す。Armyknife の `--agent`、`--child-launch`、`--worktree` は直接指定しない。
 
 #### post-worktree-create hook の失敗
 

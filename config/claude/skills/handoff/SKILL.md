@@ -68,7 +68,7 @@ dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 
 ### 新しいセッションを起動する
 
-handoff launcher は文書本文を prompt にし、`--type handoff` と親子関係を固定する。委任扱い、worktree、engine/model/effort の上書きは渡さない。
+handoff launcher は文書本文を prompt にし、`--type handoff` と親子関係を固定する。委任扱いと worktree は使わない。engine、model、reasoning effort は通常は選択中 profile の `handoff` type 設定を使い、ユーザーが明示した場合だけ launcher に同名の flag を渡す。
 
 `--kind` には引き継ぐ workflow の表示名を渡す。設計 handoff では `design` を指定する。`--type handoff` は選択中 profile の `handoff` type 設定を使い、`--kind` は表示名だけを変える。
 
@@ -87,7 +87,7 @@ handoff launcher は文書本文を prompt にし、`--type handoff` と親子�
   --kind research --label "<タスクの短い要約>"
 ```
 
-`a agent profile show` で選択中 profile と各 type の設定を確認し、切り替える場合は `a agent profile use <PROFILE>` を使う。launcher は `--type handoff` を固定するため、engine、model、reasoning effort は選択中 profile の `handoff` type 設定で決まる。起動時の flag による上書きは受け付けない。
+`a agent profile show` で選択中 profile と各 type の既定値を確認できる。launcher は `--type handoff` を固定し、engine、model、reasoning effort は通常その `handoff` type 設定で決まる。ユーザーがいずれかを明示した場合だけ、対応する `--engine`、`--model`、`--reasoning-effort` を launcher に渡す。1 回の起動のために `a agent profile use` で全体の選択を書き換えない。
 
 引き継ぎ元へ報告してほしい場合は、後述のとおり handoff.md 本文に書く。
 
