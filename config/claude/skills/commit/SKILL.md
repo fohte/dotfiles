@@ -9,13 +9,15 @@ description: Use this skill when committing changes. This skill enforces writing
 
 ## Conditions
 
-Resolve these before anything else. Values come from the `## Repository facts` list injected at session start. If the list is absent, or a value used below is `unset`, run `gen-claude-template context repo-facts` from the repo directory to print it. If a value is still `unset`, ask the user instead of continuing. Do not infer a value from anywhere else.
+Resolve the repository-fact values before anything else. Values come from the `## Repository facts` list injected at session start. If the list is absent, or a value used below is `unset`, run `gen-claude-template context repo-facts` from the repo directory to print it. If a repository-fact value is still `unset`, ask the user instead of continuing. Do not infer repository facts from anywhere else.
+
+Resolve `vibe_mode` with `~/.agents/skills/delegate/references/vibe-policy.md` before selecting a row. Session status alone does not select the vibe commit procedure.
 
 Find the first row that matches, read only the file it names, and follow it for the commit procedure and the review steps. Never read the other file: the two differ in when `self-review` runs and how many commits it produces.
 
 | Condition                       | Action                                     |
 | ------------------------------- | ------------------------------------------ |
-| `a agent vibe status` exits 0   | Read `references/non-master-push-repo.md`. |
+| `vibe_mode` is `true`           | Read `references/non-master-push-repo.md`. |
 | `is_master_push_repo` is `true` | Read `references/master-push-repo.md`.     |
 | (otherwise)                     | Read `references/non-master-push-repo.md`. |
 

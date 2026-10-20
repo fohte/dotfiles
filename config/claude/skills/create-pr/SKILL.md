@@ -18,7 +18,7 @@ Resolve these before anything else. Values come from the `## Repository facts` l
 Derived value:
 
 - `english_output`: true when `repo.visibility` is `PUBLIC` **and** `repo.language` is not `ja`, otherwise false. `repo.visibility: PUBLIC` alone does not make it true.
-- `vibe_mode`: run `a agent vibe status`; true only if it exits 0. If the command is unavailable or exits non-zero, use the normal flow.
+- `vibe_mode`: resolve with `~/.agents/skills/delegate/references/vibe-policy.md`. Before each vibe-only report or submit, repeat both checks and continue only if the initial `vibe_mode` is still permitted.
 
 Read `references/draft-manual.md` before starting Step 1. It covers Steps 1, 2 and 4.
 
@@ -74,7 +74,7 @@ git log "origin/$(git main)..HEAD" --oneline
 
 ## 3. レビュー
 
-`vibe_mode` では editor を開かず、draft を作成した後に委任元のレビューを待つ。委任元に `notify` してよいのは draft ready、PR ready、またはこの指示の前提が誤っていると判明した場合だけとする。進捗、質問、待ち状態は通知しない。通知後はターンを終えて委任元の返答を待つ。
+`vibe_mode` では editor を開かず、draft を作成した後に委任元のレビューを待つ。`<vibe-draft-ready>` を送る直前に共通 policy を再確認し、初回判定時から許可が続いている場合だけ通知する。許可がなくなっていた場合は通常フローに戻り、crit review の承認を得て editor review を完了する。vibe 報告は送らない。委任元に `notify` してよいのは draft ready、PR ready、またはこの指示の前提が誤っていると判明した場合だけとする。進捗、質問、待ち状態は通知しない。通知後はターンを終えて委任元の返答を待つ。
 
 draft ready、PR ready、前提誤りを通知するときは、`a agent peer parent | jq -r '.[0].session_id // empty'` で委任元の session ID を取得し、`a agent peer notify --message <MESSAGE> <SESSION_ID>` で送る。session ID が空、または `notify` が `ended` エラーで失敗した場合は、宛先を推測せずユーザーに報告する。
 
@@ -125,7 +125,7 @@ a ai pr-draft submit [--base main]
 ```
 
 既存 PR がある場合は title と body を更新する。通常フローではユーザー承認済みの場合のみ submit する。
-`vibe_mode` では Step 3 で委任元の明示的な承認を受けた後、`a agent vibe status` が exit 0 であることを確かめ、`a ai pr-draft submit --no-review` を使う。通常の委任では承認なしで submit しない。
+submit 直前に共通 policy を再確認する。初回判定時から許可が続いている場合だけ、Step 3 で委任元の明示的な承認を受けた後に `a ai pr-draft submit --no-review` を使う。それ以外は通常フローに切り替え、未実施の crit と editor review を終えて人間の承認を受けてから `--no-review` なしで submit する。
 `english_output` が true のときは、title と body に日本語が含まれていないこと。
 
 ## 6. tq タスクへのリンク登録
@@ -152,7 +152,7 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 ## 7. CI 実行を監視
 
 `gh pr checks --watch` で CI を監視。失敗したら調査・修正して再 push。
-`vibe_mode` では CI が green になり、該当時は Step 8 も済ませた後、次の形式で委任元へ報告する。PR URL とチェックリスト項目 ID は実際の値に置き換える。チェックリスト項目のない委任では `none` を使う。
+`vibe_mode` では CI が green になり、該当時は Step 8 も済ませた後、共通 policy を再確認する。初回判定時から許可が続いている場合だけ、次の形式で委任元へ報告する。許可がなくなっていた場合は vibe 報告を送らず、通常の人間レビューに委ねる。PR URL とチェックリスト項目 ID は実際の値に置き換える。チェックリスト項目のない委任では `none` を使う。
 
 `vrt` commit status 以外がすべて green で、`vrt` だけが失敗しているときも報告する。VRT 差分の確認と承認ラベルの付与は委任元が担うため、委任先はユーザーに VRT レビューを頼まず、`vrt-approved` を待たず、自分でも付けない。リポジトリの規約が「VRT 差分はユーザーにレビューを頼む」としていても、vibe ではこの報告がその依頼の代わりになる。
 
