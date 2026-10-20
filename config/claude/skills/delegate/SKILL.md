@@ -102,7 +102,7 @@ launcher は入力と描画後の prompt を検証してから Armyknife を起�
 
 launcher は `--type delegate`、`--child-launch deny`、`--kind development` を固定する。`repo.direct_commit` が `true` で通常 delegate の場合は worktree を使わず、prompt を direct-commit 用に描画する。vibe delegate は `repo.direct_commit` に関わらず worktree と PR を使い、Armyknife の `--vibe` guard を通す。engine、model、reasoning effort はユーザーが明示した場合だけ launcher flag で渡す。Armyknife の `--agent`、`--child-launch`、`--worktree` は直接指定しない。
 
-継承資格を持つセッションから起動した子の資格は自動記録されるため、`--vibe` は継承を指定する flag ではない。資格を持つ子孫は明示的に vibe を有効にした祖先が有効な間だけ継承し、子自身の明示的な vibe 設定はコピーされない。`a agent peer adopt` は継承資格を外し、`a agent resume` は記録済みの状態を復元するだけなので、既存セッションや adopt 後のセッションには grant が必要な場合がある。
+継承資格を持つセッションから起動した子の資格は自動記録されるため、`--vibe` は継承を指定する flag ではない。継承の条件と既存セッションへの grant ルールは、`project-manager` skill の「vibe coding の開始を頼まれたら」を参照する。
 
 #### post-worktree-create hook の失敗
 
