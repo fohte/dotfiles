@@ -87,7 +87,7 @@ launcher は入力と描画後の prompt を検証してから Armyknife を起�
 - `--tq-task-id`: この委任作業を記録する tq task ID。対応 task がある通常委任では必ず渡す
 - `--tq-checklist-item-id`: 対応する実装チェックリストの leaf ID。無い場合は省略する
 - `--engine`、`--model`、`--reasoning-effort`: ユーザーが明示した値だけを渡す。省略時は選択中 profile の `delegate` type 設定を使う
-- `--vibe`: `~/.agents/skills/delegate/references/vibe-policy.md` の `vibe_mode` が true の場合だけ渡す。Armyknife が両方の許可を検査する
+- `--vibe`: `~/.agents/skills/delegate/references/vibe-policy.md` の `vibe_mode` が true の場合だけ渡す。これは呼び出し元の実効 vibe が有効で、対象 repo の `repo.vibe` が boolean `true` であることを検査する明示的な guard である
 - `--dry-run`: 入力と選択した profile を確認し、session は起動しない
 - `--label`: **必須**. セッションのタイトル。`a agent watch` の TUI でセッション一覧に表示され、コンテキストスイッチ時に「このセッションで何をやっていたか」を素早く思い出すためのもの。以下のルールで生成すること:
     - 日本語 2-5 語
@@ -101,6 +101,8 @@ launcher は入力と描画後の prompt を検証してから Armyknife を起�
 - `DELEGATE_TASK_PURPOSE` / `DELEGATE_TQ_TASK_ID` / `DELEGATE_TQ_CHECKLIST_ITEM_ID`: launcher が worktree 作成時だけ環境に設定する。hook が branch config に記録し、`create-pr` skill が使う
 
 launcher は `--type delegate`、`--child-launch deny`、`--kind development` を固定する。`repo.direct_commit` が `true` で通常 delegate の場合は worktree を使わず、prompt を direct-commit 用に描画する。vibe delegate は `repo.direct_commit` に関わらず worktree と PR を使い、Armyknife の `--vibe` guard を通す。engine、model、reasoning effort はユーザーが明示した場合だけ launcher flag で渡す。Armyknife の `--agent`、`--child-launch`、`--worktree` は直接指定しない。
+
+継承資格を持つセッションから起動した子の資格は自動記録されるため、`--vibe` は継承を指定する flag ではない。資格を持つ子孫は明示的に vibe を有効にした祖先が有効な間だけ継承し、子自身の明示的な vibe 設定はコピーされない。`a agent peer adopt` は継承資格を外し、`a agent resume` は記録済みの状態を復元するだけなので、既存セッションや adopt 後のセッションには grant が必要な場合がある。
 
 #### post-worktree-create hook の失敗
 
