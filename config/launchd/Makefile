@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-PLISTS := com.fohte.codex-app-server.plist com.fohte.codex-app-server-reloader.plist com.fohte.skk-watcher.plist
+PLISTS := com.fohte.codex-app-server.plist com.fohte.codex-app-server-reloader.plist com.fohte.skk-watcher.plist com.fohte.claude-rate-limits.plist
 
 all: $(PLISTS)
 
@@ -26,6 +26,12 @@ com.fohte.skk-watcher.plist: com.fohte.skk-watcher.plist.in
 	sed -e 's|__HOME__|$(HOME)|g' \
 	    -e "s|__MISE__|$$mise|g" \
 	    -e "s|__SKK_DICT_REPO__|$$skk_repo|g" \
+	    $< > $@.tmp && mv $@.tmp $@
+
+com.fohte.claude-rate-limits.plist: com.fohte.claude-rate-limits.plist.in
+	@bun=$$(command -v bun) && test -n "$$bun" || { echo "bun not found in PATH" >&2; exit 1; }; \
+	sed -e 's|__HOME__|$(HOME)|g' \
+	    -e "s|__BUN__|$$bun|g" \
 	    $< > $@.tmp && mv $@.tmp $@
 
 clean:

@@ -149,6 +149,7 @@ if match_tag claude; then
   # so change the band visibility by editing the repo file instead.
   sym config/claude/ponytail-band ~/.claude/.ponytail-band
   sym config/claude/statusline.ts ~/.claude/statusline.ts
+  sym config/claude/rate-limit-metrics.ts ~/.claude/rate-limit-metrics.ts
   sym config/claude/hooks ~/.claude/hooks
   sym config/claude/rules ~/.claude/rules
 fi
@@ -239,6 +240,25 @@ fi
 
 if match_tag launchd && is_macos; then
   launchd_names=(com.fohte.codex-app-server com.fohte.codex-app-server-reloader com.fohte.skk-watcher)
+
+  claude_rate_limits_name=com.fohte.claude-rate-limits
+  claude_rate_limits_state="$HOME/.local/state/claude-rate-limits"
+  if match_role private; then
+    launchd_names+=("$claude_rate_limits_name")
+    log-exec mkdir -m 700 -p "$claude_rate_limits_state"
+  else
+    claude_rate_limits_plist="$HOME/Library/LaunchAgents/$claude_rate_limits_name.plist"
+    launchd_domain="gui/$(id -u)"
+    if launchctl print "$launchd_domain/$claude_rate_limits_name" > /dev/null 2>&1; then
+      log-exec launchctl bootout "$launchd_domain" "$claude_rate_limits_plist" || true
+    fi
+    if [ -e "$claude_rate_limits_plist" ] || [ -L "$claude_rate_limits_plist" ]; then
+      log-exec rm "$claude_rate_limits_plist"
+    fi
+    if [ -d "$claude_rate_limits_state" ]; then
+      log-exec rm -r "$claude_rate_limits_state"
+    fi
+  fi
 
   # One-time cleanup for the decommissioned headroom-proxy job. Removing it
   # from the loop below stops re-bootstrapping it, but a machine that already

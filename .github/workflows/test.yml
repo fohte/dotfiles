@@ -54,6 +54,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: lefthook run pre-commit --all-files
 
+      - name: Test Claude Code rate limit metrics
+        run: mise run test:claude-rate-limits
+
       # Formatters configured with `stage_fixed: true` run `git add` after formatting,
       # which stages the changes.
       # commit-action uses `git ls-files --modified` which only detects unstaged changes.
