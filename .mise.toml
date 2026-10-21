@@ -8,10 +8,6 @@ depends = ["refresh:pull"]
 # other tasks mid-way (e.g. `brew upgrade` killed while relinking mise).
 run = "mise run -c refresh:after-pull"
 
-[tasks."test:claude-rate-limits"]
-description = "Test Claude Code rate limit metric aggregation"
-run = "bun test config/claude/rate-limit-metrics.test.ts"
-
 [tasks."refresh:after-pull"]
 description = "Refresh tools after pulling dotfiles"
 depends = [
@@ -167,7 +163,6 @@ run = "brew upgrade"
 actionlint = "1.7.12"
 "github:betterleaks/betterleaks" = "1.8.1"
 node = "26.3.0"
-"core:bun" = "1.3.14"
 pinact = "4.1.1"
 "github:fohte/basefmt" = "0.1.0"
 "npm:@commitlint/cli" = "21.2.3"

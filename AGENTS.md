@@ -19,6 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. 新しい設定ファイルを追加する場合は `symlinks` ファイルを更新すること
 2. 設定は `config/<tool-name>/` ディレクトリに配置すること
 3. タグベースのデプロイをサポートするため、`symlinks` に適切な `match_tag` ブロックを追加すること
+4. dotfiles ではテストを置かない。テストスクリプト、テスト用 mise task、CI の test step を追加せず、共通指示のテスト追加ルールも適用しない
 
 ### 設定の反映
 
