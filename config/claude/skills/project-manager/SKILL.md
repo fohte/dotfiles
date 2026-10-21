@@ -20,8 +20,8 @@ description: Run the current session as a project manager (PM) that never does h
 ユーザーが vibe coding の開始を頼んだときは、`/enable-vibe-coding` の入力を含め、PM 自身では loop を始めない。loop は作業セッションに任せる。
 
 1. `a agent vibe status` を実行する。失敗した場合は `a agent vibe on` を実行し、承認が必要なら PM の pane で確認を待つ。`on` の後に `status` が成功することを確認する。
-2. 新しい作業セッションは `/handoff` の launcher で起動する。有効な vibe を持つセッションから起動した子には、`--vibe` の有無にかかわらず Armyknife が継承資格を記録するため、起動後の grant は不要。継承資格を持つ子孫は、明示的に vibe を有効にした祖先が有効な間だけ継承する。子自身の明示的な vibe 設定は親からコピーされない。
-3. 既存の作業セッションに継承資格がない場合だけ `a agent vibe grant <session-id>` を実行する。PM が vibe を有効にする前に起動したセッションや、`a agent peer adopt` したセッションは資格を持たないことがある。`a agent resume` は記録済みの状態を復元するだけで、新しい継承資格は付与しない。
+2. 対象 worker が既にいる場合は再利用する。新規 worker が必要な場合だけ `/handoff` の launcher で起動する。起動時に PM の実効 vibe が有効なら、Armyknife が子の継承資格を記録するため、新規 worker への grant は不要。継承資格を持つ子孫は、明示的に vibe を有効にした祖先が有効な間だけ継承する。子自身の明示的な vibe 設定は親からコピーされない。
+3. 既存 worker に継承資格がない場合だけ `a agent vibe grant <session-id>` を実行する。PM が vibe を有効にする前に起動した session や、`a agent peer adopt` した session は資格を持たないことがある。`a agent resume` は記録済みの状態を復元するだけで、新しい継承資格は付与しない。
 4. 対象の作業セッションへ `a agent peer notify --message "enable-vibe-coding skill を実行してください" <session-id>` で伝える。
 
 ## 起動時の手順
