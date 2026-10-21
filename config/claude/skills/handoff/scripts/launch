@@ -102,7 +102,7 @@ done
 [[ $seen_label == true && -n ${label//[[:space:]]/} ]] || fail "--label is required and must not be empty."
 [[ -f $handoff_file && -s $handoff_file ]] || fail "handoff.md must be a non-empty file."
 
-if ! awk '
+if ! LC_ALL=C awk '
   BEGIN {
     required[1] = "## 引き継ぐ理由"
     required[2] = "## 背景と目的"
