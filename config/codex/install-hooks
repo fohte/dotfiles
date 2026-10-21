@@ -3,8 +3,8 @@
 # the PreToolUse guards (default-branch-edit-guard, ponytail-comment-guard,
 # agent-guard), the SessionStart context injection (all of `gen-claude-template
 # context`, the same set Claude Code gets), and the tq session tracking hooks
-# (SessionStart / Stop / SessionEnd), and the armyknife session tracking hooks
-# (`a agent hook`).
+# (SessionStart / Stop / SessionEnd), the armyknife session tracking hooks
+# (`a agent hook`), and the Codex subagent completion handler.
 #
 # `runok init` registers its own PreToolUse/PermissionRequest entries in the
 # same file (command `runok hook --agent codex`). This script appends an entry
@@ -45,7 +45,8 @@ UserPromptSubmit\t.*\ta agent hook user-prompt-submit --engine codex
 PostToolUse\t.*\ta agent hook post-tool-use --engine codex
 PermissionRequest\t.*\ta agent hook permission-request --engine codex
 Stop\t.*\ta agent hook stop --engine codex
-SessionEnd\t.*\ta agent hook session-end --engine codex\t3'
+SessionEnd\t.*\ta agent hook session-end --engine codex\t3
+SubagentStop\t.*\ta agent codex-subagent-stop'
 
 # Commands this script used to register. An already-deployed hooks.json still
 # has them, and the append-only loop below would leave both old and new
