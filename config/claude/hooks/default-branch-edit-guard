@@ -1,22 +1,51 @@
 #!/bin/bash
-# Block Edit/Write/MultiEdit (Claude Code) and apply_patch (Codex) on the
-# repo's default branch unless armyknife config explicitly opts in via
-# `repos.<owner>/<repo>.direct_commit: true`.
+# Block direct edits outside the session checkout before applying the default-
+# branch guard; repo.direct_commit bypasses only the latter.
 #
 # Invoked from pre-tool-use-proxy.bash; receives the original PreToolUse
 # JSON payload on stdin.
 input=$(cat)
 
 tool_name=$(echo "$input" | jq -r '.tool_name // empty')
-if [ "$tool_name" = "apply_patch" ]; then
-  # Codex's apply_patch tool_input has no file_path (just a raw patch-text
-  # `command`); resolve the repo from the session cwd instead.
-  dir=$(echo "$input" | jq -r '.cwd // empty')
-else
-  file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
-  [ -z "$file_path" ] && exit 0
-  dir=$(dirname -- "$file_path")
-fi
+boundary_status=0
+bash "$(dirname -- "$0")/edit-checkout-boundary.bash" <<< "$input"
+boundary_status=$?
+
+deny_target() {
+  jq -nc --arg reason "$1" '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: $reason
+    }
+  }'
+}
+
+case "$boundary_status" in
+  0)
+    dir=$(echo "$input" | jq -r '.cwd // empty')
+    ;;
+  10)
+    exit 0
+    ;;
+  20)
+    deny_target "An edit target is outside the session Git checkout or could not be classified. The entire edit was blocked."
+    exit 0
+    ;;
+  30)
+    if [ "$tool_name" = "apply_patch" ]; then
+      dir=$(echo "$input" | jq -r '.cwd // empty')
+    else
+      file_path=$(echo "$input" | jq -r '.tool_input.file_path // .tool_input.edits[0].file_path // empty')
+      [ -z "$file_path" ] && exit 0
+      dir=$(dirname -- "$file_path")
+    fi
+    ;;
+  *)
+    deny_target "Could not determine the checkout for every edit target. The entire edit was blocked."
+    exit 0
+    ;;
+esac
 [ -z "$dir" ] && exit 0
 
 repo_root=$(git -C "$dir" rev-parse --show-toplevel 2> /dev/null) || exit 0
