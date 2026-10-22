@@ -62,7 +62,7 @@ done
 
 if [[ "$recursive" == "true" ]]; then
   # Return the root repository directory (not the worktree)
-  git worktree list --porcelain | head -1 | awk '{ print $2 }'
+  git worktree list --porcelain | awk 'NR == 1 { print $2 }'
 else
   # Return the current worktree's top-level directory
   git rev-parse --show-toplevel
