@@ -74,7 +74,8 @@ local function launchFocusOrCycle(path)
     end
 
     local wins = hs.fnutils.filter(app:allWindows(), function(w)
-      return w:isStandard() and w:id()
+      -- Arc's Google Meet popup reports the AXSystemDialog subrole, not a standard one
+      return (w:isStandard() or w:subrole() == 'AXSystemDialog') and w:id()
     end)
     -- allWindows() order is not stable, so sort by id to keep cycling deterministic
     table.sort(wins, function(a, b)
