@@ -1,6 +1,6 @@
 #!/bin/bash
-# Block direct edits outside the session checkout before applying the default-
-# branch guard; repo.direct_commit bypasses only the latter.
+# Keep checkout isolation independent because repo.direct_commit must not
+# authorize edits in another checkout.
 #
 # Invoked from pre-tool-use-proxy.bash; receives the original PreToolUse
 # JSON payload on stdin.
@@ -26,10 +26,11 @@ case "$boundary_status" in
     dir=$(echo "$input" | jq -r '.cwd // empty')
     ;;
   10)
+    # No target belongs to this checkout, so its default branch does not apply.
     exit 0
     ;;
   20)
-    deny_target "An edit target is outside the session Git checkout or could not be classified. The entire edit was blocked."
+    deny_target "An edit target belongs to another Git checkout or could not be classified. The entire edit was blocked."
     exit 0
     ;;
   30)

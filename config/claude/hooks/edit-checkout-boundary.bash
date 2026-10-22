@@ -2,12 +2,10 @@
 set -u
 
 LEGACY_BRANCH_CHECK=30
-TEMP_ONLY=10
+NO_CHECKOUT_TARGETS=10
 DENIED=20
 TARGETS=()
-TEMP_ROOTS=()
 REALPATH_BIN=$(command -v grealpath || command -v realpath) || exit "$DENIED"
-STAT_BIN=$(command -v gstat || command -v stat) || exit "$DENIED"
 
 input=$(cat) || exit "$DENIED"
 jq -e . <<< "$input" > /dev/null 2>&1 || exit "$DENIED"
@@ -50,7 +48,7 @@ normalize_path() {
 
 git_root() {
   local directory=$1
-  local captured status result
+  local captured status result metadata_status
 
   captured=$(
     (
@@ -67,7 +65,14 @@ git_root() {
 
   if [[ $status != 0 ]]; then
     case "$result" in
-      *'not a git repository'*) return 1 ;;
+      'fatal: not a git repository (or any of the parent directories): .git')
+        has_git_metadata_ancestor "$directory"
+        metadata_status=$?
+        case "$metadata_status" in
+          1) return 1 ;;
+          *) return 2 ;;
+        esac
+        ;;
       *) return 2 ;;
     esac
   fi
@@ -76,10 +81,16 @@ git_root() {
   normalize_path -e "$result" || return 2
 }
 
-path_within() {
+has_git_metadata_ancestor() {
   local path=$1
-  local root=$2
-  [[ $path == "$root" || $path == "$root"/* ]]
+  local parent
+
+  while :; do
+    [[ -e $path/.git || -L $path/.git ]] && return 0
+    parent=$(dirname -- "$path") || return 2
+    [[ $parent != "$path" ]] || return 1
+    path=$parent
+  done
 }
 
 existing_directory() {
@@ -92,20 +103,6 @@ existing_directory() {
     path=$parent
   done
   printf '%s' "$path"
-}
-
-private_session_temp_root() {
-  local session_id=$1
-  local directory=$2
-  local mode mode_value
-
-  [[ $session_id =~ ^[A-Za-z0-9_-]{1,128}$ ]] || return 1
-  [[ -d $directory && ! -L $directory && -O $directory ]] || return 1
-  mode=$("$STAT_BIN" -c '%a' "$directory" 2> /dev/null) || return 1
-  [[ $mode =~ ^[0-7]{3,4}$ ]] || return 1
-  mode_value=$((8#$mode))
-  (((mode_value & 0077) == 0 && (mode_value & 0700) == 0700)) || return 1
-  normalize_path -e "$directory"
 }
 
 add_target() {
@@ -235,21 +232,7 @@ else
   deny
 fi
 
-session_id=$(jq -r '.session_id // empty' <<< "$input")
-if [[ -n $session_id && $session_id =~ ^[A-Za-z0-9_-]{1,128}$ ]]; then
-  if temp_root=$(private_session_temp_root "$session_id" "/tmp/agent-$session_id"); then
-    TEMP_ROOTS+=("$temp_root")
-  fi
-fi
-
-if [[ $tool_name == apply_patch && -n ${CODEX_THREAD_ID:-} && ${CODEX_THREAD_ID:-} != "$session_id" && $CODEX_THREAD_ID =~ ^[A-Za-z0-9_-]{1,128}$ ]]; then
-  if temp_root=$(private_session_temp_root "$CODEX_THREAD_ID" "/tmp/agent-$CODEX_THREAD_ID"); then
-    TEMP_ROOTS+=("$temp_root")
-  fi
-fi
-
 checkout_targets=0
-temp_targets=0
 for raw_target in "${TARGETS[@]}"; do
   if [[ $raw_target == /* ]]; then
     target=$raw_target
@@ -258,30 +241,21 @@ for raw_target in "${TARGETS[@]}"; do
   fi
   target=$(normalize_path -m "$target") || deny
 
-  is_temp_target=0
-  for temp_root in "${TEMP_ROOTS[@]}"; do
-    if path_within "$target" "$temp_root"; then
-      is_temp_target=1
-      break
-    fi
-  done
-  if [[ $is_temp_target == 1 ]]; then
-    temp_targets=$((temp_targets + 1))
-    continue
-  fi
-
-  path_within "$target" "$session_root" || deny
   target_directory_input=$target
   if [[ ! -d $target_directory_input ]]; then
     target_directory_input=$(dirname -- "$target") || deny
   fi
   target_directory=$(existing_directory "$target_directory_input") || deny
-  target_root=$(git_root "$target_directory") || deny
-  [[ $target_root == "$session_root" ]] || deny
-  checkout_targets=$((checkout_targets + 1))
+  if target_root=$(git_root "$target_directory"); then
+    [[ $target_root == "$session_root" ]] || deny
+    checkout_targets=$((checkout_targets + 1))
+  else
+    git_status=$?
+    [[ $git_status == 1 ]] || deny
+  fi
 done
 
-if [[ $checkout_targets == 0 && $temp_targets -eq ${#TARGETS[@]} ]]; then
-  exit "$TEMP_ONLY"
+if [[ $checkout_targets == 0 ]]; then
+  exit "$NO_CHECKOUT_TARGETS"
 fi
 exit 0
