@@ -8,6 +8,9 @@ set -uo pipefail
 
 input=$(cat)
 
+printf '%s\n' \
+  "tq: \`task complete <id> --reason <reason>\` は状態とは別の終了理由を選びます: \`completed\` (作業完了), \`not_planned\` (誤起票・実施しない), \`duplicate\` (別タスクで管理)。\`not_planned\` は番号・page・comment を保持します。物理削除には \`--confirm-delete <id>\` が必要です。不明な構文は推測前に \`--help\` を確認してください。"
+
 # config/bin/tq exits non-zero when the 1Password vault is locked or the
 # network is down; a SessionStart hook must not surface that on every session.
 tq hook SessionStart "$@" <<< "$input" || exit 0
