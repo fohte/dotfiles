@@ -23,7 +23,8 @@ agent:
       state: waiting
     done:
       state: done
-  # The fork cannot set status directly, so this prompt repeats the blocking criteria and returns a classification.
+  # The fork cannot set status directly, so its criteria must match stop_hook_instruction
+  # and Codex developer_instructions.
   status_inference_prompt: |
     直前のやりとりから、次に誰が何をするべきかを判定し、status を選んでください。
     vibe coding 中 (`a agent vibe status` が exit 0) に `<vibe-draft-ready>` か `<vibe-pr-ready>` を送って委任元の返答・レビュー・merge を待つ場合は `wait` を使ってください。この待ちについてはこの規則を優先します。
@@ -46,6 +47,7 @@ agent:
 
     delegate skill の「委任先の PR が merge された場合」に従ってください。
     </delegation-update>
+  # Keep its status criteria aligned with status inference and Codex developer instructions.
   stop_hook_instruction: |
     ターンを終える前に `a agent status set <kind> <note>` で status を設定してください。
     vibe coding 中 (`a agent vibe status` が exit 0) に `<vibe-draft-ready>` か `<vibe-pr-ready>` を送って委任元の返答・レビュー・merge を待つ場合は `wait` を使ってください。この待ちについてはこの規則を優先します。

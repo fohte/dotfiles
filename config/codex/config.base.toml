@@ -12,6 +12,7 @@ approvals_reviewer = "auto_review"
 # Codex is upgraded through Homebrew, so the startup update prompt is noise.
 check_for_update_on_startup = false
 
+# Keep status criteria aligned with armyknife's inference and stop-hook prompts.
 # Codex-only guidance belongs here because AGENTS.md is shared with Claude Code.
 developer_instructions = """
 ターンを終える前に `a agent status set <kind> <note>` で status を設定してください。
