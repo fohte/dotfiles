@@ -13,10 +13,10 @@ Resources: `task`, `page`, `comment`, `project`, `label`, `asset`, `github`, `ch
 
 ## Name yourself with `--author`
 
-tq records who made each write and treats an unattributed one as the user's own. Pass your own model name (e.g. `claude-opus-5`) so your edits are not logged as theirs. It is a global option, so it goes before the resource, and runok refuses `tq` without it.
+tq records who made each write and treats an unattributed one as the user's own. Pass your own model name (e.g. `my-agent`) so your edits are not logged as theirs. It is a global option, so it goes before the resource, and runok refuses `tq` without it.
 
 ```bash
-tq --author claude-opus-5 task complete 58
+tq --author my-agent task complete <task-id> --reason completed
 ```
 
 The examples below leave it out to keep them readable; every real invocation still needs it.
@@ -24,6 +24,8 @@ The examples below leave it out to keep them readable; every real invocation sti
 ## Discover flags from `--help`, don't guess them
 
 The CLI derives its flags, choices, validation, and help text from the API's zod schemas, so `--help` is always current while anything written down here can go stale. Run `tq <resource> <subcommand> --help` before a command you haven't used in this session.
+
+If a command is unknown or its syntax is unclear, read `tq <resource> --help` before trying another spelling or alias. Use the listed command for the operation; do not infer one from another resource or tool.
 
 ```bash
 tq task --help          # subcommands of a resource
@@ -104,6 +106,25 @@ ffmpeg -i <src> -vf 'scale=-2:min(720\,ih),fps=15' -c:v libx264 -crf 28 -preset 
 tq asset upload <dst>.mp4
 ```
 
+## Close or delete tasks
+
+Task status and closure reason describe different things. Close a task with `tq task complete <id> --reason <reason>` and choose the reason that matches the work:
+
+LLM authors must provide `--reason` explicitly.
+
+- `completed`: the work is done.
+- `not_planned`: the task was created by mistake or the work will not be done. This keeps the task number, pages, and comments available, so use it to cancel work instead of deleting its record.
+- `duplicate`: another task already tracks the same work. Add `--duplicate-of <taskId>` when the existing task is known.
+
+Use `tq task reopen <id>` to return a completed task to todo. Physical deletion removes the task and can also remove related pages or comments. It requires an explicit `--confirm-delete <id>` that resolves to the same task; the confirmation can be included on the first call. Delete only when that loss is intended.
+
+```bash
+tq task complete <task-id> --reason not_planned
+tq task complete <duplicate-task-id> --reason duplicate --duplicate-of <existing-task-id>
+tq task reopen <task-id>
+tq task delete <task-id> --confirm-delete <task-id>
+```
+
 ## Common flows
 
 ```bash
@@ -118,5 +139,5 @@ tq page list 58
 tq page create 58 '調査メモ' --file <findings-path>
 
 # Move a task along
-tq task complete 58
+tq task complete <task-id> --reason completed
 ```
