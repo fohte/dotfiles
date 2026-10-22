@@ -72,6 +72,18 @@ branch 名の URL は、branch が進むと別の行を指すので使わない�
 図の形は、読み手が既に見方を知っているものを使う (テーブル構造なら ER 図、処理の順序ならシーケンス図)。
 自作の形は、見方の説明から読ませることになる。
 
+## 完成した HTML の文章を検査する
+
+完成した HTML を crit に渡す前に、本文を抽出して yomiyasu の最新 lint に通す。
+
+```bash
+python3 <plz-explain-with-crit のスキルディレクトリ>/scripts/check_generated_html.py /path/to/output.html
+```
+
+この helper は `<p>`、見出し、`<figcaption>`、`<caption>` の文章をまとめて検査する。SVG は表示ラベルに使う `<text>` の内容だけを語彙検査し、本文と分けて処理する。CSS、JavaScript、HTML コメント、`<pre>` や `<code>` などのコード例、属性値は検査しない。inline 要素はタグだけを除いて文字列をつなぎ、文字参照を復元する。各指摘の `line` は元 HTML の行番号を示す。
+
+抽出結果では太字や箇条書きの構造が失われるため、その比率は検査しない。出力の `prose_block_count`、`prose_char_count`、`svg_label_count`、`svg_label_char_count` で検査対象を見つけたことを確かめ、`candidate_count` が 0 件でも本文を読み返す。warn または error の候補があれば JSON を出したうえで終了コード 1 を返す。HTML を直した後は同じコマンドを再実行し、更新後の指摘を確認してから `crit preview` を起動する。
+
 ## 書く観点
 
 どの資料にも、目的・結論・全体図・一次情報へのリンクを含める。
