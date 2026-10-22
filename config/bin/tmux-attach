@@ -6,6 +6,10 @@ set -e
 . ~/bin/lib/util.sh
 
 if ! is_tmux_running && ! tmux has-session > /dev/null 2>&1; then
+  # The server inherits RLIMIT_NOFILE from the process that starts it and holds
+  # one fd per pane; at macOS's default soft limit (256), run-shell and
+  # display-popup fail silently once ~250 panes are open.
+  ulimit -Sn 65536 || ulimit -Sn hard || true
   tmux new-session
 else
   selected="$(tmux ls -F '#{session_last_attached} #{session_name}' | sort -k 1 | tail -1 | cut -f2 -d' ')"
