@@ -112,18 +112,18 @@ PM セッションから切り出した作業セッション。PM は手を動�
 
 ## tmux window の振り分け
 
-作業セッションの pane は、段階ごとの window (例: 保留中 / 設計中 / 実装中 / 完了) にまとめる。ユーザーは window でどのセッションを見に行くかを決めるので、段階と window がずれると、実装中のセッションを設計中の中から探すことになる。
+調査・設計を進めて実装を委任する task owner session の pane だけを、段階ごとの window (例: 保留中 / 設計中 / 実装中 / 完了) にまとめる。実装を担当する session は worktree の有無にかかわらず対象外とし、個別の作業 window を維持する。`tq session list` の `tasks` で担当 task を特定し、handoff の役割と `a agent peer list` の session ID / 親子関係を照合して owner と実装担当を判別する。`cwd` は repo の照合にだけ使い、役割が特定できない場合は移動しない。
 
-- 段階は tq で上から順に判定する: タスクが completed で、セッションの `agent_status` も `done` なら完了 (completed でもユーザーの判断や確認が残っていれば完了にしない)、未完了の blockedBy があるか、他タスクの完了待ちで止まっていれば保留中、「実装」チェックリストがあれば実装中、それ以外は設計中。保留中を分けるのは、ユーザーが今は見に行っても何もできないセッションを、手が要るセッションの中から除くため
+- owner の段階は tq で上から順に判定する: タスクが completed で、owner session の `agent_status` も `done` なら完了 (completed でもユーザーの判断や確認が残っていれば完了にしない)、未完了の blockedBy があるか、他タスクの完了待ちで止まっていれば保留中、「実装」チェックリストがあれば実装中、それ以外は設計中。保留中を分けるのは、ユーザーが今は見に行っても何もできない owner session を、手が要る session の中から除くため
 - 完了 window に移したセッションは `a agent close --child <session_id>` で閉じる。拒否された場合は `--force` を使わず、拒否理由をユーザーに伝える
-- 起動時と完了時だけでなく、peer message を受けるたびに担当中の全セッションを見直す。設計が承認されて実装に入ったことは、作業セッションが報告しない (ユーザーが画面で見ている節目なので) ため、PM が tq を見に行かない限り気づけない
-- worker ごとに、対象 repo に対応する配置先 session を一意に確定する。`a agent peer list` の `cwd` と、`tmux list-sessions -F '#{session_id} #{session_name} #{session_path}'` で得た各 `session_path` に例の `git_common_dir` を適用して照合する。出力される Git 共通ディレクトリを各入力 path から `cd -P` で物理絶対パスに解決する。共通ディレクトリが一致する session だけを候補とするため、linked worktree も同じ repo として判定できる。配置先は一致した session の `session_id` で指定し、session 名や PM 自身の所属 session だけを根拠にしない
+- 起動時と完了時だけでなく、peer message を受けるたびに担当中の全 session の状態と役割を見直す。段階 window の振り分けは owner session にだけ適用する
+- owner session ごとに、対象 repo に対応する配置先 session を一意に確定する。`a agent peer list` の owner の `cwd` と、`tmux list-sessions -F '#{session_id} #{session_name} #{session_path}'` で得た各 `session_path` を、次の例のように有限個列挙して照合する。Git 2.31 未満との互換性のため `rev-parse --git-common-dir` の相対出力を各入力 path から `cd -P` で物理絶対パスに解決し、一致する session だけを候補とする。これにより relative path、symlink、linked worktree も同じ repo として判定できる。正規化に失敗したら移動コマンドを実行せず止める。配置先は一致した session の `session_id` で指定し、session 名や PM 自身の所属 session だけを根拠にしない
 - 一致する session がない、候補が複数ある、または peer の `cwd` / 候補の `session_path` を正規化できない場合は移動を止め、ユーザーに確認する。配置先 session を自動で新設しない
-- worker を置く段階 window は、確定した session の中から選ぶ。window 名だけで判定せず `window_id` で識別し、同じ段階に該当する window が複数ある場合は移動を止めて確認する。段階 window がない場合は `break-pane` で確定済み session に作る
-- pane の対応表は `a agent peer list` と `tmux list-panes -a -F '#{session_id} #{session_name} #{window_id} #{window_name} #{pane_id} #{pane_current_path} #{pane_floating_flag} #{window_linked_sessions}'` から作る。操作直前に両方を取り直し、対象 worker の `cwd`、最新 `pane_id`、tmux 上の所属を照合してから移す。`cwd` や所属が変わっていたら repo と配置先 session / window を確定し直す。移動に関わる window のいずれかで `window_linked_sessions` が 1 より大きい場合、または移動先にいる worker の対象 repo が異なる場合は移動を止めてユーザーに確認する
-- 既存 window には、確定済み session と `window_id` を含む target を指定して `join-pane` で移す。移動先 pane は floating でないことを `pane_floating_flag` で確認する。`pane_id`、`session_id`、`window_id`、`pane_current_path` と peer の `cwd` を照合し、別 repo の worker がいないことを確認する
+- owner pane を置く段階 window は、確定した session の中から選ぶ。window 名だけで判定せず `window_id` で識別し、同じ段階に該当する window が複数ある場合は移動を止めて確認する。段階 window がない場合は `break-pane` で確定済み session に作る
+- owner pane の対応表は `a agent peer list` と `tmux list-panes -a -F '#{session_id} #{session_name} #{window_id} #{window_name} #{pane_id} #{pane_current_path} #{pane_floating_flag} #{window_linked_sessions}'` から作る。操作直前に両方を取り直し、対象 owner の `cwd`、最新 `pane_id`、tmux 上の所属を照合してから移す。`cwd` や所属が変わっていたら repo と配置先 session / window を確定し直す。移動に関わる window のいずれかで `window_linked_sessions` が 1 より大きい場合は移動を止めてユーザーに確認する
+- 既存 window には、確定済み session と `window_id` を含む target を指定して owner pane だけを `join-pane` で移す。移動先 pane は floating でないことを `pane_floating_flag` で確認する。`pane_id`、`session_id`、`window_id`、`pane_current_path` と peer の `cwd` を照合し、移動先 window に実装担当や役割不明の pane、別 repo の pane がないことを確認する
 - 移動後に同じ `pane_id` を再取得し、確定済みの `session_id` と段階 window の `window_id` にあることを照合する。`break-pane` で作成した window は、移動後の pane 情報から新しい `window_id` を特定して照合する。一致しない場合は追加の移動を止めて報告する
-- `new-window` と `move-window` を使う場合も `-t` に確定済み session の ID を含める。window 全体を移す `move-window` では、移動前に全 pane の `pane_current_path` を Git 共通ディレクトリに正規化して対象 repo と一致することを確認し、worker pane は peer の `cwd` も照合する。いずれかの pane で正規化または一致を確認できない場合は移動を止めてユーザーに確認する
+- `new-window` と `move-window` を使う場合も `-t` に確定済み session の ID を含める。window 全体を移す `move-window` は、全 pane が同じ対象 repo / 同じ段階の owner session であり、実装担当や役割不明の pane がない場合だけ使う。移動前に全 pane の `pane_current_path` を Git 共通ディレクトリに正規化して一致させ、owner pane は peer の `cwd` とも照合する。いずれかの pane で役割、正規化、repo の一致を確認できない場合は window 全体を移さず、owner pane 単位の操作も安全にできなければ移動を止めてユーザーに確認する
 
 ```bash
 # Fictional sample-repo session and pane IDs; refresh them before use.
@@ -134,12 +134,18 @@ target_pane='%903'
 source_window='@904'
 stage_name='実装中'
 
-# Resolve a linked worktree's common directory without requiring Git 2.31.
-git_common_dir() {
-  local common_dir
-  common_dir=$(git -C "$1" rev-parse --git-common-dir) || return 1
-  (cd "$1" && cd -P "$common_dir" && pwd)
-}
+# Replace these fictional paths with the finite set of owner cwd and session_path values.
+for repo_path in '/fictional/repos/sample-repo' '/fictional/worktrees/sample-repo-change'; do
+  common_dir=$(git -C "$repo_path" rev-parse --git-common-dir) || {
+    printf 'Unable to resolve Git common directory: %s\n' "$repo_path" >&2
+    exit 1
+  }
+  physical_common_dir=$(cd "$repo_path" && cd -P "$common_dir" && pwd -P) || {
+    printf 'Unable to resolve physical Git common directory: %s\n' "$repo_path" >&2
+    exit 1
+  }
+  printf '%s\t%s\n' "$repo_path" "$physical_common_dir"
+done
 
 # Create a stage window in the verified session.
 tmux break-pane -d -s "$source_pane" -t "$target_session:" -n "$stage_name"
