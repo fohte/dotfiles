@@ -37,6 +37,7 @@ default_subagent_model = "gpt-6-luna"
 default_subagent_reasoning_effort = "max"
 
 [tui]
+notifications = false
 status_line = ["model-with-reasoning", "used-tokens", "context-used", "five-hour-limit", "weekly-limit", "codex-version"]
 status_line_use_colors = true
 
