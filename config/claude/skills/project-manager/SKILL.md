@@ -112,7 +112,7 @@ PM セッションから切り出した作業セッション。PM は手を動�
 
 ## tmux window の振り分け
 
-調査・設計を進めて実装を委任する task owner session の pane だけを、段階ごとの window (例: 保留中 / 設計中 / 実装中 / 完了) にまとめる。実装を担当する session は worktree の有無にかかわらず対象外とし、個別の作業 window を維持する。`tq session list` の `tasks` で担当 task を特定し、handoff の役割と `a agent peer list` の session ID / 親子関係を照合して owner と実装担当を判別する。`cwd` は repo の照合にだけ使い、役割が特定できない場合は移動しない。
+調査・設計を進めて実装を委任する task owner session の pane だけを、段階ごとの window (例: 保留中 / 設計中 / 実装中 / 完了) にまとめる。実装を担当する session は worktree の有無にかかわらず対象外とし、個別の作業 window を維持する。`tq session list` の `tasks` と `a agent peer list` の session ID を照合する。owner と実装担当の役割は handoff / 委任内容から判別し、親子関係は `a agent peer children` / `a agent peer parent` で確認する。`cwd` は repo の照合にだけ使い、役割が特定できない場合は移動しない。
 
 - owner の段階は tq で上から順に判定する: タスクが completed で、owner session の `agent_status` も `done` なら完了 (completed でもユーザーの判断や確認が残っていれば完了にしない)、未完了の blockedBy があるか、他タスクの完了待ちで止まっていれば保留中、「実装」チェックリストがあれば実装中、それ以外は設計中。保留中を分けるのは、ユーザーが今は見に行っても何もできない owner session を、手が要る session の中から除くため
 - 完了 window に移したセッションは `a agent close --child <session_id>` で閉じる。拒否された場合は `--force` を使わず、拒否理由をユーザーに伝える
