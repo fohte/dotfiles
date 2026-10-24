@@ -25,10 +25,10 @@ user_home="$6"
 host_os=$(uname -s)
 case "$host_os" in
   Darwin)
-    required_commands=(claude defaults dirname env find id jq mkdir mktemp profiles rg tr uname wc)
+    required_commands=(claude defaults dirname env find id jq mkdir mktemp profiles rg sed tr uname wc)
     ;;
   Linux)
-    echo "Error: Claude isolation preflight has no verified Linux managed-policy and network gate." >&2
+    echo "Error: Claude isolation preflight has no verified Linux managed-policy source and init-context gate." >&2
     exit 3
     ;;
   *)
@@ -68,6 +68,22 @@ clean_env_args=(
   "LANG=C"
   "LC_ALL=C"
 )
+
+print_sanitized_diagnostics() {
+  local log_file="$1"
+  [[ -s "$log_file" ]] || return 0
+
+  rg -i 'error|warning|fail|denied|unable|could not|not fetched|timed out|timeout' "$log_file" |
+    sed -n '1,12p' |
+    sed -E \
+      -e 's#(https?://)[^/@[:space:]]+@#\1[REDACTED]@#g' \
+      -e 's#(https?://[^?[:space:]]+)\?[^[:space:]]+#\1?[REDACTED]#g' \
+      -e 's/(Bearer )[A-Za-z0-9._~+/-]+/\1[REDACTED]/g' \
+      -e 's/(sk-ant-)[A-Za-z0-9_-]+/\1[REDACTED]/g' \
+      -e 's/([Xx]-[Aa][Pp][Ii]-[Kk]ey:[[:space:]]*)[^[:space:]]+/\1[REDACTED]/g' \
+      -e 's/((ANTHROPIC|CLAUDE_CODE)_[A-Za-z0-9_]+[=:])[[:graph:]]+/\1[REDACTED]/g' \
+      -e 's/(([Hh][Tt][Tt][Pp][Ss]?|[Aa][Ll][Ll]|[Nn][Oo])_[Pp][Rr][Oo][Xx][Yy]=)[[:graph:]]+/\1[REDACTED]/g' >&2 || true
+}
 
 cli_version=$("${clean_env_args[@]}" "$claude_path" --version) || {
   echo "Error: unable to inspect the Claude CLI version." >&2
@@ -121,53 +137,51 @@ check_system_managed_sources() {
     fi
   fi
 
-  if [[ "$host_os" == "Darwin" ]]; then
-    local managed_preferences_dir profile_status_file profiles_file defaults_file
-    managed_preferences_dir="/Library/Managed Preferences"
-    if [[ -e "$managed_preferences_dir" || -L "$managed_preferences_dir" ]]; then
-      assert_inspectable_directory "$managed_preferences_dir" || return 1
-    fi
-    assert_absent_path "$managed_preferences_dir/com.anthropic.claudecode.plist" || return 1
-    assert_absent_path "/Library/Preferences/com.anthropic.claudecode.plist" || return 1
-    assert_absent_path "$user_home/Library/Managed Preferences/com.anthropic.claudecode.plist" || return 1
-    assert_absent_path "$user_home/Library/Preferences/com.anthropic.claudecode.plist" || return 1
+  local managed_preferences_dir profile_status_file profiles_file defaults_file
+  managed_preferences_dir="/Library/Managed Preferences"
+  if [[ -e "$managed_preferences_dir" || -L "$managed_preferences_dir" ]]; then
+    assert_inspectable_directory "$managed_preferences_dir" || return 1
+  fi
+  assert_absent_path "$managed_preferences_dir/com.anthropic.claudecode.plist" || return 1
+  assert_absent_path "/Library/Preferences/com.anthropic.claudecode.plist" || return 1
+  assert_absent_path "$user_home/Library/Managed Preferences/com.anthropic.claudecode.plist" || return 1
+  assert_absent_path "$user_home/Library/Preferences/com.anthropic.claudecode.plist" || return 1
 
-    profile_status_file="$work_dir/profiles-status.txt"
-    profiles_file="$work_dir/profiles.txt"
-    defaults_file="$work_dir/defaults-domains.txt"
-    if ! profiles status -type enrollment > "$profile_status_file" 2>&1; then
-      echo "Error: unable to inspect macOS MDM enrollment." >&2
-      return 1
-    fi
-    if ! rg -qi '^Enrolled via DEP:[[:space:]]*No([[:space:]].*)?$' "$profile_status_file" ||
-      ! rg -qi '^MDM enrollment:[[:space:]]*No([[:space:]].*)?$' "$profile_status_file"; then
-      echo "Error: Claude draft review cannot rule out macOS MDM settings." >&2
-      return 1
-    fi
-    if ! profiles show -type configuration > "$profiles_file" 2>&1; then
-      echo "Error: unable to inspect macOS configuration profiles." >&2
-      return 1
-    fi
-    if rg -qi 'com\.anthropic\.claudecode' "$profiles_file"; then
-      echo "Error: macOS profiles contain Claude Code managed settings." >&2
-      return 1
-    fi
-    if ! defaults domains > "$defaults_file" 2>&1; then
-      echo "Error: unable to inspect macOS preference domains." >&2
-      return 1
-    fi
-    if rg -qi 'com\.anthropic\.claudecode' "$defaults_file"; then
-      echo "Error: macOS preferences contain Claude Code managed settings." >&2
-      return 1
-    fi
-    if ! defaults domains -currentHost > "$defaults_file" 2>&1; then
-      echo "Error: unable to inspect current-host macOS preference domains." >&2
-      return 1
-    fi
-    if rg -qi 'com\.anthropic\.claudecode' "$defaults_file"; then
-      echo "Error: current-host preferences contain Claude Code managed settings." >&2
-      return 1
-    fi
+  profile_status_file="$work_dir/profiles-status.txt"
+  profiles_file="$work_dir/profiles.txt"
+  defaults_file="$work_dir/defaults-domains.txt"
+  if ! profiles status -type enrollment > "$profile_status_file" 2>&1; then
+    echo "Error: unable to inspect macOS MDM enrollment." >&2
+    return 1
+  fi
+  if ! rg -qi '^Enrolled via DEP:[[:space:]]*No([[:space:]].*)?$' "$profile_status_file" ||
+    ! rg -qi '^MDM enrollment:[[:space:]]*No([[:space:]].*)?$' "$profile_status_file"; then
+    echo "Error: Claude draft review cannot rule out macOS MDM settings." >&2
+    return 1
+  fi
+  if ! profiles show -type configuration > "$profiles_file" 2>&1; then
+    echo "Error: unable to inspect macOS configuration profiles." >&2
+    return 1
+  fi
+  if rg -qi 'com\.anthropic\.claudecode' "$profiles_file"; then
+    echo "Error: macOS profiles contain Claude Code managed settings." >&2
+    return 1
+  fi
+  if ! defaults domains > "$defaults_file" 2>&1; then
+    echo "Error: unable to inspect macOS preference domains." >&2
+    return 1
+  fi
+  if rg -qi 'com\.anthropic\.claudecode' "$defaults_file"; then
+    echo "Error: macOS preferences contain Claude Code managed settings." >&2
+    return 1
+  fi
+  if ! defaults domains -currentHost > "$defaults_file" 2>&1; then
+    echo "Error: unable to inspect current-host macOS preference domains." >&2
+    return 1
+  fi
+  if rg -qi 'com\.anthropic\.claudecode' "$defaults_file"; then
+    echo "Error: current-host preferences contain Claude Code managed settings." >&2
+    return 1
   fi
 }
 
@@ -175,6 +189,7 @@ check_system_managed_sources || exit 3
 
 if ! "${clean_env_args[@]}" "$claude_path" auth status > "$auth_status_file" 2> "$stderr_file"; then
   echo "Error: Claude auth status could not be verified in a clean environment." >&2
+  print_sanitized_diagnostics "$stderr_file"
   exit 3
 fi
 jq -e '.loggedIn == true and .authMethod == "claude.ai" and (.configDirectory | type == "string" and startswith("/"))' \
@@ -201,19 +216,21 @@ if [[ -e "$user_settings_file" || -L "$user_settings_file" ]]; then
   jq -e '
     type == "object"
     and (if has("env") then (.env | type == "object") else true end)
-    and ([.env // {} | keys[] | select(test("^(ANTHROPIC_|CLAUDE_CODE_USE_|CLAUDE_CODE_GATEWAY_)"))] | length == 0)
+    and ([.env // {} | keys[] | select(test("^(ANTHROPIC_|CLAUDE_CODE_|(HTTP|HTTPS|ALL|NO)_PROXY$)"; "i"))] | length == 0)
   ' "$user_settings_file" > /dev/null || {
-    echo "Error: Claude user settings contain a provider or gateway override." >&2
+    echo "Error: Claude user settings contain a launch-time environment override." >&2
     exit 3
   }
 fi
 
 if ! "${clean_env_args[@]}" "$claude_path" doctor > "$doctor_file" 2>&1; then
   echo "Error: Claude doctor could not verify the managed-settings state." >&2
+  print_sanitized_diagnostics "$doctor_file"
   exit 3
 fi
 if ! rg -iq 'Managed settings \(remote\):[[:space:]]*not fetched.*requires an Enterprise or Team subscription' "$doctor_file"; then
   echo "Error: Claude remote managed settings are not confirmed absent." >&2
+  print_sanitized_diagnostics "$doctor_file"
   exit 3
 fi
 
@@ -259,6 +276,7 @@ cd "$empty_cwd"
 if ! "${claude_env_args[@]}" "$claude_path" "${claude_args[@]}" \
   < "$prompt_file" > "$events_file" 2> "$stderr_file"; then
   echo "Error: Claude draft reviewer failed." >&2
+  print_sanitized_diagnostics "$stderr_file"
   exit 3
 fi
 
