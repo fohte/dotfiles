@@ -63,6 +63,12 @@ steps:
 
 ### 手順
 
+`review-draft` は `self-review/reviewers.yaml` と role overlay の `review_draft` 設定から engine / model / reasoning effort を解決し、各値の出典と実効値を表示する。Codex は `codex-cli 0.163.0` の macOS sandbox または Linux seccomp profile が使える環境だけを許可する。fake credential と架空 prompt を外部通信なしの sandbox 内から loopback endpoint に送る probe の request trace を検査し、request と client metadata が許可済みの形であること、実効 sandbox が OS に応じて `seatbelt` / `seccomp` であること、developer input が bundled base instructions、user input が script の review prompt、追加 input や tool schema がないことを確認してから、同じ catalog と gate 設定で実レビューを行う。Linux では seccomp profile を開始できない環境、または request capture を検証できない場合に fail closed する。CLI version、model metadata、probe request のどれかが検証条件と合わない場合も script は非 0 で終了する。Claude は `claude.ai` 認証と `claude doctor` の remote settings 状態を確認し、OS ごとの managed settings / MCP / MDM source と remote settings cache が見つからない場合だけ起動する。Claude Code 2.1.310 に固定し、restricted / safe mode、session persistence 無効、built-in tools と MCP を無効化する設定で起動した後、`system/init` の tools / MCP / skills / plugins / agents / slash commands が空であることを毎回確認する。未確認の managed source、CLI version、または init metadata があれば fail closed する。失敗、`invalid` / `partial` / `empty` な回答、設問 1 と 2 の回答が揃わない結果は必須レビュー未完了として扱い、fallback engine へ自動で切り替えない。
+
+review-draft は HEAD / base / draft / prompt の hash を記録し、実行中にどれかが変われば失敗する。Codex は `turn.started` の後に唯一の completed agent message があり、エラー event がなく、末尾が `turn.completed` のときだけ採用する。Claude は exit 0 かつ result subtype が success、is_error が false、stop_reason が `end_turn` または `stop_sequence` の最終 result だけを採用する。stdout が 1 MiB を超える場合、または設問 1 と 2 の見出しと回答が揃わない場合も失敗する。
+
+Claude の managed-policy preflight は macOS で検証済みである。CLI は claude.ai の API 通信にネットワークを使うため、helper は OS レベルの network sandbox を設けず、user settings の provider / gateway / proxy override を拒否する。Linux は同じ managed-policy と init-context の検証経路が未確認のため fail closed する。
+
 1. 機械的に判定できるルールをスクリプトで検査する。違反があれば内容を出力して非 0 で終わるので、ファイルを直して exit 0 になるまで繰り返す
 
     ```bash

@@ -11,6 +11,13 @@
 # edit the repository and run the test suite no matter what its reference says.
 default_agent: claude
 
+# Keep draft-specific Claude usage separate from self-review's Claude CLI default.
+uses:
+  review_draft:
+    agents:
+      claude:
+        model: haiku
+
 agents:
   codex:
     references:

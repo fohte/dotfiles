@@ -21,6 +21,8 @@ commit range のレビューでは、現在の branch に記録された review 
 
 ## Backend execution
 
+engine / model / reasoning effort は base 設定と role overlay から解決する。reviewer 固有設定を用途設定より優先し、用途設定を共通既定より優先する。各設定値の出典と実効値は reviewer 起動前に表示し、result にも保存する。Codex quota による既存 fallback は Claude へ解決し直した値を使う。
+
 1. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
 2. Create a manifest file path (`mktemp "$AGENT_TMPDIR/self-review-manifest.XXXXXX"`) and run `~/.agents/skills/self-review/scripts/select-reviewers <range> > <manifest-file>`. If it fails, launch nothing. When the cause is your own invocation (wrong working directory, or a typo in the caller's `<range>`), correct it and run it once more — no reviewer has run yet, so this does not count as a reviewer retry. Never switch to a range the caller did not give. Use the manifest file as the source of truth even if command output is missing: before step 4, run `jq -r '.status' <manifest-file>` and continue only when it returns `ready`. If it is `skipped`, do not launch reviewers and report that the range was skipped because no unreviewed changes remain. For any other status or an invalid manifest, stop and report the error. Once a ready manifest succeeds, do not call `select-reviewers` again for this review — every step below reads `<manifest-file>` instead. Its `reviewers` array is the complete launch manifest: do not add, remove, or reorder entries.
 3. Carry the path `mktemp` printed as a literal string into every later step. Shell variables do not survive between tool calls, and re-deriving the path with a glob can pick up an earlier manifest from this session. Do not use `ps` or other process listings to infer progress or identify a process as yours; concurrent sessions may show another run.
@@ -30,6 +32,8 @@ commit range のレビューでは、現在の branch に記録された review 
 7. If a manifest entry has a non-null `fallback_reason`, mention it for that reviewer in the final Summary output.
 
 ## 結果集約
+
+`invalid` / `partial` / `empty`、または retry 後も欠けている reviewer result は未評価として報告し、必須 reviewer 全員の有効な結果が揃うまで呼び出し元の `commit` / `push` / `PR` workflow を止める。
 
 通し番号を持つ 12 観点を番号順に並べ、番号を持たない base reviewer (test-philosophy) の評価をその後へ、起動した conditional reviewer の評価をさらにその後へ追加する。
 未起動の conditional reviewer は出力しない。

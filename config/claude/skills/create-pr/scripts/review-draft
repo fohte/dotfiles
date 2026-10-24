@@ -7,23 +7,50 @@
 set -euo pipefail
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+self_review_dir=$(cd "$script_dir/../../self-review" && pwd -P)
+config_script_dir="$self_review_dir/scripts"
+reviewers_file="$self_review_dir/reviewers.yaml"
 
 # Assign first: a failure inside `$(...)` used as an argument would not trip `set -e`.
 draft=$("$script_dir/draft-path")
-base=${1:-$(git main)}
+repo_root=$(git rev-parse --show-toplevel)
+base=${1:-$(git -C "$repo_root" main)}
+base_ref="origin/$base"
 [[ -f "$draft" ]] || {
   echo "Error: draft not found: $draft" >&2
   exit 1
 }
+[[ -n "${AGENT_TMPDIR:-}" && -d "$AGENT_TMPDIR" ]] || {
+  echo "Error: AGENT_TMPDIR must point to a session-specific temporary directory." >&2
+  exit 2
+}
+command -v shasum > /dev/null || {
+  echo "Error: required command not found: shasum" >&2
+  exit 2
+}
 
-title=$(yq --front-matter=extract -r '.title' "$draft")
+temp_root=$(cd "$AGENT_TMPDIR" && pwd -P)
+work_dir=$(mktemp -d "$temp_root/review-draft.XXXXXX")
+trap 'rm -r "$work_dir"' EXIT
+empty_cwd="$work_dir/cwd"
+mkdir "$empty_cwd"
+draft_snapshot="$work_dir/draft.md"
+cp "$draft" "$draft_snapshot"
+
+head_sha=$(git -C "$repo_root" rev-parse --verify HEAD)
+base_sha=$(git -C "$repo_root" rev-parse --verify "$base_ref^{commit}")
+title=$(yq --front-matter=extract -r '.title' "$draft_snapshot")
 # The frontmatter also holds the review steps, which are not part of the PR.
-body=$(sed '1,/^---$/d' "$draft")
-diff=$(git diff "origin/$base...HEAD")
+body=$(sed '1,/^---$/d' "$draft_snapshot")
+diff=$(git -C "$repo_root" diff "$base_sha...$head_sha")
+[[ -n "$title" && -n "$body" && -n "$diff" ]] || {
+  echo "Error: title, body, and diff must all be non-empty." >&2
+  exit 1
+}
 
 prompt=$(
   cat << EOF
-あなたはこの Pull Request のレビュアーです。以下の title と body、base branch との diff だけを読み、次の 2 点に自由回答で答えてください。
+あなたはこの Pull Request のレビュアーです。以下の title と body、base branch との diff だけを読み、次の 2 点に自由回答で答えてください。回答には必ず \`## 1.\` と \`## 2.\` をそれぞれ単独行の見出しとして使い、次の行から空でない回答を書いてください。
 
 1. body の冒頭の節 (Purpose や Why など) に書かれた困りごとが、続く節 (Approach や What など) の変更でなぜ解消されるのかを、body の記述だけから説明できますか。説明できるなら、その説明を書いてください。diff を読まないと説明できない、または説明できないなら、body に何が欠けているかを書いてください
 2. レビューの判断に不要な行や引用、別の行とまとめて 1 行にできる行 (同じ変更の言い換え、補足、帰結) はありますか。あれば該当箇所を引用し、なぜ不要か、どうまとめられるかを書いてください
@@ -48,9 +75,109 @@ $diff
 EOF
 )
 
-# No tools, so the reviewer reads nothing beyond the prompt; safe mode keeps the
-# user's CLAUDE.md and hooks out of its context.
-work_dir=$(mktemp -d -t review-draft.XXXXXX)
-trap 'rm -rf "$work_dir"' EXIT
-cd "$work_dir"
-claude --print --model haiku --safe-mode --strict-mcp-config --tools "" <<< "$prompt"
+prompt_file="$work_dir/prompt.txt"
+result_file="$work_dir/result.txt"
+printf '%s\n' "$prompt" > "$prompt_file"
+hash_file() {
+  shasum -a 256 "$1" | awk '{print $1}'
+}
+
+head_hash="$head_sha"
+base_hash="$base_sha"
+draft_hash=$(hash_file "$draft_snapshot")
+prompt_hash=$(hash_file "$prompt_file")
+snapshot_descriptor=$(jq -cn \
+  --arg head "$head_hash" \
+  --arg base "$base_hash" \
+  --arg draft "$draft_hash" \
+  --arg prompt "$prompt_hash" \
+  '{head_sha: $head, base_sha: $base, draft_sha256: $draft, prompt_sha256: $prompt}')
+input_hash=$(printf '%s' "$snapshot_descriptor" | shasum -a 256 | awk '{print $1}')
+
+assert_snapshot_unchanged() {
+  local current_head current_base current_draft current_prompt
+  current_head=$(git -C "$repo_root" rev-parse --verify HEAD)
+  current_base=$(git -C "$repo_root" rev-parse --verify "$base_ref^{commit}")
+  current_draft=$(hash_file "$draft")
+  current_prompt=$(hash_file "$prompt_file")
+  if [[ "$current_head" != "$head_hash" || "$current_base" != "$base_hash" ||
+    "$current_draft" != "$draft_hash" || "$current_prompt" != "$prompt_hash" ]]; then
+    echo "Error: review inputs changed during the draft review." >&2
+    return 1
+  fi
+}
+
+assert_snapshot_unchanged || exit 3
+original_codex_home=${CODEX_HOME:-"$HOME/.codex"}
+case "$original_codex_home" in
+  /*) ;;
+  *) original_codex_home="$(pwd -P)/$original_codex_home" ;;
+esac
+
+# shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
+source "$config_script_dir/review-config"
+load_review_config "$reviewers_file" "$work_dir"
+engine_config=$(resolve_review_engine review_draft)
+agent=$(jq -r '.agent' <<< "$engine_config")
+model=$(jq -r '.model // empty' <<< "$engine_config")
+reasoning_effort=$(jq -r '.reasoning_effort // empty' <<< "$engine_config")
+printf 'Draft review: input_hash=%s (HEAD=%s, base=%s, draft=%s, prompt=%s), engine=%s (configured=%s; source=%s), model=%s (source=%s), effort=%s (source=%s)\n' \
+  "$input_hash" "$head_hash" "$base_hash" "$draft_hash" "$prompt_hash" \
+  "$agent" \
+  "$(jq -r '.configured_agent' <<< "$engine_config")" \
+  "$(jq -r '.sources.agent' <<< "$engine_config")" \
+  "${model:-CLI default}" \
+  "$(jq -r '.sources.model' <<< "$engine_config")" \
+  "${reasoning_effort:-CLI default}" \
+  "$(jq -r '.sources.reasoning_effort' <<< "$engine_config")" >&2
+
+cd "$empty_cwd"
+max_output_bytes=1048576
+quota_pattern="you['’]?ve hit (your )?(weekly|usage) limit|rate[_ -]?limit[_ -]?(exceeded|reached)|out of extra usage|usage quota.{0,30}(exceeded|limit)"
+
+case "$agent" in
+  claude)
+    "$script_dir/review-draft-claude" "$model" "$reasoning_effort" "$prompt_file" "$result_file" "$work_dir" "$HOME" || {
+      echo "Error: draft reviewer failed on the isolated Claude engine." >&2
+      exit 3
+    }
+    stdout_file="$work_dir/claude-events.jsonl"
+    stderr_file="$work_dir/claude-stderr.log"
+    ;;
+  codex)
+    "$script_dir/review-draft-codex" "$model" "$reasoning_effort" "$prompt_file" "$result_file" "$work_dir" "$original_codex_home" || {
+      echo "Error: draft reviewer failed on the isolated Codex engine." >&2
+      exit 3
+    }
+    stdout_file="$work_dir/codex-events.jsonl"
+    stderr_file="$work_dir/codex-stderr.log"
+    ;;
+  *)
+    echo "Error: review-draft does not support the configured engine: $agent" >&2
+    exit 2
+    ;;
+esac
+
+output_bytes=$(wc -c < "$stdout_file" | tr -d '[:space:]')
+if [[ "$output_bytes" -gt "$max_output_bytes" ]]; then
+  echo "Error: draft reviewer output exceeded the size limit." >&2
+  exit 3
+fi
+if grep -Eiq "$quota_pattern" "$stdout_file" "$stderr_file"; then
+  echo "Error: draft reviewer output contains a usage-limit response." >&2
+  exit 3
+fi
+
+if [[ ! -s "$result_file" ]] || ! awk '
+  /^## 1\.[[:space:]]*$/ { if (one || two) invalid = 1; one = 1; section = 1; next }
+  /^## 2\.[[:space:]]*$/ { if (!one || two) invalid = 1; two = 1; section = 2; next }
+  section == 1 && NF { one_answer = 1 }
+  section == 2 && NF { two_answer = 1 }
+  END { exit !(one && two && one_answer && two_answer && !invalid) }
+' "$result_file"; then
+  echo "Error: draft reviewer returned an empty or incomplete answer." >&2
+  exit 3
+fi
+
+assert_snapshot_unchanged || exit 3
+cat "$result_file"

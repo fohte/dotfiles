@@ -205,13 +205,11 @@ if [[ "$range_mode" == commit && ! -s "$diff_file" ]]; then
   exit 0
 fi
 
-# `dot role overlay` resolves the overlay file by role + filename, not by
-# content, so a role overlay of this file can define its own `agent:` routing.
-overlay_file=$(dot role overlay "$reviewers_file" 2> /dev/null || true)
-if [[ -n "$overlay_file" ]]; then
-  yq eval-all 'select(fileIndex==0) * select(fileIndex==1)' "$reviewers_file" "$overlay_file" > "$work_dir/reviewers.yaml"
-  reviewers_file="$work_dir/reviewers.yaml"
-fi
+# shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
+source "$script_dir/review-config"
+load_review_config "$reviewers_file" "$work_dir"
+# shellcheck disable=SC2154 # Assigned by review-config.
+reviewers_file="$review_config_file"
 
 # The snapshot run-external-reviewers leaves behind after a Codex call stays
 # authoritative until the window resets, so a limit check here never needs a
@@ -296,12 +294,17 @@ while IFS= read -r reviewer; do
   if [[ "$selected" == true ]]; then
     definition=$(yq -r ".reviewers.\"$reviewer\".definition" "$reviewers_file")
 
-    resolved_agent=$(yq -r ".reviewers.\"$reviewer\".agent // .default_agent" "$reviewers_file")
+    reviewer_config=$(resolve_review_engine self_review "$reviewer")
+    configured_agent=$(jq -r '.configured_agent' <<< "$reviewer_config")
+    resolved_agent="$configured_agent"
     fallback_reason=null
     if [[ "$resolved_agent" == codex ]] && codex_over_limit; then
       resolved_agent=claude
       fallback_reason='"Codex is over its usage limit, so this reviewer ran on the Claude backend instead."'
+      reviewer_config=$(resolve_review_engine self_review "$reviewer" "$resolved_agent")
     fi
+    model=$(jq -c '.model' <<< "$reviewer_config")
+    reasoning_effort=$(jq -c '.reasoning_effort' <<< "$reviewer_config")
 
     references_file="$work_dir/$reviewer.references"
     : > "$references_file"
@@ -319,12 +322,16 @@ while IFS= read -r reviewer; do
     done < <(yq -r ".reviewers.\"$reviewer\".references[]" "$reviewers_file")
     jq -n \
       --arg name "$reviewer" \
+      --arg configured_agent "$configured_agent" \
       --arg agent "$resolved_agent" \
+      --argjson model "$model" \
+      --argjson reasoning_effort "$reasoning_effort" \
+      --argjson config "$reviewer_config" \
       --arg definition "${definition%.md}" \
       --argjson fallback_reason "$fallback_reason" \
       --rawfile references "$references_file" \
       --rawfile targets "$targets_file" \
-      '{name: $name, agent: $agent, definition: $definition, fallback_reason: $fallback_reason, references: ($references | split("\n") | map(select(length > 0))), targets: ($targets | split("\n") | map(select(length > 0)))}' >> "$manifest"
+      '{name: $name, configured_agent: $configured_agent, agent: $agent, model: $model, reasoning_effort: $reasoning_effort, config: $config, definition: $definition, fallback_reason: $fallback_reason, references: ($references | split("\n") | map(select(length > 0))), targets: ($targets | split("\n") | map(select(length > 0)))}' >> "$manifest"
   fi
 done < <(yq -r '.reviewers | to_entries[] | .key' "$reviewers_file")
 

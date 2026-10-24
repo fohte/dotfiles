@@ -35,6 +35,30 @@ fi
   exit 2
 }
 
+jq -e '
+  (.reviewers | type == "array" and length > 0) and
+  ([.reviewers[].name] | unique | length) == (.reviewers | length) and
+  all(.reviewers[];
+    (.name | type == "string" and length > 0) and
+    (.configured_agent == "claude" or .configured_agent == "codex" or .configured_agent == "agy") and
+    (.agent == "claude" or .agent == "codex" or .agent == "agy") and
+    (.model == null or (.model | type == "string" and length > 0)) and
+    (.reasoning_effort == null or (.reasoning_effort | type == "string" and length > 0)) and
+    (.config.config.base | type == "string" and length > 0) and
+    (.config.config.overlay == null or (.config.config.overlay | type == "string" and length > 0)) and
+    (.config.configured_agent == .configured_agent) and
+    (.config.agent == .agent) and
+    (.config.model == .model) and
+    (.config.reasoning_effort == .reasoning_effort) and
+    (.config.sources.agent | type == "string" and length > 0) and
+    (.config.sources.model | type == "string" and length > 0) and
+    (.config.sources.reasoning_effort | type == "string" and length > 0)
+  )
+' "$manifest_file" > /dev/null || {
+  echo "Error: manifest has missing or invalid reviewer configuration." >&2
+  exit 2
+}
+
 # Reject an unknown agent, or one whose executable is missing, before any
 # reviewer is spawned; the dispatch below would otherwise surface it as N
 # background reviewers that simply failed.
@@ -64,6 +88,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 skill_dir=$(cd "$script_dir/.." && pwd -P)
 claude_dir=$(cd "$skill_dir/../.." && pwd -P)
 repo_root=$(git rev-parse --show-toplevel)
+# shellcheck disable=SC2034 # Used by review-backends.
 schema_file="$skill_dir/review-output-schema.json"
 usage_file="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-usage.json"
 auth_file="$HOME/.codex/auth.json"
@@ -231,190 +256,8 @@ record_codex_usage() {
   mv "$usage_file.$$" "$usage_file"
 }
 
-initialize_codex_home() {
-  mkdir -p "$shared_codex_home"
-
-  # Isolate user instructions and skills while preserving the credentials Codex needs.
-  if [[ -f "$auth_file" && ! -e "$shared_codex_home/auth.json" && ! -L "$shared_codex_home/auth.json" ]]; then
-    if ! ln -s "$auth_file" "$shared_codex_home/auth.json" 2> /dev/null &&
-      [[ ! -e "$shared_codex_home/auth.json" && ! -L "$shared_codex_home/auth.json" ]]; then
-      echo "Error: unable to link Codex credentials into $shared_codex_home/auth.json." >&2
-      return 1
-    fi
-  fi
-}
-
-run_codex() {
-  local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}"
-  local resume_session_id="${4:-}" persist_session="${5:-false}"
-  local config_args=(--config 'cli_auth_credentials_store="file"')
-  local codex_args=(exec)
-
-  if [[ "$persist_session" == true ]]; then
-    config_args+=(--config 'sandbox_mode="read-only"')
-  fi
-  initialize_codex_home
-  [[ -n "$reasoning_effort" ]] && config_args+=(--config "model_reasoning_effort=\"$reasoning_effort\"")
-
-  if [[ -n "$resume_session_id" ]]; then
-    codex_args+=(resume "$resume_session_id" --json)
-  else
-    [[ "$persist_session" == true ]] && codex_args+=(--json) || codex_args+=(--ephemeral)
-    codex_args+=(--sandbox read-only --color never)
-  fi
-
-  HOME="$shared_codex_home" CODEX_HOME="$shared_codex_home" codex "${codex_args[@]}" \
-    --ignore-user-config \
-    "${model_args[@]+"${model_args[@]}"}" \
-    "${config_args[@]}" \
-    --output-schema "$schema_file" \
-    --output-last-message "$reviewer_dir/result.json" \
-    - < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || return 1
-
-  if [[ "$persist_session" == true ]]; then
-    local session_id
-    jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$reviewer_dir/result.json" > /dev/null || return 1
-    if [[ -n "$resume_session_id" ]]; then
-      session_id="$resume_session_id"
-    else
-      session_id=$(jq -er 'select(.type == "thread.started") | .thread_id' "$reviewer_dir/stdout.log" | sed -n '1p') || return 1
-    fi
-    [[ -n "$session_id" ]] || return 1
-    printf '%s\n' "$session_id" > "$reviewer_dir/session-id"
-  fi
-}
-
-# agy has no stdin prompt mode: `--print` (and its `--prompt` alias) takes the
-# prompt as the flag's own value, so it must be attached with `=` rather than
-# left to consume the next argv token (verified against agy v1.1.18; a bare
-# `--print` followed by another flag misparses that flag as the prompt). It
-# also wraps the schema-checked result in `.structured_output` rather than
-# writing it as the whole message, unlike `codex --output-schema`.
-run_agy() {
-  local reviewer_dir="$1"
-  agy \
-    --sandbox \
-    --add-dir "$repo_root" \
-    "${model_args[@]+"${model_args[@]}"}" \
-    --output-format json \
-    --json-schema "$schema_file" \
-    --print="$(cat "$reviewer_dir/prompt.txt")" \
-    > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || true
-  # A tool denied by the permission rules in config/agy leaves `status` at ERROR
-  # even though the review itself ran to completion, so the schema-checked
-  # payload is the only signal separating a finished review from a failed run.
-  jq -e '.structured_output != null' "$reviewer_dir/stdout.log" > /dev/null || return 1
-  jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
-}
-
-# Git's global config and ignore file can resolve into the denied checkout.
-git_global_read_paths() {
-  local ignore
-  ignore=$(git config --global --includes --path --get core.excludesfile || true)
-
-  {
-    git config --global --includes --list --show-origin --name-only |
-      cut -f1 |
-      sed 's/^file://' |
-      sort -u
-    printf '%s\n' "${ignore:-${XDG_CONFIG_HOME:-$HOME/.config}/git/ignore}"
-  } | sort -u | while IFS= read -r path; do
-    [[ -e "$path" ]] || continue
-    printf '%s\n%s\n' "$path" "$(realpath "$path")"
-  done | jq -Rsc 'split("\n") | map(select(length > 0)) | unique'
-}
-
-# Restricting the tool set and enabling the sandbox are not two ways of saying
-# the same thing: the sandbox governs Bash subprocesses only, so Write and Edit
-# have to be dropped from the tool set, while `--tools` says nothing about what
-# a shell command may touch. Either one alone leaves the repository writable.
-#
-# Reads are bounded once per mechanism for the same reason. The sandbox denies
-# the checkout root so a review cannot wander into an unrelated repository, and
-# re-opens the one under review inside it: sandbox read rules resolve by
-# specificity, not deny-over-allow. Read, Grep, and Glob bypass the sandbox
-# entirely and are bounded instead by the working directory plus
-# `additionalDirectories`, so the secrets need a permission rule of their own. A
-# permission rule needs the `//` prefix to mean an absolute path, so prefixing
-# one produces three slashes; a plain `Read(/abs/path)` matches nothing and
-# denies nothing.
-#
-# Writes are allowed under the reviewer's own scratch directory. Settling a
-# doubt by running a minimal repro is part of the review, and it is per-reviewer
-# so that parallel reviewers cannot overwrite each other's prompt or result.
-#
-# `--safe-mode` excludes ambient CLAUDE.md, custom skills/plugins, hooks and MCP
-# servers. `--restricted` still loads the explicit settings file while ignoring
-# user and repository settings; `--strict-mcp-config` keeps MCP disabled.
-# build_prompt inlines every instruction file that applies to the diff, so the
-# review contract stays identical to codex and agy.
-#
-# `--json-schema` takes the schema inline and rejects a path, unlike
-# `codex --output-schema` and `agy --json-schema`. It also cannot resolve the
-# `$schema` meta-schema reference the other two accept, and fails the whole run
-# on it, so that key is dropped on the way in rather than removed from the file.
-run_claude() {
-  local reviewer_dir="$1" resume_session_id="${2:-}" persist_session="${3:-false}"
-  local git_read_paths_json session_args=() session_id status=0
-  mkdir -p "$reviewer_dir/scratch"
-  [[ -n "$resume_session_id" ]] && session_args=(--resume "$resume_session_id")
-
-  git_read_paths_json=$(git_global_read_paths)
-
-  # Background Bash calls can outlive the command timeout, so disable them too.
-  jq -n \
-    --arg repo "$repo_root" \
-    --arg scratch "$reviewer_dir/scratch" \
-    --arg home "$HOME" \
-    --arg checkout_root "$HOME/ghq" \
-    --argjson git_read_paths "$git_read_paths_json" \
-    '[$home + "/.ssh", $home + "/.aws", $home + "/.gnupg"] as $secrets
-     | {
-         env: {
-           BASH_DEFAULT_TIMEOUT_MS: "30000",
-           BASH_MAX_TIMEOUT_MS: "30000",
-           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
-         },
-         permissions: {
-           deny: ($secrets | map("Read(//\(.)/**)")),
-           additionalDirectories: [$scratch]
-         },
-         sandbox: {
-           enabled: true,
-           network: { allowedDomains: [], strictAllowlist: true },
-           filesystem: {
-             denyWrite: [$repo],
-             allowWrite: [$scratch],
-             denyRead: ($secrets + [$checkout_root]),
-             allowRead: ([$repo] + $git_read_paths)
-           }
-         }
-       }' > "$reviewer_dir/settings.json"
-
-  claude \
-    --print \
-    "${session_args[@]+"${session_args[@]}"}" \
-    --restricted \
-    --safe-mode \
-    --strict-mcp-config \
-    "${model_args[@]+"${model_args[@]}"}" \
-    --tools Bash,Read,Grep,Glob \
-    --settings "$reviewer_dir/settings.json" \
-    --output-format json \
-    --json-schema "$(jq -c 'del(."$schema")' "$schema_file")" \
-    < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || status=$?
-  if [[ "$status" -ne 0 ]] || ! jq -e '.subtype == "success" and .is_error != true' "$reviewer_dir/stdout.log" > /dev/null; then
-    # Claude reports errors such as "Prompt is too long" only in its stdout JSON.
-    jq -rR 'fromjson? | select(.is_error? == true) | .result' "$reviewer_dir/stdout.log" >> "$reviewer_dir/stderr.log"
-    return 1
-  fi
-  jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
-  if [[ "$persist_session" == true ]]; then
-    session_id=$(jq -er '.session_id | strings | select(length > 0)' "$reviewer_dir/stdout.log") || return 1
-    [[ -z "$resume_session_id" || "$session_id" == "$resume_session_id" ]] || return 1
-    printf '%s\n' "$session_id" > "$reviewer_dir/session-id"
-  fi
-}
+# shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
+source "$script_dir/review-backends"
 
 # shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
 source "$script_dir/review-sessions"
@@ -437,11 +280,26 @@ for reviewer in "${selected[@]}"; do
   build_prompt "$reviewer" "$reviewer_dir/prompt.txt" "$reviewer_agent"
   [[ "$reviewer_agent" == codex ]] && codex_used=true
 
-  # select-reviewers already resolved agent + model from reviewers.yaml and its
-  # role overlay, so this script never reads reviewers.yaml directly.
-  model=$(jq -r --arg agent "$reviewer_agent" '.agents[$agent].model // empty' "$manifest_file")
-  reasoning_effort=$(jq -r --arg agent "$reviewer_agent" '.agents[$agent].reasoning_effort // empty' "$manifest_file")
-  resume_session_id=$(review_session_id "$reviewer" "$reviewer_agent")
+  # select-reviewers resolved the effective settings into the manifest so retries
+  # and resumed sessions use the same engine, model, effort, and config source.
+  model=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .model // empty' "$manifest_file")
+  model_json=$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .model' "$manifest_file")
+  reasoning_effort=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .reasoning_effort // empty' "$manifest_file")
+  reasoning_effort_json=$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .reasoning_effort' "$manifest_file")
+  reviewer_config=$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | {config, configured_agent, agent, model, reasoning_effort, fallback_reason}' "$manifest_file")
+  resume_session_id=$(review_session_id "$reviewer" "$reviewer_agent" "$model_json" "$reasoning_effort_json")
+
+  printf 'Reviewer %s: engine=%s (configured=%s; source=%s), model=%s (source=%s), effort=%s (source=%s)\n' \
+    "$reviewer" \
+    "$reviewer_agent" \
+    "$(jq -r '.configured_agent' <<< "$reviewer_config")" \
+    "$(jq -r '.config.sources.agent' <<< "$reviewer_config")" \
+    "${model:-CLI default}" \
+    "$(jq -r '.config.sources.model' <<< "$reviewer_config")" \
+    "${reasoning_effort:-CLI default}" \
+    "$(jq -r '.config.sources.reasoning_effort' <<< "$reviewer_config")" >&2
+  fallback_reason=$(jq -r '.fallback_reason // empty' <<< "$reviewer_config")
+  [[ -z "$fallback_reason" ]] || printf 'Reviewer %s fallback: %s\n' "$reviewer" "$fallback_reason" >&2
 
   # None of the agents require a model: an unset one just means "use the CLI's
   # own default" (checked once here so run_codex/run_agy/run_claude don't
@@ -449,6 +307,7 @@ for reviewer in "${selected[@]}"; do
   # under macOS's bundled /bin/bash (3.2, pre-dates GPLv3), whose `nounset`
   # treats expanding an empty array as an unbound-variable error.
   model_args=()
+  # shellcheck disable=SC2034 # Used by review-backends.
   [[ -n "$model" ]] && model_args=(--model "$model")
 
   (
@@ -483,11 +342,45 @@ result_files=()
 for reviewer in "${selected[@]}"; do
   result_file="$work_dir/$reviewer/result.json"
   [[ -f "$result_file" ]] || continue
-  jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$result_file" > /dev/null || {
+  expected_evaluation_ids='[]'
+  case "$reviewer" in
+    behavior) expected_evaluation_ids='["1","2","3","4","5"]' ;;
+    structure) expected_evaluation_ids='["6","8","9","12"]' ;;
+    convention) expected_evaluation_ids='["7","10","11"]' ;;
+    test-philosophy) expected_evaluation_ids='["test-presence","test-writing"]' ;;
+  esac
+  jq -e --arg reviewer "$reviewer" --argjson expected_evaluation_ids "$expected_evaluation_ids" '
+    type == "object" and
+    (keys == ["evaluations", "findings", "reviewer"]) and
+    .reviewer == $reviewer and
+    (.evaluations | type == "array" and length > 0) and
+    ([.evaluations[].id] | unique | length) == (.evaluations | length) and
+    ($expected_evaluation_ids == [] or ([.evaluations[].id] | sort == ($expected_evaluation_ids | sort))) and
+    all(.evaluations[];
+      (keys == ["id", "status", "summary"]) and
+      (.id | type == "string" and test("\\S")) and
+      (.status == "pass" or .status == "not-applicable" or .status == "critical" or .status == "warning") and
+      (.summary | type == "string" and test("\\S"))
+    ) and
+    (.findings | type == "array") and
+    all(.findings[];
+      (keys == ["evidence", "file", "id", "line", "severity", "suggestion", "title"]) and
+      (.id | type == "string" and test("\\S")) and
+      (.severity == "critical" or .severity == "warning") and
+      (.title | type == "string" and test("\\S")) and
+      (.file | type == "string" and test("\\S")) and
+      (.line | type == "number" and . >= 1 and floor == .) and
+      (.evidence | type == "string" and test("\\S")) and
+      (.suggestion | type == "string" and test("\\S"))
+    )
+  ' "$result_file" > /dev/null || {
     echo "Error: invalid reviewer result: $reviewer" >&2
     failed=true
     continue
   }
+  jq --argjson execution "$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | {configured_agent, agent, model, reasoning_effort, config, fallback_reason}' "$manifest_file")" \
+    '. + {execution: $execution}' "$result_file" > "$work_dir/$reviewer/result.with-execution.json"
+  mv "$work_dir/$reviewer/result.with-execution.json" "$result_file"
   result_files+=("$result_file")
 done
 
