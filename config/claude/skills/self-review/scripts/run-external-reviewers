@@ -342,20 +342,20 @@ result_files=()
 for reviewer in "${selected[@]}"; do
   result_file="$work_dir/$reviewer/result.json"
   [[ -f "$result_file" ]] || continue
-  expected_evaluations=0
+  expected_evaluation_ids='[]'
   case "$reviewer" in
-    behavior) expected_evaluations=5 ;;
-    structure) expected_evaluations=4 ;;
-    convention) expected_evaluations=3 ;;
-    test-philosophy) expected_evaluations=2 ;;
+    behavior) expected_evaluation_ids='["1","2","3","4","5"]' ;;
+    structure) expected_evaluation_ids='["6","8","9","12"]' ;;
+    convention) expected_evaluation_ids='["7","10","11"]' ;;
+    test-philosophy) expected_evaluation_ids='["test-presence","test-writing"]' ;;
   esac
-  jq -e --arg reviewer "$reviewer" --argjson expected_evaluations "$expected_evaluations" '
+  jq -e --arg reviewer "$reviewer" --argjson expected_evaluation_ids "$expected_evaluation_ids" '
     type == "object" and
     (keys == ["evaluations", "findings", "reviewer"]) and
     .reviewer == $reviewer and
     (.evaluations | type == "array" and length > 0) and
-    ($expected_evaluations == 0 or (.evaluations | length == $expected_evaluations)) and
     ([.evaluations[].id] | unique | length) == (.evaluations | length) and
+    ($expected_evaluation_ids == [] or ([.evaluations[].id] | sort == ($expected_evaluation_ids | sort))) and
     all(.evaluations[];
       (keys == ["id", "status", "summary"]) and
       (.id | type == "string" and test("\\S")) and

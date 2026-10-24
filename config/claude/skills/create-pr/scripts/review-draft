@@ -118,8 +118,8 @@ case "$agent" in
 esac
 
 if [[ ! -s "$result_file" ]] || ! awk '
-  /^(#+[[:space:]]*)?1[.、)]([[:space:]]|$)/ { if (one || two) invalid = 1; one = 1; section = 1; next }
-  /^(#+[[:space:]]*)?2[.、)]([[:space:]]|$)/ { if (!one || two) invalid = 1; two = 1; section = 2; next }
+  /^## 1\.[[:space:]]*$/ { if (one || two) invalid = 1; one = 1; section = 1; next }
+  /^## 2\.[[:space:]]*$/ { if (!one || two) invalid = 1; two = 1; section = 2; next }
   section == 1 && NF { one_answer = 1 }
   section == 2 && NF { two_answer = 1 }
   END { exit !(one && two && one_answer && two_answer && !invalid) }
