@@ -1,0 +1,184 @@
+initialize_codex_home() {
+  mkdir -p "$shared_codex_home"
+
+  # Isolate user instructions and skills while preserving the credentials Codex needs.
+  if [[ -f "$auth_file" && ! -e "$shared_codex_home/auth.json" && ! -L "$shared_codex_home/auth.json" ]]; then
+    if ! ln -s "$auth_file" "$shared_codex_home/auth.json" 2> /dev/null &&
+      [[ ! -e "$shared_codex_home/auth.json" && ! -L "$shared_codex_home/auth.json" ]]; then
+      echo "Error: unable to link Codex credentials into $shared_codex_home/auth.json." >&2
+      return 1
+    fi
+  fi
+}
+
+run_codex() {
+  local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}"
+  local resume_session_id="${4:-}" persist_session="${5:-false}"
+  local config_args=(--config 'cli_auth_credentials_store="file"')
+  local codex_args=(exec)
+
+  if [[ "$persist_session" == true ]]; then
+    config_args+=(--config 'sandbox_mode="read-only"')
+  fi
+  initialize_codex_home
+  [[ -n "$reasoning_effort" ]] && config_args+=(--config "model_reasoning_effort=\"$reasoning_effort\"")
+
+  if [[ -n "$resume_session_id" ]]; then
+    codex_args+=(resume "$resume_session_id" --json)
+  else
+    [[ "$persist_session" == true ]] && codex_args+=(--json) || codex_args+=(--ephemeral)
+    codex_args+=(--sandbox read-only --color never)
+  fi
+
+  HOME="$shared_codex_home" CODEX_HOME="$shared_codex_home" codex "${codex_args[@]}" \
+    --ignore-user-config \
+    "${model_args[@]+"${model_args[@]}"}" \
+    "${config_args[@]}" \
+    --output-schema "$schema_file" \
+    --output-last-message "$reviewer_dir/result.json" \
+    - < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || return 1
+
+  if [[ "$persist_session" == true ]]; then
+    local session_id
+    jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$reviewer_dir/result.json" > /dev/null || return 1
+    if [[ -n "$resume_session_id" ]]; then
+      session_id="$resume_session_id"
+    else
+      session_id=$(jq -er 'select(.type == "thread.started") | .thread_id' "$reviewer_dir/stdout.log" | sed -n '1p') || return 1
+    fi
+    [[ -n "$session_id" ]] || return 1
+    printf '%s\n' "$session_id" > "$reviewer_dir/session-id"
+  fi
+}
+
+# agy has no stdin prompt mode: `--print` (and its `--prompt` alias) takes the
+# prompt as the flag's own value, so it must be attached with `=` rather than
+# left to consume the next argv token (verified against agy v1.1.18; a bare
+# `--print` followed by another flag misparses that flag as the prompt). It
+# also wraps the schema-checked result in `.structured_output` rather than
+# writing it as the whole message, unlike `codex --output-schema`.
+run_agy() {
+  local reviewer_dir="$1"
+  agy \
+    --sandbox \
+    --add-dir "$repo_root" \
+    "${model_args[@]+"${model_args[@]}"}" \
+    --output-format json \
+    --json-schema "$schema_file" \
+    --print="$(cat "$reviewer_dir/prompt.txt")" \
+    > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || true
+  # A tool denied by the permission rules in config/agy leaves `status` at ERROR
+  # even though the review itself ran to completion, so the schema-checked
+  # payload is the only signal separating a finished review from a failed run.
+  jq -e '.structured_output != null' "$reviewer_dir/stdout.log" > /dev/null || return 1
+  jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
+}
+
+# Git's global config and ignore file can resolve into the denied checkout.
+git_global_read_paths() {
+  local ignore
+  ignore=$(git config --global --includes --path --get core.excludesfile || true)
+
+  {
+    git config --global --includes --list --show-origin --name-only |
+      cut -f1 |
+      sed 's/^file://' |
+      sort -u
+    printf '%s\n' "${ignore:-${XDG_CONFIG_HOME:-$HOME/.config}/git/ignore}"
+  } | sort -u | while IFS= read -r path; do
+    [[ -e "$path" ]] || continue
+    printf '%s\n%s\n' "$path" "$(realpath "$path")"
+  done | jq -Rsc 'split("\n") | map(select(length > 0)) | unique'
+}
+
+# Restricting the tool set and enabling the sandbox are not two ways of saying
+# the same thing: the sandbox governs Bash subprocesses only, so Write and Edit
+# have to be dropped from the tool set, while `--tools` says nothing about what
+# a shell command may touch. Either one alone leaves the repository writable.
+#
+# Reads are bounded once per mechanism for the same reason. The sandbox denies
+# the checkout root so a review cannot wander into an unrelated repository, and
+# re-opens the one under review inside it: sandbox read rules resolve by
+# specificity, not deny-over-allow. Read, Grep, and Glob bypass the sandbox
+# entirely and are bounded instead by the working directory plus
+# `additionalDirectories`, so the secrets need a permission rule of their own. A
+# permission rule needs the `//` prefix to mean an absolute path, so prefixing
+# one produces three slashes; a plain `Read(/abs/path)` matches nothing and
+# denies nothing.
+#
+# Writes are allowed under the reviewer's own scratch directory. Settling a
+# doubt by running a minimal repro is part of the review, and it is per-reviewer
+# so that parallel reviewers cannot overwrite each other's prompt or result.
+#
+# `--safe-mode` excludes ambient CLAUDE.md, custom skills/plugins, hooks and MCP
+# servers. `--restricted` still loads the explicit settings file while ignoring
+# user and repository settings; `--strict-mcp-config` keeps MCP disabled.
+# build_prompt inlines every instruction file that applies to the diff, so the
+# review contract stays identical to codex and agy.
+#
+# `--json-schema` takes the schema inline and rejects a path, unlike
+# `codex --output-schema` and `agy --json-schema`. It also cannot resolve the
+# `$schema` meta-schema reference the other two accept, and fails the whole run
+# on it, so that key is dropped on the way in rather than removed from the file.
+run_claude() {
+  local reviewer_dir="$1" resume_session_id="${2:-}" persist_session="${3:-false}"
+  local git_read_paths_json session_args=() session_id status=0
+  mkdir -p "$reviewer_dir/scratch"
+  [[ -n "$resume_session_id" ]] && session_args=(--resume "$resume_session_id")
+
+  git_read_paths_json=$(git_global_read_paths)
+
+  # Background Bash calls can outlive the command timeout, so disable them too.
+  jq -n \
+    --arg repo "$repo_root" \
+    --arg scratch "$reviewer_dir/scratch" \
+    --arg home "$HOME" \
+    --arg checkout_root "$HOME/ghq" \
+    --argjson git_read_paths "$git_read_paths_json" \
+    '[$home + "/.ssh", $home + "/.aws", $home + "/.gnupg"] as $secrets
+     | {
+         env: {
+           BASH_DEFAULT_TIMEOUT_MS: "30000",
+           BASH_MAX_TIMEOUT_MS: "30000",
+           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
+         },
+         permissions: {
+           deny: ($secrets | map("Read(//\(.)/**)")),
+           additionalDirectories: [$scratch]
+         },
+         sandbox: {
+           enabled: true,
+           network: { allowedDomains: [], strictAllowlist: true },
+           filesystem: {
+             denyWrite: [$repo],
+             allowWrite: [$scratch],
+             denyRead: ($secrets + [$checkout_root]),
+             allowRead: ([$repo] + $git_read_paths)
+           }
+         }
+       }' > "$reviewer_dir/settings.json"
+
+  claude \
+    --print \
+    "${session_args[@]+"${session_args[@]}"}" \
+    --restricted \
+    --safe-mode \
+    --strict-mcp-config \
+    "${model_args[@]+"${model_args[@]}"}" \
+    --tools Bash,Read,Grep,Glob \
+    --settings "$reviewer_dir/settings.json" \
+    --output-format json \
+    --json-schema "$(jq -c 'del(."$schema")' "$schema_file")" \
+    < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || status=$?
+  if [[ "$status" -ne 0 ]] || ! jq -e '.subtype == "success" and .is_error != true' "$reviewer_dir/stdout.log" > /dev/null; then
+    # Claude reports errors such as "Prompt is too long" only in its stdout JSON.
+    jq -rR 'fromjson? | select(.is_error? == true) | .result' "$reviewer_dir/stdout.log" >> "$reviewer_dir/stderr.log"
+    return 1
+  fi
+  jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
+  if [[ "$persist_session" == true ]]; then
+    session_id=$(jq -er '.session_id | strings | select(length > 0)' "$reviewer_dir/stdout.log") || return 1
+    [[ -z "$resume_session_id" || "$session_id" == "$resume_session_id" ]] || return 1
+    printf '%s\n' "$session_id" > "$reviewer_dir/session-id"
+  fi
+}
