@@ -29,6 +29,8 @@ EOF
 
 ## push 前レビュー
 
+必須 reviewer が同じ engine で retry した後も未評価、または結果が `invalid` / `partial` / `empty` の場合は、`commit` と `push` を続けない。
+
 `git push` の前に、その push に含まれる全コミットをまとめて `self-review` skill でレビューする。
 skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、12 観点の統合レポートを返す。
 **レビューは 1 回の push につき 1 回だけ実行する**。

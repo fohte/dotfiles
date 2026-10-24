@@ -63,6 +63,8 @@ steps:
 
 ### 手順
 
+`review-draft` は `self-review/reviewers.yaml` と role overlay の `review_draft` 設定から engine / model / reasoning effort を解決し、各値の出典と実効値を表示する。Codex は `codex-cli 0.163.0` と macOS sandbox の組み合わせだけを許可する。fake credential と架空 prompt を外部通信なしの sandbox 内から loopback endpoint に送る probe の request trace を検査し、request の field が許可済みの形であること、developer input が bundled base instructions、user input が script の review prompt、追加 input や tool schema がないことを確認してから、同じ catalog と gate 設定で実レビューを行う。Linux では隔離条件を検証できる実行経路がないため fail closed する。CLI version、model metadata、probe request のどれかが検証条件と合わない場合も script は非 0 で終了する。失敗、`invalid` / `partial` / `empty` な回答、設問 1 と 2 の回答が揃わない結果は必須レビュー未完了として扱い、fallback engine へ自動で切り替えない。
+
 1. 機械的に判定できるルールをスクリプトで検査する。違反があれば内容を出力して非 0 で終わるので、ファイルを直して exit 0 になるまで繰り返す
 
     ```bash

@@ -1,0 +1,207 @@
+#!/bin/bash
+# shellcheck disable=SC2154 # Callers initialize the shared config paths.
+
+load_review_config() {
+  local requested_file="$1" work_dir="$2" base_dir base_name stem extension role overlay_file status
+
+  for command in dot jq yq; do
+    command -v "$command" > /dev/null || {
+      echo "Error: required command not found: $command" >&2
+      return 127
+    }
+  done
+
+  [[ -f "$requested_file" ]] || {
+    echo "Error: reviewer config not found: $requested_file" >&2
+    return 1
+  }
+
+  base_dir=$(cd "$(dirname "$requested_file")" && pwd -P)
+  review_config_base_file="$base_dir/$(basename "$requested_file")"
+  review_config_overlay_file=
+  role=$(dot role get) || {
+    echo "Error: unable to resolve the dotfiles role." >&2
+    return 1
+  }
+
+  case "$role" in
+    private)
+      base_name=$(basename "$review_config_base_file")
+      if [[ "$base_name" == *.* ]]; then
+        stem="${base_name%.*}"
+        extension=".${base_name##*.}"
+      else
+        stem="$base_name"
+        extension=
+      fi
+      overlay_file="$base_dir/$stem.private$extension"
+      if [[ -e "$overlay_file" ]]; then
+        review_config_overlay_file="$overlay_file"
+      fi
+      ;;
+    work)
+      if overlay_file=$(dot role overlay "$review_config_base_file" 2> "$work_dir/overlay-error"); then
+        review_config_overlay_file="$overlay_file"
+      else
+        status=$?
+        if [[ "$status" -ne 1 ]]; then
+          cat "$work_dir/overlay-error" >&2
+          echo "Error: unable to resolve the reviewer config overlay." >&2
+          return 1
+        fi
+      fi
+      ;;
+    *)
+      echo "Error: unsupported dotfiles role: $role" >&2
+      return 1
+      ;;
+  esac
+
+  if [[ -n "$review_config_overlay_file" && ! -f "$review_config_overlay_file" ]]; then
+    echo "Error: reviewer config overlay is not a file: $review_config_overlay_file" >&2
+    return 1
+  fi
+
+  review_config_file="$work_dir/reviewers.yaml"
+  if [[ -n "$review_config_overlay_file" ]]; then
+    yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' \
+      "$review_config_base_file" "$review_config_overlay_file" > "$review_config_file"
+  else
+    cp "$review_config_base_file" "$review_config_file"
+  fi
+
+  review_config_json_file="$work_dir/reviewers.json"
+  yq -o=json '.' "$review_config_file" > "$review_config_json_file"
+  review_config_overlay_json_file=
+  if [[ -n "$review_config_overlay_file" ]]; then
+    review_config_overlay_json_file="$work_dir/reviewers-overlay.json"
+    yq -o=json '.' "$review_config_overlay_file" > "$review_config_overlay_json_file"
+  fi
+}
+
+review_config_source_for() {
+  local path_json="$1" source_file path_label
+  path_label=$(jq -r 'map("[" + tojson + "]") | join("")' <<< "$path_json")
+  source_file="$review_config_base_file"
+  if [[ -n "$review_config_overlay_json_file" ]] &&
+    jq -e --argjson path "$path_json" 'getpath($path) != null' "$review_config_overlay_json_file" > /dev/null; then
+    source_file="$review_config_overlay_file"
+  fi
+  printf '%s#%s' "$source_file" "$path_label"
+}
+
+review_config_pick_agent() {
+  local use="$1" reviewer="$2"
+  jq -c --arg use "$use" --arg reviewer "$reviewer" '
+    [
+      (if $reviewer == "" then empty else {value: .reviewers[$reviewer].agent, path: ["reviewers", $reviewer, "agent"]} end),
+      {value: .uses[$use].agent, path: ["uses", $use, "agent"]},
+      {value: .default_agent, path: ["default_agent"]}
+    ]
+    | map(select(.value != null))
+    | (.[0] // {value: null, path: null})
+  ' "$review_config_json_file"
+}
+
+review_config_pick_setting() {
+  local use="$1" reviewer="$2" agent="$3" setting="$4"
+  jq -c \
+    --arg use "$use" \
+    --arg reviewer "$reviewer" \
+    --arg agent "$agent" \
+    --arg setting "$setting" '
+      [
+        (if $reviewer == "" then empty else {value: .reviewers[$reviewer].agents[$agent][$setting], path: ["reviewers", $reviewer, "agents", $agent, $setting]} end),
+        {value: .uses[$use].agents[$agent][$setting], path: ["uses", $use, "agents", $agent, $setting]},
+        {value: .agents[$agent][$setting], path: ["agents", $agent, $setting]}
+      ]
+      | map(select(.value != null))
+      | (.[0] // {value: null, path: null})
+    ' "$review_config_json_file"
+}
+
+review_config_validate_string() {
+  local candidate="$1" label="$2"
+  jq -e '(.value | type == "string" and test("\\S"))' <<< "$candidate" > /dev/null || {
+    echo "Error: $label must be a non-empty string in reviewer config." >&2
+    return 1
+  }
+}
+
+resolve_review_engine() {
+  local use="$1" reviewer="${2:-}" agent_override="${3:-}"
+  local agent_candidate configured_agent agent_path agent_source effective_agent
+  local model_candidate effort_candidate model_value effort_value model_source effort_source
+  local config_overlay
+
+  [[ -n "$use" ]] || {
+    echo "Error: review config use is required." >&2
+    return 2
+  }
+
+  if [[ -n "$reviewer" ]] && ! jq -e --arg reviewer "$reviewer" '.reviewers[$reviewer] | type == "object"' "$review_config_json_file" > /dev/null; then
+    echo "Error: reviewer not found in config: $reviewer" >&2
+    return 1
+  fi
+
+  agent_candidate=$(review_config_pick_agent "$use" "$reviewer")
+  review_config_validate_string "$agent_candidate" "engine" || return 1
+  configured_agent=$(jq -r '.value' <<< "$agent_candidate")
+  agent_path=$(jq -c '.path' <<< "$agent_candidate")
+  case "$configured_agent" in
+    claude | codex | agy) ;;
+    *)
+      echo "Error: unsupported reviewer engine: $configured_agent" >&2
+      return 1
+      ;;
+  esac
+  agent_source=$(review_config_source_for "$agent_path")
+
+  effective_agent="${agent_override:-$configured_agent}"
+  case "$effective_agent" in
+    claude | codex | agy) ;;
+    *)
+      echo "Error: unsupported reviewer engine: $effective_agent" >&2
+      return 1
+      ;;
+  esac
+
+  model_candidate=$(review_config_pick_setting "$use" "$reviewer" "$effective_agent" model)
+  effort_candidate=$(review_config_pick_setting "$use" "$reviewer" "$effective_agent" reasoning_effort)
+  if [[ $(jq -r '.value == null' <<< "$model_candidate") == false ]]; then
+    review_config_validate_string "$model_candidate" "model" || return 1
+    model_source=$(review_config_source_for "$(jq -c '.path' <<< "$model_candidate")")
+  else
+    model_source="$effective_agent CLI default"
+  fi
+  if [[ $(jq -r '.value == null' <<< "$effort_candidate") == false ]]; then
+    review_config_validate_string "$effort_candidate" "reasoning_effort" || return 1
+    effort_source=$(review_config_source_for "$(jq -c '.path' <<< "$effort_candidate")")
+  else
+    effort_source="$effective_agent CLI default"
+  fi
+
+  model_value=$(jq -c '.value // null' <<< "$model_candidate")
+  effort_value=$(jq -c '.value // null' <<< "$effort_candidate")
+  config_overlay=null
+  [[ -z "$review_config_overlay_file" ]] || config_overlay=$(jq -Rn --arg path "$review_config_overlay_file" '$path')
+
+  jq -cn \
+    --arg configured_agent "$configured_agent" \
+    --arg agent "$effective_agent" \
+    --argjson model "$model_value" \
+    --argjson reasoning_effort "$effort_value" \
+    --arg config_base "$review_config_base_file" \
+    --argjson config_overlay "$config_overlay" \
+    --arg agent_source "$agent_source" \
+    --arg model_source "$model_source" \
+    --arg effort_source "$effort_source" \
+    '{
+      configured_agent: $configured_agent,
+      agent: $agent,
+      model: $model,
+      reasoning_effort: $reasoning_effort,
+      config: {base: $config_base, overlay: $config_overlay},
+      sources: {agent: $agent_source, model: $model_source, reasoning_effort: $effort_source}
+    }'
+}

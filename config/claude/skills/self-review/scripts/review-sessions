@@ -21,12 +21,16 @@ configure_review_sessions() {
 }
 
 review_session_id() {
-  local reviewer="$1" reviewer_agent="$2" saved_agent saved_session_id
+  local reviewer="$1" reviewer_agent="$2" model_json="$3" effort_json="$4"
+  local saved_agent saved_session_id saved_model saved_effort
   [[ "$session_resume_enabled" == true ]] || return 0
 
+  jq -e --arg reviewer "$reviewer" '.[$reviewer] | has("model") and has("reasoning_effort")' <<< "$previous_sessions" > /dev/null || return 0
   saved_agent=$(jq -r --arg reviewer "$reviewer" '.[$reviewer].agent // empty' <<< "$previous_sessions")
   saved_session_id=$(jq -r --arg reviewer "$reviewer" '.[$reviewer].session_id // empty' <<< "$previous_sessions")
-  [[ "$saved_agent" == "$reviewer_agent" && -n "$saved_session_id" ]] || return 0
+  saved_model=$(jq -c --arg reviewer "$reviewer" '.[$reviewer].model' <<< "$previous_sessions")
+  saved_effort=$(jq -c --arg reviewer "$reviewer" '.[$reviewer].reasoning_effort' <<< "$previous_sessions")
+  [[ "$saved_agent" == "$reviewer_agent" && "$saved_model" == "$model_json" && "$saved_effort" == "$effort_json" && -n "$saved_session_id" ]] || return 0
 
   printf '%s' "$saved_session_id"
 }
@@ -55,16 +59,16 @@ run_codex_session() {
 }
 
 run_claude_session() {
-  local reviewer="$1" reviewer_dir="$2" resume_session_id="${3:-}"
+  local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}" resume_session_id="${4:-}"
   if [[ -n "$resume_session_id" ]]; then
-    if run_claude "$reviewer_dir" "$resume_session_id" true &&
+    if run_claude "$reviewer_dir" "$resume_session_id" true "$reasoning_effort" &&
       jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$reviewer_dir/result.json" > /dev/null; then
       return 0
     fi
     echo "Warning: Claude could not resume $reviewer; starting a fresh session." >&2
     clear_reviewer_outputs "$reviewer_dir"
   fi
-  run_claude "$reviewer_dir" "" true &&
+  run_claude "$reviewer_dir" "" true "$reasoning_effort" &&
     jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$reviewer_dir/result.json" > /dev/null
 }
 
@@ -80,17 +84,17 @@ run_review_backend() {
       ;;
     claude)
       if [[ "$session_storage_enabled" == true ]]; then
-        run_claude_session "$reviewer" "$reviewer_dir" "$resume_session_id"
+        run_claude_session "$reviewer" "$reviewer_dir" "$reasoning_effort" "$resume_session_id"
       else
-        run_claude "$reviewer_dir"
+        run_claude "$reviewer_dir" "" false "$reasoning_effort"
       fi
       ;;
-    agy) run_agy "$reviewer_dir" ;;
+    agy) run_agy "$reviewer_dir" "$reasoning_effort" ;;
   esac
 }
 
 save_review_sessions() {
-  local manifest_file="$1" work_dir="$2" reviewer reviewer_agent session_id sessions_json session_expires_at
+  local manifest_file="$1" work_dir="$2" reviewer reviewer_agent model_json effort_json session_id sessions_json session_expires_at
   shift 2
   [[ "$session_storage_enabled" == true && -n "$review_head" ]] || return 0
 
@@ -100,6 +104,8 @@ save_review_sessions() {
     case "$reviewer_agent" in
       claude | codex)
         session_id=$(cat "$work_dir/$reviewer/session-id" 2> /dev/null || true)
+        model_json=$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .model' "$manifest_file")
+        effort_json=$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .reasoning_effort' "$manifest_file")
         if [[ -z "$session_id" ]]; then
           echo "Error: reviewer session id is missing: $reviewer" >&2
           return 1
@@ -108,7 +114,9 @@ save_review_sessions() {
           --arg reviewer "$reviewer" \
           --arg agent "$reviewer_agent" \
           --arg session_id "$session_id" \
-          '. + {($reviewer): {agent: $agent, session_id: $session_id}}' <<< "$sessions_json")
+          --argjson model "$model_json" \
+          --argjson reasoning_effort "$effort_json" \
+          '. + {($reviewer): {agent: $agent, model: $model, reasoning_effort: $reasoning_effort, session_id: $session_id}}' <<< "$sessions_json")
         ;;
     esac
   done

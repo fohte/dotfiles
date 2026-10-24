@@ -33,7 +33,10 @@ validate_sessions() {
     all(to_entries[];
       (.key | test("^[A-Za-z0-9_-]+$")) and
       (.value.agent == "claude" or .value.agent == "codex") and
-      (.value.session_id | type == "string" and length > 0)
+      (.value.session_id | type == "string" and length > 0) and
+      (.value | has("model") and has("reasoning_effort")) and
+      (.value.model == null or (.value.model | type == "string" and length > 0)) and
+      (.value.reasoning_effort == null or (.value.reasoning_effort | type == "string" and length > 0))
     )
   ' <<< "$sessions" > /dev/null
 }

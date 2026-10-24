@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2154 # Functions use state initialized by run-external-reviewers.
 initialize_codex_home() {
   mkdir -p "$shared_codex_home"
 
@@ -58,11 +60,13 @@ run_codex() {
 # also wraps the schema-checked result in `.structured_output` rather than
 # writing it as the whole message, unlike `codex --output-schema`.
 run_agy() {
-  local reviewer_dir="$1"
+  local reviewer_dir="$1" reasoning_effort="${2:-}" effort_args=()
+  [[ -n "$reasoning_effort" ]] && effort_args=(--effort "$reasoning_effort")
   agy \
     --sandbox \
     --add-dir "$repo_root" \
     "${model_args[@]+"${model_args[@]}"}" \
+    "${effort_args[@]+"${effort_args[@]}"}" \
     --output-format json \
     --json-schema "$schema_file" \
     --print="$(cat "$reviewer_dir/prompt.txt")" \
@@ -121,10 +125,11 @@ git_global_read_paths() {
 # `$schema` meta-schema reference the other two accept, and fails the whole run
 # on it, so that key is dropped on the way in rather than removed from the file.
 run_claude() {
-  local reviewer_dir="$1" resume_session_id="${2:-}" persist_session="${3:-false}"
-  local git_read_paths_json session_args=() session_id status=0
+  local reviewer_dir="$1" resume_session_id="${2:-}" persist_session="${3:-false}" reasoning_effort="${4:-}"
+  local git_read_paths_json session_args=() effort_args=() session_id status=0
   mkdir -p "$reviewer_dir/scratch"
   [[ -n "$resume_session_id" ]] && session_args=(--resume "$resume_session_id")
+  [[ -n "$reasoning_effort" ]] && effort_args=(--effort "$reasoning_effort")
 
   git_read_paths_json=$(git_global_read_paths)
 
@@ -165,6 +170,7 @@ run_claude() {
     --safe-mode \
     --strict-mcp-config \
     "${model_args[@]+"${model_args[@]}"}" \
+    "${effort_args[@]+"${effort_args[@]}"}" \
     --tools Bash,Read,Grep,Glob \
     --settings "$reviewer_dir/settings.json" \
     --output-format json \

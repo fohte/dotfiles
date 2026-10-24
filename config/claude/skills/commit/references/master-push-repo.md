@@ -38,6 +38,8 @@ EOF
 
 ## コミット前レビュー
 
+必須 reviewer が同じ engine で 1 回 retry した後も未評価、または結果が `invalid` / `partial` / `empty` の場合は、指摘がない扱いにせずコミットへ進まない。
+
 `git commit` の前に、ステージング済みの差分を `self-review` skill でレビューする。
 skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、12 観点の統合レポートを返す。
 **レビューは 1 コミットにつき 1 回だけ実行する**。
@@ -72,6 +74,8 @@ git diff --cached
 このレビューは `commit` skill の責務。
 
 ## push 前レビュー
+
+必須 reviewer が同じ engine で 1 回 retry した後も未評価、または結果が `invalid` / `partial` / `empty` の場合は、`push` を実行しない。
 
 **新規に実装をコミットする場合はこのセクションではなく上記「コミット前レビュー」を使う。**
 このセクションは、既に作成済みの未 push コミットをそのまま push する場合 (例: `create-pr` skill からの呼び出し、前セッションからの持ち越し) に使う。

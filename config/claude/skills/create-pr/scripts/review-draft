@@ -7,6 +7,9 @@
 set -euo pipefail
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+self_review_dir=$(cd "$script_dir/../../self-review" && pwd -P)
+config_script_dir="$self_review_dir/scripts"
+reviewers_file="$self_review_dir/reviewers.yaml"
 
 # Assign first: a failure inside `$(...)` used as an argument would not trip `set -e`.
 draft=$("$script_dir/draft-path")
@@ -20,10 +23,14 @@ title=$(yq --front-matter=extract -r '.title' "$draft")
 # The frontmatter also holds the review steps, which are not part of the PR.
 body=$(sed '1,/^---$/d' "$draft")
 diff=$(git diff "origin/$base...HEAD")
+[[ -n "$title" && -n "$body" && -n "$diff" ]] || {
+  echo "Error: title, body, and diff must all be non-empty." >&2
+  exit 1
+}
 
 prompt=$(
   cat << EOF
-あなたはこの Pull Request のレビュアーです。以下の title と body、base branch との diff だけを読み、次の 2 点に自由回答で答えてください。
+あなたはこの Pull Request のレビュアーです。以下の title と body、base branch との diff だけを読み、次の 2 点に自由回答で答えてください。回答には必ず \`## 1.\` と \`## 2.\` をそれぞれ単独行の見出しとして使い、次の行から空でない回答を書いてください。
 
 1. body の冒頭の節 (Purpose や Why など) に書かれた困りごとが、続く節 (Approach や What など) の変更でなぜ解消されるのかを、body の記述だけから説明できますか。説明できるなら、その説明を書いてください。diff を読まないと説明できない、または説明できないなら、body に何が欠けているかを書いてください
 2. レビューの判断に不要な行や引用、別の行とまとめて 1 行にできる行 (同じ変更の言い換え、補足、帰結) はありますか。あれば該当箇所を引用し、なぜ不要か、どうまとめられるかを書いてください
@@ -48,9 +55,77 @@ $diff
 EOF
 )
 
-# No tools, so the reviewer reads nothing beyond the prompt; safe mode keeps the
-# user's CLAUDE.md and hooks out of its context.
-work_dir=$(mktemp -d -t review-draft.XXXXXX)
-trap 'rm -rf "$work_dir"' EXIT
-cd "$work_dir"
-claude --print --model haiku --safe-mode --strict-mcp-config --tools "" <<< "$prompt"
+[[ -n "${AGENT_TMPDIR:-}" && -d "$AGENT_TMPDIR" ]] || {
+  echo "Error: AGENT_TMPDIR must point to a session-specific temporary directory." >&2
+  exit 2
+}
+temp_root=$(cd "$AGENT_TMPDIR" && pwd -P)
+work_dir=$(mktemp -d "$temp_root/review-draft.XXXXXX")
+trap 'rm -r "$work_dir"' EXIT
+empty_cwd="$work_dir/cwd"
+mkdir "$empty_cwd"
+prompt_file="$work_dir/prompt.txt"
+result_file="$work_dir/result.txt"
+printf '%s\n' "$prompt" > "$prompt_file"
+original_codex_home=${CODEX_HOME:-"$HOME/.codex"}
+case "$original_codex_home" in
+  /*) ;;
+  *) original_codex_home="$(pwd -P)/$original_codex_home" ;;
+esac
+
+# shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
+source "$config_script_dir/review-config"
+load_review_config "$reviewers_file" "$work_dir"
+engine_config=$(resolve_review_engine review_draft)
+agent=$(jq -r '.agent' <<< "$engine_config")
+model=$(jq -r '.model // empty' <<< "$engine_config")
+reasoning_effort=$(jq -r '.reasoning_effort // empty' <<< "$engine_config")
+cd "$empty_cwd"
+
+printf 'Draft review: engine=%s (configured=%s; source=%s), model=%s (source=%s), effort=%s (source=%s)\n' \
+  "$agent" \
+  "$(jq -r '.configured_agent' <<< "$engine_config")" \
+  "$(jq -r '.sources.agent' <<< "$engine_config")" \
+  "${model:-CLI default}" \
+  "$(jq -r '.sources.model' <<< "$engine_config")" \
+  "${reasoning_effort:-CLI default}" \
+  "$(jq -r '.sources.reasoning_effort' <<< "$engine_config")" >&2
+
+case "$agent" in
+  claude)
+    model_args=()
+    effort_args=()
+    [[ -n "$model" ]] && model_args=(--model "$model")
+    [[ -n "$reasoning_effort" ]] && effort_args=(--effort "$reasoning_effort")
+    if ! claude --print --safe-mode --setting-sources "" --strict-mcp-config --tools "" \
+      "${model_args[@]+"${model_args[@]}"}" "${effort_args[@]+"${effort_args[@]}"}" \
+      < "$prompt_file" > "$result_file" 2> "$work_dir/stderr.log"; then
+      cat "$work_dir/stderr.log" >&2
+      echo "Error: draft reviewer failed on the Claude engine." >&2
+      exit 3
+    fi
+    ;;
+  codex)
+    "$script_dir/review-draft-codex" "$model" "$reasoning_effort" "$prompt_file" "$result_file" "$work_dir" "$original_codex_home" || {
+      echo "Error: draft reviewer failed on the isolated Codex engine." >&2
+      exit 3
+    }
+    ;;
+  *)
+    echo "Error: review-draft does not support the configured engine: $agent" >&2
+    exit 2
+    ;;
+esac
+
+if [[ ! -s "$result_file" ]] || ! awk '
+  /^(#+[[:space:]]*)?1[.、)]([[:space:]]|$)/ { if (one || two) invalid = 1; one = 1; section = 1; next }
+  /^(#+[[:space:]]*)?2[.、)]([[:space:]]|$)/ { if (!one || two) invalid = 1; two = 1; section = 2; next }
+  section == 1 && NF { one_answer = 1 }
+  section == 2 && NF { two_answer = 1 }
+  END { exit !(one && two && one_answer && two_answer && !invalid) }
+' "$result_file"; then
+  echo "Error: draft reviewer returned an empty or incomplete answer." >&2
+  exit 3
+fi
+
+cat "$result_file"

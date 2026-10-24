@@ -46,6 +46,8 @@ create-pr skill を起動したら、**最初の応答で**適用される必須
 
 ## 0. push と diff の crit レビュー (必須)
 
+必須 reviewer が同じ engine で 1 回 retry した後も未評価、または結果が `invalid` / `partial` / `empty` の場合は、`push` / draft 作成 / `submit` のいずれにも進まない。
+
 未 push のコミットがあれば `commit` skill の push 手順 (`self-review` skill でのレビュー → 🔴/🟡 対応 → `git push`) に従って push する。
 `vibe_mode` では `crit-approval-review` を実行しない。push と commit skill の self-review は通常どおり行う。
 `self-review` はこの skill から直接呼び出さない。呼び出しは `commit` skill 側の責務とし、二重実行を避ける。

@@ -35,6 +35,30 @@ fi
   exit 2
 }
 
+jq -e '
+  (.reviewers | type == "array" and length > 0) and
+  ([.reviewers[].name] | unique | length) == (.reviewers | length) and
+  all(.reviewers[];
+    (.name | type == "string" and length > 0) and
+    (.configured_agent == "claude" or .configured_agent == "codex" or .configured_agent == "agy") and
+    (.agent == "claude" or .agent == "codex" or .agent == "agy") and
+    (.model == null or (.model | type == "string" and length > 0)) and
+    (.reasoning_effort == null or (.reasoning_effort | type == "string" and length > 0)) and
+    (.config.config.base | type == "string" and length > 0) and
+    (.config.config.overlay == null or (.config.config.overlay | type == "string" and length > 0)) and
+    (.config.configured_agent == .configured_agent) and
+    (.config.agent == .agent) and
+    (.config.model == .model) and
+    (.config.reasoning_effort == .reasoning_effort) and
+    (.config.sources.agent | type == "string" and length > 0) and
+    (.config.sources.model | type == "string" and length > 0) and
+    (.config.sources.reasoning_effort | type == "string" and length > 0)
+  )
+' "$manifest_file" > /dev/null || {
+  echo "Error: manifest has missing or invalid reviewer configuration." >&2
+  exit 2
+}
+
 # Reject an unknown agent, or one whose executable is missing, before any
 # reviewer is spawned; the dispatch below would otherwise surface it as N
 # background reviewers that simply failed.
@@ -256,11 +280,26 @@ for reviewer in "${selected[@]}"; do
   build_prompt "$reviewer" "$reviewer_dir/prompt.txt" "$reviewer_agent"
   [[ "$reviewer_agent" == codex ]] && codex_used=true
 
-  # select-reviewers already resolved agent + model from reviewers.yaml and its
-  # role overlay, so this script never reads reviewers.yaml directly.
-  model=$(jq -r --arg agent "$reviewer_agent" '.agents[$agent].model // empty' "$manifest_file")
-  reasoning_effort=$(jq -r --arg agent "$reviewer_agent" '.agents[$agent].reasoning_effort // empty' "$manifest_file")
-  resume_session_id=$(review_session_id "$reviewer" "$reviewer_agent")
+  # select-reviewers resolved the effective settings into the manifest so retries
+  # and resumed sessions use the same engine, model, effort, and config source.
+  model=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .model // empty' "$manifest_file")
+  model_json=$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .model' "$manifest_file")
+  reasoning_effort=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .reasoning_effort // empty' "$manifest_file")
+  reasoning_effort_json=$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .reasoning_effort' "$manifest_file")
+  reviewer_config=$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | {config, configured_agent, agent, model, reasoning_effort, fallback_reason}' "$manifest_file")
+  resume_session_id=$(review_session_id "$reviewer" "$reviewer_agent" "$model_json" "$reasoning_effort_json")
+
+  printf 'Reviewer %s: engine=%s (configured=%s; source=%s), model=%s (source=%s), effort=%s (source=%s)\n' \
+    "$reviewer" \
+    "$reviewer_agent" \
+    "$(jq -r '.configured_agent' <<< "$reviewer_config")" \
+    "$(jq -r '.config.sources.agent' <<< "$reviewer_config")" \
+    "${model:-CLI default}" \
+    "$(jq -r '.config.sources.model' <<< "$reviewer_config")" \
+    "${reasoning_effort:-CLI default}" \
+    "$(jq -r '.config.sources.reasoning_effort' <<< "$reviewer_config")" >&2
+  fallback_reason=$(jq -r '.fallback_reason // empty' <<< "$reviewer_config")
+  [[ -z "$fallback_reason" ]] || printf 'Reviewer %s fallback: %s\n' "$reviewer" "$fallback_reason" >&2
 
   # None of the agents require a model: an unset one just means "use the CLI's
   # own default" (checked once here so run_codex/run_agy/run_claude don't
@@ -303,11 +342,45 @@ result_files=()
 for reviewer in "${selected[@]}"; do
   result_file="$work_dir/$reviewer/result.json"
   [[ -f "$result_file" ]] || continue
-  jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$result_file" > /dev/null || {
+  expected_evaluations=0
+  case "$reviewer" in
+    behavior) expected_evaluations=5 ;;
+    structure) expected_evaluations=4 ;;
+    convention) expected_evaluations=3 ;;
+    test-philosophy) expected_evaluations=2 ;;
+  esac
+  jq -e --arg reviewer "$reviewer" --argjson expected_evaluations "$expected_evaluations" '
+    type == "object" and
+    (keys == ["evaluations", "findings", "reviewer"]) and
+    .reviewer == $reviewer and
+    (.evaluations | type == "array" and length > 0) and
+    ($expected_evaluations == 0 or (.evaluations | length == $expected_evaluations)) and
+    ([.evaluations[].id] | unique | length) == (.evaluations | length) and
+    all(.evaluations[];
+      (keys == ["id", "status", "summary"]) and
+      (.id | type == "string" and test("\\S")) and
+      (.status == "pass" or .status == "not-applicable" or .status == "critical" or .status == "warning") and
+      (.summary | type == "string" and test("\\S"))
+    ) and
+    (.findings | type == "array") and
+    all(.findings[];
+      (keys == ["evidence", "file", "id", "line", "severity", "suggestion", "title"]) and
+      (.id | type == "string" and test("\\S")) and
+      (.severity == "critical" or .severity == "warning") and
+      (.title | type == "string" and test("\\S")) and
+      (.file | type == "string" and test("\\S")) and
+      (.line | type == "number" and . >= 1 and floor == .) and
+      (.evidence | type == "string" and test("\\S")) and
+      (.suggestion | type == "string" and test("\\S"))
+    )
+  ' "$result_file" > /dev/null || {
     echo "Error: invalid reviewer result: $reviewer" >&2
     failed=true
     continue
   }
+  jq --argjson execution "$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | {configured_agent, agent, model, reasoning_effort, config, fallback_reason}' "$manifest_file")" \
+    '. + {execution: $execution}' "$result_file" > "$work_dir/$reviewer/result.with-execution.json"
+  mv "$work_dir/$reviewer/result.with-execution.json" "$result_file"
   result_files+=("$result_file")
 done
 

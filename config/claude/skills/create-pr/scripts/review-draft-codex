@@ -1,0 +1,309 @@
+#!/bin/bash
+set -euo pipefail
+
+if [[ $# -ne 6 ]]; then
+  echo "Usage: review-draft-codex <model> <reasoning_effort> <prompt_file> <result_file> <work_dir> <codex_home_source>" >&2
+  exit 2
+fi
+
+model="$1"
+reasoning_effort="$2"
+prompt_file="$3"
+result_file="$4"
+work_dir="$5"
+codex_home_source="$6"
+
+[[ -n "$model" ]] || {
+  echo "Error: Codex draft review requires an explicit configured model." >&2
+  exit 3
+}
+[[ -s "$prompt_file" ]] || {
+  echo "Error: Codex draft review prompt is empty." >&2
+  exit 3
+}
+
+[[ "$(uname -s)" == "Darwin" ]] || {
+  echo "Error: tool-free Codex draft review is verified only with the macOS sandbox." >&2
+  exit 3
+}
+
+for required_command in codex jq lsof rg sandbox-exec; do
+  command -v "$required_command" > /dev/null || {
+    echo "Error: required command not found: $required_command" >&2
+    exit 3
+  }
+done
+
+codex_path=$(command -v codex)
+codex_version=$("$codex_path" --version)
+[[ "$codex_version" == "codex-cli 0.163.0" ]] || {
+  echo "Error: tool-free Codex draft review is verified only with codex-cli 0.163.0 (found: $codex_version)." >&2
+  exit 3
+}
+
+auth_file="$codex_home_source/auth.json"
+[[ -s "$auth_file" ]] || {
+  echo "Error: isolated Codex draft review requires file-based Codex credentials." >&2
+  exit 3
+}
+
+isolated_home="$work_dir/home"
+probe_home="$work_dir/probe-home"
+isolated_codex_home="$work_dir/codex-home"
+probe_codex_home="$work_dir/probe-codex-home"
+isolated_tmp="$work_dir/tmp"
+empty_cwd="$work_dir/codex-cwd"
+bundled_catalog="$work_dir/bundled-models.json"
+model_catalog="$work_dir/model-catalog.json"
+stderr_file="$work_dir/codex-stderr.log"
+probe_stderr_file="$work_dir/probe-stderr.log"
+probe_stdout_file="$work_dir/probe-stdout.log"
+probe_prompt_file="$work_dir/probe-prompt.txt"
+probe_requests_file="$work_dir/probe-requests.jsonl"
+catalog_config=$(jq -Rn --arg path "$model_catalog" '$path')
+mkdir -p "$isolated_home" "$probe_home" "$isolated_codex_home" \
+  "$probe_codex_home" "$isolated_tmp" "$empty_cwd"
+
+base_env_args=(
+  env -i
+  "PATH=${PATH:-/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin}"
+  "TMPDIR=$isolated_tmp"
+  "TERM=${TERM:-dumb}"
+)
+[[ -z "${SSL_CERT_FILE:-}" ]] || base_env_args+=("SSL_CERT_FILE=$SSL_CERT_FILE")
+[[ -z "${SSL_CERT_DIR:-}" ]] || base_env_args+=("SSL_CERT_DIR=$SSL_CERT_DIR")
+
+probe_env_args=(
+  "${base_env_args[@]}"
+  "HOME=$probe_home"
+  "CODEX_HOME=$probe_codex_home"
+  "XDG_CONFIG_HOME=$probe_home/.config"
+  "XDG_CACHE_HOME=$probe_home/.cache"
+  "XDG_DATA_HOME=$probe_home/.local/share"
+  "NO_PROXY=*"
+  "no_proxy=*"
+  "OPENAI_API_KEY=fake-capture-key"
+  "RUST_LOG=codex_http_client::transport=trace"
+)
+actual_env_args=(
+  "${base_env_args[@]}"
+  "HOME=$isolated_home"
+  "CODEX_HOME=$isolated_codex_home"
+  "XDG_CONFIG_HOME=$isolated_home/.config"
+  "XDG_CACHE_HOME=$isolated_home/.cache"
+  "XDG_DATA_HOME=$isolated_home/.local/share"
+)
+for proxy_name in HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy; do
+  if [[ -n "${!proxy_name:-}" ]]; then
+    actual_env_args+=("$proxy_name=${!proxy_name}")
+  fi
+done
+
+"${probe_env_args[@]}" "$codex_path" debug models --bundled > "$bundled_catalog"
+source_metadata=$(jq -ce --arg model "$model" '
+  [.models[] | select(.slug == $model)] as $matches
+  | if ($matches | length) != 1 then error("configured model is missing or duplicated in the bundled catalog")
+    else $matches[0] | [.tool_mode, .multi_agent_version, .experimental_supported_tools, .apply_patch_tool_type]
+    end
+' "$bundled_catalog") || {
+  echo "Error: unable to inspect the configured Codex model metadata." >&2
+  exit 3
+}
+[[ "$source_metadata" == '["code_mode_only","v2",["send_user_message_async","clock"],"freeform"]' ]] || {
+  echo "Error: Codex model tool metadata differs from the verified catalog shape." >&2
+  exit 3
+}
+
+# Codex registers model-metadata tools outside its feature gates, so the
+# isolated request must remove those registrations before the CLI starts.
+jq --arg model "$model" '
+  .models |= map(
+    if .slug == $model then
+      .tool_mode = "direct"
+      | .multi_agent_version = "disabled"
+      | .experimental_supported_tools = []
+      | .apply_patch_tool_type = null
+    else .
+    end
+  )
+' "$bundled_catalog" > "$model_catalog"
+
+jq -e --arg model "$model" --slurpfile bundled "$bundled_catalog" '
+  (.models[] | select(.slug == $model)) as $modified
+  | ($bundled[0].models[] | select(.slug == $model)) as $original
+  | ($modified | del(.tool_mode, .multi_agent_version, .experimental_supported_tools, .apply_patch_tool_type))
+    ==
+    ($original | del(.tool_mode, .multi_agent_version, .experimental_supported_tools, .apply_patch_tool_type))
+' "$model_catalog" > /dev/null || {
+  echo "Error: Codex model catalog override changed fields outside the tool registrations." >&2
+  exit 3
+}
+
+config_args=(
+  --config "model_catalog_json=$catalog_config"
+  --config 'cli_auth_credentials_store="file"'
+  --config 'approval_policy="never"'
+  --config 'check_for_update_on_startup=false'
+  --config 'web_search="disabled"'
+  --config 'include_permissions_instructions=false'
+  --config 'include_apps_instructions=false'
+  --config 'include_collaboration_mode_instructions=false'
+  --config 'include_environment_context=false'
+  --config 'include_environment_context_time=false'
+  --config 'agents.enabled=false'
+  --config 'skills.include_instructions=false'
+  --config 'skills.bundled.enabled=false'
+  --config 'tools.update_plan.enabled=false'
+  --config 'tools.experimental_request_user_input.enabled=false'
+  --config 'features.shell_tool=false'
+  --config 'features.unified_exec=false'
+  --config 'features.unified_exec_tty=false'
+  --config 'features.view_image=false'
+  --config 'features.sleep_tool=false'
+  --config 'features.code_mode=false'
+  --config 'features.code_mode_host=false'
+  --config 'features.code_mode_interrupt=false'
+  --config 'features.hooks=false'
+  --config 'features.multi_agent=false'
+  --config 'features.multi_agent_v2=false'
+  --config 'features.apps=false'
+  --config 'features.plugins=false'
+  --config 'features.memories=false'
+  --config 'features.goals=false'
+  --config 'features.tool_suggest=false'
+  --config 'features.web_search_cached=false'
+  --config 'features.web_search_request=false'
+  --config 'features.skip_host_skill_discovery=true'
+  --config 'features.unbounded_connection_retries=false'
+)
+if [[ -n "$reasoning_effort" ]]; then
+  effort_config=$(jq -Rn --arg effort "$reasoning_effort" '$effort')
+  config_args+=(--config "model_reasoning_effort=$effort_config")
+fi
+
+codex_exec_args=(
+  exec
+  --ephemeral
+  --ignore-user-config
+  --ignore-rules
+  --strict-config
+  --skip-git-repo-check
+  --sandbox read-only
+  --color never
+  -C "$empty_cwd"
+  --model "$model"
+)
+
+if lsof -nP -iTCP:65534 -sTCP:LISTEN > /dev/null 2>&1; then
+  echo "Error: Codex request-capture port 65534 already has a listener." >&2
+  exit 3
+else
+  lsof_status=$?
+  if [[ "$lsof_status" -ne 1 ]]; then
+    echo "Error: unable to verify the Codex request-capture port." >&2
+    exit 3
+  fi
+fi
+
+cat > "$probe_prompt_file" << 'EOF'
+Review this fabricated pull request material and return one sentence.
+
+<title>Clarify sample-module output</title>
+<body>The sample module should explain why its output changes.</body>
+<diff>
+diff --git a/sample-module.txt b/sample-module.txt
+--- a/sample-module.txt
++++ b/sample-module.txt
+@@ -1 +1 @@
+-Output: ready
++Output: ready after validation
+</diff>
+EOF
+
+probe_config_args=(
+  --config 'model_provider="local_probe"'
+  --config 'model_providers.local_probe.name="Local Probe"'
+  --config 'model_providers.local_probe.base_url="http://127.0.0.1:65534/v1"'
+  --config 'model_providers.local_probe.wire_api="responses"'
+  --config 'model_providers.local_probe.env_key="OPENAI_API_KEY"'
+  --config 'model_providers.local_probe.requires_openai_auth=false'
+  --config 'model_providers.local_probe.request_max_retries=0'
+  --config 'model_providers.local_probe.stream_max_retries=0'
+)
+sandbox_profile='(version 1) (allow default) (deny network-outbound) (allow network-outbound (remote ip "localhost:65534")) (deny network-inbound)'
+if sandbox-exec -p "$sandbox_profile" \
+  "${probe_env_args[@]}" "$codex_path" "${codex_exec_args[@]}" \
+  "${config_args[@]}" "${probe_config_args[@]}" - \
+  < "$probe_prompt_file" > "$probe_stdout_file" 2> "$probe_stderr_file"; then
+  echo "Error: Codex request-capture probe unexpectedly received a response." >&2
+  exit 3
+else
+  probe_status=$?
+fi
+
+extract_requests() {
+  local log_file="$1" output_file="$2" line url payload
+  : > "$output_file"
+  while IFS= read -r line; do
+    [[ "$line" == *"TRACE codex_http_client::transport: POST to "* ]] || continue
+    payload="${line#*TRACE codex_http_client::transport: POST to }"
+    url="${payload%%: *}"
+    [[ "$url" == "http://127.0.0.1:65534/v1/responses" ]] || return 1
+    payload="${payload#*: }"
+    jq -e 'type == "object"' <<< "$payload" > /dev/null || return 1
+    printf '%s\n' "$payload" >> "$output_file"
+  done < "$log_file"
+}
+
+assert_tool_free_request() {
+  local requests_file="$1" expected_prompt_file="$2" require_single="$3"
+  jq -s -e \
+    --arg model "$model" \
+    --arg effort "$reasoning_effort" \
+    --argjson require_single "$require_single" \
+    --rawfile prompt "$expected_prompt_file" \
+    --slurpfile catalog "$bundled_catalog" '
+      def valid_message($role):
+        type == "object"
+        and (keys == ["content", "id", "role", "type"])
+        and .type == "message"
+        and .role == $role
+        and (.content | type == "array" and length == 1)
+        and (.content[0] | type == "object" and keys == ["text", "type"])
+        and .content[0].type == "input_text"
+        and (.content[0].text | type == "string");
+      def valid_request($request):
+        ($request | type == "object")
+        and ($request | keys == ["client_metadata", "include", "input", "model", "parallel_tool_calls", "prompt_cache_key", "reasoning", "store", "stream", "text", "tool_choice"])
+        and $request.model == $model
+        and $request.store == false
+        and $request.tool_choice == "auto"
+        and $request.parallel_tool_calls == false
+        and ($request.input | length == 2)
+        and ($request.input[0] | valid_message("developer"))
+        and $request.input[0].content[0].text == ($catalog[0].models[] | select(.slug == $model) | .base_instructions)
+        and ($request.input[1] | valid_message("user"))
+        and $request.input[1].content[0].text == $prompt
+        and ($effort == "" or $request.reasoning.effort == $effort);
+      (if $require_single then length == 1 else length > 0 end)
+      and all(.[]; valid_request(.))
+    ' "$requests_file" > /dev/null
+}
+
+if [[ "$probe_status" -eq 0 ]] || [[ -s "$probe_stdout_file" ]] ||
+  ! rg -q 'Connection failed:' "$probe_stderr_file" ||
+  ! extract_requests "$probe_stderr_file" "$probe_requests_file" ||
+  [[ $(wc -l < "$probe_requests_file" | tr -d ' ') -ne 1 ]] ||
+  ! assert_tool_free_request "$probe_requests_file" "$probe_prompt_file" true; then
+  echo "Error: Codex request-capture probe could not verify a tool-free context." >&2
+  exit 3
+fi
+
+cp "$auth_file" "$isolated_codex_home/auth.json"
+chmod 600 "$isolated_codex_home/auth.json"
+if ! "${actual_env_args[@]}" "$codex_path" "${codex_exec_args[@]}" \
+  "${config_args[@]}" - < "$prompt_file" > "$result_file" 2> "$stderr_file"; then
+  awk '/^(ERROR:|Error:)/ { print }' "$stderr_file" >&2
+  echo "Error: Codex draft reviewer failed." >&2
+  exit 3
+fi
