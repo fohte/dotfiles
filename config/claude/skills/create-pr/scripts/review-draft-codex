@@ -22,12 +22,21 @@ codex_home_source="$6"
   exit 3
 }
 
-[[ "$(uname -s)" == "Darwin" ]] || {
-  echo "Error: tool-free Codex draft review is verified only with the macOS sandbox." >&2
-  exit 3
-}
+host_os=$(uname -s)
+case "$host_os" in
+  Darwin)
+    required_commands=(codex jq lsof rg sandbox-exec)
+    ;;
+  Linux)
+    required_commands=(codex jq rg ss)
+    ;;
+  *)
+    echo "Error: tool-free Codex draft review is unsupported on $host_os." >&2
+    exit 3
+    ;;
+esac
 
-for required_command in codex jq lsof rg sandbox-exec; do
+for required_command in "${required_commands[@]}"; do
   command -v "$required_command" > /dev/null || {
     echo "Error: required command not found: $required_command" >&2
     exit 3
@@ -56,6 +65,7 @@ empty_cwd="$work_dir/codex-cwd"
 bundled_catalog="$work_dir/bundled-models.json"
 model_catalog="$work_dir/model-catalog.json"
 stderr_file="$work_dir/codex-stderr.log"
+events_file="$work_dir/codex-events.jsonl"
 probe_stderr_file="$work_dir/probe-stderr.log"
 probe_stdout_file="$work_dir/probe-stdout.log"
 probe_prompt_file="$work_dir/probe-prompt.txt"
@@ -171,9 +181,6 @@ config_args=(
   --config 'features.memories=false'
   --config 'features.goals=false'
   --config 'features.tool_suggest=false'
-  --config 'features.web_search_cached=false'
-  --config 'features.web_search_request=false'
-  --config 'features.skip_host_skill_discovery=true'
   --config 'features.unbounded_connection_retries=false'
 )
 if [[ -n "$reasoning_effort" ]]; then
@@ -194,16 +201,30 @@ codex_exec_args=(
   --model "$model"
 )
 
-if lsof -nP -iTCP:65534 -sTCP:LISTEN > /dev/null 2>&1; then
-  echo "Error: Codex request-capture port 65534 already has a listener." >&2
-  exit 3
-else
-  lsof_status=$?
-  if [[ "$lsof_status" -ne 1 ]]; then
-    echo "Error: unable to verify the Codex request-capture port." >&2
-    exit 3
-  fi
-fi
+case "$host_os" in
+  Darwin)
+    if lsof -nP -iTCP:65534 -sTCP:LISTEN > /dev/null 2>&1; then
+      echo "Error: Codex request-capture port 65534 already has a listener." >&2
+      exit 3
+    else
+      lsof_status=$?
+      if [[ "$lsof_status" -ne 1 ]]; then
+        echo "Error: unable to verify the Codex request-capture port." >&2
+        exit 3
+      fi
+    fi
+    ;;
+  Linux)
+    if ! listener_output=$(ss -H -ltn 'sport = :65534'); then
+      echo "Error: unable to verify the Codex request-capture port." >&2
+      exit 3
+    fi
+    if [[ -n "$listener_output" ]]; then
+      echo "Error: Codex request-capture port 65534 already has a listener." >&2
+      exit 3
+    fi
+    ;;
+esac
 
 cat > "$probe_prompt_file" << 'EOF'
 Review this fabricated pull request material and return one sentence.
@@ -230,11 +251,29 @@ probe_config_args=(
   --config 'model_providers.local_probe.request_max_retries=0'
   --config 'model_providers.local_probe.stream_max_retries=0'
 )
-sandbox_profile='(version 1) (allow default) (deny network-outbound) (allow network-outbound (remote ip "localhost:65534")) (deny network-inbound)'
-if sandbox-exec -p "$sandbox_profile" \
-  "${probe_env_args[@]}" "$codex_path" "${codex_exec_args[@]}" \
-  "${config_args[@]}" "${probe_config_args[@]}" - \
-  < "$probe_prompt_file" > "$probe_stdout_file" 2> "$probe_stderr_file"; then
+run_probe() {
+  case "$host_os" in
+    Darwin)
+      local sandbox_profile
+      sandbox_profile='(version 1) (allow default) (deny network-outbound) (allow network-outbound (remote ip "localhost:65534")) (deny network-inbound)'
+      sandbox-exec -p "$sandbox_profile" \
+        "${probe_env_args[@]}" "$codex_path" "${codex_exec_args[@]}" \
+        "${config_args[@]}" "${probe_config_args[@]}" - \
+        < "$probe_prompt_file" > "$probe_stdout_file" 2> "$probe_stderr_file"
+      ;;
+    Linux)
+      "${probe_env_args[@]}" "$codex_path" \
+        -c permissions.review_probe.filesystem.:root=write \
+        -c permissions.review_probe.network.enabled=false \
+        sandbox -P review_probe -- \
+        "${probe_env_args[@]}" "$codex_path" "${codex_exec_args[@]}" \
+        "${config_args[@]}" "${probe_config_args[@]}" - \
+        < "$probe_prompt_file" > "$probe_stdout_file" 2> "$probe_stderr_file"
+      ;;
+  esac
+}
+
+if run_probe; then
   echo "Error: Codex request-capture probe unexpectedly received a response." >&2
   exit 3
 else
@@ -260,6 +299,7 @@ assert_tool_free_request() {
   jq -s -e \
     --arg model "$model" \
     --arg effort "$reasoning_effort" \
+    --arg host_os "$host_os" \
     --argjson require_single "$require_single" \
     --rawfile prompt "$expected_prompt_file" \
     --slurpfile catalog "$bundled_catalog" '
@@ -272,13 +312,35 @@ assert_tool_free_request() {
         and (.content[0] | type == "object" and keys == ["text", "type"])
         and .content[0].type == "input_text"
         and (.content[0].text | type == "string");
+      def valid_client_metadata:
+        type == "object"
+        and all(to_entries[];
+          (.key | IN("root_turn_id", "session_id", "thread_id", "turn_id", "x-codex-installation-id", "x-codex-turn-metadata", "x-codex-window-id"))
+          and (.value | type == "string")
+        );
       def valid_request($request):
-        ($request | type == "object")
+        ($request.client_metadata["x-codex-turn-metadata"] | try fromjson catch null) as $turn
+        | ($request | type == "object")
         and ($request | keys == ["client_metadata", "include", "input", "model", "parallel_tool_calls", "prompt_cache_key", "reasoning", "store", "stream", "text", "tool_choice"])
         and $request.model == $model
         and $request.store == false
         and $request.tool_choice == "auto"
         and $request.parallel_tool_calls == false
+        and $request.stream == true
+        and ($request.client_metadata | valid_client_metadata)
+        and ($turn | type == "object")
+        and ($turn | keys == ["agent_name", "analytics_enabled", "auto_review_enabled", "context_window_id", "history_initialization", "installation_id", "model", "node_repl_auto_review_required", "node_repl_disabled", "reasoning_effort", "request_kind", "root_turn_id", "sandbox", "sandbox_mode", "session_id", "thread_id", "thread_source", "turn_id", "turn_started_at_unix_ms", "turn_trigger", "window_id", "window_number"])
+        and $turn.model == $model
+        and ($effort == "" or $turn.reasoning_effort == $effort)
+        and $turn.request_kind == "turn"
+        and $turn.sandbox == (if $host_os == "Linux" then "seccomp" else "seatbelt" end)
+        and $turn.sandbox_mode == "read-only"
+        and ($request.prompt_cache_key | type == "string" and test("\\S"))
+        and $request.include == ["reasoning.encrypted_content"]
+        and $request.text == {verbosity: "low"}
+        and ($request.reasoning | type == "object" and keys == ["context", "effort"])
+        and $request.reasoning.context == "all_turns"
+        and ($request.reasoning.effort | type == "string" and test("\\S"))
         and ($request.input | length == 2)
         and ($request.input[0] | valid_message("developer"))
         and $request.input[0].content[0].text == ($catalog[0].models[] | select(.slug == $model) | .base_instructions)
@@ -302,8 +364,43 @@ fi
 cp "$auth_file" "$isolated_codex_home/auth.json"
 chmod 600 "$isolated_codex_home/auth.json"
 if ! "${actual_env_args[@]}" "$codex_path" "${codex_exec_args[@]}" \
-  "${config_args[@]}" - < "$prompt_file" > "$result_file" 2> "$stderr_file"; then
+  "${config_args[@]}" --json - < "$prompt_file" > "$events_file" 2> "$stderr_file"; then
   awk '/^(ERROR:|Error:)/ { print }' "$stderr_file" >&2
   echo "Error: Codex draft reviewer failed." >&2
   exit 3
 fi
+
+output_bytes=$(wc -c < "$events_file" | tr -d '[:space:]')
+[[ "$output_bytes" -le 1048576 ]] || {
+  echo "Error: Codex draft reviewer output exceeded the size limit." >&2
+  exit 3
+}
+
+if ! jq -s -e '
+  [to_entries[] | select(.value.type == "turn.started") | .key] as $starts
+  | [to_entries[] | select(.value.type == "item.completed" and .value.item.type == "agent_message") | .key] as $messages
+  | [to_entries[] | select(.value.type == "turn.completed") | .key] as $completions
+  | length > 0
+    and all(.[]; type == "object" and (.type | type == "string"))
+    and all(.[];
+      if .type == "item.started" or .type == "item.completed" or .type == "item.updated" then
+        (.item.type == "agent_message" or .item.type == "reasoning")
+      else
+        (.type | IN("thread.started", "turn.started", "turn.completed"))
+      end
+    )
+    and ($starts | length == 1)
+    and ($messages | length == 1)
+    and ($completions | length == 1)
+    and ([.[] | select(.type == "turn.failed" or .type == "error")] | length == 0)
+    and $starts[0] < $messages[0]
+    and $messages[0] < $completions[0]
+    and $completions[0] == (length - 1)
+    and (.[ $messages[0] ].item.text | type == "string" and test("\\S"))
+' "$events_file" > /dev/null; then
+  echo "Error: Codex draft reviewer did not return a successful completion event and final message." >&2
+  exit 3
+fi
+
+jq -sr 'map(select(.type == "item.completed" and .item.type == "agent_message"))[0].item.text' \
+  "$events_file" > "$result_file"
