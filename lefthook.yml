@@ -74,6 +74,7 @@ pre-commit:
       run: ./config/bin/crit-approval-check
 
 commit-msg:
+  piped: true
   commands:
     commitlint:
       run: mise x -- commitlint --edit {1}

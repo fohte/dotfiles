@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+engine="${1:?Usage: agent-attribution-proxy <engine>}"
+
+deny_attribution() {
+  jq -nc --arg reason "Attribution context is unavailable for this commit." '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: $reason
+    }
+  }'
+}
+
+if ! envelope=$(jq -sce '
+  if length == 2 then
+    {hook_input: .[0], hook_output: .[1]}
+  else
+    error("expected hook input and hook output")
+  end
+'); then
+  deny_attribution
+  exit 0
+fi
+
+if ! attribution_output=$(printf '%s\n' "$envelope" | a agent attribution pre-tool-use "$engine" --final-object); then
+  deny_attribution
+  exit 0
+fi
+
+if [[ -n "$attribution_output" ]] && ! jq -e 'type == "object"' <<< "$attribution_output" > /dev/null 2>&1; then
+  deny_attribution
+  exit 0
+fi
+
+printf '%s\n' "$attribution_output"

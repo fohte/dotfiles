@@ -121,4 +121,13 @@ bash_permission() {
 }
 
 output=$(bash_permission)
-exec ~/.claude/hooks/bash-bg-timeout-default "$output" <<< "$input"
+output=$(~/.claude/hooks/bash-bg-timeout-default "$output" <<< "$input")
+
+if ! attribution_output=$(printf '%s\n%s\n' "$input" "${output:-null}" | ~/.claude/hooks/agent-attribution-proxy claude-code); then
+  jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "Attribution context is unavailable for this commit."}}'
+  exit 0
+fi
+
+if [ -n "$attribution_output" ]; then
+  printf '%s\n' "$attribution_output"
+fi
