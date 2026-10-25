@@ -73,7 +73,16 @@ pre-commit:
     crit-approval:
       run: ./config/bin/crit-approval-check
 
-commit-msg:
+prepare-commit-msg:
   commands:
+    attribution:
+      run: a agent attribution prepare-commit-msg {1}
+
+commit-msg:
+  piped: true
+  commands:
+    attribution:
+      run: a agent attribution commit-msg {1}
+
     commitlint:
       run: mise x -- commitlint --edit {1}
