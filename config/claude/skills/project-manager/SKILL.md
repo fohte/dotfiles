@@ -43,6 +43,8 @@ dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 - `$dir/<n>.md`: タスク固有部分 (`<n>` は tq のタスク番号)。下記の構成で書く
 - `$dir/<n>.handoff.md`: `cat "$dir/<n>.md" "$dir/_common.md" > "$dir/<n>.handoff.md"` で結合する
 
+タスク固有 handoff の tq page に関する記述は、要否・内容とも track-in-tq skill の「何をどこに書くか」に従い、共通規則と食い違わせない。
+
 ```bash
 ~/.agents/skills/handoff/scripts/launch \
   --handoff "$dir/<n>.handoff.md" --repo "$(git root -r)" \

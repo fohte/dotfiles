@@ -6,7 +6,7 @@
     - 資料の作り方と crit の往復は、すべてその skill に従う。approve されるまで往復する
     - 判断がユーザーに属するもの (何を運用に載せるか、どの外部サービスを契約するか など) も、勝手に決めず根拠付きで選択肢を示す
     - 設計に実装が含まれ、実装先リポジトリの `repo.direct_commit` が `true` でないなら、言われなくても split-into-prs skill で PR 分割まで済ませ、分割案を設計資料に含めて出す。設計と一緒に分割も approve してもらえば、委任の前にもう一度承認を待たずに済む。ユーザーが分割を指定・承認済みなら分割し直さず、その案を載せる
-4. **approve された内容を tq の page に書く。** 設計・調査結果・根拠はここに置く。task description には書かない。PR 分割も approve されたら、handoff の「担当タスク」に記載した ID の「実装」チェックリストへ、split-into-prs の手順で Batch / PR 項目を記録する
+4. **読者向け資料が必要なら tq page にまとめる。** page の要否と内容は track-in-tq skill の「何をどこに書くか」に従い、設計・調査の結論と判断に必要な根拠を記録する。task description には書かない。PR 分割も approve されたら、handoff の「担当タスク」に記載した ID の「実装」チェックリストへ、split-into-prs の手順で Batch / PR 項目を記録する
 5. **実装が必要なら delegate skill で委任する。** 自分で実装しない。委任してよいのは設計が approve され、原因が特定できてからである。1 委任 = 1 PR。approve 済みの PR 分割に従い、最初の 1 PR だけ委任して、残りは前の PR が merge されてから改めて委任する
     - 委任先の engine、model、reasoning effort は通常は選択中 profile の `delegate` type 設定を使う。ユーザーがいずれかを明示した場合だけ、対応する launcher flag で値を渡す。1 回の起動のために profile の全体選択を書き換えない
     - **delegate launcher に `--tq-task-id` で上記タスクの ID を必ず渡す。** 渡さないと委任先の PR がどのタスクにも載らない

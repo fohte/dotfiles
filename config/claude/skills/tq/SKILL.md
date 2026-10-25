@@ -1,6 +1,6 @@
 ---
 name: tq
-description: 'Read and write the user''s personal task manager (tq, https://tq.fohte.net) with the `tq` CLI. TRIGGER whenever the user refers to their own tasks, projects, or task pages — "タスクに追加して", "今日のタスク", "この調査結果を page に残して", "tq の #58 見て", a tq.fohte.net URL, or a bare task number in that context. Also trigger when writing up a design doc, investigation report, or HTML visualization that should live on a task rather than in a scratch file, and when attaching a screenshot, image, or video to a task or page. SKIP for in-session TODO tracking (use TodoWrite) and for GitHub issues (use the github-issue skill).'
+description: 'Read and write the user''s personal task manager (tq, https://tq.fohte.net) with the `tq` CLI. TRIGGER whenever the user refers to their own tasks, projects, or task pages — "タスクに追加して", "今日のタスク", "この調査結果を page に残して", "tq の #58 見て", a tq.fohte.net URL, or a bare task number in that context. Also trigger when preparing a reader-facing design document, investigation report, or HTML visualization for a task, and when attaching a screenshot, image, or video to a task or page. Follow track-in-tq to decide whether a page is needed and what belongs in it. SKIP for in-session TODO tracking (use TodoWrite) and for GitHub issues (use the github-issue skill).'
 ---
 
 # tq CLI
@@ -125,6 +125,10 @@ tq task reopen <task-id>
 tq task delete <task-id> --confirm-delete <task-id>
 ```
 
+## Page content
+
+Follow the shared rules in the track-in-tq skill's "何をどこに書くか" section to decide whether to create or update a page and what belongs in it.
+
 ## Common flows
 
 ```bash
@@ -135,8 +139,8 @@ tq today get "$(gdate +%F)"
 tq task search 'CLI' --status todo
 tq page list 58
 
-# Capture an investigation result on the task it belongs to
-tq page create 58 '調査メモ' --file <findings-path>
+# Save a reader-facing investigation result when a page is needed
+tq page create <task-id> 'Findings' --file <findings-path>
 
 # Move a task along
 tq task complete <task-id> --reason completed
