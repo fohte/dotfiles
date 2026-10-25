@@ -23,6 +23,18 @@ commit range のレビューでは、現在の branch に記録された review 
 
 engine / model / reasoning effort は base 設定と role overlay から解決する。reviewer 固有設定を用途設定より優先し、用途設定を共通既定より優先する。各設定値の出典と実効値は reviewer 起動前に表示し、result にも保存する。Codex quota による既存 fallback は Claude へ解決し直した値を使う。
 
+backend が返す成果物は共有 JSON schema に従う reviewer ごとの JSON です。必須の evaluation ID は reviewer-evaluation-ids.json から prompt と validator が共に読みます。集約 Markdown の見出しと日本語名は利用者向け表示であり、JSON の ID とは別の契約です。conditional reviewer の ID 集合は固定しません。
+
+reviewer 実行に失敗した場合だけ、本文を含まない診断 JSON を保存します。
+
+- 記録項目: `run_id`、reviewer、終了コード、scope、execution mode、実効 engine / model / effort、patch と prompt の SHA-256、固定 `reason_code` と `field_path`
+- 保存しない項目: prompt、diff、index、result、stdout、stderr、認証情報、manifest 本文
+- 保存先: `XDG_CACHE_HOME` が未設定なら `$HOME/.cache/self-review/diagnostics`
+- 権限と保持期間: directory は 0700、file は 0600。次回起動時に 7 日を超えた自分の記録だけを削除
+- 手動削除: `~/.agents/skills/self-review/scripts/review-diagnostics clear`
+
+成功した試行の診断は作りません。resume の失敗診断は fresh fallback が成功しても保持します。保存した診断の path は実行時の stderr に表示します。
+
 1. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
 2. Create a manifest file path (`mktemp "$AGENT_TMPDIR/self-review-manifest.XXXXXX"`) and run `~/.agents/skills/self-review/scripts/select-reviewers <range> > <manifest-file>`. If it fails, launch nothing. When the cause is your own invocation (wrong working directory, or a typo in the caller's `<range>`), correct it and run it once more — no reviewer has run yet, so this does not count as a reviewer retry. Never switch to a range the caller did not give. Use the manifest file as the source of truth even if command output is missing: before step 4, run `jq -r '.status' <manifest-file>` and continue only when it returns `ready`. If it is `skipped`, do not launch reviewers and report that the range was skipped because no unreviewed changes remain. For any other status or an invalid manifest, stop and report the error. Once a ready manifest succeeds, do not call `select-reviewers` again for this review — every step below reads `<manifest-file>` instead. Its `reviewers` array is the complete launch manifest: do not add, remove, or reorder entries.
 3. Carry the path `mktemp` printed as a literal string into every later step. Shell variables do not survive between tool calls, and re-deriving the path with a glob can pick up an earlier manifest from this session. Do not use `ps` or other process listings to infer progress or identify a process as yours; concurrent sessions may show another run.

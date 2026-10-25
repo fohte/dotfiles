@@ -37,7 +37,7 @@ review_session_id() {
 
 clear_reviewer_outputs() {
   local reviewer_dir="$1" file
-  for file in result.json stdout.log stderr.log session-id; do
+  for file in result.json stdout.log stderr.log session-id backend-exit-code; do
     if [[ -f "$reviewer_dir/$file" ]]; then
       rm "$reviewer_dir/$file"
     fi
@@ -45,13 +45,19 @@ clear_reviewer_outputs() {
 }
 
 run_codex_session() {
+  local attempt_exit_code
   local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}" resume_session_id="${4:-}"
 
   if [[ -n "$resume_session_id" ]]; then
     if run_codex "$reviewer" "$reviewer_dir" "$reasoning_effort" "$resume_session_id" true; then
       return 0
+    else
+      attempt_exit_code=$?
     fi
-    echo "Warning: Codex could not resume $reviewer; starting a fresh session." >&2
+    diagnostics_save_failure "$attempt_exit_code" '[{"reason_code":"resume_failed","field_path":"$"}]' || return 1
+    diagnostic_execution_mode=fallback
+    printf '%s\n' "$diagnostic_execution_mode" > "$reviewer_dir/execution-mode"
+    echo "Warning: reviewer resume failed; starting a fresh session." >&2
     clear_reviewer_outputs "$reviewer_dir"
   fi
 
@@ -59,13 +65,19 @@ run_codex_session() {
 }
 
 run_claude_session() {
+  local attempt_exit_code
   local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}" resume_session_id="${4:-}"
   if [[ -n "$resume_session_id" ]]; then
     if run_claude "$reviewer_dir" "$resume_session_id" true "$reasoning_effort" &&
       jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$reviewer_dir/result.json" > /dev/null; then
       return 0
+    else
+      attempt_exit_code=$?
     fi
-    echo "Warning: Claude could not resume $reviewer; starting a fresh session." >&2
+    diagnostics_save_failure "$attempt_exit_code" '[{"reason_code":"resume_failed","field_path":"$"}]' || return 1
+    diagnostic_execution_mode=fallback
+    printf '%s\n' "$diagnostic_execution_mode" > "$reviewer_dir/execution-mode"
+    echo "Warning: reviewer resume failed; starting a fresh session." >&2
     clear_reviewer_outputs "$reviewer_dir"
   fi
   run_claude "$reviewer_dir" "" true "$reasoning_effort" &&

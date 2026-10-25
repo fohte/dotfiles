@@ -1,0 +1,303 @@
+#!/bin/bash
+
+diagnostics_run_dir=
+diagnostics_run_id=
+diagnostic_reviewer=
+diagnostic_scope=
+diagnostic_execution_mode=
+diagnostic_engine=
+diagnostic_model=
+diagnostic_reasoning_effort=
+diagnostic_patch_sha256=
+diagnostic_prompt_sha256=
+
+diagnostics_usage() {
+  echo "Usage: review-diagnostics clear" >&2
+  exit 2
+}
+
+diagnostics_resolve_root() {
+  local cache_home
+  cache_home=$(printenv XDG_CACHE_HOME || true)
+  [[ -n "$cache_home" ]] || cache_home="$HOME/.cache"
+  diagnostics_root="$cache_home/self-review/diagnostics"
+
+  if [[ -L "$cache_home" || -L "$cache_home/self-review" || -L "$diagnostics_root" ]]; then
+    echo "Error: self-review diagnostics directory must not be a symlink." >&2
+    return 1
+  fi
+}
+
+diagnostics_cleanup_expired() {
+  local run_dir diagnostic_file
+  diagnostics_resolve_root || return 1
+  for run_dir in "$diagnostics_root"/self-review-run.*; do
+    [[ -d "$run_dir" && ! -L "$run_dir" ]] || continue
+    for diagnostic_file in "$run_dir"/self-review-diagnostic.*; do
+      [[ -f "$diagnostic_file" && ! -L "$diagnostic_file" ]] || continue
+      if ! find -P "$diagnostic_file" -type f -mmin +10080 -delete 2> /dev/null; then
+        echo "Error: unable to clean expired self-review diagnostics." >&2
+        return 1
+      fi
+    done
+    rmdir "$run_dir" 2> /dev/null || true
+  done
+}
+
+diagnostics_prepare() {
+  umask 077
+  diagnostics_resolve_root || return 1
+  if ! mkdir -p "$diagnostics_root" ||
+    ! diagnostics_resolve_root ||
+    [[ ! -d "$diagnostics_root" || -L "$diagnostics_root" ]] ||
+    ! chmod 700 "$diagnostics_root"; then
+    echo "Error: unable to prepare the self-review diagnostics directory." >&2
+    return 1
+  fi
+  diagnostics_cleanup_expired || return 1
+  diagnostics_run_dir=$(mktemp -d "$diagnostics_root/self-review-run.XXXXXX") || {
+    echo "Error: unable to create a self-review diagnostics run directory." >&2
+    return 1
+  }
+  chmod 700 "$diagnostics_run_dir" || {
+    echo "Error: unable to secure the self-review diagnostics run directory." >&2
+    return 1
+  }
+  diagnostics_run_id=$(basename "$diagnostics_run_dir")
+}
+
+diagnostics_finish() {
+  if [[ -n "$diagnostics_run_dir" && -d "$diagnostics_run_dir" && ! -L "$diagnostics_run_dir" ]]; then
+    rmdir "$diagnostics_run_dir" 2> /dev/null || true
+  fi
+}
+
+diagnostics_sha256_file() {
+  local file="$1" output
+  if command -v shasum > /dev/null; then
+    output=$(shasum -a 256 "$file") || return 1
+  elif command -v sha256sum > /dev/null; then
+    output=$(sha256sum "$file") || return 1
+  else
+    return 127
+  fi
+  printf '%s\n' "$output" | awk '{print $1}'
+}
+
+diagnostics_sha256_text() {
+  if command -v shasum > /dev/null; then
+    printf '%s' "$1" | shasum -a 256 | awk '{print $1}'
+  elif command -v sha256sum > /dev/null; then
+    printf '%s' "$1" | sha256sum | awk '{print $1}'
+  else
+    return 127
+  fi
+}
+
+diagnostics_sha256_agy_prompt() {
+  local prompt
+  prompt=$(cat "$1") || return 1
+  diagnostics_sha256_text "$prompt"
+}
+
+diagnostics_validation_errors() {
+  local result_file="$1" reviewer="$2" expected_ids="$3" count
+  if ! count=$(jq -s 'length' "$result_file" 2> /dev/null); then
+    printf '[{"reason_code":"invalid_json","field_path":"$"}]\n'
+    return 0
+  fi
+  if [[ "$count" -eq 0 ]]; then
+    printf '[{"reason_code":"invalid_json","field_path":"$"}]\n'
+    return 0
+  fi
+  if [[ "$count" -ne 1 ]]; then
+    printf '[{"reason_code":"multiple_json_values","field_path":"$"}]\n'
+    return 0
+  fi
+
+  jq -c --arg reviewer "$reviewer" --argjson expected_ids "$expected_ids" '
+    def violation($reason; $path):
+      {reason_code: $reason, field_path: $path};
+    def nonblank_string:
+      type == "string" and test("\\S");
+    def missing($object; $fields):
+      [$fields[]
+       | . as $field
+       | select(($object | has($field[0])) | not)
+       | violation("required_field_missing"; $field[1])];
+    def has_extra($object; $expected):
+      any($object | keys[]; . as $key | ($expected | index($key)) == null);
+
+    . as $root
+    | [
+        (if ($root | type) != "object" then
+           [violation("result_not_object"; "$")]
+         else
+           missing($root; [
+             ["reviewer", "$.reviewer"],
+             ["evaluations", "$.evaluations"],
+             ["findings", "$.findings"]
+           ])
+           + (if has_extra($root; ["evaluations", "findings", "reviewer"])
+              then [violation("additional_field"; "$")]
+              else [] end)
+           + (if ($root | has("reviewer")) and $root.reviewer != $reviewer
+              then [violation("reviewer_mismatch"; "$.reviewer")]
+              else [] end)
+         end),
+        (if ($root | type) == "object" and ($root.evaluations | type) == "array" then
+           (if ($root.evaluations | length) == 0
+            then [violation("evaluations_empty"; "$.evaluations")]
+            else [] end)
+           + ([$root.evaluations[] as $evaluation
+               | if ($evaluation | type) != "object" then
+                   [violation("evaluation_not_object"; "$.evaluations[]")]
+                 else
+                   (missing($evaluation; [
+                     ["id", "$.evaluations[].id"],
+                     ["status", "$.evaluations[].status"],
+                     ["summary", "$.evaluations[].summary"]
+                   ])
+                   + (if has_extra($evaluation; ["id", "status", "summary"])
+                      then [violation("additional_field"; "$.evaluations[]")]
+                      else [] end)
+                   + (if ($evaluation.id | nonblank_string)
+                      then [] else [violation("evaluation_id_invalid"; "$.evaluations[].id")] end)
+                   + (if ($evaluation.status == "pass"
+                          or $evaluation.status == "not-applicable"
+                          or $evaluation.status == "critical"
+                          or $evaluation.status == "warning")
+                      then [] else [violation("evaluation_status_invalid"; "$.evaluations[].status")] end)
+                   + (if ($evaluation.summary | nonblank_string)
+                      then [] else [violation("evaluation_summary_invalid"; "$.evaluations[].summary")] end))
+                 end] | add // [])
+           + (if ([$root.evaluations[].id] | length) != ([$root.evaluations[].id] | unique | length)
+              then [violation("evaluation_id_duplicate"; "$.evaluations[].id")]
+              else [] end)
+           + (if $expected_ids != [] and
+                 (($expected_ids - ([$root.evaluations[].id] | unique)) | length) > 0
+              then [violation("evaluation_id_missing"; "$.evaluations[].id")]
+              else [] end)
+           + (if $expected_ids != [] and
+                 ((([$root.evaluations[].id] | unique) - $expected_ids) | length) > 0
+              then [violation("evaluation_id_unexpected"; "$.evaluations[].id")]
+              else [] end)
+         else
+           [violation("evaluations_not_array"; "$.evaluations")]
+         end),
+        (if ($root | type) == "object" and ($root.findings | type) == "array" then
+           ([$root.findings[] as $finding
+            | if ($finding | type) != "object" then
+                [violation("finding_not_object"; "$.findings[]")]
+              else
+                (missing($finding; [
+                  ["id", "$.findings[].id"],
+                  ["severity", "$.findings[].severity"],
+                  ["title", "$.findings[].title"],
+                  ["file", "$.findings[].file"],
+                  ["line", "$.findings[].line"],
+                  ["evidence", "$.findings[].evidence"],
+                  ["suggestion", "$.findings[].suggestion"]
+                ])
+                + (if has_extra($finding; ["evidence", "file", "id", "line", "severity", "suggestion", "title"])
+                   then [violation("additional_field"; "$.findings[]")]
+                   else [] end)
+                + (if ($finding.id | nonblank_string)
+                   then [] else [violation("finding_id_invalid"; "$.findings[].id")] end)
+                + (if ($finding.severity == "critical" or $finding.severity == "warning")
+                   then [] else [violation("finding_severity_invalid"; "$.findings[].severity")] end)
+                + (if ($finding.title | nonblank_string)
+                   then [] else [violation("finding_title_invalid"; "$.findings[].title")] end)
+                + (if ($finding.file | nonblank_string)
+                   then [] else [violation("finding_file_invalid"; "$.findings[].file")] end)
+                + (if (($finding.line | type) == "number"
+                       and $finding.line >= 1
+                       and ($finding.line | floor) == $finding.line)
+                   then [] else [violation("finding_line_invalid"; "$.findings[].line")] end)
+                + (if ($finding.evidence | nonblank_string)
+                   then [] else [violation("finding_evidence_invalid"; "$.findings[].evidence")] end)
+                + (if ($finding.suggestion | nonblank_string)
+                   then [] else [violation("finding_suggestion_invalid"; "$.findings[].suggestion")] end))
+              end] | add // [])
+         else
+           [violation("findings_not_array"; "$.findings")]
+         end)
+      ]
+    | add
+    | unique_by([.reason_code, .field_path])
+  ' "$result_file" 2> /dev/null
+}
+
+diagnostics_save_failure() {
+  local exit_code="$1" violations="$2" diagnostic_file
+  if [[ -z "$diagnostics_run_dir" || ! -d "$diagnostics_run_dir" || -L "$diagnostics_run_dir" ]]; then
+    echo "Error: unable to save self-review failure diagnostic; review remains unevaluated." >&2
+    return 1
+  fi
+  if ! jq -e 'type == "array" and length > 0' <<< "$violations" > /dev/null 2>&1; then
+    echo "Error: unable to save self-review failure diagnostic; review remains unevaluated." >&2
+    return 1
+  fi
+  diagnostic_file=$(mktemp "$diagnostics_run_dir/self-review-diagnostic.XXXXXX") || {
+    echo "Error: unable to save self-review failure diagnostic; review remains unevaluated." >&2
+    return 1
+  }
+  if ! jq -cn \
+    --arg run_id "$diagnostics_run_id" \
+    --arg reviewer "$diagnostic_reviewer" \
+    --argjson exit_code "$exit_code" \
+    --arg scope "$diagnostic_scope" \
+    --arg execution_mode "$diagnostic_execution_mode" \
+    --arg engine "$diagnostic_engine" \
+    --arg model "$diagnostic_model" \
+    --arg reasoning_effort "$diagnostic_reasoning_effort" \
+    --arg patch_sha256 "$diagnostic_patch_sha256" \
+    --arg prompt_sha256 "$diagnostic_prompt_sha256" \
+    --argjson violations "$violations" \
+    '{
+      run_id: $run_id,
+      reviewer: $reviewer,
+      exit_code: $exit_code,
+      scope: $scope,
+      execution_mode: $execution_mode,
+      engine: $engine,
+      model: $model,
+      reasoning_effort: $reasoning_effort,
+      patch_sha256: $patch_sha256,
+      prompt_sha256: $prompt_sha256,
+      violations: $violations
+    }' > "$diagnostic_file" 2> /dev/null; then
+    rm "$diagnostic_file" 2> /dev/null || true
+    echo "Error: unable to save self-review failure diagnostic; review remains unevaluated." >&2
+    return 1
+  fi
+  chmod 600 "$diagnostic_file" || {
+    rm "$diagnostic_file" || true
+    echo "Error: unable to secure self-review failure diagnostic; review remains unevaluated." >&2
+    return 1
+  }
+  echo "Self-review failure diagnostic saved; a later run removes records older than 7 days: $diagnostic_file" >&2
+}
+
+diagnostics_clear() {
+  umask 077
+  diagnostics_resolve_root || return 1
+  [[ -d "$diagnostics_root" ]] || return 0
+  local run_dir diagnostic_file
+  for run_dir in "$diagnostics_root"/self-review-run.*; do
+    [[ -d "$run_dir" && ! -L "$run_dir" ]] || continue
+    for diagnostic_file in "$run_dir"/self-review-diagnostic.*; do
+      [[ -f "$diagnostic_file" && ! -L "$diagnostic_file" ]] || continue
+      if ! find -P "$diagnostic_file" -type f -delete 2> /dev/null; then
+        echo "Error: unable to delete self-review diagnostics." >&2
+        return 1
+      fi
+    done
+    rmdir "$run_dir" 2> /dev/null || true
+  done
+}
+
+if [[ "$0" == "${BASH_SOURCE[0]:-}" ]]; then
+  [[ "$#" -eq 1 && "$1" == clear ]] || diagnostics_usage
+  diagnostics_clear
+fi

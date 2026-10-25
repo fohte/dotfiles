@@ -17,6 +17,7 @@ run_codex() {
   local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}"
   local resume_session_id="${4:-}" persist_session="${5:-false}"
   local config_args=(--config 'cli_auth_credentials_store="file"')
+  local command_status=0
   local codex_args=(exec)
 
   if [[ "$persist_session" == true ]]; then
@@ -38,7 +39,9 @@ run_codex() {
     "${config_args[@]}" \
     --output-schema "$schema_file" \
     --output-last-message "$reviewer_dir/result.json" \
-    - < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || return 1
+    - < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || command_status=$?
+  printf '%s\n' "$command_status" > "$reviewer_dir/backend-exit-code"
+  [[ "$command_status" -eq 0 ]] || return "$command_status"
 
   if [[ "$persist_session" == true ]]; then
     local session_id
@@ -60,6 +63,7 @@ run_codex() {
 # also wraps the schema-checked result in `.structured_output` rather than
 # writing it as the whole message, unlike `codex --output-schema`.
 run_agy() {
+  local command_status=0
   local reviewer_dir="$1" reasoning_effort="${2:-}" effort_args=()
   [[ -n "$reasoning_effort" ]] && effort_args=(--effort "$reasoning_effort")
   agy \
@@ -70,12 +74,16 @@ run_agy() {
     --output-format json \
     --json-schema "$schema_file" \
     --print="$(cat "$reviewer_dir/prompt.txt")" \
-    > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || true
+    > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || command_status=$?
+  printf '%s\n' "$command_status" > "$reviewer_dir/backend-exit-code"
   # A tool denied by the permission rules in config/agy leaves `status` at ERROR
   # even though the review itself ran to completion, so the schema-checked
   # payload is the only signal separating a finished review from a failed run.
-  jq -e '.structured_output != null' "$reviewer_dir/stdout.log" > /dev/null || return 1
-  jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
+  if ! jq -e '.structured_output != null' "$reviewer_dir/stdout.log" > /dev/null 2>&1; then
+    [[ "$command_status" -eq 0 ]] || return "$command_status"
+    return 1
+  fi
+  jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json" 2> /dev/null
 }
 
 # Git's global config and ignore file can resolve into the denied checkout.
@@ -176,8 +184,13 @@ run_claude() {
     --output-format json \
     --json-schema "$(jq -c 'del(."$schema")' "$schema_file")" \
     < "$reviewer_dir/prompt.txt" > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || status=$?
-  if [[ "$status" -ne 0 ]] || ! jq -e '.subtype == "success" and .is_error != true' "$reviewer_dir/stdout.log" > /dev/null; then
+  printf '%s\n' "$status" > "$reviewer_dir/backend-exit-code"
+  if [[ "$status" -ne 0 ]]; then
     # Claude reports errors such as "Prompt is too long" only in its stdout JSON.
+    jq -rR 'fromjson? | select(.is_error? == true) | .result' "$reviewer_dir/stdout.log" >> "$reviewer_dir/stderr.log"
+    return "$status"
+  fi
+  if ! jq -e '.subtype == "success" and .is_error != true' "$reviewer_dir/stdout.log" > /dev/null; then
     jq -rR 'fromjson? | select(.is_error? == true) | .result' "$reviewer_dir/stdout.log" >> "$reviewer_dir/stderr.log"
     return 1
   fi
