@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+
+readonly identity_label='dotfiles-git-signing'
+readonly sc_auth='/usr/sbin/sc_auth'
+readonly ssh_keygen='/usr/bin/ssh-keygen'
+readonly provider='/usr/lib/ssh-keychain.dylib'
+readonly ssh_directory="${HOME:?}/.ssh"
+readonly key_file="$ssh_directory/id_dotfiles_secure_enclave_signing"
+readonly public_key_file="$key_file.pub"
+
+die() {
+  printf 'prepare-signing-key: %s\n' "$*" >&2
+  exit 1
+}
+
+ready() {
+  printf 'Public key for GitHub Signing Key registration: %s\n' "$public_key_file"
+  "$ssh_keygen" -lf "$public_key_file" -E sha256
+}
+
+[[ "$(uname -s)" == Darwin ]] || die 'Secure Enclave keys can only be prepared on macOS.'
+[[ -f "$key_file" && -f "$public_key_file" ]] && {
+  ready
+  exit
+}
+
+mkdir -p "$ssh_directory"
+chmod 700 "$ssh_directory"
+exec 9> "$ssh_directory/.dotfiles-git-signing.lock"
+lockf -s -t 120 9 || die 'Could not acquire the signing-key preparation lock.'
+[[ -f "$key_file" && -f "$public_key_file" ]] && {
+  ready
+  exit
+}
+
+export SSH_SK_PROVIDER="$provider"
+unset SSH_AUTH_SOCK
+work_directory="$(mktemp -d "$ssh_directory/.dotfiles-git-signing.XXXXXX")"
+trap 'rm -R "$work_directory"' EXIT
+
+if [[ ! -f "$key_file" ]]; then
+  identity_hash="$("$sc_auth" list-ctk-identities -t ssh -e hex | awk -v label="$identity_label" '$4 == label { print $2 }')" || die 'Could not list Secure Enclave identities.'
+  [[ "$identity_hash" != *$'\n'* ]] || die 'Multiple Secure Enclave identities use the signing label.'
+  if [[ -z "$identity_hash" ]]; then
+    "$sc_auth" create-ctk-identity -l "$identity_label" -k p-256-ne -t none || die 'Could not create the Secure Enclave identity.'
+    identity_hash="$("$sc_auth" list-ctk-identities -t ssh -e hex | awk -v label="$identity_label" '$4 == label { print $2 }')" || die 'Could not list Secure Enclave identities.'
+    [[ -n "$identity_hash" && "$identity_hash" != *$'\n'* ]] || die 'Could not identify the new Secure Enclave key.'
+  fi
+
+  (
+    cd "$work_directory"
+    SSH_ASKPASS=/usr/bin/true SSH_ASKPASS_REQUIRE=force KEYCHAIN_CERTIFICATES="$identity_hash" \
+      "$ssh_keygen" -w "$provider" -K -N ''
+  ) || die 'Could not retrieve the Secure Enclave key handle.'
+  shopt -s nullglob
+  exported_public_keys=("$work_directory"/id_*.pub)
+  shopt -u nullglob
+  [[ "${#exported_public_keys[@]}" = 1 ]] || die 'Expected one exported Secure Enclave public key.'
+  exported_handle="${exported_public_keys[0]%.pub}"
+  [[ -f "$exported_handle" ]] || die 'The exported Secure Enclave key handle is missing.'
+  chmod 600 "$exported_handle"
+  [[ ! -e "$key_file" && ! -L "$key_file" ]] || die "Key handle already exists: $key_file"
+  mv "$exported_handle" "$key_file"
+  if [[ ! -f "$public_key_file" ]]; then
+    chmod 644 "${exported_public_keys[0]}"
+    mv "${exported_public_keys[0]}" "$public_key_file"
+  fi
+fi
+
+if [[ ! -f "$public_key_file" ]]; then
+  "$ssh_keygen" -y -f "$key_file" > "$work_directory/public-key.pub" || die 'Could not read the public key from the key handle.'
+  chmod 644 "$work_directory/public-key.pub"
+  [[ ! -e "$public_key_file" && ! -L "$public_key_file" ]] || die "Public key already exists: $public_key_file"
+  mv "$work_directory/public-key.pub" "$public_key_file"
+fi
+
+ready
