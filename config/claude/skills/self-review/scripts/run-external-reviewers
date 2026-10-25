@@ -12,6 +12,8 @@ usage() {
 [ "$#" -ge 1 ] || usage
 manifest_file="$1"
 shift
+review_scope=all
+[[ "$#" -eq 0 ]] || review_scope=selected
 
 [[ -f "$manifest_file" ]] || {
   echo "Error: manifest file not found: $manifest_file" >&2
@@ -90,9 +92,13 @@ claude_dir=$(cd "$skill_dir/../.." && pwd -P)
 repo_root=$(git rev-parse --show-toplevel)
 # shellcheck disable=SC2034 # Used by review-backends.
 schema_file="$skill_dir/review-output-schema.json"
+evaluation_ids_file="$skill_dir/reviewer-evaluation-ids.json"
 usage_file="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-usage.json"
 auth_file="$HOME/.codex/auth.json"
 shared_codex_home="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-home"
+
+# shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
+source "$script_dir/review-diagnostics"
 
 work_dir=$(mktemp -d -t self-review-external.XXXXXX)
 # Exit 1 is reserved for "findings exist"; a `set -e` abort (cp, mkdir, sed, ...)
@@ -101,10 +107,27 @@ findings_reported=false
 on_exit() {
   local status=$?
   rm -rf "$work_dir"
+  diagnostics_finish
   [[ "$status" -eq 1 && "$findings_reported" != true ]] && status=3
   exit "$status"
 }
 trap on_exit EXIT
+diagnostics_prepare || exit 3
+
+jq -e '
+  type == "object" and
+  (keys == ["behavior", "convention", "structure", "test-philosophy"]) and
+  all(to_entries[];
+    (.key | type == "string" and length > 0) and
+    (.value | type == "array" and length > 0 and
+      (unique | length) == length and
+      all(.[]; type == "string" and test("\\S"))
+    )
+  )
+' "$evaluation_ids_file" > /dev/null || {
+  echo "Error: reviewer evaluation ID contract is invalid." >&2
+  exit 3
+}
 
 resolved_range=$(jq -r '.range' "$manifest_file")
 diff_args=("$resolved_range")
@@ -138,6 +161,11 @@ fi
 [ -s "$diff_file" ] || {
   echo "Error: review diff is empty." >&2
   exit 2
+}
+
+patch_sha256=$(diagnostics_sha256_file "$diff_file") || {
+  echo "Error: unable to hash the review patch for diagnostics." >&2
+  exit 3
 }
 
 selected=()
@@ -220,6 +248,16 @@ build_prompt() {
     append_resource "$prompt_file" "$instruction_file"
   done < "$instructions_file"
 
+  required_evaluation_ids=$(jq -c --arg reviewer "$reviewer" '.[$reviewer] // []' "$evaluation_ids_file")
+  if [[ "$(jq -r 'length' <<< "$required_evaluation_ids")" -gt 0 ]]; then
+    {
+      printf '\n<required-evaluation-ids>\n'
+      printf '%s\n' 'Return exactly these evaluation IDs, with no duplicates:'
+      jq -r '.[] | "- " + .' <<< "$required_evaluation_ids"
+      printf '</required-evaluation-ids>\n'
+    } >> "$prompt_file"
+  fi
+
   {
     if [[ -s "$work_dir/targets/$reviewer.txt" ]]; then
       printf '\n<review-targets>\n'
@@ -273,11 +311,18 @@ done
 
 codex_used=false
 pids=()
+prompt_hashes=()
 for reviewer in "${selected[@]}"; do
   reviewer_dir="$work_dir/$reviewer"
   mkdir -p "$reviewer_dir"
   reviewer_agent=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .agent' "$manifest_file")
   build_prompt "$reviewer" "$reviewer_dir/prompt.txt" "$reviewer_agent"
+  if [[ "$reviewer_agent" == agy ]]; then
+    prompt_sha256=$(diagnostics_sha256_agy_prompt "$reviewer_dir/prompt.txt")
+  else
+    prompt_sha256=$(diagnostics_sha256_file "$reviewer_dir/prompt.txt")
+  fi
+  prompt_hashes+=("$prompt_sha256")
   [[ "$reviewer_agent" == codex ]] && codex_used=true
 
   # select-reviewers resolved the effective settings into the manifest so retries
@@ -300,6 +345,13 @@ for reviewer in "${selected[@]}"; do
     "$(jq -r '.config.sources.reasoning_effort' <<< "$reviewer_config")" >&2
   fallback_reason=$(jq -r '.fallback_reason // empty' <<< "$reviewer_config")
   [[ -z "$fallback_reason" ]] || printf 'Reviewer %s fallback: %s\n' "$reviewer" "$fallback_reason" >&2
+  execution_mode=fresh
+  [[ -z "$resume_session_id" ]] || execution_mode=resume
+  [[ -z "$fallback_reason" ]] || execution_mode=fallback
+  diagnostic_model="$model"
+  [[ -n "$diagnostic_model" ]] || diagnostic_model='CLI default'
+  diagnostic_reasoning_effort="$reasoning_effort"
+  [[ -n "$diagnostic_reasoning_effort" ]] || diagnostic_reasoning_effort='CLI default'
 
   # None of the agents require a model: an unset one just means "use the CLI's
   # own default" (checked once here so run_codex/run_agy/run_claude don't
@@ -312,17 +364,27 @@ for reviewer in "${selected[@]}"; do
 
   (
     cd "$repo_root"
+    # shellcheck disable=SC2034 # Consumed by review-diagnostics.
+    diagnostic_reviewer="$reviewer"
+    diagnostic_scope="$review_scope"
+    diagnostic_execution_mode="$execution_mode"
+    diagnostic_engine="$reviewer_agent"
+    diagnostic_patch_sha256="$patch_sha256"
+    diagnostic_prompt_sha256="$prompt_sha256"
+    printf '%s\n' "$execution_mode" > "$reviewer_dir/execution-mode"
     run_review_backend "$reviewer" "$reviewer_agent" "$reviewer_dir" "$reasoning_effort" "$resume_session_id"
   ) &
   pids+=("$!")
 done
 
 failed=false
+backend_exit_codes=()
 for index in "${!pids[@]}"; do
-  if ! wait "${pids[$index]}"; then
-    reviewer=${selected[$index]}
-    echo "Error: reviewer failed: $reviewer" >&2
-    sed -n '1,120p' "$work_dir/$reviewer/stderr.log" >&2
+  if wait "${pids[$index]}"; then
+    backend_exit_codes+=(0)
+  else
+    wait_status=$?
+    backend_exit_codes+=("$wait_status")
     failed=true
   fi
 done
@@ -339,45 +401,59 @@ fi
 # for good if that retry fails too. The caller reads which reviewers are missing
 # off the array and treats only those as unevaluated.
 result_files=()
-for reviewer in "${selected[@]}"; do
-  result_file="$work_dir/$reviewer/result.json"
-  [[ -f "$result_file" ]] || continue
-  expected_evaluation_ids='[]'
-  case "$reviewer" in
-    behavior) expected_evaluation_ids='["1","2","3","4","5"]' ;;
-    structure) expected_evaluation_ids='["6","8","9","12"]' ;;
-    convention) expected_evaluation_ids='["7","10","11"]' ;;
-    test-philosophy) expected_evaluation_ids='["test-presence","test-writing"]' ;;
-  esac
-  jq -e --arg reviewer "$reviewer" --argjson expected_evaluation_ids "$expected_evaluation_ids" '
-    type == "object" and
-    (keys == ["evaluations", "findings", "reviewer"]) and
-    .reviewer == $reviewer and
-    (.evaluations | type == "array" and length > 0) and
-    ([.evaluations[].id] | unique | length) == (.evaluations | length) and
-    ($expected_evaluation_ids == [] or ([.evaluations[].id] | sort == ($expected_evaluation_ids | sort))) and
-    all(.evaluations[];
-      (keys == ["id", "status", "summary"]) and
-      (.id | type == "string" and test("\\S")) and
-      (.status == "pass" or .status == "not-applicable" or .status == "critical" or .status == "warning") and
-      (.summary | type == "string" and test("\\S"))
-    ) and
-    (.findings | type == "array") and
-    all(.findings[];
-      (keys == ["evidence", "file", "id", "line", "severity", "suggestion", "title"]) and
-      (.id | type == "string" and test("\\S")) and
-      (.severity == "critical" or .severity == "warning") and
-      (.title | type == "string" and test("\\S")) and
-      (.file | type == "string" and test("\\S")) and
-      (.line | type == "number" and . >= 1 and floor == .) and
-      (.evidence | type == "string" and test("\\S")) and
-      (.suggestion | type == "string" and test("\\S"))
-    )
-  ' "$result_file" > /dev/null || {
-    echo "Error: invalid reviewer result: $reviewer" >&2
+for index in "${!selected[@]}"; do
+  reviewer="${selected[$index]}"
+  reviewer_dir="$work_dir/$reviewer"
+  result_file="$reviewer_dir/result.json"
+  backend_exit_code="${backend_exit_codes[$index]}"
+  expected_evaluation_ids=$(jq -c --arg reviewer "$reviewer" '.[$reviewer] // []' "$evaluation_ids_file")
+  reviewer_agent=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .agent' "$manifest_file")
+  reviewer_model=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .model // empty' "$manifest_file")
+  reviewer_effort=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .reasoning_effort // empty' "$manifest_file")
+  # shellcheck disable=SC2034 # Consumed by review-diagnostics.
+  diagnostic_reviewer="$reviewer"
+  # shellcheck disable=SC2034 # Consumed by review-diagnostics.
+  diagnostic_scope="$review_scope"
+  # shellcheck disable=SC2034 # Consumed by review-diagnostics.
+  diagnostic_engine="$reviewer_agent"
+  diagnostic_model="$reviewer_model"
+  [[ -n "$diagnostic_model" ]] || diagnostic_model='CLI default'
+  diagnostic_reasoning_effort="$reviewer_effort"
+  [[ -n "$diagnostic_reasoning_effort" ]] || diagnostic_reasoning_effort='CLI default'
+  # shellcheck disable=SC2034 # Consumed by review-diagnostics.
+  diagnostic_patch_sha256="$patch_sha256"
+  # shellcheck disable=SC2034 # Consumed by review-diagnostics.
+  diagnostic_prompt_sha256="${prompt_hashes[$index]}"
+  # shellcheck disable=SC2034 # Consumed by review-diagnostics.
+  diagnostic_execution_mode=$(cat "$reviewer_dir/execution-mode")
+
+  if [[ -f "$result_file" ]]; then
+    if ! validation_violations=$(diagnostics_validation_errors "$result_file" "$reviewer" "$expected_evaluation_ids"); then
+      validation_violations='[{"reason_code":"validator_failed","field_path":"$"}]'
+    fi
+  else
+    validation_violations='[{"reason_code":"result_missing","field_path":"$"}]'
+  fi
+  validation_failed=$(jq -r 'length > 0' <<< "$validation_violations")
+  if [[ "$backend_exit_code" -eq 0 && "$validation_failed" == true && -f "$reviewer_dir/backend-exit-code" ]]; then
+    backend_command_exit_code=$(cat "$reviewer_dir/backend-exit-code")
+    if [[ "$backend_command_exit_code" =~ ^[0-9]+$ ]] && [[ "$backend_command_exit_code" -ne 0 ]]; then
+      backend_exit_code="$backend_command_exit_code"
+    fi
+  fi
+  if [[ "$backend_exit_code" -ne 0 ]]; then
+    violations=$(jq -cn --argjson validation "$validation_violations" \
+      '$validation + [{reason_code: "backend_failed", field_path: "$"}] | unique_by([.reason_code, .field_path])')
+  else
+    violations="$validation_violations"
+  fi
+  if [[ "$backend_exit_code" -ne 0 || "$validation_failed" == true ]]; then
     failed=true
-    continue
-  }
+    diagnostics_save_failure "$backend_exit_code" "$violations" || failed=true
+    [[ "$backend_exit_code" -eq 0 ]] || echo "Error: reviewer backend failed: $reviewer (exit $backend_exit_code)." >&2
+    [[ "$validation_failed" != true ]] || echo "Error: reviewer result rejected: $reviewer." >&2
+  fi
+  [[ "$backend_exit_code" -eq 0 && "$validation_failed" != true ]] || continue
   jq --argjson execution "$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | {configured_agent, agent, model, reasoning_effort, config, fallback_reason}' "$manifest_file")" \
     '. + {execution: $execution}' "$result_file" > "$work_dir/$reviewer/result.with-execution.json"
   mv "$work_dir/$reviewer/result.with-execution.json" "$result_file"

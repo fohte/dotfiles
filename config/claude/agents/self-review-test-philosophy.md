@@ -14,6 +14,8 @@ description: self-review skill 専用の test-philosophy 観点テストレビ�
 
 ## 出力形式
 
+evaluations[].id には test-presence と test-writing をそれぞれ 1 回ずつ使います。日本語の評価名は集約 Markdown の表示に使い、JSON の ID には使いません。
+
 ヘッダは `## 観点別評価 (test-philosophy)`。
 
 ```
