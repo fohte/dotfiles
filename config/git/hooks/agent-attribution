@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+hook_name="${1:?Usage: agent-attribution <hook-name> <hook-argument>}"
+hook_argument="${2:?Usage: agent-attribution <hook-name> <hook-argument>}"
+
+case "$hook_name" in
+  prepare-commit-msg | commit-msg | reference-transaction)
+    exec a agent attribution "$hook_name" "$hook_argument"
+    ;;
+  *)
+    printf 'Unsupported attribution hook: %s\n' "$hook_name" >&2
+    exit 2
+    ;;
+esac

@@ -24,7 +24,7 @@ if ! envelope=$(jq -sce '
   exit 0
 fi
 
-if ! attribution_output=$(printf '%s\n' "$envelope" | a agent attribution pre-tool-use "$engine"); then
+if ! attribution_output=$(printf '%s\n' "$envelope" | a agent attribution pre-tool-use "$engine" --final-object); then
   deny_attribution
   exit 0
 fi

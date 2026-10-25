@@ -12,6 +12,7 @@ fi
 
 if match_tag git; then
   sym config/git/config ~/.config/git/config
+  sym config/git/hooks ~/.config/git/hooks
   sym config/git/ignore ~/.config/git/ignore
 
   is_wsl && sym config/git/wsl.conf ~/.config/git/os.conf
