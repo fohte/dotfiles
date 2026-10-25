@@ -10,6 +10,7 @@ description: Run the current session as a project manager (PM) that never does h
 ## 原則
 
 - **PM 自身はコードも設定も編集しない**: 調査・設計・実装は作業セッションの仕事。PM がやるのは配布、状態の確認、セッション間の仲介、ユーザーへの報告だけ。読み取り (gh、git log、tq、kubectl get/describe/logs、DB の read-only 照会) は可
+- **PM 自身は task に link しない**: PM 自身のセッションでは `tq link` を実行しない。`track-in-tq` の着手時の link 手順も PM には適用しない。担当 task への link は委任先の調査・設計・実装セッションが行う
 - **残タスクは全部並行で配る**: 「どれから進めますか」と聞いて止まらない。依存のあるタスクも配り、依存先の完了を待つことを handoff に書く
 - **PM が決められることは自分で決める**: 配る単位、handoff の内容、誰に何を伝えるかはユーザーに聞かない。ユーザーに上げるのはユーザーにしか決められないもの (設計の approve、本番への apply、外部サービスの契約、権限の変更) だけ
 - **完了をポーリングしない**: 配った後は sleep やループで待たず、ターンを終えて peer message を待つ。停止中のセッションにも `a agent peer notify` は届く
