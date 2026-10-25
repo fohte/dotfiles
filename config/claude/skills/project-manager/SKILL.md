@@ -62,6 +62,7 @@ PM セッションから切り出した作業セッション。PM は手を動�
 ## 背景と目的
 
 担当タスク: tq #<n> (`<task id>`)。description を必ず読むこと。
+このセッションが task owner として担当する。task を起票した PM は成果コメントの記録や task close を代行しない。
 
 ユーザーの発言 (原文): 「...」
 
@@ -100,6 +101,14 @@ PM セッションから切り出した作業セッション。PM は手を動�
 
 セッション引き取りのトリアージでは、`tq session list` の `tasks` と `a agent peer children` で担当を対応付ける。担当セッションが `a agent peer children` にいない場合は `a agent peer adopt <session_id>` で引き取る。親が生存しているため `adopt` が拒否された場合は `--force` で再試行しない。拒否は記録せず、ユーザーへ伝える。
 
+## task と owner session の close 順序
+
+- task owner は各実装 delegate child session の成果と `agent_status=done` を確認してから、既存の完了条件を満たす場合だけ成果コメントを記録して task を close する。PM が task を起票していても、この責務は owner にある
+- owner は task の実際の状態が `completed` になった後、task に紐づく child session を close する。task が pending の間は child close が拒否されるため、この順序を守る。拒否されたら `--force` を使わず、owner session を `done` にせず PM に報告する
+- owner は成果コメントへの参照、task の実際の状態、成果と検証結果、残作業やユーザー確認待ちの有無、実装 delegate children の結果と後処理を PM に報告する
+- PM は成果コメントと task の実際の状態が `completed` であることを照合し、owner に残作業・ユーザー判断や確認待ちがなく、実装 delegate children の結果確認と後処理が済み、owner session の `agent_status` が `done` であることを確認してから owner session を閉じる。task が completed でも、いずれかを確認できなければ owner session を閉じない
+- close のために task の完了条件・仮定・親子構造・依存関係を変更しない。owner session の close が拒否されたら `--force` を使わない
+
 ## peer message を受けたら
 
 作業セッションから報告が来るたびに、次の 3 つをこの順で行う。
@@ -114,7 +123,7 @@ PM セッションから切り出した作業セッション。PM は手を動�
 
 調査・設計を進めて実装を委任する task owner session の pane だけを、段階ごとの window (例: 保留中 / 設計中 / 実装中 / 完了) にまとめる。実装を担当する session は worktree の有無にかかわらず対象外とし、個別の作業 window を維持する。`tq session list` の `tasks` と `a agent peer list` の session ID を照合する。owner と実装担当の役割は handoff / 委任内容から判別し、親子関係は `a agent peer children` / `a agent peer parent` で確認する。`cwd` は repo の照合にだけ使い、役割が特定できない場合は移動しない。
 
-- owner の段階は tq で上から順に判定する: タスクが completed で、owner session の `agent_status` も `done` なら完了 (completed でもユーザーの判断や確認が残っていれば完了にしない)、未完了の blockedBy があるか、他タスクの完了待ちで止まっていれば保留中、「実装」チェックリストがあれば実装中、それ以外は設計中。保留中を分けるのは、ユーザーが今は見に行っても何もできない owner session を、手が要る session の中から除くため
+- owner の段階は tq と peer の報告を照合して判定する: 完了判定は上記「task と owner session の close 順序」を満たす場合だけとする。task が completed でも、ユーザーの判断や確認、実装 delegate children の後処理が残っていれば完了にしない。完了でなければ、未完了の blockedBy があるか、他タスクの完了待ちで止まっていれば保留中、「実装」チェックリストがあれば実装中、それ以外は設計中。保留中を分けるのは、ユーザーが今は見に行っても何もできない owner session を、手が要る session の中から除くため
 - 完了 window に移したセッションは `a agent close --child <session_id>` で閉じる。拒否された場合は `--force` を使わず、拒否理由をユーザーに伝える
 - 起動時と完了時だけでなく、peer message を受けるたびに担当中の全 session の状態と役割を見直す。段階 window の振り分けは owner session にだけ適用する
 - owner session ごとに、対象 repo に対応する配置先 session を一意に確定する。`a agent peer list` の owner の `cwd` と、`tmux list-sessions -F '#{session_id} #{session_name} #{session_path}'` で得た各 `session_path` を、次の例のように有限個列挙して照合する。Git 2.31 未満との互換性のため `rev-parse --git-common-dir` の相対出力を各入力 path から `cd -P` で物理絶対パスに解決し、一致する session だけを候補とする。これにより relative path、symlink、linked worktree も同じ repo として判定できる。正規化に失敗したら移動コマンドを実行せず止める。配置先は一致した session の `session_id` で指定し、session 名や PM 自身の所属 session だけを根拠にしない

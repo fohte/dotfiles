@@ -13,6 +13,15 @@
     - PR 分割の実装チェックリストがある場合は、委任する PR に対応する葉項目 ID を delegate launcher の `--tq-checklist-item-id` に渡す。Batch 親の ID は使わない
 6. **ユーザーが見ていない節目だけ引き継ぎ元 (PM セッション) に報告する。** 報告するのは、PR が merge されたとき、範囲が変わったとき、止まったとき、終わったとき。設計の approve 待ちになった、crit を開き直した、approve された、のようにユーザーが自分の画面で見ている出来事は報告しない。PM がそれをユーザーに中継し、同じ通知が二重に届いてトークンと費用の無駄になるため。`a agent peer parent | jq -r '.[0].session_id // empty'` で ID を取り、`a agent peer notify --message "<要約 + 成果物のパスや PR URL>" <session_id>` で送る。全文は貼らない
 
+## task の成果記録と close
+
+- このセッションが担当 task の owner である。task を起票した PM は成果コメントや task close を代行しない
+- owner は実装 delegate children の結果と `agent_status=done` を確認してから、track-in-tq skill の既存完了条件を満たす場合だけ成果コメントを記録して task を close する。成果コメントには成果物 (PR または commit)、検証結果、残件の扱いを含める。実施中の残作業があれば task を close しない
+- task の実際の状態が `completed` になった後、owner は task に紐づく child session を close する。task が pending の間は child close が拒否されるため、この順序を守る。拒否されたら `--force` を使わず owner session を `done` にせず PM に報告する
+- owner はコメントへの参照、task の実際の状態、残作業・ユーザー確認待ちの有無、実装 delegate children の結果と後処理を PM に報告する
+- PM は報告と tq の実状態が `completed` であることを確認し、残作業やユーザー判断・確認待ちがなく、children の後処理が済み、owner session が `done` の場合だけ owner session を閉じる。条件を確認できなければ task と owner session を閉じない
+- close のために完了条件・仮定・tq の親子構造・依存関係を変更しない。session close が拒否された場合は `--force` で回避しない
+
 ## 全体の文脈
 
 <プログラム全体の目標と、全体像・完了条件が書かれた場所 (起点タスクの page など)>

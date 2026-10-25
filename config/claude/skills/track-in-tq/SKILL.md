@@ -12,6 +12,12 @@ description: 'Keep a piece of work tracked in tq (the user''s personal task mana
 
 `tq` CLI のフラグ、`--author` の指定、長文を `--file` で渡す作法は `tq` skill を参照する。
 
+## task owner の責務
+
+- task owner は成果をまとめ、成果コメントを記録し、既存の完了条件を満たす場合だけ task を close する。PM が task を起票した場合も、起票者ではなく owner が行う
+- 実装 delegate は成果を owner に報告し、委任元 task の成果コメントや close を行わない。owner は delegate の成果と完了状態を確認し、自分の task の完了を判断する。child session の後処理は以下の close 順序に従う
+- PM が task を管理する場合、owner は成果コメントへの参照、task の実際の状態、成果物・検証結果・残件の扱い、child の結果と後処理を PM に報告する。PM はこれらと owner の残作業・ユーザー判断や確認待ちの有無を確認してから owner session を閉じる。PM は task の成果コメントや close を代行しない
+
 ## 節目
 
 | 節目                             | やること                                                                                            |
@@ -101,8 +107,22 @@ fork は origin の owner が自分でも、成果物は他人のリポジトリ
 - `tq --author <model> task get <id>` の `githubLinks` を確認し、立てた PR が全部 merged になっている。チェックリスト項目に紐付く PR はチェックリストツリーと `checklistCompletionCount` で確認し、`completed` が `total` と同じで、すべての葉項目がチェック済みであることを確かめる。項目に紐付かない PR も `githubLinks` で状態を確認する。PR を伴わない調査だけの作業なら、この条件は無い
 - 落とした項目 (「今回やらないこと」) が別タスクになっているか、ユーザーに提示済み
 
+加えて、task owner が成果コメントを記録してから task を close する。
+成果コメントには、何ができるようになったか、PR または commit などの成果物、検証結果、残件の扱いを含める。
+実装 delegate children の結果確認と `agent_status=done`、owner の残作業やユーザー判断・確認待ちがないことを task close 前に確認する。
+子の未完了やユーザー確認待ちがある場合は task を close せず、owner session も閉じない。
+実施中の残作業がある間は `complete` しない。今回やらない項目は上記の条件に従って別タスクにするかユーザーに提示する。
+close 後に `tq --author <model> task get <id>` で実際の状態が `completed` になったことを確認する。
+task に紐づく child session は pending task が残っていると close が拒否されるため、task が `completed` になってから owner が close する。
+child session の close が拒否された場合は `--force` を使わず、owner session を `done` にしない。PM 管理下なら PM に、それ以外はユーザーに報告する。
+child session の後処理後、PM 管理下なら成果コメントへの参照、task の実際の状態、残作業・ユーザー確認待ちの有無、child の結果と後処理を PM に報告する。
+
 条件を満たさない場合は `complete` せず、既に完了扱いになっているなら `tq task status <id> todo` に戻す。
 残作業をまとめコメントに書いた上で完了にすると、閉じたタスクの中に未着手の作業が埋まる。
+
+task close が拒否された場合は実際の task 状態を確認し、completed になっていなければ完了扱いにしない。
+task を completed にできなければ owner session も `done` にしない。PM 管理下なら PM に、それ以外はユーザーに状態と拒否を報告する。
+close を通すために完了条件・仮定・tq の親子構造・依存関係を変更しない。
 
 残りが「ユーザーの操作を待って確認する」項目だけになったら、「確認できたら完了にします」と約束して待たない。
 待っている操作 (マージなど) がこのセッションを閉じることがあり、そうなると誰も確認も `complete` もしないまま残る。
@@ -126,7 +146,7 @@ PR 番号は下記のように tq task へのリンク化を避けた形で書�
 
 <判断とその理由。読み手が変更の形をつかむのに要ること>
 
-<動作確認をしたなら、その結果>
+<検証結果と、残件がある場合の扱い。実施中の残作業がある間は complete しない>
 
 <設計 page と結果がずれたなら、その差分>
 ```
