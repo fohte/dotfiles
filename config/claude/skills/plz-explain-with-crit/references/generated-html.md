@@ -3,6 +3,8 @@
 コードや diff として存在しないもの (アーキテクチャ、調査結果、概念同士の関係、時系列) を解説する場合。
 ユーザーは図の任意の箇所を選択して「ここは何」と聞けるので、チャットで長文を往復するより当たりを付けやすい。
 
+設計の採否を判断する HTML を作る場合、またはその採否判断に影響する改稿をする場合に限り、`assets/design-outline.md` と `references/design-check.md` を読む。そこで扱うのは HTML 上の構成と内容の接続・抜けの確認であり、一般の設計相談に文書作成や独立照合を追加しない。既存コード、PR、動作中の画面の閲覧説明や Q&A だけの場合は読まない。
+
 ## 作るかどうか
 
 図で説明できることがあるなら作る。
@@ -103,6 +105,7 @@ skill に同梱したテンプレートを使い、毎回新しい単一 HTML �
 `scripts/create-html.ts` は Bun の標準機能だけを使い、タイトルの設定と出力ファイルの作成を行う。
 タイトルは HTML 用にエスケープされ、出力先が既にあれば失敗する。
 本文用の JSON / YAML などの入力形式や、編集後のビルド工程は設けない。
+設計判断を説明する HTML も、既存の `assets/explainer.html` と `scripts/create-html.ts` を使う。新しい生成オプション、script、本文入力形式は追加しない。
 
 ```bash
 <skill-dir>/scripts/create-html.ts --title "架空の荷物が届くまで" --output /path/to/delivery-flow.html
