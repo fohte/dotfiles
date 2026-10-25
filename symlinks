@@ -14,7 +14,11 @@ if match_tag git; then
   sym config/git/config ~/.config/git/config
   sym config/git/ignore ~/.config/git/ignore
 
-  is_wsl && sym config/git/wsl.conf ~/.config/git/os.conf
+  if is_macos; then
+    sym config/git/macos.conf ~/.config/git/os.conf
+  elif is_wsl; then
+    sym config/git/wsl.conf ~/.config/git/os.conf
+  fi
 fi
 
 if match_tag gh; then
