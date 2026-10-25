@@ -15,7 +15,7 @@ description: 'Keep a piece of work tracked in tq (the user''s personal task mana
 ## task owner の責務
 
 - task owner は成果をまとめ、成果コメントを記録し、既存の完了条件を満たす場合だけ task を close する。PM が task を起票した場合も、起票者ではなく owner が行う
-- 実装 delegate は成果を owner に報告し、委任元 task の成果コメントや close を行わない。owner は delegate の成果と完了状態を確認し、自分の task の完了を判断する。child session の後処理は以下の close 順序に従う
+- 実装 delegate は成果を owner に報告し、委任元 task の成果コメントや close を行わない。owner は delegate の成果 (PR の merge や commit など) と既存の完了条件を確認し、自分の task の完了を判断する。child session の後処理は以下の close 順序に従う
 - PM が task を管理する場合、owner は成果コメントへの参照、task の実際の状態、成果物・検証結果・残件の扱い、child の結果と後処理を PM に報告する。PM はこれらと owner の残作業・ユーザー判断や確認待ちの有無を確認してから owner session を閉じる。PM は task の成果コメントや close を代行しない
 
 ## 節目
@@ -113,12 +113,13 @@ page は、読者が単独で理解・判断できる資料を必要とする場
 
 加えて、task owner が成果コメントを記録してから task を close する。
 成果コメントには、何ができるようになったか、PR または commit などの成果物、検証結果、残件の扱いを含める。
-実装 delegate children の結果確認と `agent_status=done`、owner の残作業やユーザー判断・確認待ちがないことを task close 前に確認する。
-子の未完了やユーザー確認待ちがある場合は task を close せず、owner session も閉じない。
+実装 delegate child の成果と既存の完了条件を確認し、満たす場合に成果コメントと task close へ進む。child の `agent_status=done`、終了ログ、削除記録、アーカイブ時刻や終了経路の判定を追加条件にしない。
+PR を伴わない作業は、commit などの成果と既存の完了条件で判断する。
+owner に実施中の残作業やユーザー判断・確認待ちがある場合は task を close せず、owner session も閉じない。
 実施中の残作業がある間は `complete` しない。今回やらない項目は上記の条件に従って別タスクにするかユーザーに提示する。
 close 後に `tq --author <model> task get <id>` で実際の状態が `completed` になったことを確認する。
-task に紐づく child session は pending task が残っていると close が拒否されるため、task が `completed` になってから owner が close する。
-child session の close が拒否された場合は `--force` を使わず、owner session を `done` にしない。PM 管理下なら PM に、それ以外はユーザーに報告する。
+所定の merge コマンドで既に自動 close された child は後処理を繰り返さない。task が `completed` になった後も child session が残っていれば owner が通常の close で閉じる。task が pending の間は child close が拒否されるため、この順序を守る。
+child session の close が拒否された場合は `--force` を使わず、owner session を `done` にせず PM 管理下なら PM に、それ以外はユーザーに報告する。
 child session の後処理後、PM 管理下なら成果コメントへの参照、task の実際の状態、残作業・ユーザー確認待ちの有無、child の結果と後処理を PM に報告する。
 
 条件を満たさない場合は `complete` せず、既に完了扱いになっているなら `tq task status <id> todo` に戻す。
@@ -128,9 +129,8 @@ task close が拒否された場合は実際の task 状態を確認し、comple
 task を completed にできなければ owner session も `done` にしない。PM 管理下なら PM に、それ以外はユーザーに状態と拒否を報告する。
 close を通すために完了条件・仮定・tq の親子構造・依存関係を変更しない。
 
-残りが「ユーザーの操作を待って確認する」項目だけになったら、「確認できたら完了にします」と約束して待たない。
-待っている操作 (マージなど) がこのセッションを閉じることがあり、そうなると誰も確認も `complete` もしないまま残る。
-代わりに、未確認の完了条件と、確認したらユーザー自身がチェックして閉じればよいことを伝える。
+残りが merge などの操作後に確認する項目だけでも、「確認できたら完了にします」と約束して待たない。未確認の完了条件を示し、操作後に成果確認と成果コメント・task close を担う task owner を明確にする。
+merge 時に実装 child が自動 close されても、task owner は既存の完了条件に従って確認と成果記録を続ける。PM 管理下では owner が task の実状態と child の後処理を PM に報告し、PM は owner session の `agent_status=done` を確認してから owner session を閉じる。PM は task の成果コメントや close を代行しない。
 
 PR 番号は下記のように tq task へのリンク化を避けた形で書く。
 詳細は `tq` skill の「Cross-reference other systems by URL, not by `#number`」を参照する。

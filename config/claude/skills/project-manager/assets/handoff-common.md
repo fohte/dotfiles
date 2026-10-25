@@ -16,9 +16,9 @@
 ## task の成果記録と close
 
 - このセッションが担当 task の owner である。task を起票した PM は成果コメントや task close を代行しない
-- owner は実装 delegate children の結果と `agent_status=done` を確認してから、track-in-tq skill の既存完了条件を満たす場合だけ成果コメントを記録して task を close する。成果コメントには成果物 (PR または commit)、検証結果、残件の扱いを含める。実施中の残作業があれば task を close しない
-- task の実際の状態が `completed` になった後、owner は task に紐づく child session を close する。task が pending の間は child close が拒否されるため、この順序を守る。拒否されたら `--force` を使わず owner session を `done` にせず PM に報告する
-- owner はコメントへの参照、task の実際の状態、残作業・ユーザー確認待ちの有無、実装 delegate children の結果と後処理を PM に報告する
+- owner は実装 delegate child の成果と track-in-tq skill の既存完了条件を確認し、条件を満たす場合に成果コメントを記録して task を close する。child の `agent_status=done`、終了ログ、削除記録、アーカイブ時刻や終了経路の判定を追加条件にしない。成果コメントには成果物 (PR または commit)、検証結果、残件の扱いを含める。実施中の残作業があれば task を close しない
+- 所定の merge コマンドが実装 child を自動 close した場合は、owner はその後処理を繰り返さない。task の実際の状態が `completed` になった後も child session が残っていれば、owner は通常の close で閉じる。task が pending の間は child close が拒否されるため、この順序を守る。拒否されたら `--force` を使わず owner session を `done` にせず PM に報告する
+- owner はコメントへの参照、task の実際の状態、残作業・ユーザー確認待ちの有無、実装 delegate children の結果と必要な後処理を PM に報告する
 - PM は報告と tq の実状態が `completed` であることを確認し、残作業やユーザー判断・確認待ちがなく、children の後処理が済み、owner session が `done` の場合だけ owner session を閉じる。条件を確認できなければ task と owner session を閉じない
 - close のために完了条件・仮定・tq の親子構造・依存関係を変更しない。session close が拒否された場合は `--force` で回避しない
 
