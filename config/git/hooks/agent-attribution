@@ -11,6 +11,9 @@ case "$hook_name" in
     fi
     exit 0
     ;;
+  commit-msg | reference-transaction)
+    exit 0
+    ;;
   *)
     printf 'Unsupported attribution hook: %s\n' "$hook_name" >&2
     exit 2
