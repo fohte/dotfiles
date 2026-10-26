@@ -46,7 +46,7 @@ done
 codex_path=$(command -v codex)
 mise_state_dir=${MISE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/mise}
 if [[ "$mise_state_dir" != /* ]]; then
-  mise_state_dir="$PWD/$mise_state_dir"
+  mise_state_dir="${OLDPWD:-$PWD}/$mise_state_dir"
 fi
 auth_file="$codex_home_source/auth.json"
 [[ -s "$auth_file" ]] || {
