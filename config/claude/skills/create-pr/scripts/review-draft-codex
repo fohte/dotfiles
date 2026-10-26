@@ -44,6 +44,10 @@ for required_command in "${required_commands[@]}"; do
 done
 
 codex_path=$(command -v codex)
+mise_state_dir=${MISE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/mise}
+if [[ "$mise_state_dir" != /* ]]; then
+  mise_state_dir="$PWD/$mise_state_dir"
+fi
 auth_file="$codex_home_source/auth.json"
 [[ -s "$auth_file" ]] || {
   echo "Error: isolated Codex draft review requires file-based Codex credentials." >&2
@@ -71,6 +75,7 @@ mkdir -p "$isolated_home" "$probe_home" "$isolated_codex_home" \
 base_env_args=(
   env -i
   "PATH=${PATH:-/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin}"
+  "MISE_STATE_DIR=$mise_state_dir"
   "TMPDIR=$isolated_tmp"
   "TERM=${TERM:-dumb}"
 )
