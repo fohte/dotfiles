@@ -44,12 +44,6 @@ for required_command in "${required_commands[@]}"; do
 done
 
 codex_path=$(command -v codex)
-codex_version=$("$codex_path" --version)
-[[ "$codex_version" == "codex-cli 0.163.0" ]] || {
-  echo "Error: tool-free Codex draft review is verified only with codex-cli 0.163.0 (found: $codex_version)." >&2
-  exit 3
-}
-
 auth_file="$codex_home_source/auth.json"
 [[ -s "$auth_file" ]] || {
   echo "Error: isolated Codex draft review requires file-based Codex credentials." >&2
