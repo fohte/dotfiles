@@ -91,11 +91,3 @@
 [hook "fohte-agent-attribution-prepare-commit-msg"]
 	event = prepare-commit-msg
 	command = ~/.config/git/hooks/agent-attribution prepare-commit-msg "$@"
-
-[hook "fohte-agent-attribution-commit-msg"]
-	event = commit-msg
-	command = ~/.config/git/hooks/agent-attribution commit-msg "$@"
-
-[hook "fohte-agent-attribution-reference-transaction"]
-	event = reference-transaction
-	command = ~/.config/git/hooks/agent-attribution reference-transaction "$@"

@@ -27,11 +27,14 @@ if [[ -n "$runok_output" ]] && ! jq -e 'type == "object"' <<< "$runok_output" > 
   exit 0
 fi
 
+attribution_output=
 if ! attribution_output=$(printf '%s\n%s\n' "$input" "${runok_output:-null}" | ~/.codex/agent-attribution-proxy codex); then
-  deny_pre_tool_use "Attribution context is unavailable for this commit."
-  exit 0
+  printf 'Attribution enrichment failed; preserving the existing hook output.\n' >&2
+  attribution_output=
 fi
 
 if [[ -n "$attribution_output" ]]; then
   printf '%s\n' "$attribution_output"
+elif [[ -n "$runok_output" ]]; then
+  printf '%s\n' "$runok_output"
 fi
