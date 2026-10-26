@@ -405,13 +405,15 @@ jobs:
             exit 1
           fi
 
-          if ! CONTENT_LOSS_OUTPUT=$(
+          content_loss_status=0
+          CONTENT_LOSS_OUTPUT=$(
             .content-loss-detector/scripts/detect-content-loss \
               --pr-url "${pr_url}" \
               --from "${FROM_VERSION}" \
               --data-file "$RUNNER_TEMP/copier-answers-before-update.yml" \
               2>&1
-          ); then
+          ) || content_loss_status=$?
+          if [ "${content_loss_status}" -ne 0 ]; then
             echo "${CONTENT_LOSS_OUTPUT}" >&2
             content_loss_list=$(printf '%s\n' "${CONTENT_LOSS_OUTPUT}" | sed 's/^/> /')
             body="${body}
@@ -421,6 +423,11 @@ jobs:
           >
           ${content_loss_list}"
             gh pr edit "${pr_url}" --body "${body}"
+            # Exit 2 means content loss was confirmed and the PR hold succeeded.
+            if [ "${content_loss_status}" -eq 2 ]; then
+              echo "Content loss detected; leaving PR in draft without failing this job."
+              exit 0
+            fi
             exit 1
           fi
           echo "${CONTENT_LOSS_OUTPUT}"
