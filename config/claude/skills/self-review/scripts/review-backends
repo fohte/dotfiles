@@ -16,9 +16,13 @@ initialize_codex_home() {
 run_codex() {
   local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}"
   local resume_session_id="${4:-}" persist_session="${5:-false}"
+  # Pin mise's trust-state location before HOME changes for the Codex process.
+  local mise_state_dir="${MISE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/mise}"
   local config_args=(--config 'cli_auth_credentials_store="file"')
   local command_status=0
   local codex_args=(exec)
+
+  [[ "$mise_state_dir" == /* ]] || mise_state_dir="$PWD/$mise_state_dir"
 
   if [[ "$persist_session" == true ]]; then
     config_args+=(--config 'sandbox_mode="read-only"')
@@ -33,7 +37,7 @@ run_codex() {
     codex_args+=(--sandbox read-only --color never)
   fi
 
-  HOME="$shared_codex_home" CODEX_HOME="$shared_codex_home" codex "${codex_args[@]}" \
+  HOME="$shared_codex_home" CODEX_HOME="$shared_codex_home" MISE_STATE_DIR="$mise_state_dir" codex "${codex_args[@]}" \
     --ignore-user-config \
     "${model_args[@]+"${model_args[@]}"}" \
     "${config_args[@]}" \
