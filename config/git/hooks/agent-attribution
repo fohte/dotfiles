@@ -6,7 +6,10 @@ hook_argument="${2:?Usage: agent-attribution <hook-name> <hook-argument>}"
 
 case "$hook_name" in
   prepare-commit-msg)
-    exec a agent attribution "$hook_name" "$hook_argument"
+    if ! a agent attribution "$hook_name" "$hook_argument"; then
+      printf 'Attribution enrichment failed; continuing the Git operation.\n' >&2
+    fi
+    exit 0
     ;;
   *)
     printf 'Unsupported attribution hook: %s\n' "$hook_name" >&2
