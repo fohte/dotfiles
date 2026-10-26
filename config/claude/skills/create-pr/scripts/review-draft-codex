@@ -170,6 +170,7 @@ config_args=(
   --config 'features.hooks=false'
   --config 'features.multi_agent=false'
   --config 'features.multi_agent_v2=false'
+  --config 'features.incremental_tools=false'
   --config 'features.apps=false'
   --config 'features.plugins=false'
   --config 'features.memories=false'
