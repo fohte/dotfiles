@@ -44,12 +44,10 @@ for required_command in "${required_commands[@]}"; do
 done
 
 codex_path=$(command -v codex)
-codex_version=$("$codex_path" --version)
-[[ "$codex_version" == "codex-cli 0.163.0" ]] || {
-  echo "Error: tool-free Codex draft review is verified only with codex-cli 0.163.0 (found: $codex_version)." >&2
-  exit 3
-}
-
+mise_state_dir=${MISE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/mise}
+if [[ "$mise_state_dir" != /* ]]; then
+  mise_state_dir="${OLDPWD:-$PWD}/$mise_state_dir"
+fi
 auth_file="$codex_home_source/auth.json"
 [[ -s "$auth_file" ]] || {
   echo "Error: isolated Codex draft review requires file-based Codex credentials." >&2
@@ -77,6 +75,7 @@ mkdir -p "$isolated_home" "$probe_home" "$isolated_codex_home" \
 base_env_args=(
   env -i
   "PATH=${PATH:-/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin}"
+  "MISE_STATE_DIR=$mise_state_dir"
   "TMPDIR=$isolated_tmp"
   "TERM=${TERM:-dumb}"
 )
@@ -176,6 +175,7 @@ config_args=(
   --config 'features.hooks=false'
   --config 'features.multi_agent=false'
   --config 'features.multi_agent_v2=false'
+  --config 'features.incremental_tools=false'
   --config 'features.apps=false'
   --config 'features.plugins=false'
   --config 'features.memories=false'
