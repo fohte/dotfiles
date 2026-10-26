@@ -95,9 +95,7 @@ reviewers:
       pattern: '[ぁ-んァ-ヶ一-龯]'
     definition: self-review-japanese-writing.md
     references:
-      - yomiyasu/SKILL.md
-      - yomiyasu/references/*.md
-      - yomiyasu/references/domains/*.md
+      - self-review/references/japanese-writing.md
 
   readme:
     trigger:
