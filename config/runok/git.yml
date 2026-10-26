@@ -190,7 +190,7 @@ rules:
       - deny: 'git rebase origin/main'
       - deny: 'git rebase origin/master'
   - deny: 'git [-C *] pull --no-rebase *'
-    message: 'Blocked to prevent unintended merge commits'
+    message: 'Blocked: explicit `--no-rebase` is denied to prevent merge commits. Plain `git pull` is not blocked by this rule, but may fail depending on Git configuration and worktree state.'
     fix_suggestion: 'git pull --rebase'
     tests:
       - deny: 'git pull --no-rebase'
@@ -200,7 +200,7 @@ rules:
   # it stays allowed. Kept separate from the rule above because runok only
   # supports multi-word alternation in command position.
   - deny: 'git [-C *] pull * -r|--rebase false|no|off|0 *'
-    message: 'Blocked to prevent unintended merge commits'
+    message: 'Blocked: `-r` or `--rebase` with `false`, `no`, `off`, or `0` is denied to prevent merge commits. Plain `git pull` is not blocked by this rule, but may fail depending on Git configuration and worktree state.'
     fix_suggestion: 'git pull --rebase'
     tests:
       - deny: 'git pull --rebase=false'
