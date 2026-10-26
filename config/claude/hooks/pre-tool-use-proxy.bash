@@ -125,6 +125,7 @@ output=$(~/.claude/hooks/bash-bg-timeout-default "$output" <<< "$input")
 
 attribution_output=
 if ! attribution_output=$(printf '%s\n%s\n' "$input" "${output:-null}" | ~/.claude/hooks/agent-attribution-proxy claude-code); then
+  printf 'Attribution enrichment failed; preserving the existing hook output.\n' >&2
   attribution_output=
 fi
 
