@@ -312,6 +312,13 @@ if ! "${actual_env_args[@]}" "$codex_path" "${codex_exec_args[@]}" \
 fi
 
 if ! jq -s -e '
+  length > 0 and all(.[]; type == "object" and (.type | type == "string"))
+' "$events_file" > /dev/null; then
+  echo "Error: Codex draft reviewer returned no inspectable events." >&2
+  exit 3
+fi
+
+if ! jq -s -e '
   def indicates_tool_execution:
     [
       .type?,
@@ -324,9 +331,7 @@ if ! jq -s -e '
       .item?.tool?.type?
     ]
     | any(.[]; type == "string" and test("tool|command_execution|file_change|mcp|collab|web_search|browser|computer|function_call|shell"; "i"));
-  length > 0
-    and all(.[]; type == "object" and (.type | type == "string"))
-    and all(.[]; .type != "turn.failed" and .type != "error")
+  all(.[]; .type != "turn.failed" and .type != "error")
     and all(.[]; (indicates_tool_execution | not))
 ' "$events_file" > /dev/null; then
   echo "Error: Codex draft reviewer executed a tool or returned an error event." >&2
