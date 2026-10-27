@@ -15,7 +15,6 @@ case "$hook_name" in
     exit 0
     ;;
   *)
-    printf 'Unsupported attribution hook: %s\n' "$hook_name" >&2
-    exit 2
+    exit 0
     ;;
 esac
