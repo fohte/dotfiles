@@ -123,8 +123,9 @@ dot refresh
 This command automatically updates the SKK dictionary, Neovim plugins, mise tools, and more.
 The public repository is pulled with `--ff-only --autostash`. An existing role
 repository is updated with `--ff-only` only when clean; refresh stops if a pull
-fails. A missing role repository is never cloned. If no role is set, refresh
-updates only the public repository and its submodules.
+fails. A missing role repository is never cloned. Without a role, the pull
+phase skips the role repository, while role-independent tool updates still run
+and tasks that require deployment are skipped.
 
 ## 🔧 How Deployment Works
 
