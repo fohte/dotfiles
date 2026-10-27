@@ -12,6 +12,9 @@ approvals_reviewer = "auto_review"
 # Codex is upgraded through Homebrew, so the startup update prompt is noise.
 check_for_update_on_startup = false
 
+[features]
+wake_on_agent_messages = true
+
 [tools]
 web_search = true
 
