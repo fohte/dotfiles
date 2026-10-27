@@ -9,12 +9,7 @@ state_dir="$HOME/.local/state/dotfiles/role-skill-links"
 umask 077
 mkdir -p "$state_dir"
 
-# Both engines can start together and reconcile the same roots and state files.
-# The owner PID lets a later hook reclaim a lock left by a crashed process.
-lock_dir="$state_dir/sync.lock"
-recovery_lock_dir="$state_dir/sync-recovery.lock"
-
-# A kernel lock serializes sync and stale-lock recovery across both engines.
+# A kernel lock serializes skill sync across both engines.
 if [ "${DOTFILES_ROLE_SKILL_SYNC_GUARD_PID:-}" != "$$" ]; then
   if ! command -v perl > /dev/null 2>&1; then
     echo "error: perl is required to serialize role skill synchronization" >&2
@@ -31,118 +26,9 @@ if [ "${DOTFILES_ROLE_SKILL_SYNC_GUARD_PID:-}" != "$$" ]; then
     fcntl($guard, F_SETFD, 0) or die "unable to preserve sync guard: $!";
     $ENV{DOTFILES_ROLE_SKILL_SYNC_GUARD_PID} = $$;
     exec { $ARGV[0] } @ARGV or die "unable to restart skill sync: $!";
-  ' "$state_dir/sync-recovery.guard" "$script_path" "$@"
+  ' "$state_dir/sync.guard" "$script_path" "$@"
 fi
 
-# shortcut: PID reuse can make a stale lock look active; remove it manually if sync keeps skipping after that process exits.
-pid_is_running() {
-  [[ "$1" =~ ^[0-9]+$ ]] && kill -0 "$1" 2> /dev/null
-}
-
-read_lock_pid() {
-  local lock_dir="$1" attempt lock_pid=""
-
-  for attempt in 1 2 3 4 5; do
-    if [ -r "$lock_dir/pid" ]; then
-      IFS= read -r lock_pid < "$lock_dir/pid" || lock_pid=""
-      break
-    fi
-    if [ "$attempt" -lt 5 ]; then
-      sleep 0.1
-    fi
-  done
-
-  printf '%s\n' "$lock_pid"
-}
-
-reclaim_stale_lock() {
-  local lock_dir="$1" expected_pid="$2" description="$3" current_pid
-
-  current_pid="$(read_lock_pid "$lock_dir")"
-  if [ "$current_pid" != "$expected_pid" ] || pid_is_running "$current_pid"; then
-    echo "warning: $description lock changed while checking it; skipping this invocation" >&2
-    return 1
-  fi
-
-  echo "warning: removing stale $description lock at $lock_dir" >&2
-  if [ -f "$lock_dir/pid" ]; then
-    rm "$lock_dir/pid"
-  fi
-  if ! rmdir "$lock_dir"; then
-    echo "error: unable to remove stale $description lock at $lock_dir" >&2
-    return 1
-  fi
-}
-
-cleanup_owned_lock() {
-  local lock_dir="$1" owner_pid=""
-
-  if [ -r "$lock_dir/pid" ]; then
-    IFS= read -r owner_pid < "$lock_dir/pid" || owner_pid=""
-  fi
-  if [ "$owner_pid" = "$$" ]; then
-    rm "$lock_dir/pid"
-    rmdir "$lock_dir"
-  fi
-}
-
-cleanup_locks() {
-  cleanup_owned_lock "$lock_dir"
-  cleanup_owned_lock "$recovery_lock_dir"
-}
-
-if [ -d "$lock_dir" ] || ! mkdir "$lock_dir"; then
-  lock_pid="$(read_lock_pid "$lock_dir")"
-  if pid_is_running "$lock_pid"; then
-    echo "warning: another role skill sync is running; skipping this invocation" >&2
-    exit 0
-  fi
-
-  if [ ! -d "$lock_dir" ]; then
-    if ! mkdir "$lock_dir"; then
-      echo "warning: another role skill sync started; skipping this invocation" >&2
-      exit 0
-    fi
-  else
-    lock_pid="$(read_lock_pid "$lock_dir")"
-    if pid_is_running "$lock_pid"; then
-      echo "warning: another role skill sync is running; skipping this invocation" >&2
-      exit 0
-    fi
-
-    if [ -d "$recovery_lock_dir" ] || ! mkdir "$recovery_lock_dir"; then
-      recovery_pid="$(read_lock_pid "$recovery_lock_dir")"
-      if pid_is_running "$recovery_pid"; then
-        echo "warning: another role skill sync is recovering its lock; skipping this invocation" >&2
-        exit 0
-      fi
-      if ! reclaim_stale_lock "$recovery_lock_dir" "$recovery_pid" "role skill sync recovery"; then
-        exit 0
-      fi
-      if ! mkdir "$recovery_lock_dir"; then
-        echo "warning: another role skill sync started recovery; skipping this invocation" >&2
-        exit 0
-      fi
-    fi
-    printf '%s\n' "$$" > "$recovery_lock_dir/pid"
-    trap cleanup_locks EXIT
-
-    current_lock_pid="$(read_lock_pid "$lock_dir")"
-    if [ "$current_lock_pid" != "$lock_pid" ] || pid_is_running "$current_lock_pid"; then
-      echo "warning: role skill sync lock changed while checking it; skipping this invocation" >&2
-      exit 0
-    fi
-    if ! reclaim_stale_lock "$lock_dir" "$lock_pid" "role skill sync"; then
-      exit 0
-    fi
-    if ! mkdir "$lock_dir"; then
-      echo "warning: another role skill sync started; skipping this invocation" >&2
-      exit 0
-    fi
-  fi
-fi
-printf '%s\n' "$$" > "$lock_dir/pid"
-trap cleanup_locks EXIT
 trap 'exit 1' HUP INT TERM
 
 link_public_skills() {
