@@ -3,24 +3,33 @@
 
 prepare_review_instructions() {
   local repo_root="$1" files_file="$2" work_dir="$3" directory instruction_name file
-  while IFS= read -r file; do
-    directory=$(dirname "$repo_root/$file")
-    while [[ "$directory" == "$repo_root" || "$directory" == "$repo_root/"* ]]; do
-      for instruction_name in AGENTS.md CLAUDE.md; do
-        [[ -f "$directory/$instruction_name" ]] && printf '%s\n' "$directory/$instruction_name"
+  if jq -e '.recovery_round != null' "$manifest_file" > /dev/null; then
+    jq -r '.recovery_round.input_snapshot.files[] | select(.kind == "resource" and .purpose == "instruction") | .path' "$manifest_file" > "$work_dir/instructions.txt"
+  else
+    while IFS= read -r file; do
+      directory=$(dirname "$repo_root/$file")
+      while [[ "$directory" == "$repo_root" || "$directory" == "$repo_root/"* ]]; do
+        for instruction_name in AGENTS.md CLAUDE.md; do
+          [[ -f "$directory/$instruction_name" ]] && printf '%s\n' "$directory/$instruction_name"
+        done
+        [[ "$directory" == "$repo_root" ]] && break
+        directory=$(dirname "$directory")
       done
-      [[ "$directory" == "$repo_root" ]] && break
-      directory=$(dirname "$directory")
-    done
-  done < "$files_file" | LC_ALL=C sort -u > "$work_dir/instructions.txt"
+    done < "$files_file" | LC_ALL=C sort -u > "$work_dir/instructions.txt"
+  fi
   instructions_file="$work_dir/instructions.txt"
 }
 
 append_resource() {
   local output="$1" path="$2"
   printf '\n<resource path="%s">\n' "$path" >> "$output"
-  if jq -e --arg path "$path" '(.recovery_round.input_snapshot.files // []) | any(.[]; .kind == "resource" and .path == $path)' "$manifest_file" > /dev/null; then
-    jq -r --arg path "$path" '.recovery_round.input_snapshot.files[] | select(.kind == "resource" and .path == $path) | .content' "$manifest_file" >> "$output"
+  if jq -e '.recovery_round != null' "$manifest_file" > /dev/null; then
+    jq -e --arg path "$path" '.recovery_round.input_snapshot.files | any(.[]; .kind == "resource" and .path == $path)' "$manifest_file" > /dev/null ||
+      {
+        echo "Error: recovery snapshot is missing a prompt resource: $path" >&2
+        return 3
+      }
+    jq -j --arg path "$path" '[.recovery_round.input_snapshot.files[] | select(.kind == "resource" and .path == $path) | .content] | first' "$manifest_file" >> "$output"
   else
     sed -n '1,$p' "$path" >> "$output"
   fi

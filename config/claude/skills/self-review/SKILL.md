@@ -60,7 +60,7 @@ reviewer 実行に失敗した場合だけ、本文を含まない診断 JSON �
 
     `round-record.json` の各 attempt は独立した execution ID、input / patch / prompt hash、取得できた backend session ID、runner の結果 path を結びます。recovery round は旧 session を再開せず、通常の branch review state も読み書きしません。
 
-3. runner が exit 0 または 1 で終わったら、`attempt-01/result.json` の意味上の評価を確認して記録します。exit 0 / 1 だけで評価済みとは判断しません。
+3. runner が exit 0 または 1 で終わったら、`round-record.json` の最新 attempt にある `output.result_path` の結果を読み、意味上の評価を記録します。exit 0 / 1 だけで評価済みとは判断しません。
 
     ```bash
     ~/.agents/skills/self-review/scripts/self-review-recovery-round assess \

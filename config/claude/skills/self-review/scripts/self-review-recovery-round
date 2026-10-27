@@ -19,11 +19,25 @@ fail() {
 }
 
 sha256_file() {
-  shasum -a 256 "$1" | awk '{ print $1 }'
+  local output
+  if command -v shasum > /dev/null; then
+    output=$(shasum -a 256 "$1") || return 1
+  elif command -v sha256sum > /dev/null; then
+    output=$(sha256sum "$1") || return 1
+  else
+    return 127
+  fi
+  printf '%s\n' "$output" | awk '{ print $1 }'
 }
 
 sha256_stdin() {
-  shasum -a 256 | awk '{ print $1 }'
+  if command -v shasum > /dev/null; then
+    shasum -a 256 | awk '{ print $1 }'
+  elif command -v sha256sum > /dev/null; then
+    sha256sum | awk '{ print $1 }'
+  else
+    return 127
+  fi
 }
 
 absolute_file_path() {
@@ -34,8 +48,10 @@ absolute_file_path() {
 }
 
 snapshot_file() {
-  local round_dir="$1" index="$2" kind="$3" path="$4" file="$5" source="$6" revision="${7:-}"
+  local round_dir="$1" index="$2" kind="$3" path="$4" file="$5" source="$6" revision="" purpose=""
   local snapshot_path sha256
+  [[ "$#" -lt 7 ]] || revision="$7"
+  [[ "$#" -lt 8 ]] || purpose="$8"
   snapshot_path="$round_dir/input-snapshots/$(printf '%03d' "$index").json"
   sha256=$(sha256_file "$file")
   jq -n \
@@ -44,9 +60,18 @@ snapshot_file() {
     --arg sha256 "$sha256" \
     --arg source "$source" \
     --arg revision "$revision" \
+    --arg purpose "$purpose" \
     --rawfile content "$file" \
-    '{kind: $kind, path: $path, sha256: $sha256, source: $source, content: $content} + (if $revision == "" then {} else {revision: $revision} end)' \
+    '{kind: $kind, path: $path, sha256: $sha256, source: $source, content: $content} +
+      (if $revision == "" then {} else {revision: $revision} end) +
+      (if $purpose == "" then {} else {purpose: $purpose} end)' \
     > "$snapshot_path"
+}
+
+snapshot_resource() {
+  local round_dir="$1" index="$2" path="$3" purpose="$4"
+  [[ -f "$path" ]] || fail "review input is missing: $path"
+  snapshot_file "$round_dir" "$index" resource "$path" "$path" file "" "$purpose"
 }
 
 input_sha256() {
@@ -65,7 +90,7 @@ validate_source_record() {
       .new_manifest.sha256 == $manifest_sha and
       .new_manifest.status == "ready" and
       (.previous_runs | type == "array" and length > 0) and
-      (.previous_runs | any(.[]; .exit_code != 0)) and
+      (.previous_runs | any(.[]; .exit_code != 0 and .exit_code != 1)) and
       (.current_round.result.all_required_evaluations_present == true) and
       (.current_round.status == "valid_findings" or .current_round.status == "valid")' \
     "$old_record" > /dev/null || fail "old record does not bind the supplied manifest, repository, failed attempts, and a valid evaluation."
@@ -95,7 +120,7 @@ write_recovery_manifest() {
           old_manifest: {path: $old_manifest_path, sha256: $old_manifest_sha},
           old_record: {path: $old_record_path, sha256: $old_record_sha},
           prior_attempts: [$old_record_data[0].previous_runs[] | {task_id, reviewers, exit_code, stdout, stderr, result}],
-          failed_attempts: [$old_record_data[0].previous_runs[] | select(.exit_code != 0) | {task_id, reviewers, exit_code, stdout, stderr, result}],
+          failed_attempts: [$old_record_data[0].previous_runs[] | select(.exit_code != 0 and .exit_code != 1) | {task_id, reviewers, exit_code, stdout, stderr, result}],
           valid_evaluation: {
             status: $old_record_data[0].current_round.status,
             reviewers: $old_record_data[0].current_round.reviewers,
@@ -115,7 +140,7 @@ write_recovery_manifest() {
 
 snapshot_review_inputs() {
   local round_dir="$1" current_head="$2" output_name="$3" skill_dir claude_dir definition resource_path target_path target_file
-  local index=0 input_files snapshot_hash
+  local repo_root directory instruction_name index=0 input_files snapshot_hash instruction_files
   skill_dir=$(cd "$script_dir/.." && pwd -P)
   claude_dir=$(cd "$skill_dir/../.." && pwd -P)
   while IFS= read -r resource_path; do
@@ -127,16 +152,42 @@ snapshot_review_inputs() {
 
   definition=$(jq -r '.reviewers[0].definition' "$round_dir/manifest.json")
   resource_path="$claude_dir/agents/$definition.md"
-  [[ -f "$resource_path" ]] || fail "reviewer definition is missing: $resource_path"
-  snapshot_file "$round_dir" "$index" resource "$resource_path" "$resource_path" file
+  snapshot_resource "$round_dir" "$index" "$resource_path" definition
   index=$((index + 1))
   while IFS= read -r resource_path; do
     [[ -n "$resource_path" ]] || continue
     resource_path="$claude_dir/skills/$resource_path"
-    [[ -f "$resource_path" ]] || fail "reviewer reference is missing: $resource_path"
-    snapshot_file "$round_dir" "$index" resource "$resource_path" "$resource_path" file
+    snapshot_resource "$round_dir" "$index" "$resource_path" reviewer_reference
     index=$((index + 1))
   done < <(jq -r '.reviewers[0].references[]' "$round_dir/manifest.json")
+  while IFS= read -r resource_path; do
+    [[ -n "$resource_path" ]] || continue
+    resource_path="$claude_dir/skills/$resource_path"
+    snapshot_resource "$round_dir" "$index" "$resource_path" agent_reference
+    index=$((index + 1))
+  done < <(jq -r '. as $manifest | [$manifest.reviewers[].agent as $agent | $manifest.agents[$agent].references[]?] | unique[]' "$round_dir/manifest.json")
+
+  repo_root=$(jq -r '.repo_root' "$round_dir/manifest.json")
+  instruction_files="$round_dir/instruction-files"
+  while IFS= read -r target_path; do
+    directory=$(dirname "$repo_root/$target_path")
+    while [[ "$directory" == "$repo_root" || "$directory" == "$repo_root/"* ]]; do
+      for instruction_name in AGENTS.md CLAUDE.md; do
+        [[ -f "$directory/$instruction_name" ]] && printf '%s\n' "$directory/$instruction_name"
+      done
+      [[ "$directory" == "$repo_root" ]] && break
+      directory=$(dirname "$directory")
+    done
+  done < <(jq -r '.files[]' "$round_dir/manifest.json") | LC_ALL=C sort -u > "$instruction_files"
+  while IFS= read -r resource_path; do
+    [[ -n "$resource_path" ]] || continue
+    snapshot_resource "$round_dir" "$index" "$resource_path" instruction
+    index=$((index + 1))
+  done < "$instruction_files"
+  snapshot_resource "$round_dir" "$index" "$skill_dir/reviewer-evaluation-ids.json" evaluation_ids
+  index=$((index + 1))
+  snapshot_resource "$round_dir" "$index" "$skill_dir/review-output-schema.json" output_schema
+  index=$((index + 1))
 
   target_file="$round_dir/target-content"
   while IFS= read -r target_path; do
@@ -186,9 +237,10 @@ create_round() {
   [[ -n "$reason" ]] || fail "repair reason is required."
   [[ -n "${AGENT_TMPDIR:-}" && -d "$AGENT_TMPDIR" ]] || fail "AGENT_TMPDIR must name an existing session directory."
 
-  for command in git jq shasum yq dot uuidgen; do
+  for command in git jq yq dot uuidgen; do
     command -v "$command" > /dev/null || fail "required command not found: $command"
   done
+  command -v shasum > /dev/null || command -v sha256sum > /dev/null || fail "required command not found: shasum or sha256sum"
   repo_root=$(git rev-parse --show-toplevel)
   current_head=$(git rev-parse --verify 'HEAD^{commit}')
   old_manifest_sha=$(sha256_file "$old_manifest")
@@ -222,7 +274,7 @@ create_round() {
 verify_round() {
   local round_dir="$1" manifest="$1/manifest.json" record="$1/round-record.json"
   local repo_root current_head round_id expected_manifest actual_manifest expected_input actual_input snapshot_count index kind path expected_sha
-  local source_manifest_sha source_record_sha
+  local source_manifest_sha source_record_sha purpose
   [[ -f "$manifest" && -f "$record" ]] || fail "round manifest or record is missing."
   repo_root=$(git rev-parse --show-toplevel)
   current_head=$(git rev-parse --verify 'HEAD^{commit}')
@@ -240,6 +292,10 @@ verify_round() {
   jq -e '.reviewers | length == 1' "$manifest" > /dev/null &&
     [[ $(jq -r '.reviewers[0].name' "$manifest") == japanese-writing ]] ||
     fail "round manifest must contain only the Japanese-writing reviewer."
+  for purpose in definition evaluation_ids output_schema; do
+    jq -e --arg purpose "$purpose" '.recovery_round.input_snapshot.files | any(.[]; .kind == "resource" and .purpose == $purpose)' "$manifest" > /dev/null ||
+      fail "required prompt snapshot is missing: $purpose"
+  done
   source_manifest_sha=$(jq -er '.source.old_manifest.sha256' "$record")
   source_record_sha=$(jq -er '.source.old_record.sha256' "$record")
   [[ $(sha256_file "$round_dir/provenance/old-manifest.json") == "$source_manifest_sha" ]] || fail "preserved old manifest hash changed."
@@ -281,7 +337,7 @@ verify_round_command() {
 run_round() {
   [[ "$#" -eq 1 ]] || usage
   local round_dir="$1" record="$1/round-record.json" manifest="$1/manifest.json"
-  local attempt_count attempt_number round_status attempt_dir execution_id started_at runner_status
+  local attempt_count attempt_number round_status attempt_dir execution_id started_at runner_status schema_file evaluation_ids_file
   local result_status record_status input_hash backend_session_id patch_sha prompt_sha result_valid
   round_dir=$(cd "$round_dir" && pwd -P)
   acquire_lock "$round_dir"
@@ -302,6 +358,10 @@ run_round() {
   input_hash=$(jq -r '.input_sha256' "$record")
   attempt_dir="$round_dir/attempt-$(printf '%02d' "$attempt_number")"
   mkdir "$attempt_dir"
+  schema_file="$attempt_dir/review-output-schema.json"
+  evaluation_ids_file="$attempt_dir/reviewer-evaluation-ids.json"
+  jq -j '.recovery_round.input_snapshot.files[] | select(.purpose == "output_schema") | .content' "$manifest" > "$schema_file"
+  jq -j '.recovery_round.input_snapshot.files[] | select(.purpose == "evaluation_ids") | .content' "$manifest" > "$evaluation_ids_file"
   jq \
     --argjson attempt "$attempt_number" \
     --arg execution_id "$execution_id" \
@@ -312,7 +372,9 @@ run_round() {
   mv "$round_dir/round-record.next.json" "$record"
 
   set +e
-  SELF_REVIEW_RECOVERY_ATTEMPT_DIR="$attempt_dir" \
+  SELF_REVIEW_RECOVERY_SCHEMA_FILE="$schema_file" \
+    SELF_REVIEW_RECOVERY_EVALUATION_IDS_FILE="$evaluation_ids_file" \
+    SELF_REVIEW_RECOVERY_ATTEMPT_DIR="$attempt_dir" \
     "$script_dir/run-external-reviewers" "$manifest" japanese-writing \
     > "$attempt_dir/result.json" 2> "$attempt_dir/stderr.log"
   runner_status=$?
