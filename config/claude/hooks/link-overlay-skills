@@ -1,22 +1,155 @@
-#!/bin/bash
-# SessionStart hook: symlink role overlay skill directories into ~/.claude/skills/.
-#
-# Claude Code only discovers personal skills at the flat path
-# ~/.claude/skills/<skill-name>/SKILL.md. To make role overlay skills under
-# config-overlays/claude/skills/*/ available, link each skill directory in flat
-# at session start. Hook is idempotent: re-running leaves links pointing at the
-# same target via `ln -sfn`.
-set -eu
+#!/usr/bin/env bash
+# Link role overlay skills into each engine's flat skill root.
+set -euo pipefail
 
-overlay_dir=$(dot role overlay config/claude/skills 2> /dev/null || true)
-[ -z "$overlay_dir" ] && exit 0
-[ -d "$overlay_dir" ] || exit 0
+dotfiles_dir="$(dot path)"
+public_skill_dir="$dotfiles_dir/config/claude/skills"
+overlay_dir="$(dot role overlay config/claude/skills || true)"
+state_dir="$HOME/.local/state/dotfiles/role-skill-links"
+umask 077
+mkdir -p "$state_dir"
 
-mkdir -p "$HOME/.claude/skills" "$HOME/.agents/skills"
-for d in "$overlay_dir"/*/; do
-  [ -d "$d" ] || continue
-  ln -sfn "$d" "$HOME/.claude/skills/$(basename "$d")"
-  # `dot deploy` skips symlinked skills, so Codex only sees overlay skills
-  # through this link.
-  ln -sfn "$d" "$HOME/.agents/skills/$(basename "$d")"
-done
+link_public_skills() {
+  local root="$1" include_synced="$2" skill name destination
+
+  for skill in "$public_skill_dir"/*/; do
+    [ -d "$skill" ] || continue
+    name="$(basename "${skill%/}")"
+    if [ "$include_synced" != true ] && [ "$name" = synced ]; then
+      continue
+    fi
+    if [ "$include_synced" != true ] && [ -L "${skill%/}" ]; then
+      continue
+    fi
+    destination="$root/$name"
+    if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+      ln -s "${skill%/}" "$destination" || return 1
+    fi
+  done
+}
+
+remove_legacy_overlay_links() {
+  local link name target
+
+  for link in "$public_skill_dir"/*; do
+    [ -L "$link" ] || continue
+    name="$(basename "$link")"
+    target="$(readlink "$link")"
+    case "$target" in
+      */config-overlays/claude/skills/"$name" | */config-overlays/claude/skills/"$name"/) rm "$link" || return 1 ;;
+    esac
+  done
+}
+
+prepare_skill_root() {
+  local root="$1" include_synced="$2" root_target
+
+  if [ -L "$root" ]; then
+    root_target="$(readlink "$root")"
+    if [ "$root" = "$HOME/.claude/skills" ] && [ "$root_target" = "$public_skill_dir" ]; then
+      remove_legacy_overlay_links || return 1
+      rm "$root" || return 1
+    else
+      echo "warning: keeping custom skill root symlink at $root" >&2
+      return 1
+    fi
+  fi
+
+  mkdir -p "$root" || return 1
+  link_public_skills "$root" "$include_synced" || return 1
+}
+
+lookup_target() {
+  local file="$1" wanted_name="$2" name target
+  [ -f "$file" ] || return 1
+  while IFS=$'\t' read -r name target; do
+    if [ "$name" = "$wanted_name" ]; then
+      printf '%s\n' "$target"
+      return 0
+    fi
+  done < "$file"
+  return 1
+}
+
+sync_skill_root() {
+  local root="$1" state_file="$2" desired_file old_state next_state
+  local skill name target path current_target desired_target recorded_target
+
+  desired_file="$(mktemp "$state_dir/.desired.XXXXXX")"
+  old_state="$(mktemp "$state_dir/.old.XXXXXX")"
+  next_state="$(mktemp "$state_dir/.next.XXXXXX")"
+  trap 'rm -f "$desired_file" "$old_state" "$next_state"' RETURN
+
+  if [ -d "$overlay_dir" ]; then
+    for skill in "$overlay_dir"/*/; do
+      [ -f "$skill/SKILL.md" ] || continue
+      name="$(basename "${skill%/}")"
+      [ -f "$public_skill_dir/$name/SKILL.md" ] && continue
+      printf '%s\t%s\n' "$name" "${skill%/}" >> "$desired_file"
+    done
+  fi
+
+  if [ -f "$state_file" ]; then
+    cp "$state_file" "$old_state"
+  else
+    # Adopt links from the old hook once, which used this exact target layout.
+    for path in "$root"/*; do
+      [ -L "$path" ] || continue
+      name="$(basename "$path")"
+      current_target="$(readlink "$path")"
+      case "$current_target" in
+        */config-overlays/claude/skills/"$name" | */config-overlays/claude/skills/"$name"/)
+          printf '%s\t%s\n' "$name" "$current_target" >> "$old_state"
+          ;;
+      esac
+    done
+  fi
+
+  while IFS=$'\t' read -r name target; do
+    path="$root/$name"
+    current_target=""
+    if [ -L "$path" ]; then
+      current_target="$(readlink "$path")"
+    fi
+    desired_target="$(lookup_target "$desired_file" "$name" || true)"
+
+    if [ "$current_target" = "$target" ]; then
+      if [ "$desired_target" = "$target" ]; then
+        printf '%s\t%s\n' "$name" "$target" >> "$next_state"
+      else
+        rm "$path"
+      fi
+    fi
+  done < "$old_state"
+
+  while IFS=$'\t' read -r name target; do
+    path="$root/$name"
+    if [ -L "$path" ]; then
+      current_target="$(readlink "$path")"
+      if [ "$current_target" = "$target" ]; then
+        recorded_target="$(lookup_target "$next_state" "$name" || true)"
+        if [ "$recorded_target" != "$target" ]; then
+          echo "warning: keeping unrecorded skill symlink at $path" >&2
+        fi
+      fi
+    elif [ -e "$path" ]; then
+      echo "warning: keeping existing skill at $path" >&2
+    else
+      ln -s "$target" "$path"
+      printf '%s\t%s\n' "$name" "$target" >> "$next_state"
+    fi
+  done < "$desired_file"
+
+  mv "$next_state" "$state_file"
+}
+
+claude_root="$HOME/.claude/skills"
+codex_root="$HOME/.agents/skills"
+if prepare_skill_root "$claude_root" true; then
+  sync_skill_root "$claude_root" "$state_dir/claude.tsv"
+  link_public_skills "$claude_root" true
+fi
+if prepare_skill_root "$codex_root" false; then
+  sync_skill_root "$codex_root" "$state_dir/codex.tsv"
+  link_public_skills "$codex_root" false
+fi

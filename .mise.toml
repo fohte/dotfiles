@@ -25,19 +25,38 @@ depends = [
 ]
 
 [tasks."refresh:pull"]
-description = "Pull latest dotfiles and update submodules"
+description = "Pull latest dotfiles and the selected role repository"
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(ghq list -e -p fohte/dotfiles)"
+dotfiles_dir="$(ghq list -e -p fohte/dotfiles)"
+cd "$dotfiles_dir"
 
-if git diff --quiet; then
-  git pull
-else
-  git stash
-  git pull
-  git stash pop
+role_name="$(config/bin/dot-role get name)"
+role_repo="$(config/bin/dot-role get repo || true)"
+role_repo_dir=""
+if [ -n "$role_repo" ]; then
+  role_repo_dir="$HOME/ghq/github.com/$role_repo"
+fi
+
+update_repo() {
+  local repo_dir="$1"
+  if [ -n "$(git -C "$repo_dir" status --porcelain --untracked-files=all)" ]; then
+    echo "error: refusing to refresh $repo_dir because it has uncommitted changes" >&2
+    return 1
+  fi
+
+  echo "Updating $repo_dir"
+  git -C "$repo_dir" pull --ff-only
+}
+
+update_repo "$dotfiles_dir"
+
+if [ -n "$role_repo_dir" ] && [ -d "$role_repo_dir" ] && [ "$role_repo_dir" != "$dotfiles_dir" ]; then
+  update_repo "$role_repo_dir"
+elif [ "$role_name" = private ]; then
+  echo "warning: private role repository is unavailable at $role_repo_dir; skipping its update" >&2
 fi
 
 git submodule update --init --recursive

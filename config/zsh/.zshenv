@@ -59,6 +59,7 @@ setopt no_global_rcs
 path=(
   $HOME/.local/bin(N-/)
   $HOME/bin(N-/)
+  $HOME/.local/share/dotfiles/role-bin(N-/)
   $HOME/.cabal/bin(N-/)
   /usr/local/bin(N-/)
   /usr/bin(N-/)
@@ -128,8 +129,8 @@ import_env 'github.zsh'
 # Calculate initial checksum of zsh config files
 export ZSH_CONFIG_CHECKSUM=$(calculate_zsh_config_checksum)
 
-# Role-specific overlay (private: in-repo, work: external repo). The symlink
-# is pre-resolved by `dot deploy` to avoid shelling out to `dot role` here.
+# The selected role repository's overlay is loaded before machine-local config.
+# The symlink is pre-resolved by `dot deploy` to avoid shelling out here.
 [ -f "$ZSH_CONFIG_HOME/.zshenv.overlay" ] && source "$ZSH_CONFIG_HOME/.zshenv.overlay"
 
 [ -f ~/.local/.zshenv ] && source ~/.local/.zshenv

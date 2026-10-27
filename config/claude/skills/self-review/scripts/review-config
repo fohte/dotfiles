@@ -2,7 +2,7 @@
 # shellcheck disable=SC2154 # Callers initialize the shared config paths.
 
 load_review_config() {
-  local requested_file="$1" work_dir="$2" base_dir base_name stem extension role overlay_file status
+  local requested_file="$1" work_dir="$2" base_dir role overlay_file status
 
   for command in dot jq yq; do
     command -v "$command" > /dev/null || {
@@ -25,21 +25,7 @@ load_review_config() {
   }
 
   case "$role" in
-    private)
-      base_name=$(basename "$review_config_base_file")
-      if [[ "$base_name" == *.* ]]; then
-        stem="${base_name%.*}"
-        extension=".${base_name##*.}"
-      else
-        stem="$base_name"
-        extension=
-      fi
-      overlay_file="$base_dir/$stem.private$extension"
-      if [[ -e "$overlay_file" ]]; then
-        review_config_overlay_file="$overlay_file"
-      fi
-      ;;
-    work)
+    private | work)
       if overlay_file=$(dot role overlay "$review_config_base_file" 2> "$work_dir/overlay-error"); then
         review_config_overlay_file="$overlay_file"
       else
@@ -48,6 +34,9 @@ load_review_config() {
           cat "$work_dir/overlay-error" >&2
           echo "Error: unable to resolve the reviewer config overlay." >&2
           return 1
+        fi
+        if [[ -s "$work_dir/overlay-error" ]]; then
+          cat "$work_dir/overlay-error" >&2
         fi
       fi
       ;;

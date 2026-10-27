@@ -44,6 +44,8 @@ Install [mise](https://mise.jdx.dev/installing-mise.html) first, then clone the 
 git clone https://github.com/fohte/dotfiles ~/ghq/github.com/fohte/dotfiles
 cd ~/ghq/github.com/fohte/dotfiles
 git submodule update --init
+# Optional: clone this private repository to use private role overlays.
+ghq get -u fohte/dotfiles-private
 config/bin/dot role set private   # or: dot role set work repo=<owner>/<name>
 config/bin/dot deploy -t bin,mise
 scripts/bootstrap
@@ -80,17 +82,25 @@ in the gitignored `.role` file at the repository root.
 
 | Role      | Overlay source                                                                  |
 | --------- | ------------------------------------------------------------------------------- |
-| `private` | `config/<tool>/<file>.private.<ext>` (in this repo, git-tracked)                |
+| `private` | `~/ghq/github.com/fohte/dotfiles-private/config-overlays/<tool>/<file>`         |
 | `work`    | `~/ghq/github.com/<owner>/<name>/config-overlays/<tool>/<file>` (external repo) |
 
 ```bash
 dot role set private
+dot role set private repo=<owner>/<name>
 dot role set work repo=<owner>/<name>
 
 dot role get          # print the current role
-dot role get repo     # print the repo (work only)
+dot role get repo     # print the selected role repository
 dot role overlay config/zsh/.zshrc   # print the overlay path for a given file
 ```
+
+Private overlays default to `fohte/dotfiles-private`. If that repository is
+not cloned, `dot role overlay` reports that role overlays are unavailable and
+tools use their base and local configuration without cloning the repository.
+Place personal executable scripts in `dotfiles-private/config-overlays/bin/`.
+`dot deploy -t zsh` links that directory to `~/.local/share/dotfiles/role-bin`,
+which is added to `PATH` after the public `~/bin` directory.
 
 Tools that consume the role:
 
@@ -101,13 +111,17 @@ Tools that consume the role:
 
 ### ✨ Updating
 
-Run `dot refresh` to update the dotfiles and upgrade packages:
+Run `dot refresh` to update the public dotfiles, the selected role repository
+when it is already cloned, and upgrade packages:
 
 ```bash
 dot refresh
 ```
 
 This command automatically updates the SKK dictionary, Neovim plugins, mise tools, and more.
+Both repositories are pulled with `--ff-only`; refresh stops if either has
+uncommitted changes or cannot be fast-forwarded. It never clones a missing role
+repository.
 
 ## 🔧 How Deployment Works
 
