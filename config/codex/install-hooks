@@ -5,7 +5,7 @@
 # context injection (all of `gen-claude-template context`, the same set Claude
 # Code gets), and the tq session tracking hooks
 # (SessionStart / Stop / SessionEnd), the armyknife session tracking hooks
-# (`a agent hook`), and the Codex subagent completion handler.
+# (`a agent hook`).
 #
 # `runok init` checks for its exact command without checking the matcher. Keep
 # an inactive PreToolUse entry so init does not register a competing handler.
@@ -44,8 +44,7 @@ UserPromptSubmit\t.*\ta agent hook user-prompt-submit --engine codex
 PostToolUse\t.*\ta agent hook post-tool-use --engine codex
 PermissionRequest\t.*\ta agent hook permission-request --engine codex
 Stop\t.*\ta agent hook stop --engine codex
-SessionEnd\t.*\ta agent hook session-end --engine codex\t3
-SubagentStop\t.*\ta agent codex-subagent-stop'
+SessionEnd\t.*\ta agent hook session-end --engine codex\t3'
 
 # Commands this script used to register. An already-deployed hooks.json still
 # has them, and the append-only loop below would leave both old and new
@@ -85,6 +84,17 @@ content=$(jq --arg runok "$runok_pre_tool_use_command" '
       end;
   .hooks = (.hooks // {})
   | .hooks.PreToolUse = retain_runok_sentinel((.hooks.PreToolUse // []); $runok)
+' <<< "$content")
+
+# Codex trust IDs include group and handler positions. Keep empty groups in place;
+# removing a handler can still shift later handlers within a mixed group.
+subagent_stop_command='a agent codex-subagent-stop'
+content=$(jq --arg command "$subagent_stop_command" '
+  if .hooks.SubagentStop then
+    .hooks.SubagentStop |= map(
+      if .hooks then .hooks |= map(select(.command != $command)) else . end
+    )
+  else . end
 ' <<< "$content")
 
 while IFS= read -r command; do
