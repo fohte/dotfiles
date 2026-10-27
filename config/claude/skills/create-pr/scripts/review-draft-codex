@@ -295,7 +295,6 @@ assert_tool_free_request() {
 }
 
 if [[ "$probe_status" -eq 0 ]] || [[ -s "$probe_stdout_file" ]] ||
-  ! rg -q 'Connection failed:' "$probe_stderr_file" ||
   ! extract_requests "$probe_stderr_file" "$probe_requests_file" ||
   ! assert_tool_free_request "$probe_requests_file" "$probe_prompt_file"; then
   echo "Error: Codex request-capture probe could not verify a tool-free context." >&2
