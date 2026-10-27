@@ -75,11 +75,11 @@ runner は caller が結果の意味を確認する前に、成功した実行�
 
 2. Codex では recovery helper をバックグラウンドで起動し、完了通知を待ちます。runner を直接呼ぶと実行 ID と retry 上限が記録されないため、helper を使ってください。
 
-    Claude Code では recovery helper を `run_in_background: true` で起動し、完了通知を待つ間にターンを終えます。
-
     ```bash
     a agent bg run -- ~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>
     ```
+
+    Claude Code では同じ helper (`~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>`) を `run_in_background: true` で起動し、完了通知を待つ間にターンを終えます。
 
     `round-record.json` の各 attempt は独立した execution ID、input / patch / prompt hash、取得できた backend session ID、runner の結果 path を結びます。recovery round は旧 session を再開せず、通常の branch review state も読み書きしません。
 
@@ -90,15 +90,20 @@ runner は caller が結果の意味を確認する前に、成功した実行�
       <round-directory> evaluated "<evaluation summary>"
     ```
 
-    要求された評価が未実施または部分実施なら、`not-evaluated` と原因を記録してから、同じ round directory で helper をもう 1 回だけ実行します。runner が失敗した場合も同じ helper の再実行が 1 回だけ許可されます。
-
-    Claude Code では同じ round directory で recovery helper を `run_in_background: true` で起動し、完了通知を待つ間にターンを終えます。
+    要求された評価が未実施または部分実施なら、次の assess command で `not-evaluated` と原因を記録してから、同じ round directory で helper をもう 1 回だけ実行します。runner が失敗した場合は assess を省略して helper を 1 回だけ再実行します。
 
     ```bash
     ~/.agents/skills/self-review/scripts/self-review-recovery-round assess \
       <round-directory> not-evaluated "<unassessed reason>"
+    ```
+
+    `not-evaluated` を記録した後、または runner が失敗した後に、同じ helper をもう 1 回だけ実行します。Codex では次を使います。
+
+    ```bash
     a agent bg run -- ~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>
     ```
+
+    Claude Code では同じ helper (`~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>`) を `run_in_background: true` で起動し、完了通知を待つ間にターンを終えます。
 
     2 回目も未評価なら `round-record.json` にその状態を残して止めます。再選択、round の作り直し、旧評価の retry はしません。結果が有効なら `evaluated` を記録し、通常の結果集約へ戻ります。
 
