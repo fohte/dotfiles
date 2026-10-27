@@ -33,8 +33,12 @@ set -euo pipefail
 dotfiles_dir="$(ghq list -e -p fohte/dotfiles)"
 cd "$dotfiles_dir"
 
-role_name="$(config/bin/dot-role get name)"
-role_repo="$(config/bin/dot-role get repo || true)"
+role_name=""
+role_repo=""
+if [ -f "$dotfiles_dir/.role" ]; then
+  role_name="$(config/bin/dot-role get name)"
+  role_repo="$(config/bin/dot-role get repo || true)"
+fi
 role_repo_dir=""
 if [ -n "$role_repo" ]; then
   role_repo_dir="$HOME/ghq/github.com/$role_repo"
@@ -51,7 +55,8 @@ update_repo() {
   git -C "$repo_dir" pull --ff-only
 }
 
-update_repo "$dotfiles_dir"
+echo "Updating $dotfiles_dir"
+git -C "$dotfiles_dir" pull --ff-only --autostash
 
 if [ -n "$role_repo_dir" ] && [ -d "$role_repo_dir" ] && [ "$role_repo_dir" != "$dotfiles_dir" ]; then
   update_repo "$role_repo_dir"

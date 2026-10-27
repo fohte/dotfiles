@@ -96,8 +96,9 @@ dot role overlay config/zsh/.zshrc   # print the overlay path for a given file
 ```
 
 Private overlays default to `fohte/dotfiles-private`. If that repository is
-not cloned, `dot role overlay` reports that role overlays are unavailable and
-tools use their base and local configuration without cloning the repository.
+not cloned, `dot role overlay` and `dot deploy` report that role overlays are
+unavailable, and tools use their base and local configuration without cloning
+the repository.
 Place personal executable scripts in the selected role repository's
 `config-overlays/bin/`. `dot deploy -t zsh` links that directory to
 `~/.local/share/dotfiles/role-bin`, which is added to `PATH` after the public
@@ -120,9 +121,10 @@ dot refresh
 ```
 
 This command automatically updates the SKK dictionary, Neovim plugins, mise tools, and more.
-Both repositories are pulled with `--ff-only`; refresh stops if either has
-uncommitted changes or cannot be fast-forwarded. It never clones a missing role
-repository.
+The public repository is pulled with `--ff-only --autostash`. An existing role
+repository is updated with `--ff-only` only when clean; refresh stops if a pull
+fails. A missing role repository is never cloned. If no role is set, refresh
+updates only the public repository and its submodules.
 
 ## 🔧 How Deployment Works
 
