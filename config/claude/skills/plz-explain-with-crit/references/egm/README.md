@@ -5,3 +5,5 @@
 - License: Apache-2.0. The upstream `LICENSE` is included here.
 
 The five files retain their upstream contents. The review runner uses the `REVIEW` instructions and output format; it omits `BRAINSTORM` instructions.
+
+For the review command and workflow, see [Goldfish design review](../goldfish-review.md).

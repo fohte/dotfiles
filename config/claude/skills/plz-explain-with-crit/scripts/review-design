@@ -79,7 +79,7 @@ cp "$request_file" "$work_dir/request.txt"
 cp "$followups_file" "$work_dir/follow-ups.txt"
 
 # Load configuration from the dotfiles checkout so the role is independent of the target repository.
-# shellcheck disable=SC1091
+# shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
 source "$config_script_dir/review-config"
 cd "$dotfiles_root"
 load_review_config "$reviewers_file" "$work_dir"
@@ -190,12 +190,9 @@ run_codex() {
     --ephemeral
     --sandbox read-only
     --ignore-user-config
-    --skip-git-repo-check
     --color never
     --config 'cli_auth_credentials_store="file"'
-    -C "$reviewer_dir/cwd"
-    --add-dir "$repo_root"
-    --add-dir "$egm_dir"
+    -C "$repo_root"
     --output-last-message "$reviewer_dir/result.txt"
   )
   [[ -z "$model" ]] || args+=(--model "$model")
