@@ -22,7 +22,4 @@ case "$hook_name" in
   commit-msg | reference-transaction)
     exit 0
     ;;
-  *)
-    exit 0
-    ;;
 esac
