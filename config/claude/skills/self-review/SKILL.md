@@ -39,7 +39,7 @@ reviewer 実行や結果検査に失敗した場合、本文を含まない診�
 
 成功した試行の診断は作りません。resume の失敗診断は保存できた場合、fresh fallback が成功しても保持します。保存した診断の path は実行時の stderr に表示します。
 
-呼び出し元が修復を伴う recovery round を明示的に依頼し、旧 round に失敗試行と有効評価がある場合は、通常の selector を実行せず、後述の「入力不足からの recovery round」を使ってください。
+呼び出し元が未評価 evaluation を補う recovery round を明示的に依頼し、旧 round に失敗試行と有効評価がある場合は、通常の selector を実行せず、後述の「入力不足からの recovery round」を使ってください。
 
 1. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
    For `--cached`, snapshot the applicable index before `select-reviewers`: copy `${GIT_INDEX_FILE:-$(git rev-parse --git-path index)}` to a unique path from `mktemp "$AGENT_TMPDIR/self-review-index.XXXXXX"`, then pass `GIT_INDEX_FILE=<snapshot-path>` to `select-reviewers` and every runner invocation. Keep that snapshot unchanged until all reviewers and retries finish.
@@ -71,7 +71,7 @@ runner は全 reviewer の結果と必須項目を検査した後に session sta
       <fixed-range> <old-manifest> <old-round-record> "<repair-reason>" [reviewer]
     ```
 
-    `reviewer` は `japanese-writing` または `comment` を指定し、省略すると `japanese-writing` を選びます。切り詰めの証拠とする条件は、旧評価が `agy` で実行され、分割送信を導入した [PR 398](https://github.com/fohte/dotfiles/pull/398) より前の実行であり、prompt が約 192,000 bytes の request 上限を超え、対象の差分または本文が切り詰め位置より後ろから始まることです。`config/claude/skills/self-review/scripts/review-backends` の `run_agy` は `single_message_limit=191000` を分割送信の閾値として使います。修復理由には prompt または diff の byte 数と対象の位置を caller が記載してください。script は証拠を機械検査しません。
+    `reviewer` は `japanese-writing` または `comment` を指定し、省略すると `japanese-writing` を選びます。切り詰めの証拠とする条件は、旧評価が `agy` で実行され、分割送信を導入した [PR 398](https://github.com/fohte/dotfiles/pull/398) より前の実行であり、prompt が約 192,000 bytes の request 上限を超え、対象の差分または本文が prompt 先頭からの byte offset で切り詰め位置より後ろに及ぶことです。対象が切り詰め位置より後ろから始まる場合と、切り詰め位置をまたぐ場合を含みます。修復理由には prompt または diff の byte 数と対象の位置を caller が記載してください。script は証拠を機械検査しません。
 
     出力された round directory をそのまま使います。`verify <round-directory>` で snapshot hash と HEAD を検証し、`manifest.json` の `.range`、`.reviewers[].targets`、`.recovery_round.input_snapshot.sha256` を確認してください。manifest は指定した reviewer だけを含み、fixed HEAD の diff、files、各対象本文、base YAML と role overlay、definition と references の path / hash / body、resolver の実効設定と source を保存します。`round-record.json` は旧 manifest と round record の path / hash、旧失敗試行と有効評価の記録先を参照します。既存の Japanese round は manifest を変更せず verify できます。
 
