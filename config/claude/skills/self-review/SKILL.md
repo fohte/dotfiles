@@ -64,14 +64,16 @@ runner は全 reviewer の結果と必須項目を検査した後に session sta
 
 呼び出し元が修復を伴う recovery round を明示的に依頼し、旧 round に失敗試行と有効評価がある場合だけ使用します。対象は修復した reviewer 定義・参照で固定 range の未評価文書を再評価するケースです。通常の reviewer retry、任意の reset、有効評価の再実行には使いません。
 
-1. caller の固定 range、旧 manifest、旧 round record、修復理由を渡して round を生成します。selector は保存 HEAD を参照せず、固定 range 全体から現行 YAML の Japanese targets を選びます。
+1. caller の固定 range、旧 manifest、旧 round record、修復理由を渡して round を生成します。selector は保存 HEAD を参照せず、固定 range 全体から指定 reviewer の targets を選びます。対象 reviewer は `japanese-writing` または `comment` で、省略時は従来どおり `japanese-writing` です。
 
     ```bash
     ~/.agents/skills/self-review/scripts/self-review-recovery-round create \
-      <fixed-range> <old-manifest> <old-round-record> "<repair-reason>"
+      <fixed-range> <old-manifest> <old-round-record> "<repair-reason>" [reviewer]
     ```
 
-    出力された round directory をそのまま使います。`verify <round-directory>` で snapshot hash と HEAD を検証し、`manifest.json` の `.range`、`.reviewers[].targets`、`.recovery_round.input_snapshot.sha256` を確認してください。manifest は Japanese reviewer だけを含み、fixed HEAD の diff、files、各対象本文、base YAML と role overlay、definition と references の path / hash / body、resolver の実効設定と source を保存します。`round-record.json` は旧 manifest と round record の path / hash、旧失敗試行と有効評価の記録先を参照します。
+    `reviewer` は `japanese-writing` または `comment` を指定し、省略すると `japanese-writing` を選びます。修復理由には、切り詰めを示す prompt または diff の byte 数と、対象が切り詰め位置より後ろにある根拠を caller が記載してください。script はこの証拠を機械検査しません。切り詰めの証拠がある評価は、summary が完了を示していても未評価として扱います。
+
+    出力された round directory をそのまま使います。`verify <round-directory>` で snapshot hash と HEAD を検証し、`manifest.json` の `.range`、`.reviewers[].targets`、`.recovery_round.input_snapshot.sha256` を確認してください。manifest は指定した reviewer だけを含み、fixed HEAD の diff、files、各対象本文、base YAML と role overlay、definition と references の path / hash / body、resolver の実効設定と source を保存します。`round-record.json` は旧 manifest と round record の path / hash、旧失敗試行と有効評価の記録先を参照します。既存の Japanese round は manifest を変更せず verify できます。
 
 2. Codex では recovery helper をバックグラウンドで起動し、完了通知を待ちます。runner を直接呼ぶと実行 ID と retry 上限が記録されないため、helper を使ってください。
 

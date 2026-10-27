@@ -5,7 +5,7 @@ set -euo pipefail
 usage() {
   cat >&2 << 'EOF'
 Usage:
-  self-review-recovery-round create <range> <old-manifest> <old-record> <reason>
+  self-review-recovery-round create <range> <old-manifest> <old-record> <reason> [japanese-writing|comment]
   self-review-recovery-round verify <round-dir>
   self-review-recovery-round run <round-dir>
   self-review-recovery-round assess <round-dir> evaluated|not-evaluated <reason>
@@ -100,17 +100,18 @@ validate_source_record() {
 
 write_recovery_manifest() {
   local selection_path="$1" round_dir="$2" round_id="$3" created_at="$4" reason="$5"
-  local old_manifest="$6" old_manifest_sha="$7" old_record="$8" old_record_sha="$9"
+  local reviewer="$6" old_manifest="$7" old_manifest_sha="$8" old_record="$9" old_record_sha="${10}"
   jq \
     --arg round_id "$round_id" \
     --arg created_at "$created_at" \
     --arg reason "$reason" \
+    --arg reviewer "$reviewer" \
     --arg old_manifest_path "$old_manifest" \
     --arg old_manifest_sha "$old_manifest_sha" \
     --arg old_record_path "$old_record" \
     --arg old_record_sha "$old_record_sha" \
     --slurpfile old_record_data "$old_record" \
-    '.reviewers = [.reviewers[] | select(.name == "japanese-writing")] |
+    '.reviewers = [.reviewers[] | select(.name == $reviewer)] |
       .recovery_round = {
         version: 1,
         id: $round_id,
@@ -227,12 +228,15 @@ write_round_record() {
 }
 
 create_round() {
-  [[ "$#" -eq 4 ]] || usage
-  local requested_range="$1" old_manifest old_record reason repo_root current_head
+  [[ "$#" -eq 4 || "$#" -eq 5 ]] || usage
+  local requested_range="$1" old_manifest old_record reason reviewer repo_root current_head
   local old_manifest_sha old_record_sha round_dir selection_path round_id created_at input_hash
   old_manifest=$(absolute_file_path "$2")
   old_record=$(absolute_file_path "$3")
   reason="$4"
+  reviewer="${5:-japanese-writing}"
+  [[ "$reviewer" == japanese-writing || "$reviewer" == comment ]] ||
+    fail "unsupported recovery reviewer: $reviewer (choose japanese-writing or comment)."
   [[ -f "$old_manifest" && -f "$old_record" ]] || fail "old manifest or round record is missing."
   [[ -n "$reason" ]] || fail "repair reason is required."
   [[ -n "${AGENT_TMPDIR:-}" && -d "$AGENT_TMPDIR" ]] || fail "AGENT_TMPDIR must name an existing session directory."
@@ -254,16 +258,16 @@ create_round() {
   selection_path="$round_dir/selection.json"
   "$script_dir/select-reviewers" --recovery-full-range "$requested_range" > "$selection_path" || fail "full-range reviewer selection failed."
   jq -e '.status == "ready" and .recovery_selection == true' "$selection_path" > /dev/null || fail "full-range selection did not produce a ready recovery manifest."
-  jq -e '
-    ([.reviewers[] | select(.name == "japanese-writing")] | length) == 1 and
-    ([.reviewers[] | select(.name == "japanese-writing")][0].targets | length) > 0
-  ' "$selection_path" > /dev/null || fail "current YAML did not select Japanese-writing targets for the fixed range."
+  jq -e --arg reviewer "$reviewer" '
+    [.reviewers[] | select(.name == $reviewer)] as $selected |
+    ($selected | length) == 1 and ($selected[0].targets | length) > 0
+  ' "$selection_path" > /dev/null || fail "current YAML did not select $reviewer targets for the fixed range."
   jq -e --arg head "$current_head" '.review_head == $head' "$selection_path" > /dev/null ||
     fail "the fixed range must end at the checked-out HEAD."
 
   round_id=$(uuidgen | tr '[:upper:]' '[:lower:]')
   created_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
-  write_recovery_manifest "$selection_path" "$round_dir" "$round_id" "$created_at" "$reason" \
+  write_recovery_manifest "$selection_path" "$round_dir" "$round_id" "$created_at" "$reason" "$reviewer" \
     "$old_manifest" "$old_manifest_sha" "$old_record" "$old_record_sha"
   snapshot_review_inputs "$round_dir" "$current_head" input_hash
   write_round_record "$round_dir" "$round_id" "$created_at" "$repo_root" "$current_head" "$input_hash"
@@ -289,9 +293,8 @@ verify_round() {
   actual_input=$(input_sha256 "$manifest")
   [[ "$expected_input" == "$actual_input" ]] || fail "round input snapshot hash changed."
   [[ $(jq -r '.recovery_round.input_snapshot.sha256' "$manifest") == "$actual_input" ]] || fail "manifest input snapshot hash is inconsistent."
-  jq -e '.reviewers | length == 1' "$manifest" > /dev/null &&
-    [[ $(jq -r '.reviewers[0].name' "$manifest") == japanese-writing ]] ||
-    fail "round manifest must contain only the Japanese-writing reviewer."
+  jq -e '.reviewers | length == 1 and (.[0].name == "japanese-writing" or .[0].name == "comment")' "$manifest" > /dev/null ||
+    fail "round manifest must contain exactly one supported reviewer."
   for purpose in definition evaluation_ids output_schema; do
     jq -e --arg purpose "$purpose" '.recovery_round.input_snapshot.files | any(.[]; .kind == "resource" and .purpose == $purpose)' "$manifest" > /dev/null ||
       fail "required prompt snapshot is missing: $purpose"
@@ -337,11 +340,12 @@ verify_round_command() {
 run_round() {
   [[ "$#" -eq 1 ]] || usage
   local round_dir="$1" record="$1/round-record.json" manifest="$1/manifest.json"
-  local attempt_count attempt_number round_status attempt_dir execution_id started_at runner_status schema_file evaluation_ids_file
+  local attempt_count attempt_number round_status attempt_dir execution_id started_at runner_status schema_file evaluation_ids_file reviewer
   local result_status record_status input_hash backend_session_id patch_sha prompt_sha result_valid
   round_dir=$(cd "$round_dir" && pwd -P)
   acquire_lock "$round_dir"
   verify_round "$round_dir"
+  reviewer=$(jq -er '.reviewers[0].name' "$manifest")
   attempt_count=$(jq -r '.attempts | length' "$record")
   round_status=$(jq -r '.status' "$record")
   attempt_number=$((attempt_count + 1))
@@ -375,13 +379,13 @@ run_round() {
   SELF_REVIEW_RECOVERY_SCHEMA_FILE="$schema_file" \
     SELF_REVIEW_RECOVERY_EVALUATION_IDS_FILE="$evaluation_ids_file" \
     SELF_REVIEW_RECOVERY_ATTEMPT_DIR="$attempt_dir" \
-    "$script_dir/run-external-reviewers" "$manifest" japanese-writing \
+    "$script_dir/run-external-reviewers" "$manifest" "$reviewer" \
     > "$attempt_dir/result.json" 2> "$attempt_dir/stderr.log"
   runner_status=$?
   set -e
   result_valid=false
   if [[ "$runner_status" -eq 0 || "$runner_status" -eq 1 ]]; then
-    if jq -e 'type == "array" and length == 1 and .[0].reviewer == "japanese-writing"' "$attempt_dir/result.json" > /dev/null 2>&1; then
+    if jq -e --arg reviewer "$reviewer" 'type == "array" and length == 1 and .[0].reviewer == $reviewer' "$attempt_dir/result.json" > /dev/null 2>&1; then
       result_valid=true
     fi
   fi
@@ -396,9 +400,9 @@ run_round() {
   backend_session_id=
   patch_sha=
   prompt_sha=
-  [[ ! -f "$attempt_dir/japanese-writing.backend-session-id" ]] || backend_session_id=$(cat "$attempt_dir/japanese-writing.backend-session-id")
+  [[ ! -f "$attempt_dir/$reviewer.backend-session-id" ]] || backend_session_id=$(cat "$attempt_dir/$reviewer.backend-session-id")
   [[ ! -f "$attempt_dir/patch-sha256" ]] || patch_sha=$(cat "$attempt_dir/patch-sha256")
-  [[ ! -f "$attempt_dir/japanese-writing.prompt-sha256" ]] || prompt_sha=$(cat "$attempt_dir/japanese-writing.prompt-sha256")
+  [[ ! -f "$attempt_dir/$reviewer.prompt-sha256" ]] || prompt_sha=$(cat "$attempt_dir/$reviewer.prompt-sha256")
   jq \
     --arg finished_at "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
     --arg status "$result_status" \
