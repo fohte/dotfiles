@@ -67,7 +67,16 @@ git_root() {
     has_git_metadata_ancestor "$directory"
     metadata_status=$?
     case "$metadata_status" in
-      1) return 1 ;;
+      1)
+        if (
+          unset GIT_DIR GIT_WORK_TREE GIT_COMMON_DIR GIT_CEILING_DIRECTORIES
+          unset GIT_DISCOVERY_ACROSS_FILESYSTEM GIT_PREFIX
+          git -C "$directory" rev-parse --is-bare-repository > /dev/null 2>&1
+        ); then
+          return 2
+        fi
+        return 1
+        ;;
       *) return 2 ;;
     esac
   fi
