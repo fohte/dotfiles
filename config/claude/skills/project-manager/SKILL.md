@@ -137,30 +137,51 @@ PM セッションから切り出した作業セッション。PM は手を動�
 - 移動後に同じ `pane_id` を再取得し、確定済みの `session_id` と段階 window の `window_id` にあることを照合する。`break-pane` で作成した window は、移動後の pane 情報から新しい `window_id` を特定して照合する。一致しない場合は追加の移動を行わず報告する
 - `new-window` と `move-window` を使う場合も `-t` に確定済み session の ID を含める。window 全体を移す `move-window` は、全 pane が同じ対象 repo / 同じ段階の owner session で、実装担当や役割不明の pane がない場合だけ使う。移動前に全 pane と owner pane の repo を照合できない場合は window を移さず、その owner pane も安全に移せなければ配置を見送る
 
+以下は repo の照合と、移動先を確定した後のコマンド例。pane / window の操作は上記の条件に合うものを個別に使う。
+
 ```bash
-# Fictional sample-repo session and pane IDs; refresh them before use.
+# Fictional session and pane IDs; refresh them before use.
 target_session='$92'
 source_pane='%901'
 target_window='@902'
 target_pane='%903'
 source_window='@904'
-stage_name='実装中'
+stage_name='implementation'
+```
 
-# Compare these common directories and move only when one session matches.
-git -C '/fictional/repos/sample-repo' rev-parse --path-format=absolute --git-common-dir
-git -C '/fictional/repos/other-repo' rev-parse --path-format=absolute --git-common-dir
+候補 repo の Git 共通ディレクトリを照合する例:
 
-# Create a stage window only when none exists in the unique target session.
+```bash
+git -C "$repo_path" rev-parse --path-format=absolute --git-common-dir
+```
+
+段階 window がない場合に作成する例:
+
+```bash
 tmux break-pane -d -s "$source_pane" -t "$target_session:" -n "$stage_name"
+```
 
-# Or join a unique existing stage window through a verified non-floating pane.
+一意な既存 window に pane を加える例:
+
+```bash
 tmux join-pane -d -s "$source_pane" -t "$target_session:$target_window.$target_pane"
+```
 
-# Keep explicit session targeting when creating or moving a whole window.
+確定済み session に window を作成する例:
+
+```bash
 tmux new-window -t "$target_session:" -n "$stage_name"
-tmux move-window -s "$source_window" -t "$target_session:"
+```
 
-# Refresh and verify pane, session, and window membership after each move.
+全 pane の repo と役割を確認した window を移す例:
+
+```bash
+tmux move-window -s "$source_window" -t "$target_session:"
+```
+
+移動後に pane の所属を再取得する例:
+
+```bash
 tmux list-panes -a -F '#{session_id} #{session_name} #{window_id} #{window_name} #{pane_id} #{pane_current_path} #{pane_floating_flag} #{window_linked_sessions}'
 ```
 
