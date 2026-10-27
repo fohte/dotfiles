@@ -79,7 +79,7 @@ dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
   --tq-checklist-item-id "<leaf-item-id>"
 ```
 
-launcher は入力と描画後の prompt を検証してから Armyknife を起動する。`render-task` が失敗したときに空 prompt で session が起動することはない。
+launcher は `task.yaml` の入力を検証し、`render-task` が失敗した場合は Armyknife を起動しない。
 
 - `--task`: `purpose` と `goal` が空でない文字列で、任意 field の型も正しい task.yaml。launcher が既存の `render-task` で本文を作る
 - `--repo`: 対象 repo。省略時は現在の repo を使う

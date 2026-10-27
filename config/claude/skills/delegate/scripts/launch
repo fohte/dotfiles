@@ -160,8 +160,9 @@ if ! target_repo=$(cd "$target_repo" && git root -r); then
   fail "Could not resolve the target repository root."
 fi
 
-if ! direct_commit=$(cd "$target_repo" && a config get repo.direct_commit); then
-  fail "Could not read repo.direct_commit for the target repository."
+direct_commit=false
+if configured_direct_commit=$(cd "$target_repo" && a config get repo.direct_commit); then
+  direct_commit=$configured_direct_commit
 fi
 case "$direct_commit" in
   true | false) ;;
@@ -182,7 +183,6 @@ direct_prompt=false
 if ! prompt=$(DELEGATE_DIRECT_COMMIT="$direct_prompt" "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/render-task" "$task_file"); then
   exit 1
 fi
-[[ -n ${prompt//[[:space:]]/} ]] || fail "Rendered prompt is empty."
 
 cmd=(agent new --type delegate --child-launch deny --kind development)
 [[ $seen_engine == true ]] && cmd+=(--engine "$engine")
