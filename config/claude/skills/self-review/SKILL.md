@@ -25,7 +25,7 @@ engine / model / reasoning effort は base 設定と role overlay から解決�
 
 backend が返す成果物は共有 JSON schema に従う reviewer ごとの JSON です。必須の evaluation ID は reviewer-evaluation-ids.json から prompt と validator が共に読みます。集約 Markdown の見出しと日本語名は利用者向け表示であり、JSON の ID とは別の契約です。conditional reviewer の ID 集合は固定しません。
 
-runner は余分な field、余分または重複した evaluation ID、大小文字だけ異なる reviewer 名、空の suggestion を警告して結果を保持します。別 reviewer 名、必須 ID の欠落、空の summary、その他の構造違反は結果を拒否します。Schema validation と runner の exit 0 / 1 は schema-valid な結果を示し、評価が実施されたことまでは保証しません。呼び出し元は各 evaluation の summary を読み、要求した観点を実際に確認した結果か判断してください。入力不足、resource / reference を参照できない状態、差分や対象を確認できない状態、権限制約、context 上限などで評価を実施できていない場合、その evaluation は未評価です。evaluation の一部だけが未実施または部分実施の場合は、その evaluation だけを未評価として、実施済みの evaluation は保持します。summary から未実施の evaluation を特定できない場合は、実施済みと確認できる evaluation だけを保持し、残りを未評価とします。
+runner は余分な field、余分または重複した evaluation ID、大小文字だけ異なる reviewer 名、空の suggestion を警告して結果を保持します。別 reviewer 名、必須 ID の欠落、空の summary、その他の構造違反は結果を拒否します。runner の exit 0 / 1 は必須項目を満たす結果が返ったことを示し、評価が実施されたことまでは保証しません。呼び出し元は各 evaluation の summary を読み、要求した観点を実際に確認した結果か判断してください。入力不足、resource / reference を参照できない状態、差分や対象を確認できない状態、権限制約、context 上限などで評価を実施できていない場合、その evaluation は未評価です。evaluation の一部だけが未実施または部分実施の場合は、その evaluation だけを未評価として、実施済みの evaluation は保持します。summary から未実施の evaluation を特定できない場合は、実施済みと確認できる evaluation だけを保持し、残りを未評価とします。
 
 `not-applicable` は対象を確認し、その観点が差分の構造上無関係と判断した場合に限ります。評価に必要な入力や参照がない、または制約により確認できない場合を N/A にしないでください。
 
