@@ -46,7 +46,7 @@ case "$tool_name" in
   # execute_sentry_tool bypasses catalog tools' individual permission names.
   # Filter it here to honor read/update allows while preserving Seer's deny.
   mcp__sentry__execute_sentry_tool)
-    exec ~/.claude/hooks/sentry-issue-update-guard <<< "$input"
+    exec ~/.claude/hooks/sentry-tool-guard <<< "$input"
     ;;
   Skill)
     # Only subagent-invoked calls need the guard; main-thread Skill calls
