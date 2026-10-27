@@ -171,6 +171,12 @@ fi
 
 if match_tag codex; then
   sym config/agents/AGENTS.md ~/.codex/AGENTS.md
+  # Remove the link left by earlier deployments without touching user-owned replacements.
+  codex_attribution_proxy="$HOME/.codex/agent-attribution-proxy"
+  if [ -L "$codex_attribution_proxy" ] &&
+    [ "$(readlink "$codex_attribution_proxy")" = "$DOTFILES_DIR/config/claude/hooks/agent-attribution-proxy" ]; then
+    log-exec rm "$codex_attribution_proxy"
+  fi
   sym config/codex/codex-pre-tool-use-proxy ~/.codex/codex-pre-tool-use-proxy
   sym config/codex/rules ~/.codex/rules
 fi
