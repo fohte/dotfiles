@@ -51,6 +51,12 @@ definitions:
         - '~/.agents/skills/*/bin/*'
         - '~/.claude/skills/*/scripts/*'
         - '~/.claude/skills/*/bin/*'
+        # Skill paths may be resolved to absolute paths. The leading `/`
+        # keeps cwd-relative paths from matching a trusted location.
+        - '/*/.agents/skills/*/scripts/*'
+        - '/*/.agents/skills/*/bin/*'
+        - '/*/.claude/skills/*/scripts/*'
+        - '/*/.claude/skills/*/bin/*'
         - '~/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
         - '~/.claude/plugins/cache/*/*/*/skills/*/bin/*'
         # Plugin skills are usually invoked with a resolved absolute path. The

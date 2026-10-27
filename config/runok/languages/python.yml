@@ -14,6 +14,9 @@ rules:
       - allow: 'python3 ~/.agents/skills/example-skill/scripts/check.py run --stdin'
       - allow: 'python3 ~/.claude/skills/example-skill/scripts/check.py verify --final final.md'
       - allow: 'python ~/.agents/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python3 /Users/example/.agents/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python3 /Users/example/.claude/skills/example-skill/scripts/check.py verify --final final.md'
+      - allow: 'python3 ~/.claude/skills/example-skill/bin/check.py --help'
       - allow: 'python3 ~/.claude/plugins/cache/example-marketplace/example-plugin/1.0.0/skills/example-skill/scripts/check.py run --stdin'
       - allow: 'python3 /Users/example/.claude/plugins/cache/example-marketplace/example-plugin/1.0.0/skills/example-skill/scripts/check.py run --stdin'
 
@@ -22,10 +25,7 @@ rules:
   - allow: 'python3|python *'
     when: >-
       !(size(args) > 0 &&
-        (args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') ||
-         args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') ||
-         args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
-         args[0].matches('^/.*/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/')))
+        definitions.vars["claude-skill-scripts"].exists(p, glob_matches(p, args[0])))
     sandbox: readonly
     tests:
       - allow: 'python3 -c "print(1)"'
