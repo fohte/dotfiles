@@ -36,30 +36,6 @@ rules:
       - allow: 'python3 ~/.claude/plugins/cache/example-marketplace/example-plugin/1.0.0/skills/example-skill/scripts/check.py run --stdin'
       - allow: 'python3 ~/.claude/skills/example-skill/scripts/check.py run --stdin --no-record'
 
-  # Flag matching ignores argument order, so pair interpreter modes with a
-  # script path to keep those invocations readonly. A script flag with the
-  # same spelling also selects this sandbox.
-  - allow: >-
-      python3|python
-      -b|-bb|-B|-d|-E|-h|--help|-i|-I|-I*|-O|-OO|-P|-q|-s|-S|-u|-v|-V|-VV|--version|-x|--help-env|--help-xoptions|--help-all
-      <var:sandboxed-skill-scripts> *
-    sandbox: readonly
-    tests:
-      - allow: 'python3 -B ~/.agents/skills/example-skill/scripts/check.py run --stdin'
-      - allow: 'python3 -E ~/.claude/skills/example-skill/scripts/check.py run --stdin'
-      - allow: 'python -s ~/.agents/skills/example-skill/scripts/check.py run --stdin'
-      - allow: 'python3 -O ~/.claude/skills/example-skill/scripts/check.py verify --final final.md'
-      - allow: 'python3 -Iu ~/.agents/skills/example-skill/scripts/check.py run --stdin'
-      - allow: 'python3 -I ~/.claude/skills/example-skill/scripts/check.py run --stdin'
-      - allow: 'python -u ~/.agents/skills/example-skill/scripts/check.py run --stdin'
-
-  - allow: >-
-      python3|python -W|-X|--check-hash-based-pycs * <var:sandboxed-skill-scripts> *
-    sandbox: readonly
-    tests:
-      - allow: 'python3 -W ignore ~/.agents/skills/example-skill/scripts/check.py run --stdin'
-      - allow: 'python -X dev ~/.claude/skills/example-skill/scripts/check.py run --stdin'
-
   # The stricter readonly sandbox wins whenever both rules match.
   - allow: 'python3|python *'
     when: >-
@@ -93,6 +69,11 @@ rules:
       - allow: 'python3 ~/.agents/skills/x/../../../tmp/scripts/evil.py run --stdin'
       - allow: 'python3 ~/.agents/skills/../scripts/evil.py run --stdin'
       - allow: 'python3 ~/.claude/skills/../scripts/evil.py run --stdin'
+      - pass: 'python3 -B -u ~/.agents/skills/example-skill/scripts/check.py run --stdin'
+      - pass: 'python3 -I -u ~/.claude/skills/example-skill/scripts/check.py run --stdin'
+      - pass: 'python3 -Bu ~/.agents/skills/example-skill/scripts/check.py run --stdin'
+      - pass: 'python3 -R ~/.claude/skills/example-skill/scripts/check.py run --stdin'
+      - pass: 'python3 -- ~/.agents/skills/example-skill/scripts/check.py run --stdin'
 
   - allow: 'schemathesis *'
     tests:

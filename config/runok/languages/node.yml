@@ -456,7 +456,9 @@ rules:
     tests:
       - allow: 'na dedupe'
 
-  # Skill-bundled tools may create temp files that `readonly` rejects.
+  # Skill-bundled tools (e.g. archify) stage output through mkdtemp in $TMPDIR,
+  # which `readonly` below rejects. A local server still cannot bind, so
+  # `archify preview` fails here; use `crit preview <file>` instead.
   # The glob spans `/`, so absolute paths need one skill level under a safe HOME root.
   - allow: 'node <var:sandboxed-skill-scripts> *'
     when: >-
@@ -483,18 +485,7 @@ rules:
       - allow: 'node ~/.claude/skills/example-skill/bin/check.mjs --help'
       - allow: 'node ~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/build.cjs in.md out.md'
       - allow: 'node ~/.claude/skills/example-skill/scripts/check.js --stdin'
-
-  # Flag matching ignores argument order, so pair known Node modes with a
-  # script path to keep those invocations readonly. A script flag with the
-  # same spelling also selects this sandbox.
-  - allow: >-
-      node
-      --check|--test|--watch|--interactive|-i|--version|-v|--help|-h
-      <var:sandboxed-skill-scripts> *
-    sandbox: readonly
-    tests:
-      - allow: 'node --check ~/.agents/skills/example-skill/scripts/check.js'
-      - allow: 'node --test ~/.claude/skills/example-skill/scripts/check.js'
+      - allow: 'node ~/.agents/skills/example-skill/scripts/check.mjs --help'
 
   # Rule matches do not take priority by order, so readonly steps aside only
   # for direct skill-script paths accepted by the sandboxed variable.
@@ -528,6 +519,8 @@ rules:
       - allow: 'node ~/.agents/skills/x/../../../tmp/scripts/evil.js in.md out.md'
       - allow: 'node ~/.agents/skills/../scripts/evil.js'
       - allow: 'node ~/.claude/skills/../bin/evil.js'
+      - pass: 'node --check ~/.agents/skills/example-skill/scripts/check.js'
+      - pass: 'node --test ~/.claude/skills/example-skill/scripts/check.js'
 
   - allow: 'corepack enable'
     tests:
