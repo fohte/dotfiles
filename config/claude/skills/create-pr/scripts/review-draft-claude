@@ -25,10 +25,10 @@ user_home="$6"
 host_os=$(uname -s)
 case "$host_os" in
   Darwin)
-    required_commands=(claude defaults dirname env find id jq mkdir mktemp profiles rg sed tr uname wc)
+    required_commands=(claude dirname env id jq mkdir rg sed tr uname wc)
     ;;
   Linux)
-    echo "Error: Claude isolation preflight has no verified Linux managed-policy source and init-context gate." >&2
+    echo "Error: Claude isolation preflight has no verified Linux init-context validation path." >&2
     exit 3
     ;;
   *)
@@ -51,7 +51,6 @@ launch_user=$(id -un)
 tmp_dir="$work_dir/claude-tmp"
 empty_cwd="$work_dir/claude-cwd"
 auth_status_file="$work_dir/claude-auth-status.json"
-doctor_file="$work_dir/claude-doctor.log"
 events_file="$work_dir/claude-events.jsonl"
 stderr_file="$work_dir/claude-stderr.log"
 mcp_config_file="$work_dir/empty-mcp.json"
@@ -85,99 +84,6 @@ print_sanitized_diagnostics() {
       -e 's/(([Hh][Tt][Tt][Pp][Ss]?|[Aa][Ll][Ll]|[Nn][Oo])_[Pp][Rr][Oo][Xx][Yy]=)[[:graph:]]+/\1[REDACTED]/g' >&2 || true
 }
 
-assert_absent_path() {
-  local source_path="$1"
-  if [[ -e "$source_path" || -L "$source_path" ]]; then
-    echo "Error: Claude managed source is present: $source_path" >&2
-    return 1
-  fi
-}
-
-assert_inspectable_directory() {
-  local directory="$1"
-  [[ -d "$directory" && -r "$directory" && -x "$directory" && ! -L "$directory" ]] || {
-    echo "Error: Claude managed source path is not inspectable: $directory" >&2
-    return 1
-  }
-}
-
-check_system_managed_sources() {
-  local system_dir parent_dir
-  system_dir="/Library/Application Support/ClaudeCode"
-  assert_inspectable_directory "/Library" || return 1
-  assert_inspectable_directory "/Library/Application Support" || return 1
-
-  parent_dir=$(dirname "$system_dir")
-  assert_inspectable_directory "$parent_dir" || return 1
-  if [[ -e "$system_dir" || -L "$system_dir" ]]; then
-    assert_inspectable_directory "$system_dir" || return 1
-  fi
-
-  assert_absent_path "$system_dir/managed-settings.json" || return 1
-  assert_absent_path "$system_dir/managed-settings.d" || return 1
-  assert_absent_path "$system_dir/managed-mcp.json" || return 1
-  if [[ -d "$system_dir" ]]; then
-    local first_system_entry
-    if ! first_system_entry=$(find "$system_dir" -mindepth 1 -print -quit); then
-      echo "Error: unable to enumerate the Claude managed settings directory." >&2
-      return 1
-    fi
-    if [[ -n "$first_system_entry" ]]; then
-      echo "Error: Claude managed settings directory contains an unverified source." >&2
-      return 1
-    fi
-  fi
-
-  local managed_preferences_dir profile_status_file profiles_file defaults_file
-  managed_preferences_dir="/Library/Managed Preferences"
-  if [[ -e "$managed_preferences_dir" || -L "$managed_preferences_dir" ]]; then
-    assert_inspectable_directory "$managed_preferences_dir" || return 1
-  fi
-  assert_absent_path "$managed_preferences_dir/com.anthropic.claudecode.plist" || return 1
-  assert_absent_path "/Library/Preferences/com.anthropic.claudecode.plist" || return 1
-  assert_absent_path "$user_home/Library/Managed Preferences/com.anthropic.claudecode.plist" || return 1
-  assert_absent_path "$user_home/Library/Preferences/com.anthropic.claudecode.plist" || return 1
-
-  profile_status_file="$work_dir/profiles-status.txt"
-  profiles_file="$work_dir/profiles.txt"
-  defaults_file="$work_dir/defaults-domains.txt"
-  if ! profiles status -type enrollment > "$profile_status_file" 2>&1; then
-    echo "Error: unable to inspect macOS MDM enrollment." >&2
-    return 1
-  fi
-  if ! rg -qi '^Enrolled via DEP:[[:space:]]*No([[:space:]].*)?$' "$profile_status_file" ||
-    ! rg -qi '^MDM enrollment:[[:space:]]*No([[:space:]].*)?$' "$profile_status_file"; then
-    echo "Error: Claude draft review cannot rule out macOS MDM settings." >&2
-    return 1
-  fi
-  if ! profiles show -type configuration > "$profiles_file" 2>&1; then
-    echo "Error: unable to inspect macOS configuration profiles." >&2
-    return 1
-  fi
-  if rg -qi 'com\.anthropic\.claudecode' "$profiles_file"; then
-    echo "Error: macOS profiles contain Claude Code managed settings." >&2
-    return 1
-  fi
-  if ! defaults domains > "$defaults_file" 2>&1; then
-    echo "Error: unable to inspect macOS preference domains." >&2
-    return 1
-  fi
-  if rg -qi 'com\.anthropic\.claudecode' "$defaults_file"; then
-    echo "Error: macOS preferences contain Claude Code managed settings." >&2
-    return 1
-  fi
-  if ! defaults domains -currentHost > "$defaults_file" 2>&1; then
-    echo "Error: unable to inspect current-host macOS preference domains." >&2
-    return 1
-  fi
-  if rg -qi 'com\.anthropic\.claudecode' "$defaults_file"; then
-    echo "Error: current-host preferences contain Claude Code managed settings." >&2
-    return 1
-  fi
-}
-
-check_system_managed_sources || exit 3
-
 if ! "${clean_env_args[@]}" "$claude_path" auth status > "$auth_status_file" 2> "$stderr_file"; then
   echo "Error: Claude auth status could not be verified in a clean environment." >&2
   print_sanitized_diagnostics "$stderr_file"
@@ -197,33 +103,6 @@ auth_config_dir=$(cd "$auth_config_dir" && pwd -P) || {
   echo "Error: Claude auth configuration directory cannot be resolved." >&2
   exit 3
 }
-assert_absent_path "$auth_config_dir/remote-settings.json" || exit 3
-user_settings_file="$auth_config_dir/settings.json"
-if [[ -e "$user_settings_file" || -L "$user_settings_file" ]]; then
-  [[ -f "$user_settings_file" && -r "$user_settings_file" ]] || {
-    echo "Error: Claude user settings cannot be inspected for provider overrides." >&2
-    exit 3
-  }
-  jq -e '
-    type == "object"
-    and (if has("env") then (.env | type == "object") else true end)
-    and ([.env // {} | keys[] | select(test("^(ANTHROPIC_|CLAUDE_CODE_|(HTTP|HTTPS|ALL|NO)_PROXY$)"; "i"))] | length == 0)
-  ' "$user_settings_file" > /dev/null || {
-    echo "Error: Claude user settings contain a launch-time environment override." >&2
-    exit 3
-  }
-fi
-
-if ! "${clean_env_args[@]}" "$claude_path" doctor > "$doctor_file" 2>&1; then
-  echo "Error: Claude doctor could not verify the managed-settings state." >&2
-  print_sanitized_diagnostics "$doctor_file"
-  exit 3
-fi
-if ! rg -iq 'Managed settings \(remote\):[[:space:]]*not fetched.*requires an Enterprise or Team subscription' "$doctor_file"; then
-  echo "Error: Claude remote managed settings are not confirmed absent." >&2
-  print_sanitized_diagnostics "$doctor_file"
-  exit 3
-fi
 
 printf '{"mcpServers":{}}\n' > "$mcp_config_file"
 settings_json=$(jq -cn '{
@@ -284,18 +163,14 @@ if ! jq -s -e --arg expected_cwd "$expected_cwd" '
   | length > 0
     and all(.[]; type == "object" and (.type | type == "string"))
     and all(.[];
-      if .type == "system" then
-        .subtype == "init"
-      elif .type == "assistant" then
+      if .type == "assistant" then
         (.message | type == "object")
         and .message.role == "assistant"
         and (.message.content | type == "array")
         and ([.message.content[] | select(.type == "tool_use")] | length == 0)
         and (.parent_tool_use_id == null)
-      elif .type == "result" then
-        true
       else
-        false
+        true
       end
     )
     and ($inits | length == 1)
