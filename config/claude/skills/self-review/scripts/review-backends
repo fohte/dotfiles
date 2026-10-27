@@ -69,9 +69,7 @@ run_codex() {
 run_agy() {
   local command_status=0
   local reviewer_dir="$1" reasoning_effort="${2:-}" effort_args=()
-  local prompt prompt_bytes chunk_chars=35000 single_message_limit=191000
-  local chunks_file stream_input stream_stdout stream_stderr final_stderr
-  local chunk_count conversation_id final_prompt stream_status=0
+  local prompt prompt_bytes single_message_limit=191000 chunk_count conversation_id
   [[ -n "$reasoning_effort" ]] && effort_args=(--effort "$reasoning_effort")
 
   # Command substitution strips trailing newlines, matching the prompt hash recorded by diagnostics.
@@ -89,24 +87,36 @@ run_agy() {
       --json-schema "$schema_file" \
       --print="$prompt" \
       > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/stderr.log" || command_status=$?
-    printf '%s\n' "$command_status" > "$reviewer_dir/backend-exit-code"
-    # A tool denied by the permission rules in config/agy leaves `status` at ERROR
-    # even though the review itself ran to completion, so the schema-checked
-    # payload is the only signal separating a finished review from a failed run.
-    if ! jq -e '.structured_output != null' "$reviewer_dir/stdout.log" > /dev/null 2>&1; then
-      [[ "$command_status" -eq 0 ]] || return "$command_status"
-      return 1
-    fi
-    jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json" 2> /dev/null
+    agy_collect_result "$reviewer_dir" "$command_status"
     return $?
   fi
 
+  agy_prepare_stream_input "$reviewer_dir" "$prompt" || return 1
+  chunk_count=$(jq -er '.count' "$reviewer_dir/agy-prompt-chunks.json") || return 1
+  [[ "$chunk_count" -ge 2 ]] || return 1
+  agy_send_stream_input "$reviewer_dir" "$reasoning_effort" || return $?
+  conversation_id=$(agy_stream_conversation_id "$reviewer_dir" "$((chunk_count - 1))") || return 1
+  agy_run_final_prompt "$reviewer_dir" "$conversation_id" "$chunk_count"
+}
+
+agy_collect_result() {
+  local reviewer_dir="$1" command_status="$2"
+  printf '%s\n' "$command_status" > "$reviewer_dir/backend-exit-code"
+
+  # agy can report ERROR after a denied tool; a schema-checked payload still proves the review completed.
+  if ! jq -e '.structured_output != null' "$reviewer_dir/stdout.log" > /dev/null 2>&1; then
+    [[ "$command_status" -eq 0 ]] || return "$command_status"
+    return 1
+  fi
+  jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json" 2> /dev/null
+}
+
+agy_prepare_stream_input() {
+  local reviewer_dir="$1" prompt="$2" chunk_chars=35000
+  local chunks_file="$reviewer_dir/agy-prompt-chunks.json"
+  local stream_input="$reviewer_dir/agy-stream-input.jsonl"
+
   # jq slices Unicode code points; 35,000 characters use at most 140,000 UTF-8 bytes.
-  chunks_file="$reviewer_dir/agy-prompt-chunks.json"
-  stream_input="$reviewer_dir/agy-stream-input.jsonl"
-  stream_stdout="$reviewer_dir/agy-stream-stdout.log"
-  stream_stderr="$reviewer_dir/agy-stream-stderr.log"
-  final_stderr="$reviewer_dir/agy-final-stderr.log"
   printf '%s' "$prompt" > "$reviewer_dir/agy-prompt.txt" || return 1
   if ! jq -Rs -c --argjson chunk_chars "$chunk_chars" '
     . as $prompt
@@ -131,13 +141,12 @@ run_agy() {
   ' "$reviewer_dir/agy-prompt.txt" > "$chunks_file"; then
     return 1
   fi
-  if ! jq -c '.messages[]' "$chunks_file" > "$stream_input"; then
-    return 1
-  fi
-  chunk_count=$(jq -er '.count' "$chunks_file") || return 1
-  if [[ "$chunk_count" -lt 2 ]]; then
-    return 1
-  fi
+  jq -c '.messages[]' "$chunks_file" > "$stream_input"
+}
+
+agy_send_stream_input() {
+  local reviewer_dir="$1" reasoning_effort="${2:-}" effort_args=() stream_status=0
+  [[ -n "$reasoning_effort" ]] && effort_args=(--effort "$reasoning_effort")
 
   agy \
     --sandbox \
@@ -146,13 +155,20 @@ run_agy() {
     "${effort_args[@]+"${effort_args[@]}"}" \
     --input-format stream-json \
     --output-format stream-json \
-    < "$stream_input" > "$stream_stdout" 2> "$stream_stderr" || stream_status=$?
+    < "$reviewer_dir/agy-stream-input.jsonl" \
+    > "$reviewer_dir/agy-stream-stdout.log" 2> "$reviewer_dir/agy-stream-stderr.log" || stream_status=$?
   if [[ "$stream_status" -ne 0 ]]; then
-    cat "$stream_stderr" > "$reviewer_dir/stderr.log"
+    cat "$reviewer_dir/agy-stream-stderr.log" > "$reviewer_dir/stderr.log"
     printf '%s\n' "$stream_status" > "$reviewer_dir/backend-exit-code"
     return "$stream_status"
   fi
-  if ! jq -se --argjson expected "$((chunk_count - 1))" '
+  return 0
+}
+
+agy_stream_conversation_id() {
+  local reviewer_dir="$1" expected="$2" conversation_id
+  local stream_stdout="$reviewer_dir/agy-stream-stdout.log"
+  if ! jq -se --argjson expected "$expected" '
     (map(select(.event == "init" and (.conversation_id | type == "string" and length > 0))) | length == 1)
     and (map(select(.event == "result")) | length == $expected)
     and all(.[]; .event != "error")
@@ -161,20 +177,26 @@ run_agy() {
       (.result.response | type == "string" and test("^[[:space:]]*ACK[.!]?[[:space:]]*$"; "i"))
     )
   ' "$stream_stdout" > /dev/null; then
-    cat "$stream_stderr" > "$reviewer_dir/stderr.log"
+    cat "$reviewer_dir/agy-stream-stderr.log" > "$reviewer_dir/stderr.log"
+    printf 'Error: agy stream-json did not acknowledge every prompt chunk successfully.\n' >&2
     printf '1\n' > "$reviewer_dir/backend-exit-code"
     return 1
   fi
-  conversation_id=$(jq -er 'select(.event == "init") | .conversation_id' "$stream_stdout" | sed -n '1p')
+  conversation_id=$(jq -ser '[.[] | select(.event == "init")][0].conversation_id' "$stream_stdout") || return 1
   if [[ -z "$conversation_id" ]]; then
-    cat "$stream_stderr" > "$reviewer_dir/stderr.log"
+    printf 'Error: agy stream-json did not return a conversation ID.\n' >&2
     printf '1\n' > "$reviewer_dir/backend-exit-code"
     return 1
   fi
+  printf '%s\n' "$conversation_id"
+}
+
+agy_run_final_prompt() {
+  local reviewer_dir="$1" conversation_id="$2" chunk_count="$3" command_status=0 final_prompt
   final_prompt=$(jq -rj --arg count "$chunk_count" '
     .last + "\n\n[Transfer note: All " + $count
     + " parts of the review input have been sent. Review the complete input now, following the request and instructions in the input.]"
-  ' "$chunks_file") || return 1
+  ' "$reviewer_dir/agy-prompt-chunks.json") || return 1
 
   agy \
     --conversation "$conversation_id" \
@@ -185,14 +207,9 @@ run_agy() {
     --output-format json \
     --json-schema "$schema_file" \
     --print="$final_prompt" \
-    > "$reviewer_dir/stdout.log" 2> "$final_stderr" || command_status=$?
-  cat "$stream_stderr" "$final_stderr" > "$reviewer_dir/stderr.log"
-  printf '%s\n' "$command_status" > "$reviewer_dir/backend-exit-code"
-  [[ "$command_status" -eq 0 ]] || return "$command_status"
-  if ! jq -e '.structured_output != null' "$reviewer_dir/stdout.log" > /dev/null 2>&1; then
-    return 1
-  fi
-  jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json" 2> /dev/null
+    > "$reviewer_dir/stdout.log" 2> "$reviewer_dir/agy-final-stderr.log" || command_status=$?
+  cat "$reviewer_dir/agy-stream-stderr.log" "$reviewer_dir/agy-final-stderr.log" > "$reviewer_dir/stderr.log"
+  agy_collect_result "$reviewer_dir" "$command_status"
 }
 
 # Git's global config and ignore file can resolve into the denied checkout.
