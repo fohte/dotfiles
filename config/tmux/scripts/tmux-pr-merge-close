@@ -107,6 +107,11 @@ notify() {
   fi
 }
 
+notify_if_session_exists() {
+  [ -n "$active_session_id" ] || return 0
+  notify "$@"
+}
+
 short_output() {
   local value
   value="$(sanitize_text "$1")"
@@ -136,7 +141,7 @@ report_to_user() {
   else
     tmux display-message -d 0 "$display_message" > /dev/null 2>&1 || true
   fi
-  notify "$title" "$message" "$outcome" "${active_session_id:-}"
+  notify_if_session_exists "$title" "$message" "$outcome" "${active_session_id:-}"
   printf '%s\n' "$message" >&2
 }
 
@@ -184,48 +189,28 @@ resolve_sibling_session_id() {
 
 read_pr() {
   local result
-  if ! result="$(gh pr view "$1" --json state,headRefOid,mergeStateStatus,mergedAt 2>&1)"; then
+  if ! result="$(gh pr view "$1" --json state,headRefOid 2>&1)"; then
     printf '%s' "$result" >&2
     return 1
   fi
   printf '%s' "$result"
 }
 
-ensure_pr_is_safe() {
+ensure_pr_head_is_unchanged() {
   local current="$1" expected_head="$2" phase="$3"
-  local current_head merge_state reason
+  local current_head
 
   current_head="$(json_field "$current" '.headRefOid')"
-  merge_state="$(json_field "$current" '.mergeStateStatus')"
   if [ "$current_head" != "$expected_head" ]; then
-    reason="The PR head changed $phase."
-  elif [ "$merge_state" = 'DIRTY' ]; then
-    reason="The PR has merge conflicts $phase."
-  else
-    return 0
+    fail "The PR head changed $phase."
   fi
-
-  fail "$reason"
-}
-
-ensure_pr_is_open_and_safe() {
-  local current="$1" expected_head="$2" session_id="$3" phase="$4"
-  local state
-
-  state="$(json_field "$current" '.state')"
-  if [ "$state" = 'MERGED' ]; then
-    close_merged_session "$session_id"
-    return 1
-  fi
-  if [ "$state" != 'OPEN' ]; then
-    fail "The PR was closed before it could be merged (state: $state)."
-  fi
-  ensure_pr_is_safe "$current" "$expected_head" "$phase"
+  return 0
 }
 
 prepare() {
   local pane_id="$1" session_id="$2" client_tty="$3" window_id="$4" mode="${5:-}"
-  local dry_run=false pane_path repo_root pr_json payload prompt command escaped_title script_path resolution_status
+  local dry_run=false pane_path repo_root pr_json payload prompt command escaped_title script_path
+  active_session_id="$session_id"
   active_client_tty="$client_tty"
   if [ "$mode" = '--dry-run' ]; then
     dry_run=true
@@ -253,40 +238,24 @@ prepare() {
     fail "Unable to read the pane working directory: $(short_output "$pane_path")"
   fi
   if [ -z "$session_id" ]; then
-    if session_id="$(resolve_sibling_session_id "$pane_id" "$pane_path")"; then
-      :
-    else
-      resolution_status="$?"
-      if [ "$resolution_status" -eq 2 ]; then
-        fail 'Multiple agent sessions share this pane directory; run the command from the intended agent pane.'
-      fi
+    if ! session_id="$(resolve_sibling_session_id "$pane_id" "$pane_path")"; then
+      session_id=""
     fi
   fi
   active_session_id="$session_id"
-  if [ -z "$session_id" ]; then
-    fail 'No armyknife agent session is associated with this pane or a matching pane in the same window.'
-  fi
   if ! repo_root="$(git -C "$pane_path" rev-parse --show-toplevel 2> /dev/null)"; then
     fail 'The pane is not inside a Git repository.'
   fi
-  if ! pr_json="$(cd "$repo_root" && gh pr view --json number,title,url,state,headRefOid,mergeStateStatus 2>&1)"; then
+  if ! pr_json="$(cd "$repo_root" && gh pr view --json number,title,url,headRefOid 2>&1)"; then
     fail "Unable to read PR details: $(short_output "$pr_json")"
   fi
 
   pr_number="$(json_field "$pr_json" '.number')"
   pr_title="$(sanitize_text "$(json_field "$pr_json" '.title')")"
-  local pr_url state head_sha merge_state
+  local pr_url head_sha
   pr_url="$(json_field "$pr_json" '.url')"
-  state="$(json_field "$pr_json" '.state')"
   head_sha="$(json_field "$pr_json" '.headRefOid')"
-  merge_state="$(json_field "$pr_json" '.mergeStateStatus')"
 
-  if [ "$state" != 'OPEN' ]; then
-    fail "The PR is not open (state: $state)."
-  fi
-  if [ "$merge_state" = 'DIRTY' ]; then
-    fail 'The PR has merge conflicts.'
-  fi
   if [ -z "$pr_url" ] || [ -z "$head_sha" ] || [ "$head_sha" = 'null' ]; then
     fail 'The PR is missing its URL or head commit.'
   fi
@@ -314,7 +283,7 @@ prepare() {
 
 run_merge() {
   local encoded_payload="$1" payload_json repo_root session_id pr_url head_sha
-  local current state output dry_run close_error
+  local current output dry_run close_error
 
   if ! payload_json="$(printf '%s' "$encoded_payload" | base64 -D 2> /dev/null)"; then
     payload_json="$(printf '%s' "$encoded_payload" | base64 -d 2> /dev/null)" ||
@@ -339,23 +308,13 @@ run_merge() {
   if ! current="$(read_pr "$pr_url" 2>&1)"; then
     fail "Unable to read PR status: $(short_output "$current")"
   fi
-  state="$(json_field "$current" '.state')"
   if [ "$dry_run" = 'true' ]; then
-    if [ "$state" = 'MERGED' ]; then
-      notify 'tmux PR merge dry run' "PR #$pr_number ($pr_title) is already merged. Dry run did not close the agent session." success
-      return
-    fi
-    if [ "$state" != 'OPEN' ]; then
-      fail "The PR is not open (state: $state)."
-    fi
-    ensure_pr_is_safe "$current" "$head_sha" 'after confirmation'
-    notify 'tmux PR merge dry run' "PR #$pr_number ($pr_title) is open and has no merge conflicts. Would run a gh pr-merge, including its pre-pr-merge hook and required-check wait, then let it close the agent session after the squash merge if the safety checks pass. No changes were made." success
+    ensure_pr_head_is_unchanged "$current" "$head_sha" 'after confirmation'
+    notify_if_session_exists 'tmux PR merge dry run' "PR #$pr_number ($pr_title) would be passed to armyknife's PR merge flow if its head is unchanged. No changes were made." success
     return
   fi
 
-  if ! ensure_pr_is_open_and_safe "$current" "$head_sha" "$session_id" 'after confirmation'; then
-    return 0
-  fi
+  ensure_pr_head_is_unchanged "$current" "$head_sha" 'after confirmation'
 
   set_pr_merge_status 'running a gh pr-merge'
   if ! run_pr_merge; then
@@ -374,7 +333,7 @@ run_merge() {
     notify_merged_close_failure "$close_error"
   else
     clear_pr_merge_status
-    notify 'tmux PR merge succeeded' "PR #$pr_number ($pr_title) was merged." success
+    notify_if_session_exists 'tmux PR merge succeeded' "PR #$pr_number ($pr_title) was merged." success
   fi
 }
 
@@ -466,13 +425,18 @@ notify_merged_close_failure() {
 
 close_merged_session() {
   local target_session_id="$1" close_output
+  if [ -z "$target_session_id" ]; then
+    clear_pr_merge_status
+    return 0
+  fi
+
   set_pr_merge_status 'cleaning up'
   if ! close_output="$("$HOME/.cargo/bin/a" agent close "$target_session_id" 2>&1)"; then
     notify_merged_close_failure "$close_output"
     exit 1
   fi
 
-  notify 'tmux PR merge succeeded' "PR #$pr_number ($pr_title) was merged and the agent session was closed." success
+  notify_if_session_exists 'tmux PR merge succeeded' "PR #$pr_number ($pr_title) was merged and the agent session was closed." success
 }
 
 case "${1:-}" in

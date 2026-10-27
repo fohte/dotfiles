@@ -24,12 +24,8 @@ user_home="$6"
 
 host_os=$(uname -s)
 case "$host_os" in
-  Darwin)
-    required_commands=(claude dirname env id jq mkdir rg sed tr uname wc)
-    ;;
-  Linux)
-    echo "Error: Claude isolation preflight has no verified Linux init-context validation path." >&2
-    exit 3
+  Darwin | Linux)
+    required_commands=(claude dirname env id jq mkdir rg sed uname)
     ;;
   *)
     echo "Error: isolated Claude draft review is unsupported on $host_os." >&2
@@ -84,26 +80,86 @@ print_sanitized_diagnostics() {
       -e 's/(([Hh][Tt][Tt][Pp][Ss]?|[Aa][Ll][Ll]|[Nn][Oo])_[Pp][Rr][Oo][Xx][Yy]=)[[:graph:]]+/\1[REDACTED]/g' >&2 || true
 }
 
+print_event_summary() {
+  local summary
+
+  if ! summary=$(jq -Rsc '
+    def safe_string:
+      if type != "string" then null
+      elif test("^[A-Za-z0-9_.-]{1,80}$") then .
+      else "[other]"
+      end;
+    def event_summary:
+      if type == "object" then
+        {type: (.type | safe_string), subtype: (.subtype | safe_string)}
+      else
+        {type: null, subtype: null}
+      end;
+    def array_count: if type == "array" then length else null end;
+    def boolean_or_null: if type == "boolean" then . else null end;
+    def diagnostic_sample:
+      if length <= 400 then .
+      else .[0:200] + .[-200:]
+      end;
+
+    (split("\n") | map(select(length > 0) | try fromjson catch null)) as $events
+    | [$events[] | select(type == "object" and .type == "system" and .subtype == "init")] as $inits
+    | [$events[] | select(type == "object" and .type == "result")] as $results
+    | {
+        events: {
+          total: ($events | length),
+          omitted: (if ($events | length) > 400 then ($events | length) - 400 else 0 end),
+          sequence: ($events | diagnostic_sample | map(event_summary))
+        },
+        init: {
+          total: ($inits | length),
+          omitted: (if ($inits | length) > 400 then ($inits | length) - 400 else 0 end),
+          entries: (
+            $inits
+            | diagnostic_sample
+            | map({
+                tools_count: (.tools | array_count),
+                mcp_servers_count: (.mcp_servers | array_count)
+              })
+          )
+        },
+        results: {
+          total: ($results | length),
+          omitted: (if ($results | length) > 400 then ($results | length) - 400 else 0 end),
+          entries: (
+            $results
+            | diagnostic_sample
+            | map({
+                subtype: (.subtype | safe_string),
+                is_error: (.is_error | boolean_or_null),
+                stop_reason: (.stop_reason | safe_string)
+              })
+          )
+        }
+      }
+  ' "$events_file" 2> /dev/null); then
+    echo 'Claude draft reviewer event summary: unavailable.' >&2
+    return 0
+  fi
+
+  printf 'Claude draft reviewer event summary: %s\n' "$summary" >&2
+}
+
 if ! "${clean_env_args[@]}" "$claude_path" auth status > "$auth_status_file" 2> "$stderr_file"; then
   echo "Error: Claude auth status could not be verified in a clean environment." >&2
   print_sanitized_diagnostics "$stderr_file"
   exit 3
 fi
-jq -e '.loggedIn == true and .authMethod == "claude.ai"' \
+jq -e '.loggedIn == true' \
   "$auth_status_file" > /dev/null || {
-  echo "Error: Claude draft review requires a first-party claude.ai subscription login." >&2
+  echo "Error: Claude draft review requires an active login." >&2
   exit 3
 }
 
 printf '{"mcpServers":{}}\n' > "$mcp_config_file"
 settings_json=$(jq -cn '{
   disableAllHooks: true,
-  disableBundledSkills: true,
-  enabledPlugins: {
-    "cc-plugin-agents-md@builtin": false,
-    "cc-plugin-telemetry@builtin": false,
-    "cc-plugin-plugin-authoring@builtin": false
-  }
+  disableBundledSkills: true
 }')
 
 claude_args=(
@@ -141,18 +197,12 @@ if ! "${claude_env_args[@]}" "$claude_path" "${claude_args[@]}" \
   exit 3
 fi
 
-output_bytes=$(wc -c < "$events_file" | tr -d '[:space:]')
-[[ "$output_bytes" -le 1048576 ]] || {
-  echo "Error: Claude draft reviewer output exceeded the size limit." >&2
-  exit 3
-}
-
-expected_cwd=$(pwd -P)
-if ! jq -s -e --arg expected_cwd "$expected_cwd" '
+if ! jq -s -e '
   [to_entries[] | select(.value.type == "system" and .value.subtype == "init") | .key] as $inits
   | [to_entries[] | select(.value.type == "result") | .key] as $results
   | length > 0
     and all(.[]; type == "object" and (.type | type == "string"))
+    and all(.[]; .type != "error")
     and all(.[];
       if .type == "assistant" then
         (.message | type == "object")
@@ -165,23 +215,18 @@ if ! jq -s -e --arg expected_cwd "$expected_cwd" '
       end
     )
     and ($inits | length == 1)
-    and $inits[0] == 0
+    and all(.[:$inits[0]][]; .type | IN("assistant", "user", "result") | not)
     and ($results | length == 1)
     and $results[0] == (length - 1)
-    and (.[ $inits[0] ] | .cwd == $expected_cwd and .original_cwd == $expected_cwd)
     and (.[ $inits[0] ] | (.model | type == "string" and test("\\S")))
     and (.[ $inits[0] ] | (.tools | type == "array" and length == 0))
     and (.[ $inits[0] ] | (.mcp_servers | type == "array" and length == 0))
-    and (.[ $inits[0] ] | (.skills | type == "array" and length == 0))
-    and (.[ $inits[0] ] | (.plugins | type == "array" and length == 0))
-    and (.[ $inits[0] ] | (.agents | type == "array" and length == 0))
-    and (.[ $inits[0] ] | (.slash_commands | type == "array" and length == 0))
-    and (.[ $inits[0] ] | (if has("terminal_slash_commands") then (.terminal_slash_commands | type == "array" and length == 0) else true end))
     and (.[ $results[0] ] | .subtype == "success" and .is_error == false)
     and (.[ $results[0] ].stop_reason | IN("end_turn", "stop_sequence"))
     and (.[ $results[0] ].result | type == "string" and test("\\S"))
-' "$events_file" > /dev/null; then
+' "$events_file" > /dev/null 2> /dev/null; then
   echo "Error: Claude draft reviewer did not return a verified tool-free context and successful result." >&2
+  print_event_summary
   exit 3
 fi
 

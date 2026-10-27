@@ -1,6 +1,13 @@
 .PHONY: all clean
 
-PLISTS := com.fohte.codex-app-server.plist com.fohte.codex-app-server-reloader.plist com.fohte.skk-watcher.plist com.fohte.claude-rate-limits.plist
+BASE_PLISTS := com.fohte.codex-app-server.plist com.fohte.codex-app-server-reloader.plist com.fohte.skk-watcher.plist
+PRIVATE_PLIST := com.fohte.claude-rate-limits.plist
+MACHINE_ROLE := $(shell ../bin/dot-role get name)
+
+PLISTS := $(BASE_PLISTS)
+ifeq ($(MACHINE_ROLE),private)
+PLISTS += $(PRIVATE_PLIST)
+endif
 
 all: $(PLISTS)
 
@@ -28,11 +35,13 @@ com.fohte.skk-watcher.plist: com.fohte.skk-watcher.plist.in
 	    -e "s|__SKK_DICT_REPO__|$$skk_repo|g" \
 	    $< > $@.tmp && mv $@.tmp $@
 
-com.fohte.claude-rate-limits.plist: com.fohte.claude-rate-limits.plist.in
+ifeq ($(MACHINE_ROLE),private)
+$(PRIVATE_PLIST): $(PRIVATE_PLIST).in
 	@bun=$$(command -v bun) && test -n "$$bun" || { echo "bun not found in PATH" >&2; exit 1; }; \
 	sed -e 's|__HOME__|$(HOME)|g' \
 	    -e "s|__BUN__|$$bun|g" \
 	    $< > $@.tmp && mv $@.tmp $@
+endif
 
 clean:
-	rm -f $(PLISTS)
+	rm -f $(BASE_PLISTS) $(PRIVATE_PLIST)
