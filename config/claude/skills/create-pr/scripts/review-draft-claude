@@ -72,7 +72,7 @@ print_sanitized_diagnostics() {
   local log_file="$1"
   [[ -s "$log_file" ]] || return 0
 
-  rg -i 'error|warning|fail|denied|unable|could not|not fetched|timed out|timeout' "$log_file" |
+  rg -i 'error|warning|fail|denied|unable|could not|timed out|timeout' "$log_file" |
     sed -n '1,12p' |
     sed -E \
       -e 's#(https?://)[^/@[:space:]]+@#\1[REDACTED]@#g' \
@@ -89,20 +89,11 @@ if ! "${clean_env_args[@]}" "$claude_path" auth status > "$auth_status_file" 2> 
   print_sanitized_diagnostics "$stderr_file"
   exit 3
 fi
-jq -e '.loggedIn == true and .authMethod == "claude.ai" and (.configDirectory | type == "string" and startswith("/"))' \
+jq -e '.loggedIn == true and .authMethod == "claude.ai"' \
   "$auth_status_file" > /dev/null || {
   echo "Error: Claude draft review requires a first-party claude.ai subscription login." >&2
   exit 3
 }
-auth_config_dir=$(jq -er '.configDirectory' "$auth_status_file")
-[[ -d "$auth_config_dir" && -r "$auth_config_dir" && -x "$auth_config_dir" ]] || {
-  echo "Error: Claude auth configuration directory is not inspectable." >&2
-  exit 3
-}
-if ! (cd "$auth_config_dir" && pwd -P > /dev/null); then
-  echo "Error: Claude auth configuration directory cannot be resolved." >&2
-  exit 3
-fi
 
 printf '{"mcpServers":{}}\n' > "$mcp_config_file"
 settings_json=$(jq -cn '{
