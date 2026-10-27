@@ -217,6 +217,13 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
         ],
       },
     ],
+    PostModelSwitch: [
+      {
+        hooks: [
+          { type: 'command', command: 'a agent hook post-model-switch' },
+        ],
+      },
+    ],
     UserPromptSubmit: [
       {
         hooks: [
