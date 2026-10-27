@@ -39,7 +39,7 @@ reviewer 実行に失敗した場合だけ、本文を含まない診断 JSON �
 
 成功した試行の診断は作りません。resume の失敗診断は fresh fallback が成功しても保持します。保存した診断の path は実行時の stderr に表示します。
 
-旧 round に失敗試行と有効評価があり、修復した reviewer 定義・参照で固定 range の未評価文書を再評価する場合は、通常の selector を実行せず、後述の「入力不足からの recovery round」を使ってください。
+呼び出し元が修復を伴う recovery round を明示的に依頼し、旧 round に失敗試行と有効評価がある場合は、通常の selector を実行せず、後述の「入力不足からの recovery round」を使ってください。
 
 1. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
    For `--cached`, snapshot the applicable index before `select-reviewers`: copy `${GIT_INDEX_FILE:-$(git rev-parse --git-path index)}` to a unique path from `mktemp "$AGENT_TMPDIR/self-review-index.XXXXXX"`, then pass `GIT_INDEX_FILE=<snapshot-path>` to `select-reviewers` and every runner invocation. Keep that snapshot unchanged until all reviewers and retries finish.
@@ -62,7 +62,7 @@ runner は caller が結果の意味を確認する前に、成功した実行�
 
 ## 入力不足からの recovery round
 
-旧 round に失敗試行と有効評価があり、修復した reviewer 定義・参照で固定 range の未評価文書を再評価するときだけ使用します。通常の reviewer retry、任意の reset、有効評価の再実行には使いません。
+呼び出し元が修復を伴う recovery round を明示的に依頼し、旧 round に失敗試行と有効評価がある場合だけ使用します。対象は修復した reviewer 定義・参照で固定 range の未評価文書を再評価するケースです。通常の reviewer retry、任意の reset、有効評価の再実行には使いません。
 
 1. caller の固定 range、旧 manifest、旧 round record、修復理由を渡して round を生成します。selector は保存 HEAD を参照せず、固定 range 全体から現行 YAML の Japanese targets を選びます。
 
@@ -74,6 +74,8 @@ runner は caller が結果の意味を確認する前に、成功した実行�
     出力された round directory をそのまま使います。`verify <round-directory>` で snapshot hash と HEAD を検証し、`manifest.json` の `.range`、`.reviewers[].targets`、`.recovery_round.input_snapshot.sha256` を確認してください。manifest は Japanese reviewer だけを含み、fixed HEAD の diff、files、各対象本文、base YAML と role overlay、definition と references の path / hash / body、resolver の実効設定と source を保存します。`round-record.json` は旧 manifest と round record の path / hash、旧失敗試行と有効評価の記録先を参照します。
 
 2. Codex では recovery helper をバックグラウンドで起動し、完了通知を待ちます。runner を直接呼ぶと実行 ID と retry 上限が記録されないため、helper を使ってください。
+
+    Claude Code では recovery helper を `run_in_background: true` で起動し、完了通知を待ってターンを終えます。
 
     ```bash
     a agent bg run -- ~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>
@@ -89,6 +91,8 @@ runner は caller が結果の意味を確認する前に、成功した実行�
     ```
 
     要求された評価が未実施または部分実施なら、`not-evaluated` と原因を記録してから、同じ round directory で helper をもう 1 回だけ実行します。runner が失敗した場合も同じ helper の再実行が 1 回だけ許可されます。
+
+    Claude Code では同じ round directory で recovery helper を `run_in_background: true` で起動し、完了通知を待ってターンを終えます。
 
     ```bash
     ~/.agents/skills/self-review/scripts/self-review-recovery-round assess \
