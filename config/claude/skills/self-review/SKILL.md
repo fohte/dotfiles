@@ -62,7 +62,7 @@ runner は全 reviewer の結果と必須項目を検査した後に session sta
 
 ## 入力不足からの recovery round
 
-呼び出し元が修復を伴う recovery round を明示的に依頼し、旧 round に失敗試行と有効評価がある場合だけ使用します。対象は修復した reviewer 定義・参照で固定 range の未評価文書を再評価するケースです。通常の reviewer retry、任意の reset、有効評価の再実行には使いません。
+呼び出し元が未評価 evaluation を補う recovery round を明示的に依頼し、旧 round に失敗試行と有効評価がある場合だけ使用します。対象は、修復した reviewer 定義・参照で固定 range の未評価文書を再評価する場合と、切り詰めの証拠がある旧評価を未評価として扱い recovery round で補う場合です。後者は未評価だった評価を補うもので、切り詰めの証拠がない有効評価の再実行ではありません。通常の reviewer retry、任意の reset には使いません。
 
 1. caller の固定 range、旧 manifest、旧 round record、修復理由を渡して round を生成します。selector は保存 HEAD を参照せず、固定 range 全体から対象 reviewer の targets を選びます。
 
@@ -71,7 +71,7 @@ runner は全 reviewer の結果と必須項目を検査した後に session sta
       <fixed-range> <old-manifest> <old-round-record> "<repair-reason>" [reviewer]
     ```
 
-    `reviewer` は `japanese-writing` または `comment` を指定し、省略すると `japanese-writing` を選びます。修復理由には、切り詰めを示す prompt または diff の byte 数と、対象が切り詰め位置より後ろにある根拠を caller が記載してください。script はこの証拠を機械検査しません。切り詰めの証拠がある評価は、summary が完了を示していても未評価として扱います。
+    `reviewer` は `japanese-writing` または `comment` を指定し、省略すると `japanese-writing` を選びます。切り詰めの証拠とする条件は、旧評価が `agy` で実行され、分割送信を導入した [PR 398](https://github.com/fohte/dotfiles/pull/398) より前の実行であり、prompt が約 192,000 bytes の request 上限を超え、対象の差分または本文が切り詰め位置より後ろから始まることです。`config/claude/skills/self-review/scripts/review-backends` の `run_agy` は `single_message_limit=191000` を分割送信の閾値として使います。修復理由には prompt または diff の byte 数と対象の位置を caller が記載してください。script は証拠を機械検査しません。
 
     出力された round directory をそのまま使います。`verify <round-directory>` で snapshot hash と HEAD を検証し、`manifest.json` の `.range`、`.reviewers[].targets`、`.recovery_round.input_snapshot.sha256` を確認してください。manifest は指定した reviewer だけを含み、fixed HEAD の diff、files、各対象本文、base YAML と role overlay、definition と references の path / hash / body、resolver の実効設定と source を保存します。`round-record.json` は旧 manifest と round record の path / hash、旧失敗試行と有効評価の記録先を参照します。既存の Japanese round は manifest を変更せず verify できます。
 
@@ -99,7 +99,7 @@ runner は全 reviewer の結果と必須項目を検査した後に session sta
       <round-directory> not-evaluated "<unassessed reason>"
     ```
 
-    `not-evaluated` を記録した後、または runner が失敗した後に、同じ helper をもう 1 回だけ実行します。旧 round と recovery round の各 attempt で実施済みの evaluation とその findings を保持し、retry は未評価だった evaluation とその findings を補うために使います。同じ evaluation と finding は一度だけ集約します。Codex では次を使います。
+    `not-evaluated` を記録した後、または runner が失敗した後に、同じ helper をもう 1 回だけ実行します。旧 round と recovery round の各 attempt で実施済みと判断した evaluation と findings は保持します。切り詰めの証拠により未評価とした旧 evaluation と findings は、実施済み評価として保持せず集約にも含めません。retry は recovery round で未評価だった evaluation とその findings を補うために使います。同じ evaluation と finding は一度だけ集約します。Codex では次を使います。
 
     ```bash
     a agent bg run -- ~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>
@@ -107,11 +107,13 @@ runner は全 reviewer の結果と必須項目を検査した後に session sta
 
     Claude Code では同じ helper (`~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>`) を `run_in_background: true` で起動し、完了通知を待つ間にターンを終えます。
 
-    2 回目も未評価の evaluation が残る場合は、その attempt に `not-evaluated` を記録して `round-record.json` の状態を残し、実施済み evaluation とその findings を保持したまま止めます。未評価の evaluation だけを未評価として報告します。再選択、round の作り直し、旧評価の retry はしません。残っていた evaluation がすべて実施済みなら `evaluated` を記録し、保持した結果と合わせて通常の結果集約へ戻ります。
+    2 回目も未評価の evaluation が残る場合は、その attempt に `not-evaluated` を記録して `round-record.json` の状態を残し、実施済み evaluation とその findings を保持したまま止めます。未評価の evaluation だけを未評価として報告します。再選択、round の作り直し、旧評価の retry はしません。残っていた evaluation がすべて実施済みなら `evaluated` を記録し、切り詰めの証拠で未評価とした旧 evaluation を除いた実施済み結果と recovery 結果を通常の結果集約へ渡します。
 
 ## 結果集約
 
 有効な evaluation result が一度も返らなかった reviewer は、その reviewer の全 evaluation を未評価として報告します。`invalid` / `empty`、必須 ID の欠落、空の summary は結果を無効とし、`partial` または未実施・部分実施と分かる summary は未実施の evaluation だけを未評価として報告します。実施済みの evaluation とその findings は保持し、summary から未実施の evaluation を特定できない場合は実施済みと確認できる evaluation だけを保持して残りを未評価とします。形式上の警告や診断・session state の保存失敗だけでは評価を未実施にしません。
+
+切り詰めの証拠がある `comment` または `japanese-writing` の評価は、summary が完了を示していても未評価として扱い、旧評価とその findings を集約に含めません。
 
 findings は schema 上 reviewer 単位の配列です。初回 result の実施済み evaluation に属する findings を保持し、retry result からは初回で未評価だった evaluation のうち retry で補えた evaluation に属する findings だけを追加します。対応付けには手順 6 の規則を使います。
 
