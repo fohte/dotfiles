@@ -146,7 +146,7 @@ source_pane='%901'
 target_window='@902'
 target_pane='%903'
 source_window='@904'
-stage_name='implementation'
+stage_name='実装中'
 ```
 
 候補 repo の Git 共通ディレクトリを照合する例:
