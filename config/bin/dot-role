@@ -7,7 +7,7 @@
 #   work repo=fohte/wantedly-internal-settings
 #
 # Overlay resolution:
-#   private  -> ~/ghq/github.com/fohte/dotfiles-private/config-overlays/<tool>/<file>
+#   private  -> ~/ghq/github.com/<repo>/config-overlays/<tool>/<file>
 #   work     -> ~/ghq/github.com/<repo>/config-overlays/<tool>/<file>
 
 set -euo pipefail

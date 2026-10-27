@@ -82,7 +82,7 @@ in the gitignored `.role` file at the repository root.
 
 | Role      | Overlay source                                                                  |
 | --------- | ------------------------------------------------------------------------------- |
-| `private` | `~/ghq/github.com/fohte/dotfiles-private/config-overlays/<tool>/<file>`         |
+| `private` | `~/ghq/github.com/<owner>/<name>/config-overlays/<tool>/<file>`                 |
 | `work`    | `~/ghq/github.com/<owner>/<name>/config-overlays/<tool>/<file>` (external repo) |
 
 ```bash
@@ -98,9 +98,10 @@ dot role overlay config/zsh/.zshrc   # print the overlay path for a given file
 Private overlays default to `fohte/dotfiles-private`. If that repository is
 not cloned, `dot role overlay` reports that role overlays are unavailable and
 tools use their base and local configuration without cloning the repository.
-Place personal executable scripts in `dotfiles-private/config-overlays/bin/`.
-`dot deploy -t zsh` links that directory to `~/.local/share/dotfiles/role-bin`,
-which is added to `PATH` after the public `~/bin` directory.
+Place personal executable scripts in the selected role repository's
+`config-overlays/bin/`. `dot deploy -t zsh` links that directory to
+`~/.local/share/dotfiles/role-bin`, which is added to `PATH` after the public
+`~/bin` directory.
 
 Tools that consume the role:
 
