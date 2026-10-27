@@ -9,6 +9,18 @@ state_dir="$HOME/.local/state/dotfiles/role-skill-links"
 umask 077
 mkdir -p "$state_dir"
 
+# Both engines can start together and reconcile the same roots and state files.
+lock_dir="$state_dir/sync.lock"
+if ! mkdir "$lock_dir"; then
+  if [ -d "$lock_dir" ]; then
+    echo "warning: another role skill sync is running; skipping this invocation" >&2
+    exit 0
+  fi
+  echo "error: unable to acquire role skill sync lock at $lock_dir" >&2
+  exit 1
+fi
+trap 'rmdir "$lock_dir"' EXIT
+
 link_public_skills() {
   local root="$1" include_synced="$2" skill name destination
 
