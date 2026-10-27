@@ -12,8 +12,7 @@ endif
 # Layers (each can use +: syntax for deep merging, e.g. permissions+: { allow+: [...] }):
 #   1. base (the .jsonnet file passed as argument)
 #   2. role overlay (resolved via `dot role overlay`):
-#      - private: <DOTFILES_DIR>/config/claude/<file>.private.jsonnet
-#      - work:    ~/ghq/github.com/<repo>/config-overlays/claude/<file>.jsonnet
+#      - ~/ghq/github.com/<repo>/config-overlays/claude/<file>.jsonnet
 #   3. local overlay: <file>.local.jsonnet (gitignored, for secrets/machine-only tweaks)
 # External variables referenced via env('VAR_NAME') are auto-detected from all layers
 # and passed as --ext-str flags (jsonnet reads them from environment variables).

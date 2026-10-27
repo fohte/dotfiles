@@ -5,7 +5,7 @@
 # context injection (all of `gen-claude-template context`, the same set Claude
 # Code gets), and the tq session tracking hooks
 # (SessionStart / Stop / SessionEnd), the armyknife session tracking hooks
-# (`a agent hook`).
+# (`a agent hook`), and role overlay skill links.
 #
 # `runok init` checks for its exact command without checking the matcher. Keep
 # an inactive PreToolUse entry so init does not register a competing handler.
@@ -44,7 +44,8 @@ UserPromptSubmit\t.*\ta agent hook user-prompt-submit --engine codex
 PostToolUse\t.*\ta agent hook post-tool-use --engine codex
 PermissionRequest\t.*\ta agent hook permission-request --engine codex
 Stop\t.*\ta agent hook stop --engine codex
-SessionEnd\t.*\ta agent hook session-end --engine codex\t3'
+SessionEnd\t.*\ta agent hook session-end --engine codex\t3
+SessionStart\t.*\t~/.claude/hooks/link-overlay-skills'
 
 # Commands this script used to register. An already-deployed hooks.json still
 # has them, and the append-only loop below would leave both old and new
