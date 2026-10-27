@@ -13,6 +13,15 @@ initialize_codex_home() {
   fi
 }
 
+reviewer_result_identity_matches() {
+  local reviewer="$1" result_file="$2"
+  jq -e --arg reviewer "$reviewer" '
+    .reviewer == $reviewer or
+    ((.reviewer | type) == "string" and
+      (.reviewer | ascii_downcase) == ($reviewer | ascii_downcase))
+  ' "$result_file" > /dev/null
+}
+
 run_codex() {
   local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}"
   local resume_session_id="${4:-}" persist_session="${5:-false}"
@@ -49,14 +58,17 @@ run_codex() {
 
   if [[ "$persist_session" == true ]]; then
     local session_id
-    jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$reviewer_dir/result.json" > /dev/null || return 1
+    reviewer_result_identity_matches "$reviewer" "$reviewer_dir/result.json" || return 1
     if [[ -n "$resume_session_id" ]]; then
       session_id="$resume_session_id"
     else
-      session_id=$(jq -er 'select(.type == "thread.started") | .thread_id' "$reviewer_dir/stdout.log" | sed -n '1p') || return 1
+      session_id=$(jq -r 'select(.type == "thread.started") | .thread_id // empty' "$reviewer_dir/stdout.log" | sed -n '1p') || session_id=
     fi
-    [[ -n "$session_id" ]] || return 1
-    printf '%s\n' "$session_id" > "$reviewer_dir/session-id"
+    if [[ -z "$session_id" ]]; then
+      echo "Warning: Codex session ID is unavailable; keeping the reviewer result without session reuse." >&2
+    elif ! printf '%s\n' "$session_id" > "$reviewer_dir/session-id"; then
+      echo "Warning: unable to save the Codex session ID; keeping the reviewer result without session reuse." >&2
+    fi
   fi
 }
 
@@ -200,8 +212,16 @@ run_claude() {
   fi
   jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
   if [[ "$persist_session" == true ]]; then
-    session_id=$(jq -er '.session_id | strings | select(length > 0)' "$reviewer_dir/stdout.log") || return 1
-    [[ -z "$resume_session_id" || "$session_id" == "$resume_session_id" ]] || return 1
-    printf '%s\n' "$session_id" > "$reviewer_dir/session-id"
+    if ! session_id=$(jq -er '.session_id | strings | select(length > 0)' "$reviewer_dir/stdout.log" 2> /dev/null); then
+      echo "Warning: Claude session ID is unavailable; keeping the reviewer result without session reuse." >&2
+      return 0
+    fi
+    if [[ -n "$resume_session_id" && "$session_id" != "$resume_session_id" ]]; then
+      echo "Warning: Claude session ID changed during resume; keeping the reviewer result without session reuse." >&2
+      return 0
+    fi
+    if ! printf '%s\n' "$session_id" > "$reviewer_dir/session-id"; then
+      echo "Warning: unable to save the Claude session ID; keeping the reviewer result without session reuse." >&2
+    fi
   fi
 }

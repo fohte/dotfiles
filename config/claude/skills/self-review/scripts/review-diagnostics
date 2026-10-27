@@ -17,26 +17,26 @@ diagnostics_usage() {
 }
 
 diagnostics_resolve_root() {
-  local cache_home
+  local cache_home severity="${1:-Error}"
   cache_home=$(printenv XDG_CACHE_HOME || true)
   [[ -n "$cache_home" ]] || cache_home="$HOME/.cache"
   diagnostics_root="$cache_home/self-review/diagnostics"
 
   if [[ -L "$cache_home" || -L "$cache_home/self-review" || -L "$diagnostics_root" ]]; then
-    echo "Error: self-review diagnostics directory must not be a symlink." >&2
+    echo "$severity: self-review diagnostics directory must not be a symlink." >&2
     return 1
   fi
 }
 
 diagnostics_cleanup_expired() {
-  local run_dir diagnostic_file
-  diagnostics_resolve_root || return 1
+  local run_dir diagnostic_file severity="${1:-Error}"
+  diagnostics_resolve_root "$severity" || return 1
   for run_dir in "$diagnostics_root"/self-review-run.*; do
     [[ -d "$run_dir" && ! -L "$run_dir" ]] || continue
     for diagnostic_file in "$run_dir"/self-review-diagnostic.*; do
       [[ -f "$diagnostic_file" && ! -L "$diagnostic_file" ]] || continue
       if ! find -P "$diagnostic_file" -type f -mmin +10080 -delete 2> /dev/null; then
-        echo "Error: unable to clean expired self-review diagnostics." >&2
+        echo "$severity: unable to clean expired self-review diagnostics." >&2
         return 1
       fi
     done
@@ -46,21 +46,21 @@ diagnostics_cleanup_expired() {
 
 diagnostics_prepare() {
   umask 077
-  diagnostics_resolve_root || return 1
+  diagnostics_resolve_root Warning || return 1
   if ! mkdir -p "$diagnostics_root" ||
-    ! diagnostics_resolve_root ||
+    ! diagnostics_resolve_root Warning ||
     [[ ! -d "$diagnostics_root" || -L "$diagnostics_root" ]] ||
     ! chmod 700 "$diagnostics_root"; then
-    echo "Error: unable to prepare the self-review diagnostics directory." >&2
+    echo "Warning: unable to prepare the self-review diagnostics directory." >&2
     return 1
   fi
-  diagnostics_cleanup_expired || return 1
+  diagnostics_cleanup_expired Warning || return 1
   diagnostics_run_dir=$(mktemp -d "$diagnostics_root/self-review-run.XXXXXX") || {
-    echo "Error: unable to create a self-review diagnostics run directory." >&2
+    echo "Warning: unable to create a self-review diagnostics run directory." >&2
     return 1
   }
   chmod 700 "$diagnostics_run_dir" || {
-    echo "Error: unable to secure the self-review diagnostics run directory." >&2
+    echo "Warning: unable to secure the self-review diagnostics run directory." >&2
     return 1
   }
   diagnostics_run_id=$(basename "$diagnostics_run_dir")
@@ -142,7 +142,10 @@ diagnostics_validation_errors() {
               then [violation("additional_field"; "$")]
               else [] end)
            + (if ($root | has("reviewer")) and $root.reviewer != $reviewer
-              then [violation("reviewer_mismatch"; "$.reviewer")]
+              then (if ($root.reviewer | type) == "string" and
+                       ($root.reviewer | ascii_downcase) == ($reviewer | ascii_downcase)
+                    then [violation("reviewer_case_mismatch"; "$.reviewer")]
+                    else [violation("reviewer_mismatch"; "$.reviewer")] end)
               else [] end)
          end),
         (if ($root | type) == "object" and ($root.evaluations | type) == "array" then
@@ -216,8 +219,10 @@ diagnostics_validation_errors() {
                    then [] else [violation("finding_line_invalid"; "$.findings[].line")] end)
                 + (if ($finding.evidence | nonblank_string)
                    then [] else [violation("finding_evidence_invalid"; "$.findings[].evidence")] end)
-                + (if ($finding.suggestion | nonblank_string)
-                   then [] else [violation("finding_suggestion_invalid"; "$.findings[].suggestion")] end))
+                + (if ($finding.suggestion | type) != "string"
+                   then [violation("finding_suggestion_invalid"; "$.findings[].suggestion")]
+                   elif ($finding.suggestion | nonblank_string)
+                   then [] else [violation("finding_suggestion_empty"; "$.findings[].suggestion")] end))
               end] | add // [])
          else
            [violation("findings_not_array"; "$.findings")]
@@ -228,19 +233,20 @@ diagnostics_validation_errors() {
   ' "$result_file" 2> /dev/null
 }
 
+# Failure records are optional metadata and must not determine review completion.
 diagnostics_save_failure() {
   local exit_code="$1" violations="$2" diagnostic_file
   if [[ -z "$diagnostics_run_dir" || ! -d "$diagnostics_run_dir" || -L "$diagnostics_run_dir" ]]; then
-    echo "Error: unable to save self-review failure diagnostic; review remains unevaluated." >&2
-    return 1
+    echo "Warning: unable to save self-review failure diagnostic." >&2
+    return 0
   fi
   if ! jq -e 'type == "array" and length > 0' <<< "$violations" > /dev/null 2>&1; then
-    echo "Error: unable to save self-review failure diagnostic; review remains unevaluated." >&2
-    return 1
+    echo "Warning: unable to save self-review failure diagnostic." >&2
+    return 0
   fi
   diagnostic_file=$(mktemp "$diagnostics_run_dir/self-review-diagnostic.XXXXXX") || {
-    echo "Error: unable to save self-review failure diagnostic; review remains unevaluated." >&2
-    return 1
+    echo "Warning: unable to save self-review failure diagnostic." >&2
+    return 0
   }
   if ! jq -cn \
     --arg run_id "$diagnostics_run_id" \
@@ -268,13 +274,13 @@ diagnostics_save_failure() {
       violations: $violations
     }' > "$diagnostic_file" 2> /dev/null; then
     rm "$diagnostic_file" 2> /dev/null || true
-    echo "Error: unable to save self-review failure diagnostic; review remains unevaluated." >&2
-    return 1
+    echo "Warning: unable to save self-review failure diagnostic." >&2
+    return 0
   fi
   chmod 600 "$diagnostic_file" || {
     rm "$diagnostic_file" || true
-    echo "Error: unable to secure self-review failure diagnostic; review remains unevaluated." >&2
-    return 1
+    echo "Warning: unable to secure self-review failure diagnostic." >&2
+    return 0
   }
   echo "Self-review failure diagnostic saved; a later run removes records older than 7 days: $diagnostic_file" >&2
 }

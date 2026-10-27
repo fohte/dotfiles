@@ -18,7 +18,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "The runner checks this ID against the exact set required for the reviewer."
+            "description": "Evaluation identifier."
           },
           "status": {
             "type": "string",
