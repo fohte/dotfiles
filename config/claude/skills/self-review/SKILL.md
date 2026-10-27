@@ -75,7 +75,7 @@ runner は caller が結果の意味を確認する前に、成功した実行�
 
 2. Codex では recovery helper をバックグラウンドで起動し、完了通知を待ちます。runner を直接呼ぶと実行 ID と retry 上限が記録されないため、helper を使ってください。
 
-    Claude Code では recovery helper を `run_in_background: true` で起動し、完了通知を待ってターンを終えます。
+    Claude Code では recovery helper を `run_in_background: true` で起動し、完了通知を待つ間にターンを終えます。
 
     ```bash
     a agent bg run -- ~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>
@@ -92,7 +92,7 @@ runner は caller が結果の意味を確認する前に、成功した実行�
 
     要求された評価が未実施または部分実施なら、`not-evaluated` と原因を記録してから、同じ round directory で helper をもう 1 回だけ実行します。runner が失敗した場合も同じ helper の再実行が 1 回だけ許可されます。
 
-    Claude Code では同じ round directory で recovery helper を `run_in_background: true` で起動し、完了通知を待ってターンを終えます。
+    Claude Code では同じ round directory で recovery helper を `run_in_background: true` で起動し、完了通知を待つ間にターンを終えます。
 
     ```bash
     ~/.agents/skills/self-review/scripts/self-review-recovery-round assess \
