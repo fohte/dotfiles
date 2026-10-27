@@ -459,9 +459,12 @@ rules:
   # Skill-bundled tools (e.g. archify) stage output through mkdtemp in $TMPDIR,
   # which `readonly` below rejects. A local server still cannot bind, so
   # `archify preview` fails here; use `crit preview <file>` instead.
+  # Tilde spellings are accepted; resolved paths must stay under a user skill root.
   - allow: 'node <var:claude-skill-scripts> *'
     when: >-
       size(args) > 0 &&
+      !args[0].contains('..') &&
+      !args[0].contains('/.claude/skills/synced/') &&
       (!args[0].startsWith('/') ||
        args[0].startsWith(env.HOME + '/.agents/skills/') ||
        args[0].startsWith(env.HOME + '/.claude/skills/') ||
@@ -479,6 +482,8 @@ rules:
     when: >-
       !(size(args) > 0 &&
         definitions.vars["claude-skill-scripts"].exists(p, glob_matches(p, args[0])) &&
+        !args[0].contains('..') &&
+        !args[0].contains('/.claude/skills/synced/') &&
         (!args[0].startsWith('/') ||
          args[0].startsWith(env.HOME + '/.agents/skills/') ||
          args[0].startsWith(env.HOME + '/.claude/skills/') ||
@@ -488,6 +493,8 @@ rules:
       - allow: 'node -e "console.log(1)"'
       - allow: 'node lint.mjs ~/.agents/skills/archify/SKILL.md'
       - allow: 'node /Users/example/repo/.claude/skills/example-skill/scripts/build.cjs in.md out.md'
+      - allow: 'node ~/.claude/skills/synced/b/s/scripts/build.cjs in.md out.md'
+      - allow: 'node ~/.agents/skills/x/../../../tmp/scripts/evil.js in.md out.md'
 
   - allow: 'corepack enable'
     tests:
