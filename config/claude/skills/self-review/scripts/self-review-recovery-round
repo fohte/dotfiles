@@ -18,6 +18,13 @@ fail() {
   exit 1
 }
 
+is_supported_recovery_reviewer() {
+  case "$1" in
+    japanese-writing | comment) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 sha256_file() {
   local output
   if command -v shasum > /dev/null; then
@@ -235,7 +242,7 @@ create_round() {
   old_record=$(absolute_file_path "$3")
   reason="$4"
   reviewer="${5:-japanese-writing}"
-  [[ "$reviewer" == japanese-writing || "$reviewer" == comment ]] ||
+  is_supported_recovery_reviewer "$reviewer" ||
     fail "unsupported recovery reviewer: $reviewer (choose japanese-writing or comment)."
   [[ -f "$old_manifest" && -f "$old_record" ]] || fail "old manifest or round record is missing."
   [[ -n "$reason" ]] || fail "repair reason is required."
@@ -278,7 +285,7 @@ create_round() {
 verify_round() {
   local round_dir="$1" manifest="$1/manifest.json" record="$1/round-record.json"
   local repo_root current_head round_id expected_manifest actual_manifest expected_input actual_input snapshot_count index kind path expected_sha
-  local source_manifest_sha source_record_sha purpose
+  local source_manifest_sha source_record_sha purpose reviewer
   [[ -f "$manifest" && -f "$record" ]] || fail "round manifest or record is missing."
   repo_root=$(git rev-parse --show-toplevel)
   current_head=$(git rev-parse --verify 'HEAD^{commit}')
@@ -293,8 +300,9 @@ verify_round() {
   actual_input=$(input_sha256 "$manifest")
   [[ "$expected_input" == "$actual_input" ]] || fail "round input snapshot hash changed."
   [[ $(jq -r '.recovery_round.input_snapshot.sha256' "$manifest") == "$actual_input" ]] || fail "manifest input snapshot hash is inconsistent."
-  jq -e '.reviewers | length == 1 and (.[0].name == "japanese-writing" or .[0].name == "comment")' "$manifest" > /dev/null ||
-    fail "round manifest must contain exactly one supported reviewer."
+  jq -e '.reviewers | length == 1' "$manifest" > /dev/null || fail "round manifest must contain exactly one reviewer."
+  reviewer=$(jq -er '.reviewers[0].name' "$manifest") || fail "round manifest reviewer is missing."
+  is_supported_recovery_reviewer "$reviewer" || fail "round manifest contains an unsupported reviewer: $reviewer."
   for purpose in definition evaluation_ids output_schema; do
     jq -e --arg purpose "$purpose" '.recovery_round.input_snapshot.files | any(.[]; .kind == "resource" and .purpose == $purpose)' "$manifest" > /dev/null ||
       fail "required prompt snapshot is missing: $purpose"
