@@ -459,7 +459,7 @@ rules:
   # Skill-bundled tools (e.g. archify) stage output through mkdtemp in $TMPDIR,
   # which `readonly` below rejects. A local server still cannot bind, so
   # `archify preview` fails here. If the user asks to see the output, use
-  # `crit preview <file>` when the active engine allows it.
+  # `crit preview <file>`.
   # The glob spans `/`, so absolute paths need one skill level under a safe HOME root.
   - allow: 'node <var:sandboxed-skill-scripts> *'
     when: >-
