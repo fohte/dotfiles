@@ -64,7 +64,7 @@ runner は全 reviewer の結果と必須項目を検査した後に session sta
 
 呼び出し元が修復を伴う recovery round を明示的に依頼し、旧 round に失敗試行と有効評価がある場合だけ使用します。対象は修復した reviewer 定義・参照で固定 range の未評価文書を再評価するケースです。通常の reviewer retry、任意の reset、有効評価の再実行には使いません。
 
-1. caller の固定 range、旧 manifest、旧 round record、修復理由を渡して round を生成します。selector は保存 HEAD を参照せず、固定 range 全体から指定 reviewer の targets を選びます。対象 reviewer は `japanese-writing` または `comment` で、省略時は従来どおり `japanese-writing` です。
+1. caller の固定 range、旧 manifest、旧 round record、修復理由を渡して round を生成します。selector は保存 HEAD を参照せず、固定 range 全体から対象 reviewer の targets を選びます。
 
     ```bash
     ~/.agents/skills/self-review/scripts/self-review-recovery-round create \
