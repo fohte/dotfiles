@@ -210,6 +210,7 @@ ensure_pr_head_is_unchanged() {
 prepare() {
   local pane_id="$1" session_id="$2" client_tty="$3" window_id="$4" mode="${5:-}"
   local dry_run=false pane_path repo_root pr_json payload prompt command escaped_title script_path
+  active_session_id="$session_id"
   active_client_tty="$client_tty"
   if [ "$mode" = '--dry-run' ]; then
     dry_run=true
