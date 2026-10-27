@@ -171,7 +171,6 @@ fi
 
 if match_tag codex; then
   sym config/agents/AGENTS.md ~/.codex/AGENTS.md
-  sym config/claude/hooks/agent-attribution-proxy ~/.codex/agent-attribution-proxy
   sym config/codex/codex-pre-tool-use-proxy ~/.codex/codex-pre-tool-use-proxy
   sym config/codex/rules ~/.codex/rules
 fi

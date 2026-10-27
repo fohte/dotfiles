@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Idempotently register this repo's hooks in Codex's hooks.json:
 # the PreToolUse guards (default-branch-edit-guard, ponytail-comment-guard,
-# agent-guard, and the combined Bash runok/attribution proxy), the SessionStart
+# agent-guard, and the Bash runok proxy), the SessionStart
 # context injection (all of `gen-claude-template context`, the same set Claude
 # Code gets), and the tq session tracking hooks
 # (SessionStart / Stop / SessionEnd), the armyknife session tracking hooks
