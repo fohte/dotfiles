@@ -10,16 +10,53 @@ umask 077
 mkdir -p "$state_dir"
 
 # Both engines can start together and reconcile the same roots and state files.
+# The owner PID lets a later hook reclaim a lock left by a crashed process.
 lock_dir="$state_dir/sync.lock"
-if ! mkdir "$lock_dir"; then
-  if [ -d "$lock_dir" ]; then
+if [ -d "$lock_dir" ] || ! mkdir "$lock_dir"; then
+  lock_pid=""
+  for attempt in 1 2 3 4 5; do
+    if [ -r "$lock_dir/pid" ]; then
+      IFS= read -r lock_pid < "$lock_dir/pid" || lock_pid=""
+      break
+    fi
+    if [ "$attempt" -lt 5 ]; then
+      sleep 0.1
+    fi
+  done
+
+  if [[ "$lock_pid" =~ ^[0-9]+$ ]] && kill -0 "$lock_pid" 2> /dev/null; then
     echo "warning: another role skill sync is running; skipping this invocation" >&2
     exit 0
   fi
-  echo "error: unable to acquire role skill sync lock at $lock_dir" >&2
-  exit 1
+
+  current_lock_pid=""
+  if [ -r "$lock_dir/pid" ]; then
+    IFS= read -r current_lock_pid < "$lock_dir/pid" || current_lock_pid=""
+  fi
+  if [ "$current_lock_pid" != "$lock_pid" ]; then
+    echo "warning: role skill sync lock changed while checking it; skipping this invocation" >&2
+    exit 0
+  fi
+  echo "warning: removing stale role skill sync lock at $lock_dir" >&2
+  if [ -f "$lock_dir/pid" ]; then
+    rm "$lock_dir/pid"
+  fi
+  if ! rmdir "$lock_dir"; then
+    echo "error: unable to remove stale role skill sync lock at $lock_dir" >&2
+    exit 1
+  fi
+  if ! mkdir "$lock_dir"; then
+    echo "warning: another role skill sync started; skipping this invocation" >&2
+    exit 0
+  fi
 fi
-trap 'rmdir "$lock_dir"' EXIT
+printf '%s\n' "$$" > "$lock_dir/pid"
+cleanup_lock() {
+  rm "$lock_dir/pid"
+  rmdir "$lock_dir"
+}
+trap cleanup_lock EXIT
+trap 'exit 1' HUP INT TERM
 
 link_public_skills() {
   local root="$1" include_synced="$2" skill name destination
