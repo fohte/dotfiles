@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Shared reviewer result structure. The runner warns about extra fields, extra or duplicate evaluation IDs, reviewer-name case differences, and empty suggestions; other reviewer-name mismatches, missing required evaluation IDs, and empty summaries remain errors.",
+  "description": "Shared reviewer result structure. Reviewer-specific required evaluation IDs are enforced by the runner from reviewer-evaluation-ids.json.",
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
   "required": ["reviewer", "evaluations", "findings"],
   "properties": {
     "reviewer": {
@@ -13,12 +13,12 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "additionalProperties": true,
+        "additionalProperties": false,
         "required": ["id", "status", "summary"],
         "properties": {
           "id": {
             "type": "string",
-            "description": "The runner requires each ID listed for this reviewer in reviewer-evaluation-ids.json and warns about extra or duplicate IDs."
+            "description": "The runner checks this ID against the exact set required for the reviewer."
           },
           "status": {
             "type": "string",
@@ -32,7 +32,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": true,
+        "additionalProperties": false,
         "required": [
           "id",
           "severity",
