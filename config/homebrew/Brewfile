@@ -79,6 +79,11 @@ brew 'talhelper'
 # CLI for out-of-band management of Kubernetes nodes created by Talos
 brew 'siderolabs/tap/talosctl', trusted: true
 
+# ===== Cloud / infrastructure =====
+
+# Official Amazon Web Services command-line interface
+brew 'awscli'
+
 # ===== Language servers =====
 
 # General purpose Language Server
