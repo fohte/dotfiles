@@ -100,50 +100,10 @@ done
 
 [[ $seen_handoff == true ]] || fail "--handoff is required."
 [[ $seen_label == true && -n ${label//[[:space:]]/} ]] || fail "--label is required and must not be empty."
-[[ -f $handoff_file && -s $handoff_file ]] || fail "handoff.md must be a non-empty file."
-
-if ! LC_ALL=C awk '
-  BEGIN {
-    required[1] = "## 引き継ぐ理由"
-    required[2] = "## 背景と目的"
-    required[3] = "## これまでの進捗"
-    required[4] = "## 次にやってほしいこと"
-    required[5] = "## 参考情報"
-    second_opinion[1] = "## 引き継ぐ理由"
-    second_opinion[2] = "## 背景と目的"
-    second_opinion[3] = "## 次にやってほしいこと"
-    second_opinion[4] = "## 参考情報"
-    second_opinion[5] = "## これまでの進捗"
-  }
-  NR == 1 {
-    if ($0 !~ /^# [^[:space:]]/) invalid = 1
-    next
-  }
-  /^## / {
-    if (section > 0 && section <= 5 && !has_content) invalid = 1
-    section++
-    heading[section] = $0
-    has_content = 0
-    next
-  }
-  section > 0 && section <= 5 && /[^[:space:]]/ { has_content = 1 }
-  END {
-    if (invalid || NR == 0 || section < 5 || (section <= 5 && !has_content)) exit 1
-    standard_order = 1
-    second_opinion_order = 1
-    for (i = 1; i <= 5; i++) {
-      if (heading[i] != required[i]) standard_order = 0
-      if (heading[i] != second_opinion[i]) second_opinion_order = 0
-    }
-    if (!standard_order && !second_opinion_order) exit 1
-    if (second_opinion_order && section > 5) exit 1
-  }
-' "$handoff_file"; then
-  fail "handoff.md must have a title and the five required sections in the standard or second-opinion order, each with content. Additional sections may follow the standard order."
-fi
+[[ -f $handoff_file ]] || fail "handoff.md must be a non-empty file."
 
 prompt=$(cat "$handoff_file")
-[[ -n ${prompt//[[:space:]]/} ]] || fail "Rendered prompt is empty."
+[[ -n ${prompt//[[:space:]]/} ]] || fail "handoff.md must be a non-empty file."
 
 cmd=(agent new --type handoff --child-launch allow)
 [[ $seen_kind == true ]] && cmd+=(--kind "$kind")
