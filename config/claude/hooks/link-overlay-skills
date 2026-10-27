@@ -13,6 +13,13 @@ mkdir -p "$state_dir"
 # The owner PID lets a later hook reclaim a lock left by a crashed process.
 lock_dir="$state_dir/sync.lock"
 recovery_lock_dir="$state_dir/sync-recovery.lock"
+recovery_pid=""
+
+# shortcut: PID reuse can make a stale lock look active; remove it manually if sync keeps skipping after that process exits.
+pid_is_running() {
+  [[ "$1" =~ ^[0-9]+$ ]] && kill -0 "$1" 2> /dev/null
+}
+
 if [ -d "$lock_dir" ] || ! mkdir "$lock_dir"; then
   lock_pid=""
   for attempt in 1 2 3 4 5; do
@@ -25,19 +32,58 @@ if [ -d "$lock_dir" ] || ! mkdir "$lock_dir"; then
     fi
   done
 
-  if [[ "$lock_pid" =~ ^[0-9]+$ ]] && kill -0 "$lock_pid" 2> /dev/null; then
+  if pid_is_running "$lock_pid"; then
     echo "warning: another role skill sync is running; skipping this invocation" >&2
     exit 0
   fi
 
   if [ -d "$recovery_lock_dir" ] || ! mkdir "$recovery_lock_dir"; then
-    echo "warning: another role skill sync is recovering its lock; skipping this invocation" >&2
-    exit 0
+    for attempt in 1 2 3 4 5; do
+      if [ -r "$recovery_lock_dir/pid" ]; then
+        IFS= read -r recovery_pid < "$recovery_lock_dir/pid" || recovery_pid=""
+        break
+      fi
+      if [ "$attempt" -lt 5 ]; then
+        sleep 0.1
+      fi
+    done
+
+    if pid_is_running "$recovery_pid"; then
+      echo "warning: another role skill sync is recovering its lock; skipping this invocation" >&2
+      exit 0
+    fi
+
+    current_recovery_pid=""
+    if [ -r "$recovery_lock_dir/pid" ]; then
+      IFS= read -r current_recovery_pid < "$recovery_lock_dir/pid" || current_recovery_pid=""
+    fi
+    if [ "$current_recovery_pid" != "$recovery_pid" ] || pid_is_running "$current_recovery_pid"; then
+      echo "warning: role skill sync recovery lock changed while checking it; skipping this invocation" >&2
+      exit 0
+    fi
+    echo "warning: removing stale role skill sync recovery lock at $recovery_lock_dir" >&2
+    if [ -f "$recovery_lock_dir/pid" ]; then
+      rm "$recovery_lock_dir/pid"
+    fi
+    if ! rmdir "$recovery_lock_dir"; then
+      echo "error: unable to remove stale role skill sync recovery lock at $recovery_lock_dir" >&2
+      exit 1
+    fi
+    if ! mkdir "$recovery_lock_dir"; then
+      echo "warning: another role skill sync started recovery; skipping this invocation" >&2
+      exit 0
+    fi
   fi
   printf '%s\n' "$$" > "$recovery_lock_dir/pid"
   cleanup_recovery_lock() {
-    rm "$recovery_lock_dir/pid"
-    rmdir "$recovery_lock_dir"
+    local owner_pid=""
+    if [ -r "$recovery_lock_dir/pid" ]; then
+      IFS= read -r owner_pid < "$recovery_lock_dir/pid" || owner_pid=""
+    fi
+    if [ "$owner_pid" = "$$" ]; then
+      rm "$recovery_lock_dir/pid"
+      rmdir "$recovery_lock_dir"
+    fi
   }
   trap cleanup_recovery_lock EXIT
 
@@ -46,7 +92,7 @@ if [ -d "$lock_dir" ] || ! mkdir "$lock_dir"; then
     IFS= read -r current_lock_pid < "$lock_dir/pid" || current_lock_pid=""
   fi
   if [ "$current_lock_pid" != "$lock_pid" ] || {
-    [[ "$current_lock_pid" =~ ^[0-9]+$ ]] && kill -0 "$current_lock_pid" 2> /dev/null
+    pid_is_running "$current_lock_pid"
   }; then
     echo "warning: role skill sync lock changed while checking it; skipping this invocation" >&2
     exit 0
