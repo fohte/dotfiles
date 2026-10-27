@@ -21,7 +21,7 @@ fi
 # On WSL, install only the tools needed to render and deploy configuration.
 # The full global tool list includes macOS-specific tools and native builds.
 if grep -qi microsoft /proc/version 2> /dev/null; then
-  mise install aqua:jqlang/jq aqua:BurntSushi/ripgrep aqua:google/go-jsonnet aqua:mikefarah/yq
+  mise install aqua:skaji/relocatable-perl aqua:jqlang/jq aqua:BurntSushi/ripgrep aqua:google/go-jsonnet aqua:mikefarah/yq
 else
   mise install
 fi
