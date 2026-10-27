@@ -217,11 +217,13 @@ done
 
 append_resource() {
   local output="$1" path="$2"
-  {
-    printf '\n<resource path="%s">\n' "$path"
-    sed -n '1,$p' "$path"
-    printf '\n</resource>\n'
-  } >> "$output"
+  printf '\n<resource path="%s">\n' "$path" >> "$output"
+  if jq -e --arg path "$path" '(.recovery_round.input_snapshot.files // []) | any(.[]; .kind == "resource" and .path == $path)' "$manifest_file" > /dev/null; then
+    jq -r --arg path "$path" '.recovery_round.input_snapshot.files[] | select(.kind == "resource" and .path == $path) | .content' "$manifest_file" >> "$output"
+  else
+    sed -n '1,$p' "$path" >> "$output"
+  fi
+  printf '\n</resource>\n' >> "$output"
 }
 
 build_prompt() {
@@ -261,7 +263,11 @@ build_prompt() {
   {
     if [[ -s "$work_dir/targets/$reviewer.txt" ]]; then
       printf '\n<review-targets>\n'
-      sed -n '1,$p' "$work_dir/targets/$reviewer.txt"
+      if jq -e '.recovery_round != null' "$manifest_file" > /dev/null; then
+        jq -r --arg reviewer "$reviewer" '. as $manifest | [.reviewers[] | select(.name == $reviewer) | .targets[]] as $targets | $manifest.recovery_round.input_snapshot.files[] | select(.kind == "target" and (.path as $path | $targets | index($path))) | "<target-body path=\(.path|tojson)>\n" + .content + "\n</target-body>"' "$manifest_file"
+      else
+        sed -n '1,$p' "$work_dir/targets/$reviewer.txt"
+      fi
       printf '</review-targets>\n'
     fi
     printf '\n<changed-files>\n'
@@ -388,6 +394,17 @@ for index in "${!pids[@]}"; do
     failed=true
   fi
 done
+
+if [[ -n "${SELF_REVIEW_RECOVERY_ATTEMPT_DIR:-}" ]]; then
+  printf '%s\n' "$patch_sha256" > "$SELF_REVIEW_RECOVERY_ATTEMPT_DIR/patch-sha256"
+  for index in "${!selected[@]}"; do
+    reviewer="${selected[$index]}"
+    printf '%s\n' "${prompt_hashes[$index]}" > "$SELF_REVIEW_RECOVERY_ATTEMPT_DIR/$reviewer.prompt-sha256"
+    if [[ -f "$work_dir/$reviewer/session-id" ]]; then
+      cp "$work_dir/$reviewer/session-id" "$SELF_REVIEW_RECOVERY_ATTEMPT_DIR/$reviewer.backend-session-id"
+    fi
+  done
+fi
 
 # Recorded on failure too: a run that dies on the usage limit is exactly the one
 # whose snapshot must be refreshed, otherwise a stale reset_at sends every later

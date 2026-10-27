@@ -1,0 +1,384 @@
+#!/bin/bash
+# Create and execute one isolated, fixed-input self-review recovery round.
+set -euo pipefail
+
+usage() {
+  cat >&2 << 'EOF'
+Usage:
+  self-review-recovery-round create <range> <old-manifest> <old-record> <reason>
+  self-review-recovery-round verify <round-dir>
+  self-review-recovery-round run <round-dir>
+  self-review-recovery-round assess <round-dir> evaluated|not-evaluated <reason>
+EOF
+  exit 2
+}
+
+fail() {
+  echo "Error: $*" >&2
+  exit 1
+}
+
+sha256_file() {
+  shasum -a 256 "$1" | awk '{ print $1 }'
+}
+
+sha256_stdin() {
+  shasum -a 256 | awk '{ print $1 }'
+}
+
+absolute_file_path() {
+  local path="$1" directory
+  [[ "$path" == /* ]] || path="$PWD/$path"
+  directory=$(cd "$(dirname "$path")" && pwd)
+  printf '%s/%s' "$directory" "$(basename "$path")"
+}
+
+snapshot_file() {
+  local round_dir="$1" index="$2" kind="$3" path="$4" file="$5" source="$6" revision="${7:-}"
+  local snapshot_path sha256
+  snapshot_path="$round_dir/input-snapshots/$(printf '%03d' "$index").json"
+  sha256=$(sha256_file "$file")
+  jq -n \
+    --arg kind "$kind" \
+    --arg path "$path" \
+    --arg sha256 "$sha256" \
+    --arg source "$source" \
+    --arg revision "$revision" \
+    --rawfile content "$file" \
+    '{kind: $kind, path: $path, sha256: $sha256, source: $source, content: $content} + (if $revision == "" then {} else {revision: $revision} end)' \
+    > "$snapshot_path"
+}
+
+input_sha256() {
+  jq -cS '{range, repo_root, review_head, diff, files, reviewers, snapshot_files: .recovery_round.input_snapshot.files}' "$1" | sha256_stdin
+}
+
+create_round() {
+  [[ "$#" -eq 4 ]] || usage
+  local requested_range="$1" old_manifest old_record reason repo_root current_head
+  local old_manifest_sha old_record_sha round_dir selection_path round_id created_at
+  local skill_dir claude_dir definition resource_path target_path target_file index input_files input_hash manifest_sha
+  old_manifest=$(absolute_file_path "$2")
+  old_record=$(absolute_file_path "$3")
+  reason="$4"
+  [[ -f "$old_manifest" && -f "$old_record" ]] || fail "old manifest or round record is missing."
+  [[ -n "$reason" ]] || fail "repair reason is required."
+  [[ -n "${AGENT_TMPDIR:-}" && -d "$AGENT_TMPDIR" ]] || fail "AGENT_TMPDIR must name an existing session directory."
+
+  for command in git jq shasum yq dot uuidgen; do
+    command -v "$command" > /dev/null || fail "required command not found: $command"
+  done
+  repo_root=$(git rev-parse --show-toplevel)
+  current_head=$(git rev-parse --verify 'HEAD^{commit}')
+  old_manifest_sha=$(sha256_file "$old_manifest")
+  old_record_sha=$(sha256_file "$old_record")
+  jq -e \
+    --arg repo_root "$repo_root" \
+    --arg manifest_path "$old_manifest" \
+    --arg manifest_sha "$old_manifest_sha" \
+    '.repository.repo_root == $repo_root and
+      .original_manifest.path == $manifest_path and
+      .original_manifest.sha256 == $manifest_sha and
+      .new_manifest.sha256 == $manifest_sha and
+      .new_manifest.status == "ready" and
+      (.previous_runs | type == "array" and length > 0) and
+      (.previous_runs | any(.[]; .exit_code != 0)) and
+      (.current_round.result.all_required_evaluations_present == true) and
+      (.current_round.status == "valid_findings" or .current_round.status == "valid")' \
+    "$old_record" > /dev/null || fail "old record does not bind the supplied manifest, repository, failed attempts, and a valid evaluation."
+  jq -e --arg repo_root "$repo_root" '.status == "ready" and .repo_root == $repo_root' "$old_manifest" > /dev/null ||
+    fail "old manifest is not a ready manifest for this repository."
+
+  round_dir=$(mktemp -d "$AGENT_TMPDIR/self-review-recovery-round.XXXXXX")
+  mkdir -p "$round_dir/provenance" "$round_dir/input-snapshots"
+  cp "$old_manifest" "$round_dir/provenance/old-manifest.json"
+  cp "$old_record" "$round_dir/provenance/old-record.json"
+  selection_path="$round_dir/selection.json"
+  "$script_dir/select-reviewers" --recovery-full-range "$requested_range" > "$selection_path" || fail "full-range reviewer selection failed."
+  jq -e '.status == "ready" and .recovery_selection == true' "$selection_path" > /dev/null || fail "full-range selection did not produce a ready recovery manifest."
+  jq -e '
+    ([.reviewers[] | select(.name == "japanese-writing")] | length) == 1 and
+    ([.reviewers[] | select(.name == "japanese-writing")][0].targets | length) > 0
+  ' "$selection_path" > /dev/null || fail "current YAML did not select Japanese-writing targets for the fixed range."
+  jq -e --arg head "$current_head" '.review_head == $head' "$selection_path" > /dev/null ||
+    fail "the fixed range must end at the checked-out HEAD."
+
+  round_id=$(uuidgen | tr '[:upper:]' '[:lower:]')
+  created_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+  jq \
+    --arg round_id "$round_id" \
+    --arg created_at "$created_at" \
+    --arg reason "$reason" \
+    --arg old_manifest_path "$old_manifest" \
+    --arg old_manifest_sha "$old_manifest_sha" \
+    --arg old_record_path "$old_record" \
+    --arg old_record_sha "$old_record_sha" \
+    --slurpfile old_record_data "$old_record" \
+    '.reviewers = [.reviewers[] | select(.name == "japanese-writing")] |
+      .recovery_round = {
+        version: 1,
+        id: $round_id,
+        created_at: $created_at,
+        repair_reason: $reason,
+        source: {
+          old_manifest: {path: $old_manifest_path, sha256: $old_manifest_sha},
+          old_record: {path: $old_record_path, sha256: $old_record_sha},
+          prior_attempts: [$old_record_data[0].previous_runs[] | {task_id, reviewers, exit_code, stdout, stderr, result}],
+          failed_attempts: [$old_record_data[0].previous_runs[] | select(.exit_code != 0) | {task_id, reviewers, exit_code, stdout, stderr, result}],
+          valid_evaluation: {
+            status: $old_record_data[0].current_round.status,
+            reviewers: $old_record_data[0].current_round.reviewers,
+            result: $old_record_data[0].current_round.result,
+            output: {
+              preserved_stdout_path: $old_record_data[0].current_round.result.preserved_stdout_path,
+              preserved_stderr_path: $old_record_data[0].current_round.result.preserved_stderr_path,
+              result_summary_path: $old_record_data[0].current_round.result.result_summary_path,
+              raw_stdout_sha256: $old_record_data[0].current_round.result.raw_stdout_sha256,
+              raw_stderr_sha256: $old_record_data[0].current_round.result.raw_stderr_sha256
+            }
+          }
+        },
+        input_snapshot: {sha256: "", files: []}
+      }' "$selection_path" > "$round_dir/manifest.json"
+
+  skill_dir=$(cd "$script_dir/.." && pwd -P)
+  claude_dir=$(cd "$skill_dir/../.." && pwd -P)
+  index=0
+  while IFS= read -r resource_path; do
+    [[ -n "$resource_path" && "$resource_path" != null ]] || continue
+    [[ -f "$resource_path" ]] || fail "review config source is missing: $resource_path"
+    snapshot_file "$round_dir" "$index" config "$resource_path" "$resource_path" file
+    index=$((index + 1))
+  done < <(jq -r '[.reviewers[].config.config.base, .reviewers[].config.config.overlay] | map(select(. != null)) | unique[]' "$round_dir/manifest.json")
+
+  definition=$(jq -r '.reviewers[0].definition' "$round_dir/manifest.json")
+  resource_path="$claude_dir/agents/$definition.md"
+  [[ -f "$resource_path" ]] || fail "reviewer definition is missing: $resource_path"
+  snapshot_file "$round_dir" "$index" resource "$resource_path" "$resource_path" file
+  index=$((index + 1))
+  while IFS= read -r resource_path; do
+    [[ -n "$resource_path" ]] || continue
+    resource_path="$claude_dir/skills/$resource_path"
+    [[ -f "$resource_path" ]] || fail "reviewer reference is missing: $resource_path"
+    snapshot_file "$round_dir" "$index" resource "$resource_path" "$resource_path" file
+    index=$((index + 1))
+  done < <(jq -r '.reviewers[0].references[]' "$round_dir/manifest.json")
+
+  target_file="$round_dir/target-content"
+  while IFS= read -r target_path; do
+    [[ -n "$target_path" ]] || continue
+    git show "$current_head:$target_path" > "$target_file" || fail "unable to read target at the fixed HEAD: $target_path"
+    snapshot_file "$round_dir" "$index" target "$target_path" "$target_file" git "$current_head"
+    index=$((index + 1))
+  done < <(jq -r '.reviewers[0].targets[]' "$round_dir/manifest.json")
+  rm "$target_file"
+
+  input_files=$(jq -s '.' "$round_dir"/input-snapshots/*.json)
+  jq --argjson input_files "$input_files" '.recovery_round.input_snapshot.files = $input_files' \
+    "$round_dir/manifest.json" > "$round_dir/manifest.next.json"
+  mv "$round_dir/manifest.next.json" "$round_dir/manifest.json"
+  input_hash=$(input_sha256 "$round_dir/manifest.json")
+  jq --arg input_hash "$input_hash" '.recovery_round.input_snapshot.sha256 = $input_hash' \
+    "$round_dir/manifest.json" > "$round_dir/manifest.next.json"
+  mv "$round_dir/manifest.next.json" "$round_dir/manifest.json"
+  manifest_sha=$(sha256_file "$round_dir/manifest.json")
+  jq -n \
+    --arg round_id "$round_id" \
+    --arg created_at "$created_at" \
+    --arg repo_root "$repo_root" \
+    --arg review_head "$current_head" \
+    --arg manifest_path "$round_dir/manifest.json" \
+    --arg manifest_sha "$manifest_sha" \
+    --arg input_sha "$input_hash" \
+    --argjson source "$(jq -c '.recovery_round.source' "$round_dir/manifest.json")" \
+    '{version: 1, round_id: $round_id, created_at: $created_at, repo_root: $repo_root, review_head: $review_head, status: "ready", manifest: {path: $manifest_path, sha256: $manifest_sha}, input_sha256: $input_sha, source: $source, attempts: []}' \
+    > "$round_dir/round-record.json"
+  rm "$selection_path"
+  echo "$round_dir"
+}
+
+verify_round() {
+  local round_dir="$1" manifest="$1/manifest.json" record="$1/round-record.json"
+  local repo_root current_head round_id expected_manifest actual_manifest expected_input actual_input snapshot_count index kind path expected_sha
+  local source_manifest_sha source_record_sha
+  [[ -f "$manifest" && -f "$record" ]] || fail "round manifest or record is missing."
+  repo_root=$(git rev-parse --show-toplevel)
+  current_head=$(git rev-parse --verify 'HEAD^{commit}')
+  round_id=$(jq -er '.round_id' "$record")
+  jq -e --arg repo_root "$repo_root" --arg head "$current_head" --arg round_id "$round_id" \
+    '.repo_root == $repo_root and .review_head == $head and .status == "ready" and .recovery_round.version == 1 and .recovery_round.id == $round_id' \
+    "$manifest" > /dev/null || fail "round belongs to a different repository, HEAD, or recovery ID."
+  expected_manifest=$(jq -er '.manifest.sha256' "$record")
+  actual_manifest=$(sha256_file "$manifest")
+  [[ "$expected_manifest" == "$actual_manifest" ]] || fail "round manifest hash changed."
+  expected_input=$(jq -er '.input_sha256' "$record")
+  actual_input=$(input_sha256 "$manifest")
+  [[ "$expected_input" == "$actual_input" ]] || fail "round input snapshot hash changed."
+  [[ $(jq -r '.recovery_round.input_snapshot.sha256' "$manifest") == "$actual_input" ]] || fail "manifest input snapshot hash is inconsistent."
+  jq -e '.reviewers | length == 1' "$manifest" > /dev/null &&
+    [[ $(jq -r '.reviewers[0].name' "$manifest") == japanese-writing ]] ||
+    fail "round manifest must contain only the Japanese-writing reviewer."
+  source_manifest_sha=$(jq -er '.source.old_manifest.sha256' "$record")
+  source_record_sha=$(jq -er '.source.old_record.sha256' "$record")
+  [[ $(sha256_file "$round_dir/provenance/old-manifest.json") == "$source_manifest_sha" ]] || fail "preserved old manifest hash changed."
+  [[ $(sha256_file "$round_dir/provenance/old-record.json") == "$source_record_sha" ]] || fail "preserved old record hash changed."
+
+  snapshot_count=$(jq -r '.recovery_round.input_snapshot.files | length' "$manifest")
+  index=0
+  while ((index < snapshot_count)); do
+    kind=$(jq -r --argjson index "$index" '.recovery_round.input_snapshot.files[$index].kind' "$manifest")
+    path=$(jq -r --argjson index "$index" '.recovery_round.input_snapshot.files[$index].path' "$manifest")
+    expected_sha=$(jq -r --argjson index "$index" '.recovery_round.input_snapshot.files[$index].sha256' "$manifest")
+    jq -j --argjson index "$index" '.recovery_round.input_snapshot.files[$index].content' "$manifest" > "$round_dir/.snapshot-content"
+    [[ $(sha256_file "$round_dir/.snapshot-content") == "$expected_sha" ]] || fail "input snapshot content hash changed: $path"
+    if [[ "$kind" == target ]]; then
+      git show "$current_head:$path" > "$round_dir/.target-content" || fail "target is missing at the fixed HEAD: $path"
+      cmp -s "$round_dir/.snapshot-content" "$round_dir/.target-content" || fail "target content no longer matches the fixed HEAD: $path"
+    fi
+    index=$((index + 1))
+  done
+  rm -f "$round_dir/.snapshot-content" "$round_dir/.target-content"
+}
+
+acquire_lock() {
+  local round_dir="$1"
+  lock_dir="$round_dir/.lock"
+  mkdir "$lock_dir" 2> /dev/null || fail "another round operation is running or left an incomplete lock."
+  trap 'rmdir "$lock_dir" 2>/dev/null || true' EXIT
+}
+
+verify_round_command() {
+  [[ "$#" -eq 1 ]] || usage
+  local round_dir="$1"
+  round_dir=$(cd "$round_dir" && pwd -P)
+  acquire_lock "$round_dir"
+  verify_round "$round_dir"
+  jq '{round_id, status, input_sha256, manifest}' "$round_dir/round-record.json"
+}
+
+run_round() {
+  [[ "$#" -eq 1 ]] || usage
+  local round_dir="$1" record="$1/round-record.json" manifest="$1/manifest.json"
+  local attempt_count attempt_number round_status attempt_dir execution_id started_at runner_status
+  local result_status record_status input_hash backend_session_id patch_sha prompt_sha result_valid
+  round_dir=$(cd "$round_dir" && pwd -P)
+  acquire_lock "$round_dir"
+  verify_round "$round_dir"
+  attempt_count=$(jq -r '.attempts | length' "$record")
+  round_status=$(jq -r '.status' "$record")
+  attempt_number=$((attempt_count + 1))
+  if [[ "$attempt_number" -eq 1 ]]; then
+    [[ "$round_status" == ready ]] || fail "the first execution requires a ready round."
+  elif [[ "$attempt_number" -eq 2 ]]; then
+    [[ "$round_status" == failed || "$round_status" == retryable ]] || fail "the one retry requires a failed or semantically unassessed first attempt."
+  else
+    fail "the round allows one initial execution and one retry."
+  fi
+
+  execution_id=$(uuidgen | tr '[:upper:]' '[:lower:]')
+  started_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+  input_hash=$(jq -r '.input_sha256' "$record")
+  attempt_dir="$round_dir/attempt-$(printf '%02d' "$attempt_number")"
+  mkdir "$attempt_dir"
+  jq \
+    --argjson attempt "$attempt_number" \
+    --arg execution_id "$execution_id" \
+    --arg started_at "$started_at" \
+    --arg input_hash "$input_hash" \
+    '.attempts += [{attempt: $attempt, execution_id: $execution_id, started_at: $started_at, status: "running", input_sha256: $input_hash, output: {result_path: "", stderr_path: ""}}] | .status = "running"' \
+    "$record" > "$round_dir/round-record.next.json"
+  mv "$round_dir/round-record.next.json" "$record"
+
+  set +e
+  SELF_REVIEW_RECOVERY_ATTEMPT_DIR="$attempt_dir" \
+    "$script_dir/run-external-reviewers" "$manifest" japanese-writing \
+    > "$attempt_dir/result.json" 2> "$attempt_dir/stderr.log"
+  runner_status=$?
+  set -e
+  result_valid=false
+  if [[ "$runner_status" -eq 0 || "$runner_status" -eq 1 ]]; then
+    if jq -e 'type == "array" and length == 1 and .[0].reviewer == "japanese-writing"' "$attempt_dir/result.json" > /dev/null 2>&1; then
+      result_valid=true
+    fi
+  fi
+  if [[ "$result_valid" == true ]]; then
+    result_status=completed
+    record_status=awaiting_semantic_review
+  else
+    result_status=failed
+    record_status=failed
+    [[ "$attempt_number" -lt 2 ]] || record_status=failed_after_retry
+  fi
+  backend_session_id=
+  patch_sha=
+  prompt_sha=
+  [[ ! -f "$attempt_dir/japanese-writing.backend-session-id" ]] || backend_session_id=$(cat "$attempt_dir/japanese-writing.backend-session-id")
+  [[ ! -f "$attempt_dir/patch-sha256" ]] || patch_sha=$(cat "$attempt_dir/patch-sha256")
+  [[ ! -f "$attempt_dir/japanese-writing.prompt-sha256" ]] || prompt_sha=$(cat "$attempt_dir/japanese-writing.prompt-sha256")
+  jq \
+    --arg finished_at "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+    --arg status "$result_status" \
+    --arg record_status "$record_status" \
+    --argjson exit_status "$runner_status" \
+    --arg backend_session_id "$backend_session_id" \
+    --arg patch_sha "$patch_sha" \
+    --arg prompt_sha "$prompt_sha" \
+    '.attempts[-1] += {finished_at: $finished_at, status: $status, runner_exit_status: $exit_status, patch_sha256: (if $patch_sha == "" then null else $patch_sha end), prompt_sha256: (if $prompt_sha == "" then null else $prompt_sha end), backend_session_id: (if $backend_session_id == "" then null else $backend_session_id end), output: {result_path: "attempt-" + (.attempts[-1].attempt | tostring | if length == 1 then "0" + . else . end) + "/result.json", stderr_path: "attempt-" + (.attempts[-1].attempt | tostring | if length == 1 then "0" + . else . end) + "/stderr.log"}} | .status = $record_status' \
+    "$record" > "$round_dir/round-record.next.json"
+  mv "$round_dir/round-record.next.json" "$record"
+  echo "Recovery round $(jq -r '.round_id' "$record") attempt $attempt_number: $result_status (runner exit $runner_status)."
+  [[ "$result_valid" == true ]] || return 3
+  return "$runner_status"
+}
+
+assess_round() {
+  [[ "$#" -eq 3 ]] || usage
+  local round_dir="$1" assessment="$2" reason="$3" record="$1/round-record.json" attempt_count last_status new_status
+  [[ "$assessment" == evaluated || "$assessment" == not-evaluated ]] || usage
+  [[ -n "$reason" ]] || fail "assessment reason is required."
+  round_dir=$(cd "$round_dir" && pwd -P)
+  acquire_lock "$round_dir"
+  verify_round "$round_dir"
+  attempt_count=$(jq -r '.attempts | length' "$record")
+  [[ "$attempt_count" -gt 0 ]] || fail "the round has no execution to assess."
+  last_status=$(jq -r '.attempts[-1].status' "$record")
+  [[ "$last_status" == completed ]] || fail "only a schema-valid execution can receive a semantic assessment."
+  [[ $(jq -r '.status' "$record") == awaiting_semantic_review ]] || fail "the latest execution is not awaiting semantic assessment."
+  if [[ "$assessment" == evaluated ]]; then
+    new_status=complete
+  elif [[ "$attempt_count" -eq 1 ]]; then
+    new_status=retryable
+  else
+    new_status=unassessed
+  fi
+  jq \
+    --arg assessment "$assessment" \
+    --arg reason "$reason" \
+    --arg assessed_at "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+    --arg new_status "$new_status" \
+    '.attempts[-1].assessment = {status: $assessment, reason: $reason, assessed_at: $assessed_at} | .status = $new_status' \
+    "$record" > "$round_dir/round-record.next.json"
+  mv "$round_dir/round-record.next.json" "$record"
+  echo "Recovery round $(jq -r '.round_id' "$record"): $new_status."
+}
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+case "${1:-}" in
+  create)
+    shift
+    create_round "$@"
+    ;;
+  verify)
+    shift
+    verify_round_command "$@"
+    ;;
+  run)
+    shift
+    run_round "$@"
+    ;;
+  assess)
+    shift
+    assess_round "$@"
+    ;;
+  *) usage ;;
+esac

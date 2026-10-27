@@ -4,11 +4,18 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: select-reviewers --cached | <commit-range>" >&2
+  echo "Usage: select-reviewers [--recovery-full-range] --cached | <commit-range>" >&2
   exit 2
 }
 
+recovery_mode=false
+if [[ "$#" -eq 2 && "$1" == --recovery-full-range ]]; then
+  recovery_mode=true
+  shift
+fi
+
 [ "$#" -eq 1 ] || usage
+[[ "$recovery_mode" != true || "$1" != --cached ]] || usage
 
 range_mode=
 requested_base=
@@ -117,7 +124,7 @@ if [[ "$range_mode" == commit ]]; then
   reviewed_head=
   previous_review_state='{}'
 
-  if [[ -n "$review_branch" ]]; then
+  if [[ "$recovery_mode" != true && -n "$review_branch" ]]; then
     state=$("$script_dir/review-state" read "$review_branch")
     recorded_head=$(jq -r '.head // empty' <<< "$state" 2> /dev/null || true)
     if [[ -n "$recorded_head" ]] && git cat-file -e "$recorded_head^{commit}" 2> /dev/null &&
@@ -195,7 +202,9 @@ else
 fi
 
 if [[ "$range_mode" == commit && ! -s "$diff_file" ]]; then
-  "$script_dir/review-state" write "$review_branch" "$review_head"
+  if [[ "$recovery_mode" != true ]]; then
+    "$script_dir/review-state" write "$review_branch" "$review_head"
+  fi
   jq -n \
     --arg range "$resolved_range" \
     --arg repo_root "$repo_root" \
@@ -336,7 +345,17 @@ while IFS= read -r reviewer; do
 done < <(yq -r '.reviewers | to_entries[] | .key' "$reviewers_file")
 
 agents_json=$(yq -o=json '.agents // {}' "$reviewers_file")
-if [[ "$range_mode" == commit ]]; then
+if [[ "$recovery_mode" == true ]]; then
+  jq -s \
+    --arg range "$resolved_range" \
+    --arg repo_root "$repo_root" \
+    --arg review_head "$review_head" \
+    --argjson agents "$agents_json" \
+    --rawfile diff "$diff_file" \
+    --rawfile files "$files_file" \
+    '{status: "ready", recovery_selection: true, range: $range, repo_root: $repo_root, review_head: $review_head, diff: $diff, files: ($files | split("\n") | map(select(length > 0))), agents: $agents, reviewers: .}' \
+    "$manifest"
+elif [[ "$range_mode" == commit ]]; then
   previous_sessions=$(jq -c '.sessions // {}' <<< "$previous_review_state")
   previous_session_expires_at=$(jq -r '.session_expires_at // empty' <<< "$previous_review_state")
   jq -s \

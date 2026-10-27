@@ -39,14 +39,52 @@ reviewer 実行に失敗した場合だけ、本文を含まない診断 JSON �
 
 成功した試行の診断は作りません。resume の失敗診断は fresh fallback が成功しても保持します。保存した診断の path は実行時の stderr に表示します。
 
-1. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
+## 入力不足からの recovery round
+
+旧 round に失敗試行と有効評価があり、修復した reviewer 定義・参照で固定 range の未評価文書を再評価するときだけ使用します。通常の reviewer retry、任意の reset、有効評価の再実行には使いません。
+
+1. caller の固定 range、旧 manifest、旧 round record、修復理由を渡して round を生成します。selector は保存 HEAD を参照せず、固定 range 全体から現行 YAML の Japanese targets を選びます。
+
+    ```bash
+    ~/.agents/skills/self-review/scripts/self-review-recovery-round create \
+      <fixed-range> <old-manifest> <old-round-record> "<repair-reason>"
+    ```
+
+    出力された round directory をそのまま使います。`verify <round-directory>` で snapshot hash と HEAD を検証し、`manifest.json` の `.range`、`.reviewers[].targets`、`.recovery_round.input_snapshot.sha256` を確認してください。manifest は Japanese reviewer だけを含み、fixed HEAD の diff、files、各対象本文、base YAML と role overlay、definition と references の path / hash / body、resolver の実効設定と source を保存します。`round-record.json` は旧 manifest と round record の path / hash、旧失敗試行と有効評価の記録先を参照します。
+
+2. Codex では recovery helper をバックグラウンドで起動し、完了通知を待ちます。runner を直接呼ぶと実行 ID と retry 上限が記録されないため、helper を使ってください。
+
+    ```bash
+    a agent bg run -- ~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>
+    ```
+
+    `round-record.json` の各 attempt は独立した execution ID、input / patch / prompt hash、取得できた backend session ID、runner の結果 path を結びます。recovery round は旧 session を再開せず、通常の branch review state も読み書きしません。
+
+3. runner が exit 0 または 1 で終わったら、`attempt-01/result.json` の意味上の評価を確認して記録します。exit 0 / 1 だけで評価済みとは判断しません。
+
+    ```bash
+    ~/.agents/skills/self-review/scripts/self-review-recovery-round assess \
+      <round-directory> evaluated "<evaluation summary>"
+    ```
+
+    要求された評価が未実施または部分実施なら、`not-evaluated` と原因を記録してから、同じ round directory で helper をもう 1 回だけ実行します。runner が失敗した場合も同じ helper の再実行が 1 回だけ許可されます。
+
+    ```bash
+    ~/.agents/skills/self-review/scripts/self-review-recovery-round assess \
+      <round-directory> not-evaluated "<unassessed reason>"
+    a agent bg run -- ~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>
+    ```
+
+    2 回目も未評価なら `round-record.json` にその状態を残して止めます。再選択、round の作り直し、旧評価の retry はしません。結果が有効なら `evaluated` を記録し、通常の結果集約へ戻ります。
+
+4. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
    For `--cached`, snapshot the applicable index before `select-reviewers`: copy `${GIT_INDEX_FILE:-$(git rev-parse --git-path index)}` to a unique path from `mktemp "$AGENT_TMPDIR/self-review-index.XXXXXX"`, then pass `GIT_INDEX_FILE=<snapshot-path>` to `select-reviewers` and every runner invocation. Keep that snapshot unchanged until all reviewers and retries finish.
-2. Create a manifest file path (`mktemp "$AGENT_TMPDIR/self-review-manifest.XXXXXX"`) and run `~/.agents/skills/self-review/scripts/select-reviewers <range> > <manifest-file>`. If it fails, launch nothing. When the cause is your own invocation (wrong working directory, or a typo in the caller's `<range>`), correct it and run it once more — no reviewer has run yet, so this does not count as a reviewer retry. Never switch to a range the caller did not give. Use the manifest file as the source of truth even if command output is missing: before step 4, run `jq -r '.status' <manifest-file>` and continue only when it returns `ready`. If it is `skipped`, do not launch reviewers and report that the range was skipped because no unreviewed changes remain. For any other status or an invalid manifest, stop and report the error. Once a ready manifest succeeds, do not call `select-reviewers` again for this review — every step below reads `<manifest-file>` instead. Its `reviewers` array is the complete launch manifest: do not add, remove, or reorder entries.
-3. Carry the path `mktemp` printed as a literal string into every later step. Shell variables do not survive between tool calls, and re-deriving the path with a glob can pick up an earlier manifest from this session. Do not use `ps` or other process listings to infer progress or identify a process as yours; concurrent sessions may show another run.
-4. Run `~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file>` once. In Codex, start it with `a agent bg run -- ~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file>`, then wait for the `<background-task-complete>` notification before reading its output or aggregating results. In Claude Code, use `run_in_background: true` and end the turn while waiting for the completion notification. Do not poll, sleep, or start aggregation on partial output. The script launches every reviewer in `<manifest-file>` on its own agent in parallel and returns a JSON array of results. For commit ranges, it uses the narrowed patch saved in the manifest; `--cached` omits deleted-file contents from that patch while retaining deletion metadata and file names. The exit status is `0` when every reviewer succeeded with no findings, `1` when every reviewer succeeded and at least one finding exists, `3` when any reviewer or the script itself failed (regardless of findings), and `2` / `127` for invalid input or a missing command. An exit status of `0` or `1` does not establish that every evaluation was actually performed. A reviewer run regularly outlives the foreground timeout, and being killed there loses every reviewer's result at once.
-5. Never run a reviewer as a subagent, including as a fallback. Every reviewer is written for the sandbox this script puts it in, and a subagent would inherit this session's permission mode instead.
-6. After the first run, mark a reviewer failed if the script reports failure or its summary says the requested evaluation could not be performed or was only partial, even when exit 0 or 1. Retry only those reviewers once by appending their names to the original manifest path (`~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file> <reviewer> [reviewer...]`). In Codex, use `a agent bg run -- ~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file> <reviewer> [reviewer...]` and wait for the `<background-task-complete>` notification. Keep every other valid reviewer result. Exclude an incomplete initial result entirely; if the retry is valid, replace that reviewer entry rather than adding a duplicate. If definition or reference contents need repair, make that repair before the single retry and use the original manifest; it consumes that retry and does not reset the limit.
-7. If a manifest entry has a non-null `fallback_reason`, mention it for that reviewer in the final Summary output.
+5. Create a manifest file path (`mktemp "$AGENT_TMPDIR/self-review-manifest.XXXXXX"`) and run `~/.agents/skills/self-review/scripts/select-reviewers <range> > <manifest-file>`. If it fails, launch nothing. When the cause is your own invocation (wrong working directory, or a typo in the caller's `<range>`), correct it and run it once more — no reviewer has run yet, so this does not count as a reviewer retry. Never switch to a range the caller did not give. Use the manifest file as the source of truth even if command output is missing: before step 4, run `jq -r '.status' <manifest-file>` and continue only when it returns `ready`. If it is `skipped`, do not launch reviewers and report that the range was skipped because no unreviewed changes remain. For any other status or an invalid manifest, stop and report the error. Once a ready manifest succeeds, do not call `select-reviewers` again for this review — every step below reads `<manifest-file>` instead. Its `reviewers` array is the complete launch manifest: do not add, remove, or reorder entries.
+6. Carry the path `mktemp` printed as a literal string into every later step. Shell variables do not survive between tool calls, and re-deriving the path with a glob can pick up an earlier manifest from this session. Do not use `ps` or other process listings to infer progress or identify a process as yours; concurrent sessions may show another run.
+7. Run `~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file>` once. In Codex, start it with `a agent bg run -- ~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file>`, then wait for the `<background-task-complete>` notification before reading its output or aggregating results. In Claude Code, use `run_in_background: true` and end the turn while waiting for the completion notification. Do not poll, sleep, or start aggregation on partial output. The script launches every reviewer in `<manifest-file>` on its own agent in parallel and returns a JSON array of results. For commit ranges, it uses the narrowed patch saved in the manifest; `--cached` omits deleted-file contents from that patch while retaining deletion metadata and file names. The exit status is `0` when every reviewer succeeded with no findings, `1` when every reviewer succeeded and at least one finding exists, `3` when any reviewer or the script itself failed (regardless of findings), and `2` / `127` for invalid input or a missing command. An exit status of `0` or `1` does not establish that every evaluation was actually performed. A reviewer run regularly outlives the foreground timeout, and being killed there loses every reviewer's result at once.
+8. Never run a reviewer as a subagent, including as a fallback. Every reviewer is written for the sandbox this script puts it in, and a subagent would inherit this session's permission mode instead.
+9. After the first run, mark a reviewer failed if the script reports failure or its summary says the requested evaluation could not be performed or was only partial, even when exit 0 or 1. Retry only those reviewers once by appending their names to the original manifest path (`~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file> <reviewer> [reviewer...]`). In Codex, use `a agent bg run -- ~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file> <reviewer> [reviewer...]` and wait for the `<background-task-complete>` notification. Keep every other valid reviewer result. Exclude an incomplete initial result entirely; if the retry is valid, replace that reviewer entry rather than adding a duplicate. If definition or reference contents need repair, make that repair before the single retry and use the original manifest; it consumes that retry and does not reset the limit.
+10. If a manifest entry has a non-null `fallback_reason`, mention it for that reviewer in the final Summary output.
 
 ### 再試行と復旧
 
