@@ -89,29 +89,53 @@ print_event_summary() {
       elif test("^[A-Za-z0-9_.-]{1,80}$") then .
       else "[other]"
       end;
+    def event_summary:
+      if type == "object" then
+        {type: (.type | safe_string), subtype: (.subtype | safe_string)}
+      else
+        {type: null, subtype: null}
+      end;
     def array_count: if type == "array" then length else null end;
     def boolean_or_null: if type == "boolean" then . else null end;
+    def diagnostic_sample:
+      if length <= 400 then .
+      else .[0:200] + .[-200:]
+      end;
 
     (split("\n") | map(select(length > 0) | try fromjson catch null)) as $events
+    | [$events[] | select(type == "object" and .type == "system" and .subtype == "init")] as $inits
+    | [$events[] | select(type == "object" and .type == "result")] as $results
     | {
-        events: [$events[] | {type: (.type | safe_string), subtype: (.subtype | safe_string)}],
-        init: [
-          $events[]
-          | select(type == "object" and .type == "system" and .subtype == "init")
-          | {
-              tools_count: (.tools | array_count),
-              mcp_servers_count: (.mcp_servers | array_count)
-            }
-        ],
-        results: [
-          $events[]
-          | select(type == "object" and .type == "result")
-          | {
-              subtype: (.subtype | safe_string),
-              is_error: (.is_error | boolean_or_null),
-              stop_reason: (.stop_reason | safe_string)
-            }
-        ]
+        events: {
+          total: ($events | length),
+          omitted: (if ($events | length) > 400 then ($events | length) - 400 else 0 end),
+          sequence: ($events | diagnostic_sample | map(event_summary))
+        },
+        init: {
+          total: ($inits | length),
+          omitted: (if ($inits | length) > 400 then ($inits | length) - 400 else 0 end),
+          entries: (
+            $inits
+            | diagnostic_sample
+            | map({
+                tools_count: (.tools | array_count),
+                mcp_servers_count: (.mcp_servers | array_count)
+              })
+          )
+        },
+        results: {
+          total: ($results | length),
+          omitted: (if ($results | length) > 400 then ($results | length) - 400 else 0 end),
+          entries: (
+            $results
+            | diagnostic_sample
+            | map({
+                subtype: (.subtype | safe_string),
+                is_error: (.is_error | boolean_or_null),
+                stop_reason: (.stop_reason | safe_string)
+              })
+          )
+        }
       }
   ' "$events_file" 2> /dev/null); then
     echo 'Claude draft reviewer event summary: unavailable.' >&2
@@ -178,6 +202,7 @@ if ! jq -s -e '
   | [to_entries[] | select(.value.type == "result") | .key] as $results
   | length > 0
     and all(.[]; type == "object" and (.type | type == "string"))
+    and all(.[]; .type != "error")
     and all(.[];
       if .type == "assistant" then
         (.message | type == "object")
