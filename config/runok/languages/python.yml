@@ -7,45 +7,31 @@ definitions:
     - 'uvx [--from *] <cmd>'
 
 rules:
-  # `run` stages temporary snapshots when recording is unavailable.
-  - allow: 'python3 ~/.agents/skills/yomiyasu/scripts/yomiyasu_check.py run *'
+  # Skill-bundled Python tools may use mkdtemp in $TMPDIR, which readonly rejects.
+  - allow: 'python3|python <var:claude-skill-scripts> *'
     sandbox: write-tmp-cwd
-
-  - allow: 'python3 ~/.claude/skills/yomiyasu/scripts/yomiyasu_check.py run *'
-    sandbox: write-tmp-cwd
-
-  - allow: 'python3 <var:claude-skill-scripts> run *'
-    when: >-
-      size(args) > 1 &&
-      (args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/yomiyasu/scripts/yomiyasu_check[.]py$') ||
-       args[0].matches('^/.*/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/yomiyasu/scripts/yomiyasu_check[.]py$'))
-    sandbox: write-tmp-cwd
+    tests:
+      - allow: 'python3 ~/.agents/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python3 ~/.claude/skills/example-skill/scripts/check.py verify --final final.md'
+      - allow: 'python ~/.agents/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python3 ~/.claude/plugins/cache/example-marketplace/example-plugin/1.0.0/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python3 /Users/example/.claude/plugins/cache/example-marketplace/example-plugin/1.0.0/skills/example-skill/scripts/check.py run --stdin'
 
   # Rule matches do not take priority by order, so exclude the writable calls
   # from the generic Python sandbox explicitly.
   - allow: 'python3|python *'
     when: >-
-      !(size(args) > 1 && args[1] == 'run' &&
-        (args[0] in ['~/.agents/skills/yomiyasu/scripts/yomiyasu_check.py', '~/.claude/skills/yomiyasu/scripts/yomiyasu_check.py'] ||
-         args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/yomiyasu/scripts/yomiyasu_check[.]py$') ||
-         args[0].matches('^/.*/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/yomiyasu/scripts/yomiyasu_check[.]py$')))
+      !(size(args) > 0 &&
+        (args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') ||
+         args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') ||
+         args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
+         args[0].matches('^/.*/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/')))
     sandbox: readonly
     tests:
       - allow: 'python3 -c "print(1)"'
       - allow: 'python -c "print(1)"'
-
-  - allow: 'python ~/.agents/skills/yomiyasu/scripts/yomiyasu_check.py run *'
-    sandbox: readonly
-
-  - allow: 'python ~/.claude/skills/yomiyasu/scripts/yomiyasu_check.py run *'
-    sandbox: readonly
-
-  - allow: 'python <var:claude-skill-scripts> run *'
-    when: >-
-      size(args) > 1 &&
-      (args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/yomiyasu/scripts/yomiyasu_check[.]py$') ||
-       args[0].matches('^/.*/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/yomiyasu/scripts/yomiyasu_check[.]py$'))
-    sandbox: readonly
+      - allow: 'python3 example.py'
+      - allow: 'python example.py'
 
   - allow: 'schemathesis *'
     tests:

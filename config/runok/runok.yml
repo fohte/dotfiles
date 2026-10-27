@@ -49,6 +49,8 @@ definitions:
       values:
         - '~/.agents/skills/*/scripts/*'
         - '~/.agents/skills/*/bin/*'
+        - '~/.claude/skills/*/scripts/*'
+        - '~/.claude/skills/*/bin/*'
         - '~/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
         - '~/.claude/plugins/cache/*/*/*/skills/*/bin/*'
         # Plugin skills are usually invoked with a resolved absolute path. The
