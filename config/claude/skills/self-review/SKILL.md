@@ -16,7 +16,7 @@ reviewer の選択順、agent、trigger、reference は `reviewers.yaml` を唯�
 commit range のレビューでは、現在の branch に記録された review 済み HEAD が対象 HEAD の祖先なら、その HEAD までの commit を caller range 内から除外する。caller range より前へ範囲を広げない。merge commit は再 merge 結果との差分だけを含めるため、取り込んだ側の変更は除外され、conflict resolution はレビューされる。全 reviewer の成功後に HEAD と Claude / Codex の session ID を記録する。前回成功レビューから 1 時間以内なら reviewer ごとに session を再開し、失敗した resume は fresh session で再実行する。Codex reviewer はユーザーの指示と skills から分離した共有 `CODEX_HOME` を使い、1 時間を過ぎた rollout は Codex reviewer の起動時に整理する。対象 patch が空なら reviewer を起動せず skip し、その HEAD を記録する。`--cached` は session 再開と state 更新の対象外。
 
 - **指摘に対応したあと、同じ差分をレビューし直さない。** 対応で差分が変われば新しい指摘が出るので、繰り返すと終わらない
-- **reviewer が失敗したときの retry は 1 回まで。** それも失敗したら止めて、その reviewer を `⚠️ 未評価` として報告し、失敗出力にある原因を添える。同じ差分で 2 回続けて失敗するなら、差分が reviewer のコンテキストに収まらない場合 (`Prompt is too long`) を含め、起動し直しても結果は変わらない
+- **reviewer の retry は 1 回まで。** 初回 result が欠落または無効なら、その reviewer の全 evaluation を retry 対象にします。retry 後も有効な結果がない evaluation を未評価として報告し、失敗出力にある原因を添えます。有効な部分結果がある場合はその完了済み evaluation を保持し、retry が失敗しても未完了の evaluation だけを未評価として報告します。同じ差分で 2 回続けて reviewer run が失敗するなら、差分が reviewer のコンテキストに収まらない場合 (`Prompt is too long`) を含め、起動し直しても結果は変わらない
 - **reviewer が 1 つも結果を返さなかったら、12 観点すべてを `⚠️ 未評価` にし、Summary の件数の代わりにレビュー不能だったことと原因を書く。** 指摘 0 件と同じ出力にすると、呼び出し元がレビュー済みとして先に進む
 
 ## Backend execution
@@ -54,11 +54,11 @@ reviewer 実行に失敗した場合だけ、本文を含まない診断 JSON �
 
 runner は caller が結果の意味を確認する前に、成功した実行の HEAD と session を記録します。その後の `select-reviewers` が `skipped` を返しても合格の根拠になりません。意味上の失敗が残る間は再選択せず、最初の manifest と試行回数を保持してください。
 
-- 最初の manifest、有効な reviewer 結果、それぞれと対象差分の対応、未評価 reviewer、試行回数を引き継いでください。失敗出力の既存診断も保持し、消去しないでください。
+- 最初の manifest、有効な evaluation 結果とそれぞれの対象差分との対応、未評価 evaluation、未評価 evaluation を含む reviewer、試行回数を引き継いでください。失敗出力の既存診断も保持し、消去しないでください。
 - commit range の retry は manifest に保存された `diff` と `files` を使います。`--cached` は step 1 で作った同じ index snapshot を `GIT_INDEX_FILE` で渡し、その SHA-256 が各実行前に一致することを確認してください。初回に snapshot を使わなかった場合は、index が初回実行後に変わっていないことと対象差分との一致を確認できるときだけ再開し、確認できなければ旧結果と混ぜず再開範囲を呼び出し元へ報告してください。
 - retry では manifest の definition / reference パス、targets、reviewer、agent、model、reasoning effort を変えないでください。definition / reference の本文は実行時に読み込まれるため、本文を修復した後に同じ manifest で再開できます。その他の指示本文が変わった場合、または修復に別のパス、target、reviewer、実効設定が必要な場合は、同じ manifest の retry で解決したことにせず呼び出し元へ報告してください。
-- 許可された retry が残り、対象差分と修復後の定義・参照本文を確認できる場合に限り、元 manifest と未評価 reviewer を指定して再開してください。修復だけで旧結果を有効化せず、試行上限もリセットしないでください。
-- retry 後も評価不能な reviewer は未評価のままにします。原因、未確定の点、必要な修復を呼び出し元へ報告し、必須レビューが完了するまで commit / push / PR を進めないでください。ユーザー提供の情報が修復に不要なら、ユーザー入力を待たずに報告してください。
+- 許可された retry が残り、対象差分と修復後の定義・参照本文を確認できる場合に限り、元 manifest と未評価 evaluation を含む reviewer を指定して再開してください。修復だけで旧結果を有効化せず、試行上限もリセットしないでください。
+- retry 後も有効な結果がない evaluation は未評価のままにします。有効な評価結果が一度も返らなかった reviewer は、その reviewer の全 evaluation を未評価とします。原因、未確定の点、必要な修復を呼び出し元へ報告し、必須レビューが完了するまで commit / push / PR を進めないでください。ユーザー提供の情報が修復に不要なら、ユーザー入力を待たずに報告してください。
 
 ## 入力不足からの recovery round
 
@@ -109,7 +109,7 @@ runner は caller が結果の意味を確認する前に、成功した実行�
 
 ## 結果集約
 
-`invalid` / `empty` な reviewer result は、その reviewer の全 evaluation を未評価として報告する。`partial` または evaluation が未実施・部分実施と分かる summary は、未実施の evaluation だけを未評価として報告し、実施済みの evaluation は結果集約に使う。summary から未実施の evaluation を特定できない場合は、実施済みと確認できる evaluation だけを保持し、残りを未評価とする。retry 後も欠けている evaluation を未評価として報告し、必須 reviewer 全員の全 evaluation に有効な結果が揃うまで呼び出し元の `commit` / `push` / `PR` workflow を止める。
+有効な評価結果が一度も返らなかった reviewer は、その reviewer の全 evaluation を未評価として報告する。`partial` または evaluation が未実施・部分実施と分かる summary は、未実施の evaluation だけを未評価として報告し、実施済みの evaluation は結果集約に使う。summary から未実施の evaluation を特定できない場合は、実施済みと確認できる evaluation だけを保持し、残りを未評価とする。retry 後も欠けている evaluation を未評価として報告し、必須 reviewer 全員の全 evaluation に有効な結果が揃うまで呼び出し元の `commit` / `push` / `PR` workflow を止める。
 
 通し番号を持つ 12 観点を番号順に並べ、番号を持たない base reviewer (test-philosophy) の評価をその後へ、起動した conditional reviewer の評価をさらにその後へ追加する。
 未起動の conditional reviewer は出力しない。
@@ -134,7 +134,7 @@ base reviewer の観点を全件出力し、各項目に以下のいずれかを
 
 - `✅`: 壊れる可能性を検討した上で問題なし
 - `⚠️ N/A`: この diff に構造上関係しない。理由を 1 行で付ける
-- `⚠️ 未評価`: reviewer が retry 後も失敗した
+- `⚠️ 未評価`: 初回と retry のいずれにも有効な結果がない evaluation、または summary で未実施・部分実施と確認された evaluation。有効な結果が一度も返らなかった reviewer は全 evaluation が該当する
 - `🔴` / `🟡`: 指摘あり。複数ある場合は最重要 marker と総件数を併記する
 
 ```text
