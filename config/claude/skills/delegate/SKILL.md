@@ -194,7 +194,7 @@ direct-commit では branch と base ref を指定しない。worktree hook 用�
 - **既存ブランチで作業する場合**: 既存のリモートブランチ (例: follow-up PR のブランチ) にそのまま commit したい場合は、launcher の `--branch` にそのブランチ名を渡す
 - **ブランチ名**: 新規ブランチを作る場合、ブランチ名に `/` を含めないこと。代わりにハイフンを使う (例: `fix/login-bug` ではなく `fix-login-bug`)。ブランチには `fohte/` がプレフィックスとして付くため、`fix/...` だと `fohte/fix/...` になり冗長
 - 新しいインスタンスは独立した worktree で作業するため、現在の作業と競合しない。作業ツリーを共有する direct-commit モードには当てはまらず、前掲の「委任前に確認すること」に従う
-- **fork リポジトリへの委任**: 委任先が他者のリポジトリの fork (`gh repo view --json isFork -q .isFork` が `true`) なら、`additionalContext` に「oss-contribution skill を読み、commit と push はその手順に従うこと」と書く。fork では commit も push もユーザーが行うので、`render-task` が付ける締めくくりの commit / PR 作成はこの skill の手順で置き換わる。後述の「commit/PR 作成の完了条件は task.yaml に書かない」の例外はこれだけ
+- **fork リポジトリへの委任**: origin が fork (`gh repo view "$(git remote get-url origin)" --json isFork -q .isFork` が `true`) で、かつ `a config get repo.standalone_fork` が `true` を返さない場合 (コマンド失敗時を含む) は、`additionalContext` に「oss-contribution skill を読み、commit と push はその手順に従うこと」と書く。OSS contribution 対象の fork では commit も push もユーザーが行うので、`render-task` が付ける締めくくりの commit / PR 作成はこの skill の手順で置き換わる。後述の「commit/PR 作成の完了条件は task.yaml に書かない」の例外はこれだけ
 
 ### `--from` の判断ルール (重要)
 
