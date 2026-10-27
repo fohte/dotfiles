@@ -12,6 +12,7 @@ mkdir -p "$state_dir"
 # Both engines can start together and reconcile the same roots and state files.
 # The owner PID lets a later hook reclaim a lock left by a crashed process.
 lock_dir="$state_dir/sync.lock"
+recovery_lock_dir="$state_dir/sync-recovery.lock"
 if [ -d "$lock_dir" ] || ! mkdir "$lock_dir"; then
   lock_pid=""
   for attempt in 1 2 3 4 5; do
@@ -29,11 +30,24 @@ if [ -d "$lock_dir" ] || ! mkdir "$lock_dir"; then
     exit 0
   fi
 
+  if [ -d "$recovery_lock_dir" ] || ! mkdir "$recovery_lock_dir"; then
+    echo "warning: another role skill sync is recovering its lock; skipping this invocation" >&2
+    exit 0
+  fi
+  printf '%s\n' "$$" > "$recovery_lock_dir/pid"
+  cleanup_recovery_lock() {
+    rm "$recovery_lock_dir/pid"
+    rmdir "$recovery_lock_dir"
+  }
+  trap cleanup_recovery_lock EXIT
+
   current_lock_pid=""
   if [ -r "$lock_dir/pid" ]; then
     IFS= read -r current_lock_pid < "$lock_dir/pid" || current_lock_pid=""
   fi
-  if [ "$current_lock_pid" != "$lock_pid" ]; then
+  if [ "$current_lock_pid" != "$lock_pid" ] || {
+    [[ "$current_lock_pid" =~ ^[0-9]+$ ]] && kill -0 "$current_lock_pid" 2> /dev/null
+  }; then
     echo "warning: role skill sync lock changed while checking it; skipping this invocation" >&2
     exit 0
   fi
@@ -45,6 +59,8 @@ if [ -d "$lock_dir" ] || ! mkdir "$lock_dir"; then
     echo "error: unable to remove stale role skill sync lock at $lock_dir" >&2
     exit 1
   fi
+  cleanup_recovery_lock
+  trap - EXIT
   if ! mkdir "$lock_dir"; then
     echo "warning: another role skill sync started; skipping this invocation" >&2
     exit 0
