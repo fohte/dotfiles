@@ -41,7 +41,7 @@ EOF
 必須 reviewer が同じ engine で 1 回 retry した後も未評価、または結果が `invalid` / `partial` / `empty` の場合は、指摘がない扱いにせずコミットへ進まない。
 
 `git commit` の前に、ステージング済みの差分を `self-review` skill でレビューする。
-skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、12 観点の統合レポートを返す。
+self-review skill は manifest に列挙した reviewer を `run-external-reviewers` 経由で並列実行し、12 観点の統合レポートを返す。
 **レビューは 1 コミットにつき 1 回だけ実行する**。
 🔴 Critical / 🟡 Warning への対応で `git add` した後、レビューを再実行しない。
 
@@ -82,7 +82,7 @@ git diff --cached
 既存コミットは作成時の手順 6 で承認を経ているため、そのコミット自体には `crit-approval-review` を再実行しない。self-review の指摘対応で新しいコミットを作る場合、default branch 上では staged diff に対して `crit-approval-review` を実行してからコミットする。
 
 `git push` の前に、その push に含まれる全コミットをまとめて `self-review` skill でレビューする。
-skill は 3 観点グループ (behavior / structure / convention) の subagent を並列起動し、12 観点の統合レポートを返す。
+self-review skill は manifest に列挙した reviewer を `run-external-reviewers` 経由で並列実行し、12 観点の統合レポートを返す。
 **レビューは 1 回の push につき 1 回だけ実行する**。
 コミットのたびに繰り返さない。
 修正コミットを追加した後も再実行しない。

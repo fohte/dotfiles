@@ -39,6 +39,8 @@ reviewer 実行に失敗した場合だけ、本文を含まない診断 JSON �
 
 成功した試行の診断は作りません。resume の失敗診断は fresh fallback が成功しても保持します。保存した診断の path は実行時の stderr に表示します。
 
+呼び出し元が修復を伴う recovery round を明示的に依頼し、旧 round に失敗試行と有効評価がある場合は、通常の selector を実行せず、後述の「入力不足からの recovery round」を使ってください。
+
 1. Resolve one immutable `<range>` from the caller (`--cached`, `@{u}..HEAD`, or another single commit range). Do not modify the index or refs until the review finishes.
    For `--cached`, snapshot the applicable index before `select-reviewers`: copy `${GIT_INDEX_FILE:-$(git rev-parse --git-path index)}` to a unique path from `mktemp "$AGENT_TMPDIR/self-review-index.XXXXXX"`, then pass `GIT_INDEX_FILE=<snapshot-path>` to `select-reviewers` and every runner invocation. Keep that snapshot unchanged until all reviewers and retries finish.
 2. Create a manifest file path (`mktemp "$AGENT_TMPDIR/self-review-manifest.XXXXXX"`) and run `~/.agents/skills/self-review/scripts/select-reviewers <range> > <manifest-file>`. If it fails, launch nothing. When the cause is your own invocation (wrong working directory, or a typo in the caller's `<range>`), correct it and run it once more — no reviewer has run yet, so this does not count as a reviewer retry. Never switch to a range the caller did not give. Use the manifest file as the source of truth even if command output is missing: before step 4, run `jq -r '.status' <manifest-file>` and continue only when it returns `ready`. If it is `skipped`, do not launch reviewers and report that the range was skipped because no unreviewed changes remain. For any other status or an invalid manifest, stop and report the error. Once a ready manifest succeeds, do not call `select-reviewers` again for this review — every step below reads `<manifest-file>` instead. Its `reviewers` array is the complete launch manifest: do not add, remove, or reorder entries.
@@ -57,6 +59,53 @@ runner は caller が結果の意味を確認する前に、成功した実行�
 - retry では manifest の definition / reference パス、targets、reviewer、agent、model、reasoning effort を変えないでください。definition / reference の本文は実行時に読み込まれるため、本文を修復した後に同じ manifest で再開できます。その他の指示本文が変わった場合、または修復に別のパス、target、reviewer、実効設定が必要な場合は、同じ manifest の retry で解決したことにせず呼び出し元へ報告してください。
 - 許可された retry が残り、対象差分と修復後の定義・参照本文を確認できる場合に限り、元 manifest と未評価 reviewer を指定して再開してください。修復だけで旧結果を有効化せず、試行上限もリセットしないでください。
 - retry 後も評価不能な reviewer は未評価のままにします。原因、未確定の点、必要な修復を呼び出し元へ報告し、必須レビューが完了するまで commit / push / PR を進めないでください。ユーザー提供の情報が修復に不要なら、ユーザー入力を待たずに報告してください。
+
+## 入力不足からの recovery round
+
+呼び出し元が修復を伴う recovery round を明示的に依頼し、旧 round に失敗試行と有効評価がある場合だけ使用します。対象は修復した reviewer 定義・参照で固定 range の未評価文書を再評価するケースです。通常の reviewer retry、任意の reset、有効評価の再実行には使いません。
+
+1. caller の固定 range、旧 manifest、旧 round record、修復理由を渡して round を生成します。selector は保存 HEAD を参照せず、固定 range 全体から現行 YAML の Japanese targets を選びます。
+
+    ```bash
+    ~/.agents/skills/self-review/scripts/self-review-recovery-round create \
+      <fixed-range> <old-manifest> <old-round-record> "<repair-reason>"
+    ```
+
+    出力された round directory をそのまま使います。`verify <round-directory>` で snapshot hash と HEAD を検証し、`manifest.json` の `.range`、`.reviewers[].targets`、`.recovery_round.input_snapshot.sha256` を確認してください。manifest は Japanese reviewer だけを含み、fixed HEAD の diff、files、各対象本文、base YAML と role overlay、definition と references の path / hash / body、resolver の実効設定と source を保存します。`round-record.json` は旧 manifest と round record の path / hash、旧失敗試行と有効評価の記録先を参照します。
+
+2. Codex では recovery helper をバックグラウンドで起動し、完了通知を待ちます。runner を直接呼ぶと実行 ID と retry 上限が記録されないため、helper を使ってください。
+
+    ```bash
+    a agent bg run -- ~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>
+    ```
+
+    Claude Code では同じ helper (`~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>`) を `run_in_background: true` で起動し、完了通知を待つ間にターンを終えます。
+
+    `round-record.json` の各 attempt は独立した execution ID、input / patch / prompt hash、取得できた backend session ID、runner の結果 path を結びます。recovery round は旧 session を再開せず、通常の branch review state も読み書きしません。
+
+3. runner が exit 0 または 1 で終わったら、`round-record.json` の最新 attempt にある `output.result_path` の結果を読み、意味上の評価を記録します。exit 0 / 1 だけで評価済みとは判断しません。
+
+    ```bash
+    ~/.agents/skills/self-review/scripts/self-review-recovery-round assess \
+      <round-directory> evaluated "<evaluation summary>"
+    ```
+
+    要求された評価が未実施または部分実施なら、次の assess command で `not-evaluated` と原因を記録してから、同じ round directory で helper をもう 1 回だけ実行します。runner が失敗した場合は assess を省略して helper を 1 回だけ再実行します。
+
+    ```bash
+    ~/.agents/skills/self-review/scripts/self-review-recovery-round assess \
+      <round-directory> not-evaluated "<unassessed reason>"
+    ```
+
+    `not-evaluated` を記録した後、または runner が失敗した後に、同じ helper をもう 1 回だけ実行します。Codex では次を使います。
+
+    ```bash
+    a agent bg run -- ~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>
+    ```
+
+    Claude Code では同じ helper (`~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>`) を `run_in_background: true` で起動し、完了通知を待つ間にターンを終えます。
+
+    2 回目も未評価なら `round-record.json` にその状態を残して止めます。再選択、round の作り直し、旧評価の retry はしません。結果が有効なら `evaluated` を記録し、通常の結果集約へ戻ります。
 
 ## 結果集約
 

@@ -91,14 +91,16 @@ skill_dir=$(cd "$script_dir/.." && pwd -P)
 claude_dir=$(cd "$skill_dir/../.." && pwd -P)
 repo_root=$(git rev-parse --show-toplevel)
 # shellcheck disable=SC2034 # Used by review-backends.
-schema_file="$skill_dir/review-output-schema.json"
-evaluation_ids_file="$skill_dir/reviewer-evaluation-ids.json"
+schema_file="${SELF_REVIEW_RECOVERY_SCHEMA_FILE:-$skill_dir/review-output-schema.json}"
+evaluation_ids_file="${SELF_REVIEW_RECOVERY_EVALUATION_IDS_FILE:-$skill_dir/reviewer-evaluation-ids.json}"
 usage_file="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-usage.json"
 auth_file="$HOME/.codex/auth.json"
 shared_codex_home="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-home"
 
 # shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
 source "$script_dir/review-diagnostics"
+# shellcheck source=config/claude/skills/self-review/scripts/review-prompt
+source "$script_dir/review-prompt"
 
 work_dir=$(mktemp -d -t self-review-external.XXXXXX)
 # Exit 1 is reserved for "findings exist"; a `set -e` abort (cp, mkdir, sed, ...)
@@ -196,81 +198,12 @@ if [ "$#" -gt 0 ]; then
   done < <(printf '%s\n' "$@" | LC_ALL=C sort -u)
 fi
 
-# Only ancestor instructions apply to a changed file. Collecting them here
-# prevents agent discovery behavior from changing the review contract.
-while IFS= read -r file; do
-  directory=$(dirname "$repo_root/$file")
-  while [[ "$directory" == "$repo_root" || "$directory" == "$repo_root/"* ]]; do
-    for instruction_name in AGENTS.md CLAUDE.md; do
-      [[ -f "$directory/$instruction_name" ]] && printf '%s\n' "$directory/$instruction_name"
-    done
-    [[ "$directory" == "$repo_root" ]] && break
-    directory=$(dirname "$directory")
-  done
-done < "$files_file" | LC_ALL=C sort -u > "$work_dir/instructions.txt"
-instructions_file="$work_dir/instructions.txt"
+prepare_review_instructions "$repo_root" "$files_file" "$work_dir"
 
 mkdir -p "$work_dir/targets"
 for reviewer in "${selected[@]}"; do
   jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .targets[]' "$manifest_file" > "$work_dir/targets/$reviewer.txt"
 done
-
-append_resource() {
-  local output="$1" path="$2"
-  {
-    printf '\n<resource path="%s">\n' "$path"
-    sed -n '1,$p' "$path"
-    printf '\n</resource>\n'
-  } >> "$output"
-}
-
-build_prompt() {
-  local reviewer="$1" prompt_file="$2" reviewer_agent="$3" definition relative instruction_file
-  definition=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .definition' "$manifest_file")
-
-  {
-    printf '%s\n' 'Perform a read-only code review using only the supplied review contract and immutable diff.'
-    printf 'Reviewer: %s\n' "$reviewer"
-    printf '%s\n' 'Do not edit files. Repository inspection is allowed only to verify direct effects and precedents.'
-    printf '%s\n' 'Return JSON matching the supplied output schema. Set reviewer to the exact reviewer name above.'
-  } > "$prompt_file"
-
-  append_resource "$prompt_file" "$claude_dir/agents/$definition.md"
-  while IFS= read -r relative; do
-    append_resource "$prompt_file" "$claude_dir/skills/$relative"
-  done < <(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .references[]' "$manifest_file")
-
-  while IFS= read -r relative; do
-    append_resource "$prompt_file" "$claude_dir/skills/$relative"
-  done < <(jq -r --arg agent "$reviewer_agent" '.agents[$agent].references[]?' "$manifest_file")
-
-  while IFS= read -r instruction_file; do
-    append_resource "$prompt_file" "$instruction_file"
-  done < "$instructions_file"
-
-  required_evaluation_ids=$(jq -c --arg reviewer "$reviewer" '.[$reviewer] // []' "$evaluation_ids_file")
-  if [[ "$(jq -r 'length' <<< "$required_evaluation_ids")" -gt 0 ]]; then
-    {
-      printf '\n<required-evaluation-ids>\n'
-      printf '%s\n' 'Return exactly these evaluation IDs, with no duplicates:'
-      jq -r '.[] | "- " + .' <<< "$required_evaluation_ids"
-      printf '</required-evaluation-ids>\n'
-    } >> "$prompt_file"
-  fi
-
-  {
-    if [[ -s "$work_dir/targets/$reviewer.txt" ]]; then
-      printf '\n<review-targets>\n'
-      sed -n '1,$p' "$work_dir/targets/$reviewer.txt"
-      printf '</review-targets>\n'
-    fi
-    printf '\n<changed-files>\n'
-    sed -n '1,$p' "$files_file"
-    printf '</changed-files>\n\n<diff>\n'
-    sed -n '1,$p' "$diff_file"
-    printf '</diff>\n'
-  } >> "$prompt_file"
-}
 
 # Snapshot the account limits so the next skill load can pick a backend without
 # a network call. Every window is kept: each one blocks Codex on its own, and
@@ -388,6 +321,17 @@ for index in "${!pids[@]}"; do
     failed=true
   fi
 done
+
+if [[ -n "${SELF_REVIEW_RECOVERY_ATTEMPT_DIR:-}" ]]; then
+  printf '%s\n' "$patch_sha256" > "$SELF_REVIEW_RECOVERY_ATTEMPT_DIR/patch-sha256"
+  for index in "${!selected[@]}"; do
+    reviewer="${selected[$index]}"
+    printf '%s\n' "${prompt_hashes[$index]}" > "$SELF_REVIEW_RECOVERY_ATTEMPT_DIR/$reviewer.prompt-sha256"
+    if [[ -f "$work_dir/$reviewer/session-id" ]]; then
+      cp "$work_dir/$reviewer/session-id" "$SELF_REVIEW_RECOVERY_ATTEMPT_DIR/$reviewer.backend-session-id"
+    fi
+  done
+fi
 
 # Recorded on failure too: a run that dies on the usage limit is exactly the one
 # whose snapshot must be refreshed, otherwise a stale reset_at sends every later
