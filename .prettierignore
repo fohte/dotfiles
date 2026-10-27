@@ -5,3 +5,7 @@ config/nvim/lazy-lock.json
 # Copier rewraps this to a width prettier doesn't agree with, so the two
 # fight over its formatting on every `copier update`.
 .copier-answers.yml
+
+# Preserve upstream formatting for vendored reviewer definitions and standards.
+/config/claude/skills/plz-explain-with-crit/references/egm/agents/
+/config/claude/skills/plz-explain-with-crit/references/egm/resources/document_standards/

@@ -131,6 +131,8 @@ skill に同梱したテンプレートを使い、毎回新しい単一 HTML �
 配色は常にダークモード固定で書く。
 `prefers-color-scheme` によるライト/ダーク切り替えは不要。
 
+設計判断を求める HTML では、crit を起動する前に `references/goldfish-review.md` を読み、Goldfish reviewer 3 体を実行する。指摘をすべて片付け、直し終えた HTML だけを crit に出す。
+
 ```
 crit preview <file.html>
 ```
