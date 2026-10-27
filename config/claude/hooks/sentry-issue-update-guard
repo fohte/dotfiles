@@ -17,10 +17,10 @@ case "$target_name" in
   analyze_issue_with_seer)
     deny "Seer analysis is not approved."
     ;;
-  update*)
+  find* | get* | search* | update*)
     jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "allow"}}'
     ;;
   *)
-    ask "Only Sentry update tools are pre-approved through the generic executor."
+    ask "Only Sentry read and update tools are pre-approved through the generic executor."
     ;;
 esac

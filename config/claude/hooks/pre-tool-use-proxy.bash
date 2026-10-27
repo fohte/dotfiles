@@ -44,7 +44,7 @@ case "$tool_name" in
     exec ~/.claude/hooks/ask-user-question-guard <<< "$input"
     ;;
   # execute_sentry_tool bypasses catalog tools' individual permission names.
-  # Filter it here to honor the update* allow while preserving Seer's deny.
+  # Filter it here to honor read/update allows while preserving Seer's deny.
   mcp__sentry__execute_sentry_tool)
     exec ~/.claude/hooks/sentry-issue-update-guard <<< "$input"
     ;;
