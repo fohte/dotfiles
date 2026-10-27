@@ -145,10 +145,8 @@ fi
   exit 2
 }
 
-patch_sha256=$(diagnostics_sha256_file "$diff_file") || {
-  echo "Error: unable to hash the review patch for diagnostics." >&2
-  exit 3
-}
+patch_sha256=$(diagnostics_sha256_file "$diff_file") || patch_sha256=
+[[ -n "$patch_sha256" ]] || echo "Warning: unable to hash the review patch for diagnostics." >&2
 
 selected=()
 while IFS= read -r reviewer; do
@@ -231,10 +229,11 @@ for reviewer in "${selected[@]}"; do
   reviewer_agent=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .agent' "$manifest_file")
   build_prompt "$reviewer" "$reviewer_dir/prompt.txt" "$reviewer_agent"
   if [[ "$reviewer_agent" == agy ]]; then
-    prompt_sha256=$(diagnostics_sha256_agy_prompt "$reviewer_dir/prompt.txt")
+    prompt_sha256=$(diagnostics_sha256_agy_prompt "$reviewer_dir/prompt.txt") || prompt_sha256=
   else
-    prompt_sha256=$(diagnostics_sha256_file "$reviewer_dir/prompt.txt")
+    prompt_sha256=$(diagnostics_sha256_file "$reviewer_dir/prompt.txt") || prompt_sha256=
   fi
+  [[ -n "$prompt_sha256" ]] || printf 'Warning: unable to hash reviewer prompt for diagnostics: %s.\n' "$reviewer" >&2
   prompt_hashes+=("$prompt_sha256")
   [[ "$reviewer_agent" == codex ]] && codex_used=true
 
@@ -358,24 +357,20 @@ for index in "${!selected[@]}"; do
   else
     validation_violations='[{"reason_code":"result_missing","field_path":"$"}]'
   fi
-  validation_warnings=$(jq -c '
-    [.[] | select(
+  validation_groups=$(jq -c '
+    def tolerated:
       .reason_code == "additional_field" or
       .reason_code == "evaluation_id_duplicate" or
       .reason_code == "evaluation_id_unexpected" or
       .reason_code == "reviewer_case_mismatch" or
-      .reason_code == "finding_suggestion_empty"
-    )]
+      .reason_code == "finding_suggestion_empty";
+    {
+      warnings: [.[] | select(tolerated)],
+      blocking: [.[] | select(tolerated | not)]
+    }
   ' <<< "$validation_violations")
-  blocking_violations=$(jq -c '
-    [.[] | select(
-      .reason_code != "additional_field" and
-      .reason_code != "evaluation_id_duplicate" and
-      .reason_code != "evaluation_id_unexpected" and
-      .reason_code != "reviewer_case_mismatch" and
-      .reason_code != "finding_suggestion_empty"
-    )]
-  ' <<< "$validation_violations")
+  validation_warnings=$(jq -c '.warnings' <<< "$validation_groups")
+  blocking_violations=$(jq -c '.blocking' <<< "$validation_groups")
   validation_failed=$(jq -r 'length > 0' <<< "$blocking_violations")
   if [[ $(jq -r 'length' <<< "$validation_warnings") -gt 0 ]]; then
     warning_details=$(jq -c '[.[] | {reason_code, field_path}]' <<< "$validation_warnings")

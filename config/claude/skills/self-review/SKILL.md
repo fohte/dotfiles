@@ -29,9 +29,9 @@ runner は余分な field、余分または重複した evaluation ID、大小�
 
 `not-applicable` は対象を確認し、その観点が差分の構造上無関係と判断した場合に限ります。評価に必要な入力や参照がない、または制約により確認できない場合を N/A にしないでください。
 
-reviewer 実行や結果検査に失敗した場合、本文を含まない診断 JSON の保存を試みます。診断の準備や保存に失敗した場合も reviewer の実行と有効な結果は継続します。
+reviewer 実行や結果検査に失敗した場合、本文を含まない診断 JSON の保存を試みます。診断用 directory の準備、hash 算出、保存に失敗した場合も reviewer の実行と有効な結果は継続します。
 
-- 記録項目: `run_id`、reviewer、終了コード、scope、execution mode、実効 engine / model / effort、patch と prompt の SHA-256、固定 `reason_code` と `field_path`
+- 記録項目: `run_id`、reviewer、終了コード、scope、execution mode、実効 engine / model / effort、取得できた patch と prompt の SHA-256、固定 `reason_code` と `field_path`
 - 保存しない項目: prompt、diff、index、result、stdout、stderr、認証情報、manifest 本文
 - 保存先: `XDG_CACHE_HOME` が未設定なら `$HOME/.cache/self-review/diagnostics`
 - 権限と保持期間: directory は 0700、file は 0600。次回起動時に 7 日を超えた自分の記録だけを削除

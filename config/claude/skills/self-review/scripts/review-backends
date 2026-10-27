@@ -212,8 +212,16 @@ run_claude() {
   fi
   jq '.structured_output' "$reviewer_dir/stdout.log" > "$reviewer_dir/result.json"
   if [[ "$persist_session" == true ]]; then
-    session_id=$(jq -er '.session_id | strings | select(length > 0)' "$reviewer_dir/stdout.log") || return 1
-    [[ -z "$resume_session_id" || "$session_id" == "$resume_session_id" ]] || return 1
-    printf '%s\n' "$session_id" > "$reviewer_dir/session-id"
+    if ! session_id=$(jq -er '.session_id | strings | select(length > 0)' "$reviewer_dir/stdout.log" 2> /dev/null); then
+      echo "Warning: Claude session ID is unavailable; keeping the reviewer result without session reuse." >&2
+      return 0
+    fi
+    if [[ -n "$resume_session_id" && "$session_id" != "$resume_session_id" ]]; then
+      echo "Warning: Claude session ID changed during resume; keeping the reviewer result without session reuse." >&2
+      return 0
+    fi
+    if ! printf '%s\n' "$session_id" > "$reviewer_dir/session-id"; then
+      echo "Warning: unable to save the Claude session ID; keeping the reviewer result without session reuse." >&2
+    fi
   fi
 }
