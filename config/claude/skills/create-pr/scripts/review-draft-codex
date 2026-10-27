@@ -25,10 +25,10 @@ codex_home_source="$6"
 host_os=$(uname -s)
 case "$host_os" in
   Darwin)
-    required_commands=(codex jq rg sandbox-exec)
+    required_commands=(codex jq sandbox-exec)
     ;;
   Linux)
-    required_commands=(codex jq rg)
+    required_commands=(codex jq)
     ;;
   *)
     echo "Error: tool-free Codex draft review is unsupported on $host_os." >&2
