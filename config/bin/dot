@@ -120,6 +120,9 @@ cmd_deploy() {
     exit 1
   fi
 
+  # Emit the missing private repository notice before overlay consumers suppress absent paths.
+  "$_dot_bin_dir/dot-role" overlay "$DOTFILES_DIR/config/zsh/.zshenv" > /dev/null || true
+
   # Run build steps for matching tags that have a Makefile.
   # With --force, run `make clean` first so the build starts from a clean state
   # (e.g. bypassing drift checks that compare against previously-installed artifacts).
