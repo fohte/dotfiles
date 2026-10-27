@@ -54,7 +54,7 @@ git_root() {
     (
       unset GIT_DIR GIT_WORK_TREE GIT_COMMON_DIR GIT_CEILING_DIRECTORIES
       unset GIT_DISCOVERY_ACROSS_FILESYSTEM GIT_PREFIX
-      LC_ALL=C git -C "$directory" rev-parse --show-toplevel 2>&1
+      git -C "$directory" rev-parse --show-toplevel 2> /dev/null
     )
     status=$?
     printf '\n__GIT_EXIT__%s' "$status"
@@ -64,14 +64,18 @@ git_root() {
   result=${result%$'\n'}
 
   if [[ $status != 0 ]]; then
-    case "$result" in
-      'fatal: not a git repository (or any of the parent directories): .git')
-        has_git_metadata_ancestor "$directory"
-        metadata_status=$?
-        case "$metadata_status" in
-          1) return 1 ;;
-          *) return 2 ;;
-        esac
+    has_git_metadata_ancestor "$directory"
+    metadata_status=$?
+    case "$metadata_status" in
+      1)
+        if (
+          unset GIT_DIR GIT_WORK_TREE GIT_COMMON_DIR GIT_CEILING_DIRECTORIES
+          unset GIT_DISCOVERY_ACROSS_FILESYSTEM GIT_PREFIX
+          git -C "$directory" rev-parse --is-bare-repository > /dev/null 2>&1
+        ); then
+          return 2
+        fi
+        return 1
         ;;
       *) return 2 ;;
     esac
@@ -123,7 +127,6 @@ parse_codex_targets() {
     return 1
   fi
   command=$(jq -r '.tool_input.command' <<< "$input") || return 1
-  [[ $command != *$'\r'* ]] || return 1
   first_line=${command%%$'\n'*}
   [[ $first_line == '*** Begin Patch' ]] || return 1
 
