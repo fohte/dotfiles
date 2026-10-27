@@ -189,8 +189,6 @@ if match_tag armyknife; then
     log-exec rm "$HOME/.config/armyknife/private.yaml"
   fi
   sym_role_file config-overlays/armyknife/work.yaml ~/.config/armyknife/work.yaml
-  log-exec bash "$DOTFILES_DIR/config/armyknife/migrate-profile-selection.bash" \
-    "$("$DOTFILES_DIR/config/bin/dot-role" get name)"
 fi
 
 if match_tag infractl; then
