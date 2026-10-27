@@ -50,7 +50,7 @@ diff=$(git -C "$repo_root" diff "$base_sha...$head_sha")
 
 prompt=$(
   cat << EOF
-あなたはこの Pull Request のレビュアーです。以下の title と body、base branch との diff だけを読み、次の 2 点に自由回答で答えてください。回答には必ず \`## 1.\` と \`## 2.\` をそれぞれ単独行の見出しとして使い、次の行から空でない回答を書いてください。
+あなたはこの Pull Request のレビュアーです。以下の title と body、base branch との diff だけを読み、次の 2 点に自由回答で答えてください。回答には必ず \`## 1.\` と \`## 2.\` で始まる見出しを使い、その次の行から空でない回答を書いてください。
 
 1. body の冒頭の節 (Purpose や Why など) に書かれた困りごとが、続く節 (Approach や What など) の変更でなぜ解消されるのかを、body の記述だけから説明できますか。説明できるなら、その説明を書いてください。diff を読まないと説明できない、または説明できないなら、body に何が欠けているかを書いてください
 2. レビューの判断に不要な行や引用、別の行とまとめて 1 行にできる行 (同じ変更の言い換え、補足、帰結) はありますか。あれば該当箇所を引用し、なぜ不要か、どうまとめられるかを書いてください
@@ -95,13 +95,12 @@ snapshot_descriptor=$(jq -cn \
 input_hash=$(printf '%s' "$snapshot_descriptor" | shasum -a 256 | awk '{print $1}')
 
 assert_snapshot_unchanged() {
-  local current_head current_base current_draft current_prompt
+  local current_head current_draft current_prompt
   current_head=$(git -C "$repo_root" rev-parse --verify HEAD)
-  current_base=$(git -C "$repo_root" rev-parse --verify "$base_ref^{commit}")
   current_draft=$(hash_file "$draft")
   current_prompt=$(hash_file "$prompt_file")
-  if [[ "$current_head" != "$head_hash" || "$current_base" != "$base_hash" ||
-    "$current_draft" != "$draft_hash" || "$current_prompt" != "$prompt_hash" ]]; then
+  if [[ "$current_head" != "$head_hash" || "$current_draft" != "$draft_hash" ||
+    "$current_prompt" != "$prompt_hash" ]]; then
     echo "Error: review inputs changed during the draft review." >&2
     return 1
   fi
@@ -133,7 +132,6 @@ printf 'Draft review: input_hash=%s (HEAD=%s, base=%s, draft=%s, prompt=%s), eng
 
 cd "$empty_cwd"
 max_output_bytes=1048576
-quota_pattern="you['’]?ve hit (your )?(weekly|usage) limit|rate[_ -]?limit[_ -]?(exceeded|reached)|out of extra usage|usage quota.{0,30}(exceeded|limit)"
 
 case "$agent" in
   claude)
@@ -142,7 +140,6 @@ case "$agent" in
       exit 3
     }
     stdout_file="$work_dir/claude-events.jsonl"
-    stderr_file="$work_dir/claude-stderr.log"
     ;;
   codex)
     "$script_dir/review-draft-codex" "$model" "$reasoning_effort" "$prompt_file" "$result_file" "$work_dir" "$original_codex_home" || {
@@ -150,7 +147,6 @@ case "$agent" in
       exit 3
     }
     stdout_file="$work_dir/codex-events.jsonl"
-    stderr_file="$work_dir/codex-stderr.log"
     ;;
   *)
     echo "Error: review-draft does not support the configured engine: $agent" >&2
@@ -163,14 +159,9 @@ if [[ "$output_bytes" -gt "$max_output_bytes" ]]; then
   echo "Error: draft reviewer output exceeded the size limit." >&2
   exit 3
 fi
-if grep -Eiq "$quota_pattern" "$stdout_file" "$stderr_file"; then
-  echo "Error: draft reviewer output contains a usage-limit response." >&2
-  exit 3
-fi
-
 if [[ ! -s "$result_file" ]] || ! awk '
-  /^## 1\.[[:space:]]*$/ { if (one || two) invalid = 1; one = 1; section = 1; next }
-  /^## 2\.[[:space:]]*$/ { if (!one || two) invalid = 1; two = 1; section = 2; next }
+  /^## 1\./ { if (one || two) invalid = 1; one = 1; section = 1; next }
+  /^## 2\./ { if (!one || two) invalid = 1; two = 1; section = 2; next }
   section == 1 && NF { one_answer = 1 }
   section == 2 && NF { two_answer = 1 }
   END { exit !(one && two && one_answer && two_answer && !invalid) }
