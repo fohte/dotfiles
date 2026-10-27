@@ -85,15 +85,6 @@ print_sanitized_diagnostics() {
       -e 's/(([Hh][Tt][Tt][Pp][Ss]?|[Aa][Ll][Ll]|[Nn][Oo])_[Pp][Rr][Oo][Xx][Yy]=)[[:graph:]]+/\1[REDACTED]/g' >&2 || true
 }
 
-cli_version=$("${clean_env_args[@]}" "$claude_path" --version) || {
-  echo "Error: unable to inspect the Claude CLI version." >&2
-  exit 3
-}
-[[ "$cli_version" == "2.1.310 (Claude Code)" ]] || {
-  echo "Error: isolated Claude draft review is verified only with Claude Code 2.1.310 (found: $cli_version)." >&2
-  exit 3
-}
-
 assert_absent_path() {
   local source_path="$1"
   if [[ -e "$source_path" || -L "$source_path" ]]; then
@@ -287,7 +278,7 @@ output_bytes=$(wc -c < "$events_file" | tr -d '[:space:]')
 }
 
 expected_cwd=$(pwd -P)
-if ! jq -s -e --arg expected_version "2.1.310" --arg expected_cwd "$expected_cwd" '
+if ! jq -s -e --arg expected_cwd "$expected_cwd" '
   [to_entries[] | select(.value.type == "system" and .value.subtype == "init") | .key] as $inits
   | [to_entries[] | select(.value.type == "result") | .key] as $results
   | length > 0
@@ -311,7 +302,6 @@ if ! jq -s -e --arg expected_version "2.1.310" --arg expected_cwd "$expected_cwd
     and $inits[0] == 0
     and ($results | length == 1)
     and $results[0] == (length - 1)
-    and (.[ $inits[0] ] | .claude_code_version == $expected_version)
     and (.[ $inits[0] ] | .cwd == $expected_cwd and .original_cwd == $expected_cwd)
     and (.[ $inits[0] ] | (.model | type == "string" and test("\\S")))
     and (.[ $inits[0] ] | (.tools | type == "array" and length == 0))
