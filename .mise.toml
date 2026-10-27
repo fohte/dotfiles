@@ -74,7 +74,7 @@ update_repo() {
 }
 
 echo "Updating $dotfiles_dir"
-git -C "$dotfiles_dir" pull --ff-only --autostash
+git -C "$dotfiles_dir" pull --autostash
 
 if [ -n "$role_repo_dir" ] && [ -d "$role_repo_dir" ] && [ "$role_repo_dir" != "$dotfiles_dir" ]; then
   update_repo "$role_repo_dir"
