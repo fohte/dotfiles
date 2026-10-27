@@ -3,9 +3,6 @@
 BASE_PLISTS := com.fohte.codex-app-server.plist com.fohte.codex-app-server-reloader.plist com.fohte.skk-watcher.plist
 PRIVATE_PLIST := com.fohte.claude-rate-limits.plist
 MACHINE_ROLE := $(shell ../bin/dot-role get name)
-ifeq ($(MACHINE_ROLE),)
-$(error unable to determine machine role with ../bin/dot-role get name)
-endif
 
 PLISTS := $(BASE_PLISTS)
 ifeq ($(MACHINE_ROLE),private)

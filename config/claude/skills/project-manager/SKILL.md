@@ -130,8 +130,8 @@ PM セッションから切り出した作業セッション。PM は手を動�
 - 完了 window に移したセッションは `a agent close --child <session_id>` で閉じる。拒否された場合は `--force` を使わず、拒否理由をユーザーに伝える
 - 起動時と完了時だけでなく、peer message を受けるたびに担当中の全 session の状態と役割を見直す。段階 window の振り分けは owner session にだけ適用する
 - 配置先を一意に特定できない場合や、pane を安全に選べない場合は移動を見送り、その後の PM 作業を続ける。ユーザーには確認しない
-- owner session ごとに、対象 repo に対応する配置先 session を照合する。`a agent peer list` の owner の `cwd` と、`tmux list-sessions -F '#{session_id} #{session_name} #{session_path}'` で得た各 `session_path` を有限個列挙し、`git -C "$repo_path" rev-parse --path-format=absolute --git-common-dir` の結果で比較する。Git 2.31 未満との互換手順は設けない。パスを解決できない場合や一致する session が 1 つでない場合は、その owner pane を移動しない。配置先は一致した session の `session_id` で指定し、自動で新しい session を作らない
-- owner pane を置く段階 window は、確定した session 内で `window_id` を使って選ぶ。同じ段階の window が複数ある場合は移動しない。段階 window がない場合は `break-pane` で確定済み session に作る
+- owner session ごとに、対象 repo に対応する配置先 session を照合する。`a agent peer list` の owner の `cwd` と、`tmux list-sessions -F '#{session_id} #{session_name} #{session_path}'` で得た各 `session_path` を有限個列挙し、`git -C "$repo_path" rev-parse --path-format=absolute --git-common-dir` の結果で比較する。パスを解決できない場合や一致する session が 1 つでない場合は、その owner pane を移動しない。配置先は一致した session の `session_id` で指定し、自動で新しい session を作らない
+- owner pane を置く段階 window は、確定した session 内で `window_id` を使って選ぶ。同じ段階の window が複数ある場合や既存 window の安全性を確認できない場合は移動しない。段階 window が存在しない場合は `break-pane` で確定済み session に作る
 - owner pane の対応表は `a agent peer list` と `tmux list-panes -a -F '#{session_id} #{session_name} #{window_id} #{window_name} #{pane_id} #{pane_current_path} #{pane_floating_flag} #{window_linked_sessions}'` から作る。操作直前に両方を取り直し、対象 owner の `cwd`、最新 `pane_id`、tmux 上の所属を照合する。`cwd` や所属が変わっていたら repo と配置先 session / window を確定し直す。再確認できない場合や、移動に関わる window のいずれかで `window_linked_sessions` が 1 より大きい場合は移動しない
 - 既存 window には、確定済み session と `window_id` を含む target を指定して owner pane だけを `join-pane` で移す。移動先 pane が floating である場合や、移動先 window に実装担当、役割不明の pane、別 repo の pane がある場合は移動しない
 - 移動後に同じ `pane_id` を再取得し、確定済みの `session_id` と段階 window の `window_id` にあることを照合する。`break-pane` で作成した window は、移動後の pane 情報から新しい `window_id` を特定して照合する。一致しない場合は追加の移動を行わず報告する
@@ -139,49 +139,29 @@ PM セッションから切り出した作業セッション。PM は手を動�
 
 ```bash
 # Fictional sample-repo session and pane IDs; refresh them before use.
+target_session='$92'
 source_pane='%901'
-source_window='@904'
+target_window='@902'
 target_pane='%903'
+source_window='@904'
 stage_name='実装中'
 
-owner_path='/fictional/repos/sample-repo'
-session_ids=('$92' '$93')
-session_paths=('/fictional/repos/sample-repo' '/fictional/repos/other-repo')
-repo_paths_resolved=true
-owner_common_dir=$(git -C "$owner_path" rev-parse --path-format=absolute --git-common-dir) || repo_paths_resolved=false
-matching_sessions=()
-if $repo_paths_resolved; then
-  for index in "${!session_ids[@]}"; do
-    session_common_dir=$(git -C "${session_paths[$index]}" rev-parse --path-format=absolute --git-common-dir) || {
-      repo_paths_resolved=false
-      break
-    }
-    if [ "$owner_common_dir" = "$session_common_dir" ]; then
-      matching_sessions+=("${session_ids[$index]}")
-    fi
-  done
-fi
+# Compare these common directories and move only when one session matches.
+git -C '/fictional/repos/sample-repo' rev-parse --path-format=absolute --git-common-dir
+git -C '/fictional/repos/other-repo' rev-parse --path-format=absolute --git-common-dir
 
-if $repo_paths_resolved && [ "${#matching_sessions[@]}" -eq 1 ]; then
-  target_session="${matching_sessions[0]}"
-  # Populate from the verified session; include only safe matching stage windows.
-  stage_window_ids=('@902')
-  moved=false
-  if [ "${#stage_window_ids[@]}" -eq 0 ]; then
-    tmux break-pane -d -s "$source_pane" -t "$target_session:" -n "$stage_name" && moved=true
-  elif [ "${#stage_window_ids[@]}" -eq 1 ]; then
-    target_window="${stage_window_ids[0]}"
-    # Use a verified non-floating pane in the unique stage window.
-    tmux join-pane -d -s "$source_pane" -t "$target_session:$target_window.$target_pane" && moved=true
-  fi
-  if $moved; then
-    tmux list-panes -a -F '#{session_id} #{session_name} #{window_id} #{window_name} #{pane_id} #{pane_current_path} #{pane_floating_flag} #{window_linked_sessions}'
-  fi
-fi
+# Create a stage window only when none exists in the unique target session.
+tmux break-pane -d -s "$source_pane" -t "$target_session:" -n "$stage_name"
+
+# Or join a unique existing stage window through a verified non-floating pane.
+tmux join-pane -d -s "$source_pane" -t "$target_session:$target_window.$target_pane"
 
 # Keep explicit session targeting when creating or moving a whole window.
-# tmux new-window -t "$target_session:" -n "$stage_name"
-# tmux move-window -s "$source_window" -t "$target_session:"
+tmux new-window -t "$target_session:" -n "$stage_name"
+tmux move-window -s "$source_window" -t "$target_session:"
+
+# Refresh and verify pane, session, and window membership after each move.
+tmux list-panes -a -F '#{session_id} #{session_name} #{window_id} #{window_name} #{pane_id} #{pane_current_path} #{pane_floating_flag} #{window_linked_sessions}'
 ```
 
 ## セッション間の仲介
