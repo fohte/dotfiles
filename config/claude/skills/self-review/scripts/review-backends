@@ -148,6 +148,7 @@ agy_send_stream_input() {
   local reviewer_dir="$1" reasoning_effort="${2:-}" effort_args=() stream_status=0
   [[ -n "$reasoning_effort" ]] && effort_args=(--effort "$reasoning_effort")
 
+  # A schema here would set .structured_output on the first turn; later stream-json turns do not update it.
   agy \
     --sandbox \
     --add-dir "$repo_root" \
