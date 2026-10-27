@@ -81,7 +81,7 @@ brew 'siderolabs/tap/talosctl', trusted: true
 
 # ===== Cloud / infrastructure =====
 
-# Official Amazon Web Services command-line interface
+# Official Amazon AWS command-line interface
 brew 'awscli'
 
 # ===== Language servers =====
