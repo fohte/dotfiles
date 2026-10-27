@@ -7,28 +7,26 @@ definitions:
     - 'uvx [--from *] <cmd>'
 
 rules:
-  # Keep Python interpreter isolation and unbuffered modes readonly.
-  - allow: 'python3|python -I *'
-    sandbox: readonly
-    tests:
-      - allow: 'python3 -I ~/.agents/skills/example-skill/scripts/check.py run --stdin'
-
-  - allow: 'python3|python -u *'
-    sandbox: readonly
-    tests:
-      - allow: 'python3 -u ~/.agents/skills/example-skill/scripts/check.py run --stdin'
-
-  # Skill-bundled Python tools may use mkdtemp in $TMPDIR, which readonly rejects.
-  # Tilde spellings are accepted; resolved paths must stay under a user skill root.
-  - allow: 'python3|python <var:claude-skill-scripts> *'
+  # Python tools may use mkdtemp, so interpreter sandboxes need temp writes.
+  # The glob spans `/`, so absolute paths need one skill level under a safe HOME root.
+  - allow: 'python3|python <var:sandboxed-skill-scripts> *'
     when: >-
       size(args) > 0 &&
       !args[0].contains('..') &&
-      !args[0].contains('/.claude/skills/synced/') &&
-      (!args[0].startsWith('/') ||
-       args[0].startsWith(env.HOME + '/.agents/skills/') ||
-       args[0].startsWith(env.HOME + '/.claude/skills/') ||
-       args[0].startsWith(env.HOME + '/.claude/plugins/cache/'))
+      (
+        args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') ||
+        args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') ||
+        args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
+        (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+          args[0].startsWith(env.HOME + '/.agents/skills/') &&
+          args[0].matches('^' + env.HOME + '/[.]agents/skills/[^/]+/(scripts|bin)/')) ||
+        (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+          args[0].startsWith(env.HOME + '/.claude/skills/') &&
+          args[0].matches('^' + env.HOME + '/[.]claude/skills/[^/]+/(scripts|bin)/')) ||
+        (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+          args[0].startsWith(env.HOME + '/.claude/plugins/cache/') &&
+          args[0].matches('^' + env.HOME + '/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/'))
+      )
     sandbox: write-tmp-cwd
     tests:
       - allow: 'python3 ~/.agents/skills/example-skill/scripts/check.py run --stdin'
@@ -36,27 +34,61 @@ rules:
       - allow: 'python ~/.agents/skills/example-skill/scripts/check.py run --stdin'
       - allow: 'python3 ~/.claude/skills/example-skill/bin/check.py --help'
       - allow: 'python3 ~/.claude/plugins/cache/example-marketplace/example-plugin/1.0.0/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python3 ~/.claude/skills/example-skill/scripts/check.py run --stdin --no-record'
 
-  # Rule matches do not take priority by order, so exclude the writable calls
-  # from the generic Python sandbox explicitly.
+  # Flag matching ignores argument order; pair interpreter options with a
+  # script path so the script's own flags do not select this sandbox.
+  - allow: >-
+      python3|python
+      -b|-bb|-B|-d|-E|-h|--help|-i|-I|-I*|-O|-OO|-P|-q|-s|-S|-u|-v|-V|-VV|--version|-x|--help-env|--help-xoptions|--help-all
+      <var:sandboxed-skill-scripts> *
+    sandbox: readonly
+    tests:
+      - allow: 'python3 -B ~/.agents/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python3 -E ~/.claude/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python -s ~/.agents/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python3 -O ~/.claude/skills/example-skill/scripts/check.py verify --final final.md'
+      - allow: 'python3 -Iu ~/.agents/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python3 -I ~/.claude/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python -u ~/.agents/skills/example-skill/scripts/check.py run --stdin'
+
+  - allow: >-
+      python3|python -W|-X|--check-hash-based-pycs * <var:sandboxed-skill-scripts> *
+    sandbox: readonly
+    tests:
+      - allow: 'python3 -W ignore ~/.agents/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python -X dev ~/.claude/skills/example-skill/scripts/check.py run --stdin'
+
+  # The stricter readonly sandbox wins whenever both rules match.
   - allow: 'python3|python *'
     when: >-
       !(size(args) > 0 &&
-        definitions.vars["claude-skill-scripts"].exists(p, glob_matches(p, args[0])) &&
+        definitions.vars["sandboxed-skill-scripts"].exists(p, glob_matches(p, args[0])) &&
         !args[0].contains('..') &&
-        !args[0].contains('/.claude/skills/synced/') &&
-        (!args[0].startsWith('/') ||
-         args[0].startsWith(env.HOME + '/.agents/skills/') ||
-         args[0].startsWith(env.HOME + '/.claude/skills/') ||
-         args[0].startsWith(env.HOME + '/.claude/plugins/cache/')))
+        (
+          args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') ||
+          args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') ||
+          args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
+          (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+            args[0].startsWith(env.HOME + '/.agents/skills/') &&
+            args[0].matches('^' + env.HOME + '/[.]agents/skills/[^/]+/(scripts|bin)/')) ||
+          (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+            args[0].startsWith(env.HOME + '/.claude/skills/') &&
+            args[0].matches('^' + env.HOME + '/[.]claude/skills/[^/]+/(scripts|bin)/')) ||
+          (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+            args[0].startsWith(env.HOME + '/.claude/plugins/cache/') &&
+            args[0].matches('^' + env.HOME + '/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/'))
+        ))
     sandbox: readonly
     tests:
       - allow: 'python3 -c "print(1)"'
       - allow: 'python -c "print(1)"'
       - allow: 'python3 example.py'
       - allow: 'python example.py'
-      - allow: 'python3 /Users/example/repo/.claude/skills/example-skill/scripts/check.py run --stdin'
+      - allow: 'python3 /Users/foo/repo/.claude/skills/example-skill/scripts/check.py run --stdin'
       - allow: 'python3 ~/.claude/skills/synced/b/s/scripts/check.py run --stdin'
+      - allow: 'python3 ~/.claude/skills/./synced/b/scripts/check.py run --stdin'
+      - allow: 'python3 ~/.claude/skills//synced/scripts/check.py run --stdin'
       - allow: 'python3 ~/.agents/skills/x/../../../tmp/scripts/evil.py run --stdin'
 
   - allow: 'schemathesis *'

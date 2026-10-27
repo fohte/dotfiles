@@ -456,44 +456,74 @@ rules:
     tests:
       - allow: 'na dedupe'
 
-  # Skill-bundled tools (e.g. archify) stage output through mkdtemp in $TMPDIR,
-  # which `readonly` below rejects. A local server still cannot bind, so
-  # `archify preview` fails here; use `crit preview <file>` instead.
-  # Tilde spellings are accepted; resolved paths must stay under a user skill root.
-  - allow: 'node <var:claude-skill-scripts> *'
+  # Skill-bundled tools may create temp files that `readonly` rejects.
+  # The glob spans `/`, so absolute paths need one skill level under a safe HOME root.
+  - allow: 'node <var:sandboxed-skill-scripts> *'
     when: >-
       size(args) > 0 &&
       !args[0].contains('..') &&
-      !args[0].contains('/.claude/skills/synced/') &&
-      (!args[0].startsWith('/') ||
-       args[0].startsWith(env.HOME + '/.agents/skills/') ||
-       args[0].startsWith(env.HOME + '/.claude/skills/') ||
-       args[0].startsWith(env.HOME + '/.claude/plugins/cache/'))
+      (
+        args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') ||
+        args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') ||
+        args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
+        (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+          args[0].startsWith(env.HOME + '/.agents/skills/') &&
+          args[0].matches('^' + env.HOME + '/[.]agents/skills/[^/]+/(scripts|bin)/')) ||
+        (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+          args[0].startsWith(env.HOME + '/.claude/skills/') &&
+          args[0].matches('^' + env.HOME + '/[.]claude/skills/[^/]+/(scripts|bin)/')) ||
+        (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+          args[0].startsWith(env.HOME + '/.claude/plugins/cache/') &&
+          args[0].matches('^' + env.HOME + '/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/'))
+      )
     sandbox: write-tmp-cwd
     tests:
       - allow: 'node ~/.agents/skills/archify/bin/archify.mjs validate architecture /tmp/spec.json --json'
       - allow: 'node ~/.claude/skills/example-skill/scripts/build.cjs in.md out.md'
       - allow: 'node ~/.claude/skills/example-skill/bin/check.mjs --help'
       - allow: 'node ~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/build.cjs in.md out.md'
+      - allow: 'node ~/.claude/skills/example-skill/scripts/check.js --stdin'
+
+  # Flag matching ignores argument order; pair Node options with the script
+  # path so the script's own flags do not select this sandbox.
+  - allow: >-
+      node
+      --check|--test|--watch|--interactive|-i|--version|-v|--help|-h
+      <var:sandboxed-skill-scripts> *
+    sandbox: readonly
+    tests:
+      - allow: 'node --check ~/.agents/skills/example-skill/scripts/check.js'
+      - allow: 'node --test ~/.claude/skills/example-skill/scripts/check.js'
 
   # Rule matches do not take priority by order, so readonly steps aside only
-  # for skill scripts under trusted user roots.
+  # for direct skill-script paths accepted by the sandboxed variable.
   - allow: 'node *'
     when: >-
       !(size(args) > 0 &&
-        definitions.vars["claude-skill-scripts"].exists(p, glob_matches(p, args[0])) &&
+        definitions.vars["sandboxed-skill-scripts"].exists(p, glob_matches(p, args[0])) &&
         !args[0].contains('..') &&
-        !args[0].contains('/.claude/skills/synced/') &&
-        (!args[0].startsWith('/') ||
-         args[0].startsWith(env.HOME + '/.agents/skills/') ||
-         args[0].startsWith(env.HOME + '/.claude/skills/') ||
-         args[0].startsWith(env.HOME + '/.claude/plugins/cache/')))
+        (
+          args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') ||
+          args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') ||
+          args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
+          (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+            args[0].startsWith(env.HOME + '/.agents/skills/') &&
+            args[0].matches('^' + env.HOME + '/[.]agents/skills/[^/]+/(scripts|bin)/')) ||
+          (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+            args[0].startsWith(env.HOME + '/.claude/skills/') &&
+            args[0].matches('^' + env.HOME + '/[.]claude/skills/[^/]+/(scripts|bin)/')) ||
+          (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+            args[0].startsWith(env.HOME + '/.claude/plugins/cache/') &&
+            args[0].matches('^' + env.HOME + '/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/'))
+        ))
     sandbox: readonly
     tests:
       - allow: 'node -e "console.log(1)"'
       - allow: 'node lint.mjs ~/.agents/skills/archify/SKILL.md'
-      - allow: 'node /Users/example/repo/.claude/skills/example-skill/scripts/build.cjs in.md out.md'
+      - allow: 'node /Users/foo/repo/.claude/skills/example-skill/scripts/build.cjs in.md out.md'
       - allow: 'node ~/.claude/skills/synced/b/s/scripts/build.cjs in.md out.md'
+      - allow: 'node ~/.claude/skills/./synced/b/scripts/build.cjs in.md out.md'
+      - allow: 'node ~/.claude/skills//synced/scripts/build.cjs in.md out.md'
       - allow: 'node ~/.agents/skills/x/../../../tmp/scripts/evil.js in.md out.md'
 
   - allow: 'corepack enable'

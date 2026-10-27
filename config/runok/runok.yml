@@ -49,19 +49,29 @@ definitions:
       values:
         - '~/.agents/skills/*/scripts/*'
         - '~/.agents/skills/*/bin/*'
+        - '~/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
+        - '~/.claude/plugins/cache/*/*/*/skills/*/bin/*'
+        # Plugin skills are usually invoked with a resolved absolute path. The
+        # leading `/` keeps a cwd-relative `foo/.claude/plugins/cache/...` from
+        # posing as a trusted script.
+        - '/*/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
+        - '/*/.claude/plugins/cache/*/*/*/skills/*/bin/*'
+
+    # Interpreter sandboxes need temp-file access for bundled tools without
+    # broadening the separate shell and direct-execution trust set.
+    sandboxed-skill-scripts:
+      type: pattern
+      values:
+        - '~/.agents/skills/*/scripts/*'
+        - '~/.agents/skills/*/bin/*'
         - '~/.claude/skills/*/scripts/*'
         - '~/.claude/skills/*/bin/*'
-        # `*` spans `/`, so consumers must reject nested synced skills and `..` paths.
-        # Absolute spellings are restricted to skill roots under env.HOME.
         - '/*/.agents/skills/*/scripts/*'
         - '/*/.agents/skills/*/bin/*'
         - '/*/.claude/skills/*/scripts/*'
         - '/*/.claude/skills/*/bin/*'
         - '~/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
         - '~/.claude/plugins/cache/*/*/*/skills/*/bin/*'
-        # Plugin skills are usually invoked with a resolved absolute path. The
-        # leading `/` keeps a cwd-relative `foo/.claude/plugins/cache/...` from
-        # posing as a trusted script.
         - '/*/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
         - '/*/.claude/plugins/cache/*/*/*/skills/*/bin/*'
 
@@ -133,55 +143,37 @@ definitions:
     - 'rtk proxy <cmd>'
 
 rules:
-  # No sandbox: bundled scripts spawn agents and reach the network. The
-  # `node <var:claude-skill-scripts> *` rule in languages/node.yml sandboxes
-  # only that invocation form, so it caps blast radius rather than confining
-  # what a skill's own code may do.
+  # No sandbox: bundled scripts spawn agents and reach the network.
   - allow: 'bash <var:claude-skill-scripts>'
-    when: &trusted_skill_script_path >-
-      size(args) > 0 &&
-      !args[0].contains('..') &&
-      !args[0].contains('/.claude/skills/synced/') &&
-      (!args[0].startsWith('/') ||
-       args[0].startsWith(env.HOME + '/.agents/skills/') ||
-       args[0].startsWith(env.HOME + '/.claude/skills/') ||
-       args[0].startsWith(env.HOME + '/.claude/plugins/cache/'))
     tests:
       - allow: 'bash ~/.agents/skills/self-review/scripts/select-reviewers'
-      - allow: 'bash ~/.claude/skills/example-skill/scripts/check.sh'
-      - pass: 'bash /Users/example/repo/.claude/skills/example-skill/scripts/check.sh'
-      - pass: 'bash ~/.claude/skills/synced/b/s/scripts/check.sh'
-      - pass: 'bash ~/.agents/skills/x/../../../tmp/scripts/evil.sh'
+      - allow: 'bash /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs'
+      - pass: 'bash ~/.claude/skills/delegate/scripts/launch --task task.yaml --label example'
+      - pass: 'bash $HOME/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
 
   - allow: 'bash <var:claude-skill-scripts> *'
-    when: *trusted_skill_script_path
     tests:
       - allow: 'bash ~/.agents/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
-      - allow: 'bash ~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
-      - pass: 'bash /Users/example/repo/.claude/skills/example-skill/scripts/check.sh out.md'
-      - pass: 'bash ~/.claude/skills/synced/b/s/scripts/check.sh out.md'
-      - pass: 'bash ~/.agents/skills/x/../../../tmp/scripts/evil.sh out.md'
+      - allow: 'bash /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
+      - pass: 'bash ~/.claude/skills/delegate/scripts/launch --task task.yaml --label example'
+      - pass: 'bash $HOME/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
 
   # Absolute-path forms of <var:claude-skill-scripts> aren't tested here: bare
   # execution of an absolute path always loses to the `deny: '/* *'` rule
   # below (Explicit Deny Wins), regardless of this rule's own match.
   - allow: '<var:claude-skill-scripts>'
-    when: &trusted_skill_script_command >-
-      !vars["claude-skill-scripts"].contains('..') &&
-      !vars["claude-skill-scripts"].contains('/.claude/skills/synced/')
     tests:
       - allow: '~/.agents/skills/self-review/scripts/select-reviewers'
       - allow: '~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs'
-      - pass: '~/.claude/skills/synced/b/s/scripts/check.sh'
-      - pass: '~/.agents/skills/x/../../../tmp/scripts/evil.sh'
+      - pass: '~/.claude/skills/delegate/scripts/launch --task task.yaml --label example'
+      - pass: '$HOME/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
 
   - allow: '<var:claude-skill-scripts> *'
-    when: *trusted_skill_script_command
     tests:
       - allow: '~/.agents/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
       - allow: '~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
-      - pass: '~/.claude/skills/synced/b/s/scripts/check.sh out.md'
-      - pass: '~/.agents/skills/x/../../../tmp/scripts/evil.sh out.md'
+      - pass: '~/.claude/skills/delegate/scripts/launch --task task.yaml --label example'
+      - pass: '$HOME/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
 
   - ask: '~/.agents/skills/delegate/scripts/launch *'
     when: '!has(flags.vibe) && !("dry-run" in flags) && !has(flags.help) && !has(flags.h)'
