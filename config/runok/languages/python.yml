@@ -7,11 +7,27 @@ definitions:
     - 'uvx [--from *] <cmd>'
 
 rules:
+  # These commands create temporary directories for the check workflow.
+  - allow: 'python3 ~/.agents/skills/yomiyasu/scripts/yomiyasu_check.py run|verify *'
+    sandbox: write-tmp-cwd
+
+  - allow: 'python3 ~/.claude/skills/yomiyasu/scripts/yomiyasu_check.py run|verify *'
+    sandbox: write-tmp-cwd
+
+  # Rule matches do not take priority by order, so exclude the writable calls
+  # from the generic Python sandbox explicitly.
   - allow: 'python3|python *'
+    when: "!(size(args) > 1 && args[0] in ['~/.agents/skills/yomiyasu/scripts/yomiyasu_check.py', '~/.claude/skills/yomiyasu/scripts/yomiyasu_check.py'] && args[1] in ['run', 'verify'])"
     sandbox: readonly
     tests:
       - allow: 'python3 -c "print(1)"'
       - allow: 'python -c "print(1)"'
+
+  - allow: 'python ~/.agents/skills/yomiyasu/scripts/yomiyasu_check.py run|verify *'
+    sandbox: readonly
+
+  - allow: 'python ~/.claude/skills/yomiyasu/scripts/yomiyasu_check.py run|verify *'
+    sandbox: readonly
 
   - allow: 'schemathesis *'
     tests:
