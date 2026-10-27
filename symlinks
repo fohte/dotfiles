@@ -205,6 +205,7 @@ if match_tag mise; then
   else
     log-exec rm -f ~/.config/mise/conf.d/private.toml
   fi
+  sym_role_file config-overlays/mise/work.toml ~/.config/mise/conf.d/work.toml
 fi
 
 if match_tag colima && is_macos; then
