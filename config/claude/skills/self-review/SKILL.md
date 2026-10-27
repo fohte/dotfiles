@@ -13,7 +13,7 @@ reviewer の選択順、agent、trigger、reference は `reviewers.yaml` を唯�
 レビューが十分かどうかを判定するのは呼び出し元であり、この skill ではない。
 自分で次の round を始めると、呼び出し元の手順に戻れなくなる。
 
-commit range のレビューでは、現在の branch に記録された review 済み HEAD が対象 HEAD の祖先なら、その HEAD までの commit を caller range 内から除外する。caller range より前へ範囲を広げない。merge commit は再 merge 結果との差分だけを含めるため、取り込んだ側の変更は除外され、conflict resolution はレビューされる。全 reviewer の成功後に HEAD と Claude / Codex の session ID を記録する。前回成功レビューから 1 時間以内なら reviewer ごとに session を再開し、失敗した resume は fresh session で再実行する。Codex reviewer はユーザーの指示と skills から分離した共有 `CODEX_HOME` を使い、1 時間を過ぎた rollout は Codex reviewer の起動時に整理する。対象 patch が空なら reviewer を起動せず skip し、その HEAD を記録する。`--cached` は session 再開と state 更新の対象外。
+commit range のレビューでは、現在の branch に記録された review 済み HEAD が対象 HEAD の祖先なら、その HEAD までの commit を caller range 内から除外する。caller range より前へ範囲を広げない。merge commit は再 merge 結果との差分だけを含めるため、取り込んだ側の変更は除外され、conflict resolution はレビューされる。全 reviewer の成功後に HEAD と Claude / Codex の session ID の保存を試みる。session ID や state を保存できない場合は警告し、レビュー結果は使う。state がある場合、前回成功レビューから 1 時間以内なら reviewer ごとに session を再開し、失敗した resume は fresh session で再実行する。Codex reviewer はユーザーの指示と skills から分離した共有 `CODEX_HOME` を使い、1 時間を過ぎた rollout は Codex reviewer の起動時に整理する。対象 patch が空なら reviewer を起動せず skip し、その HEAD を記録する。`--cached` は session 再開と state 更新の対象外。
 
 - **指摘に対応したあと、同じ差分をレビューし直さない。** 対応で差分が変われば新しい指摘が出るので、繰り返すと終わらない
 - **reviewer が失敗したときの retry は 1 回まで。** それも失敗したら止めて、その reviewer を `⚠️ 未評価` として報告し、失敗出力にある原因を添える。同じ差分で 2 回続けて失敗するなら、差分が reviewer のコンテキストに収まらない場合 (`Prompt is too long`) を含め、起動し直しても結果は変わらない
@@ -25,11 +25,11 @@ engine / model / reasoning effort は base 設定と role overlay から解決�
 
 backend が返す成果物は共有 JSON schema に従う reviewer ごとの JSON です。必須の evaluation ID は reviewer-evaluation-ids.json から prompt と validator が共に読みます。集約 Markdown の見出しと日本語名は利用者向け表示であり、JSON の ID とは別の契約です。conditional reviewer の ID 集合は固定しません。
 
-Schema validation と runner の exit 0 / 1 は schema-valid な結果が返ったことを示します。exit 0 は全 reviewer に指摘がなく、exit 1 は指摘がある結果を示しますが、どちらも要求された評価の実施までは保証しません。呼び出し元は各 evaluation の summary を読み、要求された観点を実際に確認した結果か判断してください。入力不足、resource / reference を参照できない状態、差分や対象を確認できない状態、権限制約、context 上限などで評価を実施できていない reviewer は、exit 0 / 1 でも未評価です。evaluation の一部だけが実施できていない場合も、その reviewer の初回 result 全体を集約対象から外してください。
+runner は余分な field、余分または重複した evaluation ID、大小文字だけ異なる reviewer 名、空の suggestion を警告して結果を保持します。別 reviewer 名、必須 ID の欠落、空の summary、その他の構造違反は結果を拒否します。exit 0 は全 reviewer に指摘がなく、exit 1 は指摘がある結果を示しますが、どちらも要求された評価の実施までは保証しません。呼び出し元は各 evaluation の summary を読み、要求された観点を実際に確認した結果か判断してください。入力不足、resource / reference を参照できない状態、差分や対象を確認できない状態、権限制約、context 上限などで評価を実施できていない reviewer は、exit 0 / 1 でも未評価です。evaluation の一部だけが実施できていない場合も、その reviewer の初回 result 全体を集約対象から外してください。
 
 `not-applicable` は対象を確認し、その観点が差分の構造上無関係と判断した場合に限ります。評価に必要な入力や参照がない、または制約により確認できない場合を N/A にしないでください。
 
-reviewer 実行に失敗した場合だけ、本文を含まない診断 JSON を保存します。
+reviewer 実行や結果検査に失敗した場合、本文を含まない診断 JSON の保存を試みます。診断の準備や保存に失敗した場合も reviewer の実行と有効な結果は継続します。
 
 - 記録項目: `run_id`、reviewer、終了コード、scope、execution mode、実効 engine / model / effort、patch と prompt の SHA-256、固定 `reason_code` と `field_path`
 - 保存しない項目: prompt、diff、index、result、stdout、stderr、認証情報、manifest 本文
@@ -37,7 +37,7 @@ reviewer 実行に失敗した場合だけ、本文を含まない診断 JSON �
 - 権限と保持期間: directory は 0700、file は 0600。次回起動時に 7 日を超えた自分の記録だけを削除
 - 手動削除: `~/.agents/skills/self-review/scripts/review-diagnostics clear`
 
-成功した試行の診断は作りません。resume の失敗診断は fresh fallback が成功しても保持します。保存した診断の path は実行時の stderr に表示します。
+成功した試行の診断は作りません。resume の失敗診断は保存できた場合、fresh fallback が成功しても保持します。保存した診断の path は実行時の stderr に表示します。
 
 呼び出し元が修復を伴う recovery round を明示的に依頼し、旧 round に失敗試行と有効評価がある場合は、通常の selector を実行せず、後述の「入力不足からの recovery round」を使ってください。
 
@@ -45,14 +45,14 @@ reviewer 実行に失敗した場合だけ、本文を含まない診断 JSON �
    For `--cached`, snapshot the applicable index before `select-reviewers`: copy `${GIT_INDEX_FILE:-$(git rev-parse --git-path index)}` to a unique path from `mktemp "$AGENT_TMPDIR/self-review-index.XXXXXX"`, then pass `GIT_INDEX_FILE=<snapshot-path>` to `select-reviewers` and every runner invocation. Keep that snapshot unchanged until all reviewers and retries finish.
 2. Create a manifest file path (`mktemp "$AGENT_TMPDIR/self-review-manifest.XXXXXX"`) and run `~/.agents/skills/self-review/scripts/select-reviewers <range> > <manifest-file>`. If it fails, launch nothing. When the cause is your own invocation (wrong working directory, or a typo in the caller's `<range>`), correct it and run it once more — no reviewer has run yet, so this does not count as a reviewer retry. Never switch to a range the caller did not give. Use the manifest file as the source of truth even if command output is missing: before step 4, run `jq -r '.status' <manifest-file>` and continue only when it returns `ready`. If it is `skipped`, do not launch reviewers and report that the range was skipped because no unreviewed changes remain. For any other status or an invalid manifest, stop and report the error. Once a ready manifest succeeds, do not call `select-reviewers` again for this review — every step below reads `<manifest-file>` instead. Its `reviewers` array is the complete launch manifest: do not add, remove, or reorder entries.
 3. Carry the path `mktemp` printed as a literal string into every later step. Shell variables do not survive between tool calls, and re-deriving the path with a glob can pick up an earlier manifest from this session. Do not use `ps` or other process listings to infer progress or identify a process as yours; concurrent sessions may show another run.
-4. Run `~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file>` once. In Codex, start it with `a agent bg run -- ~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file>`, then wait for the `<background-task-complete>` notification before reading its output or aggregating results. In Claude Code, use `run_in_background: true` and end the turn while waiting for the completion notification. Do not poll, sleep, or start aggregation on partial output. The script launches every reviewer in `<manifest-file>` on its own agent in parallel and returns a JSON array of results. For commit ranges, it uses the narrowed patch saved in the manifest; `--cached` omits deleted-file contents from that patch while retaining deletion metadata and file names. The exit status is `0` when every reviewer succeeded with no findings, `1` when every reviewer succeeded and at least one finding exists, `3` when any reviewer or the script itself failed (regardless of findings), and `2` / `127` for invalid input or a missing command. An exit status of `0` or `1` does not establish that every evaluation was actually performed. A reviewer run regularly outlives the foreground timeout, and being killed there loses every reviewer's result at once.
+4. Run `~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file>` once. In Codex, start it with `a agent bg run -- ~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file>`, then wait for the `<background-task-complete>` notification before reading its output or aggregating results. In Claude Code, use `run_in_background: true` and end the turn while waiting for the completion notification. Do not poll, sleep, or start aggregation on partial output. The script launches every reviewer in `<manifest-file>` on its own agent in parallel and returns a JSON array of results. For commit ranges, it uses the narrowed patch saved in the manifest; `--cached` omits deleted-file contents from that patch while retaining deletion metadata and file names. The exit status is `0` when every reviewer succeeded with no findings, `1` when every reviewer succeeded and at least one finding exists, `3` when a reviewer backend fails, a blocking result check fails, or the script itself fails (regardless of findings), and `2` / `127` for invalid input or a missing command. Diagnostic or session state preparation and storage failures only produce warnings. An exit status of `0` or `1` does not establish that every evaluation was actually performed. A reviewer run regularly outlives the foreground timeout, and being killed there loses every reviewer's result at once.
 5. Never run a reviewer as a subagent, including as a fallback. Every reviewer is written for the sandbox this script puts it in, and a subagent would inherit this session's permission mode instead.
 6. After the first run, mark a reviewer failed if the script reports failure or its summary says the requested evaluation could not be performed or was only partial, even when exit 0 or 1. Retry only those reviewers once by appending their names to the original manifest path (`~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file> <reviewer> [reviewer...]`). In Codex, use `a agent bg run -- ~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file> <reviewer> [reviewer...]` and wait for the `<background-task-complete>` notification. Keep every other valid reviewer result. Exclude an incomplete initial result entirely; if the retry is valid, replace that reviewer entry rather than adding a duplicate. If definition or reference contents need repair, make that repair before the single retry and use the original manifest; it consumes that retry and does not reset the limit.
 7. If a manifest entry has a non-null `fallback_reason`, mention it for that reviewer in the final Summary output.
 
 ### 再試行と復旧
 
-runner は caller が結果の意味を確認する前に、成功した実行の HEAD と session を記録します。その後の `select-reviewers` が `skipped` を返しても合格の根拠になりません。意味上の失敗が残る間は再選択せず、最初の manifest と試行回数を保持してください。
+runner は全 reviewer の結果と必須項目を検査した後に session state の保存を試みます。state が保存されても、summary の意味上の確認を代替しません。その後の `select-reviewers` が `skipped` を返しても合格の根拠になりません。意味上の失敗が残る間は再選択せず、最初の manifest と試行回数を保持してください。
 
 - 最初の manifest、有効な reviewer 結果、それぞれと対象差分の対応、未評価 reviewer、試行回数を引き継いでください。失敗出力の既存診断も保持し、消去しないでください。
 - commit range の retry は manifest に保存された `diff` と `files` を使います。`--cached` は step 1 で作った同じ index snapshot を `GIT_INDEX_FILE` で渡し、その SHA-256 が各実行前に一致することを確認してください。初回に snapshot を使わなかった場合は、index が初回実行後に変わっていないことと対象差分との一致を確認できるときだけ再開し、確認できなければ旧結果と混ぜず再開範囲を呼び出し元へ報告してください。
@@ -109,7 +109,7 @@ runner は caller が結果の意味を確認する前に、成功した実行�
 
 ## 結果集約
 
-`invalid` / `partial` / `empty`、evaluation が未実施と分かる summary、または retry 後も欠けている reviewer result は未評価として報告し、必須 reviewer 全員の有効な結果が揃うまで呼び出し元の `commit` / `push` / `PR` workflow を止める。
+`invalid` / `partial` / `empty`、必須 ID の欠落、空の summary、evaluation が未実施と分かる summary、または retry 後も欠けている reviewer result は未評価として報告し、必須 reviewer 全員の有効な結果が揃うまで呼び出し元の `commit` / `push` / `PR` workflow を止める。形式上の警告や診断・session state の保存失敗だけでは結果を未評価にしない。
 
 通し番号を持つ 12 観点を番号順に並べ、番号を持たない base reviewer (test-philosophy) の評価をその後へ、起動した conditional reviewer の評価をさらにその後へ追加する。
 未起動の conditional reviewer は出力しない。

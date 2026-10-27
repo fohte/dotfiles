@@ -37,29 +37,7 @@ fi
   exit 2
 }
 
-jq -e '
-  (.reviewers | type == "array" and length > 0) and
-  ([.reviewers[].name] | unique | length) == (.reviewers | length) and
-  all(.reviewers[];
-    (.name | type == "string" and length > 0) and
-    (.configured_agent == "claude" or .configured_agent == "codex" or .configured_agent == "agy") and
-    (.agent == "claude" or .agent == "codex" or .agent == "agy") and
-    (.model == null or (.model | type == "string" and length > 0)) and
-    (.reasoning_effort == null or (.reasoning_effort | type == "string" and length > 0)) and
-    (.config.config.base | type == "string" and length > 0) and
-    (.config.config.overlay == null or (.config.config.overlay | type == "string" and length > 0)) and
-    (.config.configured_agent == .configured_agent) and
-    (.config.agent == .agent) and
-    (.config.model == .model) and
-    (.config.reasoning_effort == .reasoning_effort) and
-    (.config.sources.agent | type == "string" and length > 0) and
-    (.config.sources.model | type == "string" and length > 0) and
-    (.config.sources.reasoning_effort | type == "string" and length > 0)
-  )
-' "$manifest_file" > /dev/null || {
-  echo "Error: manifest has missing or invalid reviewer configuration." >&2
-  exit 2
-}
+# review-config validates reviewer settings before select-reviewers writes this manifest.
 
 # Reject an unknown agent, or one whose executable is missing, before any
 # reviewer is spawned; the dispatch below would otherwise surface it as N
@@ -88,6 +66,7 @@ done
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 skill_dir=$(cd "$script_dir/.." && pwd -P)
+# shellcheck disable=SC2034 # Used by review-prompt.
 claude_dir=$(cd "$skill_dir/../.." && pwd -P)
 repo_root=$(git rev-parse --show-toplevel)
 # shellcheck disable=SC2034 # Used by review-backends.
@@ -99,7 +78,7 @@ shared_codex_home="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-home"
 
 # shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
 source "$script_dir/review-diagnostics"
-# shellcheck source=config/claude/skills/self-review/scripts/review-prompt
+# shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
 source "$script_dir/review-prompt"
 
 work_dir=$(mktemp -d -t self-review-external.XXXXXX)
@@ -114,11 +93,12 @@ on_exit() {
   exit "$status"
 }
 trap on_exit EXIT
-diagnostics_prepare || exit 3
+if ! diagnostics_prepare; then
+  echo "Warning: continuing without self-review diagnostics." >&2
+fi
 
 jq -e '
-  type == "object" and
-  (keys == ["behavior", "convention", "structure", "test-philosophy"]) and
+  type == "object" and length > 0 and
   all(to_entries[];
     (.key | type == "string" and length > 0) and
     (.value | type == "array" and length > 0 and
@@ -378,7 +358,29 @@ for index in "${!selected[@]}"; do
   else
     validation_violations='[{"reason_code":"result_missing","field_path":"$"}]'
   fi
-  validation_failed=$(jq -r 'length > 0' <<< "$validation_violations")
+  validation_warnings=$(jq -c '
+    [.[] | select(
+      .reason_code == "additional_field" or
+      .reason_code == "evaluation_id_duplicate" or
+      .reason_code == "evaluation_id_unexpected" or
+      .reason_code == "reviewer_case_mismatch" or
+      .reason_code == "finding_suggestion_empty"
+    )]
+  ' <<< "$validation_violations")
+  blocking_violations=$(jq -c '
+    [.[] | select(
+      .reason_code != "additional_field" and
+      .reason_code != "evaluation_id_duplicate" and
+      .reason_code != "evaluation_id_unexpected" and
+      .reason_code != "reviewer_case_mismatch" and
+      .reason_code != "finding_suggestion_empty"
+    )]
+  ' <<< "$validation_violations")
+  validation_failed=$(jq -r 'length > 0' <<< "$blocking_violations")
+  if [[ $(jq -r 'length' <<< "$validation_warnings") -gt 0 ]]; then
+    warning_details=$(jq -c '[.[] | {reason_code, field_path}]' <<< "$validation_warnings")
+    printf 'Warning: reviewer result accepted with tolerated format issues: %s (%s).\n' "$reviewer" "$warning_details" >&2
+  fi
   if [[ "$backend_exit_code" -eq 0 && "$validation_failed" == true && -f "$reviewer_dir/backend-exit-code" ]]; then
     backend_command_exit_code=$(cat "$reviewer_dir/backend-exit-code")
     if [[ "$backend_command_exit_code" =~ ^[0-9]+$ ]] && [[ "$backend_command_exit_code" -ne 0 ]]; then
@@ -393,13 +395,14 @@ for index in "${!selected[@]}"; do
   fi
   if [[ "$backend_exit_code" -ne 0 || "$validation_failed" == true ]]; then
     failed=true
-    diagnostics_save_failure "$backend_exit_code" "$violations" || failed=true
+    diagnostics_save_failure "$backend_exit_code" "$violations"
     [[ "$backend_exit_code" -eq 0 ]] || echo "Error: reviewer backend failed: $reviewer (exit $backend_exit_code)." >&2
     [[ "$validation_failed" != true ]] || echo "Error: reviewer result rejected: $reviewer." >&2
   fi
   [[ "$backend_exit_code" -eq 0 && "$validation_failed" != true ]] || continue
-  jq --argjson execution "$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | {configured_agent, agent, model, reasoning_effort, config, fallback_reason}' "$manifest_file")" \
-    '. + {execution: $execution}' "$result_file" > "$work_dir/$reviewer/result.with-execution.json"
+  jq --arg reviewer "$reviewer" \
+    --argjson execution "$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | {configured_agent, agent, model, reasoning_effort, config, fallback_reason}' "$manifest_file")" \
+    '. + {reviewer: $reviewer, execution: $execution}' "$result_file" > "$work_dir/$reviewer/result.with-execution.json"
   mv "$work_dir/$reviewer/result.with-execution.json" "$result_file"
   result_files+=("$result_file")
 done
@@ -418,8 +421,7 @@ if [ "${#result_files[@]}" -gt 0 ] && jq -se 'any(.[]; .findings != [])' "${resu
 fi
 
 if ! save_review_sessions "$manifest_file" "$work_dir" "${selected[@]}"; then
-  echo "Error: failed to save reviewer session state." >&2
-  exit 3
+  echo "Warning: unable to save reviewer session state; the next run will start fresh." >&2
 fi
 
 [[ "$findings_reported" != true ]] || exit 1

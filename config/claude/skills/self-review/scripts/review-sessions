@@ -60,7 +60,7 @@ run_codex_session() {
     else
       attempt_exit_code=$?
     fi
-    diagnostics_save_failure "$attempt_exit_code" '[{"reason_code":"resume_failed","field_path":"$"}]' || return 1
+    diagnostics_save_failure "$attempt_exit_code" '[{"reason_code":"resume_failed","field_path":"$"}]'
     diagnostic_execution_mode=fallback
     printf '%s\n' "$diagnostic_execution_mode" > "$reviewer_dir/execution-mode"
     echo "Warning: reviewer resume failed; starting a fresh session." >&2
@@ -75,19 +75,19 @@ run_claude_session() {
   local reviewer="$1" reviewer_dir="$2" reasoning_effort="${3:-}" resume_session_id="${4:-}"
   if [[ -n "$resume_session_id" ]]; then
     if run_claude "$reviewer_dir" "$resume_session_id" true "$reasoning_effort" &&
-      jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$reviewer_dir/result.json" > /dev/null; then
+      reviewer_result_identity_matches "$reviewer" "$reviewer_dir/result.json"; then
       return 0
     else
       attempt_exit_code=$?
     fi
-    diagnostics_save_failure "$attempt_exit_code" '[{"reason_code":"resume_failed","field_path":"$"}]' || return 1
+    diagnostics_save_failure "$attempt_exit_code" '[{"reason_code":"resume_failed","field_path":"$"}]'
     diagnostic_execution_mode=fallback
     printf '%s\n' "$diagnostic_execution_mode" > "$reviewer_dir/execution-mode"
     echo "Warning: reviewer resume failed; starting a fresh session." >&2
     clear_reviewer_outputs "$reviewer_dir"
   fi
   run_claude "$reviewer_dir" "" true "$reasoning_effort" &&
-    jq -e --arg reviewer "$reviewer" '.reviewer == $reviewer' "$reviewer_dir/result.json" > /dev/null
+    reviewer_result_identity_matches "$reviewer" "$reviewer_dir/result.json"
 }
 
 run_review_backend() {
@@ -126,7 +126,6 @@ save_review_sessions() {
         model_json=$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .model' "$manifest_file")
         effort_json=$(jq -c --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .reasoning_effort' "$manifest_file")
         if [[ -z "$session_id" ]]; then
-          echo "Error: reviewer session id is missing: $reviewer" >&2
           return 1
         fi
         sessions_json=$(jq -c \
