@@ -1,0 +1,80 @@
+#!/bin/bash
+# shellcheck disable=SC2154 # This file uses variables initialized by run-external-reviewers.
+
+prepare_review_instructions() {
+  local repo_root="$1" files_file="$2" work_dir="$3" directory instruction_name file
+  while IFS= read -r file; do
+    directory=$(dirname "$repo_root/$file")
+    while [[ "$directory" == "$repo_root" || "$directory" == "$repo_root/"* ]]; do
+      for instruction_name in AGENTS.md CLAUDE.md; do
+        [[ -f "$directory/$instruction_name" ]] && printf '%s\n' "$directory/$instruction_name"
+      done
+      [[ "$directory" == "$repo_root" ]] && break
+      directory=$(dirname "$directory")
+    done
+  done < "$files_file" | LC_ALL=C sort -u > "$work_dir/instructions.txt"
+  instructions_file="$work_dir/instructions.txt"
+}
+
+append_resource() {
+  local output="$1" path="$2"
+  printf '\n<resource path="%s">\n' "$path" >> "$output"
+  if jq -e --arg path "$path" '(.recovery_round.input_snapshot.files // []) | any(.[]; .kind == "resource" and .path == $path)' "$manifest_file" > /dev/null; then
+    jq -r --arg path "$path" '.recovery_round.input_snapshot.files[] | select(.kind == "resource" and .path == $path) | .content' "$manifest_file" >> "$output"
+  else
+    sed -n '1,$p' "$path" >> "$output"
+  fi
+  printf '\n</resource>\n' >> "$output"
+}
+
+build_prompt() {
+  local reviewer="$1" prompt_file="$2" reviewer_agent="$3" definition relative instruction_file
+  definition=$(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .definition' "$manifest_file")
+
+  {
+    printf '%s\n' 'Perform a read-only code review using only the supplied review contract and immutable diff.'
+    printf 'Reviewer: %s\n' "$reviewer"
+    printf '%s\n' 'Do not edit files. Repository inspection is allowed only to verify direct effects and precedents.'
+    printf '%s\n' 'Return JSON matching the supplied output schema. Set reviewer to the exact reviewer name above.'
+  } > "$prompt_file"
+
+  append_resource "$prompt_file" "$claude_dir/agents/$definition.md"
+  while IFS= read -r relative; do
+    append_resource "$prompt_file" "$claude_dir/skills/$relative"
+  done < <(jq -r --arg reviewer "$reviewer" '.reviewers[] | select(.name == $reviewer) | .references[]' "$manifest_file")
+
+  while IFS= read -r relative; do
+    append_resource "$prompt_file" "$claude_dir/skills/$relative"
+  done < <(jq -r --arg agent "$reviewer_agent" '.agents[$agent].references[]?' "$manifest_file")
+
+  while IFS= read -r instruction_file; do
+    append_resource "$prompt_file" "$instruction_file"
+  done < "$instructions_file"
+
+  required_evaluation_ids=$(jq -c --arg reviewer "$reviewer" '.[$reviewer] // []' "$evaluation_ids_file")
+  if [[ "$(jq -r 'length' <<< "$required_evaluation_ids")" -gt 0 ]]; then
+    {
+      printf '\n<required-evaluation-ids>\n'
+      printf '%s\n' 'Return exactly these evaluation IDs, with no duplicates:'
+      jq -r '.[] | "- " + .' <<< "$required_evaluation_ids"
+      printf '</required-evaluation-ids>\n'
+    } >> "$prompt_file"
+  fi
+
+  {
+    if [[ -s "$work_dir/targets/$reviewer.txt" ]]; then
+      printf '\n<review-targets>\n'
+      if jq -e '.recovery_round != null' "$manifest_file" > /dev/null; then
+        jq -r --arg reviewer "$reviewer" '. as $manifest | [.reviewers[] | select(.name == $reviewer) | .targets[]] as $targets | $manifest.recovery_round.input_snapshot.files[] | select(.kind == "target" and (.path as $path | $targets | index($path))) | "<target-body path=\(.path|tojson)>\n" + .content + "\n</target-body>"' "$manifest_file"
+      else
+        sed -n '1,$p' "$work_dir/targets/$reviewer.txt"
+      fi
+      printf '</review-targets>\n'
+    fi
+    printf '\n<changed-files>\n'
+    sed -n '1,$p' "$files_file"
+    printf '</changed-files>\n\n<diff>\n'
+    sed -n '1,$p' "$diff_file"
+    printf '</diff>\n'
+  } >> "$prompt_file"
+}
