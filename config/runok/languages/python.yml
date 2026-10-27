@@ -7,26 +7,44 @@ definitions:
     - 'uvx [--from *] <cmd>'
 
 rules:
-  # These commands create temporary directories for the check workflow.
-  - allow: 'python3 ~/.agents/skills/yomiyasu/scripts/yomiyasu_check.py run|verify *'
+  # `run` stages temporary snapshots when recording is unavailable.
+  - allow: 'python3 ~/.agents/skills/yomiyasu/scripts/yomiyasu_check.py run *'
     sandbox: write-tmp-cwd
 
-  - allow: 'python3 ~/.claude/skills/yomiyasu/scripts/yomiyasu_check.py run|verify *'
+  - allow: 'python3 ~/.claude/skills/yomiyasu/scripts/yomiyasu_check.py run *'
+    sandbox: write-tmp-cwd
+
+  - allow: 'python3 <var:claude-skill-scripts> run *'
+    when: >-
+      size(args) > 1 &&
+      (args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/yomiyasu/scripts/yomiyasu_check[.]py$') ||
+       args[0].matches('^/.*/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/yomiyasu/scripts/yomiyasu_check[.]py$'))
     sandbox: write-tmp-cwd
 
   # Rule matches do not take priority by order, so exclude the writable calls
   # from the generic Python sandbox explicitly.
   - allow: 'python3|python *'
-    when: "!(size(args) > 1 && args[0] in ['~/.agents/skills/yomiyasu/scripts/yomiyasu_check.py', '~/.claude/skills/yomiyasu/scripts/yomiyasu_check.py'] && args[1] in ['run', 'verify'])"
+    when: >-
+      !(size(args) > 1 && args[1] == 'run' &&
+        (args[0] in ['~/.agents/skills/yomiyasu/scripts/yomiyasu_check.py', '~/.claude/skills/yomiyasu/scripts/yomiyasu_check.py'] ||
+         args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/yomiyasu/scripts/yomiyasu_check[.]py$') ||
+         args[0].matches('^/.*/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/yomiyasu/scripts/yomiyasu_check[.]py$')))
     sandbox: readonly
     tests:
       - allow: 'python3 -c "print(1)"'
       - allow: 'python -c "print(1)"'
 
-  - allow: 'python ~/.agents/skills/yomiyasu/scripts/yomiyasu_check.py run|verify *'
+  - allow: 'python ~/.agents/skills/yomiyasu/scripts/yomiyasu_check.py run *'
     sandbox: readonly
 
-  - allow: 'python ~/.claude/skills/yomiyasu/scripts/yomiyasu_check.py run|verify *'
+  - allow: 'python ~/.claude/skills/yomiyasu/scripts/yomiyasu_check.py run *'
+    sandbox: readonly
+
+  - allow: 'python <var:claude-skill-scripts> run *'
+    when: >-
+      size(args) > 1 &&
+      (args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/yomiyasu/scripts/yomiyasu_check[.]py$') ||
+       args[0].matches('^/.*/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/yomiyasu/scripts/yomiyasu_check[.]py$'))
     sandbox: readonly
 
   - allow: 'schemathesis *'
