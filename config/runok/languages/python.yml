@@ -9,29 +9,37 @@ definitions:
 rules:
   # Skill-bundled Python tools may use mkdtemp in $TMPDIR, which readonly rejects.
   - allow: 'python3|python <var:claude-skill-scripts> *'
+    when: >-
+      size(args) > 0 &&
+      (!args[0].startsWith('/') ||
+       args[0].startsWith(env.HOME + '/.agents/skills/') ||
+       args[0].startsWith(env.HOME + '/.claude/skills/') ||
+       args[0].startsWith(env.HOME + '/.claude/plugins/cache/'))
     sandbox: write-tmp-cwd
     tests:
       - allow: 'python3 ~/.agents/skills/example-skill/scripts/check.py run --stdin'
       - allow: 'python3 ~/.claude/skills/example-skill/scripts/check.py verify --final final.md'
       - allow: 'python ~/.agents/skills/example-skill/scripts/check.py run --stdin'
-      - allow: 'python3 /Users/example/.agents/skills/example-skill/scripts/check.py run --stdin'
-      - allow: 'python3 /Users/example/.claude/skills/example-skill/scripts/check.py verify --final final.md'
       - allow: 'python3 ~/.claude/skills/example-skill/bin/check.py --help'
       - allow: 'python3 ~/.claude/plugins/cache/example-marketplace/example-plugin/1.0.0/skills/example-skill/scripts/check.py run --stdin'
-      - allow: 'python3 /Users/example/.claude/plugins/cache/example-marketplace/example-plugin/1.0.0/skills/example-skill/scripts/check.py run --stdin'
 
   # Rule matches do not take priority by order, so exclude the writable calls
   # from the generic Python sandbox explicitly.
   - allow: 'python3|python *'
     when: >-
       !(size(args) > 0 &&
-        definitions.vars["claude-skill-scripts"].exists(p, glob_matches(p, args[0])))
+        definitions.vars["claude-skill-scripts"].exists(p, glob_matches(p, args[0])) &&
+        (!args[0].startsWith('/') ||
+         args[0].startsWith(env.HOME + '/.agents/skills/') ||
+         args[0].startsWith(env.HOME + '/.claude/skills/') ||
+         args[0].startsWith(env.HOME + '/.claude/plugins/cache/')))
     sandbox: readonly
     tests:
       - allow: 'python3 -c "print(1)"'
       - allow: 'python -c "print(1)"'
       - allow: 'python3 example.py'
       - allow: 'python example.py'
+      - allow: 'python3 /Users/example/repo/.claude/skills/example-skill/scripts/check.py run --stdin'
 
   - allow: 'schemathesis *'
     tests:

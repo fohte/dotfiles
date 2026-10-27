@@ -460,27 +460,34 @@ rules:
   # which `readonly` below rejects. A local server still cannot bind, so
   # `archify preview` fails here; use `crit preview <file>` instead.
   - allow: 'node <var:claude-skill-scripts> *'
+    when: >-
+      size(args) > 0 &&
+      (!args[0].startsWith('/') ||
+       args[0].startsWith(env.HOME + '/.agents/skills/') ||
+       args[0].startsWith(env.HOME + '/.claude/skills/') ||
+       args[0].startsWith(env.HOME + '/.claude/plugins/cache/'))
     sandbox: write-tmp-cwd
     tests:
       - allow: 'node ~/.agents/skills/archify/bin/archify.mjs validate architecture /tmp/spec.json --json'
       - allow: 'node ~/.claude/skills/example-skill/scripts/build.cjs in.md out.md'
       - allow: 'node ~/.claude/skills/example-skill/bin/check.mjs --help'
-      - allow: 'node /Users/example/.claude/skills/example-skill/scripts/build.cjs in.md out.md'
       - allow: 'node ~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/build.cjs in.md out.md'
-      - allow: 'node /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/build.cjs in.md out.md'
 
-  # Rule order carries no priority: when both allow rules match, the strictest
-  # sandbox wins, so `readonly` needs `when` to step aside for the rule above.
-  # The condition mirrors <var:claude-skill-scripts> exactly -- a wider one
-  # drops paths that no rule covers into the default (ask) action.
+  # Rule matches do not take priority by order, so readonly steps aside only
+  # for skill scripts under trusted user roots.
   - allow: 'node *'
     when: >-
       !(size(args) > 0 &&
-        definitions.vars["claude-skill-scripts"].exists(p, glob_matches(p, args[0])))
+        definitions.vars["claude-skill-scripts"].exists(p, glob_matches(p, args[0])) &&
+        (!args[0].startsWith('/') ||
+         args[0].startsWith(env.HOME + '/.agents/skills/') ||
+         args[0].startsWith(env.HOME + '/.claude/skills/') ||
+         args[0].startsWith(env.HOME + '/.claude/plugins/cache/')))
     sandbox: readonly
     tests:
       - allow: 'node -e "console.log(1)"'
       - allow: 'node lint.mjs ~/.agents/skills/archify/SKILL.md'
+      - allow: 'node /Users/example/repo/.claude/skills/example-skill/scripts/build.cjs in.md out.md'
 
   - allow: 'corepack enable'
     tests:
