@@ -67,7 +67,7 @@ steps:
 
 review-draft は HEAD / base / draft / prompt の hash を記録し、実行中にどれかが変われば失敗する。Codex は `turn.started` の後に唯一の completed agent message があり、エラー event がなく、末尾が `turn.completed` のときだけ採用する。Claude は exit 0 かつ result subtype が success、is_error が false、stop_reason が `end_turn` または `stop_sequence` の最終 result だけを採用する。stdout が 1 MiB を超える場合、または設問 1 と 2 の見出しと回答が揃わない場合も失敗する。
 
-Claude helper は OS レベルの network sandbox を設けず、CLI は claude.ai の API 通信にネットワークを使う。Linux は init-context の検証経路が未確認のため fail closed する。
+Claude helper は OS レベルの network sandbox を設けず、CLI は claude.ai の API 通信にネットワークを使う。managed settings、remote settings cache、user settings による provider と review context への影響は事前検査しない。Linux は init-context の検証経路が未確認のため fail closed する。
 
 1. 機械的に判定できるルールをスクリプトで検査する。違反があれば内容を出力して非 0 で終わるので、ファイルを直して exit 0 になるまで繰り返す
 

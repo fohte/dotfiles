@@ -99,10 +99,10 @@ auth_config_dir=$(jq -er '.configDirectory' "$auth_status_file")
   echo "Error: Claude auth configuration directory is not inspectable." >&2
   exit 3
 }
-auth_config_dir=$(cd "$auth_config_dir" && pwd -P) || {
+if ! (cd "$auth_config_dir" && pwd -P > /dev/null); then
   echo "Error: Claude auth configuration directory cannot be resolved." >&2
   exit 3
-}
+fi
 
 printf '{"mcpServers":{}}\n' > "$mcp_config_file"
 settings_json=$(jq -cn '{
