@@ -25,7 +25,7 @@ engine / model / reasoning effort は base 設定と role overlay から解決�
 
 backend が返す成果物は共有 JSON schema に従う reviewer ごとの JSON です。必須の evaluation ID は reviewer-evaluation-ids.json から prompt と validator が共に読みます。集約 Markdown の見出しと日本語名は利用者向け表示であり、JSON の ID とは別の契約です。conditional reviewer の ID 集合は固定しません。
 
-Schema validation と runner の exit 0 / 1 は schema-valid な結果が返ったことを示します。exit 0 は全 reviewer に指摘がなく、exit 1 は指摘がある結果を示しますが、どちらも要求された評価の実施までは保証しません。呼び出し元は各 evaluation の summary を読み、要求された観点を実際に確認した結果か判断してください。入力不足、resource / reference を参照できない状態、差分や対象を確認できない状態、権限制約、context 上限などで評価を実施できていない reviewer は、exit 0 / 1 でも未評価です。evaluation の一部だけが実施できていない場合も、その reviewer の初回 result 全体を集約対象から外してください。
+Schema validation と runner の exit 0 / 1 は schema-valid な結果が返ったことを示します。exit 0 は全 reviewer に指摘がなく、exit 1 は指摘がある結果を示しますが、どちらも要求された評価の実施までは保証しません。呼び出し元は各 evaluation の summary を読み、要求された観点を実際に確認した結果か判断してください。入力不足、resource / reference を参照できない状態、差分や対象を確認できない状態、権限制約、context 上限などで評価を実施できていない場合は、その evaluation を未評価とします。同じ reviewer のほかの evaluation が実施済みと確認できるなら、その結果は有効なものとして保持してください。summary から実施状況を特定できない場合は、実施済みと確認できる evaluation だけを保持し、残りを未評価とします。
 
 `not-applicable` は対象を確認し、その観点が差分の構造上無関係と判断した場合に限ります。評価に必要な入力や参照がない、または制約により確認できない場合を N/A にしないでください。
 
@@ -47,7 +47,7 @@ reviewer 実行に失敗した場合だけ、本文を含まない診断 JSON �
 3. Carry the path `mktemp` printed as a literal string into every later step. Shell variables do not survive between tool calls, and re-deriving the path with a glob can pick up an earlier manifest from this session. Do not use `ps` or other process listings to infer progress or identify a process as yours; concurrent sessions may show another run.
 4. Run `~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file>` once. In Codex, start it with `a agent bg run -- ~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file>`, then wait for the `<background-task-complete>` notification before reading its output or aggregating results. In Claude Code, use `run_in_background: true` and end the turn while waiting for the completion notification. Do not poll, sleep, or start aggregation on partial output. The script launches every reviewer in `<manifest-file>` on its own agent in parallel and returns a JSON array of results. For commit ranges, it uses the narrowed patch saved in the manifest; `--cached` omits deleted-file contents from that patch while retaining deletion metadata and file names. The exit status is `0` when every reviewer succeeded with no findings, `1` when every reviewer succeeded and at least one finding exists, `3` when any reviewer or the script itself failed (regardless of findings), and `2` / `127` for invalid input or a missing command. An exit status of `0` or `1` does not establish that every evaluation was actually performed. A reviewer run regularly outlives the foreground timeout, and being killed there loses every reviewer's result at once.
 5. Never run a reviewer as a subagent, including as a fallback. Every reviewer is written for the sandbox this script puts it in, and a subagent would inherit this session's permission mode instead.
-6. After the first run, mark a reviewer failed if the script reports failure or its summary says the requested evaluation could not be performed or was only partial, even when exit 0 or 1. Retry only those reviewers once by appending their names to the original manifest path (`~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file> <reviewer> [reviewer...]`). In Codex, use `a agent bg run -- ~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file> <reviewer> [reviewer...]` and wait for the `<background-task-complete>` notification. Keep every other valid reviewer result. Exclude an incomplete initial result entirely; if the retry is valid, replace that reviewer entry rather than adding a duplicate. If definition or reference contents need repair, make that repair before the single retry and use the original manifest; it consumes that retry and does not reset the limit.
+6. After the first run, assess each requested evaluation separately. Keep every evaluation whose summary confirms it was completed, even when another evaluation by the same reviewer was not performed or was only partial. Mark only the unperformed or partial evaluations as unevaluated. If a reviewer result is missing or invalid, treat all of its requested evaluations as unevaluated. Retry a reviewer once if the script reports failure or any of its evaluations remain unevaluated. Append only those reviewers' names to the original manifest path (`~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file> <reviewer> [reviewer...]`). In Codex, use `a agent bg run -- ~/.agents/skills/self-review/scripts/run-external-reviewers <manifest-file> <reviewer> [reviewer...]` and wait for the `<background-task-complete>` notification. Keep every valid evaluation from the initial run. Use a valid retry only to fill evaluations that were unevaluated after the initial run; do not replace completed initial evaluations or aggregate an evaluation twice. If the retry is invalid or still leaves evaluations unassessed, keep all completed evaluations from both attempts and report only the evaluations that remain unassessed. If definition or reference contents need repair, make that repair before the single retry and use the original manifest; it consumes that retry and does not reset the limit.
 7. If a manifest entry has a non-null `fallback_reason`, mention it for that reviewer in the final Summary output.
 
 ### 再試行と復旧
@@ -83,21 +83,21 @@ runner は caller が結果の意味を確認する前に、成功した実行�
 
     `round-record.json` の各 attempt は独立した execution ID、input / patch / prompt hash、取得できた backend session ID、runner の結果 path を結びます。recovery round は旧 session を再開せず、通常の branch review state も読み書きしません。
 
-3. runner が exit 0 または 1 で終わったら、`round-record.json` の最新 attempt にある `output.result_path` の結果を読み、意味上の評価を記録します。exit 0 / 1 だけで評価済みとは判断しません。
+3. runner が exit 0 または 1 で終わったら、`round-record.json` の最新 attempt にある `output.result_path` の結果を読み、要求された evaluation ごとに実施状況を確認します。exit 0 / 1 だけで評価済みとは判断しません。すべての evaluation が実施済みなら `evaluated` を記録します。未実施または部分実施の evaluation があれば、それだけを理由に `not-evaluated` を記録し、reason には未評価の evaluation と理由を書きます。`round-record.json` の attempt 単位の状態は実行全体の完了を示します。結果ファイル内で実施済みと確認できた evaluation を無効にはしません。
 
     ```bash
     ~/.agents/skills/self-review/scripts/self-review-recovery-round assess \
       <round-directory> evaluated "<evaluation summary>"
     ```
 
-    要求された評価が未実施または部分実施なら、次の assess command で `not-evaluated` と原因を記録してから、同じ round directory で helper をもう 1 回だけ実行します。runner が失敗した場合は assess を省略して helper を 1 回だけ再実行します。
+    要求された評価が未実施または部分実施なら、次の assess command で `not-evaluated` と未評価の evaluation を記録してから、同じ round directory で helper をもう 1 回だけ実行します。runner が失敗した場合は assess を省略して helper を 1 回だけ再実行します。
 
     ```bash
     ~/.agents/skills/self-review/scripts/self-review-recovery-round assess \
       <round-directory> not-evaluated "<unassessed reason>"
     ```
 
-    `not-evaluated` を記録した後、または runner が失敗した後に、同じ helper をもう 1 回だけ実行します。Codex では次を使います。
+    `not-evaluated` を記録した後、または runner が失敗した後に、同じ helper をもう 1 回だけ実行します。旧 round と recovery round の各 attempt で実施済みの evaluation を保持し、retry は未評価だった evaluation を補うために使います。同じ evaluation は一度だけ集約します。Codex では次を使います。
 
     ```bash
     a agent bg run -- ~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>
@@ -105,11 +105,11 @@ runner は caller が結果の意味を確認する前に、成功した実行�
 
     Claude Code では同じ helper (`~/.agents/skills/self-review/scripts/self-review-recovery-round run <round-directory>`) を `run_in_background: true` で起動し、完了通知を待つ間にターンを終えます。
 
-    2 回目も未評価なら `round-record.json` にその状態を残して止めます。再選択、round の作り直し、旧評価の retry はしません。結果が有効なら `evaluated` を記録し、通常の結果集約へ戻ります。
+    2 回目も未評価の evaluation が残る場合は、その attempt に `not-evaluated` を記録して `round-record.json` の状態を残し、実施済み evaluation の結果を保持したまま止めます。未評価の evaluation だけを未評価として報告します。再選択、round の作り直し、旧評価の retry はしません。残っていた evaluation がすべて実施済みなら `evaluated` を記録し、保持した結果と合わせて通常の結果集約へ戻ります。
 
 ## 結果集約
 
-`invalid` / `partial` / `empty`、evaluation が未実施と分かる summary、または retry 後も欠けている reviewer result は未評価として報告し、必須 reviewer 全員の有効な結果が揃うまで呼び出し元の `commit` / `push` / `PR` workflow を止める。
+`invalid` / `empty` な reviewer result は、その reviewer の全 evaluation を未評価として報告する。`partial` または evaluation が未実施・部分実施と分かる summary は、未実施の evaluation だけを未評価として報告し、実施済みの evaluation は結果集約に使う。summary から未実施の evaluation を特定できない場合は、実施済みと確認できる evaluation だけを保持し、残りを未評価とする。retry 後も欠けている evaluation を未評価として報告し、必須 reviewer 全員の全 evaluation に有効な結果が揃うまで呼び出し元の `commit` / `push` / `PR` workflow を止める。
 
 通し番号を持つ 12 観点を番号順に並べ、番号を持たない base reviewer (test-philosophy) の評価をその後へ、起動した conditional reviewer の評価をさらにその後へ追加する。
 未起動の conditional reviewer は出力しない。
