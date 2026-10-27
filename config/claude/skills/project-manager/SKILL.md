@@ -139,37 +139,49 @@ PM セッションから切り出した作業セッション。PM は手を動�
 
 ```bash
 # Fictional sample-repo session and pane IDs; refresh them before use.
-target_session='$92'
 source_pane='%901'
-target_window='@902'
-target_pane='%903'
 source_window='@904'
+target_pane='%903'
 stage_name='実装中'
 
-# Replace these fictional paths with the finite set of owner cwd and session_path values.
+owner_path='/fictional/repos/sample-repo'
+session_ids=('$92' '$93')
+session_paths=('/fictional/repos/sample-repo' '/fictional/repos/other-repo')
 repo_paths_resolved=true
-for repo_path in '/fictional/repos/sample-repo' '/fictional/worktrees/sample-repo-change'; do
-  common_dir=$(git -C "$repo_path" rev-parse --path-format=absolute --git-common-dir) || {
-    repo_paths_resolved=false
-    break
-  }
-  printf '%s\t%s\n' "$repo_path" "$common_dir"
-done
-
+owner_common_dir=$(git -C "$owner_path" rev-parse --path-format=absolute --git-common-dir) || repo_paths_resolved=false
+matching_sessions=()
 if $repo_paths_resolved; then
-  # Create a stage window in the verified session.
-  tmux break-pane -d -s "$source_pane" -t "$target_session:" -n "$stage_name"
-
-  # Or join an existing stage window through a verified non-floating pane.
-  tmux join-pane -d -s "$source_pane" -t "$target_session:$target_window.$target_pane"
-
-  # Keep explicit session targeting when creating or moving a whole window.
-  tmux new-window -t "$target_session:" -n "$stage_name"
-  tmux move-window -s "$source_window" -t "$target_session:"
-
-  # Refresh and verify pane, session, and window membership after each move.
-  tmux list-panes -a -F '#{session_id} #{session_name} #{window_id} #{window_name} #{pane_id} #{pane_current_path} #{pane_floating_flag} #{window_linked_sessions}'
+  for index in "${!session_ids[@]}"; do
+    session_common_dir=$(git -C "${session_paths[$index]}" rev-parse --path-format=absolute --git-common-dir) || {
+      repo_paths_resolved=false
+      break
+    }
+    if [ "$owner_common_dir" = "$session_common_dir" ]; then
+      matching_sessions+=("${session_ids[$index]}")
+    fi
+  done
 fi
+
+if $repo_paths_resolved && [ "${#matching_sessions[@]}" -eq 1 ]; then
+  target_session="${matching_sessions[0]}"
+  # Populate from the verified session; include only safe matching stage windows.
+  stage_window_ids=('@902')
+  moved=false
+  if [ "${#stage_window_ids[@]}" -eq 0 ]; then
+    tmux break-pane -d -s "$source_pane" -t "$target_session:" -n "$stage_name" && moved=true
+  elif [ "${#stage_window_ids[@]}" -eq 1 ]; then
+    target_window="${stage_window_ids[0]}"
+    # Use a verified non-floating pane in the unique stage window.
+    tmux join-pane -d -s "$source_pane" -t "$target_session:$target_window.$target_pane" && moved=true
+  fi
+  if $moved; then
+    tmux list-panes -a -F '#{session_id} #{session_name} #{window_id} #{window_name} #{pane_id} #{pane_current_path} #{pane_floating_flag} #{window_linked_sessions}'
+  fi
+fi
+
+# Keep explicit session targeting when creating or moving a whole window.
+# tmux new-window -t "$target_session:" -n "$stage_name"
+# tmux move-window -s "$source_window" -t "$target_session:"
 ```
 
 ## セッション間の仲介
