@@ -17,13 +17,13 @@ rules:
         args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') ||
         args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') ||
         args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
-        (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+        (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
           args[0].startsWith(env.HOME + '/.agents/skills/') &&
           args[0].matches('^' + env.HOME + '/[.]agents/skills/[^/]+/(scripts|bin)/')) ||
-        (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+        (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
           args[0].startsWith(env.HOME + '/.claude/skills/') &&
           args[0].matches('^' + env.HOME + '/[.]claude/skills/[^/]+/(scripts|bin)/')) ||
-        (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+        (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
           args[0].startsWith(env.HOME + '/.claude/plugins/cache/') &&
           args[0].matches('^' + env.HOME + '/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/'))
       )
@@ -36,8 +36,9 @@ rules:
       - allow: 'python3 ~/.claude/plugins/cache/example-marketplace/example-plugin/1.0.0/skills/example-skill/scripts/check.py run --stdin'
       - allow: 'python3 ~/.claude/skills/example-skill/scripts/check.py run --stdin --no-record'
 
-  # Flag matching ignores argument order; pair interpreter options with a
-  # script path so the script's own flags do not select this sandbox.
+  # Flag matching ignores argument order, so pair interpreter modes with a
+  # script path to keep those invocations readonly. A script flag with the
+  # same spelling also selects this sandbox.
   - allow: >-
       python3|python
       -b|-bb|-B|-d|-E|-h|--help|-i|-I|-I*|-O|-OO|-P|-q|-s|-S|-u|-v|-V|-VV|--version|-x|--help-env|--help-xoptions|--help-all
@@ -69,13 +70,13 @@ rules:
           args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') ||
           args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') ||
           args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
-          (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+          (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
             args[0].startsWith(env.HOME + '/.agents/skills/') &&
             args[0].matches('^' + env.HOME + '/[.]agents/skills/[^/]+/(scripts|bin)/')) ||
-          (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+          (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
             args[0].startsWith(env.HOME + '/.claude/skills/') &&
             args[0].matches('^' + env.HOME + '/[.]claude/skills/[^/]+/(scripts|bin)/')) ||
-          (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+          (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
             args[0].startsWith(env.HOME + '/.claude/plugins/cache/') &&
             args[0].matches('^' + env.HOME + '/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/'))
         ))
@@ -90,6 +91,8 @@ rules:
       - allow: 'python3 ~/.claude/skills/./synced/b/scripts/check.py run --stdin'
       - allow: 'python3 ~/.claude/skills//synced/scripts/check.py run --stdin'
       - allow: 'python3 ~/.agents/skills/x/../../../tmp/scripts/evil.py run --stdin'
+      - allow: 'python3 ~/.agents/skills/../scripts/evil.py run --stdin'
+      - allow: 'python3 ~/.claude/skills/../scripts/evil.py run --stdin'
 
   - allow: 'schemathesis *'
     tests:

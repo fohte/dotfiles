@@ -466,13 +466,13 @@ rules:
         args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') ||
         args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') ||
         args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
-        (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+        (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
           args[0].startsWith(env.HOME + '/.agents/skills/') &&
           args[0].matches('^' + env.HOME + '/[.]agents/skills/[^/]+/(scripts|bin)/')) ||
-        (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+        (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
           args[0].startsWith(env.HOME + '/.claude/skills/') &&
           args[0].matches('^' + env.HOME + '/[.]claude/skills/[^/]+/(scripts|bin)/')) ||
-        (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+        (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
           args[0].startsWith(env.HOME + '/.claude/plugins/cache/') &&
           args[0].matches('^' + env.HOME + '/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/'))
       )
@@ -484,8 +484,9 @@ rules:
       - allow: 'node ~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/build.cjs in.md out.md'
       - allow: 'node ~/.claude/skills/example-skill/scripts/check.js --stdin'
 
-  # Flag matching ignores argument order; pair Node options with the script
-  # path so the script's own flags do not select this sandbox.
+  # Flag matching ignores argument order, so pair known Node modes with a
+  # script path to keep those invocations readonly. A script flag with the
+  # same spelling also selects this sandbox.
   - allow: >-
       node
       --check|--test|--watch|--interactive|-i|--version|-v|--help|-h
@@ -506,13 +507,13 @@ rules:
           args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') ||
           args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') ||
           args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
-          (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+          (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
             args[0].startsWith(env.HOME + '/.agents/skills/') &&
             args[0].matches('^' + env.HOME + '/[.]agents/skills/[^/]+/(scripts|bin)/')) ||
-          (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+          (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
             args[0].startsWith(env.HOME + '/.claude/skills/') &&
             args[0].matches('^' + env.HOME + '/[.]claude/skills/[^/]+/(scripts|bin)/')) ||
-          (env.HOME.matches('^/[A-Za-z0-9._/-]+$') &&
+          (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
             args[0].startsWith(env.HOME + '/.claude/plugins/cache/') &&
             args[0].matches('^' + env.HOME + '/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/'))
         ))
@@ -525,6 +526,8 @@ rules:
       - allow: 'node ~/.claude/skills/./synced/b/scripts/build.cjs in.md out.md'
       - allow: 'node ~/.claude/skills//synced/scripts/build.cjs in.md out.md'
       - allow: 'node ~/.agents/skills/x/../../../tmp/scripts/evil.js in.md out.md'
+      - allow: 'node ~/.agents/skills/../scripts/evil.js'
+      - allow: 'node ~/.claude/skills/../bin/evil.js'
 
   - allow: 'corepack enable'
     tests:
