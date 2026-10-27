@@ -35,7 +35,7 @@
 
 - GitHub: use `gh` (e.g., `gh issue view` for issue URLs)
 - rm: prefer `git rm` for tracked files; never pass `-f`. Repo 内の生成物 (dist, node_modules, `*.gen.*` など ignored なもの) の削除は `rm` でなく `git clean -fdX <path>`、untracked の削除は `git clean -fd <path>` を使う (tracked は消えない。ただし `-X` は ignored な `.env` / `*.local.*` も消しうるので path を必ず絞る)
-- 一時ファイル: セッション専用ディレクトリ `$AGENT_TMPDIR` の下に `mktemp "$AGENT_TMPDIR/<name>.XXXXXX"` (ディレクトリは `mktemp -d`) で作る。パスを見失った場合は `$AGENT_TMPDIR` 内を検索し、候補が複数なら内容から対象を確認する。ただし、手順や skill が再探索を禁じる場合は検索せず停止する。`/tmp` 直下や `$TMPDIR` は並列セッションと共有なので、名前で探し直すと別セッションのファイルを拾う (skill が `/tmp/foo.json` のような固定パス例を示していても同様)。Write ツールなど shell 外で使うときは展開済みの絶対パスを渡す
+- 一時ファイル: セッション専用ディレクトリ `$AGENT_TMPDIR` の下に `mktemp "$AGENT_TMPDIR/<name>.XXXXXX"` (ディレクトリは `mktemp -d`) で作る。パスを見失った場合は `$AGENT_TMPDIR` 内を検索し、候補が複数なら内容から対象を確認する。`/tmp` 直下や `$TMPDIR` は並列セッションと共有なので、名前で探し直すと別セッションのファイルを拾う (skill が `/tmp/foo.json` のような固定パス例を示していても同様)。Write ツールなど shell 外で使うときは展開済みの絶対パスを渡す
 - search: 文字列そのものを探すときは `rg` (`find`/`grep` より優先)。never search `~` (too heavy)
 - 他の Claude Code / Codex セッションを探すとき: `a agent peer list` (`parent` / `children` は絞り込み版)。出力の `session_id` を使い、`a agent peer notify --message <MESSAGE> <session_id>` で送る (停止中でも内部で再開してから配送される)
 - json: use `jq`, not `python3 -c 'import json'`
