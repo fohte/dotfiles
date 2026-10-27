@@ -80,6 +80,47 @@ print_sanitized_diagnostics() {
       -e 's/(([Hh][Tt][Tt][Pp][Ss]?|[Aa][Ll][Ll]|[Nn][Oo])_[Pp][Rr][Oo][Xx][Yy]=)[[:graph:]]+/\1[REDACTED]/g' >&2 || true
 }
 
+print_event_summary() {
+  local summary
+
+  if ! summary=$(jq -Rsc '
+    def safe_string:
+      if type != "string" then null
+      elif test("^[A-Za-z0-9_.-]{1,80}$") then .
+      else "[other]"
+      end;
+    def array_count: if type == "array" then length else null end;
+    def boolean_or_null: if type == "boolean" then . else null end;
+
+    (split("\n") | map(select(length > 0) | try fromjson catch null)) as $events
+    | {
+        events: [$events[] | {type: (.type | safe_string), subtype: (.subtype | safe_string)}],
+        init: [
+          $events[]
+          | select(type == "object" and .type == "system" and .subtype == "init")
+          | {
+              tools_count: (.tools | array_count),
+              mcp_servers_count: (.mcp_servers | array_count)
+            }
+        ],
+        results: [
+          $events[]
+          | select(type == "object" and .type == "result")
+          | {
+              subtype: (.subtype | safe_string),
+              is_error: (.is_error | boolean_or_null),
+              stop_reason: (.stop_reason | safe_string)
+            }
+        ]
+      }
+  ' "$events_file" 2> /dev/null); then
+    echo 'Claude draft reviewer event summary: unavailable.' >&2
+    return 0
+  fi
+
+  printf 'Claude draft reviewer event summary: %s\n' "$summary" >&2
+}
+
 if ! "${clean_env_args[@]}" "$claude_path" auth status > "$auth_status_file" 2> "$stderr_file"; then
   echo "Error: Claude auth status could not be verified in a clean environment." >&2
   print_sanitized_diagnostics "$stderr_file"
@@ -149,7 +190,7 @@ if ! jq -s -e '
       end
     )
     and ($inits | length == 1)
-    and $inits[0] == 0
+    and all(.[:$inits[0]][]; .type | IN("assistant", "user", "result") | not)
     and ($results | length == 1)
     and $results[0] == (length - 1)
     and (.[ $inits[0] ] | (.model | type == "string" and test("\\S")))
@@ -158,8 +199,9 @@ if ! jq -s -e '
     and (.[ $results[0] ] | .subtype == "success" and .is_error == false)
     and (.[ $results[0] ].stop_reason | IN("end_turn", "stop_sequence"))
     and (.[ $results[0] ].result | type == "string" and test("\\S"))
-' "$events_file" > /dev/null; then
+' "$events_file" > /dev/null 2> /dev/null; then
   echo "Error: Claude draft reviewer did not return a verified tool-free context and successful result." >&2
+  print_event_summary
   exit 3
 fi
 
