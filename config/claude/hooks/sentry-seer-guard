@@ -1,0 +1,10 @@
+#!/bin/bash
+
+input=$(cat)
+target_name=$(jq -r '.tool_input.name // empty' <<< "$input")
+
+case "$target_name" in
+  analyze_issue_with_seer)
+    jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "Seer analysis is not approved."}}'
+    ;;
+esac

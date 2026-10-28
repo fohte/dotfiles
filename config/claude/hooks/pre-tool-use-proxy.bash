@@ -43,10 +43,10 @@ case "$tool_name" in
   AskUserQuestion)
     exec ~/.claude/hooks/ask-user-question-guard <<< "$input"
     ;;
-  # execute_sentry_tool bypasses catalog tools' individual permission names.
-  # Filter it here to honor read/update allows while preserving Seer's deny.
+  # The generic executor bypasses catalog permissions; keep Seer's deny here
+  # and let auto mode classify all other calls.
   mcp__sentry__execute_sentry_tool)
-    exec ~/.claude/hooks/sentry-tool-guard <<< "$input"
+    exec ~/.claude/hooks/sentry-seer-guard <<< "$input"
     ;;
   Skill)
     # Only subagent-invoked calls need the guard; main-thread Skill calls
