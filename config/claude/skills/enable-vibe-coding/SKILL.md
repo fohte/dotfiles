@@ -7,7 +7,7 @@ description: Start the user-requested autonomous implementation loop from a tq c
 
 Run the implementation checklist as a sequence of delegated PRs. The `/enable-vibe-coding` entry point may enable session vibe mode before this skill runs. Armyknife repository policy limits unattended review and merge to repositories where `repo.vibe` is `true`.
 
-When this session acts as a PM and the user asks to start vibe coding (including via `/enable-vibe-coding`), do not run the loop here. Follow the `project-manager` skill's procedure to ensure the PM's effective vibe is active, reuse the target worker if it already exists, and grant only if it lacks inheritance eligibility. Start a new worker through the established handoff launcher only when needed; Armyknife records its inheritance eligibility automatically when the caller's effective vibe is active at launch. Notify the worker to run this skill.
+When this session acts as a PM and the user asks to start vibe coding (including via `/enable-vibe-coding`), do not run the loop here. Follow the `project-manager` skill's procedure to ensure the PM's effective vibe is active. Unless the user limits the target, include every worker the PM has assigned. Reuse existing target workers and grant every existing target worker without inferring whether it already has inheritance eligibility. After all grants finish, notify every target worker to run this skill. Start a new worker through the established handoff launcher only when needed; Armyknife records its inheritance eligibility automatically when the caller's effective vibe is active at launch, so do not grant that worker.
 
 ## Start
 
