@@ -190,9 +190,9 @@ definitions:
     - 'rtk proxy <cmd>'
 
 rules:
-  # No sandbox: bundled scripts spawn agents and reach the network.
   # Direct command paths aren't available in `when`, so malformed spellings
-  # need a more-specific decision than the broad allow patterns.
+  # need a more-specific decision than the broad allow patterns. Keep an
+  # explicit ask for bash too: a false `when` cannot preserve delegate asks.
   - ask: '<var:untrusted-claude-skill-scripts> *'
     tests:
       - ask: '~/.agents/skills/x/../../tmp/scripts/evil.sh'
@@ -226,6 +226,7 @@ rules:
       - ask: 'bash /Users/foo/./bar/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/scripts/evil.sh'
       - ask: 'bash /Users/foo//bar/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/scripts/evil.sh'
 
+  # No sandbox: bundled scripts spawn agents and reach the network.
   - allow: 'bash <var:claude-skill-scripts>'
     when: &trusted_claude_skill_script >-
       size(args) > 0 &&
@@ -258,6 +259,8 @@ rules:
   # Absolute-path forms of <var:claude-skill-scripts> aren't tested here: bare
   # execution of an absolute path always loses to the `deny: '/* *'` rule
   # below (Explicit Deny Wins), regardless of this rule's own match.
+  # The command token isn't available to `when`, so these broad allows rely on
+  # the malformed-path asks above.
   - allow: '<var:claude-skill-scripts>'
     tests:
       - allow: '~/.agents/skills/self-review/scripts/select-reviewers'
