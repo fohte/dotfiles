@@ -238,11 +238,14 @@ rules:
         (args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') &&
           !args[0].matches('^~/[.]agents/skills/synced/')) ||
         args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
-        args[0].matches('^/[A-Za-z0-9._ /-]+/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/')
+        (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
+          args[0].startsWith(env.HOME + '/.claude/plugins/cache/') &&
+          args[0].matches('^' + env.HOME + '/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/'))
       )
     tests:
       - allow: 'bash ~/.agents/skills/self-review/scripts/select-reviewers'
-      - allow: 'bash /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs'
+      - allow: 'bash ~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs'
+      - pass: 'bash /tmp/.claude/plugins/cache/mk/pl/1.0.0/skills/sk/scripts/e.sh'
       - pass: 'bash ~/.claude/skills/delegate/scripts/launch --task task.yaml --label example'
       - pass: 'bash ~/.claude/skills/synced/example-skill/scripts/check.cjs'
       - pass: 'bash $HOME/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
@@ -251,7 +254,8 @@ rules:
     when: *trusted_claude_skill_script
     tests:
       - allow: 'bash ~/.agents/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
-      - allow: 'bash /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
+      - allow: 'bash ~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
+      - pass: 'bash /tmp/.claude/plugins/cache/mk/pl/1.0.0/skills/sk/scripts/e.sh arg'
       - pass: 'bash ~/.claude/skills/delegate/scripts/launch --task task.yaml --label example'
       - pass: 'bash ~/.claude/skills/synced/example-skill/scripts/check.cjs'
       - pass: 'bash $HOME/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
