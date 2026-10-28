@@ -4,7 +4,7 @@
 # .role file format (single line, at the repository root):
 #   private
 #   private repo=fohte/dotfiles-private
-#   work repo=fohte/wantedly-internal-settings
+#   work repo=fohte/example-work-settings
 #
 # Overlay resolution:
 #   private  -> ~/ghq/github.com/<repo>/config-overlays/<tool>/<file>
@@ -39,7 +39,7 @@ Subcommands:
 Examples:
     dot role set private
     dot role set private repo=fohte/dotfiles-private
-    dot role set work repo=fohte/wantedly-internal-settings
+    dot role set work repo=fohte/example-work-settings
     dot role get
     dot role get repo
     dot role overlay config/zsh/.zshrc
