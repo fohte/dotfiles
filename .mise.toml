@@ -6,38 +6,80 @@ depends = ["refresh:pull"]
 # A nested `mise run` re-reads this file, so tasks added or changed by the pull
 # take effect in the same refresh. -c keeps one failure from SIGTERMing the
 # other tasks mid-way (e.g. `brew upgrade` killed while relinking mise).
-run = "mise run -c refresh:after-pull"
+# Fresh installs without a role still refresh tools that do not require deploy.
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+dotfiles_dir="$(ghq list -e -p fohte/dotfiles)"
+after_pull_task=refresh:after-pull
+if [ ! -f "$dotfiles_dir/.role" ]; then
+  after_pull_task=refresh:after-pull:no-role
+fi
+
+mise run -c "$after_pull_task"
+'''
 
 [tasks."refresh:after-pull"]
 description = "Refresh tools after pulling dotfiles"
+depends = ["refresh:after-pull:common", "refresh:nvim-restore", "refresh:lefthook"]
+
+[tasks."refresh:after-pull:no-role"]
+description = "Refresh tools that do not need dotfiles deployment"
+depends = ["refresh:after-pull:common"]
+
+[tasks."refresh:after-pull:common"]
+description = "Refresh tools that do not need dotfiles deployment"
 depends = [
   "refresh:update-skk",
   "refresh:runok",
   "refresh:tq-cli",
   "refresh:tq-desktop",
   "refresh:tq-extension",
-  "refresh:nvim-restore",
   "refresh:mise-self-update",
   "refresh:mise-install",
-  "refresh:lefthook",
   "refresh:brew-bundle",
   "refresh:brew-upgrade",
 ]
 
 [tasks."refresh:pull"]
-description = "Pull latest dotfiles and update submodules"
+description = "Pull latest dotfiles and the selected role repository"
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(ghq list -e -p fohte/dotfiles)"
+dotfiles_dir="$(ghq list -e -p fohte/dotfiles)"
+cd "$dotfiles_dir"
 
-if git diff --quiet; then
-  git pull
-else
-  git stash
-  git pull
-  git stash pop
+role_name=""
+role_repo=""
+if [ -f "$dotfiles_dir/.role" ]; then
+  role_name="$(config/bin/dot-role get name)"
+  role_repo="$(config/bin/dot-role get repo || true)"
+fi
+role_repo_dir=""
+if [ -n "$role_repo" ]; then
+  role_repo_dir="$HOME/ghq/github.com/$role_repo"
+fi
+
+update_repo() {
+  local repo_dir="$1"
+  if [ -n "$(git -C "$repo_dir" status --porcelain --untracked-files=all)" ]; then
+    echo "error: refusing to refresh $repo_dir because it has uncommitted changes" >&2
+    return 1
+  fi
+
+  echo "Updating $repo_dir"
+  git -C "$repo_dir" pull --ff-only
+}
+
+echo "Updating $dotfiles_dir"
+git -C "$dotfiles_dir" pull --autostash
+
+if [ -n "$role_repo_dir" ] && [ -d "$role_repo_dir" ] && [ "$role_repo_dir" != "$dotfiles_dir" ]; then
+  update_repo "$role_repo_dir"
+elif [ "$role_name" = private ]; then
+  echo "warning: private role repository is unavailable at $role_repo_dir; skipping its update" >&2
 fi
 
 git submodule update --init --recursive

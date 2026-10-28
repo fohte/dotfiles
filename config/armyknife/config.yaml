@@ -119,6 +119,9 @@ repos:
   fohte/dotfiles:
     # dotfiles is operated directly on the default branch.
     direct_commit: true
+  fohte/github_exporter:
+    # Maintained and published from this fork without upstream contributions.
+    standalone_fork: true
   fohte/runok:
     # External contributors require human review before merging.
     vibe: false

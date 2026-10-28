@@ -1,6 +1,6 @@
 ---
 name: oss-contribution
-description: Workflow for contributing to third-party repositories through the user's fork, where the user makes every commit and push. Use this skill whenever working inside a fork of someone else's repository (`gh repo view --json isFork` is true), when runok blocks `git commit` / `git push` and points here, or when a delegated task says to read it. It overrides the commit and push steps of the commit / create-pr skills.
+description: Workflow for contributing to third-party repositories through the user's fork, where the user makes every commit and push. Use this skill whenever, from the target repository root, the origin repository is a fork (`gh repo view "$(git remote get-url origin)" --json isFork -q .isFork` returns `true`) and `a config get repo.standalone_fork` does not return `true` (including when that command fails), when runok blocks `git commit` / `git push` and points here, or when a delegated task says to read it. It overrides the commit and push steps of the commit / create-pr skills.
 ---
 
 # OSS Contribution

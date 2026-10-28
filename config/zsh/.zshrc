@@ -39,8 +39,8 @@ import_rc 'history.rc.zsh'
 import_rc 'misc.rc.zsh'
 import_rc 'tmux.rc.zsh'
 
-# Role-specific overlay (private: in-repo, work: external repo). The symlink
-# is pre-resolved by `dot deploy` to avoid shelling out to `dot role` here.
+# The selected role repository's overlay is loaded before machine-local config.
+# The symlink is pre-resolved by `dot deploy` to avoid shelling out here.
 [ -f "$ZDOTDIR/.zshrc.overlay" ] && source "$ZDOTDIR/.zshrc.overlay"
 
 [ -f ~/.local/.zshrc ] && source ~/.local/.zshrc

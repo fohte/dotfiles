@@ -63,6 +63,7 @@ if match_tag zsh; then
   # shell out to `dot role overlay` (~15-20ms per invocation).
   sym_role_overlay config/zsh/.zshenv ~/.config/zsh/.zshenv.overlay
   sym_role_overlay config/zsh/.zshrc ~/.config/zsh/.zshrc.overlay
+  sym_role_overlay config/bin ~/.local/share/dotfiles/role-bin
 fi
 
 if match_tag tmux; then
@@ -135,12 +136,21 @@ if match_tag claude; then
   sym config/claude/agents ~/.claude/agents
   sym config/claude/commands ~/.claude/commands
   sym config/claude/contexts ~/.claude/contexts
-  sym config/claude/skills ~/.claude/skills
-  # Link per skill, not the whole directory: Codex walks this root recursively
-  # and claude.ai's synced/ cache would eat its skill-metadata budget.
-  # Symlinked skills come from external tools (e.g. terminal-browser) or the
-  # link-overlay-skills hook, which link them into ~/.agents/skills
-  # themselves; claiming them here makes the two fight.
+  if [ -L "$HOME/.claude/skills" ]; then
+    if [ "$(readlink "$HOME/.claude/skills")" != "$DOTFILES_DIR/config/claude/skills" ]; then
+      echo "[warn] keeping custom skill root symlink at $HOME/.claude/skills" >&2
+    fi
+    # The SessionStart hook safely detaches the legacy checkout symlink before
+    # linking skills. Never write overlay links through this root.
+  else
+    claude_skills=()
+    for skill in config/claude/skills/*/; do
+      [ -d "$skill" ] && claude_skills+=("$skill")
+    done
+    sym "${claude_skills[@]}" ~/.claude/skills
+  fi
+  # Link public skills individually so overlay links never write into this
+  # checkout through the Claude skill root.
   skills=()
   for skill in config/claude/skills/!(synced)/; do
     [ -L "${skill%/}" ] || skills+=("$skill")
@@ -188,11 +198,7 @@ fi
 if match_tag armyknife; then
   sym config/armyknife/config.yaml ~/.config/armyknife/config.yaml
   sym config/armyknife/hooks ~/.config/armyknife/hooks
-  if match_role private; then
-    sym config/armyknife/config.private.yaml ~/.config/armyknife/private.yaml
-  elif [ -L "$HOME/.config/armyknife/private.yaml" ]; then
-    log-exec rm "$HOME/.config/armyknife/private.yaml"
-  fi
+  sym_role_overlay config/armyknife/config.yaml ~/.config/armyknife/private.yaml
   sym_role_file config-overlays/armyknife/work.yaml ~/.config/armyknife/work.yaml
 fi
 
@@ -202,14 +208,7 @@ fi
 
 if match_tag mise; then
   sym config/mise/home-config.toml ~/.config/mise/config.toml
-
-  # mise merges conf.d/*.toml into the global config; install private-only
-  # tools via this file and drop the link on non-private roles.
-  if match_role private; then
-    sym config/mise/conf.d/private.toml ~/.config/mise/conf.d/private.toml
-  else
-    log-exec rm -f ~/.config/mise/conf.d/private.toml
-  fi
+  sym_role_overlay config/mise/conf.d/private.toml ~/.config/mise/conf.d/private.toml
   sym_role_file config-overlays/mise/work.toml ~/.config/mise/conf.d/work.toml
 fi
 

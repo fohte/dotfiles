@@ -3,10 +3,11 @@
 #
 # .role file format (single line, at the repository root):
 #   private
+#   private repo=fohte/dotfiles-private
 #   work repo=fohte/wantedly-internal-settings
 #
 # Overlay resolution:
-#   private  -> <DOTFILES_DIR>/config/<tool>/<file>.private<ext>
+#   private  -> ~/ghq/github.com/<repo>/config-overlays/<tool>/<file>
 #   work     -> ~/ghq/github.com/<repo>/config-overlays/<tool>/<file>
 
 set -euo pipefail
@@ -24,18 +25,20 @@ DOTFILES_DIR="$(cd -P "$_bin_dir/../.." && pwd)"
 unset _src _dir _bin_dir
 
 ROLE_FILE="$DOTFILES_DIR/.role"
+DEFAULT_PRIVATE_ROLE_REPO="fohte/dotfiles-private"
 
 usage() {
   cat << EOS
 Usage: dot role <subcommand> [args...]
 
 Subcommands:
-    get [field]               Print the role name (default) or 'repo'
-    set <role> [repo=<r>]     Write .role (role: private | work)
+    get [field]               Print the role name (default) or selected 'repo'
+    set <role> [repo=<owner>/<name>]   Write .role (role: private | work)
     overlay <path>            Print the overlay path for a dotfiles file (if any)
 
 Examples:
     dot role set private
+    dot role set private repo=fohte/dotfiles-private
     dot role set work repo=fohte/wantedly-internal-settings
     dot role get
     dot role get repo
@@ -74,10 +77,7 @@ load_role() {
 
   case "$ROLE_NAME" in
     private)
-      if [ -n "$ROLE_REPO" ]; then
-        echo "error: 'private' role does not accept repo=" >&2
-        return 1
-      fi
+      ROLE_REPO="${ROLE_REPO:-$DEFAULT_PRIVATE_ROLE_REPO}"
       ;;
     work)
       if [ -z "$ROLE_REPO" ]; then
@@ -138,11 +138,15 @@ cmd_set() {
 
   case "$name" in
     private)
+      local private_repo="${repo:-$DEFAULT_PRIVATE_ROLE_REPO}"
       if [ -n "$repo" ]; then
-        echo "error: 'private' role does not accept repo=" >&2
-        return 2
+        echo "private repo=$repo" > "$ROLE_FILE"
+      else
+        echo "private" > "$ROLE_FILE"
       fi
-      echo "private" > "$ROLE_FILE"
+      if [ ! -d "$HOME/ghq/github.com/$private_repo" ]; then
+        echo "warning: private role repository is unavailable at $HOME/ghq/github.com/$private_repo; using base and local configuration only" >&2
+      fi
       ;;
     work)
       if [ -z "$repo" ]; then
@@ -186,23 +190,12 @@ cmd_overlay() {
   local overlay
   case "$ROLE_NAME" in
     private)
-      # foo/bar.ext -> foo/bar.private.ext
-      # Files starting with a dot (e.g. .zshrc) are treated as having no extension.
-      local dir base ext stem
-      dir="$(dirname "$rel")"
-      base="$(basename "$rel")"
-      if [[ "$base" == .* ]] || [[ "$base" != *.* ]]; then
-        stem="$base"
-        ext=""
-      else
-        stem="${base%.*}"
-        ext=".${base##*.}"
+      local role_repo_dir="$HOME/ghq/github.com/$ROLE_REPO"
+      if [ ! -d "$role_repo_dir" ]; then
+        echo "warning: private role repository is unavailable at $role_repo_dir; using base and local configuration only" >&2
+        return 1
       fi
-      if [ "$dir" = "." ]; then
-        overlay="$DOTFILES_DIR/${stem}.private${ext}"
-      else
-        overlay="$DOTFILES_DIR/$dir/${stem}.private${ext}"
-      fi
+      overlay="$role_repo_dir/config-overlays/${rel#config/}"
       ;;
     work)
       overlay="$HOME/ghq/github.com/$ROLE_REPO/config-overlays/${rel#config/}"

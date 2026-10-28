@@ -209,9 +209,7 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
         ],
       },
       {
-        // Symlink role overlay skill directories (config-overlays/claude/skills/*)
-        // into ~/.claude/skills/ flat, since Claude Code only discovers personal
-        // skills at the top level.
+        // Link role overlay skills into both engines' flat skill roots.
         hooks: [
           { type: 'command', command: '~/.claude/hooks/link-overlay-skills' },
         ],
