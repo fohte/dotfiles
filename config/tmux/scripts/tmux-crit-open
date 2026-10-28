@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# Toggle the agent's Crit review from tmux Alt-r. Repair stale tmux cell pixel
-# sizes first so terminal-browser does not shrink the entire review page.
+# Show the agent's review (or switch to the next one) from tmux Alt-r. Repair
+# stale tmux cell pixel sizes first so terminal-browser does not shrink the
+# entire review page.
 # Arguments: source pane ID and invoking client name, supplied by the binding.
 
 set -euo pipefail
