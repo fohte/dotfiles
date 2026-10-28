@@ -59,7 +59,7 @@ reviewers:
       kind: added-lines
       # Markers require a following space: without it the pattern also matches
       # CSS hex literals and Ruby string interpolation.
-      pattern: '(^|[[:space:]])(//|#|--)[[:space:]]|^[[:space:]]*(\*|/\*)|"""|<!--'
+      pattern: '(^|[[:space:]])(//|#|--)[[:space:]]|^[[:space:]]*(\*([[:space:]]|/|$)|/\*)|"""|<!--'
       # `# ` at the start of a line in prose files is a Markdown heading, not
       # a comment marker.
       exclude: '\.(md|mdx|markdown|rst|adoc|txt)$'
