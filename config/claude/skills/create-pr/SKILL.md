@@ -130,7 +130,11 @@ a ai pr-draft submit [--base main]
 submit 直前に共通 policy を再確認する。初回判定時から許可が続いている場合だけ、Step 3 で委任元の明示的な承認を受けた後に `a ai pr-draft submit --no-review` を使う。それ以外は通常フローに切り替え、未実施の crit と editor review を終えて人間の承認を受けてから `--no-review` なしで submit する。
 `english_output` が true のときは、title と body に日本語が含まれていないこと。
 
+公開計画が保存された task では submit が tq の葉への PR リンクとシリーズ図の同期も行う。公開計画がない task ではどちらも行わない。submit は同期に失敗しても成功扱いになるため、`stderr` に復旧コマンドが出た場合は表示どおりに実行する。
+
 ## 6. tq タスクへのリンク登録
+
+公開計画がある場合は submit が葉にリンクし、公開計画がない場合はこの Step の手動リンクで補う。同じ PR を同じ葉に再度紐付けても既存の task link が使われるため、submit の自動リンク後も以下の手順を実行できる。
 
 委任元が `branch.<name>.x-tq-checklist-item-id` に PR 項目 ID を残していれば、`tq checklist item update <itemId> --github <pr_url>` でその項目にリンクする。これにより tq task にも GitHub link が作られる。項目 ID が無い場合は、`branch.<name>.x-tq-task-id` に ID があればそれをタスクのリンク先にし、セッション側の結果で上書きしない。
 branch の task ID は worktree 専用で、session は複数作業にまたがることがあるため、branch の task ID を `TQ_SESSION_ID` からの推定より優先する。
