@@ -66,6 +66,47 @@ description: Split a task into a set of small, single-concern PRs that can be im
 
 親項目と PR 項目は `tq checklist item add <checklistId> <content>` で作る。複数 Batch の場合は PR 項目に `--parent <batchItemId>` を付け、単一 Batch では省略する。既存項目は `tq checklist item update` で本文や note を更新し、必要なら `tq checklist item move` で移動する。PR 項目の note は一時ファイルを `--note-file <path>` で渡す。すべての `tq` 呼び出しで `--author <model>` を指定し、長文の受け渡しは `tq` skill に従う。コマンドの引数は `tq checklist item add --help` など、該当する subcommand の `--help` で確認する。
 
+### 公開計画の登録
+
+チェックリストの葉 ID を確定したら、同じ task の公開計画を `a ai pr-series set` で保存する。このコマンドは armyknife のバージョン v0.1.481 以降で使える。計画は user state に保存され、repo への commit は不要。
+
+JSON には分割全体の `name` と `purpose`、各 PR の `id`、1 行の `summary`、依存先 ID の `dependsOn`、掲載先の `repository` (`owner/repo`)、対応する tq 葉 ID の `tqLeafId` を含める。各 `id` は葉の本文にある `PR 1` などの番号に対応させ、計画内で一意にする。たとえば `PR 1: ...` の葉には `pr-1` を割り当て、依存先を `dependsOn` で参照する。`dependsOn` は各葉の note に明記された `依存` (前提にする PR) から作り、`依存: なし` は空配列にする。Batch は並列化のまとまりなので、Batch の順序だけから依存を推測しない。`summary` は掲載先 repo の言語で書き、Mermaid のラベル幅が 200 px 未満に収まる短い文にする。
+
+```json
+{
+    "name": "Notification preferences",
+    "purpose": "Let users choose which notifications they receive.",
+    "pullRequests": [
+        {
+            "id": "pr-1",
+            "summary": "Add preference API",
+            "dependsOn": [],
+            "repository": "acme/notify-api",
+            "tqLeafId": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+            "id": "pr-2",
+            "summary": "Add notification settings",
+            "dependsOn": ["pr-1"],
+            "repository": "acme/notify-web",
+            "tqLeafId": "00000000-0000-4000-8000-000000000002"
+        }
+    ]
+}
+```
+
+ファイルを `$AGENT_TMPDIR` 配下に作り、登録する。
+
+```bash
+plan_file=$(mktemp "$AGENT_TMPDIR/pr-series-plan.XXXXXX")
+cat > "$plan_file" <<'EOF'
+<上の形式の JSON>
+EOF
+a ai pr-series set <task-id> --file "$plan_file"
+```
+
+PR の追加・削除や依存関係の変更で分割計画を更新した場合は、tq の葉を先に更新し、全 PR の内容を反映した JSON で `set` を再実行する。その後 `a ai pr-series sync <task-id>` を実行し、作成済み PR の図を更新する。PR の説明や Mermaid 区画は手で編集しない。
+
 ## アンチパターン
 
 - **PR ではなく commit を分ける**: PR は squash merge されるため、1 PR 内でいくら commit を分けても merge 後の履歴には 1 つしか残らない。関心を分ける単位は commit ではなく PR
