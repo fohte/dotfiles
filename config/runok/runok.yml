@@ -57,6 +57,53 @@ definitions:
         - '/*/.claude/plugins/cache/*/*/*/skills/*/scripts/*'
         - '/*/.claude/plugins/cache/*/*/*/skills/*/bin/*'
 
+    # These malformed script paths can still match the broad patterns above
+    # because `*` also consumes `/`.
+    untrusted-claude-skill-scripts:
+      type: pattern
+      values:
+        - '~/.agents/skills/*..*/scripts/*|~/.agents/skills/*..*/bin/*'
+        - '~/.agents/skills/*/scripts/*..*|~/.agents/skills/*/bin/*..*'
+        - '~/.agents/skills/*/./*scripts/*|~/.agents/skills/*/./*bin/*'
+        - '~/.agents/skills/*/scripts/./*|~/.agents/skills/*/bin/./*'
+        - '~/.agents/skills/*/scripts/*/./*|~/.agents/skills/*/bin/*/./*'
+        - '~/.agents/skills/*//*scripts/*|~/.agents/skills/*//*bin/*'
+        - '~/.agents/skills/*/scripts//*|~/.agents/skills/*/bin//*'
+        - '~/.agents/skills/*/scripts/*//*|~/.agents/skills/*/bin/*//*'
+        - '~/.agents/skills/synced/scripts/*|~/.agents/skills/synced/bin/*'
+        - '~/.agents/skills/*/*/scripts/*|~/.agents/skills/*/*/bin/*'
+        - '~/.claude/plugins/cache/*..*skills/*/scripts/*|~/.claude/plugins/cache/*..*skills/*/bin/*'
+        - '~/.claude/plugins/cache/*/skills/*..*/scripts/*|~/.claude/plugins/cache/*/skills/*..*/bin/*'
+        - '~/.claude/plugins/cache/*/skills/*/scripts/*..*|~/.claude/plugins/cache/*/skills/*/bin/*..*'
+        - '~/.claude/plugins/cache/*/./*skills/*/scripts/*|~/.claude/plugins/cache/*/./*skills/*/bin/*'
+        - '~/.claude/plugins/cache/*/skills/*/./*scripts/*|~/.claude/plugins/cache/*/skills/*/./*bin/*'
+        - '~/.claude/plugins/cache/*/skills/*/scripts/./*|~/.claude/plugins/cache/*/skills/*/bin/./*'
+        - '~/.claude/plugins/cache/*/skills/*/scripts/*/./*|~/.claude/plugins/cache/*/skills/*/bin/*/./*'
+        - '~/.claude/plugins/cache/*//*skills/*/scripts/*|~/.claude/plugins/cache/*//*skills/*/bin/*'
+        - '~/.claude/plugins/cache/*/skills/*//*scripts/*|~/.claude/plugins/cache/*/skills/*//*bin/*'
+        - '~/.claude/plugins/cache/*/skills/*/scripts//*|~/.claude/plugins/cache/*/skills/*/bin//*'
+        - '~/.claude/plugins/cache/*/skills/*/scripts/*//*|~/.claude/plugins/cache/*/skills/*/bin/*//*'
+        - '~/.claude/plugins/cache/*/*/*/*/skills/*/scripts/*|~/.claude/plugins/cache/*/*/*/*/skills/*/bin/*'
+        - '~/.claude/plugins/cache/*/*/*/skills/*/*/scripts/*|~/.claude/plugins/cache/*/*/*/skills/*/*/bin/*'
+        - '~/.claude/plugins/cache/*/*/*/skills/synced/scripts/*|~/.claude/plugins/cache/*/*/*/skills/synced/bin/*'
+        - '/*..*/.claude/plugins/cache/*/*/*/skills/*/scripts/*|/*..*/.claude/plugins/cache/*/*/*/skills/*/bin/*'
+        - '/*/./*/.claude/plugins/cache/*/*/*/skills/*/scripts/*|/*/./*/.claude/plugins/cache/*/*/*/skills/*/bin/*'
+        - '/*//*/*.claude/plugins/cache/*/*/*/skills/*/scripts/*|/*//*/*.claude/plugins/cache/*/*/*/skills/*/bin/*'
+        - '/*/.claude/plugins/cache/*..*skills/*/scripts/*|/*/.claude/plugins/cache/*..*skills/*/bin/*'
+        - '/*/.claude/plugins/cache/*/skills/*..*/scripts/*|/*/.claude/plugins/cache/*/skills/*..*/bin/*'
+        - '/*/.claude/plugins/cache/*/skills/*/scripts/*..*|/*/.claude/plugins/cache/*/skills/*/bin/*..*'
+        - '/*/.claude/plugins/cache/*/./*skills/*/scripts/*|/*/.claude/plugins/cache/*/./*skills/*/bin/*'
+        - '/*/.claude/plugins/cache/*/skills/*/./*scripts/*|/*/.claude/plugins/cache/*/skills/*/./*bin/*'
+        - '/*/.claude/plugins/cache/*/skills/*/scripts/./*|/*/.claude/plugins/cache/*/skills/*/bin/./*'
+        - '/*/.claude/plugins/cache/*/skills/*/scripts/*/./*|/*/.claude/plugins/cache/*/skills/*/bin/*/./*'
+        - '/*/.claude/plugins/cache/*//*skills/*/scripts/*|/*/.claude/plugins/cache/*//*skills/*/bin/*'
+        - '/*/.claude/plugins/cache/*/skills/*//*scripts/*|/*/.claude/plugins/cache/*/skills/*//*bin/*'
+        - '/*/.claude/plugins/cache/*/skills/*/scripts//*|/*/.claude/plugins/cache/*/skills/*/bin//*'
+        - '/*/.claude/plugins/cache/*/skills/*/scripts/*//*|/*/.claude/plugins/cache/*/skills/*/bin/*//*'
+        - '/*/.claude/plugins/cache/*/*/*/*/skills/*/scripts/*|/*/.claude/plugins/cache/*/*/*/*/skills/*/bin/*'
+        - '/*/.claude/plugins/cache/*/*/*/skills/*/*/scripts/*|/*/.claude/plugins/cache/*/*/*/skills/*/*/bin/*'
+        - '/*/.claude/plugins/cache/*/*/*/skills/synced/scripts/*|/*/.claude/plugins/cache/*/*/*/skills/synced/bin/*'
+
     # Interpreter sandboxes need temp-file access for bundled tools without
     # broadening the separate shell and direct-execution trust set.
     sandboxed-skill-scripts:
@@ -144,18 +191,68 @@ definitions:
 
 rules:
   # No sandbox: bundled scripts spawn agents and reach the network.
+  # Direct command paths aren't available in `when`, so malformed spellings
+  # need a more-specific decision than the broad allow patterns.
+  - ask: '<var:untrusted-claude-skill-scripts> *'
+    tests:
+      - ask: '~/.agents/skills/x/../../tmp/scripts/evil.sh'
+      - ask: '~/.agents/skills/self-review/./scripts/evil.sh'
+      - ask: '~/.agents/skills/self-review//scripts/evil.sh'
+      - ask: '~/.agents/skills/self-review/scripts/./evil.sh'
+      - ask: '~/.agents/skills/self-review/scripts//evil.sh'
+      - ask: '~/.agents/skills/synced/self-review/scripts/evil.sh'
+      - ask: '~/.agents/skills/synced/scripts/evil.sh'
+      - pass: '~/.claude/skills/synced/example-skill/scripts/check.cjs'
+      - ask: '~/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/nested/scripts/evil.sh'
+      - deny: '/Users/foo/../bar/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/scripts/evil.sh'
+      - deny: '/Users/foo/./bar/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/scripts/evil.sh'
+      - deny: '/Users/foo//bar/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/scripts/evil.sh'
+
+  - ask: 'bash <var:untrusted-claude-skill-scripts> *'
+    tests:
+      - ask: 'bash ~/.agents/skills/x/../../tmp/scripts/evil.sh'
+      - ask: 'bash ~/.agents/skills/self-review/./scripts/evil.sh'
+      - ask: 'bash ~/.agents/skills/self-review//scripts/evil.sh'
+      - ask: 'bash ~/.agents/skills/self-review/scripts/./evil.sh'
+      - ask: 'bash ~/.agents/skills/self-review/scripts//evil.sh'
+      - ask: 'bash ~/.agents/skills/synced/self-review/scripts/evil.sh'
+      - ask: 'bash ~/.agents/skills/synced/scripts/evil.sh'
+      - pass: 'bash ~/.claude/skills/synced/example-skill/scripts/check.cjs'
+      - ask: 'bash ~/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/nested/scripts/evil.sh'
+      - ask: 'bash ~/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/scripts/../evil.sh'
+      - ask: 'bash ~/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/scripts/./evil.sh'
+      - ask: 'bash ~/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/scripts//evil.sh'
+      - ask: 'bash /Users/foo/../bar/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/scripts/evil.sh'
+      - ask: 'bash /Users/foo/./bar/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/scripts/evil.sh'
+      - ask: 'bash /Users/foo//bar/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/scripts/evil.sh'
+
   - allow: 'bash <var:claude-skill-scripts>'
+    when: &trusted_claude_skill_script >-
+      size(args) > 0 &&
+      !args[0].contains('..') &&
+      !args[0].contains('//') &&
+      !args[0].matches('^~/.*/[.]/') &&
+      !args[0].matches('^/.*/[.]/') &&
+      (
+        (args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') &&
+          !args[0].matches('^~/[.]agents/skills/synced/')) ||
+        args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
+        args[0].matches('^/[A-Za-z0-9._ /-]+/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/')
+      )
     tests:
       - allow: 'bash ~/.agents/skills/self-review/scripts/select-reviewers'
       - allow: 'bash /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs'
       - pass: 'bash ~/.claude/skills/delegate/scripts/launch --task task.yaml --label example'
+      - pass: 'bash ~/.claude/skills/synced/example-skill/scripts/check.cjs'
       - pass: 'bash $HOME/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
 
   - allow: 'bash <var:claude-skill-scripts> *'
+    when: *trusted_claude_skill_script
     tests:
       - allow: 'bash ~/.agents/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
       - allow: 'bash /Users/foo/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
       - pass: 'bash ~/.claude/skills/delegate/scripts/launch --task task.yaml --label example'
+      - pass: 'bash ~/.claude/skills/synced/example-skill/scripts/check.cjs'
       - pass: 'bash $HOME/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
 
   # Absolute-path forms of <var:claude-skill-scripts> aren't tested here: bare
@@ -166,6 +263,7 @@ rules:
       - allow: '~/.agents/skills/self-review/scripts/select-reviewers'
       - allow: '~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs'
       - pass: '~/.claude/skills/delegate/scripts/launch --task task.yaml --label example'
+      - pass: '~/.claude/skills/synced/example-skill/scripts/check.cjs'
       - pass: '$HOME/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
 
   - allow: '<var:claude-skill-scripts> *'
@@ -173,6 +271,7 @@ rules:
       - allow: '~/.agents/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
       - allow: '~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
       - pass: '~/.claude/skills/delegate/scripts/launch --task task.yaml --label example'
+      - pass: '~/.claude/skills/synced/example-skill/scripts/check.cjs'
       - pass: '$HOME/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
 
   - ask: '~/.agents/skills/delegate/scripts/launch *'
