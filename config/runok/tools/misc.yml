@@ -34,6 +34,7 @@ rules:
   # armyknife
   - allow: 'a ai draft *'
   - allow: 'a ai pr-draft *'
+  - allow: 'a ai pr-series *'
   - allow: 'a ai review wait *'
   # The dedicated wrapper validates vibe mode and merge conditions itself.
   - allow: 'a gh pr-merge *'
