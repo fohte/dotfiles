@@ -130,7 +130,7 @@ a ai pr-draft submit [--base main]
 submit 直前に共通 policy を再確認する。初回判定時から許可が続いている場合だけ、Step 3 で委任元の明示的な承認を受けた後に `a ai pr-draft submit --no-review` を使う。それ以外は通常フローに切り替え、未実施の crit と editor review を終えて人間の承認を受けてから `--no-review` なしで submit する。
 `english_output` が true のときは、title と body に日本語が含まれていないこと。
 
-公開計画が保存され、branch config に `x-tq-task-id` と `x-tq-checklist-item-id` の両方がある場合、submit が tq の葉への PR リンクと分割 PR の全体図の同期を行う。どれかの条件がない場合は自動処理を行わない。submit は同期に失敗しても成功扱いになるため、`stderr` に復旧コマンドが出た場合は表示どおりに実行する。
+公開計画が保存され、branch config に `x-tq-task-id` と `x-tq-checklist-item-id` の両方がある場合、submit が tq の葉への PR リンクと分割 PR の全体像の同期を行う。どれかの条件がない場合は自動処理を行わない。submit は同期に失敗しても成功扱いになるため、`stderr` に復旧コマンドが出た場合は表示どおりに実行する。
 
 ## 6. tq タスクへのリンク登録
 
