@@ -70,9 +70,9 @@ description: Split a task into a set of small, single-concern PRs that can be im
 
 チェックリストの葉 ID を確定したら、同じ task の公開計画を `a ai pr-series set` で保存する。このコマンドは armyknife v0.1.481 以降で使える。`steps` と PR タイトルとして読める 1 文の要約を登録するには v0.1.494 以降が必要。計画は user state に保存され、repo への commit は不要。
 
-JSON には分割全体の `name` と `purpose`、各 PR の `id`、`summary`、依存先 ID の `dependsOn`、掲載先の `repository` (`owner/repo`)、対応する tq 葉 ID の `tqLeafId`、`steps` を含める。`steps` の配列順が進行順を表す。step は同じ目的の PR や一緒に進める PR をまとめる単位として手で決める。PR を 1 本ずつ機械的に別 step にせず、たとえば依存関係のない PR 8 本も、同じまとまりとして進めるなら 1 つの step にできる。各 step は空にせず、各 PR を空でない step 1 つだけに割り当て、依存先の PR は前の step に置く。依存のない PR を後の step に置いてもよい。各 PR の `id` は葉の本文にある `PR 1` などの番号に対応させ、計画内で一意にする。たとえば `PR 1: ...` の葉には `pr-1` を割り当てる。
+JSON には分割全体の `name` と `purpose`、各 PR の `id`、`summary`、依存先 ID の `dependsOn`、掲載先の `repository` (`owner/repo`)、対応する tq 葉 ID の `tqLeafId`、`steps` を含める。`steps` の配列順が進行順を表す。step は同じ目的の PR や一緒に進める PR をまとめる単位として手で決める。PR を 1 本ずつ機械的に別 step にせず、たとえば依存関係のない複数の PR も、同じまとまりとして進めるなら 1 つの step にできる。各 step は空にせず、各 PR を空でない step 1 つだけに割り当て、依存先の PR は前の step に置く。依存のない PR を後の step に置いてもよい。各 PR の `id` は葉の本文にある `PR 1` などの番号に対応させ、計画内で一意にする。たとえば `PR 1: ...` の葉には `pr-1` を割り当てる。
 
-各 PR の `summary` は掲載先 repo の言語で、PR タイトルとして読める 1 行の文にし、末尾に句点を付けない。作成済みの PR は `owner/repo#N` の参照がタイトルと状態に展開され、`summary` は表示されない。今回の PR と未作成の PR は `summary` が表示される。
+各 PR の `summary` は掲載先 repo の言語で、PR タイトルとして読める 1 行の文にし、末尾に句点やピリオドを付けない。作成済みの PR は `owner/repo#N` の参照がタイトルと状態に展開され、`summary` は表示されない。今回の PR と未作成の PR は `summary` が表示される。
 
 2 本以上の PR を含む step には、まとまりで行うことを表す `summary` を掲載先 repo の言語で 1 文書く。`Batch 1` のようなラベルではなく、PR の内容が分かる文にする。PR が 1 本だけの step では `summary` は不要で、表示もされない。公開 repo の PR が 2 本以上残る step では `summary` が表示されるため、非公開 repo の PR を含む step でも、summary には公開 repo の PR の内容だけを書く。
 
@@ -127,7 +127,7 @@ EOF
 a ai pr-series set <task-id> --file "$plan_file"
 ```
 
-PR の追加・削除や各 PR の内容・依存関係を変更する場合は、tq の葉を先に更新する。step のまとまり・順序・`summary` だけを変更する場合、tq の葉は更新しない。保存済み計画を読み戻すコマンドはないため、`set` を再実行するときは `name`、`purpose`、全 PR、全 `steps` と step の `summary` を含む計画全体の JSON を渡す。その後 `a ai pr-series sync <task-id>` を実行し、作成済み PR の手順リストを更新する。PR の説明や管理区画は手で編集しない。
+PR の追加・削除や各 PR の内容・依存関係を変更するときは、tq の葉を先に更新する。step のまとまり・順序・`summary` だけを変更するときは、tq の葉を更新しない。PR や step を変更したら、保存済み計画を読み戻すコマンドはないため、`name`、`purpose`、全 PR、全 `steps` と step の `summary` を含む計画全体の JSON で `a ai pr-series set` をやり直す。その後 `a ai pr-series sync <task-id>` を実行し、作成済み PR の手順リストを更新する。PR の説明や管理区画は手で編集しない。
 
 ## アンチパターン
 
