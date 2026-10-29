@@ -139,6 +139,7 @@ review_config_load_armyknife_snapshot() {
   local source="$1" snapshot_yaml="$work_dir/armyknife-agent.yaml"
   local snapshot_json="$review_armyknife_snapshot_file.tmp"
 
+  # select-reviewers uses command substitution for this resolver, so a variable would not cache the snapshot across calls.
   [[ -f "$review_armyknife_snapshot_file" ]] && return 0
 
   command -v a > /dev/null || {
@@ -161,6 +162,20 @@ review_config_load_armyknife_snapshot() {
   fi
 
   mv "$snapshot_json" "$review_armyknife_snapshot_file"
+}
+
+review_config_reject_reference_direct_settings() {
+  local use="$1" reviewer="$2" agent="$3" reference_source="$4"
+  local setting candidate setting_source
+
+  for setting in model reasoning_effort; do
+    candidate=$(review_config_pick_setting "$use" "$reviewer" "$agent" "$setting")
+    if [[ $(jq -r '.value != null' <<< "$candidate") == true ]]; then
+      setting_source=$(review_config_source_for "$(jq -c '.path' <<< "$candidate")")
+      echo "Error: armyknife profile reference at $reference_source conflicts with direct $setting setting at $setting_source." >&2
+      return 1
+    fi
+  done
 }
 
 review_config_resolve_armyknife_reference() {
@@ -308,13 +323,18 @@ resolve_review_engine() {
   esac
 
   if [[ -n "$reference_type" && "$effective_agent" == "$configured_agent" ]]; then
-    reference_model=$(jq -c '.model // null' <<< "$profile_candidate")
-    reference_effort=$(jq -c '.reasoning_effort // null' <<< "$profile_candidate")
-    if [[ "$reference_model" != null ]]; then
+    review_config_reject_reference_direct_settings "$use" "$reviewer" "$configured_agent" "$agent_source" || return 1
+    if jq -e 'has("model")' <<< "$profile_candidate" > /dev/null; then
+      reference_model=$(jq -c '.model' <<< "$profile_candidate")
       review_config_validate_value_string "$reference_model" "armyknife profile model" "$agent_source" || return 1
+    else
+      reference_model=null
     fi
-    if [[ "$reference_effort" != null ]]; then
+    if jq -e 'has("reasoning_effort")' <<< "$profile_candidate" > /dev/null; then
+      reference_effort=$(jq -c '.reasoning_effort' <<< "$profile_candidate")
       review_config_validate_value_string "$reference_effort" "armyknife profile reasoning_effort" "$agent_source" || return 1
+    else
+      reference_effort=null
     fi
     model_value="$reference_model"
     effort_value="$reference_effort"
