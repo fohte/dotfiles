@@ -66,6 +66,7 @@ load_review_config() {
     review_config_overlay_json_file="$work_dir/reviewers-overlay.json"
     yq -o=json '.' "$review_config_overlay_file" > "$review_config_overlay_json_file"
   fi
+  review_armyknife_snapshot_file="$work_dir/armyknife-agent.json"
 }
 
 review_config_source_for() {
@@ -117,11 +118,49 @@ review_config_validate_string() {
   }
 }
 
+review_config_reference_source() {
+  local source="$1" profile="$2" type="$3" setting="${4:-}"
+  if [[ -n "$setting" ]]; then
+    printf '%s (armyknife profile %s, type %s, field %s)' "$source" "$profile" "$type" "$setting"
+  else
+    printf '%s (armyknife profile %s, type %s)' "$source" "$profile" "$type"
+  fi
+}
+
+review_config_load_armyknife_snapshot() {
+  local source="$1" snapshot_yaml="$work_dir/armyknife-agent.yaml"
+  local snapshot_json="$review_armyknife_snapshot_file.tmp"
+
+  [[ -f "$review_armyknife_snapshot_file" ]] && return 0
+
+  command -v a > /dev/null || {
+    echo "Error: required command not found: a (referenced at $source)." >&2
+    return 127
+  }
+  if ! a config get agent > "$snapshot_yaml" 2> "$work_dir/armyknife-error"; then
+    cat "$work_dir/armyknife-error" >&2
+    echo "Error: unable to read the armyknife agent config referenced at $source." >&2
+    return 1
+  fi
+  if ! yq -o=json '.' "$snapshot_yaml" > "$snapshot_json"; then
+    echo "Error: unable to parse the armyknife agent config referenced at $source." >&2
+    return 1
+  fi
+  if ! jq -e 'type == "object" and (.active_profile | type == "string" and test("\\S")) and (.profiles | type == "object")' \
+    "$snapshot_json" > /dev/null; then
+    echo "Error: armyknife agent config must contain active_profile and profiles at $source." >&2
+    return 1
+  fi
+
+  mv "$snapshot_json" "$review_armyknife_snapshot_file"
+}
+
 resolve_review_engine() {
   local use="$1" reviewer="${2:-}" agent_override="${3:-}"
   local agent_candidate configured_agent agent_path agent_source effective_agent
   local model_candidate effort_candidate model_value effort_value model_source effort_source
-  local config_overlay
+  local config_overlay agent_value_type reference_type reference_path reference_value_type profile_name profile_candidate
+  local reference_source reference_model reference_effort profile_engine_type
 
   [[ -n "$use" ]] || {
     echo "Error: review config use is required." >&2
@@ -134,17 +173,102 @@ resolve_review_engine() {
   fi
 
   agent_candidate=$(review_config_pick_agent "$use" "$reviewer")
-  review_config_validate_string "$agent_candidate" "engine" || return 1
-  configured_agent=$(jq -r '.value' <<< "$agent_candidate")
+  if [[ $(jq -r '.path == null' <<< "$agent_candidate") == true ]]; then
+    review_config_validate_string "$agent_candidate" "engine" || return 1
+  fi
   agent_path=$(jq -c '.path' <<< "$agent_candidate")
-  case "$configured_agent" in
-    claude | codex | agy) ;;
+  agent_source=$(review_config_source_for "$agent_path")
+
+  agent_value_type=$(jq -r '.value | type' <<< "$agent_candidate")
+  reference_type=
+  profile_name=
+  profile_candidate=
+  reference_source=
+  case "$agent_value_type" in
+    string)
+      review_config_validate_string "$agent_candidate" "engine" || return 1
+      configured_agent=$(jq -r '.value' <<< "$agent_candidate")
+      ;;
+    object)
+      if ! jq -e '.value | has("reference")' <<< "$agent_candidate" > /dev/null; then
+        echo "Error: invalid agent config shape at $agent_source; expected an engine string or reference.armyknife." >&2
+        return 1
+      fi
+      if ! jq -e '.value | keys == ["reference"]' <<< "$agent_candidate" > /dev/null; then
+        echo "Error: agent config mixes a reference with direct settings at $agent_source." >&2
+        return 1
+      fi
+      if ! jq -e '.value.reference | type == "object"' <<< "$agent_candidate" > /dev/null; then
+        echo "Error: invalid agent reference shape at $agent_source; expected reference.armyknife." >&2
+        return 1
+      fi
+      if [[ $(jq -r '.value.reference | length' <<< "$agent_candidate") -eq 0 ]]; then
+        echo "Error: empty agent reference at $agent_source." >&2
+        return 1
+      fi
+      if ! jq -e '.value.reference | has("armyknife")' <<< "$agent_candidate" > /dev/null; then
+        echo "Error: unsupported agent reference provider at $agent_source; expected armyknife." >&2
+        return 1
+      fi
+      if ! jq -e '.value.reference | keys == ["armyknife"]' <<< "$agent_candidate" > /dev/null; then
+        echo "Error: invalid agent reference shape at $agent_source; only armyknife is supported." >&2
+        return 1
+      fi
+      reference_value_type=$(jq -r '.value.reference.armyknife | type' <<< "$agent_candidate")
+      if [[ "$reference_value_type" != string ]]; then
+        echo "Error: invalid armyknife agent reference shape at $agent_source; expected a string path." >&2
+        return 1
+      fi
+      reference_path=$(jq -r '.value.reference.armyknife' <<< "$agent_candidate")
+      if [[ ! "$reference_path" =~ [^[:space:]] ]]; then
+        echo "Error: empty armyknife agent reference at $agent_source." >&2
+        return 1
+      fi
+      if [[ "$reference_path" != agent.profile.* ]]; then
+        echo "Error: invalid armyknife agent reference at $agent_source; expected agent.profile.<type>." >&2
+        return 1
+      fi
+      reference_type="${reference_path#agent.profile.}"
+      if [[ -z "$reference_type" || "$reference_type" == *.* || "$reference_type" =~ [[:space:]] ]]; then
+        echo "Error: invalid armyknife agent reference at $agent_source; expected agent.profile.<type>." >&2
+        return 1
+      fi
+
+      review_config_load_armyknife_snapshot "$agent_source" || return $?
+      profile_name=$(jq -r '.active_profile' "$review_armyknife_snapshot_file")
+      profile_candidate=$(jq -c --arg profile "$profile_name" --arg type "$reference_type" \
+        '.profiles[$profile][$type] // null' "$review_armyknife_snapshot_file")
+      if [[ "$profile_candidate" == null ]]; then
+        echo "Error: armyknife profile type not found: agent.profile.$reference_type (profile $profile_name) at $agent_source." >&2
+        return 1
+      fi
+      if [[ $(jq -r 'type' <<< "$profile_candidate") != object ]]; then
+        echo "Error: invalid armyknife profile type shape: agent.profile.$reference_type (profile $profile_name) at $agent_source." >&2
+        return 1
+      fi
+
+      profile_engine_type=$(jq -r '.engine | type' <<< "$profile_candidate")
+      configured_agent=$(jq -r '.engine | strings // empty' <<< "$profile_candidate")
+      if [[ "$profile_engine_type" != string || -z "$configured_agent" || ! "$configured_agent" =~ [^[:space:]] ]]; then
+        echo "Error: armyknife profile type must contain a non-empty engine: agent.profile.$reference_type (profile $profile_name) at $agent_source." >&2
+        return 1
+      fi
+      reference_source=$(review_config_reference_source "$agent_source" "$profile_name" "$reference_type")
+      agent_source="$reference_source"
+      ;;
     *)
-      echo "Error: unsupported reviewer engine: $configured_agent" >&2
+      echo "Error: invalid agent config shape at $agent_source; expected an engine string or reference.armyknife." >&2
       return 1
       ;;
   esac
-  agent_source=$(review_config_source_for "$agent_path")
+
+  case "$configured_agent" in
+    claude | codex | agy) ;;
+    *)
+      echo "Error: unsupported reviewer engine: $configured_agent at $agent_source." >&2
+      return 1
+      ;;
+  esac
 
   effective_agent="${agent_override:-$configured_agent}"
   case "$effective_agent" in
@@ -155,23 +279,66 @@ resolve_review_engine() {
       ;;
   esac
 
-  model_candidate=$(review_config_pick_setting "$use" "$reviewer" "$effective_agent" model)
-  effort_candidate=$(review_config_pick_setting "$use" "$reviewer" "$effective_agent" reasoning_effort)
-  if [[ $(jq -r '.value == null' <<< "$model_candidate") == false ]]; then
-    review_config_validate_string "$model_candidate" "model" || return 1
-    model_source=$(review_config_source_for "$(jq -c '.path' <<< "$model_candidate")")
+  if [[ -n "$reference_type" && "$effective_agent" == "$configured_agent" ]]; then
+    reference_model=$(jq -c '.model // null' <<< "$profile_candidate")
+    reference_effort=$(jq -c '.reasoning_effort // null' <<< "$profile_candidate")
+    if [[ "$reference_model" != null ]] && ! jq -e 'type == "string" and test("\\S")' <<< "$reference_model" > /dev/null; then
+      echo "Error: armyknife profile model must be a non-empty string at $agent_source." >&2
+      return 1
+    fi
+    if [[ "$reference_effort" != null ]] && ! jq -e 'type == "string" and test("\\S")' <<< "$reference_effort" > /dev/null; then
+      echo "Error: armyknife profile reasoning_effort must be a non-empty string at $agent_source." >&2
+      return 1
+    fi
+    model_value="$reference_model"
+    effort_value="$reference_effort"
+    model_source=$(review_config_reference_source "$(review_config_source_for "$agent_path")" "$profile_name" "$reference_type" model)
+    effort_source=$(review_config_reference_source "$(review_config_source_for "$agent_path")" "$profile_name" "$reference_type" reasoning_effort)
+    if [[ "$model_value" == null ]]; then
+      model_source="$model_source (${effective_agent} CLI default)"
+    fi
+    if [[ "$effort_value" == null ]]; then
+      effort_source="$effort_source (${effective_agent} CLI default)"
+    fi
   else
-    model_source="$effective_agent CLI default"
-  fi
-  if [[ $(jq -r '.value == null' <<< "$effort_candidate") == false ]]; then
-    review_config_validate_string "$effort_candidate" "reasoning_effort" || return 1
-    effort_source=$(review_config_source_for "$(jq -c '.path' <<< "$effort_candidate")")
-  else
-    effort_source="$effective_agent CLI default"
+    model_candidate=$(review_config_pick_setting "$use" "$reviewer" "$effective_agent" model)
+    effort_candidate=$(review_config_pick_setting "$use" "$reviewer" "$effective_agent" reasoning_effort)
+    if [[ $(jq -r '.value == null' <<< "$model_candidate") == false ]]; then
+      review_config_validate_string "$model_candidate" "model" || return 1
+      model_source=$(review_config_source_for "$(jq -c '.path' <<< "$model_candidate")")
+    else
+      model_source="$effective_agent CLI default"
+    fi
+    if [[ $(jq -r '.value == null' <<< "$effort_candidate") == false ]]; then
+      review_config_validate_string "$effort_candidate" "reasoning_effort" || return 1
+      effort_source=$(review_config_source_for "$(jq -c '.path' <<< "$effort_candidate")")
+    else
+      effort_source="$effective_agent CLI default"
+    fi
+    model_value=$(jq -c '.value // null' <<< "$model_candidate")
+    effort_value=$(jq -c '.value // null' <<< "$effort_candidate")
+    if [[ -n "$reference_type" ]]; then
+      model_source="$reference_source; $model_source"
+      effort_source="$reference_source; $effort_source"
+    fi
   fi
 
-  model_value=$(jq -c '.value // null' <<< "$model_candidate")
-  effort_value=$(jq -c '.value // null' <<< "$effort_candidate")
+  if [[ "$use" == review_draft && -n "$reference_type" ]]; then
+    case "$effective_agent" in
+      claude) ;;
+      codex)
+        if [[ "$model_value" == null ]]; then
+          echo "Error: Codex draft review requires a model at $agent_source." >&2
+          return 1
+        fi
+        ;;
+      *)
+        echo "Error: draft review does not support the armyknife profile engine $effective_agent at $agent_source." >&2
+        return 1
+        ;;
+    esac
+  fi
+
   config_overlay=null
   [[ -z "$review_config_overlay_file" ]] || config_overlay=$(jq -Rn --arg path "$review_config_overlay_file" '$path')
 
