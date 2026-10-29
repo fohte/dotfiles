@@ -47,7 +47,7 @@ description: Split a task into a set of small, single-concern PRs that can be im
 - 依存: PR 1 (<何を待つのか>)
 ```
 
-分割後、そのまま委任に進む場合は delegate に渡す。delegate は 1 委任 = 1 PR なので、着手できるのは Batch 1 のみ。後続 Batch は先行 PR が merge されてから改めて委任する。依存のある PR を委任するときは、依存先の PR の URL を「依存先」と分かる形で委任内容に含める。
+分割後、そのまま委任に進む場合は delegate に渡す。delegate は 1 委任 = 1 PR なので、着手できるのは Batch 1 のみ。後続 Batch は先行 PR が merge されてから改めて委任する。依存のある PR を委任するときは、依存先の PR の URL を `依存先: <URL>` の形で委任内容に含める。
 
 ## tq チェックリストへの記録
 
