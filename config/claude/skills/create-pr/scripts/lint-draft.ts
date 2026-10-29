@@ -13,6 +13,7 @@ import { dirname, join } from 'node:path'
 import { parseArgs } from 'node:util'
 
 type Report = (lineno: number, rule: string, message: string) => void
+type LinkLabel = 'from' | 'depends on'
 
 const TITLE_MAX = 50
 const SECTION_MAX_ITEMS = 2
@@ -122,18 +123,24 @@ export function lint(text: string, owner: string): [number, string][] {
   let inWhy = true
   let prevInList = false
   let blankSincePrev = false
-  let fromBlock:
-    { lineno: number; indent: number; children: string[] } | undefined
+  let linkBlock:
+    | {
+        lineno: number
+        indent: number
+        label: LinkLabel
+        children: string[]
+      }
+    | undefined
 
-  const closeFromBlock = () => {
-    if (fromBlock && fromBlock.children.length < 2) {
+  const closeLinkBlock = () => {
+    if (linkBlock && linkBlock.children.length < 2) {
       report(
-        fromBlock.lineno,
+        linkBlock.lineno,
         'Rule 5',
-        'write a single `from:` link on one line as `- from: <URL>`',
+        `write a single \`${linkBlock.label}:\` link on one line as \`- ${linkBlock.label}: <URL>\``,
       )
     }
-    fromBlock = undefined
+    linkBlock = undefined
   }
 
   let section: { lineno: number; items: number } | undefined
@@ -188,16 +195,20 @@ export function lint(text: string, owner: string): [number, string][] {
       }
     }
 
-    if (fromBlock) {
-      if (indent > fromBlock.indent && item) {
+    if (linkBlock) {
+      if (indent > linkBlock.indent && item) {
         if (BARE_URL.test(item[2])) {
-          fromBlock.children.push(item[2])
+          linkBlock.children.push(item[2])
         } else {
-          report(lineno, 'Rule 5', 'list only bare URLs under `from:`')
+          report(
+            lineno,
+            'Rule 5',
+            `list only bare URLs under \`${linkBlock.label}:\``,
+          )
         }
         continue
       }
-      closeFromBlock()
+      closeLinkBlock()
     }
 
     if (line.startsWith('## ')) {
@@ -215,17 +226,18 @@ export function lint(text: string, owner: string): [number, string][] {
 
     if (item) {
       const content = item[2].trimEnd()
-      const from = content.match(/^from:\s*(.*)$/)
-      if (section && !from) section.items++
-      if (from) {
-        const rest = from[1]
+      const link = content.match(/^(from|depends on):\s*(.*)$/)
+      if (section && !link) section.items++
+      if (link) {
+        const label = link[1] as LinkLabel
+        const rest = link[2]
         if (rest === '') {
-          fromBlock = { lineno, indent, children: [] }
+          linkBlock = { lineno, indent, label, children: [] }
         } else if (!BARE_URL.test(rest) || rest.includes(',')) {
           report(
             lineno,
             'Rule 5',
-            'write `from:` as `- from: <URL>` with a bare URL and nothing else',
+            `write \`${label}:\` as \`- ${label}: <URL>\` with a bare URL and nothing else`,
           )
         }
         continue
@@ -257,7 +269,7 @@ export function lint(text: string, owner: string): [number, string][] {
     }
   }
 
-  closeFromBlock()
+  closeLinkBlock()
   closeSection()
   return errors
 }
