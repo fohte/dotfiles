@@ -86,6 +86,7 @@ review_config_pick_agent() {
     [
       (if $reviewer == "" then empty else {value: .reviewers[$reviewer].agent, path: ["reviewers", $reviewer, "agent"]} end),
       {value: .uses[$use].agent, path: ["uses", $use, "agent"]},
+      {value: .agent, path: ["agent"]},
       {value: .default_agent, path: ["default_agent"]}
     ]
     | map(select(.value != null))

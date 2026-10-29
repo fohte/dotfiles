@@ -8,8 +8,9 @@ set -euo pipefail
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 self_review_dir=$(cd "$script_dir/../../self-review" && pwd -P)
+create_pr_dir=$(cd "$script_dir/.." && pwd -P)
 config_script_dir="$self_review_dir/scripts"
-reviewers_file="$self_review_dir/reviewers.yaml"
+review_settings_file="$create_pr_dir/review.yaml"
 
 # Assign first: a failure inside `$(...)` used as an argument would not trip `set -e`.
 draft=$("$script_dir/draft-path")
@@ -115,7 +116,7 @@ esac
 
 # shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
 source "$config_script_dir/review-config"
-load_review_config "$reviewers_file" "$work_dir"
+load_review_config "$review_settings_file" "$work_dir"
 engine_config=$(resolve_review_engine review_draft)
 agent=$(jq -r '.agent' <<< "$engine_config")
 model=$(jq -r '.model // empty' <<< "$engine_config")

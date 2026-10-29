@@ -21,7 +21,7 @@ commit range のレビューでは、現在の branch に記録された review 
 
 ## Backend execution
 
-engine / model / reasoning effort は base 設定と role overlay から解決する。reviewer 固有設定を用途設定より優先し、用途設定を共通既定より優先する。各設定値の出典と実効値は reviewer 起動前に表示し、result にも保存する。Codex quota による既存 fallback は Claude へ解決し直した値を使う。
+engine / model / reasoning effort は `reviewers.yaml` と role overlay の参照、および選択中の armyknife profile から解決する。reviewer 固有設定を用途設定より優先し、用途設定を共通既定より優先する。各設定値の出典と実効値は reviewer 起動前に表示し、result にも保存する。Codex quota による既存 fallback は Claude へ解決し直した値を使う。
 
 backend が返す成果物は共有 JSON schema に従う reviewer ごとの JSON です。必須の evaluation ID は reviewer-evaluation-ids.json から prompt と validator が共に読みます。集約 Markdown の見出しと日本語名は利用者向け表示であり、JSON の ID とは別の契約です。conditional reviewer の ID 集合は固定しません。
 
