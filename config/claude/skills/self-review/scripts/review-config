@@ -325,9 +325,9 @@ resolve_review_engine() {
 
   if [[ "$use" == codex_quota_fallback ]]; then
     case "$configured_agent" in
-      claude | codex) ;;
+      claude | agy) ;;
       *)
-        echo "Error: Codex quota fallback requires the claude or codex engine, got $configured_agent at $agent_source." >&2
+        echo "Error: Codex quota fallback requires the claude or agy engine, got $configured_agent at $agent_source." >&2
         return 1
         ;;
     esac
