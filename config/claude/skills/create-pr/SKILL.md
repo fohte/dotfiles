@@ -40,14 +40,31 @@ Apply every row below whose condition holds. The rows are independent of each ot
 
 GitHub は下段 PR が merge されると上段 PR の remote branch を rebase し、base を付け替える。ローカル branch が古いまま diff や push を行わないよう、base branch の解決と Step 0 より先に同期する ([GitHub docs](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/merging-stacked-pull-requests))。
 
-stack PR を作成したときは、後続の実行で下段 PR の merge を確認できるよう、PR 番号と branch 名を現在の branch config に保存する。Step 5 の submit が stack 作成の警告を出さずに成功した場合、または警告に対する復旧後に stack 作成を確認できた場合に保存する。下記の placeholder は base branch 解決で得た値に置き換える。
+stack PR を作成したときは、後続の実行で下段 PR の merge を確認できるよう、PR 番号と branch 名を現在の branch config に保存する。Step 5 の submit が stack 作成の警告を出さずに成功した場合、または警告に対する復旧後に stack 作成を確認できた場合に保存する。`current_branch` は現在の branch 名、`stack_parent_pr_number` と `stack_parent_branch` は base branch 解決で得た値にする。
 
 ```bash
-git config --local "branch.$(git branch --show-current).x-create-pr-stack-parent-number" "$stack_parent_pr_number"
-git config --local "branch.$(git branch --show-current).x-create-pr-stack-parent-branch" "$stack_parent_branch"
+current_branch=$(git branch --show-current)
+git config --local "branch.$current_branch.x-create-pr-stack-parent-number" "$stack_parent_pr_number"
+git config --local "branch.$current_branch.x-create-pr-stack-parent-branch" "$stack_parent_branch"
 ```
 
-保存済みの PR 番号がある場合は、`gh pr view <stack_parent_pr_number> --json state --jq .state` で状態を確認する。`MERGED` なら、現在の branch に upstream が設定されていることを確認してから `git pull --rebase` を実行し、成功後に base branch を解決する。`OPEN` なら下段 branch を fetch し、後述の ancestry check で現在の branch に含まれていることを確認する。含まれていなければ `git rebase origin/<stack_parent_branch>` を Step 0 より前に実行する。merge されずに `CLOSED` になっていた場合は、stack の状態を推測せず作業を止めて報告する。fetch、rebase、pull のいずれかが失敗した場合も Step 0 に進まない。
+保存済みの番号と branch 名が両方ある場合は branch config から読み、下段 PR の状態を確認する。片方だけがある場合は metadata が不完全なので作業を止めて報告する。
+
+```bash
+current_branch=$(git branch --show-current)
+stack_parent_pr_number=$(git config --local --get "branch.$current_branch.x-create-pr-stack-parent-number")
+stack_parent_branch=$(git config --local --get "branch.$current_branch.x-create-pr-stack-parent-branch")
+gh pr view "$stack_parent_pr_number" --json state --jq .state
+```
+
+`MERGED` なら、現在の branch に upstream が設定されていることを確認してから `git pull --rebase` を実行する。成功後は次のとおり branch config から保存済みの番号と branch 名を削除し、base branch を解決する。
+
+```bash
+git config --local --unset-all "branch.$current_branch.x-create-pr-stack-parent-number"
+git config --local --unset-all "branch.$current_branch.x-create-pr-stack-parent-branch"
+```
+
+`OPEN` なら追加の同期は不要で、base branch の選択に進む。merge されずに `CLOSED` になっていた場合は、stack の状態を推測せず作業を止めて報告する。`git pull --rebase` が失敗した場合も Step 0 に進まない。
 
 ### Base branch の選択
 
@@ -57,11 +74,18 @@ git config --local "branch.$(git branch --show-current).x-create-pr-stack-parent
 2. 新規 PR で明示された下段 branch があれば、open PR 一覧から `headRefName` が完全一致し、`headRepository.nameWithOwner` がこの repository と一致し、`isCrossRepository` が `false` の PR を選ぶ。その PR の branch と番号を `stack_parent_branch` / `stack_parent_pr_number` にし、`base_branch` にも同じ branch 名を使う。
 3. 明示指定がなく、current branch の push 先がこの repository の場合は、`gh repo view --json nameWithOwner --jq .nameWithOwner` で repository 名を確認し、`gh pr list --state open --limit 1000 --json number,headRefName,headRefOid,headRepository,isCrossRepository,baseRefName,baseRefOid` で候補を得る。`headRepository.nameWithOwner` がこの repository と一致し、`isCrossRepository` が `false` の PR のみを候補にする。head と base の remote branch ref を fetch してから比較する。各 ref は `git fetch --no-tags origin "refs/heads/<branch>:refs/remotes/origin/<branch>"` で取得する。取得後の ref OID が `headRefOid` / `baseRefOid` と異なる場合は PR 一覧を一度取り直して再計算する。再計算後も一致しない場合、fetch が失敗した場合、または graph が浅く判定できない場合は作業を止めて原因を報告する。
 
-    各 PR について `git merge-base --all HEAD "origin/<headRefName>"` と `git merge-base --all "origin/<headRefName>" "origin/<baseRefName>"` を求める。各結果が 1 commit の場合だけ比較を続ける。前者を `shared_commit`、後者を `pr_base` とし、`shared_commit` が `pr_base` と異なり、`git merge-base --is-ancestor "$pr_base" "$shared_commit"` が成功する PR を候補にする。下段 PR に後から commit が追加されても、上段 branch と共有する古い commit が PR 固有履歴に残っていれば候補になる。候補の `shared_commit` を比較し、ほかの候補すべての共有 commit の子孫にある候補が 1 つだけなら、その PR を選ぶ。候補が複数で前後関係を決められない場合は作業を止めて報告する。
+    各 PR について次の 2 つを求める。各結果が 1 commit の場合だけ比較を続ける。
+
+    ```bash
+    git merge-base --all HEAD "origin/<headRefName>"
+    git merge-base --all "origin/<headRefName>" "origin/<baseRefName>"
+    ```
+
+    前者を `shared_commit`、後者を `pr_base` とし、`shared_commit` が `pr_base` と異なり、`git merge-base --is-ancestor "$pr_base" "$shared_commit"` が成功する PR を候補にする。下段 PR に後から commit が追加されても、上段 branch と共有する古い commit が PR 固有履歴に残っていれば候補になる。候補の `shared_commit` を比較し、ほかの候補すべての共有 commit の子孫にある候補が 1 つだけなら、その PR を選ぶ。候補が複数で前後関係を決められない場合は作業を止めて報告する。
 
 4. 下段 PR が見つからない場合、または push 先が fork の場合は default branch (`git main`) を使う。ただし、ユーザーや委任元から current branch が下段 PR 上に作られたと聞いていて候補が見つからない場合は、default branch に fallback せず状況を報告する。下段 PR が force-push や rebase で共有履歴を失った場合は明示指定を使う。
 
-`stack_parent_branch` が決まったら、fetch 済みの `origin/<stack_parent_branch>` が `HEAD` の祖先か確認する。祖先でなければ `git rebase origin/<stack_parent_branch>` を Step 0 より前に行い、conflict が解決できなければ作業を止める。これにより下段 PR の最新 commit を上段 branch に取り込み、stack の差分と履歴を揃える。GitHub は stack の merge に linear history を要求し、下段 branch に変更が入ると stack 全体の cascading rebase が必要になる場合がある。merge 前に GitHub の `Rebase stack` を実行するよう案内された場合は、その操作を完了してから進める ([GitHub requirements](https://docs.github.com/en/pull-requests/reference/stacked-pull-requests#linear-history))。
+GitHub は stack の merge に linear history を要求し、下段 branch に変更が入ると stack 全体の cascading rebase が必要になる場合がある。merge 前に GitHub の `Rebase stack` を実行するよう案内された場合は、その操作を完了してから進める ([GitHub requirements](https://docs.github.com/en/pull-requests/reference/stacked-pull-requests#linear-history))。
 
 `base_ref` には `origin/<base_branch>` を使う。remote ref がない場合は fetch して取得する。stack 用の base は同一 repository の branch に限る。fork にある既存 PR の base は維持するが、fork から新規 PR を作る場合は default branch 向けの通常の PR とする。
 
@@ -69,7 +93,7 @@ git config --local "branch.$(git branch --show-current).x-create-pr-stack-parent
 
 | 用途                | 指定                                                                                                                                 |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| diff と crit review | `base_ref` を `crit-approval-review` に明示して渡す                                                                                  |
+| diff と crit review | default branch では crit の自動検出を使い、それ以外では `base_ref` を `crit-approval-review` に明示して渡す                          |
 | `review-draft`      | default branch 以外なら `base_branch` を引数に渡す                                                                                   |
 | submit              | `stack_parent_branch` がある新規 PR だけ `--base <stack_parent_branch>` を渡す。既存 PR の更新と default branch 向け PR では省略する |
 
