@@ -36,15 +36,20 @@ Apply every row below whose condition holds. The rows are independent of each ot
 
 ## Step 0 より前の upstream 同期
 
-diff、crit review、push の前に、upstream が設定された branch を毎回同期する。GitHub は下段 PR の merge 後に上段 PR の remote branch を rebase して base を付け替えるため、ローカル branch を先に合わせる ([GitHub docs](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/merging-stacked-pull-requests))。
+同期または Base branch の解決で作業を止める場合、`vibe_mode` では前提の誤りとして委任元に報告する。
+
+GitHub は下段 PR の merge 後に上段 PR の remote branch を rebase して base を付け替えるため、upstream が `origin/<現在の branch>` の場合だけ、diff、crit review、push の前にローカル branch を同期する ([GitHub docs](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/merging-stacked-pull-requests))。
 
 ```bash
-if git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' >/dev/null 2>&1; then
+branch=$(git branch --show-current)
+upstream_remote=$(git config --get "branch.$branch.remote" || true)
+upstream_merge=$(git config --get "branch.$branch.merge" || true)
+if [[ "$upstream_remote" == "origin" && "$upstream_merge" == "refs/heads/$branch" ]]; then
   git pull --rebase
 fi
 ```
 
-upstream がなければ同期を省く。`git pull --rebase` が失敗したら作業を止め、エラー内容を報告する。作業ツリーの変更が原因なら、変更を commit または stash してから再実行する。
+upstream がない場合、別の branch、または別 remote を指す場合は同期しない。`git pull --rebase` が失敗したら作業を止め、エラー内容を報告する。作業ツリーの変更が原因なら、変更を commit または stash してから再実行する。
 
 ## Base branch の解決
 
@@ -166,7 +171,7 @@ a ai pr-draft submit [--base <stack_parent_branch>]
 ```
 
 既存 PR がある場合は title と body を更新する。通常フローではユーザー承認済みの場合のみ submit する。
-submit 直前に共通 policy を再確認する。初回判定時から許可が続いている場合だけ、Step 3 で委任元の明示的な承認を受けた後に `a ai pr-draft submit --no-review` を使う。それ以外は通常フローに切り替え、未実施の crit と editor review を終えて人間の承認を受けてから `--no-review` なしで submit する。
+submit 直前に共通 policy を再確認する。初回判定時から許可が続いている場合だけ、Step 3 で委任元の明示的な承認を受けた後に `a ai pr-draft submit [--base <stack_parent_branch>] --no-review` を使う。それ以外は通常フローに切り替え、未実施の crit と editor review を終えて人間の承認を受けてから `--no-review` なしで submit する。
 `english_output` が true のときは、title と body に日本語が含まれていないこと。
 
 `--base` の指定は「Base branch の解決」に従う。
