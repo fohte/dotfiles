@@ -7,7 +7,7 @@ description: Use this skill when creating or updating a Pull Request. This skill
 
 以下の手順で PR を作成する。
 
-**重要:** diff の確認には必ず remote の default branch と比較すること (`git diff "origin/$(git main)...HEAD"`)。ローカルの default branch は古い可能性がある。
+**重要:** diff は Step 0 で解決した base ref と比較すること。default branch の ref は必ず remote (`origin/<default_branch>`) を使う。ローカルの default branch は古い可能性がある。
 
 ## Conditions
 
@@ -34,6 +34,18 @@ Apply every row below whose condition holds. The rows are independent of each ot
 | `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.                                                                                                                                                                                                           |
 | ... and the template contains `Design decisions` | The rules include Rule 9; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                                                                                                                                                                                              |
 
+## Base branch の解決
+
+Step 0 より前に、全 step で使う `base_branch` を一度だけ解決する。
+
+1. 現在の branch に open PR がある場合は `gh pr view --json baseRefName --jq .baseRefName` で得た base branch を使う。既存 PR の再 submit では base を変更しない。
+2. open PR がなく、current branch の push 先がこの repository の場合は `gh pr list --state open --limit 1000 --json number,headRefName,headRefOid,isCrossRepository` を実行する。同一 repository の PR (`isCrossRepository` が `false`) のうち、`headRefOid` が現在の `HEAD` の祖先である PR を候補にする。候補同士で祖先関係を比較し、ほかの候補の祖先ではない head branch が一つだけならそれを選ぶ。候補が一意にならない場合は base を推測せず、作業を止めて状況を報告する。
+3. 候補がない場合、または push 先が fork の場合は default branch (`git main`) を使う。
+
+`base_branch` には PR の `headRefName`、`base_ref` には `origin/<base_branch>` を使う。remote ref がない場合は `git fetch origin "refs/heads/<base_branch>:refs/remotes/origin/<base_branch>"` で取得する。stack 用の base は同一 repository の branch に限る。fork にある既存 PR の base は維持するが、fork から新規 PR を作る場合は default branch 向けの通常の PR とする。
+
+下段 PR が merge された後、上段 branch に追加 commit を push する前に `git pull --rebase` で GitHub が更新した remote branch を取り込む。
+
 ## 開始時の宣言 (必須・最初の応答で実行)
 
 create-pr skill を起動したら、**最初の応答で**適用される必須ステップを列挙し、これから実行する旨を宣言すること。宣言なしに Step 1 以降に進むのは禁止。
@@ -55,12 +67,12 @@ create-pr skill を起動したら、**最初の応答で**適用される必須
 ```bash
 git log @{u}..HEAD --oneline
 # upstream 未設定なら
-git log "origin/$(git main)..HEAD" --oneline
+git log "origin/$base_branch..HEAD" --oneline
 ```
 
 未 push のコミットがなければ push は不要。
 
-`vibe_mode` でない場合は、push の要否にかかわらず `crit-approval-review` skill で base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。
+`vibe_mode` でない場合は、push の要否にかかわらず `crit-approval-review` skill で base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。stack 用の base が default branch でない場合は `base_ref` を crit skill に渡す。default branch の場合は crit の自動検出を使う。
 
 通常フローでは承認後に `commit` skill の push 手順に従って loop 中の修正をまとめてコミット・push し、Step 1 に進む。`vibe_mode` では crit 承認を待たずに Step 1 に進む。
 
@@ -73,6 +85,7 @@ git log "origin/$(git main)..HEAD" --oneline
 ## 2. ドラフトのレビュー (必須・スキップ禁止)
 
 `references/draft-manual.md` の Step 2 に従う。
+stack 用の base が default branch でない場合は `review-draft <base_branch>` を実行し、default branch の場合は引数を省略する。
 
 ## 3. レビュー
 
@@ -123,12 +136,15 @@ enable-vibe-coding skill の『draft ready を受けたら』の手順に従う�
 ## 5. Submit
 
 ```bash
-a ai pr-draft submit [--base main]
+a ai pr-draft submit [--base <base_branch>]
 ```
 
 既存 PR がある場合は title と body を更新する。通常フローではユーザー承認済みの場合のみ submit する。
 submit 直前に共通 policy を再確認する。初回判定時から許可が続いている場合だけ、Step 3 で委任元の明示的な承認を受けた後に `a ai pr-draft submit --no-review` を使う。それ以外は通常フローに切り替え、未実施の crit と editor review を終えて人間の承認を受けてから `--no-review` なしで submit する。
 `english_output` が true のときは、title と body に日本語が含まれていないこと。
+
+default branch 向けの通常 PR では `--base` を省略する。同一 repository の open PR branch を base にする場合は `--base <base_branch>` を渡す。
+submit の `stderr` に stack 作成の警告と `gh api` の復旧 command が出た場合、submit 自体が成功していても PR は stack に入っていない。表示された command をそのまま実行する。復旧 command が失敗した場合は、推測した command で再試行せず、警告と command を最終報告に含める。
 
 公開計画が保存され、branch config に `x-tq-task-id` と `x-tq-checklist-item-id` の両方がある場合、submit が tq の葉への PR リンクと分割 PR の全体像の同期を行う。どれかの条件がない場合は自動処理を行わない。submit は同期に失敗しても成功扱いになるため、`stderr` に復旧コマンドが出た場合は表示どおりに実行する。
 

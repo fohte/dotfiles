@@ -81,6 +81,8 @@ Claude helper は OS レベルの network sandbox を設けない。clean env �
     ~/.agents/skills/create-pr/scripts/review-draft [<base_branch>]
     ```
 
+    create-pr skill が解決した `base_branch` が default branch でない場合は、その branch 名を渡す。default branch の場合は引数を省略する。
+
     レビュアーを subagent (Task ツール) で起動してはならない。subagent への prompt を書き手が書くと、書き手の文脈が混ざる。
 
 3. レビュアーの回答を要約せずにユーザーに発話する

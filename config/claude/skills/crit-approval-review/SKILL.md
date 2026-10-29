@@ -12,7 +12,7 @@ description: crit story を作成してユーザーに差分をレビューし�
 
 ## 対象の差分
 
-crit の自動検出に任せる。feature branch では base branch から working tree まで、default branch では未コミットの変更が対象になる。
+呼び出し元から base ref が渡された場合は、その ref を crit に明示して使う。指定がない場合は crit の自動検出に任せる。feature branch では base branch から working tree まで、default branch では未コミットの変更が対象になる。
 どちらも working tree を含むので、loop 中の未コミットの修正もそのまま次の round でレビューできる。
 
 ## 1. story を作成する
@@ -25,10 +25,12 @@ authoring では、`crit:crit-story` の例に `--no-open` がない場合も、
 
 ```bash
 crit story --guide --no-open
-crit story --prep <path> --no-open
-crit story --story-file <path> --no-open
-crit story --refresh --story-file <path> --no-open
+crit story --prep <path> [--base-branch <base_ref>] --no-open
+crit story --story-file <path> [--base-branch <base_ref>] --no-open
+crit story --refresh --story-file <path> [--base-branch <base_ref>] --no-open
 ```
+
+呼び出し元から `base_ref` が渡された場合は、prep、story の ingest、refresh のすべてに同じ `--base-branch <base_ref>` を指定する。create-pr skill は stack 対象 branch の remote ref (`origin/<base_branch>`) を渡す。
 
 `--guide` と `--prep` は出力後に終了する。
 これらは browser flow に入らないためブラウザを開かず、`--no-open` は no-op だが authoring command の契約を揃えるため付ける。
@@ -56,7 +58,7 @@ bare な `crit story`、`crit story --no-spend`、`crit`、`crit review` はこ�
 4. `a agent status set wait "design review of <repo.name> diff"` を実行してターンを終える。`sleep` などで turn 内に留まらない。完了通知 `<crit-design-review-done>` が新しい turn として届くまで、次に進まない
 5. 通知の指摘が 0 件なら「3. レビュー loop を回す」に進む。1 件以上なら、「4. 指摘に対応する」と同じ要領で修正して返信し (コミットも push もしない)、手順 3 から繰り返す (手順 2 のコメントは残したままにし、書き直さない)。指摘 0 件で完了するまで人間のレビューを始めない
 
-`notify` が `ended` エラーで失敗したら委任元が失われている。設計レビューを飛ばし、手順 2 のコメントを `--reply-to <comment-id> --resolve` で閉じ (id は `crit comments --session <id> --json` で探す)、story を `--refresh --story-file <path> --no-open` で作り直して overview の冒頭に「設計レビューなし: 委任元が終了している」と書き、「3. レビュー loop を回す」に進む。
+`notify` が `ended` エラーで失敗したら委任元が失われている。設計レビューを飛ばし、手順 2 のコメントを `--reply-to <comment-id> --resolve` で閉じ (id は `crit comments --session <id> --json` で探す)、story を `--refresh --story-file <path> [--base-branch <base_ref>] --no-open` で作り直して overview の冒頭に「設計レビューなし: 委任元が終了している」と書き、「3. レビュー loop を回す」に進む。
 
 ## 3. レビュー loop を回す
 
