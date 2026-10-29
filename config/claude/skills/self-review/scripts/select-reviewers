@@ -308,9 +308,9 @@ while IFS= read -r reviewer; do
     resolved_agent="$configured_agent"
     fallback_reason=null
     if [[ "$resolved_agent" == codex ]] && codex_over_limit; then
-      resolved_agent=claude
-      fallback_reason='"Codex is over its usage limit, so this reviewer ran on the Claude backend instead."'
-      reviewer_config=$(resolve_review_engine self_review "$reviewer" "$resolved_agent")
+      reviewer_config=$(resolve_review_engine codex_quota_fallback)
+      resolved_agent=$(jq -r '.configured_agent' <<< "$reviewer_config")
+      fallback_reason=$(jq -cn --arg engine "$resolved_agent" '"Codex is over its usage limit, so this reviewer ran on the \($engine) backend instead."')
     fi
     model=$(jq -c '.model' <<< "$reviewer_config")
     reasoning_effort=$(jq -c '.reasoning_effort' <<< "$reviewer_config")
