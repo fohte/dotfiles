@@ -1,22 +1,16 @@
 # Reviewer selection and prompt inputs are data so every backend (Claude, Codex,
 # Antigravity, ...) shares one source of truth.
 #
-# `default_agent` / per-reviewer `agent` name which backend runs a reviewer, and
-# must be a key run-external-reviewers knows (`claude`, `codex`, `agy`),
-# optionally configured under `agents:`. `definition` names the reviewer
-# definition file under ~/.claude/agents/, independent of which agent runs it.
+# `default_agent` / per-reviewer `agent` select a backend directly or through
+# an armyknife profile reference. `definition` names the reviewer definition
+# file under ~/.claude/agents/, independent of which backend runs it.
 #
 # Every reviewer runs as a sandboxed external process. Claude also offers an
 # in-process subagent, but one inherits the session's permission mode, so it can
 # edit the repository and run the test suite no matter what its reference says.
-default_agent: claude
-
-# Keep draft-specific Claude usage separate from self-review's Claude CLI default.
-uses:
-  review_draft:
-    agents:
-      claude:
-        model: haiku
+default_agent:
+  reference:
+    armyknife: agent.profile.code-review
 
 agents:
   codex:
@@ -39,6 +33,9 @@ reviewers:
       - self-review/references/structure.md
 
   convention:
+    agent:
+      reference:
+        armyknife: agent.profile.rules-review
     always: true
     definition: self-review-convention.md
     references:
@@ -48,6 +45,9 @@ reviewers:
   # A path trigger on test files cannot fire on the case this reviewer most
   # needs to catch: a change that should have had tests and got none.
   test-philosophy:
+    agent:
+      reference:
+        armyknife: agent.profile.rules-review
     always: true
     definition: self-review-test-philosophy.md
     references:
@@ -55,6 +55,9 @@ reviewers:
       - self-review/references/_common.md
 
   comment:
+    agent:
+      reference:
+        armyknife: agent.profile.writing-review
     trigger:
       kind: added-lines
       # Markers require a following space: without it the pattern also matches
@@ -89,6 +92,9 @@ reviewers:
       - self-review/references/_common.md
 
   japanese-writing:
+    agent:
+      reference:
+        armyknife: agent.profile.writing-review
     trigger:
       kind: added-lines
       paths: '\.(md|mdx|markdown|rst|adoc|txt)$'
