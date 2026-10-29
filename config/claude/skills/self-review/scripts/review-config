@@ -166,12 +166,19 @@ review_config_load_armyknife_snapshot() {
 
 review_config_reject_reference_direct_settings() {
   local use="$1" reviewer="$2" agent="$3" reference_source="$4"
-  local setting candidate setting_source
+  local setting candidate setting_path setting_source
 
   for setting in model reasoning_effort; do
     candidate=$(review_config_pick_setting "$use" "$reviewer" "$agent" "$setting")
     if [[ $(jq -r '.value != null' <<< "$candidate") == true ]]; then
-      setting_source=$(review_config_source_for "$(jq -c '.path' <<< "$candidate")")
+      setting_path=$(jq -c '.path' <<< "$candidate")
+      setting_source=$(review_config_source_for "$setting_path")
+      # The base haiku is a fallback for legacy draft configs, not a profile override.
+      if [[ "$use" == review_draft && "$agent" == claude && "$setting" == model &&
+        "$setting_path" == '["uses","review_draft","agents","claude","model"]' &&
+        "$setting_source" == "$review_config_base_file#"* ]]; then
+        continue
+      fi
       echo "Error: armyknife profile reference at $reference_source conflicts with direct $setting setting at $setting_source." >&2
       return 1
     fi
