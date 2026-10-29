@@ -34,60 +34,31 @@ Apply every row below whose condition holds. The rows are independent of each ot
 | `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.                                                                                                                                                                                                           |
 | ... and the template contains `Design decisions` | The rules include Rule 9; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                                                                                                                                                                                              |
 
+## Step 0 より前の upstream 同期
+
+diff、crit review、push の前に、upstream が設定された branch を毎回同期する。GitHub は下段 PR の merge 後に上段 PR の remote branch を rebase して base を付け替えるため、ローカル branch を先に合わせる ([GitHub docs](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/merging-stacked-pull-requests))。
+
+```bash
+if git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' >/dev/null 2>&1; then
+  git pull --rebase
+fi
+```
+
+upstream がなければ同期を省く。`git pull --rebase` が失敗したら作業を止めて報告する。
+
 ## Base branch の解決
 
-### Step 0 より前の stack branch 同期
+`base_branch` は diff、crit review、`review-draft`、submit で使う PR の base。`stack_parent_branch` と `stack_parent_pr_number` は、新しい PR を open PR に積む場合だけ設定する。
 
-GitHub は下段 PR が merge されると上段 PR の remote branch を rebase し、base を付け替える。ローカル branch が古いまま diff や push を行わないよう、base branch の解決と Step 0 より先に同期する ([GitHub docs](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/merging-stacked-pull-requests))。
+1. 現在の branch に open PR があれば、`gh pr list --state open --head "$(git branch --show-current)" --json number,baseRefName` で確認した `baseRefName` を使う。既存 PR の更新では base を変更しない。該当 PR が複数ある場合は曖昧さを報告して止める。
+2. 現在の branch に open PR がなく、ユーザーまたは委任元が下段 PR の branch を指定していれば、その branch を使う。`gh pr list --state open --head "<指定 branch>" --json number,headRefName,headRepository,isCrossRepository` で完全一致する open PR を確認し、その PR が同じ repository にある場合だけ、番号と branch を `stack_parent_pr_number` / `stack_parent_branch` に設定する。該当 PR がなければ前提の誤りとして報告して止める。
+3. 明示指定がなければ `git fetch origin` を 1 回実行してから、自動判定する。`gh repo view --json nameWithOwner --jq .nameWithOwner` で現在の repository を確認し、`gh pr list --state open --limit 1000 --json number,headRefName,headRefOid,headRepository,isCrossRepository` で open PR を取得して個別に判定する。fetch または一覧取得に失敗した場合は候補なしとして扱う。
+    - `headRepository.nameWithOwner` が現在の repository と一致し、`isCrossRepository` が `false` の PR だけを見る。PR の情報が欠けている場合、`origin/<headRefName>` がない場合、`git rev-parse origin/<headRefName>` と `headRefOid` が異なる場合、または shallow clone などで履歴を判定できない場合は、その PR だけを候補から外す。
+    - `shared_commit=$(git merge-base HEAD "origin/<headRefName>")` を求める。値があり、`shared_commit` が `origin/$(git main)` の祖先でなければ候補にする。下段 PR に後から commit が追加されても、現在の branch と共有する PR 固有 commit が候補判定に使われる。
+    - 候補が 1 件なら使う。複数ある場合は、共有 commit がほかの全候補の共有 commit の子孫である候補が一意ならそれを使う。それ以外は曖昧さを報告して止める。`vibe_mode` では前提の誤りとして委任元に報告する。
+4. 候補がなければ default branch (`git main`) を使う。fork から新しい PR を作る場合も default branch を使う。stack は同じ repository の branch 間だけで作成できる。
 
-stack PR を作成したときは、後続の実行で下段 PR の merge を確認できるよう、PR 番号と branch 名を現在の branch config に保存する。Step 5 の submit が stack 作成の警告を出さずに成功した場合、または警告に対する復旧後に stack 作成を確認できた場合に保存する。`current_branch` は現在の branch 名、`stack_parent_pr_number` と `stack_parent_branch` は base branch 解決で得た値にする。
-
-```bash
-current_branch=$(git branch --show-current)
-git config --local "branch.$current_branch.x-create-pr-stack-parent-number" "$stack_parent_pr_number"
-git config --local "branch.$current_branch.x-create-pr-stack-parent-branch" "$stack_parent_branch"
-```
-
-保存済みの番号と branch 名が両方ある場合は branch config から読み、下段 PR の状態を確認する。片方だけがある場合は metadata が不完全なので作業を止めて報告する。
-
-```bash
-current_branch=$(git branch --show-current)
-stack_parent_pr_number=$(git config --local --get "branch.$current_branch.x-create-pr-stack-parent-number")
-stack_parent_branch=$(git config --local --get "branch.$current_branch.x-create-pr-stack-parent-branch")
-gh pr view "$stack_parent_pr_number" --json state --jq .state
-```
-
-`MERGED` なら、現在の branch に upstream が設定されていることを確認してから `git pull --rebase` を実行する。成功後は次のとおり branch config から保存済みの番号と branch 名を削除し、base branch を解決する。
-
-```bash
-git config --local --unset-all "branch.$current_branch.x-create-pr-stack-parent-number"
-git config --local --unset-all "branch.$current_branch.x-create-pr-stack-parent-branch"
-```
-
-`OPEN` なら追加の同期は不要で、base branch の選択に進む。merge されずに `CLOSED` になっていた場合は、stack の状態を推測せず作業を止めて報告する。`git pull --rebase` が失敗した場合も Step 0 に進まない。
-
-### Base branch の選択
-
-全 step で使う `base_branch` は PR の target branch を表す。`stack_parent_branch` と `stack_parent_pr_number` は、新規 PR を open PR に積む場合だけ設定する。ユーザーまたは委任元が下段 PR の branch を明示している場合は自動検出より優先する。current branch の push 先と明示された branch が同一 repository にあり、明示された branch に open PR がちょうど 1 つあることを確認する。条件を満たさない場合は default branch に fallback せず作業を止めて報告する。既存 PR の base と明示された branch が異なる場合も、再 submit で base を変えず、食い違いを報告する。
-
-1. 現在の branch に open PR があるか `gh pr list --state open --head "$(git branch --show-current)" --json number,baseRefName` で確認する。1 件ならその `baseRefName` を `base_branch` にする。明示された下段 branch がこの base と異なる場合は、既存 PR の再 submit では base を変更できないため作業を止めて食い違いを報告する。0 件なら新規 PR として次へ進み、複数なら曖昧なため作業を止める。closed または merged PR はこの判定に含めない。
-2. 新規 PR で明示された下段 branch があれば、open PR 一覧から `headRefName` が完全一致し、`headRepository.nameWithOwner` がこの repository と一致し、`isCrossRepository` が `false` の PR を選ぶ。その PR の branch と番号を `stack_parent_branch` / `stack_parent_pr_number` にし、`base_branch` にも同じ branch 名を使う。
-3. 明示指定がなく、current branch の push 先がこの repository の場合は、`gh repo view --json nameWithOwner --jq .nameWithOwner` で repository 名を確認し、`gh pr list --state open --limit 1000 --json number,headRefName,headRefOid,headRepository,isCrossRepository,baseRefName,baseRefOid` で候補を得る。`headRepository.nameWithOwner` がこの repository と一致し、`isCrossRepository` が `false` の PR のみを候補にする。head と base の remote branch ref を fetch してから比較する。各 ref は `git fetch --no-tags origin "refs/heads/<branch>:refs/remotes/origin/<branch>"` で取得する。取得後の ref OID が `headRefOid` / `baseRefOid` と異なる場合は PR 一覧を一度取り直して再計算する。再計算後も一致しない場合、fetch が失敗した場合、または graph が浅く判定できない場合は作業を止めて原因を報告する。
-
-    各 PR について次の 2 つを求める。各結果が 1 commit の場合だけ比較を続ける。
-
-    ```bash
-    git merge-base --all HEAD "origin/<headRefName>"
-    git merge-base --all "origin/<headRefName>" "origin/<baseRefName>"
-    ```
-
-    前者を `shared_commit`、後者を `pr_base` とし、`shared_commit` が `pr_base` と異なり、`git merge-base --is-ancestor "$pr_base" "$shared_commit"` が成功する PR を候補にする。下段 PR に後から commit が追加されても、上段 branch と共有する古い commit が PR 固有履歴に残っていれば候補になる。候補の `shared_commit` を比較し、ほかの候補すべての共有 commit の子孫にある候補が 1 つだけなら、その PR を選ぶ。候補が複数で前後関係を決められない場合は作業を止めて報告する。
-
-4. 下段 PR が見つからない場合、または push 先が fork の場合は default branch (`git main`) を使う。ただし、ユーザーや委任元から current branch が下段 PR 上に作られたと聞いていて候補が見つからない場合は、default branch に fallback せず状況を報告する。下段 PR が force-push や rebase で共有履歴を失った場合は明示指定を使う。
-
-GitHub は stack の merge に linear history を要求し、下段 branch に変更が入ると stack 全体の cascading rebase が必要になる場合がある。merge 前に GitHub の `Rebase stack` を実行するよう案内された場合は、その操作を完了してから進める ([GitHub requirements](https://docs.github.com/en/pull-requests/reference/stacked-pull-requests#linear-history))。
-
-`base_ref` には `origin/<base_branch>` を使う。remote ref がない場合は fetch して取得する。stack 用の base は同一 repository の branch に限る。fork にある既存 PR の base は維持するが、fork から新規 PR を作る場合は default branch 向けの通常の PR とする。
+`base_ref` には `origin/<base_branch>` を使う。必要な remote ref がなければ `origin` から取得する。
 
 各 step では次の値を使う。
 
@@ -187,6 +158,8 @@ enable-vibe-coding skill の『draft ready を受けたら』の手順に従う�
 
 ## 5. Submit
 
+stack を作成するには armyknife v0.1.497 以降が必要。古い `a` は `--base` を受け付けても stack を作らず、警告も出さない。
+
 ```bash
 a ai pr-draft submit [--base <stack_parent_branch>]
 ```
@@ -199,10 +172,10 @@ submit 直前に共通 policy を再確認する。初回判定時から許可�
 submit の `stderr` に stack 作成の警告が出た場合、submit 自体は成功しても PR は stack に入っていない。警告の内容と出力された command を確認し、条件に合う復旧方法だけを使う。
 
 - 下段 PR が既存 stack の途中にある警告は復旧 command を出さない。この場合は command を作らず、stack に入らなかったことを報告する。
-- stack の読み取りに失敗した警告では、状態確認、stack が無い場合の作成、下段 PR が最上段の場合の追加に使う command が条件付きで出る。状態確認 command を先に実行し、その結果に応じて作成か追加のどちらか一方だけを実行する。
-- `<stack_number>` などの placeholder は実際の値に置き換える。placeholder が残った command は実行しない。
+- stack の読み取りに失敗した警告では、まず出力された状態確認 command を実行する。下段 PR の状態は `gh api "repos/<owner>/<repo>/pulls/<下段 PR の番号>" --jq .stack` で確認し、`.position` と `.size` が等しければ最上段と判断する。stack がなければ作成 command、最上段なら追加 command のどちらか一方だけを使う。最上段でなければ追加しない。
+- `<stack_number>` などは実際の値に置き換える。command が出力されなかった場合は作らず、placeholder が残る command も実行しない。
 
-復旧 command が失敗した場合は、推測した command で再試行せず、警告と出力された command を最終報告に含める。stack 作成を確認できた場合は、上記の branch config に下段 PR の番号と branch 名を保存する。
+復旧 command が失敗した場合は、推測した command で再試行せず、警告と出力された command を最終報告に含める。
 
 公開計画が保存され、branch config に `x-tq-task-id` と `x-tq-checklist-item-id` の両方がある場合、submit が tq の葉への PR リンクと分割 PR の全体像の同期を行う。どれかの条件がない場合は自動処理を行わない。submit は同期に失敗しても成功扱いになるため、`stderr` に復旧コマンドが出た場合は表示どおりに実行する。
 
