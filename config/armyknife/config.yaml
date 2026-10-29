@@ -92,6 +92,17 @@ agent:
         engine: codex
         model: gpt-6-luna
         reasoning_effort: max
+      code-review:
+        engine: claude
+      rules-review:
+        engine: claude
+      writing-review:
+        engine: claude
+      pr-draft-review:
+        engine: claude
+        model: haiku
+      codex-quota-fallback:
+        engine: claude
   # Keep this fallback for `a agent new` calls without `--type`.
   codex:
     # Model and effort fallback for `a agent new` without `--type` when its
