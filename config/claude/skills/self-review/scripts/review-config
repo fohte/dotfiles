@@ -263,7 +263,7 @@ review_config_resolve_armyknife_reference() {
 
 resolve_review_engine() {
   local use="$1" reviewer="${2:-}"
-  local agent_candidate configured_agent agent_path agent_source effective_agent
+  local agent_candidate configured_agent agent_path agent_source
   local model_candidate effort_candidate model_value effort_value model_source effort_source
   local config_overlay agent_value_type reference_type profile_name profile_candidate
   local reference_config reference_source reference_origin_source reference_model reference_effort
@@ -333,16 +333,7 @@ resolve_review_engine() {
     esac
   fi
 
-  effective_agent="$configured_agent"
-  case "$effective_agent" in
-    claude | codex | agy) ;;
-    *)
-      echo "Error: unsupported reviewer engine: $effective_agent" >&2
-      return 1
-      ;;
-  esac
-
-  if [[ -n "$reference_type" && "$effective_agent" == "$configured_agent" ]]; then
+  if [[ -n "$reference_type" ]]; then
     review_config_reject_reference_direct_settings "$use" "$reviewer" "$configured_agent" "$agent_source" || return 1
     if jq -e 'has("model")' <<< "$profile_candidate" > /dev/null; then
       reference_model=$(jq -c '.model' <<< "$profile_candidate")
@@ -361,25 +352,25 @@ resolve_review_engine() {
     model_source=$(review_config_reference_source "$reference_origin_source" "$profile_name" "$reference_type" model)
     effort_source=$(review_config_reference_source "$reference_origin_source" "$profile_name" "$reference_type" reasoning_effort)
     if [[ "$model_value" == null ]]; then
-      model_source="$model_source (${effective_agent} CLI default)"
+      model_source="$model_source (${configured_agent} CLI default)"
     fi
     if [[ "$effort_value" == null ]]; then
-      effort_source="$effort_source (${effective_agent} CLI default)"
+      effort_source="$effort_source (${configured_agent} CLI default)"
     fi
   else
-    model_candidate=$(review_config_pick_setting "$use" "$reviewer" "$effective_agent" model)
-    effort_candidate=$(review_config_pick_setting "$use" "$reviewer" "$effective_agent" reasoning_effort)
+    model_candidate=$(review_config_pick_setting "$use" "$reviewer" "$configured_agent" model)
+    effort_candidate=$(review_config_pick_setting "$use" "$reviewer" "$configured_agent" reasoning_effort)
     if [[ $(jq -r '.value == null' <<< "$model_candidate") == false ]]; then
       review_config_validate_string "$model_candidate" "model" || return 1
       model_source=$(review_config_source_for "$(jq -c '.path' <<< "$model_candidate")")
     else
-      model_source="$effective_agent CLI default"
+      model_source="$configured_agent CLI default"
     fi
     if [[ $(jq -r '.value == null' <<< "$effort_candidate") == false ]]; then
       review_config_validate_string "$effort_candidate" "reasoning_effort" || return 1
       effort_source=$(review_config_source_for "$(jq -c '.path' <<< "$effort_candidate")")
     else
-      effort_source="$effective_agent CLI default"
+      effort_source="$configured_agent CLI default"
     fi
     model_value=$(jq -c '.value // null' <<< "$model_candidate")
     effort_value=$(jq -c '.value // null' <<< "$effort_candidate")
@@ -390,7 +381,7 @@ resolve_review_engine() {
   fi
 
   if [[ "$use" == review_draft && -n "$reference_type" ]]; then
-    case "$effective_agent" in
+    case "$configured_agent" in
       claude) ;;
       codex)
         if [[ "$model_value" == null ]]; then
@@ -399,7 +390,7 @@ resolve_review_engine() {
         fi
         ;;
       *)
-        echo "Error: draft review does not support the armyknife profile engine $effective_agent at $agent_source." >&2
+        echo "Error: draft review does not support the armyknife profile engine $configured_agent at $agent_source." >&2
         return 1
         ;;
     esac
@@ -410,7 +401,7 @@ resolve_review_engine() {
 
   jq -cn \
     --arg configured_agent "$configured_agent" \
-    --arg agent "$effective_agent" \
+    --arg agent "$configured_agent" \
     --argjson model "$model_value" \
     --argjson reasoning_effort "$effort_value" \
     --arg config_base "$review_config_base_file" \
