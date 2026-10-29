@@ -66,7 +66,7 @@ skill_dir=$(cd "$script_dir/.." && pwd -P)
 self_review_dir=$(cd "$skill_dir/../self-review" && pwd -P)
 dotfiles_root=$(cd "$skill_dir/../../../.." && pwd -P)
 config_script_dir="$self_review_dir/scripts"
-reviewers_file="$self_review_dir/reviewers.yaml"
+review_settings_file="$skill_dir/../create-pr/review.yaml"
 egm_dir="$skill_dir/references/egm"
 
 work_root=$(cd "$AGENT_TMPDIR" && pwd -P)
@@ -82,12 +82,17 @@ cp "$followups_file" "$work_dir/follow-ups.txt"
 # shellcheck disable=SC1091 # The helper path is resolved relative to this script at runtime.
 source "$config_script_dir/review-config"
 cd "$dotfiles_root"
-load_review_config "$reviewers_file" "$work_dir"
+load_review_config "$review_settings_file" "$work_dir"
 engine_config=$(resolve_review_engine design_review)
-review_engine=$(jq -er '.agent | strings | select(. == "claude" or . == "codex")' <<< "$engine_config") || {
-  echo "Error: design review requires the claude or codex engine." >&2
-  exit 2
-}
+review_engine=$(jq -r '.agent' <<< "$engine_config")
+review_engine_source=$(jq -r '.sources.agent' <<< "$engine_config")
+case "$review_engine" in
+  claude | codex) ;;
+  *)
+    echo "Error: design review requires the claude or codex engine, got $review_engine at $review_engine_source." >&2
+    exit 2
+    ;;
+esac
 review_model=$(jq -r '.model // empty' <<< "$engine_config")
 review_effort=$(jq -r '.reasoning_effort // empty' <<< "$engine_config")
 

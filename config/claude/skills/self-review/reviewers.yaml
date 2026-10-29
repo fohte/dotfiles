@@ -12,6 +12,10 @@ default_agent:
   reference:
     armyknife: agent.profile.code-review
 
+codex_quota_fallback:
+  reference:
+    armyknife: agent.profile.codex-quota-fallback
+
 agents:
   codex:
     references:

@@ -82,6 +82,11 @@ review_config_source_for() {
 
 review_config_pick_agent() {
   local use="$1" reviewer="$2"
+  if [[ "$use" == codex_quota_fallback ]]; then
+    jq -c '{value: .codex_quota_fallback, path: ["codex_quota_fallback"]}' "$review_config_json_file"
+    return
+  fi
+
   jq -c --arg use "$use" --arg reviewer "$reviewer" '
     [
       (if $reviewer == "" then empty else {value: .reviewers[$reviewer].agent, path: ["reviewers", $reviewer, "agent"]} end),
@@ -257,7 +262,7 @@ review_config_resolve_armyknife_reference() {
 }
 
 resolve_review_engine() {
-  local use="$1" reviewer="${2:-}" agent_override="${3:-}"
+  local use="$1" reviewer="${2:-}"
   local agent_candidate configured_agent agent_path agent_source effective_agent
   local model_candidate effort_candidate model_value effort_value model_source effort_source
   local config_overlay agent_value_type reference_type profile_name profile_candidate
@@ -281,6 +286,10 @@ resolve_review_engine() {
   agent_source=$(review_config_source_for "$agent_path")
 
   agent_value_type=$(jq -r '.value | type' <<< "$agent_candidate")
+  if [[ "$use" == codex_quota_fallback && "$agent_value_type" == null ]]; then
+    echo "Error: codex quota fallback reference is missing at $agent_source." >&2
+    return 1
+  fi
   reference_type=
   profile_name=
   profile_candidate=
@@ -314,7 +323,17 @@ resolve_review_engine() {
       ;;
   esac
 
-  effective_agent="${agent_override:-$configured_agent}"
+  if [[ "$use" == codex_quota_fallback ]]; then
+    case "$configured_agent" in
+      claude | codex) ;;
+      *)
+        echo "Error: Codex quota fallback requires the claude or codex engine, got $configured_agent at $agent_source." >&2
+        return 1
+        ;;
+    esac
+  fi
+
+  effective_agent="$configured_agent"
   case "$effective_agent" in
     claude | codex | agy) ;;
     *)
