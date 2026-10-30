@@ -199,7 +199,7 @@ depends = ["refresh:brew-bundle"]
 run = "brew upgrade"
 
 [tools]
-"aqua:evilmartians/lefthook" = "2.1.14"
+"aqua:evilmartians/lefthook" = "2.2.2"
 
 # lefthook hooks
 actionlint = "1.7.12"
