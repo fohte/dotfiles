@@ -3,7 +3,7 @@
 # holds up on its own. The drafting session reads causes the body omits out of
 # the task and investigation still in its context, so it cannot judge this.
 #
-# Usage: review-draft [<base_branch>]
+# Usage: review-draft [--branch <branch>] [<base_branch>]
 set -euo pipefail
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
@@ -11,11 +11,57 @@ self_review_dir=$(cd "$script_dir/../../self-review" && pwd -P)
 create_pr_dir=$(cd "$script_dir/.." && pwd -P)
 config_script_dir="$self_review_dir/scripts"
 review_settings_file="$create_pr_dir/review.yaml"
+# shellcheck source=config/claude/skills/create-pr/scripts/branch-option disable=SC1091
+source "$script_dir/branch-option"
 
-# Assign first: a failure inside `$(...)` used as an argument would not trip `set -e`.
-draft=$("$script_dir/draft-path")
+usage() {
+  cat << 'EOF'
+Usage: review-draft [--branch <branch>] [<base_branch>]
+
+Review the draft and diff for the current branch or an explicitly selected branch.
+EOF
+}
+
+branch=
+base=
+while (($#)); do
+  case "$1" in
+    --branch)
+      set_branch_option branch "$#" "${2:-}"
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -*)
+      echo "Error: unknown argument: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+    *)
+      if [[ -n "$base" ]]; then
+        echo "Error: only one base branch may be specified" >&2
+        usage >&2
+        exit 2
+      fi
+      base="$1"
+      shift
+      ;;
+  esac
+done
+
 repo_root=$(git rev-parse --show-toplevel)
-base=${1:-$(git -C "$repo_root" main)}
+head_ref=HEAD
+if [[ -n "$branch" ]]; then
+  git -C "$repo_root" fetch origin "+refs/heads/$branch:refs/remotes/origin/$branch"
+  head_ref="refs/remotes/origin/$branch"
+  draft=$("$script_dir/draft-path" --branch "$branch")
+else
+  # Assign first: a failure inside `$(...)` used as an argument would not trip `set -e`.
+  draft=$("$script_dir/draft-path")
+fi
+base=${base:-$(git -C "$repo_root" main)}
 base_ref="origin/$base"
 [[ -f "$draft" ]] || {
   echo "Error: draft not found: $draft" >&2
@@ -38,7 +84,7 @@ mkdir "$empty_cwd"
 draft_snapshot="$work_dir/draft.md"
 cp "$draft" "$draft_snapshot"
 
-head_sha=$(git -C "$repo_root" rev-parse --verify HEAD)
+head_sha=$(git -C "$repo_root" rev-parse --verify "$head_ref^{commit}")
 base_sha=$(git -C "$repo_root" rev-parse --verify "$base_ref^{commit}")
 title=$(yq --front-matter=extract -r '.title' "$draft_snapshot")
 # The frontmatter also holds the review steps, which are not part of the PR.
@@ -97,7 +143,7 @@ input_hash=$(printf '%s' "$snapshot_descriptor" | shasum -a 256 | awk '{print $1
 
 assert_snapshot_unchanged() {
   local current_head current_draft current_prompt
-  current_head=$(git -C "$repo_root" rev-parse --verify HEAD)
+  current_head=$(git -C "$repo_root" rev-parse --verify "$head_ref^{commit}")
   current_draft=$(hash_file "$draft")
   current_prompt=$(hash_file "$prompt_file")
   if [[ "$current_head" != "$head_hash" || "$current_draft" != "$draft_hash" ||
@@ -121,7 +167,7 @@ engine_config=$(resolve_review_engine review_draft)
 agent=$(jq -r '.agent' <<< "$engine_config")
 model=$(jq -r '.model // empty' <<< "$engine_config")
 reasoning_effort=$(jq -r '.reasoning_effort // empty' <<< "$engine_config")
-printf 'Draft review: input_hash=%s (HEAD=%s, base=%s, draft=%s, prompt=%s), engine=%s (configured=%s; source=%s), model=%s (source=%s), effort=%s (source=%s)\n' \
+printf 'Draft review: input_hash=%s (head=%s, base=%s, draft=%s, prompt=%s), engine=%s (configured=%s; source=%s), model=%s (source=%s), effort=%s (source=%s)\n' \
   "$input_hash" "$head_hash" "$base_hash" "$draft_hash" "$prompt_hash" \
   "$agent" \
   "$(jq -r '.configured_agent' <<< "$engine_config")" \

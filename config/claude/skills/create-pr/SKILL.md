@@ -74,6 +74,33 @@ upstream がない場合、別の branch、または別 remote を指す場合�
 | `review-draft`      | default branch 以外なら `base_branch` を引数に渡す                                                                                   |
 | submit              | `stack_parent_branch` がある新規 PR だけ `--base <stack_parent_branch>` を渡す。既存 PR の更新と default branch 向け PR では省略する |
 
+## Checkout していない branch の PR を更新する
+
+既存 PR の title / body だけを更新し、target branch に commit する変更がない場合に使う。コード変更を push する場合は target branch の worktree で通常の手順を使う。`vibe_mode` の委任先は常に自分の branch で作業するため、この節は使わない。
+
+まず PR の URL と base branch を取得する。
+
+```bash
+pr_url=$(gh pr view "$target_branch" --json url --jq .url)
+base_branch=$(gh pr view "$target_branch" --json baseRefName --jq .baseRefName)
+```
+
+各 Step では target branch を明示する。
+
+| Step | target branch を指定する方法                                                                                                                                            |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | `crit-approval-review` の `crit story` と `crit-approval` に `--pr "$pr_url"` を渡す。PR のファイルを forge API から読むため `--remote` も渡す。push する commit はない |
+| 1    | `a ai pr-draft new --branch "$target_branch"` で作成し、`draft-path --branch "$target_branch"` で draft path を取得する                                                 |
+| 2    | `lint-draft.ts "$draft_path"` と `review-draft --branch "$target_branch" "$base_branch"` を実行する                                                                     |
+| 3    | `a ai pr-draft review "$draft_path"` で editor review を行う                                                                                                            |
+| 4    | `references/draft-manual.md` の指示どおりに指摘を draft へ反映する                                                                                                      |
+| 5    | `a ai pr-draft submit "$draft_path"` で既存 PR の title / body を更新する                                                                                               |
+| 6    | `link-tq-task --author <自分のモデル名> --branch "$target_branch"` を使う                                                                                               |
+| 7    | `gh pr checks "$target_branch" --watch` で CI を監視する                                                                                                                |
+| 8    | 通常の条件に従う                                                                                                                                                        |
+
+Step 0 の PR review は `crit-approval-review` の PR 手順に従う。`crit-approval` は PR / range 指定の承認で default branch の commit 許可を記録しない。
+
 ## 開始時の宣言 (必須・最初の応答で実行)
 
 create-pr skill を起動したら、**最初の応答で**適用される必須ステップを列挙し、これから実行する旨を宣言すること。宣言なしに Step 1 以降に進むのは禁止。

@@ -1,11 +1,46 @@
 #!/bin/bash
-# Print the deterministic path of the current branch's PR draft file, matching
-# the layout `a ai pr-draft new` creates it at.
+# Print the deterministic path of a PR draft file, matching the layout
+# `a ai pr-draft new` creates it at.
 set -euo pipefail
 
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+# shellcheck source=config/claude/skills/create-pr/scripts/branch-option disable=SC1091
+source "$script_dir/branch-option"
+
+usage() {
+  cat << 'EOF'
+Usage: draft-path [--branch <branch>]
+
+Print the draft path for the current branch or an explicitly selected branch.
+EOF
+}
+
+branch=
+explicit_branch=false
+while (($#)); do
+  case "$1" in
+    --branch)
+      set_branch_option branch "$#" "${2:-}"
+      explicit_branch=true
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Error: unknown argument: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+if [[ "$explicit_branch" != true ]]; then
+  branch=$(git branch --show-current)
+fi
 owner=$(gh repo view --json owner --jq .owner.login)
 repo=$(gh repo view --json name --jq .name)
-branch=$(git branch --show-current)
 tmpdir="${TMPDIR:-/tmp}"
 tmpdir="${tmpdir%/}"
 
