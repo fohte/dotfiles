@@ -15,8 +15,7 @@ EOF
 }
 
 author=
-branch=
-explicit_branch=false
+branch_arg=
 while (($#)); do
   case "$1" in
     --author)
@@ -28,8 +27,7 @@ while (($#)); do
       shift 2
       ;;
     --branch)
-      set_branch_option branch "$#" "${2:-}"
-      explicit_branch=true
+      set_branch_option branch_arg "$#" "${2:-}"
       shift 2
       ;;
     -h | --help)
@@ -50,8 +48,13 @@ if [[ -z "$author" ]]; then
   exit 2
 fi
 
+branch=$branch_arg
 if [[ -z "$branch" ]]; then
   branch=$(git branch --show-current)
+fi
+pr_view_args=()
+if [[ -n "$branch_arg" ]]; then
+  pr_view_args=("$branch_arg")
 fi
 if [[ -z "$branch" ]]; then
   echo "Error: could not determine the current branch" >&2
@@ -98,11 +101,7 @@ if [[ -z "$checklist_item_id" ]]; then
   fi
 fi
 
-if [[ "$explicit_branch" == true ]]; then
-  pr_url=$(gh pr view "$branch" --json url -q .url)
-else
-  pr_url=$(gh pr view --json url -q .url)
-fi
+pr_url=$(gh pr view "${pr_view_args[@]}" --json url -q .url)
 if [[ -n "$checklist_item_id" ]]; then
   link_args=(checklist item update "$checklist_item_id" --github "$pr_url")
 else

@@ -15,13 +15,11 @@ Print the draft path for the current branch or an explicitly selected branch.
 EOF
 }
 
-branch=
-explicit_branch=false
+branch_arg=
 while (($#)); do
   case "$1" in
     --branch)
-      set_branch_option branch "$#" "${2:-}"
-      explicit_branch=true
+      set_branch_option branch_arg "$#" "${2:-}"
       shift 2
       ;;
     -h | --help)
@@ -36,7 +34,9 @@ while (($#)); do
   esac
 done
 
-if [[ "$explicit_branch" != true ]]; then
+if [[ -n "$branch_arg" ]]; then
+  branch=$branch_arg
+else
   branch=$(git branch --show-current)
 fi
 owner=$(gh repo view --json owner --jq .owner.login)
