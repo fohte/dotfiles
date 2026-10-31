@@ -75,10 +75,12 @@ Claude helper は OS レベルの network sandbox を設けない。clean env �
     ~/.agents/skills/create-pr/scripts/lint-draft.ts
     ```
 
+checkout していない branch の draft は `draft-path --branch <branch>` で path を取得し、その path を `lint-draft.ts` に渡す。`review-draft` には `--branch <branch>` と PR の base branch も渡す。
+
 2. draft を書いたセッションの context を持たないレビュアーに draft を読ませる。書いたセッションは、本文に書かれていない因果も context にある委任内容や調査結果から読み取ってしまうので、意味の判定はレビュアーに任せる。次のスクリプトを実行すると、title と body、base branch との diff だけを渡されたレビュアーが、困りごとが変更でなぜ解消されるかと、不要な行や引用、1 行にまとめられる行があるかに自由回答で答える。base branch が default branch でないときは引数で渡す
 
     ```bash
-    ~/.agents/skills/create-pr/scripts/review-draft [<base_branch>]
+    ~/.agents/skills/create-pr/scripts/review-draft [--branch <branch>] [<base_branch>]
     ```
 
     create-pr skill の「Base branch の解決」に従って `base_branch` を渡す。

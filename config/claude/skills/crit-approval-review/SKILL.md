@@ -15,6 +15,8 @@ description: crit story を作成してユーザーに差分をレビューし�
 呼び出し元から base ref が渡された場合は、その ref を crit に明示して使う。指定がない場合は crit の自動検出に任せる。feature branch では base branch から working tree まで、default branch では未コミットの変更が対象になる。
 どちらも working tree を含むので、loop 中の未コミットの修正もそのまま次の round でレビューできる。
 
+呼び出し元が PR または commit range を指定した場合は、story 作成とレビュー loop の両方に同じ対象を渡す。PR は `crit story --pr <PR URL> --remote` と `crit-approval --remote --pr <PR URL>`、range は `crit story --range <base>..<head>` と `crit-approval --range <base>..<head>` を使う。`--remote` は PR のファイルを forge API から読み、作業 tree を切り替えない。wrapper は `--pr` / `--range` 指定の承認では HEAD を記録しないため、default branch への commit 許可には使えない。
+
 ## 1. story を作成する
 
 `crit:crit-story` skill で story を作成する。story の文章 (prologue の `title` / `overview` / `key_changes` / `risks`、各 chapter の `title` / `summary`) は**日本語で書く**。`crit story --guide` が返す guide 本文は英語だが、それは出力言語の指定ではない。
@@ -31,6 +33,17 @@ crit story --refresh --story-file <path> [--base-branch <base_ref>] --no-open
 ```
 
 呼び出し元から `base_ref` が渡された場合は、prep、story の ingest、refresh のすべてに同じ `--base-branch <base_ref>` を指定する。create-pr skill は stack 対象 branch の remote ref (`origin/<base_branch>`) を渡す。
+
+PR review では、次の authoring commands に同じ `--pr <PR URL> --remote` を追加する。`crit-approval` にも同じ URL を渡す。
+
+```bash
+crit story --pr <PR URL> --remote --prep <path> --no-open
+crit story --pr <PR URL> --remote --story-file <path> --no-open
+crit story --pr <PR URL> --remote --refresh --story-file <path> --no-open
+crit-approval --remote --pr <PR URL>
+```
+
+commit range review では、story authoring commands と `crit-approval` に同じ `--range <base>..<head>` を追加する。
 
 `--guide` と `--prep` は出力後に終了する。
 これらは browser flow に入らないためブラウザを開かず、`--no-open` は no-op だが authoring command の契約を揃えるため付ける。
@@ -71,7 +84,7 @@ Codex では `a agent bg run -- crit-approval [args...]` を使い、完了通�
 `crit-approval` と `crit review` を同じ round で併用したり、起動コマンドを再実行したりしない。
 `crit story` は story を保存して終了するため、承認待ちのブロックは `crit:crit` 側が担う。
 
-wrapper は `approved: true` の出力を検出すると、その時点の `HEAD` を Git metadata に記録する。
+通常の working tree review では、wrapper は `approved: true` の出力を検出すると、その時点の `HEAD` を Git metadata に記録する。`--pr` / `--range` を指定した review は対象が current `HEAD` とは異なるため記録しない。
 
 ## 4. 指摘に対応する
 

@@ -74,6 +74,15 @@ fi
 
 tmp_stdout="$(mktemp /tmp/crit-approval-stdout.XXXXXX)"
 tmp_stderr="$(mktemp /tmp/crit-approval-stderr.XXXXXX)"
+# A PR or range approval does not approve the current commit on the default branch.
+record_approval_allowed=true
+for arg in "$@"; do
+  case "$arg" in
+    --pr | --pr=* | --range | --range=*)
+      record_approval_allowed=false
+      ;;
+  esac
+done
 
 set +e
 crit "$@" > >(tee "$tmp_stdout") 2> >(tee "$tmp_stderr" >&2)
@@ -81,7 +90,8 @@ crit_status=$?
 wait
 set -e
 
-if grep -Eq '^[[:space:]]*(\{[[:space:]]*)?"?approved"?[[:space:]]*:[[:space:]]*"?true"?([[:space:]]*\})?[[:space:]]*$' "$tmp_stdout" "$tmp_stderr"; then
+if [[ "$record_approval_allowed" == true ]] &&
+  grep -Eq '^[[:space:]]*(\{[[:space:]]*)?"?approved"?[[:space:]]*:[[:space:]]*"?true"?([[:space:]]*\})?[[:space:]]*$' "$tmp_stdout" "$tmp_stderr"; then
   record_approval
 fi
 

@@ -1,16 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+# shellcheck source=config/claude/skills/create-pr/scripts/branch-option disable=SC1091
+source "$script_dir/branch-option"
+
 usage() {
   cat << 'EOF'
-Usage: link-tq-task --author <model-name>
+Usage: link-tq-task --author <model-name> [--branch <branch>]
 
-Link the current pull request to the checklist item or task configured for this branch or session.
+Link the pull request for the current or selected branch to its checklist item or task.
 Set tq_task_id to select a task when the session has multiple leaf tasks.
 EOF
 }
 
 author=
+branch_arg=
 while (($#)); do
   case "$1" in
     --author)
@@ -19,6 +24,10 @@ while (($#)); do
         exit 2
       fi
       author="$2"
+      shift 2
+      ;;
+    --branch)
+      set_branch_option branch_arg "$#" "${2:-}"
       shift 2
       ;;
     -h | --help)
@@ -39,7 +48,10 @@ if [[ -z "$author" ]]; then
   exit 2
 fi
 
-branch=$(git branch --show-current)
+branch=$branch_arg
+if [[ -z "$branch" ]]; then
+  branch=$(git branch --show-current)
+fi
 if [[ -z "$branch" ]]; then
   echo "Error: could not determine the current branch" >&2
   exit 1
@@ -85,7 +97,11 @@ if [[ -z "$checklist_item_id" ]]; then
   fi
 fi
 
-pr_url=$(gh pr view --json url -q .url)
+if [[ -n "$branch_arg" ]]; then
+  pr_url=$(gh pr view "$branch_arg" --json url -q .url)
+else
+  pr_url=$(gh pr view --json url -q .url)
+fi
 if [[ -n "$checklist_item_id" ]]; then
   link_args=(checklist item update "$checklist_item_id" --github "$pr_url")
 else
