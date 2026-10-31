@@ -52,10 +52,6 @@ branch=$branch_arg
 if [[ -z "$branch" ]]; then
   branch=$(git branch --show-current)
 fi
-pr_view_args=()
-if [[ -n "$branch_arg" ]]; then
-  pr_view_args=("$branch_arg")
-fi
 if [[ -z "$branch" ]]; then
   echo "Error: could not determine the current branch" >&2
   exit 1
@@ -101,7 +97,11 @@ if [[ -z "$checklist_item_id" ]]; then
   fi
 fi
 
-pr_url=$(gh pr view "${pr_view_args[@]}" --json url -q .url)
+if [[ -n "$branch_arg" ]]; then
+  pr_url=$(gh pr view "$branch_arg" --json url -q .url)
+else
+  pr_url=$(gh pr view --json url -q .url)
+fi
 if [[ -n "$checklist_item_id" ]]; then
   link_args=(checklist item update "$checklist_item_id" --github "$pr_url")
 else
