@@ -6,6 +6,7 @@ config/nvim/lazy-lock.json
 # fight over its formatting on every `copier update`.
 .copier-answers.yml
 
-# Preserve upstream formatting for vendored reviewer definitions and standards.
+# Preserve upstream formatting for vendored content.
 /config/claude/skills/plz-explain-with-crit/references/egm/agents/
 /config/claude/skills/plz-explain-with-crit/references/egm/resources/document_standards/
+/config/claude/skills/yomiyasu/

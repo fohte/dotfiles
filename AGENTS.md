@@ -47,6 +47,12 @@ linked worktree (`.worktrees/<name>` など) からの `dot deploy` / `dot refre
 - `settings.jsonnet` と MCP 定義は base + role overlay + local の 3 層マージで、ビルドが要る。MCP 定義の変更後は `dot deploy -t claude` と `dot deploy -t codex` の両方を実行する。`config/agents/AGENTS.md`、`rules/`、`skills/`、`contexts/` は symlink なので編集だけで反映される
 - Codex などが読む `~/.agents/skills` だけは skill ごとの symlink を並べた実ディレクトリで、claude.ai の `skills/synced/` を除外している。既存 skill の編集は即反映されるが、**追加・削除は `dot deploy -t claude` を流すまで反映されない**
 
+### Vendored yomiyasu skill
+
+`config/claude/skills/yomiyasu/` は [nanaism/yomiyasu](https://github.com/nanaism/yomiyasu) の `skills/yomiyasu/` を tag ごとに同期したコピーとして扱う。コピー内のファイルを直接編集しない。
+
+更新時は `opensrc path nanaism/yomiyasu@<tag>` で upstream を取得し、取得した `skills/yomiyasu/` の内容をコピー先へ同期する。`.prettierignore` の除外を維持し、`diff -r` で upstream の `skills/yomiyasu/` と差分がないことを確認する。
+
 ## ツールバージョン管理
 
 ### mise
