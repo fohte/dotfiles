@@ -47,7 +47,7 @@ rules:
       - deny: 'git config unset --global commit.gpgsign'
       - deny: 'git config --global --remove-section commit'
       - pass: 'git config core.hooksPath .githooks'
-      - allow: 'git config --list'
+      - pass: 'git config --list'
   - deny: 'git [-C *] config -e|--edit|edit *'
     message: 'Blocked because editing the config file can disable commit signing.'
     tests:
@@ -465,8 +465,8 @@ rules:
       - deny: 'git config user.name test'
       - deny: 'git config user.email test@example.com'
       - deny: 'git -C /tmp config user.name test'
-      - allow: 'git config user.name'
-      - allow: 'git config --get user.name'
+      - pass: 'git config user.name'
+      - pass: 'git config --get user.name'
 
   # allow rules
   # `config/bin/git-main` (on PATH) is invoked by git's subcommand dispatch
@@ -729,7 +729,7 @@ rules:
     tests:
       - deny: 'gh api graphql -f query=mutation{createCommitOnBranch}'
       - deny: 'gh api graphql --raw-field query=mutation{createRef}'
-      - allow: 'gh api graphql -f query=query{repository{name}}'
+      - pass: 'gh api graphql -f query=query{repository{name}}'
   - deny: 'gh log *'
     message: 'Not a valid gh command, did you mean `gh run watch`?'
   - deny: 'gh [-R *] issue comment|create|edit *'
@@ -780,6 +780,51 @@ rules:
     tests:
       - deny: 'gh pr create --title "foo" --body "bar"'
       - deny: 'gh -R fohte/runok pr create --title "foo"'
+  - deny: 'gh [-R *] api * -X|--method POST * *repos/*/pulls|*repos/*/pulls?*|*repos/*/stacks* *'
+    message: 'Use /create-pr skill to create PRs.'
+    fix_suggestion: 'To read, pass `-X GET`. If `a ai pr-draft submit` printed this command to recover a stack, show it to the user instead of running it.'
+    tests:
+      - deny: 'gh api -X POST repos/sample-org/sample-repo/pulls -f title=x'
+      - deny: 'gh api repos/sample-org/sample-repo/pulls --method POST -f title=x'
+      - deny: 'gh api -X=POST /repos/sample-org/sample-repo/pulls'
+      - deny: 'gh api --method=POST https://api.github.com/repos/sample-org/sample-repo/pulls'
+      - deny: 'gh -R sample-org/sample-repo api -X POST "repos/{owner}/{repo}/pulls"'
+      - deny: 'gh api --method POST repos/sample-org/sample-repo/stacks --input -'
+      - deny: 'gh api --method POST repos/sample-org/sample-repo/stacks/23/add --input -'
+      - deny: 'gh api -XPOST repos/sample-org/sample-repo/pulls'
+      - deny: 'gh api repos/sample-org/sample-repo/pulls -X POST'
+      - deny: 'gh api --hostname github.example.com -X POST repos/sample-org/sample-repo/pulls'
+      - deny: 'gh api -X POST "repos/sample-org/sample-repo/pulls?draft=1"'
+      - deny: |-
+          gh api --method POST repos/sample-org/sample-repo/stacks --input - <<'JSON'
+          {"pull_requests":[17,18]}
+          JSON
+      - pass: 'gh api -X POST repos/sample-org/sample-repo/pulls/1/requested_reviewers -f reviewers[]=x'
+      - pass: 'a ai pr-draft submit'
+  # gh api sends POST when fields or input are provided without an explicit method.
+  - deny: 'gh [-R *] api * *repos/*/pulls|*repos/*/pulls?*|*repos/*/stacks* *'
+    when: "!('X' in flags) && !('method' in flags) && ['f', 'F', 'field', 'raw-field', 'input'].exists(k, k in flags)"
+    message: 'Use /create-pr skill to create PRs.'
+    fix_suggestion: 'To read, pass `-X GET`. If `a ai pr-draft submit` printed this command to recover a stack, show it to the user instead of running it.'
+    tests:
+      - deny: 'gh api repos/sample-org/sample-repo/pulls -f title=x -f head=branch -f base=main'
+      - deny: 'gh api repos/sample-org/sample-repo/pulls --raw-field title=x'
+      - deny: 'gh api repos/sample-org/sample-repo/stacks --input -'
+      - deny: 'gh api repos/sample-org/sample-repo/pulls -F title=@title.txt'
+      - deny: 'gh api repos/sample-org/sample-repo/pulls --field title=x'
+      - deny: "gh api repos/sample-org/sample-repo/pulls -f 'head=sample-org:feature' -f 'state=open'"
+      - deny: |-
+          gh api --method POST repos/sample-org/sample-repo/stacks/23/add --input - <<'JSON'
+          {"pull_request":18}
+          JSON
+      - allow: 'gh api -X GET repos/sample-org/sample-repo/pulls -f state=open'
+      - pass: 'gh api repos/sample-org/sample-repo/pulls'
+      - pass: 'gh api "repos/sample-org/sample-repo/stacks?pull_request=17"'
+      - pass: 'gh api repos/sample-org/sample-repo/pulls/17 --jq .stack'
+      - pass: 'gh api --method PATCH repos/sample-org/sample-repo/pulls/123 -f title=title'
+      - pass: 'gh api repos/sample-org/sample-repo/pulls/123/requested_reviewers -f reviewers[]=user'
+      - pass: 'gh api repos/sample-org/sample-repo/issues/123/labels -f labels[]=bug'
+      - pass: 'a ai pr-draft submit'
 
   - deny: 'gh [-R *] pr close|merge *'
     message: "Merging or closing a PR is the user's decision, not something the agent judges on its own."

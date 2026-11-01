@@ -205,10 +205,10 @@ submit 直前に共通 policy を再確認する。初回判定時から許可�
 submit の `stderr` に stack 作成の警告が出た場合、submit 自体は成功しても PR は stack に入っていない。警告の内容と出力された command を確認し、条件に合う復旧方法だけを使う。
 
 - 下段 PR が既存 stack の途中にある警告は復旧 command を出さない。この場合は command を作らず、stack に入らなかったことを報告する。
-- stack の読み取りに失敗した警告では、まず出力された状態確認 command を実行する。下段 PR の状態は `gh api "repos/<owner>/<repo>/pulls/<下段 PR の番号>" --jq .stack` で確認し、`.position` と `.size` が等しければ最上段と判断する。stack がなければ作成 command、最上段なら追加 command のどちらか一方だけを使う。最上段でなければ追加しない。
-- `<stack_number>` などは実際の値に置き換える。command が出力されなかった場合は作らず、placeholder が残る command も実行しない。
+- stack の読み取りに失敗した警告では、まず出力された状態確認 command を実行する。下段 PR の状態は `gh api "repos/<owner>/<repo>/pulls/<下段 PR の番号>" --jq .stack` で確認し、`.position` と `.size` が等しければ最上段と判断する。stack がなければ作成 command、最上段なら追加 command のどちらか一方だけをユーザーに渡し、実行してもらう。agent が実行すると runok が deny する。最上段でなければ追加しない。
+- `<stack_number>` などは実際の値に置き換える。command が出力されなかった場合は作らず、placeholder が残る command はユーザーに渡さない。
 
-復旧 command が失敗した場合は、推測した command で再試行せず、警告と出力された command を最終報告に含める。
+ユーザーから復旧 command の失敗が報告された場合は、推測した command で再試行せず、警告と出力された command を最終報告に含める。
 
 公開計画が保存され、branch config に `x-tq-task-id` と `x-tq-checklist-item-id` の両方がある場合、submit が tq の葉への PR リンクと分割 PR の全体像の同期を行う。どれかの条件がない場合は自動処理を行わない。submit は同期に失敗しても成功扱いになるため、`stderr` に復旧コマンドが出た場合は表示どおりに実行する。
 
