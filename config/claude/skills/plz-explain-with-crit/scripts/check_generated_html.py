@@ -202,7 +202,7 @@ def lint_text(lint_script: Path, lines: list[tuple[str, int | None]]) -> tuple[d
             line_map[len(markdown_lines)] = source_line
     source = "\n".join(markdown_lines) + "\n"
     result = subprocess.run(
-        [sys.executable, str(lint_script), "--json", "--strict", "-"],
+        [sys.executable, "-B", str(lint_script), "--json", "--strict", "-"],
         input=source,
         capture_output=True,
         check=False,
