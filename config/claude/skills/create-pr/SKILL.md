@@ -87,17 +87,17 @@ base_branch=$(gh pr view "$target_branch" --json baseRefName --jq .baseRefName)
 
 各 Step では target branch を明示する。
 
-| Step | target branch を指定する方法                                                                                                                                            |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0    | `crit-approval-review` の `crit story` と `crit-approval` に `--pr "$pr_url"` を渡す。PR のファイルを forge API から読むため `--remote` も渡す。push する commit はない |
-| 1    | `a ai pr-draft new --branch "$target_branch"` で作成し、`draft-path --branch "$target_branch"` で draft path を取得する                                                 |
-| 2    | `lint-draft.ts "$draft_path"` と `review-draft --branch "$target_branch" "$base_branch"` を実行する                                                                     |
-| 3    | `a ai pr-draft review "$draft_path"` で editor review を行う                                                                                                            |
-| 4    | `references/draft-manual.md` の指示どおりに指摘を draft へ反映する                                                                                                      |
-| 5    | `a ai pr-draft submit "$draft_path"` で既存 PR の title / body を更新する                                                                                               |
-| 6    | `link-tq-task --author <自分のモデル名> --branch "$target_branch"` を使う                                                                                               |
-| 7    | `gh pr checks "$target_branch" --watch` で CI を監視する                                                                                                                |
-| 8    | 通常の条件に従う                                                                                                                                                        |
+| Step | target branch を指定する方法                                                                                                                                                    |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | `crit-approval-review` の `crit story` と `crit-approval` に `--pr "$pr_url"` を渡す。PR のファイルを forge API から読むため `--remote` も渡す。push する commit はない         |
+| 1    | `render-rules --branch "$target_branch"` の出力に従って `a ai pr-draft new --branch "$target_branch"` で作成し、`draft-path --branch "$target_branch"` で draft path を取得する |
+| 2    | `lint-draft.ts "$draft_path"` と `review-draft --branch "$target_branch" "$base_branch"` を実行する                                                                             |
+| 3    | `a ai pr-draft review "$draft_path"` で editor review を行う                                                                                                                    |
+| 4    | `references/draft-manual.md` の指示どおりに指摘を draft へ反映する                                                                                                              |
+| 5    | `a ai pr-draft submit "$draft_path"` で既存 PR の title / body を更新する                                                                                                       |
+| 6    | `link-tq-task --author <自分のモデル名> --branch "$target_branch"` を使う                                                                                                       |
+| 7    | `gh pr checks "$target_branch" --watch` で CI を監視する                                                                                                                        |
+| 8    | 通常の条件に従う                                                                                                                                                                |
 
 Step 0 の PR review は `crit-approval-review` の PR 手順に従う。`crit-approval` は PR / range 指定の承認で default branch の commit 許可を記録しない。
 

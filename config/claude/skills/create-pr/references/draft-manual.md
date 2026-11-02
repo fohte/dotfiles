@@ -7,10 +7,12 @@ SKILL.md の Step 1, 2, 4 の中身。
 以下のルールに従って書く。
 ルールは書きながら守る。
 
-ルールは以下のスクリプトの出力。release-please の有無・PR template の有無・`Design decisions` の有無による分岐は出力に反映済みなので、自分で判断し直さず、出力の全文を読んでから書く。
+ルールは以下のスクリプトの出力。release-please の有無・PR template の有無・`Design decisions` の有無による分岐は出力に反映済みなので、自分で判断し直さず、出力の全文を読んでから書く。checkout していない branch の draft を作る場合は `--branch <branch>` を渡す。この指定は marker の判定に使う branch config だけに適用され、PR template と release-please の判定は現在の checkout を参照する。
 
 ```bash
 ~/.agents/skills/create-pr/scripts/render-rules
+# For a branch that is not checked out:
+~/.agents/skills/create-pr/scripts/render-rules --branch "$target_branch"
 ```
 
 ### バッククォートのエスケープ
@@ -27,7 +29,7 @@ echo 'use `gh` command'
 
 ### ドラフト投入
 
-`render-rules` の出力にある「PR template の構造」に従ったドラフト本文を投入する (コメント指示 `<!-- ... -->` は削除)。
+`render-rules` の出力にある「PR template の構造」に従ったドラフト本文を投入する (コメント指示 `<!-- ... -->` は削除し、出力に含まれる場合は `<!-- pr-series:start -->` と `<!-- pr-series:end -->` を残す)。
 
 ```bash
 cat <<'EOF' | a ai pr-draft new --title "PRタイトル"

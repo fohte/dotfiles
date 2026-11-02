@@ -26,6 +26,10 @@ const FENCE = /^\s*(```|~~~)/
 const WHY_CONDITIONAL =
   /^[^、。]*(とき|時|ので)(は|に|には)?、|^(When|If|Since|Because|Without)\b/
 const BARE_URL = /^https?:\/\/\S+$/
+const PR_SERIES_MARKERS = new Set([
+  '<!-- pr-series:start -->',
+  '<!-- pr-series:end -->',
+])
 // The lookbehind skips redirect.github.com and other subdomains.
 const GITHUB_ORG = /(?<![\w.-])github\.com\/([\w.-]+)/g
 const BLOB_REF = /github\.com\/[\w.-]+\/[\w.-]+\/blob\/([^/\s)]+)\//g
@@ -176,7 +180,7 @@ export function lint(text: string, owner: string): [number, string][] {
 
     if (isCode) continue
 
-    if (line.includes('<!--')) {
+    if (line.includes('<!--') && !PR_SERIES_MARKERS.has(stripped)) {
       report(lineno, 'template', 'remove the template comment')
     }
 
