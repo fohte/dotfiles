@@ -3,6 +3,7 @@
 {{- $has_pr_template := ne (conv.ToString $v.pr_template) "" -}}
 {{- $has_design_decisions := and $has_pr_template (strings.Contains "Design decisions" (conv.ToString $v.pr_template)) -}}
 {{- $has_branch_purpose := ne (conv.ToString $v.has_branch_purpose) "" -}}
+{{- $has_pr_series_markers := eq (conv.ToString $v.has_pr_series_markers) "true" -}}
 
 ### PR template の構造
 
@@ -17,7 +18,7 @@
 {{ $v.pr_template }}
 ```
 
-- コメント指示 (`<!-- ... -->`) はドラフトから削除
+- コメント指示 (`<!-- ... -->`) はドラフトから削除する。PR series marker は下記で指示された場合だけ残す
 - 以降のルールは template の全セクションに適用する
   {{- else }}
 
@@ -35,6 +36,17 @@ PR template が存在しないリポジトリでは以下の構造を使う。
 ```
 
 {{- end }}
+
+{{ if $has_pr_series_markers -}}
+### PR series の位置
+
+変更内容の節の中で `###` 小見出しを置ける位置に、次の 2 行をそのまま置く。間は空行にしてよい。
+
+```markdown
+<!-- pr-series:start -->
+<!-- pr-series:end -->
+```
+{{ end }}
 
 ### 大原則
 

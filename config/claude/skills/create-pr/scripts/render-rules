@@ -10,9 +10,17 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 # Assign first: a failure inside `$(...)` used as an argument would not trip `set -e`.
 has_release_please=$("$script_dir/has-release-please")
 pr_template=$("$script_dir/find-pr-template")
+branch=$(git branch --show-current)
+task_id=$(git config --get "branch.$branch.x-tq-task-id" || true)
+checklist_item_id=$(git config --get "branch.$branch.x-tq-checklist-item-id" || true)
+has_pr_series_markers=false
+if [[ -n "$task_id" && -n "$checklist_item_id" ]]; then
+  has_pr_series_markers=true
+fi
 
 jq -n --arg has_release_please "$has_release_please" \
   --arg pr_template "$pr_template" \
   --arg has_branch_purpose "${1:-}" \
-  '{has_release_please:$has_release_please, pr_template:$pr_template, has_branch_purpose:$has_branch_purpose}' |
+  --arg has_pr_series_markers "$has_pr_series_markers" \
+  '{has_release_please:$has_release_please, pr_template:$pr_template, has_branch_purpose:$has_branch_purpose, has_pr_series_markers:$has_pr_series_markers}' |
   gomplate -d vars=stdin:///vars.json -f "$script_dir/rules.md.tmpl"
