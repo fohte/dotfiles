@@ -27,7 +27,7 @@ echo 'use `gh` command'
 
 ### ドラフト投入
 
-`render-rules` の出力にある「PR template の構造」に従ったドラフト本文を投入する (コメント指示 `<!-- ... -->` は削除)。
+`render-rules` の出力にある「PR template の構造」に従ったドラフト本文を投入する (コメント指示 `<!-- ... -->` は削除し、出力に含まれる場合は `<!-- pr-series:start -->` と `<!-- pr-series:end -->` を残す)。
 
 ```bash
 cat <<'EOF' | a ai pr-draft new --title "PRタイトル"

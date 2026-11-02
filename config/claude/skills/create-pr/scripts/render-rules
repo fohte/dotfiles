@@ -14,6 +14,7 @@ branch=$(git branch --show-current)
 task_id=$(git config --get "branch.$branch.x-tq-task-id" || true)
 checklist_item_id=$(git config --get "branch.$branch.x-tq-checklist-item-id" || true)
 has_pr_series_markers=false
+# Submit synchronizes the series only when both IDs are set (see SKILL.md).
 if [[ -n "$task_id" && -n "$checklist_item_id" ]]; then
   has_pr_series_markers=true
 fi
