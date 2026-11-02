@@ -7,10 +7,12 @@ SKILL.md の Step 1, 2, 4 の中身。
 以下のルールに従って書く。
 ルールは書きながら守る。
 
-ルールは以下のスクリプトの出力。release-please の有無・PR template の有無・`Design decisions` の有無による分岐は出力に反映済みなので、自分で判断し直さず、出力の全文を読んでから書く。
+ルールは以下のスクリプトの出力。release-please の有無・PR template の有無・`Design decisions` の有無による分岐は出力に反映済みなので、自分で判断し直さず、出力の全文を読んでから書く。checkout していない branch の draft を作る場合は `--branch <branch>` を渡す。
 
 ```bash
 ~/.agents/skills/create-pr/scripts/render-rules
+# For a branch that is not checked out:
+~/.agents/skills/create-pr/scripts/render-rules --branch "$target_branch"
 ```
 
 ### バッククォートのエスケープ

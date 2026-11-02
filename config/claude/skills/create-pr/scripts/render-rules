@@ -2,15 +2,54 @@
 # Print the PR body writing rules for the current repo, with the release-please
 # / PR template / Design decisions branches already resolved.
 #
-# Usage: render-rules [<branch_purpose>]
+# Usage: render-rules [--branch <branch>] [<branch_purpose>]
 set -euo pipefail
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+# shellcheck source=config/claude/skills/create-pr/scripts/branch-option disable=SC1091
+source "$script_dir/branch-option"
+
+usage() {
+  cat << 'EOF'
+Usage: render-rules [--branch <branch>] [<branch_purpose>]
+
+Print the PR body writing rules for the current or selected branch.
+EOF
+}
+
+branch=
+branch_purpose=
+while (($#)); do
+  case "$1" in
+    --branch)
+      set_branch_option branch "$#" "${2:-}"
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -*)
+      echo "Error: unknown argument: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+    *)
+      if [[ -n "$branch_purpose" ]]; then
+        echo "Error: only one branch purpose may be specified" >&2
+        usage >&2
+        exit 2
+      fi
+      branch_purpose=$1
+      shift
+      ;;
+  esac
+done
 
 # Assign first: a failure inside `$(...)` used as an argument would not trip `set -e`.
 has_release_please=$("$script_dir/has-release-please")
 pr_template=$("$script_dir/find-pr-template")
-branch=$(git branch --show-current)
+branch=${branch:-$(git branch --show-current)}
 task_id=$(git config --get "branch.$branch.x-tq-task-id" || true)
 checklist_item_id=$(git config --get "branch.$branch.x-tq-checklist-item-id" || true)
 has_pr_series_markers=false
@@ -21,7 +60,7 @@ fi
 
 jq -n --arg has_release_please "$has_release_please" \
   --arg pr_template "$pr_template" \
-  --arg has_branch_purpose "${1:-}" \
+  --arg has_branch_purpose "$branch_purpose" \
   --arg has_pr_series_markers "$has_pr_series_markers" \
   '{has_release_please:$has_release_please, pr_template:$pr_template, has_branch_purpose:$has_branch_purpose, has_pr_series_markers:$has_pr_series_markers}' |
   gomplate -d vars=stdin:///vars.json -f "$script_dir/rules.md.tmpl"

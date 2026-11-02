@@ -40,7 +40,7 @@ PR template が存在しないリポジトリでは以下の構造を使う。
 {{ if $has_pr_series_markers -}}
 ### PR series の位置
 
-変更内容の節の中で `###` 小見出しを置ける位置に、次の 2 行をそのまま置く。間は空行にしてよい。
+変更内容の節の箇条書きの後ろに、次の 2 行をそのまま置く。`Design decisions` の `<details>` がある場合は、その直前に置く。間は空行にしてよい。
 
 ```markdown
 <!-- pr-series:start -->
