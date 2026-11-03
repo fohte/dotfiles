@@ -37,7 +37,7 @@ description: Delegate tasks to a separate Claude Code or Codex instance, either 
 
 以下は委任元 (現在のセッション) が先に済ませる:
 
-- **設計判断**: どの仕組みで実現するか。未決なら design skill で案を出し、ユーザーが選んだ案を確定案とする (design skill は決定を下さず選択を求めて終わる)
+- **設計判断**: どの仕組みで実現するか。未決なら design-flow skill で案を出し、ユーザーが選んだ案を確定案とする (design-flow skill は決定を下さず選択を求めて終わる)
 - **バグの原因**: どこが原因でどう直すか。未特定なら debug-flow skill で root cause を特定する。特定できた時点で委任に戻り、修正フェーズには進ませない (debug-flow は原因特定後に自動で修正へ移行し、main で直接作業するリポジトリでは委任せず実装してしまう)
 - **方針を決めるための調査**: 選択肢の比較や実現可能性の確認。research skill で調べる
 - **tq タスク**: この委任作業を載せるタスク。まだ無いなら track-in-tq skill を呼んで作る (既存タスクを探す手順もその skill が持つ)。委任先は自分のタスクを作らないので、タスクが無いまま委任すると成果がどこにも記録されない

@@ -35,7 +35,7 @@ description: Development (実装フルフローモード). Use this skill when i
 
 ## Step 2: 設計
 
-`/design` (Codex: `$design`) スキルを呼び出し、設計案を検討する。
+`/design-flow` (Codex: `$design-flow`) スキルを呼び出し、設計案を検討する。
 
 **スキップ条件**: 以下の場合はこのステップをスキップしてよい:
 

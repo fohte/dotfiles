@@ -1,5 +1,5 @@
 ---
-name: design
+name: design-flow
 description: Design (設計専用モード)
 ---
 
