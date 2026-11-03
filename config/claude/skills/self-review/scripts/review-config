@@ -383,6 +383,7 @@ resolve_review_engine() {
   if [[ "$use" == review_draft && -n "$reference_type" ]]; then
     case "$configured_agent" in
       claude) ;;
+      agy) ;;
       codex)
         if [[ "$model_value" == null ]]; then
           echo "Error: Codex draft review requires a model at $agent_source." >&2

@@ -195,6 +195,38 @@ case "$agent" in
     }
     stdout_file="$work_dir/codex-events.jsonl"
     ;;
+  agy)
+    schema_file="$work_dir/agy-output-schema.json"
+    cat > "$schema_file" << 'EOF'
+{
+  "type": "object",
+  "properties": {
+    "answer": { "type": "string", "minLength": 1 }
+  },
+  "required": ["answer"],
+  "additionalProperties": false
+}
+EOF
+    model_args=()
+    # shellcheck disable=SC2034 # Used by review-backends.
+    [[ -n "$model" ]] && model_args=(--model "$model")
+    # shellcheck source=config/claude/skills/self-review/scripts/review-backends disable=SC1091
+    source "$config_script_dir/review-backends"
+    run_draft_agy() {
+      # The reviewer receives the prompt only; its sandbox must not expose the checkout.
+      local repo_root="$empty_cwd"
+      run_agy "$work_dir" "$reasoning_effort"
+    }
+    run_draft_agy || {
+      echo "Error: draft reviewer failed on the isolated agy engine." >&2
+      exit 3
+    }
+    jq -er '.answer' "$work_dir/result.json" > "$result_file" || {
+      echo "Error: draft reviewer returned an invalid agy result." >&2
+      exit 3
+    }
+    stdout_file="$work_dir/stdout.log"
+    ;;
   *)
     echo "Error: review-draft does not support the configured engine: $agent" >&2
     exit 2
