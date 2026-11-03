@@ -220,10 +220,8 @@ load_review_config "$reviewers_file" "$work_dir"
 # shellcheck disable=SC2154 # Assigned by review-config.
 reviewers_file="$review_config_file"
 
-# The snapshot run-external-reviewers leaves behind after a Codex call stays
-# authoritative until the window resets, so a limit check here never needs a
-# network call, and the usage endpoint stays untouched for as long as the
-# limit holds.
+# Selection stays offline by reading the last run's snapshot. A fallback run
+# refreshes it afterward so an early reset can restore Codex before reset_at.
 codex_usage_file="${XDG_CACHE_HOME:-$HOME/.cache}/self-review/codex-usage.json"
 codex_over_limit() {
   [[ -f "$codex_usage_file" ]] || return 1

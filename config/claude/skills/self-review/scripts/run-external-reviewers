@@ -221,6 +221,7 @@ for reviewer in "${selected[@]}"; do
 done
 
 codex_used=false
+codex_fallback=false
 pids=()
 prompt_hashes=()
 for reviewer in "${selected[@]}"; do
@@ -257,6 +258,7 @@ for reviewer in "${selected[@]}"; do
     "$(jq -r '.config.sources.reasoning_effort' <<< "$reviewer_config")" >&2
   fallback_reason=$(jq -r '.fallback_reason // empty' <<< "$reviewer_config")
   [[ -z "$fallback_reason" ]] || printf 'Reviewer %s fallback: %s\n' "$reviewer" "$fallback_reason" >&2
+  [[ "$(jq -r '.configured_agent' <<< "$reviewer_config")" != codex || -z "$fallback_reason" ]] || codex_fallback=true
   execution_mode=fresh
   [[ -z "$resume_session_id" ]] || execution_mode=resume
   [[ -z "$fallback_reason" ]] || execution_mode=fallback
@@ -312,10 +314,9 @@ if [[ -n "${SELF_REVIEW_RECOVERY_ATTEMPT_DIR:-}" ]]; then
   done
 fi
 
-# Recorded on failure too: a run that dies on the usage limit is exactly the one
-# whose snapshot must be refreshed, otherwise a stale reset_at sends every later
-# review back to Codex while the limit still holds.
-if [[ "$codex_used" == true ]]; then
+# Refresh failed Codex attempts and fallback runs so an early quota reset does
+# not keep every later review on Claude.
+if [[ "$codex_used" == true || "$codex_fallback" == true ]]; then
   record_codex_usage || true
 fi
 
