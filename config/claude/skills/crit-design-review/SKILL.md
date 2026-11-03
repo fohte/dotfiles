@@ -23,6 +23,7 @@ crit への書き込みと読み取りには、必ず `--session <crit session i
 2. 設計と食い違う箇所を `crit comment --session <id> --author design-session <path>:<line> '<body>'` で指摘する。設計のどの記述と食い違うかを引用し、直す方向を書く。設計に書かれていないだけの実装判断は指摘しない
 3. 再依頼のときは、先に自分の指摘スレッド (`crit comments --session <id> --json` の `author` が `design-session` で、完了コメントでないもの) を確認する。直っていれば `--reply-to <comment-id> --resolve` で確認内容を返信し、直っていなければ `--resolve` なしで何が違うかを追記する。`--resolve` は `design-session` のスレッドだけに使い、人間のコメントには使わない。そのうえで 2 を新しい差分に対しても行う
 4. 未解決の `design-session` の指摘スレッド (path 付きのコメント) の数を N として、review 全体へ完了コメントを書く: `crit comment --session <id> --author design-session '設計レビュー完了: 指摘 N 件'`。N に完了コメントは数えない。前回の完了コメントが残っていれば、先に `--reply-to <comment-id> --resolve` で閉じる。古い件数が人間の目に未解決のまま残るのと、次回の N に混ざるのを防ぐため。N が 0 のときは、委任先が書いた「設計レビュー中」コメントも同じ方法で閉じる。人間は設計レビュー中でも crit を開けるので、完了を画面で判別できるようにするため
+   N が 0 の場合は、今書いた完了コメントも `crit comments --session <id> --all --json` で ID を確認し、`crit comment --session <id> --author design-session --reply-to <comment-id> --resolve '設計レビュー完了: 指摘 0 件'` で閉じる。完了は次の手順の通知で伝える。これにより、指摘がない設計レビューのコメントを未解決のまま残さない。N が 1 以上の場合は完了コメントを未解決のまま残し、委任先が修正・返信して再依頼したときに次回の手順 4 で閉じる
 5. `Implementer session` に完了を通知する。`a agent peer notify --message <MESSAGE> <session_id>` で、次の形式で送る。送ったらターンを終える
 
 ```text
