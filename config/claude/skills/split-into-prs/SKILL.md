@@ -47,20 +47,20 @@ description: Split a task into a set of small, single-concern PRs that can be im
 - 依存: PR 1 (<何を待つのか>)
 ```
 
-分割後、そのまま委任に進む場合は delegate に渡す。delegate は 1 委任 = 1 PR なので、着手できるのは Batch 1 のみ。後続 Batch は先行 PR が merge されてから改めて委任する。依存のある PR を委任するときは、依存先の PR の URL を `依存先: <URL>` の形で委任内容に含める。
+分割後は、分割したセッション自身が PR を順に実装する。後続 Batch は先行 PR のブランチから作る。委任に進む場合は delegate に渡す。delegate は 1 委任 = 1 PR なので、着手できるのは Batch 1 のみ。後続 Batch は先行 PR が merge されてから改めて委任する。依存のある PR を委任するときは、依存先の PR の URL を `依存先: <URL>` の形で委任内容に含める。
 
 ## tq チェックリストへの記録
 
-分割案を提示した時点では tq を更新しない。ユーザーが案を承認した後、次の優先順で記録先の task ID を決め、以降の checklist 操作に使う。
+分割の承認が要るかは呼び出し元が決める (`project-manager` の handoff では、その手順 3 と 4)。承認が要る場合は、案を提示した時点では tq を更新せず、承認後に記録する。承認が要らない場合は、分割を決めた時点で記録する。記録先の task ID は次の優先順で決め、以降の checklist 操作に使う。
 
 - `project-manager` の handoff に「担当タスク」として tq task ID が記載されていれば、その ID を使う。`track-in-tq` が別の ID を選んでいても、handoff の ID を記録先として優先する
 - それ以外では、`track-in-tq` が選んだ作業タスクの ID があれば使う
 - どちらにも ID がなければ tq を更新せず、チャットに案を出す
 
 1. `tq checklist list <taskId>` で既存のチェックリストを確認する。名前が `実装` のものが無ければ `tq checklist create <taskId> --name 実装` で作り、あれば既存のチェックリストを更新する
-2. 承認された分割案に残る PR 項目は既存の葉項目 ID を保ち、本文と note を更新する。Batch の構成が変わったら `tq checklist item move` で親項目または root に移す。merged の PR 項目を残す場合はその checked 状態を保つ
+2. 記録する分割案に残る PR 項目は既存の葉項目 ID を保ち、本文と note を更新する。Batch の構成が変わったら `tq checklist item move` で親項目または root に移す。merged の PR 項目を残す場合はその checked 状態を保つ
 3. 新しい Batch が複数なら `Batch 1` などの親項目を作り、その下に各 PR 項目を追加する。Batch が 1 つなら親項目を作らず、PR 項目を直接並べる
-4. 古い PR 項目は、承認された分割案に対応せず、その ID を渡した委任も実行中でない場合に削除する。項目に PR が紐付いている場合は、項目の `githubLinkId` と `tq task get <taskId>` の `githubLinks[].id` を対応させて状態を確認し、open の間は項目を残す。実行中の委任や open の PR を新しい案から外す場合は、完了またはキャンセルしてから項目を削除する。`tq checklist item delete <itemId>` は子項目も削除するため、Batch 親は子がすべて削除対象のときだけ削除する
+4. 古い PR 項目は、記録する分割案に対応せず、その ID を渡した委任も実行中でない場合に削除する。項目に PR が紐付いている場合は、項目の `githubLinkId` と `tq task get <taskId>` の `githubLinks[].id` を対応させて状態を確認し、open の間は項目を残す。実行中の委任や open の PR を新しい案から外す場合は、完了またはキャンセルしてから項目を削除する。`tq checklist item delete <itemId>` は子項目も削除するため、Batch 親は子がすべて削除対象のときだけ削除する
 5. PR 項目の本文は `PR 1: <目的>` とし、note に `変更範囲`、`ゴール`、`依存` を記録する。本文は 1 行にし、note に長い内容を書く
 6. `tq checklist list <taskId>` で親子関係と内容を確認する。各 PR の葉項目 ID を控え、delegate に対応する ID を渡す。Batch の親項目 ID は渡さない
 

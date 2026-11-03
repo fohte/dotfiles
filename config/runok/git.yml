@@ -288,10 +288,20 @@ rules:
       - allow: 'git checkout -- file.txt'
       - allow: 'git checkout --theirs file.txt'
       - allow: 'git checkout --ours file.txt'
-  - deny: 'git [-C *] switch *'
-    message: 'Blocked because `git switch` changes the current branch and has side effects on the working tree.'
+  # A session working in its own linked worktree (`.worktrees/<name>`) stacks
+  # PR branches there, so switching is allowed only from inside one. The
+  # `-C <dir>` form is always denied because `fs.cwd` is not the directory git
+  # operates on. The worktree-allow branch can't be covered by an inline test
+  # (tests run from a non-worktree cwd); verify with `runok check` from inside
+  # a `.worktrees/` directory when editing.
+  - deny: 'git switch *'
+    when: "!fs.cwd.contains('/.worktrees/')"
+    message: 'Blocked because `git switch` changes the current branch and has side effects on the working tree. It is allowed only inside a `.worktrees/<name>` worktree.'
     tests:
       - deny: 'git switch main'
+  - deny: 'git -C * switch *'
+    message: 'Blocked because `git switch` changes the current branch and has side effects on the working tree.'
+    tests:
       - deny: 'git -C /tmp switch main'
   - deny: 'git [-C *] checkout -b|-B *'
     message: 'Blocked because creating a branch should go through the `delegate` skill, which runs the work in an isolated worktree.'
@@ -300,15 +310,20 @@ rules:
       - deny: 'git checkout -b new-branch'
       - deny: 'git checkout -B new-branch'
       - deny: 'git -C /tmp checkout -b new-branch'
-  # Branch creation routes to /delegate. Two patterns are needed:
-  # an optional `git [-C <dir>]` group would capture switch's own `-C`
-  # (force-create) flag, so the bare form and the `git -C <dir>` form are
-  # kept separate.
-  - deny: 'git switch -c|-C *'
-    message: 'Blocked because creating a branch should go through the `delegate` skill, which runs the work in an isolated worktree.'
-    fix_suggestion: 'Use the delegate skill.'
+  # Branch creation outside a worktree routes to a worktree session. Separate
+  # patterns are needed: an optional `git [-C <dir>]` group would capture
+  # switch's own `-C` (force-create) flag. `-C` would overwrite an existing
+  # branch, so it stays denied even inside a worktree.
+  - deny: 'git switch -c *'
+    when: "!fs.cwd.contains('/.worktrees/')"
+    message: 'Blocked because branches are created only inside a `.worktrees/<name>` worktree.'
+    fix_suggestion: 'Start the work in a worktree session (handoff launcher with --worktree, or the delegate skill).'
     tests:
       - deny: 'git switch -c new-branch'
+  - deny: 'git switch -C *'
+    message: 'Blocked because `git switch -C` resets an existing branch.'
+    fix_suggestion: 'git switch -c <new-branch>'
+    tests:
       - deny: 'git switch -C new-branch'
   - deny: 'git -C * switch -c|-C *'
     message: 'Blocked because creating a branch should go through the `delegate` skill, which runs the work in an isolated worktree.'

@@ -8,6 +8,9 @@ Usage: launch --handoff <handoff.md> --label <label> [options]
 Options:
   --repo <path>       Start from this repository root
   --kind <kind>       Display work type
+  --worktree          Start the session in a new worktree of the repository
+  --branch <name>     Worktree branch name (requires --worktree)
+  --tq-task-id <id>   tq task the worktree branch links its PRs to (requires --worktree)
   --engine <engine>   Override the selected profile's engine for this session
   --model <model>     Override the selected profile's model for this session
   --reasoning-effort <effort>
@@ -35,6 +38,11 @@ engine=
 model=
 reasoning_effort=
 dry_run=false
+worktree=false
+branch=
+seen_branch=false
+tq_task_id=
+seen_tq_task=false
 seen_handoff=false
 seen_label=false
 seen_repo=false
@@ -87,6 +95,23 @@ while (($#)); do
       seen_reasoning_effort=true
       shift 2
       ;;
+    --worktree)
+      [[ $worktree == false ]] || fail "--worktree may appear once."
+      worktree=true
+      shift
+      ;;
+    --branch)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_branch == false ]] || fail "--branch requires one name and may appear once."
+      branch=$2
+      seen_branch=true
+      shift 2
+      ;;
+    --tq-task-id)
+      [[ $# -ge 2 && -n $2 && $2 != --* && $seen_tq_task == false ]] || fail "--tq-task-id requires one ID and may appear once."
+      tq_task_id=$2
+      seen_tq_task=true
+      shift 2
+      ;;
     --dry-run)
       [[ $dry_run == false ]] || fail "--dry-run may appear once."
       dry_run=true
@@ -100,6 +125,8 @@ done
 
 [[ $seen_handoff == true ]] || fail "--handoff is required."
 [[ $seen_label == true && -n ${label//[[:space:]]/} ]] || fail "--label is required and must not be empty."
+[[ $seen_tq_task == false || $worktree == true ]] || fail "--tq-task-id requires --worktree."
+[[ $seen_branch == false || $worktree == true ]] || fail "--branch requires --worktree."
 [[ -f $handoff_file ]] || fail "handoff.md must be a non-empty file."
 
 prompt=$(cat "$handoff_file")
@@ -117,9 +144,18 @@ if [[ $seen_repo == true ]]; then
   fi
   cmd+=(-R "$target_repo")
 fi
+if [[ $seen_branch == true ]]; then
+  cmd+=("--worktree=$branch")
+elif [[ $worktree == true ]]; then
+  cmd+=(--worktree)
+fi
 cmd+=(--label "$label" --prompt "$prompt")
 [[ $dry_run == true ]] && cmd+=(--dry-run)
 
 unset DELEGATE_TASK_PURPOSE DELEGATE_TQ_TASK_ID DELEGATE_TQ_CHECKLIST_ITEM_ID
+# Read by the post-worktree-create hook so create-pr links the owner's PRs to its task.
+if [[ $seen_tq_task == true ]]; then
+  export DELEGATE_TQ_TASK_ID=$tq_task_id
+fi
 
 exec a "${cmd[@]}"

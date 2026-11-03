@@ -47,9 +47,12 @@ dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 
 ```bash
 ~/.agents/skills/handoff/scripts/launch \
-  --handoff "$dir/<n>.handoff.md" --repo "$(git root -r)" \
+  --handoff "$dir/<n>.handoff.md" --repo "<実装先リポジトリの root>" \
+  --worktree --branch "<ブランチ名>" --tq-task-id "<task id>" \
   --kind design --label "<タスクの短い要約>"
 ```
+
+owner は自分の worktree で実装するので、実装を伴うタスクは `--worktree`、`--branch`、`--tq-task-id` を付けて起動する。worktree は delegate と同じ `.worktrees/<name>` にでき、tq タスクの ID は最初のブランチに記録される。ブランチ名は delegate skill の規則 (ハイフン区切り、`/` を含めない、具体的な識別子を含める) に従う。調査だけのタスクではこの 3 つを付けない。
 
 設計作業セッションは `--kind design` で起動する。handoff と delegate の engine、model、reasoning effort は通常は選択中 profile の各 type 設定を使う。ユーザーが明示した場合だけ、対応する launcher flag で値を渡す。1 回の起動のために `a agent profile use` で全体の選択を書き換えない。
 
