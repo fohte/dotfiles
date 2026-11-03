@@ -180,6 +180,29 @@ printf 'Draft review: input_hash=%s (head=%s, base=%s, draft=%s, prompt=%s), eng
 cd "$empty_cwd"
 max_output_bytes=1048576
 
+print_agy_failure_summary() {
+  local reviewer_dir="$1" backend_status=unknown
+  if [[ -s "$reviewer_dir/backend-exit-code" ]]; then
+    backend_status=$(cat "$reviewer_dir/backend-exit-code")
+    [[ "$backend_status" =~ ^[0-9]+$ ]] || backend_status=unknown
+  fi
+  printf 'agy backend exit code: %s\n' "$backend_status" >&2
+
+  if [[ ! -s "$reviewer_dir/stderr.log" ]]; then
+    echo 'agy returned no schema-checked result or diagnostic output.' >&2
+  elif rg -qi 'rate.?limit|too many requests|(^|[^0-9])429([^0-9]|$)' "$reviewer_dir/stderr.log"; then
+    echo 'agy reported rate limiting.' >&2
+  elif rg -qi 'auth|unauthor|forbidden|credential|(^|[^0-9])(401|403)([^0-9]|$)' "$reviewer_dir/stderr.log"; then
+    echo 'agy reported an authentication or authorization error.' >&2
+  elif rg -qi 'timed out|timeout|deadline exceeded' "$reviewer_dir/stderr.log"; then
+    echo 'agy timed out.' >&2
+  elif rg -qi 'model.{0,40}(not found|unavailable|unknown)' "$reviewer_dir/stderr.log"; then
+    echo 'agy could not use the configured model.' >&2
+  else
+    echo 'agy failed before returning a schema-checked result; detailed logs were discarded.' >&2
+  fi
+}
+
 case "$agent" in
   claude)
     "$script_dir/review-draft-claude" "$model" "$reasoning_effort" "$prompt_file" "$result_file" "$work_dir" "$HOME" || {
@@ -212,12 +235,9 @@ EOF
     [[ -n "$model" ]] && model_args=(--model "$model")
     # shellcheck source=config/claude/skills/self-review/scripts/review-backends disable=SC1091
     source "$config_script_dir/review-backends"
-    run_draft_agy() {
-      # The reviewer receives the prompt only; its sandbox must not expose the checkout.
-      local repo_root="$empty_cwd"
-      run_agy "$work_dir" "$reasoning_effort"
-    }
-    run_draft_agy || {
+    # The reviewer receives only its prompt; keep the checkout outside agy's sandbox.
+    run_agy "$work_dir" "$reasoning_effort" "$empty_cwd" || {
+      print_agy_failure_summary "$work_dir"
       echo "Error: draft reviewer failed on the isolated agy engine." >&2
       exit 3
     }
