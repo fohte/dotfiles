@@ -50,7 +50,7 @@ description: Development (実装フルフローモード). Use this skill when i
 | `.worktrees/<name>` か `.claude/worktrees/<name>` の worktree | このセッションで実装し、`/commit` でコミット、`/create-pr` (Codex: `$create-pr`) で PR を作る |
 | (それ以外) default branch のチェックアウト                    | 下記の手順で自分が worktree に入り、上の行に従う。`delegate` は使わない                       |
 
-Claude Code では `EnterWorktree` に `name` (delegate skill のブランチ名の規則に従う) を渡す。WorktreeCreate hook が `.claude/worktrees/<name>` に `fohte/<name>` ブランチで作る。tq タスクがあれば、入った後に `git config branch.fohte/<name>.x-tq-task-id <task-id>` を記録する (PR の葉項目があれば `x-tq-checklist-item-id` も)。create-pr skill が PR を tq に紐付けるのに使う。2 本目以降の PR は `project-manager` skill の `assets/handoff-common.md` の手順 5 でブランチを作る。
+Claude Code では `EnterWorktree` に `name` (delegate skill のブランチ名の規則に従う) を渡す。WorktreeCreate hook が `.claude/worktrees/<name>` に `fohte/<name>` ブランチで作る。tq タスクがあれば、入った後に `git config branch.fohte/<name>.x-tq-task-id <task-id>` を記録する (PR の葉項目があれば `x-tq-checklist-item-id` も)。create-pr skill が PR を tq に紐付けるのに使う。2 本目以降の PR は `project-manager` skill の `assets/handoff-common.md` の手順 5 でブランチを作る。worktree の中で Claude Code の隔離チェックにコマンドを拒否されたら、ユーザーに実行を頼まず、`ExitWorktree` (action: `keep`) で抜けて実行し、同じ `name` の `EnterWorktree` で入り直す。
 
 `EnterWorktree` が無い Codex では、`handoff` skill の送り出しモードで、Step 1-2 の結果と決めた仕様を引き継ぎファイルに書き、`--worktree --branch <name>` (tq タスクがあれば `--tq-task-id <task-id>` も) を付けて新しいセッションを起動する。起動したら、このセッションは実装に手を出さない。
 
