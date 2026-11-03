@@ -1,3 +1,8 @@
 agent:
   reference:
     armyknife: agent.profile.pr-draft-review
+uses:
+  design_review:
+    agent:
+      reference:
+        armyknife: agent.profile.design-review

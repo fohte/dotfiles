@@ -98,6 +98,9 @@ agent:
         engine: claude
       writing-review:
         engine: claude
+      design-review:
+        engine: claude
+        model: haiku
       pr-draft-review:
         engine: claude
         model: haiku

@@ -13,7 +13,7 @@ HTML の自己確認後、次の入力を用意してください。
 
 設計 HTML の SVG 図には `<desc>` を付け、図の意味をテキストで説明します。
 
-依頼と後続の指示は別ファイルにし、要約や注記を加えず原文のまま渡します。runner は `self-review` の設定を読み、既定の engine、model、reasoning effort を使います。
+依頼と後続の指示は別ファイルにし、要約や注記を加えず原文のまま渡します。runner は `create-pr/review.yaml` の `design_review` 用設定から armyknife の `design-review` type を参照し、その engine、model、reasoning effort を使います。
 
 ```bash
 <skill-dir>/scripts/review-design /path/to/design.html /path/to/request.txt /path/to/follow-ups.txt /path/to/repository
