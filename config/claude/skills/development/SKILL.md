@@ -48,7 +48,9 @@ description: Development (実装フルフローモード). Use this skill when i
 | ------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `repo.direct_commit` が `true` のリポジトリ | このセッションで実装し、`/commit` (Codex: `$commit`) スキルでコミットする                     |
 | `.worktrees/<name>` の worktree             | このセッションで実装し、`/commit` でコミット、`/create-pr` (Codex: `$create-pr`) で PR を作る |
-| (それ以外) default branch のチェックアウト  | `delegate` スキルで実装を委任する。worktree を作る手段がこのセッションに無いため              |
+| (それ以外) default branch のチェックアウト  | 下記の手順で worktree のセッションに引き継ぐ。`delegate` は使わない                           |
+
+default branch のチェックアウトからは、このセッション自身を worktree に移せない (`git worktree add` と branch 作成は runok が止める)。そこで、`handoff` skill の送り出しモードで、Step 1-2 の結果と決めた仕様を引き継ぎファイルに書き、`--worktree --branch <name>` を付けて launcher で新しいセッションを起動する。tq タスクがあれば `--tq-task-id` も渡す。「次にやってほしいこと」には、この表の worktree の行に従って実装と PR 作成まで進めること、2 本目以降の PR は `project-manager` skill の `assets/handoff-common.md` の手順 5 でブランチを作ることを書く。起動したら、このセッションは実装に手を出さない。
 
 - テストが存在するプロジェクトでは、`/test-philosophy` (Codex: `$test-philosophy`) スキルの方針に従ってテストも書く
 - 実装中に設計の問題に気づいた場合も、Step 2 と同じ基準で、自分で決めるかユーザーに相談するかを分ける
