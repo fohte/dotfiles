@@ -213,11 +213,11 @@ rules:
       - allow: 'git pull --rebase'
       - allow: 'git pull --rebase=merges'
       - allow: 'git pull -rmerges'
-  # Merging origin/main or origin/master while OUTSIDE a `.worktrees/<name>`
-  # checkout means we're in the main worktree, which is always on the
+  # Merging origin/main or origin/master while OUTSIDE a `.worktrees/<name>` or
+  # `.claude/worktrees/<name>` checkout means we're in the main worktree, which is always on the
   # default branch -- merging its own remote tracking ref is the same-branch
   # antipattern that `git pull` should handle instead. Inside a worktree
-  # (`a agent new` / `/delegate`, always a feature branch), merging
+  # (`a agent new` / `/delegate` / EnterWorktree, always a feature branch), merging
   # origin/main to sync with the default branch is legitimate and stays
   # allowed via the `allow: 'git [-C *] merge origin/main|origin/master *'`
   # rule further down.
@@ -234,16 +234,17 @@ rules:
   # test (`InlineTestEntry` has no cwd override, so `runok test` only ever
   # exercises the deny branch from its own non-worktree cwd). If this
   # condition changes, manually re-verify by `cd`-ing into a path containing
-  # `.worktrees/` and confirming `runok check --verbose` still allows.
+  # `.worktrees/` and one containing `.claude/worktrees/`, and confirming
+  # `runok check --verbose` still allows.
   - deny: 'git merge origin/main|origin/master *'
-    when: "!fs.cwd.contains('/.worktrees/')"
+    when: "!fs.cwd.contains('/.worktrees/') && !fs.cwd.contains('/.claude/worktrees/')"
     message: 'Blocked because merging origin/main or origin/master directly (outside a worktree) creates a needless merge commit. Use `git pull` instead.'
     fix_suggestion: 'git pull'
     tests:
       - deny: 'git merge origin/main'
       - deny: 'git merge origin/master'
   - deny: 'git -C * merge origin/main|origin/master *'
-    when: "!flags.C.contains('/.worktrees/')"
+    when: "!flags.C.contains('/.worktrees/') && !flags.C.contains('/.claude/worktrees/')"
     message: 'Blocked because merging origin/main or origin/master directly (outside a worktree) creates a needless merge commit. Use `git pull` instead.'
     fix_suggestion: 'git -C <dir> pull'
     tests:
@@ -251,6 +252,7 @@ rules:
       - deny: 'git -C /tmp merge origin/master'
       - allow: 'git -C /tmp/.worktrees/foo merge origin/main'
       - allow: 'git -C /tmp/.worktrees/foo merge origin/master'
+      - allow: 'git -C /tmp/.claude/worktrees/foo merge origin/main'
   - deny: 'git [-C *] merge !origin/main|origin/master *'
     message: 'Blocked because non-default merges should go through `git pull --rebase` to keep history linear.'
     fix_suggestion: 'git pull --rebase'
@@ -288,15 +290,16 @@ rules:
       - allow: 'git checkout -- file.txt'
       - allow: 'git checkout --theirs file.txt'
       - allow: 'git checkout --ours file.txt'
-  # A session working in its own linked worktree (`.worktrees/<name>`) stacks
+  # A session working in its own linked worktree (`.worktrees/<name>` or
+  # `.claude/worktrees/<name>`) stacks
   # PR branches there, so switching is allowed only from inside one. The
   # `-C <dir>` form is always denied because `fs.cwd` is not the directory git
   # operates on. The worktree-allow branch can't be covered by an inline test
   # (tests run from a non-worktree cwd); verify with `runok check` from inside
-  # a `.worktrees/` directory when editing.
+  # both kinds of worktree directory when editing.
   - deny: 'git switch *'
-    when: "!fs.cwd.contains('/.worktrees/')"
-    message: 'Blocked because `git switch` changes the current branch and has side effects on the working tree. It is allowed only inside a `.worktrees/<name>` worktree.'
+    when: "!fs.cwd.contains('/.worktrees/') && !fs.cwd.contains('/.claude/worktrees/')"
+    message: 'Blocked because `git switch` changes the current branch and has side effects on the working tree. It is allowed only inside a `.worktrees/<name>` or `.claude/worktrees/<name>` worktree.'
     tests:
       - deny: 'git switch main'
   - deny: 'git -C * switch *'
@@ -315,9 +318,9 @@ rules:
   # switch's own `-C` (force-create) flag. `-C` would overwrite an existing
   # branch, so it stays denied even inside a worktree.
   - deny: 'git switch -c *'
-    when: "!fs.cwd.contains('/.worktrees/')"
-    message: 'Blocked because branches are created only inside a `.worktrees/<name>` worktree.'
-    fix_suggestion: 'Start the work in a worktree session (handoff launcher with --worktree, or the delegate skill).'
+    when: "!fs.cwd.contains('/.worktrees/') && !fs.cwd.contains('/.claude/worktrees/')"
+    message: 'Blocked because branches are created only inside a `.worktrees/<name>` or `.claude/worktrees/<name>` worktree.'
+    fix_suggestion: 'Enter a worktree first (Claude Code: EnterWorktree; Codex: the handoff launcher with --worktree).'
     tests:
       - deny: 'git switch -c new-branch'
   - deny: 'git switch -C *'
@@ -540,9 +543,9 @@ rules:
   - allow: 'git [-C *] fetch *'
     tests:
       - allow: 'git fetch origin'
-  # Inside a `.worktrees/<name>` checkout (`a agent new` / `/delegate`),
-  # this is the only rule that matches (the cwd-gated deny above requires
-  # being outside `.worktrees/`), so it stays allow there.
+  # Inside a `.worktrees/<name>` or `.claude/worktrees/<name>` checkout, this
+  # is the only rule that matches (the cwd-gated deny above requires being
+  # outside both), so it stays allow there.
   - allow: 'git [-C *] merge origin/main|origin/master *'
   # --continue / --abort / --skip progress or unwind an in-progress rebase
   # without rewriting history beyond the original `git rebase` invocation.

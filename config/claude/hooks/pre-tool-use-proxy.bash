@@ -28,12 +28,6 @@ case "$tool_name" in
     fi
     exec ~/.claude/hooks/default-branch-edit-guard <<< "$input"
     ;;
-  EnterWorktree)
-    # EnterWorktree is "Permission Required: No" so permissions.deny does not
-    # apply. Worktree creation must go through the /delegate skill.
-    jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "EnterWorktree is disabled. Use the delegate skill to spawn work in a worktree."}}'
-    exit 0
-    ;;
   TaskStop)
     exec ~/.claude/hooks/task-stop-guard <<< "$input"
     ;;
@@ -109,8 +103,9 @@ bash_permission() {
       ;;
   esac
 
-  # rtk rewrite's exit code is unstable across versions; rely on stdout content only.
-  rewritten=$(rtk rewrite "$cmd" 2> /dev/null || true)
+  # Unlike `rtk rewrite`, this reads cwd and leaves git unwrapped in .claude/worktrees/.
+  rewritten=$(echo "$input" | jq -c --argjson t "$base_input" '.tool_input = $t' |
+    rtk hook claude 2> /dev/null | jq -r '.hookSpecificOutput.updatedInput.command // empty' 2> /dev/null || true)
   if [ -z "$rewritten" ] || [ "$rewritten" = "$cmd" ]; then
     echo "$runok_output"
     exit 0

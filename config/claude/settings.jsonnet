@@ -215,6 +215,13 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
         ],
       },
     ],
+    WorktreeCreate: [
+      {
+        hooks: [
+          { type: 'command', command: '~/.claude/hooks/worktree-create' },
+        ],
+      },
+    ],
     PostModelSwitch: [
       {
         hooks: [

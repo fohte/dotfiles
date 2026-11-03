@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Write a Markdown handoff file and start a fresh agent session with it (`handoff/scripts/launch`) so that session picks up the current task — for resetting a session with accumulated context (like a manual auto-compact), switching to a different or more capable model, or getting an independent second opinion from a new session on the same problem. Also use this inside a session that itself was started from a handoff, when the user wants to write up a report to carry back to the session that started it. Trigger ONLY on an explicit, deliberate request for this handoff/report — the user runs `/handoff`, or clearly asks to hand off the session, switch models and continue, or bring results back to the original session. Do not trigger just because context is getting long or a model name comes up in passing conversation — only act when the user explicitly asks for the handoff itself. Exception: the development skill invokes this to move implementation from a default-branch checkout into a new worktree session.
+description: Write a Markdown handoff file and start a fresh agent session with it (`handoff/scripts/launch`) so that session picks up the current task — for resetting a session with accumulated context (like a manual auto-compact), switching to a different or more capable model, or getting an independent second opinion from a new session on the same problem. Also use this inside a session that itself was started from a handoff, when the user wants to write up a report to carry back to the session that started it. Trigger ONLY on an explicit, deliberate request for this handoff/report — the user runs `/handoff`, or clearly asks to hand off the session, switch models and continue, or bring results back to the original session. Do not trigger just because context is getting long or a model name comes up in passing conversation — only act when the user explicitly asks for the handoff itself. Exception: the development skill invokes this in Codex, which has no EnterWorktree, to move implementation from a default-branch checkout into a new worktree session.
 ---
 
 # 別の agent session へ作業を引き継ぐ
@@ -9,7 +9,7 @@ description: Write a Markdown handoff file and start a fresh agent session with 
 
 ## 最優先ルール
 
-- **ユーザーが明示的に依頼した時だけ動く**: 「コンテキストが溜まってきたな」といった独り言や、モデル名が話題に出ただけでは発動しない。発動した以上、引き継ぎ資料の作成自体は迷わず実行する。`development` skill が worktree へ移るために呼ぶ場合は、依頼があったものとして扱い、理由は「worktree で実装するため」とする
+- **ユーザーが明示的に依頼した時だけ動く**: 「コンテキストが溜まってきたな」といった独り言や、モデル名が話題に出ただけでは発動しない。発動した以上、引き継ぎ資料の作成自体は迷わず実行する。`EnterWorktree` の無い Codex で `development` skill が worktree へ移るために呼ぶ場合は、依頼があったものとして扱い、理由は「worktree で実装するため」とする
 - **起動は handoff の `scripts/launch` を使う**: `tmux` や `claude` を直接叩いて起動しない。launcher が内部で `a agent new --type handoff` を実行し、新セッションを `a agent` の管理下に置いて親子関係を作るため、持ち帰りの経路 (`a agent peer parent` + `a agent peer notify`) を使える
 
 ## モードの判定

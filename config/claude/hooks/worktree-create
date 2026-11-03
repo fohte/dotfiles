@@ -1,0 +1,48 @@
+#!/bin/bash
+# Claude Code reads the last stdout line as the worktree path.
+set -euo pipefail
+
+input=$(cat)
+name=$(jq -r '.name // empty' <<< "$input")
+cwd=$(jq -r '.cwd // empty' <<< "$input")
+
+if [[ ! $name =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+  echo "worktree-create: invalid worktree name: $name" >&2
+  exit 1
+fi
+
+# --git-common-dir points at the main checkout even from a linked worktree.
+common_dir=$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir)
+repo_root=$(dirname "$common_dir")
+# rtk leaves git unwrapped only under .claude/worktrees/.
+path="$repo_root/.claude/worktrees/$name"
+branch="fohte/$name"
+
+# Re-entering an existing worktree must keep its uncommitted work.
+if [[ -d $path ]]; then
+  echo "$path"
+  exit 0
+fi
+
+git -C "$repo_root" fetch --quiet origin >&2 || echo "worktree-create: fetch failed; using cached refs" >&2
+base=$(git -C "$repo_root" symbolic-ref --quiet --short refs/remotes/origin/HEAD || git -C "$repo_root" rev-parse --abbrev-ref HEAD)
+
+created_branch=false
+if git -C "$repo_root" show-ref --verify --quiet "refs/heads/$branch"; then
+  git -C "$repo_root" worktree add "$path" "$branch" >&2
+else
+  git -C "$repo_root" worktree add --no-track -b "$branch" "$path" "$base" >&2
+  created_branch=true
+fi
+
+# Roll back like armyknife does, so a retry with the same name can succeed.
+if ! ARMYKNIFE_WORKTREE_PATH=$path ARMYKNIFE_BRANCH_NAME=$branch ARMYKNIFE_REPO_ROOT=$repo_root \
+  ~/.config/armyknife/hooks/post-worktree-create >&2; then
+  git -C "$repo_root" worktree remove --force "$path" >&2
+  if [[ $created_branch == true ]]; then
+    git -C "$repo_root" branch -D "$branch" >&2
+  fi
+  exit 1
+fi
+
+echo "$path"
