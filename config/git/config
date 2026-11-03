@@ -91,3 +91,7 @@
 [hook "fohte-agent-attribution-prepare-commit-msg"]
 	event = prepare-commit-msg
 	command = ~/.config/git/hooks/agent-attribution prepare-commit-msg "$@"
+
+[hook "fohte-default-branch-commit-guard"]
+	event = pre-commit
+	command = ~/.config/git/hooks/default-branch-commit-guard

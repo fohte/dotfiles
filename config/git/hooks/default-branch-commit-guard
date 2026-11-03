@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# pre-commit: block agent commits on the default branch of repos whose
+# repo.direct_commit is false.
+set -euo pipefail
+
+# Humans may commit anywhere; only Claude Code / Codex shells are guarded.
+[ -z "${CLAUDECODE-}${CODEX_SESSION_ID-}" ] && exit 0
+
+branch=$(git branch --show-current)
+[ -z "$branch" ] && exit 0
+default=$(git symbolic-ref --short -q refs/remotes/origin/HEAD) || exit 0
+[ "$branch" != "${default#origin/}" ] && exit 0
+
+# Only an explicit `false` blocks: `a config get` fails for repos without a
+# GitHub origin (test fixtures), whose commits must keep working.
+[ "$(a config get repo.direct_commit)" != "false" ] && exit 0
+
+printf 'Blocked: agents must not commit on the default branch "%s" of %s (repo.direct_commit is false). Commit on a feature branch or in a worktree.\n' \
+  "$branch" "$(git rev-parse --show-toplevel)" >&2
+exit 1
