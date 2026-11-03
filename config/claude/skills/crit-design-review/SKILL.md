@@ -21,8 +21,8 @@ crit への書き込みと読み取りには、必ず `--session <crit session i
 
 1. 差分を読む。`~/.crit/sessions/<crit session id>.json` の `cwd` が委任先の作業ディレクトリ、`review_path` 配下の `review.json` の `base_ref` と `story` が基準と変更の概要になる。`git -C <cwd> diff <base_ref>` と `git -C <cwd> status --short` (未追跡ファイル) で差分を確認する
 2. 設計と食い違う箇所を `crit comment --session <id> --author design-session <path>:<line> '<body>'` で指摘する。設計のどの記述と食い違うかを引用し、直す方向を書く。設計に書かれていないだけの実装判断は指摘しない
-3. 再依頼のときは、先に自分の指摘スレッド (`crit comments --session <id> --json` の `author` が `design-session` で、完了コメントでないもの) を確認する。直っていれば `--reply-to <comment-id> --resolve` で確認内容を返信し、直っていなければ `--resolve` なしで何が違うかを追記する。`--resolve` は `design-session` のスレッドだけに使い、人間のコメントには使わない。そのうえで 2 を新しい差分に対しても行う
-4. 未解決の `design-session` の指摘スレッド (path 付きのコメント) の数を N として、review 全体へ完了コメントを書く: `crit comment --session <id> --author design-session '設計レビュー完了: 指摘 N 件'`。N に完了コメントは数えない。前回の完了コメントが残っていれば、先に `--reply-to <comment-id> --resolve` で閉じる。古い件数が人間の目に未解決のまま残るのと、次回の N に混ざるのを防ぐため。N が 0 のときは、委任先が書いた「設計レビュー中」コメントも同じ方法で閉じる。人間は設計レビュー中でも crit を開けるので、完了を画面で判別できるようにするため
+3. 再依頼のときは、先に自分の指摘スレッド (`crit comments --session <id> --json` の `author` が `design-session` で、完了コメントでないもの) を確認する。直っていれば `--reply-to <comment-id> --resolve` で確認内容を返信し、直っていなければ `--resolve` なしで何が違うかを追記する。`--resolve` は `design-session` のスレッドと、手順 4 で閉じる「Claude Code」が書いた「設計レビュー中」コメントにだけ使い、人間のコメントには使わない。そのうえで 2 を新しい差分に対しても行う
+4. 未解決の `design-session` の指摘スレッド (path 付きのコメント) の数を N として、review 全体へ完了コメントを書く: `crit comment --session <id> --author design-session '設計レビュー完了: 指摘 N 件'`。N に完了コメントは数えない。前回の完了コメントが残っていれば、先に `--reply-to <comment-id> --resolve` で閉じる。古い件数が人間の目に未解決のまま残るのと、次回の N に混ざるのを防ぐため。N が 0 のときは、委任先が書いた「設計レビュー中」コメントと今書いた完了コメントも、`crit comments --session <id> --json` の未解決一覧で ID を確認して同じ方法で閉じる。crit は未解決コメントが 1 件でも残ると、人間が承認しても `approved: false` にする
 5. `Implementer session` に完了を通知する。`a agent peer notify --message <MESSAGE> <session_id>` で、次の形式で送る。送ったらターンを終える
 
 ```text
