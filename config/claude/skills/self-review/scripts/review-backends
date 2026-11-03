@@ -80,7 +80,7 @@ run_codex() {
 # `codex --output-schema`.
 run_agy() {
   local command_status=0
-  local reviewer_dir="$1" reasoning_effort="${2:-}" effort_args=()
+  local reviewer_dir="$1" reasoning_effort="${2:-}" agy_add_dir="${3:-$repo_root}" effort_args=()
   local prompt prompt_bytes single_message_limit=191000 chunk_count conversation_id
   [[ -n "$reasoning_effort" ]] && effort_args=(--effort "$reasoning_effort")
 
@@ -92,7 +92,7 @@ run_agy() {
   if [[ "$prompt_bytes" -le "$single_message_limit" ]]; then
     agy \
       --sandbox \
-      --add-dir "$repo_root" \
+      --add-dir "$agy_add_dir" \
       "${model_args[@]+"${model_args[@]}"}" \
       "${effort_args[@]+"${effort_args[@]}"}" \
       --output-format json \
@@ -106,9 +106,9 @@ run_agy() {
   agy_prepare_stream_input "$reviewer_dir" "$prompt" || return 1
   chunk_count=$(jq -er '.count' "$reviewer_dir/agy-prompt-chunks.json") || return 1
   [[ "$chunk_count" -ge 2 ]] || return 1
-  agy_send_stream_input "$reviewer_dir" "$reasoning_effort" || return $?
+  agy_send_stream_input "$reviewer_dir" "$reasoning_effort" "$agy_add_dir" || return $?
   conversation_id=$(agy_stream_conversation_id "$reviewer_dir" "$((chunk_count - 1))") || return 1
-  agy_run_final_prompt "$reviewer_dir" "$conversation_id" "$chunk_count"
+  agy_run_final_prompt "$reviewer_dir" "$conversation_id" "$chunk_count" "$agy_add_dir"
 }
 
 agy_collect_result() {
@@ -157,13 +157,13 @@ agy_prepare_stream_input() {
 }
 
 agy_send_stream_input() {
-  local reviewer_dir="$1" reasoning_effort="${2:-}" effort_args=() stream_status=0
+  local reviewer_dir="$1" reasoning_effort="${2:-}" agy_add_dir="${3:-$repo_root}" effort_args=() stream_status=0
   [[ -n "$reasoning_effort" ]] && effort_args=(--effort "$reasoning_effort")
 
   # A schema here would set .structured_output on the first turn; later stream-json turns do not update it.
   agy \
     --sandbox \
-    --add-dir "$repo_root" \
+    --add-dir "$agy_add_dir" \
     "${model_args[@]+"${model_args[@]}"}" \
     "${effort_args[@]+"${effort_args[@]}"}" \
     --input-format stream-json \
@@ -205,7 +205,7 @@ agy_stream_conversation_id() {
 }
 
 agy_run_final_prompt() {
-  local reviewer_dir="$1" conversation_id="$2" chunk_count="$3" command_status=0 final_prompt
+  local reviewer_dir="$1" conversation_id="$2" chunk_count="$3" agy_add_dir="${4:-$repo_root}" command_status=0 final_prompt
   final_prompt=$(jq -rj --arg count "$chunk_count" '
     .last + "\n\n[Transfer note: All " + $count
     + " parts of the review input have been sent. Review the complete input now, following the request and instructions in the input.]"
@@ -214,7 +214,7 @@ agy_run_final_prompt() {
   agy \
     --conversation "$conversation_id" \
     --sandbox \
-    --add-dir "$repo_root" \
+    --add-dir "$agy_add_dir" \
     "${model_args[@]+"${model_args[@]}"}" \
     "${effort_args[@]+"${effort_args[@]}"}" \
     --output-format json \
