@@ -71,11 +71,6 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
     sessionUrl: false,
   },
 
-  // Bundled skills (dataviz, code-review, claude-api, etc.) are never used
-  // here and cost context on every session. Disables every bundled skill
-  // except /doctor. https://code.claude.com/docs/en/settings-reference.md
-  disableBundledSkills: true,
-
   permissions: {
     allow: [
       'Bash(runok exec:*)',
