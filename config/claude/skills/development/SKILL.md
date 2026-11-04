@@ -52,7 +52,7 @@ description: Development (実装フルフローモード). Use this skill when i
 
 Claude Code では `EnterWorktree` に `name` (delegate skill のブランチ名の規則に従う) を渡す。WorktreeCreate hook が `.claude/worktrees/<name>` に `fohte/<name>` ブランチで作る。tq タスクがあれば、入った後に `git config branch.fohte/<name>.x-tq-task-id <task-id>` を記録する (PR の葉項目があれば `x-tq-checklist-item-id` も)。create-pr skill が PR を tq に紐付けるのに使う。2 本目以降の PR は `project-manager` skill の `assets/handoff-common.md` の手順 5 でブランチを作る。worktree の中で Claude Code の隔離チェックにコマンドを拒否されたら、ユーザーに実行を頼まず、`ExitWorktree` (action: `keep`) で抜けて実行し、同じ `name` の `EnterWorktree` で入り直す。
 
-`EnterWorktree` が無い Codex では、`handoff` skill の送り出しモードで、Step 1-2 の結果と決めた仕様を引き継ぎファイルに書き、`--worktree --branch <name>` (tq タスクがあれば `--tq-task-id <task-id>` も) を付けて新しいセッションを起動する。起動したら、このセッションは実装に手を出さない。
+`EnterWorktree` が無い Codex でも、新しいセッションは起動せず、このセッションで実装する。`jq -nc --arg name <name> --arg cwd "$PWD" '{name:$name,cwd:$cwd}' | ~/.claude/hooks/worktree-create` で同じ worktree を作り、出力の最終行のパスを以降のコマンドの `workdir` とファイル編集の場所にする。tq の記録は Claude Code と同じ。
 
 - テストが存在するプロジェクトでは、`/test-philosophy` (Codex: `$test-philosophy`) スキルの方針に従ってテストも書く
 - 実装中に設計の問題に気づいた場合も、Step 2 と同じ基準で、自分で決めるかユーザーに相談するかを分ける

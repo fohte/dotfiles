@@ -320,7 +320,7 @@ rules:
   - deny: 'git switch -c *'
     when: "!fs.cwd.contains('/.worktrees/') && !fs.cwd.contains('/.claude/worktrees/')"
     message: 'Blocked because branches are created only inside a `.worktrees/<name>` or `.claude/worktrees/<name>` worktree.'
-    fix_suggestion: 'Enter a worktree first (Claude Code: EnterWorktree; Codex: the handoff launcher with --worktree).'
+    fix_suggestion: 'Enter a worktree first (Claude Code: EnterWorktree; Codex: ~/.claude/hooks/worktree-create, see the development skill Step 3).'
     tests:
       - deny: 'git switch -c new-branch'
   - deny: 'git switch -C *'
