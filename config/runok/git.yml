@@ -25,6 +25,22 @@ rules:
     tests:
       - deny: 'git commit --amend'
       - deny: 'git -C /tmp commit --amend --no-edit'
+  - deny: 'git [-C *] filter-branch|filter-repo *'
+    message: 'Blocked because bulk history rewriting replaces the original commits.'
+    fix_suggestion: 'Add a new commit instead. Ask the user if history must be rewritten.'
+    tests:
+      - deny: 'git filter-branch -f --msg-filter "sed s/a/b/" main..HEAD'
+      - deny: 'git -C /tmp filter-branch -f --msg-filter "sed s/a/b/" main..HEAD'
+      - deny: 'git filter-branch'
+      - deny: 'git filter-repo --force'
+      - deny: 'git -C /tmp filter-repo --force'
+  # `git filter-repo` dispatches to this binary on PATH, so it can also run
+  # without the `git` front end.
+  - deny: 'git-filter-repo *'
+    message: 'Blocked because bulk history rewriting replaces the original commits.'
+    fix_suggestion: 'Add a new commit instead. Ask the user if history must be rewritten.'
+    tests:
+      - deny: 'git-filter-repo --force'
   - deny: 'git [-C *] commit|cherry-pick|revert|am|merge|rebase|pull --no-gpg-sign *'
     message: 'Blocked to ensure commits are always GPG signed. Re-run the same command without --no-gpg-sign.'
     tests:
@@ -63,16 +79,25 @@ rules:
     message: 'Blocked to prevent rewriting remote history'
     tests:
       - deny: 'git push --force-with-lease origin main'
+      - deny: 'git -C /tmp push --force-with-lease origin main'
   - deny: 'git [-C *] push --force *'
     message: 'Blocked to prevent rewriting remote history'
     fix_suggestion: 'git push'
     tests:
       - deny: 'git push --force origin main'
-  - deny: 'git [-C *] push -f *'
+      - deny: 'git -C /tmp push --force origin main'
+  # runok keeps bundled short flags as one key (`-uf` -> `uf`), so `-f` is
+  # matched inside any bundle of push's no-value short flags.
+  - deny: 'git [-C *] push *'
+    when: "flags.exists(k, k.matches('^[46dnquv]*f[46dnquv]*$'))"
     message: 'Blocked to prevent rewriting remote history'
     fix_suggestion: 'git push'
     tests:
       - deny: 'git push -f origin main'
+      - deny: 'git push -uf origin main'
+      - deny: 'git -C /tmp push -uf origin main'
+      - deny: 'git -C /tmp push -df origin feature'
+      - allow: 'git -C /tmp push -u origin main'
   - deny: 'git [-C *] push * +*'
     message: 'Blocked because a refspec with a leading `+` forces non-fast-forward update and rewrites remote history'
     fix_suggestion: 'git push <remote> <src>:<dst> (without `+`). To undo commits, use `git revert`.'
@@ -81,6 +106,7 @@ rules:
       - deny: 'git push origin +main'
       - deny: 'git push origin +HEAD:refs/heads/foo'
       - deny: 'git push origin main +feature/foo'
+      - deny: 'git -C /tmp push origin +main'
       # -C /tmp keeps these deterministic regardless of invocation cwd -- a
       # bare `git push origin main` would ask instead of allow when this
       # rule's own tests run from inside a master-push-repos entry.
@@ -91,6 +117,7 @@ rules:
     fix_suggestion: 'git push <remote> <branch>'
     tests:
       - deny: 'git push --mirror origin'
+      - deny: 'git -C /tmp push --mirror origin'
   # `git push`/`git fetch` are already broadly allowed and aren't
   # remote-aware, so an unreviewed `remote add` could redirect a later
   # push/fetch to an unintended destination without another confirmation
@@ -370,6 +397,7 @@ rules:
       - deny: 'git fast-import'
       - deny: 'git replace abc1234 def5678'
       - deny: 'git -C /tmp write-tree'
+      - deny: 'git -C /tmp replace abc1234 def5678'
   # A refspec whose source is a raw object name publishes a commit that no
   # local branch points at -- the push half of the plumbing bypass above.
   - deny: 'git [-C *] push *'
@@ -394,6 +422,17 @@ rules:
       - deny: 'git branch --delete feature/foo'
       - deny: 'git branch --delete --force feature/foo'
       - deny: 'git -C /tmp branch -D feature/foo'
+  # Like the push rule, `-f` is matched inside bundles of branch's no-value
+  # short flags (`-qf` -> `qf`).
+  - deny: 'git [-C *] branch *'
+    when: "flags.exists(k, k == 'force' || k.matches('^[acCdDilmMqrtv]*f[acCdDilmMqrtv]*$'))"
+    message: 'Blocked because force-moving an existing branch can drop commits from that branch, like `git reset --hard`.'
+    tests:
+      - deny: 'git branch -f main HEAD~3'
+      - deny: 'git branch -qf main HEAD~3'
+      - deny: 'git branch -tf feature origin/feature'
+      - deny: 'git -C /tmp branch --force main HEAD~3'
+      - allow: 'git branch -vv'
   - deny: 'git [-C *] reset *'
     message: 'Blocked to prevent rewriting commit history or destroying work. To unstage files, use `git restore --staged <path>` instead.'
     fix_suggestion: 'git restore --staged <path>'
