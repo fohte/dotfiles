@@ -1,7 +1,7 @@
 #!/bin/bash
 # Guards for Claude Code's Agent tool and Codex's spawn_agent tool: block
-# isolation:"worktree", and fill in a safe model when a subagent call would
-# otherwise silently inherit the parent session's model.
+# isolation:"worktree", and stop a subagent call from silently inheriting the
+# parent session's model (deny on Claude Code, fill in a model on Codex).
 #
 # Invoked from pre-tool-use-proxy.bash; receives the original PreToolUse
 # JSON payload on stdin.
@@ -20,15 +20,13 @@ fi
 # Subagent model resolution order (Claude Code sub-agents doc, "Choose a
 # model"): CLAUDE_CODE_SUBAGENT_MODEL env var > per-call model param >
 # subagent definition's `model` frontmatter > parent session's model. This
-# hook doesn't account for the env var; if it's ever set, it wins over the
-# model this hook injects. With nothing set anywhere, a subagent silently
-# inherits the parent session's model -- including Fable, which is priced
-# far above the other tiers and gets prohibitively expensive once it's
-# fanned out across subagents. Explicit model:"fable" is blocked separately
-# via permissions.deny (Agent(model:fable)); this fills in FALLBACK_MODEL
-# only when BOTH the call and the target subagent's own definition leave
-# model unset, so intentional per-call or per-agent model choices are never
-# overridden.
+# hook doesn't account for the env var. With nothing set anywhere, a
+# subagent silently inherits the parent session's model -- including Fable,
+# which is priced far above the other tiers and gets prohibitively expensive
+# once it's fanned out across subagents. Explicit model:"fable" is blocked
+# separately via permissions.deny (Agent(model:fable)); this acts only when
+# BOTH the call and the target subagent's own definition leave model unset,
+# so intentional per-call or per-agent model choices are never overridden.
 readonly FALLBACK_MODEL='sonnet'
 
 model=$(echo "$input" | jq -r '.tool_input.model // empty')
@@ -105,16 +103,14 @@ fi
 
 [ -n "$pinned_model" ] && [ "$pinned_model" != "inherit" ] && exit 0
 
-updated_tool_input=$(echo "$input" | jq -c --arg m "$FALLBACK_MODEL" '.tool_input + {model: $m}')
+# Claude Code's auto mode refuses a call whose input a hook rewrote after
+# its classifier reviewed it, so make the caller resend with model set.
+if [ "$tool_name" != "spawn_agent" ]; then
+  jq -nc --arg m "$FALLBACK_MODEL" '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "Neither this call nor the subagent definition sets a model. Retry with an explicit model (e.g. model: \"\($m)\")."}}'
+  exit 0
+fi
 
 # Codex's PreToolUse parser discards updatedInput unless permissionDecision
-# is also "allow" (codex-rs/hooks/src/engine/output_parser.rs), whereas
-# Claude Code applies updatedInput regardless of permissionDecision. Adding
-# it unconditionally would change Claude Code's behavior too: "allow" there
-# means auto-approve, which currently isn't set so the call still goes
-# through Claude Code's normal permission flow.
-if [ "$tool_name" = "spawn_agent" ]; then
-  jq -nc --argjson u "$updated_tool_input" '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "allow", updatedInput: $u}}'
-else
-  jq -nc --argjson u "$updated_tool_input" '{hookSpecificOutput: {hookEventName: "PreToolUse", updatedInput: $u}}'
-fi
+# is also "allow" (codex-rs/hooks/src/engine/output_parser.rs).
+updated_tool_input=$(echo "$input" | jq -c --arg m "$FALLBACK_MODEL" '.tool_input + {model: $m}')
+jq -nc --argjson u "$updated_tool_input" '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "allow", updatedInput: $u}}'
