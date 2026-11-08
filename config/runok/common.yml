@@ -467,7 +467,14 @@ rules:
       - ask: 'a cc vibe on'
       - ask: 'a ag vibe on'
       - pass: 'a agent vibe off'
-      - pass: 'a agent vibe status'
+
+  # Read-only. A single `pass` in a chain with `a gh pr-merge` sends the whole
+  # command to the auto mode classifier, which can reject the merge.
+  - allow: 'a ag|cc|agent vibe status'
+    tests:
+      - allow: 'a agent vibe status'
+      - allow: 'a ag vibe status'
+      - allow: 'a cc vibe status'
 
   # `*` can match zero tokens; runok counts each subcommand token in `args`,
   # so four means one session ID.

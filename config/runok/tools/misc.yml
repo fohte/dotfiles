@@ -40,6 +40,13 @@ rules:
   - allow: 'a gh pr-merge *'
     tests:
       - allow: 'a gh pr-merge 123'
+  # Read-only. A single `pass` in a chain with `a gh pr-merge` sends the whole
+  # command to the auto mode classifier, which can reject the merge.
+  - allow: 'a config get repo.vibe'
+    tests:
+      - allow: 'a config get repo.vibe'
+      - pass: 'a config get repo.direct_commit'
+      - allow: 'a agent vibe status && test "$(a config get repo.vibe)" = true && a gh pr-merge 123'
   - deny: 'a ai review request *'
     message: 'AI review requests cost money and must not be run casually.'
     tests:
