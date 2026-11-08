@@ -98,7 +98,7 @@ end
 
 hs.hotkey.bind({ 'alt' }, '1', launchFocusOrCycle('/Applications/Ghostty.app'))
 
-hs.hotkey.bind({ 'alt' }, '2', launchFocusOrCycle('/Applications/Arc.app'))
+hs.hotkey.bind({ 'alt' }, '2', launchFocusOrCycle('/Applications/Dia.app'))
 
 hs.hotkey.bind({ 'alt' }, '3', launchFocusOrCycle('/Applications/Slack.app'))
 
