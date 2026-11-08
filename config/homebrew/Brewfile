@@ -161,6 +161,8 @@ cask 'hammerspoon'
 cask 'thaw'
 # System monitor for the menu bar
 cask 'stats'
+# Spotify and iTunes in the menu bar
+cask 'spotmenu'
 # Screencast tool with keystroke visualization
 cask 'keycastr'
 # PDF and PostScript reader
