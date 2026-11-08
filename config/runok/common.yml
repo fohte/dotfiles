@@ -49,6 +49,8 @@ definitions:
   wrappers:
     # tools/crit.yml matches this exact string via `shell.wrappers`.
     - 'a cc|agent bg run -- <cmd>'
+    # The preset only wraps `timeout`; Homebrew coreutils installs it as `gtimeout`.
+    - 'gtimeout <opts> * <cmd>'
 
 rules:
   # Piping `yes` auto-answers interactive confirmation prompts, bypassing
@@ -60,6 +62,8 @@ rules:
       - deny: 'yes'
       - deny: 'yes y'
       - deny: 'yes | rm -i foo'
+      - deny: 'gtimeout 200 yes'
+      - deny: 'gtimeout -k 5 200 yes'
 
   # `when` excludes safe targets (via the same `definitions.vars` lists the
   # allow rule below references, using runok's `glob_matches`/`definitions`
