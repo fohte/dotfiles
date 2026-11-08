@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-BASE_PLISTS := com.fohte.codex-app-server.plist com.fohte.codex-app-server-reloader.plist com.fohte.skk-watcher.plist
+BASE_PLISTS := com.fohte.codex-app-server.plist com.fohte.codex-app-server-reloader.plist com.fohte.skk-watcher.plist com.fohte.disk-sweep.plist
 PRIVATE_PLIST := com.fohte.claude-rate-limits.plist
 MACHINE_ROLE := $(shell ../bin/dot-role get name)
 
@@ -34,6 +34,9 @@ com.fohte.skk-watcher.plist: com.fohte.skk-watcher.plist.in
 	    -e "s|__MISE__|$$mise|g" \
 	    -e "s|__SKK_DICT_REPO__|$$skk_repo|g" \
 	    $< > $@.tmp && mv $@.tmp $@
+
+com.fohte.disk-sweep.plist: com.fohte.disk-sweep.plist.in
+	@sed -e 's|__HOME__|$(HOME)|g' -e 's|__LAUNCHD_DIR__|$(CURDIR)|g' $< > $@.tmp && mv $@.tmp $@
 
 ifeq ($(MACHINE_ROLE),private)
 $(PRIVATE_PLIST): $(PRIVATE_PLIST).in

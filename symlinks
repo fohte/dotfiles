@@ -249,7 +249,7 @@ if match_tag misc; then
 fi
 
 if match_tag launchd && is_macos; then
-  launchd_names=(com.fohte.codex-app-server com.fohte.codex-app-server-reloader com.fohte.skk-watcher)
+  launchd_names=(com.fohte.codex-app-server com.fohte.codex-app-server-reloader com.fohte.skk-watcher com.fohte.disk-sweep)
 
   claude_rate_limits_name=com.fohte.claude-rate-limits
   claude_rate_limits_state="$HOME/.local/state/claude-rate-limits"

@@ -122,6 +122,9 @@ apply_symbolic_hotkey 60 false # 60 = "Select the previous input source"
 
 # -- Appearance --
 
+# Empty items that have sat in the Trash for 30 days
+apply com.apple.finder FXRemoveOldTrashItems -bool true
+
 # Dark mode
 apply NSGlobalDomain AppleInterfaceStyle -string Dark
 

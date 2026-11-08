@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+# Delete regenerable dev data that piles up, then warn when free space is low.
+# Runs weekly from com.fohte.disk-sweep; safe to run by hand.
+# Each step is independent: a missing tool or a failure skips only that step.
+#
+# Usage: disk-sweep [--dry-run]
+
+set -uo pipefail
+
+TARGET_STALE_DAYS=14
+CACHE_STALE_DAYS=30
+LOW_FREE_GB=100
+
+dry_run=false
+[[ "${1:-}" == "--dry-run" ]] && dry_run=true
+
+step() { echo "== $*"; }
+has() { command -v "$1" > /dev/null; }
+run() {
+  if $dry_run; then
+    echo "[dry-run] $*"
+  else
+    "$@"
+  fi
+}
+# Remove each path given on stdin. --summary prints only the count and total size.
+rm_paths() {
+  local summary=false n=0 kb=0 p
+  [[ "${1:-}" == "--summary" ]] && summary=true
+  while IFS= read -r p; do
+    $summary || du -sh "$p"
+    n=$((n + 1))
+    kb=$((kb + $(du -sk "$p" | cut -f1)))
+    if $dry_run; then
+      $summary || echo "[dry-run] rm -r $p"
+    else
+      rm -r "$p"
+    fi
+  done
+  echo "$n paths, $((kb / 1024)) MB"
+}
+
+step "rust target not built for ${TARGET_STALE_DAYS} days"
+# cargo writes both markers into a target dir; CACHEDIR.TAG alone also matches .venv and ruff caches.
+fd -H -I -t f '^\.rustc_info\.json$' ~/ghq --max-depth 8 -E node_modules -E .git |
+  while IFS= read -r info; do
+    t="${info%/.rustc_info.json}"
+    [[ -f "$t/CACHEDIR.TAG" && ! -e "$t/.git" ]] || continue
+    [[ -z "$(find "$t" -maxdepth 3 -newermt "${TARGET_STALE_DAYS} days ago" -print -quit)" ]] && echo "$t"
+  done | rm_paths
+
+if has docker && docker info > /dev/null 2>&1; then
+  step docker
+  $dry_run && docker system df
+  run docker builder prune -af --filter until=168h
+  run docker image prune -af --filter until=168h
+  run docker container prune -f --filter until=168h
+  # Without --all only anonymous volumes go; named ones may hold dev DB data.
+  run docker volume prune -f
+  # Freed blocks inside the VM return to the Mac only after a trim.
+  has colima && run colima ssh -- sudo fstrim /var/lib/docker
+fi
+
+step "caches older than ${CACHE_STALE_DAYS} days"
+[[ -d ~/.bun/install/cache ]] &&
+  find ~/.bun/install/cache -mindepth 1 -maxdepth 1 -mtime +"$CACHE_STALE_DAYS" | rm_paths --summary
+# Plugin cache layout: <host>/<namespace>/<type>/<version>
+[[ -d ~/.cache/terraform ]] &&
+  find ~/.cache/terraform -mindepth 4 -maxdepth 4 -type d -mtime +"$CACHE_STALE_DAYS" | rm_paths --summary
+if has opensrc && [[ -f ~/.opensrc/sources.json ]]; then
+  cutoff="$(gdate -u -d "${CACHE_STALE_DAYS} days ago" +%FT%T)"
+  # `opensrc remove` takes repos as name@version but packages only as registry:name (all versions),
+  # so a package goes only when every cached version is stale.
+  old_srcs=()
+  while IFS= read -r s; do old_srcs+=("$s"); done < <(jq -r --arg c "$cutoff" '
+    (.repos[] | select(.fetchedAt < $c) | "\(.name)@\(.version)"),
+    (.packages | group_by(.name)[] | select(all(.fetchedAt < $c)) | .[0] | "\(.registry):\(.name)")
+  ' ~/.opensrc/sources.json)
+  echo "opensrc: ${#old_srcs[@]} sources fetched before $cutoff"
+  ((${#old_srcs[@]} > 0)) && ! $dry_run && opensrc remove "${old_srcs[@]}" > /dev/null
+fi
+
+step "unused caches"
+has pnpm && run pnpm store prune
+# uv waits forever while long-running uv processes hold the cache.
+has uv && run gtimeout 300 uv cache prune
+has pre-commit && run pre-commit gc
+# npm and go have no age-based prune.
+has npm && run npm cache clean --force
+has go && run go clean -modcache
+
+step runtimes
+if has mise; then
+  if $dry_run; then echo "mise: $(mise prune --dry-run 2>&1 | rg -c "is prunable") prunable versions"; else mise prune --yes; fi
+fi
+
+if ! pgrep -xq Resolve && [[ -d ~/Movies/CacheClip ]]; then
+  step "DaVinci Resolve render cache"
+  find ~/Movies/CacheClip -mindepth 1 -maxdepth 1 | rm_paths --summary
+fi
+
+free_gb=$(($(df -k / | awk 'NR==2 {print $4}') / 1024 / 1024))
+echo "free: ${free_gb} GB"
+if ((free_gb < LOW_FREE_GB)); then
+  run osascript -e "display notification \"空きが ${free_gb} GB です。Downloads や Docker の volume などを手で整理してください\" with title \"disk-sweep\""
+fi

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.fohte.disk-sweep</string>
+
+  <!-- A login shell provides PATH for docker, mise, cargo tools and the like. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>exec __LAUNCHD_DIR__/disk-sweep</string>
+  </array>
+
+  <!-- Sunday 12:00; a missed run fires at the next wake. -->
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key>
+    <integer>0</integer>
+    <key>Hour</key>
+    <integer>12</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>__HOME__/.local/state/disk-sweep/sweep.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>__HOME__/.local/state/disk-sweep/sweep.log</string>
+</dict>
+</plist>
