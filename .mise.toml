@@ -79,7 +79,7 @@ git -C "$dotfiles_dir" pull --autostash
 if [ -n "$role_repo_dir" ] && [ -d "$role_repo_dir" ] && [ "$role_repo_dir" != "$dotfiles_dir" ]; then
   update_repo "$role_repo_dir"
 elif [ "$role_name" = private ]; then
-  echo "warning: private role repository is unavailable at $role_repo_dir; skipping its update" >&2
+  echo "warning: private role repository is unavailable${role_repo_dir:+ at $role_repo_dir}; skipping its update" >&2
 fi
 
 git submodule update --init --recursive
