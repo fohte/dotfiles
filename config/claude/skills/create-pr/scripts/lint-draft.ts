@@ -30,8 +30,10 @@ const PR_SERIES_MARKERS = new Set([
   '<!-- pr-series:start -->',
   '<!-- pr-series:end -->',
 ])
-// The lookbehind skips redirect.github.com and other subdomains.
-const GITHUB_ORG = /(?<![\w.-])github\.com\/([\w.-]+)/g
+// The lookbehind skips redirect.github.com and other subdomains. The lookahead
+// skips user-attachments, where GitHub hosts uploaded images and videos; it is
+// not an org.
+const GITHUB_ORG = /(?<![\w.-])github\.com\/(?!user-attachments\/)([\w.-]+)/g
 const BLOB_REF = /github\.com\/[\w.-]+\/[\w.-]+\/blob\/([^/\s)]+)\//g
 const SHA = /^[0-9a-f]{7,40}$/
 // Requires a space before "(" so a trailing markdown link `[text](url)` does not match.
