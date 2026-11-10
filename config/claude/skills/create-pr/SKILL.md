@@ -147,19 +147,7 @@ git log "origin/$base_branch..HEAD" --oneline
 
 `vibe_mode` では editor を開かず、draft を作成した後に委任元のレビューを待つ。`<vibe-draft-ready>` を送る直前に共通 policy を再確認し、初回判定時から許可が続いている場合だけ通知する。許可がなくなっていた場合は通常フローに戻り、crit review の承認を得て editor review を完了する。vibe 報告は送らない。委任元に `notify` してよいのは draft ready、PR ready、またはこの指示の前提が誤っていると判明した場合だけとする。進捗、質問、待ち状態は通知しない。通知後はターンを終えて委任元の返答を待つ。
 
-draft ready、PR ready、前提誤りを通知するときは、`a agent peer parent | jq -r '.[0].session_id // empty'` で委任元の session ID を取得し、`a agent peer notify --message <MESSAGE> <SESSION_ID>` で送る。session ID が空、または `notify` が `ended` エラーで失敗した場合は、宛先を推測せずユーザーに報告する。
-
-draft の絶対パス、ブランチ名、現在の HEAD SHA、チェックリスト項目 ID を含む次の形式で `<vibe-draft-ready>` を作る。draft のパスは `~/.agents/skills/create-pr/scripts/draft-path` の出力、ブランチ名は `git branch --show-current`、HEAD SHA は `git rev-parse HEAD` で取得する。チェックリスト項目 ID は `branch.<ブランチ名>.x-tq-checklist-item-id` から取得する。値が無い場合は `none` を使う。チェックリスト leaf の項目 ID は委任元が報告を照合するときに検証する。
-
-```text
-<vibe-draft-ready>
-Draft: <draft-path の出力>
-Branch: <ブランチ名>
-Head SHA: <HEAD SHA>
-tq checklist item ID: <チェックリスト項目 ID>
-enable-vibe-coding skill の『draft ready を受けたら』の手順に従う。
-</vibe-draft-ready>
-```
+draft ready は `~/.agents/skills/create-pr/scripts/notify-vibe draft-ready`、PR ready は `~/.agents/skills/create-pr/scripts/notify-vibe pr-ready <PR_URL>` で通知する。script が draft path、ブランチ名、HEAD SHA、チェックリスト項目 ID、委任元の session ID を取得して既定の形式を組み立て、通知する。チェックリスト項目 ID が無い場合は `none` を使う。親 session を解決できない場合や通知に失敗した場合は、script が非 0 で終了する。宛先を推測せずユーザーに報告する。前提誤りの報告は引き続き `vibe-policy.md` の手順で通知する。
 
 通知後は `a agent status set wait "review of <repo-name> PR draft"` を実行して turn を止める (`<repo-name>` は `repo.name`)。`sleep` ツールやコマンドで turn 内に留まって待たない。委任元の返答は新しい turn として届く。返答で再開するまで待ち、再開後も承認なしに Step 5 へ進まない。
 
@@ -238,18 +226,11 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 ## 7. CI 実行を監視
 
 `gh pr checks --watch` で CI を監視。失敗したら調査・修正して再 push。
-`vibe_mode` では CI が green になり、該当時は Step 8 も済ませた後、共通 policy を再確認する。初回判定時から許可が続いている場合だけ、次の形式で委任元へ報告する。許可がなくなっていた場合は vibe 報告を送らず、通常の人間レビューに委ねる。PR URL とチェックリスト項目 ID は実際の値に置き換える。チェックリスト項目のない委任では `none` を使う。
+`vibe_mode` では CI が green になり、該当時は Step 8 も済ませた後、共通 policy を再確認する。初回判定時から許可が続いている場合だけ委任元へ報告する。許可がなくなっていた場合は vibe 報告を送らず、通常の人間レビューに委ねる。
 
 `vrt` commit status 以外がすべて green で、`vrt` だけが失敗しているときも報告する。VRT 差分の確認と承認ラベルの付与は委任元が担うため、委任先はユーザーに VRT レビューを頼まず、`vrt-approved` を待たず、自分でも付けない。リポジトリの規約が「VRT 差分はユーザーにレビューを頼む」としていても、vibe ではこの報告がその依頼の代わりになる。
 
-```text
-<vibe-pr-ready>
-PR: <PR URL>
-Head SHA: <git rev-parse HEAD の値>
-tq checklist item ID: <branch.<name>.x-tq-checklist-item-id の値>
-enable-vibe-coding skill の『PR ready を受けたら』の手順に従う。
-</vibe-pr-ready>
-```
+`~/.agents/skills/create-pr/scripts/notify-vibe pr-ready <PR_URL>` を実行する。script が PR URL、HEAD SHA、チェックリスト項目 ID、委任元の session ID を取得・組み立てて既定の形式で通知する。チェックリスト項目 ID が無い場合は `none` を使う。親 session を解決できない場合や通知に失敗した場合は、script が非 0 で終了する。宛先を推測せずユーザーに報告する。
 
 通知後は `a agent status set wait "merge of <repo-name> PR <number>"` を実行 (`<repo-name>`=`repo.name`、`<number>`=PR URL 末尾の番号) して turn を止める。draft ready のときと同じく turn 内に留まって待たない。turn が続いている session は merge 後に `a agent close` で閉じられない。
 
