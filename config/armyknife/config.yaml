@@ -75,6 +75,7 @@ agent:
     project-manager:
       icon: "\U000F0849" # nf-md-account_group
       color: [255, 215, 135] # yellow (#FFD787)
+      nav_label: PM
   work_type_fallback:
     icon: "\uF141" # nf-fa-ellipsis_h
     color: [135, 135, 135] # gray (#878787)
