@@ -62,6 +62,10 @@ if [[ "$kind" == draft-ready ]]; then
   script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
   draft_path=$("$script_dir/draft-path") || fail 'could not determine the PR draft path'
   [[ -n "$draft_path" ]] || fail 'could not determine the PR draft path'
+  case "$draft_path" in
+    /*) ;;
+    *) draft_path="$PWD/$draft_path" ;;
+  esac
   message=$(
     cat << EOF
 <vibe-draft-ready>
