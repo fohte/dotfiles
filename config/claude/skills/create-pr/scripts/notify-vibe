@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat << 'EOF'
+Usage: notify-vibe draft-ready
+       notify-vibe pr-ready <pr-url>
+
+Collect the current branch details and notify the parent session.
+EOF
+}
+
+fail() {
+  printf 'Error: %s\n' "$1" >&2
+  exit 1
+}
+
+if (($# == 0)); then
+  usage >&2
+  exit 2
+fi
+
+kind=$1
+shift
+case "$kind" in
+  draft-ready)
+    if (($# != 0)); then
+      echo 'Error: draft-ready does not accept arguments' >&2
+      usage >&2
+      exit 2
+    fi
+    ;;
+  pr-ready)
+    if (($# != 1)) || [[ -z "$1" ]]; then
+      echo 'Error: pr-ready requires a PR URL' >&2
+      usage >&2
+      exit 2
+    fi
+    pr_url=$1
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  *)
+    echo "Error: unknown notification kind: $kind" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
+
+branch=$(git branch --show-current) || fail 'could not determine the current branch'
+[[ -n "$branch" ]] || fail 'could not determine the current branch'
+
+head_sha=$(git rev-parse HEAD) || fail 'could not read the current HEAD SHA'
+checklist_item_id=$(git config --get "branch.$branch.x-tq-checklist-item-id" || true)
+if [[ -z "$checklist_item_id" ]]; then
+  checklist_item_id=none
+fi
+
+if [[ "$kind" == draft-ready ]]; then
+  script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+  draft_path=$("$script_dir/draft-path") || fail 'could not determine the PR draft path'
+  [[ -n "$draft_path" ]] || fail 'could not determine the PR draft path'
+  case "$draft_path" in
+    /*) ;;
+    *) draft_path="$PWD/$draft_path" ;;
+  esac
+  message=$(
+    cat << EOF
+<vibe-draft-ready>
+Draft: $draft_path
+Branch: $branch
+Head SHA: $head_sha
+tq checklist item ID: $checklist_item_id
+enable-vibe-coding skill の『draft ready を受けたら』の手順に従う。
+</vibe-draft-ready>
+EOF
+  )
+else
+  message=$(
+    cat << EOF
+<vibe-pr-ready>
+PR: $pr_url
+Head SHA: $head_sha
+tq checklist item ID: $checklist_item_id
+enable-vibe-coding skill の『PR ready を受けたら』の手順に従う。
+</vibe-pr-ready>
+EOF
+  )
+fi
+
+if ! parent_json=$(a agent peer parent 2>&1); then
+  printf 'Error: could not resolve the parent session: %s\n' "$parent_json" >&2
+  exit 1
+fi
+if ! parent_session_id=$(jq -r '.[0].session_id // empty' <<< "$parent_json"); then
+  echo 'Error: could not parse the parent session response' >&2
+  exit 1
+fi
+[[ -n "$parent_session_id" ]] || fail 'parent session ID is empty'
+
+if ! notify_output=$(a agent peer notify --message "$message" "$parent_session_id" 2>&1); then
+  printf 'Error: failed to notify parent session %s: %s\n' "$parent_session_id" "$notify_output" >&2
+  exit 1
+fi
+[[ -z "$notify_output" ]] || printf '%s\n' "$notify_output"
