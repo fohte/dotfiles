@@ -118,7 +118,7 @@ PR を伴わない作業は、commit などの成果と既存の完了条件で�
 owner に実施中の残作業やユーザー判断・確認待ちがある場合は task を close せず、owner session も閉じない。
 実施中の残作業がある間は `complete` しない。今回やらない項目は上記の条件に従って別タスクにするかユーザーに提示する。
 close 後に `tq --author <model> task get <id>` で実際の状態が `completed` になったことを確認する。
-所定の merge コマンドで既に自動 close された child は後処理を繰り返さない。task が `completed` になった後も child session が残っていれば owner が通常の close で閉じる。task が pending の間は child close が拒否されるため、この順序を守る。
+所定の merge コマンドで既に自動 close された child は後処理を繰り返さない。task が `completed` になった後も child session が残っていれば owner が `a agent close --child <session_id>` で閉じる。task が pending の間は child close が拒否されるため、この順序を守る。
 child session の close が拒否された場合は `--force` を使わず、owner session を `done` にせず PM 管理下なら PM に、それ以外はユーザーに報告する。
 child session の後処理後、PM 管理下なら成果コメントへの参照、task の実際の状態、残作業・ユーザー確認待ちの有無、child の結果と後処理を PM に報告する。
 

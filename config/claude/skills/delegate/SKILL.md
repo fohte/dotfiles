@@ -362,6 +362,8 @@ armyknife から `<delegation-update>` で merge 通知が来たら、default br
 
 vibe 中に自分で merge した PR について後から届く `<delegation-update>` は処理済みとして扱い、この手順を繰り返さない。
 
+merge 後も委任先が `a agent peer children` に残っていれば (`a gh pr-merge` の自動 close が失敗した場合など)、`label` と `cwd` で merge された PR の委任先を特定し、`a agent close --child <session_id>` で閉じる。`--child` は直接の子でないセッションを閉じる前に拒否する。拒否されたら `--force` を使わず、理由をユーザーに伝える。
+
 1. `gh pr view <PR> --json mergeCommit` で merge commit を取り、`gh run list --commit <sha>` の run を `gh run watch <run-id> --exit-status` で待つ。merge 直後は run がまだ作られていないことがあるので、空でも CI 無しとは判断せず、default branch への push で動く workflow が `.github/workflows/` に無いときだけ 3 に進む
 2. 失敗したら:
     1. `a agent peer list -R <owner>/<repo>/.worktrees/` で同じリポジトリの worktree で動くセッションを洗い出し、`ended` 以外の全員に merge 保留を `a agent peer notify` する。宛先は委任元の子に限らない。送った session_id は解除の通知に使うので控える
