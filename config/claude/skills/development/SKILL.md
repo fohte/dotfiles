@@ -11,9 +11,14 @@ description: Development (実装フルフローモード). Use this skill when i
 
 1. 要件理解・コード調査
 2. 設計
-3. 実装
+3. 実装を delegate
 
-**原則: 調査・設計・実装を同じセッションで行う。** 別セッションに委任すると、委任先が文脈を読み直す分と、そのレビューの分だけトークンが増えるため。ただし、main/master ブランチのチェックアウトでは実装しない (Step 3 参照)。
+**原則: main/master ブランチで直接実装しない。** 調査と設計はこのセッションで行い、実装は `delegate` skill で別 worktree に委任する。
+
+**直接実装する例外**:
+
+- dotfiles のように main で直接作業するリポジトリ
+- `delegate` skill によって worktree 内で動作している場合 (既に delegate 済み)
 
 ---
 
@@ -38,21 +43,21 @@ description: Development (実装フルフローモード). Use this skill when i
 - 設計判断が不要な単純な修正 (typo 修正、設定値変更など)
 - ユーザーが具体的な実装方法を指定している場合
 
-ゴールが明確なら、仕様の詳細は自分で決めて進める。ユーザーに聞くのは、`project-manager` skill の `assets/handoff-common.md` の手順 3 に挙げた基準に当たる論点だけにする。
-
 ## Step 3: 実装
 
-今いる場所で分岐する。
+### 通常 (デフォルト)
 
-| 場所                                                          | 実装の仕方                                                                                    |
-| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `repo.direct_commit` が `true` のリポジトリ                   | このセッションで実装し、`/commit` (Codex: `$commit`) スキルでコミットする                     |
-| `.worktrees/<name>` か `.claude/worktrees/<name>` の worktree | このセッションで実装し、`/commit` でコミット、`/create-pr` (Codex: `$create-pr`) で PR を作る |
-| (それ以外) default branch のチェックアウト                    | 下記の手順で自分が worktree に入り、上の行に従う。`delegate` は使わない                       |
+**Step 1-2 をこのセッションで完了させた上で**、`delegate` スキルで実装を委任する。
 
-Claude Code では `EnterWorktree` に `name` (delegate skill のブランチ名の規則に従う) を渡す。WorktreeCreate hook が `.claude/worktrees/<name>` に `fohte/<name>` ブランチで作る。tq タスクがあれば、入った後に `git config branch.fohte/<name>.x-tq-task-id <task-id>` を記録する (PR の葉項目があれば `x-tq-checklist-item-id` も)。create-pr skill が PR を tq に紐付けるのに使う。2 本目以降の PR は `project-manager` skill の `assets/handoff-common.md` の手順 5 でブランチを作る。worktree の中で Claude Code の隔離チェックにコマンドを拒否されたら、ユーザーに実行を頼まず、`ExitWorktree` (action: `keep`) で抜けて実行し、同じ `name` の `EnterWorktree` で入り直す。
+プロンプトには以下を含めること:
 
-`EnterWorktree` が無い Codex でも、新しいセッションは起動せず、このセッションで実装する。`jq -nc --arg name <name> --arg cwd "$PWD" '{name:$name,cwd:$cwd}' | ~/.claude/hooks/worktree-create` で同じ worktree を作り、出力の最終行のパスを以降のコマンドの `workdir` とファイル編集の場所にする。tq の記録は Claude Code と同じ。
+- **背景**: タスクの目的と経緯
+- **現状**: 調査・設計の結果
+- **ゴール**: 具体的な実装内容と設計方針
+
+### 例外: main で直接作業可能なリポジトリ
+
+このセッション内で実装を行い、完了後に `/commit` (Codex: `$commit`) スキルでコミットする。
 
 - テストが存在するプロジェクトでは、`/test-philosophy` (Codex: `$test-philosophy`) スキルの方針に従ってテストも書く
-- 実装中に設計の問題に気づいた場合も、Step 2 と同じ基準で、自分で決めるかユーザーに相談するかを分ける
+- 実装中に設計の問題に気づいた場合は、ユーザーに相談する

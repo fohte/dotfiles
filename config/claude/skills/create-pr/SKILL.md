@@ -19,7 +19,6 @@ Derived value:
 
 - `english_output`: true when `repo.visibility` is `PUBLIC` **and** `repo.language` is not `ja`, otherwise false. `repo.visibility: PUBLIC` alone does not make it true.
 - `vibe_mode`: resolve with `~/.agents/skills/delegate/references/vibe-policy.md`. Before each vibe-only report or submit, repeat both checks and continue only if the initial `vibe_mode` is still permitted.
-- `self_owned`: true when this session is the tq task owner implementing its own task (its handoff names it the task owner), false when a delegator started it with a delegated task. A self-owned session has no delegator to review its draft.
 
 Read `references/draft-manual.md` before starting Step 1. It covers Steps 1, 2 and 4.
 
@@ -27,7 +26,6 @@ Apply every row below whose condition holds. The rows are independent of each ot
 
 | Condition                                        | Effect                                                                                                                                                                                                                                                                                                                                          |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vibe_mode` and `self_owned` are both true       | Read `references/self-owned-vibe.md`. It replaces the delegator report and approval in Steps 0, 3, 4 and 7 below. Everything else in the `vibe_mode` row still applies.                                                                                                                                                                         |
 | `vibe_mode` is true                              | Skip crit review, notify the delegator with the draft and wait for explicit approval before submitting with `--no-review`; report PR ready after CI passes or only `vrt` fails (Step 7). Keep self-review and CI monitoring. Even when `is_master_push_repo` is true, create a PR from the current branch and never push to the default branch. |
 | `english_output` is true                         | Translation to English is required. The reference covers it in Step 4; Step 5 requires a Japanese-free title and body.                                                                                                                                                                                                                          |
 | `english_output` is false                        | No translation happens.                                                                                                                                                                                                                                                                                                                         |

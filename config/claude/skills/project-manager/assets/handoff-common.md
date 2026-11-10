@@ -11,10 +11,10 @@
     - handoff やタスクに、ユーザーが決めると書いてある
     - 実装先リポジトリで `a config get repo.vibe` が `true` を返さない。この場合は今までどおり、設計全体と、手順 4 で PR 分割をする場合はその分割案を、crit で approve してもらってから実装に入る
 4. **PR 分割と記録。** 実装先リポジトリの `repo.direct_commit` が `true` でないなら、split-into-prs skill で PR 分割を決め、handoff の「担当タスク」に記載した ID の「実装」チェックリストへ記録する。手順 3 で crit に出す論点が無ければ、分割は承認を待たずに記録する。読者向け資料が必要なら、track-in-tq skill の「何をどこに書くか」に従って tq page にまとめる。task description には書かない
-5. **実装は自分でする。** delegate skill で委任しない。委任先が文脈を読み直す分と、そのレビューの分だけトークンが増えるため。原因が特定でき、手順 3 で crit に出した論点が approve されてから着手する
-    - PM が `--worktree` で起動していれば、このセッションは `.worktrees/<name>` の worktree にいて、最初のブランチには tq タスクの ID が記録されている。default branch のチェックアウトにいる場合は、development skill の Step 3 の手順で worktree に入ってから実装する
-    - PR は分割に従って 1 本ずつ作る。2 本目以降は `git switch -c fohte/<name> <base>` で新しいブランチを作る。`<base>` は、前の PR がマージ済みなら `origin/<default branch>`、未マージで依存しているなら前の PR のブランチにする。`<name>` は delegate skill のブランチ名の規則 (ハイフン区切り、`/` を含めない) に従う。新しいブランチでは `git config branch.<branch>.x-tq-task-id <task-id>` と、その PR の葉項目の `x-tq-checklist-item-id` を記録する。create-pr skill が PR を tq に紐付けるのに使う
-    - PR の作成は create-pr skill に従う。vibe の場合は、その skill の「task owner が自分で実装した場合」の手順で、自分で draft を確かめて submit し、CI が通ったらマージまで進める
+5. **実装が必要なら delegate skill で委任する。** 自分で実装しない。委任してよいのは原因が特定でき、手順 3 で crit に出した論点が approve されてからである。1 委任 = 1 PR。PR 分割に従い、最初の 1 PR だけ委任して、残りは前の PR が merge されてから改めて委任する
+    - 委任先の engine、model、reasoning effort は通常は選択中 profile の `delegate` type 設定を使う。ユーザーがいずれかを明示した場合だけ、対応する launcher flag で値を渡す。1 回の起動のために profile の全体選択を書き換えない
+    - **delegate launcher に `--tq-task-id` で上記タスクの ID を必ず渡す。** 渡さないと委任先の PR がどのタスクにも載らない
+    - PR 分割の実装チェックリストがある場合は、委任する PR に対応する葉項目 ID を delegate launcher の `--tq-checklist-item-id` に渡す。Batch 親の ID は使わない
 6. **ユーザーが見ていない節目だけ引き継ぎ元 (PM セッション) に報告する。** 報告するのは、PR が merge されたとき、範囲が変わったとき、止まったとき、終わったとき。手順 3 で自分で決めた判断も、PR 本文に残るので報告しない。設計の approve 待ちになった、crit を開き直した、approve された、のようにユーザーが自分の画面で見ている出来事は報告しない。PM がそれをユーザーに中継し、同じ通知が二重に届いてトークンと費用の無駄になるため。`a agent peer parent | jq -r '.[0].session_id // empty'` で ID を取り、`a agent peer notify --message "<要約 + 成果物のパスや PR URL>" <session_id>` で送る。全文は貼らない
 
 ## 検証

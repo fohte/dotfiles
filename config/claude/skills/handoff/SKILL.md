@@ -68,7 +68,7 @@ dir=$(mktemp -d "$AGENT_TMPDIR/handoff.XXXXXX")
 
 ### 新しいセッションを起動する
 
-handoff launcher は文書本文を prompt にし、`--type handoff` と親子関係を固定する。委任扱いにはしない。worktree は、後述の実装まで行う場合に `--worktree` を付けたときだけ使う。engine、model、reasoning effort は通常は選択中 profile の `handoff` type 設定を使い、ユーザーが明示した場合だけ launcher に同名の flag を渡す。
+handoff launcher は文書本文を prompt にし、`--type handoff` と親子関係を固定する。委任扱いと worktree は使わない。engine、model、reasoning effort は通常は選択中 profile の `handoff` type 設定を使い、ユーザーが明示した場合だけ launcher に同名の flag を渡す。
 
 `--kind` には引き継ぐ workflow の表示名を渡す。設計 handoff では `design` を指定する。`--type handoff` は選択中 profile の `handoff` type 設定を使い、`--kind` は表示名だけを変える。
 
@@ -92,8 +92,6 @@ handoff launcher は文書本文を prompt にし、`--type handoff` と親子�
 引き継ぎ元へ報告してほしい場合は、後述のとおり handoff.md 本文に書く。
 
 worktree 内から `--repo` を指定した場合、元 worktree の未コミット変更は引き継ぎ先から見えない。必要なら handoff.md の「参考情報」に元の cwd を書く。git 管理外のディレクトリでは repo を指定しない。
-
-引き継ぎ先が実装まで行う場合は `--worktree` を付け、新しい `.worktrees/<name>` の worktree で起動する。ブランチ名は `--branch` で delegate skill の規則に従って付け、PR を紐付ける tq タスクがあれば `--tq-task-id` で渡す。
 
 launcher は `--help` と `--dry-run` に対応する。`--child-launch allow` を固定し、引き継ぎ先が必要に応じて子 session を起動できるようにする。この権限は完了報告の指示を変えない。「完了報告を送るな」という文は `delegate/scripts/prompt-template.md` の通常 delegate prompt にあり、Armyknife の起動フラグが追加するものではない。
 

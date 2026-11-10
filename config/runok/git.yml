@@ -247,7 +247,7 @@ rules:
   # `.claude/worktrees/<name>` checkout means we're in the main worktree, which is always on the
   # default branch -- merging its own remote tracking ref is the same-branch
   # antipattern that `git pull` should handle instead. Inside a worktree
-  # (`a agent new` / `/delegate` / EnterWorktree, always a feature branch), merging
+  # (`a agent new` / `/delegate`, always a feature branch), merging
   # origin/main to sync with the default branch is legitimate and stays
   # allowed via the `allow: 'git [-C *] merge origin/main|origin/master *'`
   # rule further down.
@@ -320,21 +320,10 @@ rules:
       - allow: 'git checkout -- file.txt'
       - allow: 'git checkout --theirs file.txt'
       - allow: 'git checkout --ours file.txt'
-  # A session working in its own linked worktree (`.worktrees/<name>` or
-  # `.claude/worktrees/<name>`) stacks
-  # PR branches there, so switching is allowed only from inside one. The
-  # `-C <dir>` form is always denied because `fs.cwd` is not the directory git
-  # operates on. The worktree-allow branch can't be covered by an inline test
-  # (tests run from a non-worktree cwd); verify with `runok check` from inside
-  # both kinds of worktree directory when editing.
-  - deny: 'git switch *'
-    when: "!fs.cwd.contains('/.worktrees/') && !fs.cwd.contains('/.claude/worktrees/')"
-    message: 'Blocked because `git switch` changes the current branch and has side effects on the working tree. It is allowed only inside a `.worktrees/<name>` or `.claude/worktrees/<name>` worktree.'
-    tests:
-      - deny: 'git switch main'
-  - deny: 'git -C * switch *'
+  - deny: 'git [-C *] switch *'
     message: 'Blocked because `git switch` changes the current branch and has side effects on the working tree.'
     tests:
+      - deny: 'git switch main'
       - deny: 'git -C /tmp switch main'
   - deny: 'git [-C *] checkout -b|-B *'
     message: 'Blocked because creating a branch should go through the `delegate` skill, which runs the work in an isolated worktree.'
@@ -343,20 +332,15 @@ rules:
       - deny: 'git checkout -b new-branch'
       - deny: 'git checkout -B new-branch'
       - deny: 'git -C /tmp checkout -b new-branch'
-  # Branch creation outside a worktree routes to a worktree session. Separate
-  # patterns are needed: an optional `git [-C <dir>]` group would capture
-  # switch's own `-C` (force-create) flag. `-C` would overwrite an existing
-  # branch, so it stays denied even inside a worktree.
-  - deny: 'git switch -c *'
-    when: "!fs.cwd.contains('/.worktrees/') && !fs.cwd.contains('/.claude/worktrees/')"
-    message: 'Blocked because branches are created only inside a `.worktrees/<name>` or `.claude/worktrees/<name>` worktree.'
-    fix_suggestion: 'Enter a worktree first (Claude Code: EnterWorktree; Codex: ~/.claude/hooks/worktree-create, see the development skill Step 3).'
+  # Branch creation routes to /delegate. Two patterns are needed:
+  # an optional `git [-C <dir>]` group would capture switch's own `-C`
+  # (force-create) flag, so the bare form and the `git -C <dir>` form are
+  # kept separate.
+  - deny: 'git switch -c|-C *'
+    message: 'Blocked because creating a branch should go through the `delegate` skill, which runs the work in an isolated worktree.'
+    fix_suggestion: 'Use the delegate skill.'
     tests:
       - deny: 'git switch -c new-branch'
-  - deny: 'git switch -C *'
-    message: 'Blocked because `git switch -C` resets an existing branch.'
-    fix_suggestion: 'git switch -c <new-branch>'
-    tests:
       - deny: 'git switch -C new-branch'
   - deny: 'git -C * switch -c|-C *'
     message: 'Blocked because creating a branch should go through the `delegate` skill, which runs the work in an isolated worktree.'

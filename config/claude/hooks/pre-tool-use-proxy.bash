@@ -28,6 +28,12 @@ case "$tool_name" in
     fi
     exec ~/.claude/hooks/default-branch-edit-guard <<< "$input"
     ;;
+  EnterWorktree)
+    # EnterWorktree is "Permission Required: No" so permissions.deny does not
+    # apply. Worktree creation must go through the /delegate skill.
+    jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "EnterWorktree is disabled. Use the delegate skill to spawn work in a worktree."}}'
+    exit 0
+    ;;
   TaskStop)
     exec ~/.claude/hooks/task-stop-guard <<< "$input"
     ;;
