@@ -228,7 +228,7 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 `gh pr checks --watch` で CI を監視。失敗したら調査・修正して再 push。
 `vibe_mode` では CI が green になり、該当時は Step 8 も済ませた後、共通 policy を再確認する。初回判定時から許可が続いている場合だけ委任元へ報告する。許可がなくなっていた場合は vibe 報告を送らず、通常の人間レビューに委ねる。
 
-`vrt` commit status 以外がすべて green で、`vrt` だけが失敗しているときも報告する。マージをブロックしない外部 commit status (例: informational な Codecov status) が pending でも待たない。GitHub Actions の check は引き続き待ち、failed required check はブロックとして扱う。VRT 差分の確認と承認ラベルの付与は委任元が担うため、委任先はユーザーに VRT レビューを頼まず、`vrt-approved` を待たず、自分でも付けない。リポジトリの規約が「VRT 差分はユーザーにレビューを頼む」としていても、vibe ではこの報告がその依頼の代わりになる。
+`vrt` commit status 以外がすべて green で、`vrt` だけが失敗しているときも報告する。GitHub Actions の check 結果をすべて確認し、残る pending status がマージをブロックしない外部 commit status (例: informational な Codecov status) だけなら、`gh pr checks --watch` を止めて報告する。failed required check はブロックとして扱う。VRT 差分の確認と承認ラベルの付与は委任元が担うため、委任先はユーザーに VRT レビューを頼まず、`vrt-approved` を待たず、自分でも付けない。リポジトリの規約が「VRT 差分はユーザーにレビューを頼む」としていても、vibe ではこの報告がその依頼の代わりになる。
 
 `~/.agents/skills/create-pr/scripts/notify-vibe pr-ready <PR_URL>` を実行する。script が PR URL、HEAD SHA、チェックリスト項目 ID、委任元の session ID を取得・組み立てて既定の形式で通知する。チェックリスト項目 ID が無い場合は `none` を使う。親 session を解決できない場合や通知に失敗した場合は、script が非 0 で終了する。宛先を推測せずユーザーに報告する。
 
