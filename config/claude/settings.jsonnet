@@ -222,6 +222,13 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
         ],
       },
     ],
+    PreCompact: [
+      {
+        hooks: [
+          { type: 'command', command: 'a agent hook pre-compact' },
+        ],
+      },
+    ],
     PostModelSwitch: [
       {
         hooks: [
