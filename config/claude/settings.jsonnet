@@ -36,6 +36,11 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
     // accepts (2^31 - 1 ms, a setTimeout limit). The per-task default stays
     // 30 min; hooks/bash-bg-timeout-default fills in this cap instead.
     BASH_MAX_TIMEOUT_MS: '2147483647',
+
+    // Claude Code's repeating "still running" check-ins have no setting of
+    // their own, so this undocumented variable zeroes the flag behind them.
+    // agent.bg_task_reminder in armyknife sends the one-shot reminder instead.
+    CLAUDE_INTERNAL_FC_OVERRIDES: std.manifestJsonMinified({ tengu_silent_heron: 0 }),
   },
 
   // Parallel work is driven by separate tmux panes/sessions, not the
