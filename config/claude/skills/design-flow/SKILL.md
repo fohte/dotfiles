@@ -101,6 +101,38 @@ description: Design (設計専用モード)
 - **比較表は必須**: 一目で違いがわかるようにする
 - **推奨は明確に**: 曖昧な表現を避け、どれを推奨するか明言する
 
+## Proposal 登録
+
+設計案を提示するときは、本文に上記の説明・比較・推奨を残したうえで、同じ案を `a agent proposal add` に登録する。Proposal カードから案を選べるようにし、案の選択に `AskUserQuestion` は使わない。
+
+各案を Proposal の option に対応させ、案の名前を `label`、概要と適している場合を `description`、メリットとデメリットをそれぞれ `pros` と `cons` に入れる。推奨案の option だけに `recommended: true` を設定する。`title` と各 option の `label` は必須で、option は 2-9 個にする。
+
+```sh
+cat <<'EOF' | a agent proposal add
+{
+  "title": "Choose an implementation approach",
+  "summary": "Context for comparing the approaches",
+  "options": [
+    {
+      "label": "Approach A",
+      "description": "Overview and when to use this approach",
+      "pros": ["Example advantage"],
+      "cons": ["Example drawback"],
+      "recommended": true
+    },
+    {
+      "label": "Approach B",
+      "description": "Overview and when to use this approach",
+      "pros": ["Example advantage"],
+      "cons": ["Example drawback"]
+    }
+  ]
+}
+EOF
+```
+
+登録したら選択を待たずにターンを終了する。選択は Proposal カード経由で受け取り、端末から通常の返事が届いた場合もその内容に従って続ける。
+
 ## 禁止事項
 
 - Edit, Write ツールの使用
@@ -108,5 +140,6 @@ description: Design (設計専用モード)
 - git commit, git push などの変更を伴う操作
 - **1 案だけの提示** (必ず 2 案以上)
 - **詳細すぎる設計** (疑似コード、型定義、ファイル構成などは不要)
+- **案の選択を AskUserQuestion で求めること** (Proposal 登録後にターンを終了する)
 
 設計案の選択後、詳細設計が必要な場合はユーザーに確認を取ること。
