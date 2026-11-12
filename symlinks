@@ -255,7 +255,7 @@ if match_tag launchd && is_macos; then
   }
 
   claude_rate_limits_name=com.fohte.claude-rate-limits
-  agent_watch_web_names=(com.fohte.agent-watch-web com.fohte.agent-watch-web-reloader)
+  agent_watch_web_names=(com.fohte.agent-watch-web)
   claude_rate_limits_state="$HOME/.local/state/claude-rate-limits"
   if match_role private; then
     launchd_names+=("$claude_rate_limits_name")
@@ -294,6 +294,17 @@ if match_tag launchd && is_macos; then
     if [ -d "$claude_rate_limits_state" ]; then
       log-exec rm -r "$claude_rate_limits_state"
     fi
+  fi
+
+  # Removing the reloader from launchd_names alone leaves previously deployed jobs loaded.
+  legacy_reloader_name=com.fohte.agent-watch-web-reloader
+  legacy_reloader_plist="$HOME/Library/LaunchAgents/$legacy_reloader_name.plist"
+  launchd_domain="gui/$(id -u)"
+  if launchctl print "$launchd_domain/$legacy_reloader_name" > /dev/null 2>&1; then
+    log-exec launchctl bootout "$launchd_domain" "$legacy_reloader_plist" || true
+  fi
+  if [ -e "$legacy_reloader_plist" ] || [ -L "$legacy_reloader_plist" ]; then
+    log-exec rm "$legacy_reloader_plist"
   fi
 
   # One-time cleanup for the decommissioned headroom-proxy job. Removing it

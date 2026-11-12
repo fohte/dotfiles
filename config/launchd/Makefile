@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 BASE_PLISTS := com.fohte.codex-app-server.plist com.fohte.codex-app-server-reloader.plist com.fohte.skk-watcher.plist com.fohte.disk-sweep.plist
-PRIVATE_PLISTS := com.fohte.claude-rate-limits.plist com.fohte.agent-watch-web.plist com.fohte.agent-watch-web-reloader.plist
+PRIVATE_PLISTS := com.fohte.claude-rate-limits.plist com.fohte.agent-watch-web.plist
 MACHINE_ROLE := $(shell ../bin/dot-role get name)
 
 PLISTS := $(BASE_PLISTS)
@@ -52,8 +52,6 @@ com.fohte.claude-rate-limits.plist: com.fohte.claude-rate-limits.plist.in
 com.fohte.agent-watch-web.plist: com.fohte.agent-watch-web.plist.in
 	@sed -e 's|__HOME__|$(HOME)|g' -e 's|__LAUNCHD_DIR__|$(CURDIR)|g' $< > $@.tmp && mv $@.tmp $@
 
-com.fohte.agent-watch-web-reloader.plist: com.fohte.agent-watch-web-reloader.plist.in
-	@sed -e 's|__HOME__|$(HOME)|g' -e 's|__LAUNCHD_DIR__|$(CURDIR)|g' $< > $@.tmp && mv $@.tmp $@
 endif
 
 clean:
