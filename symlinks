@@ -248,19 +248,26 @@ if match_tag launchd && is_macos; then
   launchd_names=(com.fohte.codex-app-server com.fohte.codex-app-server-reloader com.fohte.skk-watcher com.fohte.disk-sweep)
 
   claude_rate_limits_name=com.fohte.claude-rate-limits
+  agent_watch_web_names=(com.fohte.agent-watch-web com.fohte.agent-watch-web-reloader)
   claude_rate_limits_state="$HOME/.local/state/claude-rate-limits"
   if match_role private; then
     launchd_names+=("$claude_rate_limits_name")
+    launchd_names+=("${agent_watch_web_names[@]}")
     log-exec mkdir -m 700 -p "$claude_rate_limits_state"
+    log-exec tailscale serve --bg 4317
+    log-exec tailscale serve --bg --https=8443 http://127.0.0.1:4318
   else
-    claude_rate_limits_plist="$HOME/Library/LaunchAgents/$claude_rate_limits_name.plist"
     launchd_domain="gui/$(id -u)"
-    if launchctl print "$launchd_domain/$claude_rate_limits_name" > /dev/null 2>&1; then
-      log-exec launchctl bootout "$launchd_domain" "$claude_rate_limits_plist" || true
-    fi
-    if [ -e "$claude_rate_limits_plist" ] || [ -L "$claude_rate_limits_plist" ]; then
-      log-exec rm "$claude_rate_limits_plist"
-    fi
+    private_launchd_names=("$claude_rate_limits_name" "${agent_watch_web_names[@]}")
+    for private_launchd_name in "${private_launchd_names[@]}"; do
+      private_launchd_plist="$HOME/Library/LaunchAgents/$private_launchd_name.plist"
+      if launchctl print "$launchd_domain/$private_launchd_name" > /dev/null 2>&1; then
+        log-exec launchctl bootout "$launchd_domain" "$private_launchd_plist" || true
+      fi
+      if [ -e "$private_launchd_plist" ] || [ -L "$private_launchd_plist" ]; then
+        log-exec rm "$private_launchd_plist"
+      fi
+    done
     if [ -d "$claude_rate_limits_state" ]; then
       log-exec rm -r "$claude_rate_limits_state"
     fi

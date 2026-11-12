@@ -7,6 +7,9 @@
 
   <key>ProgramArguments</key>
   <array>
+    <string>__LAUNCHD_DIR__/run-with-log</string>
+    <string>__HOME__/.local/state/claude-rate-limits/sender.log</string>
+    <string>--</string>
     <string>__BUN__</string>
     <string>__HOME__/.claude/rate-limit-metrics.ts</string>
   </array>
@@ -16,11 +19,5 @@
 
   <key>RunAtLoad</key>
   <false/>
-
-  <key>StandardOutPath</key>
-  <string>__HOME__/.local/state/claude-rate-limits/sender.log</string>
-
-  <key>StandardErrorPath</key>
-  <string>__HOME__/.local/state/claude-rate-limits/sender.log</string>
 </dict>
 </plist>

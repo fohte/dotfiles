@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.fohte.agent-watch-web</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__LAUNCHD_DIR__/run-with-log</string>
+    <string>__HOME__/.local/state/agent-watch-web/watch-web.log</string>
+    <string>--</string>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>exec ~/.cargo/bin/a agent watch-web --no-open</string>
+  </array>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>KeepAlive</key>
+  <true/>
+</dict>
+</plist>

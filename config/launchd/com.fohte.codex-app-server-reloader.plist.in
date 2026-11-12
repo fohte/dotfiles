@@ -13,17 +13,14 @@
 
   <key>ProgramArguments</key>
   <array>
+    <string>__LAUNCHD_DIR__/run-with-log</string>
+    <string>__HOME__/.local/state/codex-app-server-reloader/reloader.log</string>
+    <string>--</string>
     <string>__HOME__/bin/codex-app-server-reload</string>
     <string>__CODEX__</string>
   </array>
 
   <key>RunAtLoad</key>
   <false/>
-
-  <key>StandardOutPath</key>
-  <string>__HOME__/.local/state/codex-app-server-reloader/reloader.log</string>
-
-  <key>StandardErrorPath</key>
-  <string>__HOME__/.local/state/codex-app-server-reloader/reloader.log</string>
 </dict>
 </plist>

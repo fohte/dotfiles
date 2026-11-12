@@ -7,6 +7,9 @@
 
   <key>ProgramArguments</key>
   <array>
+    <string>__LAUNCHD_DIR__/run-with-log</string>
+    <string>__HOME__/.local/state/codex-app-server/app-server.log</string>
+    <string>--</string>
     <string>__CODEX__</string>
     <string>app-server</string>
     <string>--listen</string>
@@ -36,11 +39,5 @@
     <key>NumberOfFiles</key>
     <integer>8192</integer>
   </dict>
-
-  <key>StandardOutPath</key>
-  <string>__HOME__/.local/state/codex-app-server/app-server.log</string>
-
-  <key>StandardErrorPath</key>
-  <string>__HOME__/.local/state/codex-app-server/app-server.log</string>
 </dict>
 </plist>

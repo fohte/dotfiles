@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+umask 077
+
+usage() {
+  echo "usage: run-with-log <log-path> -- <command> [args...]" >&2
+  exit 2
+}
+
+[[ $# -ge 3 && $2 == -- ]] || usage
+
+log_file="$1"
+shift 2
+
+mkdir -p "$(dirname "$log_file")"
+
+# Rotate before opening the log; launchd's StandardOutPath would stay attached to the old file.
+if [[ -f $log_file ]]; then
+  log_size=$(wc -c < "$log_file")
+  log_size=${log_size//[!0-9]/}
+  if ((log_size >= 10 * 1024 * 1024)); then
+    mv -f "$log_file" "$log_file.1"
+  fi
+fi
+
+exec "$@" >> "$log_file" 2>&1

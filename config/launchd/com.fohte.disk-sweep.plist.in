@@ -8,6 +8,9 @@
   <!-- A login shell provides PATH for docker, mise, cargo tools and the like. -->
   <key>ProgramArguments</key>
   <array>
+    <string>__LAUNCHD_DIR__/run-with-log</string>
+    <string>__HOME__/.local/state/disk-sweep/sweep.log</string>
+    <string>--</string>
     <string>/bin/zsh</string>
     <string>-lc</string>
     <string>exec __LAUNCHD_DIR__/disk-sweep</string>
@@ -26,11 +29,5 @@
 
   <key>RunAtLoad</key>
   <false/>
-
-  <key>StandardOutPath</key>
-  <string>__HOME__/.local/state/disk-sweep/sweep.log</string>
-
-  <key>StandardErrorPath</key>
-  <string>__HOME__/.local/state/disk-sweep/sweep.log</string>
 </dict>
 </plist>
