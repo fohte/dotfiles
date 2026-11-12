@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename qw(dirname);
+use File::Path qw(make_path);
+
+my $log_file = shift // die "usage: write-log <log-path>\n";
+my $max_size = 10 * 1024 * 1024;
+my $log_size = 0;
+
+umask 0077;
+make_path(dirname($log_file));
+
+if (-f $log_file) {
+    $log_size = -s $log_file // 0;
+}
+
+sub open_log {
+    my ($path, $mode) = @_;
+    open my $handle, $mode, $path or die "open $path: $!\n";
+    binmode $handle or die "binmode $path: $!\n";
+    return $handle;
+}
+
+sub rotate_log {
+    my ($path, $handle) = @_;
+    close $handle or die "close $path: $!\n";
+    rename $path, "$path.1" or die "rename $path: $!\n";
+    return open_log($path, '>');
+}
+
+my $log = $log_size >= $max_size ? do {
+    rename $log_file, "$log_file.1" or die "rename $log_file: $!\n";
+    $log_size = 0;
+    open_log($log_file, '>');
+} : open_log($log_file, '>>');
+
+binmode STDIN or die "binmode stdin: $!\n";
+while (1) {
+    my $buffer;
+    my $read = sysread STDIN, $buffer, 65536;
+    defined $read or die "read stdin: $!\n";
+    last if $read == 0;
+
+    while (length $buffer) {
+        if ($log_size >= $max_size) {
+            $log = rotate_log($log_file, $log);
+            $log_size = 0;
+        }
+
+        my $remaining = $max_size - $log_size;
+        my $chunk_size = length($buffer) < $remaining ? length($buffer) : $remaining;
+        my $chunk = substr($buffer, 0, $chunk_size, '');
+        print {$log} $chunk or die "write $log_file: $!\n";
+        $log_size += $chunk_size;
+    }
+}
+
+close $log or die "close $log_file: $!\n";

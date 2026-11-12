@@ -254,12 +254,26 @@ if match_tag launchd && is_macos; then
     launchd_names+=("$claude_rate_limits_name")
     launchd_names+=("${agent_watch_web_names[@]}")
     log-exec mkdir -m 700 -p "$claude_rate_limits_state"
-    log-exec tailscale serve --bg 4317
-    log-exec tailscale serve --bg --https=8443 http://127.0.0.1:4318
+    if command -v tailscale > /dev/null 2>&1; then
+      log-exec tailscale serve --bg 4317
+      log-exec tailscale serve --bg --https=8443 http://127.0.0.1:4318
+    else
+      echo "tailscale not found; skipping Serve configuration" >&2
+    fi
   else
     launchd_domain="gui/$(id -u)"
-    log-exec tailscale serve --yes --https=443 off
-    log-exec tailscale serve --yes --https=8443 off
+    if command -v tailscale > /dev/null 2>&1; then
+      if serve_status=$(tailscale serve status --json); then
+        if [[ $serve_status == *127.0.0.1:4317* ]]; then
+          log-exec tailscale serve --yes --https=443 off
+        fi
+        if [[ $serve_status == *127.0.0.1:4318* ]]; then
+          log-exec tailscale serve --yes --https=8443 off
+        fi
+      else
+        echo "could not read Tailscale Serve status; skipping Serve cleanup" >&2
+      fi
+    fi
     private_launchd_names=("$claude_rate_limits_name" "${agent_watch_web_names[@]}")
     for private_launchd_name in "${private_launchd_names[@]}"; do
       private_launchd_plist="$HOME/Library/LaunchAgents/$private_launchd_name.plist"
