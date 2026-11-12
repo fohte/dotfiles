@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+
+label="com.fohte.agent-watch-web"
+service="gui/$(id -u)/$label"
+
+log() {
+  echo "$(date '+%Y-%m-%dT%H:%M:%S%z') $*"
+}
+
+if ! launchctl print "$service" > /dev/null 2>&1; then
+  log "$label is not loaded; skipping restart"
+  exit 0
+fi
+
+log "restarting $label after ~/.cargo/bin/a changed"
+launchctl kill SIGTERM "$service"

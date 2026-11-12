@@ -12,6 +12,9 @@
 
   <key>ProgramArguments</key>
   <array>
+    <string>__LAUNCHD_DIR__/run-with-log</string>
+    <string>__HOME__/.local/state/skk-watcher/watch.log</string>
+    <string>--</string>
     <string>/usr/bin/python3</string>
     <string>__SKK_DICT_REPO__/scripts/skk-watch</string>
     <string>--local</string>
@@ -24,11 +27,5 @@
 
   <key>RunAtLoad</key>
   <false/>
-
-  <key>StandardOutPath</key>
-  <string>__HOME__/.local/state/skk-watcher/watch.log</string>
-
-  <key>StandardErrorPath</key>
-  <string>__HOME__/.local/state/skk-watcher/watch.log</string>
 </dict>
 </plist>
