@@ -198,8 +198,6 @@ fi
 if match_tag armyknife; then
   sym config/armyknife/config.yaml ~/.config/armyknife/config.yaml
   sym config/armyknife/hooks ~/.config/armyknife/hooks
-  sym_role_overlay config/armyknife/config.yaml ~/.config/armyknife/private.yaml
-  sym_role_file config-overlays/armyknife/work.yaml ~/.config/armyknife/work.yaml
 fi
 
 if match_tag infractl; then
@@ -208,8 +206,6 @@ fi
 
 if match_tag mise; then
   sym config/mise/home-config.toml ~/.config/mise/config.toml
-  sym_role_overlay config/mise/conf.d/private.toml ~/.config/mise/conf.d/private.toml
-  sym_role_file config-overlays/mise/work.toml ~/.config/mise/conf.d/work.toml
 fi
 
 if match_tag colima && is_macos; then
@@ -304,4 +300,14 @@ if match_tag launchd && is_macos; then
     log-exec cp "$launchd_plist" "$launchd_state.tmp"
     log-exec mv -f "$launchd_state.tmp" "$launchd_state"
   done
+fi
+
+# Links that only make sense for a particular role are defined in the role
+# repo, so they stay out of this public repo. Skipped when no role repo is
+# configured, cloned, or has a `symlinks`. `sym` resolves relative sources
+# against $DOTFILES_DIR, so that file must pass absolute sources.
+if role_repo="$("$DOTFILES_DIR/config/bin/dot-role" get repo)" &&
+  [ -f "$HOME/ghq/github.com/$role_repo/symlinks" ]; then
+  # shellcheck disable=SC1090
+  source "$HOME/ghq/github.com/$role_repo/symlinks"
 fi

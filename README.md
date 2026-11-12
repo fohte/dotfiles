@@ -110,6 +110,9 @@ Tools that consume the role:
   `~/.config/zsh/.zshenv.overlay` / `~/.config/zsh/.zshrc.overlay`. The
   symlinks are created by `dot deploy`, so re-run it after changing the role.
 - `config/claude/Makefile` merges role overlays into `settings.json` / `mcp-servers.json`.
+- `symlinks` sources `symlinks` at the root of the selected role repository
+  when it is cloned and has one. Links that only that role needs live there
+  (using `match_tag` / `sym` with absolute sources) instead of in this repository.
 
 ### ✨ Updating
 
