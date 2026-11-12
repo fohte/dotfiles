@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use File::Basename qw(dirname);
 use File::Path qw(make_path);
+use IO::Handle;
 
 my $log_file = shift // die "usage: write-log <log-path>\n";
 my $max_size = 10 * 1024 * 1024;
@@ -30,6 +31,7 @@ sub open_log {
     my ($path, $mode) = @_;
     open my $handle, $mode, $path or fail("open $path: $!");
     binmode $handle or fail("binmode $path: $!");
+    $handle->autoflush(1);
     return $handle;
 }
 
