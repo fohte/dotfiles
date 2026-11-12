@@ -247,6 +247,13 @@ fi
 if match_tag launchd && is_macos; then
   launchd_names=(com.fohte.codex-app-server com.fohte.codex-app-server-reloader com.fohte.skk-watcher com.fohte.disk-sweep)
 
+  launchd_serve_has_backend() {
+    local port="$1"
+    jq -e --arg port "$port" \
+      '[.. | strings | select(test("^(http://)?127\\.0\\.0\\.1:" + $port + "/?$"))] | length > 0' \
+      <<< "$serve_status" > /dev/null
+  }
+
   claude_rate_limits_name=com.fohte.claude-rate-limits
   agent_watch_web_names=(com.fohte.agent-watch-web com.fohte.agent-watch-web-reloader)
   claude_rate_limits_state="$HOME/.local/state/claude-rate-limits"
@@ -264,11 +271,11 @@ if match_tag launchd && is_macos; then
     launchd_domain="gui/$(id -u)"
     if command -v tailscale > /dev/null 2>&1; then
       if serve_status=$(tailscale serve status --json); then
-        if [[ $serve_status == *127.0.0.1:4317* ]]; then
-          log-exec tailscale serve --yes --https=443 off
+        if launchd_serve_has_backend 4317; then
+          log-exec tailscale serve --yes --https=443 --set-path=/ off
         fi
-        if [[ $serve_status == *127.0.0.1:4318* ]]; then
-          log-exec tailscale serve --yes --https=8443 off
+        if launchd_serve_has_backend 4318; then
+          log-exec tailscale serve --yes --https=8443 --set-path=/ off
         fi
       else
         echo "could not read Tailscale Serve status; skipping Serve cleanup" >&2

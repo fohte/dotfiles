@@ -9,8 +9,18 @@ my $log_file = shift // die "usage: write-log <log-path>\n";
 my $max_size = 10 * 1024 * 1024;
 my $log_size = 0;
 
+sub fail {
+    my ($reason) = @_;
+    my $message = "launchd log writer failed for $log_file: $reason";
+    # The writer exits independently from the launchd job process.
+    system('/usr/bin/logger', '-t', 'dotfiles-launchd', $message) == 0 or warn "$message\n";
+    die "$message\n";
+}
+
 umask 0077;
-make_path(dirname($log_file));
+my $directory_errors;
+make_path(dirname($log_file), { error => \$directory_errors });
+fail('create log directory') if $directory_errors && @{$directory_errors};
 
 if (-f $log_file) {
     $log_size = -s $log_file // 0;
@@ -18,20 +28,20 @@ if (-f $log_file) {
 
 sub open_log {
     my ($path, $mode) = @_;
-    open my $handle, $mode, $path or die "open $path: $!\n";
-    binmode $handle or die "binmode $path: $!\n";
+    open my $handle, $mode, $path or fail("open $path: $!");
+    binmode $handle or fail("binmode $path: $!");
     return $handle;
 }
 
 sub rotate_log {
     my ($path, $handle) = @_;
-    close $handle or die "close $path: $!\n";
-    rename $path, "$path.1" or die "rename $path: $!\n";
+    close $handle or fail("close $path: $!");
+    rename $path, "$path.1" or fail("rename $path: $!");
     return open_log($path, '>');
 }
 
 my $log = $log_size >= $max_size ? do {
-    rename $log_file, "$log_file.1" or die "rename $log_file: $!\n";
+    rename $log_file, "$log_file.1" or fail("rename $log_file: $!");
     $log_size = 0;
     open_log($log_file, '>');
 } : open_log($log_file, '>>');
@@ -40,7 +50,7 @@ binmode STDIN or die "binmode stdin: $!\n";
 while (1) {
     my $buffer;
     my $read = sysread STDIN, $buffer, 65536;
-    defined $read or die "read stdin: $!\n";
+    defined $read or fail("read stdin: $!");
     last if $read == 0;
 
     while (length $buffer) {
@@ -52,9 +62,9 @@ while (1) {
         my $remaining = $max_size - $log_size;
         my $chunk_size = length($buffer) < $remaining ? length($buffer) : $remaining;
         my $chunk = substr($buffer, 0, $chunk_size, '');
-        print {$log} $chunk or die "write $log_file: $!\n";
+        print {$log} $chunk or fail("write $log_file: $!");
         $log_size += $chunk_size;
     }
 }
 
-close $log or die "close $log_file: $!\n";
+close $log or fail("close $log_file: $!");

@@ -13,5 +13,6 @@ log_file="$1"
 shift 2
 log_writer="${BASH_SOURCE[0]%/*}/write-log"
 
+# The writer's umask applies only to log files, not to the service process.
 # Keep the child as launchd's job process so signals reach it directly.
 exec "$@" > >("$log_writer" "$log_file") 2>&1
