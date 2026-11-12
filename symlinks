@@ -258,6 +258,8 @@ if match_tag launchd && is_macos; then
     log-exec tailscale serve --bg --https=8443 http://127.0.0.1:4318
   else
     launchd_domain="gui/$(id -u)"
+    log-exec tailscale serve --yes --https=443 off
+    log-exec tailscale serve --yes --https=8443 off
     private_launchd_names=("$claude_rate_limits_name" "${agent_watch_web_names[@]}")
     for private_launchd_name in "${private_launchd_names[@]}"; do
       private_launchd_plist="$HOME/Library/LaunchAgents/$private_launchd_name.plist"

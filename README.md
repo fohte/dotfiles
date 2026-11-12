@@ -182,8 +182,10 @@ dot deploy -t launchd
 ```
 
 The deployment starts watch-web at login, restarts it if it exits, and configures
-Tailscale Serve for `127.0.0.1:4317` and `127.0.0.1:4318` on HTTPS port 8443.
-Open the machine's MagicDNS name from a tailnet device:
+Tailscale Serve to route the default HTTPS endpoint to `127.0.0.1:4317` and
+HTTPS port 8443 to `127.0.0.1:4318`. Switching to the work role removes these
+routes. See the [Tailscale Serve documentation](https://tailscale.com/docs/features/tailscale-serve)
+for details. Open the machine's MagicDNS name from a tailnet device:
 
 ```bash
 tailscale status --json | jq -r '.Self.DNSName'
