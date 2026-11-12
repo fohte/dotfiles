@@ -246,6 +246,18 @@ fi
 
 if match_tag launchd && is_macos; then
   launchd_names=(com.fohte.codex-app-server com.fohte.codex-app-server-reloader com.fohte.skk-watcher com.fohte.disk-sweep)
+  launchd_domain="gui/$(id -u)"
+
+  launchd_remove_job() {
+    local launchd_name="$1"
+    local launchd_plist="$HOME/Library/LaunchAgents/$launchd_name.plist"
+    if launchctl print "$launchd_domain/$launchd_name" > /dev/null 2>&1; then
+      log-exec launchctl bootout "$launchd_domain" "$launchd_plist" || true
+    fi
+    if [ -e "$launchd_plist" ] || [ -L "$launchd_plist" ]; then
+      log-exec rm -f "$launchd_plist"
+    fi
+  }
 
   launchd_serve_has_backend() {
     local port="$1"
@@ -255,7 +267,7 @@ if match_tag launchd && is_macos; then
   }
 
   claude_rate_limits_name=com.fohte.claude-rate-limits
-  agent_watch_web_names=(com.fohte.agent-watch-web com.fohte.agent-watch-web-reloader)
+  agent_watch_web_names=(com.fohte.agent-watch-web)
   claude_rate_limits_state="$HOME/.local/state/claude-rate-limits"
   if match_role private; then
     launchd_names+=("$claude_rate_limits_name")
@@ -268,7 +280,6 @@ if match_tag launchd && is_macos; then
       echo "tailscale not found; skipping Serve configuration" >&2
     fi
   else
-    launchd_domain="gui/$(id -u)"
     if command -v tailscale > /dev/null 2>&1; then
       if serve_status=$(tailscale serve status --json); then
         if launchd_serve_has_backend 4317; then
@@ -283,18 +294,15 @@ if match_tag launchd && is_macos; then
     fi
     private_launchd_names=("$claude_rate_limits_name" "${agent_watch_web_names[@]}")
     for private_launchd_name in "${private_launchd_names[@]}"; do
-      private_launchd_plist="$HOME/Library/LaunchAgents/$private_launchd_name.plist"
-      if launchctl print "$launchd_domain/$private_launchd_name" > /dev/null 2>&1; then
-        log-exec launchctl bootout "$launchd_domain" "$private_launchd_plist" || true
-      fi
-      if [ -e "$private_launchd_plist" ] || [ -L "$private_launchd_plist" ]; then
-        log-exec rm "$private_launchd_plist"
-      fi
+      launchd_remove_job "$private_launchd_name"
     done
     if [ -d "$claude_rate_limits_state" ]; then
       log-exec rm -r "$claude_rate_limits_state"
     fi
   fi
+
+  # Removing the reloader from launchd_names alone leaves previously deployed jobs loaded.
+  launchd_remove_job com.fohte.agent-watch-web-reloader
 
   # One-time cleanup for the decommissioned headroom-proxy job. Removing it
   # from the loop below stops re-bootstrapping it, but a machine that already
@@ -305,7 +313,6 @@ if match_tag launchd && is_macos; then
     log-exec rm -f "$legacy_plist" config/launchd/com.fohte.headroom-proxy.plist
   fi
 
-  launchd_domain="gui/$(id -u)"
   for launchd_name in "${launchd_names[@]}"; do
     launchd_plist="$HOME/Library/LaunchAgents/$launchd_name.plist"
     launchd_state="$HOME/.local/state/${launchd_name#com.fohte.}/loaded.plist"
