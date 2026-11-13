@@ -109,6 +109,21 @@ existing_directory() {
   printf '%s' "$path"
 }
 
+# Sessions in any repo append to files in the role repo, so its checkout is
+# editable from everywhere. Without a clone at the ghq path (same rule as
+# `dot role overlay`) the role repo never matches. The default-branch guard is
+# intentionally not applied to role repo targets.
+role_repo_root() {
+  local repo directory
+
+  repo=$(dot role get repo 2> /dev/null) || return 1
+  [[ $repo =~ ^[A-Za-z0-9_][A-Za-z0-9._-]*/[A-Za-z0-9_][A-Za-z0-9._-]*$ ]] || return 1
+  directory=$(normalize_path -e "$HOME/ghq/github.com/$repo") || return 1
+  # A directory that is not itself a repo root would resolve to an enclosing repo.
+  [[ $(git_root "$directory") == "$directory" ]] || return 1
+  printf '%s' "$directory"
+}
+
 add_target() {
   local target=$1
   [[ -n $target && $target != *$'\n'* && $target != *$'\r'* ]] || return 1
@@ -250,8 +265,11 @@ for raw_target in "${TARGETS[@]}"; do
   fi
   target_directory=$(existing_directory "$target_directory_input") || deny
   if target_root=$(git_root "$target_directory"); then
-    [[ $target_root == "$session_root" ]] || deny
-    checkout_targets=$((checkout_targets + 1))
+    if [[ $target_root == "$session_root" ]]; then
+      checkout_targets=$((checkout_targets + 1))
+    else
+      [[ $target_root == "$(role_repo_root)" ]] || deny
+    fi
   else
     git_status=$?
     [[ $git_status == 1 ]] || deny
