@@ -45,11 +45,13 @@ branch=$(git branch --show-current)
 upstream_remote=$(git config --get "branch.$branch.remote" || true)
 upstream_merge=$(git config --get "branch.$branch.merge" || true)
 if [[ "$upstream_remote" == "origin" && "$upstream_merge" == "refs/heads/$branch" ]]; then
-  git pull --rebase
+  git pull --rebase=merges
 fi
 ```
 
-upstream がない場合、別の branch、または別 remote を指す場合は同期しない。`git pull --rebase` が失敗したら作業を止め、エラー内容を報告する。作業ツリーの変更が原因なら、変更を commit または stash してから再実行する。
+`--rebase=merges` にするのは、base を取り込んだマージコミット (`sync-base-branch` skill が作る) を残すため。upstream が HEAD の祖先なら、マージコミットは書き直されずにそのまま残る。素の `--rebase` はマージコミットを捨て、merge で入った base 側のコミットを 1 つずつ積み直すので、取り込む変更がなくても merge 時に解消した競合が再び起きる。
+
+upstream がない場合、別の branch、または別 remote を指す場合は同期しない。`git pull --rebase=merges` が失敗したら作業を止め、エラー内容を報告する。作業ツリーの変更が原因なら、変更を commit または stash してから再実行する。
 
 ## Base branch の解決
 
