@@ -180,7 +180,7 @@ fi
 
 direct_prompt=false
 [[ $direct_commit == true && $vibe == false ]] && direct_prompt=true
-if ! prompt=$(DELEGATE_DIRECT_COMMIT="$direct_prompt" "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/render-task" "$task_file"); then
+if ! prompt=$(DELEGATE_DIRECT_COMMIT="$direct_prompt" DELEGATE_VIBE="$vibe" "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/render-task" "$task_file"); then
   exit 1
 fi
 

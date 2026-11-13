@@ -145,7 +145,7 @@ git log "origin/$base_branch..HEAD" --oneline
 
 ## 3. レビュー
 
-`vibe_mode` では editor を開かず、draft を作成した後に委任元のレビューを待つ。`<vibe-draft-ready>` を送る直前に共通 policy を再確認し、初回判定時から許可が続いている場合だけ通知する。許可がなくなっていた場合は通常フローに戻り、crit review の承認を得て editor review を完了する。vibe 報告は送らない。委任元に `notify` してよいのは draft ready、PR ready、またはこの指示の前提が誤っていると判明した場合だけとする。進捗、質問、待ち状態は通知しない。通知後はターンを終えて委任元の返答を待つ。
+`vibe_mode` では editor を開かず、draft を作成した後に委任元のレビューを待つ。`<vibe-draft-ready>` を送る直前に共通 policy を再確認し、初回判定時から許可が続いている場合だけ通知する。許可がなくなっていた場合は通常フローに戻り、crit review の承認を得て editor review を完了する。vibe 報告は送らない。委任元に `notify` してよいのは draft ready、PR ready、この指示の前提が誤っていると判明した場合、または vibe-policy が判定エラーの報告や通常フローへの切り替えの通知を指示する場合だけとする。進捗、質問、待ち状態は通知しない。通知後はターンを終えて委任元の返答を待つ。ただし `<vibe-fallback>` の後は vibe-policy に従い、返答を待たずに通常フローを進める。
 
 draft ready は `~/.agents/skills/create-pr/scripts/notify-vibe draft-ready`、PR ready は `~/.agents/skills/create-pr/scripts/notify-vibe pr-ready <PR_URL>` で通知する。script が draft path、ブランチ名、HEAD SHA、チェックリスト項目 ID、委任元の session ID を取得して既定の形式を組み立て、通知する。チェックリスト項目 ID が無い場合は `none` を使う。親 session を解決できない場合や通知に失敗した場合は、script が非 0 で終了する。宛先を推測せずユーザーに報告する。前提誤りの報告は引き続き `vibe-policy.md` の手順で通知する。
 

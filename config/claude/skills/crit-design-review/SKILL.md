@@ -1,6 +1,6 @@
 ---
 name: crit-design-review
-description: Use this skill when a delegated implementation session sends a `<crit-design-review-request>` message, either because its crit review is ready for a design check or because it fixed earlier design findings and asks for a re-check. Comment on deviations from the design in the implementer's crit review, then always post a completion comment and notify the implementer, even with zero findings.
+description: Use this skill when a delegated implementation session sends a `<crit-design-review-request>` message, either because its crit review is ready for a design check or because it fixed earlier design findings and asks for a re-check. Comment on deviations from the design in the implementer's crit review, then always post a completion comment and notify the implementer, even with zero findings. When the implementer was launched with `--vibe` and vibe is still allowed, ask it to re-run the vibe check instead of reviewing.
 ---
 
 # crit Design Review
@@ -14,6 +14,10 @@ description: Use this skill when a delegated implementation session sends a `<cr
 ## 依頼メッセージ
 
 委任先の `crit-approval-review` skill (「2. 設計レビューを待つ」) が形式を定義する。使うのは `crit session` (crit session id) と `Implementer session` (通知の宛先) の 2 つ。
+
+## vibe の委任先から依頼が来た場合
+
+`--vibe` で起動した委任先は crit を使わないので、依頼が来たこと自体が、委任先が通常フローに落ちた印である。この依頼に完了通知で応えると、委任先は人間のレビュー待ちに入って止まる。依頼元を `--vibe` で起動していて、対象 repo の `vibe_mode` (`~/.agents/skills/delegate/references/vibe-policy.md`) が今も true なら、以下の手順を行わない。代わりに、`<vibe-fallback>` を受けたときと同じく `enable-vibe-coding` skill の「When something goes wrong」に従い、判定し直すよう委任先に通知する。
 
 ## 手順
 

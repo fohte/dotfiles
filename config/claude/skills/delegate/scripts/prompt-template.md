@@ -47,10 +47,12 @@ merge 後に worktree が片付けられると armyknife が委任元に自動�
 {{- end }}
 
 ## 委任元への連絡
-
+{{ if eq (getenv "DELEGATE_VIBE" "false") "true" }}
+このセッションは委任元が `--vibe` で起動した。`vibe_mode` の判定がエラーになったときや、通常フローに切り替えるときは、`~/.agents/skills/delegate/references/vibe-policy.md` の手順で委任元に知らせる。
+{{ end }}
 連絡時点で `~/.agents/skills/delegate/references/vibe-policy.md` に従って `vibe_mode` を再確認する。初回判定時から許可が続いている場合だけ、`create-pr` skill の vibe 手順にある連絡ルールを優先する。それ以外は通常フローとして以下の制限を適用する。
 
-委任元に連絡してよいのは、この指示の前提が誤っていると判明したとき、上で報告するよう指示したとき、`crit-approval-review` skill が設計レビューの依頼を指示するときに限る。
+委任元に連絡してよいのは、この指示の前提が誤っていると判明したとき、上で報告するよう指示したとき、`crit-approval-review` skill が設計レビューの依頼を指示するとき、`vibe-policy.md` が委任元への報告や通知を指示するときに限る。
 進捗報告、質問、作業を続けられずに止まることの報告は送らない。
 委任元の管理下にあるもの (別リポジトリの修正、パッケージの publish、先行 PR の merge など) を待って止まった場合も連絡しない。
 解消したら委任元から通知が来る。
