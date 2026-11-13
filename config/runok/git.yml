@@ -243,14 +243,12 @@ rules:
       - allow: 'git pull --rebase'
       - allow: 'git pull --rebase=merges'
       - allow: 'git pull -rmerges'
-  # Merging origin/main or origin/master while OUTSIDE a `.worktrees/<name>` or
-  # `.claude/worktrees/<name>` checkout means we're in the main worktree, which is always on the
-  # default branch -- merging its own remote tracking ref is the same-branch
-  # antipattern that `git pull` should handle instead. Inside a worktree
-  # (`a agent new` / `/delegate`, always a feature branch), merging
-  # origin/main to sync with the default branch is legitimate and stays
-  # allowed via the `allow: 'git [-C *] merge origin/main|origin/master *'`
-  # rule further down.
+  # Outside `.worktrees/<name>` / `.claude/worktrees/<name>` we're in the main
+  # worktree, which is always on the default branch, where merging any
+  # `origin/*` ref is unwanted (`git pull` syncs its own upstream). Inside a
+  # worktree (`a agent new` / `/delegate`, always a feature branch), merging
+  # `origin/<base>` is the only way to sync with the base, since rebase and
+  # force-push are denied.
   #
   # Split into bare and `-C <dir>` forms because the check must look at the
   # directory git actually operates on, not the shell's cwd: `fs.cwd` only
@@ -266,29 +264,34 @@ rules:
   # condition changes, manually re-verify by `cd`-ing into a path containing
   # `.worktrees/` and one containing `.claude/worktrees/`, and confirming
   # `runok check --verbose` still allows.
-  - deny: 'git merge origin/main|origin/master *'
+  - deny: 'git merge origin/* *'
     when: "!fs.cwd.contains('/.worktrees/') && !fs.cwd.contains('/.claude/worktrees/')"
-    message: 'Blocked because merging origin/main or origin/master directly (outside a worktree) creates a needless merge commit. Use `git pull` instead.'
+    message: 'Blocked because merging an origin/* ref in the main checkout (outside a worktree) either duplicates `git pull` or merges another branch into the default branch. Use `git pull` to sync, or merge from a `.worktrees/<name>` checkout.'
     fix_suggestion: 'git pull'
     tests:
       - deny: 'git merge origin/main'
       - deny: 'git merge origin/master'
-  - deny: 'git -C * merge origin/main|origin/master *'
+      - deny: 'git merge origin/renovate/foo --no-edit'
+  - deny: 'git -C * merge origin/* *'
     when: "!flags.C.contains('/.worktrees/') && !flags.C.contains('/.claude/worktrees/')"
-    message: 'Blocked because merging origin/main or origin/master directly (outside a worktree) creates a needless merge commit. Use `git pull` instead.'
+    message: 'Blocked because merging an origin/* ref in the main checkout (outside a worktree) either duplicates `git pull` or merges another branch into the default branch. Use `git -C <dir> pull` to sync, or merge from a `.worktrees/<name>` checkout.'
     fix_suggestion: 'git -C <dir> pull'
     tests:
       - deny: 'git -C /tmp merge origin/main'
       - deny: 'git -C /tmp merge origin/master'
+      - deny: 'git -C /tmp merge origin/feature-base'
       - allow: 'git -C /tmp/.worktrees/foo merge origin/main'
       - allow: 'git -C /tmp/.worktrees/foo merge origin/master'
+      - allow: 'git -C /tmp/.worktrees/foo merge origin/feature-base'
       - allow: 'git -C /tmp/.claude/worktrees/foo merge origin/main'
-  - deny: 'git [-C *] merge !origin/main|origin/master *'
-    message: 'Blocked because non-default merges should go through `git pull --rebase` to keep history linear.'
+      - allow: 'git -C /tmp/.claude/worktrees/foo merge origin/feature-base'
+  - deny: 'git [-C *] merge !origin/* *'
+    message: 'Blocked because merging a local ref should go through `git pull --rebase` to keep history linear.'
     fix_suggestion: 'git pull --rebase'
     tests:
-      - deny: 'git merge origin/renovate/foo --no-edit'
       - deny: 'git merge feature-branch'
+      - deny: 'git -C /tmp/.worktrees/foo merge feature-branch'
+      - deny: 'git -C /tmp/.worktrees/foo merge main'
   # `-i` opens an editor and `--exec <cmd>` executes arbitrary commands during
   # rebase, both bypassing runok's command-level review.
   - deny: 'git [-C *] rebase -i|--interactive *'
@@ -572,7 +575,7 @@ rules:
   # Inside a `.worktrees/<name>` or `.claude/worktrees/<name>` checkout, this
   # is the only rule that matches (the cwd-gated deny above requires being
   # outside both), so it stays allow there.
-  - allow: 'git [-C *] merge origin/main|origin/master *'
+  - allow: 'git [-C *] merge origin/* *'
   # --continue / --abort / --skip progress or unwind an in-progress rebase
   # without rewriting history beyond the original `git rebase` invocation.
   - allow: 'git [-C *] rebase --continue|--abort|--skip *'
