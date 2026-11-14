@@ -246,7 +246,7 @@ if match_tag misc; then
 fi
 
 if match_tag launchd && is_macos; then
-  launchd_names=(com.fohte.codex-app-server com.fohte.codex-app-server-reloader com.fohte.skk-watcher com.fohte.disk-sweep)
+  launchd_names=(com.fohte.codex-app-server com.fohte.codex-app-server-reloader com.fohte.skk-watcher com.fohte.disk-sweep com.fohte.agent-watch-web)
   launchd_domain="gui/$(id -u)"
 
   launchd_remove_job() {
@@ -260,45 +260,14 @@ if match_tag launchd && is_macos; then
     fi
   }
 
-  launchd_serve_has_backend() {
-    local port="$1"
-    jq -e --arg port "$port" \
-      '[.. | strings | select(test("^(http://)?127\\.0\\.0\\.1:" + $port + "/?$"))] | length > 0' \
-      <<< "$serve_status" > /dev/null
-  }
-
-  claude_rate_limits_name=com.fohte.claude-rate-limits
-  agent_watch_web_names=(com.fohte.agent-watch-web)
-  claude_rate_limits_state="$HOME/.local/state/claude-rate-limits"
   if match_role private; then
-    launchd_names+=("$claude_rate_limits_name")
-    launchd_names+=("${agent_watch_web_names[@]}")
-    log-exec mkdir -m 700 -p "$claude_rate_limits_state"
+    launchd_names+=(com.fohte.claude-rate-limits)
+    log-exec mkdir -m 700 -p "$HOME/.local/state/claude-rate-limits"
     if command -v tailscale > /dev/null 2>&1; then
       log-exec tailscale serve --bg 4317
       log-exec tailscale serve --bg --https=8443 http://127.0.0.1:4318
     else
       echo "tailscale not found; skipping Serve configuration" >&2
-    fi
-  else
-    if command -v tailscale > /dev/null 2>&1; then
-      if serve_status=$(tailscale serve status --json); then
-        if launchd_serve_has_backend 4317; then
-          log-exec tailscale serve --yes --https=443 --set-path=/ off
-        fi
-        if launchd_serve_has_backend 4318; then
-          log-exec tailscale serve --yes --https=8443 --set-path=/ off
-        fi
-      else
-        echo "could not read Tailscale Serve status; skipping Serve cleanup" >&2
-      fi
-    fi
-    private_launchd_names=("$claude_rate_limits_name" "${agent_watch_web_names[@]}")
-    for private_launchd_name in "${private_launchd_names[@]}"; do
-      launchd_remove_job "$private_launchd_name"
-    done
-    if [ -d "$claude_rate_limits_state" ]; then
-      log-exec rm -r "$claude_rate_limits_state"
     fi
   fi
 
