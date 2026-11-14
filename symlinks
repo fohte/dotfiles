@@ -198,6 +198,7 @@ fi
 if match_tag armyknife; then
   sym config/armyknife/config.yaml ~/.config/armyknife/config.yaml
   sym config/armyknife/hooks ~/.config/armyknife/hooks
+  sym_role_overlay config/bin ~/.local/share/dotfiles/role-bin
 fi
 
 if match_tag infractl; then
