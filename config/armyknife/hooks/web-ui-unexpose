@@ -1,0 +1,9 @@
+#!/bin/bash
+set -euo pipefail
+
+hook="$HOME/.local/share/dotfiles/role-bin/armyknife-web-ui-unexpose"
+if [[ -x "$hook" ]]; then
+  exec "$hook" "$@"
+fi
+
+exit 0
