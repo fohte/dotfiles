@@ -151,7 +151,7 @@ git log "origin/$base_branch..HEAD" --oneline
 
 draft ready は `~/.agents/skills/create-pr/scripts/notify-vibe draft-ready`、PR ready は `~/.agents/skills/create-pr/scripts/notify-vibe pr-ready <PR_URL>` で通知する。script が draft path、ブランチ名、HEAD SHA、チェックリスト項目 ID、委任元の session ID を取得して既定の形式を組み立て、通知する。チェックリスト項目 ID が無い場合は `none` を使う。親 session を解決できない場合や通知に失敗した場合は、script が非 0 で終了する。宛先を推測せずユーザーに報告する。前提誤りの報告は引き続き `vibe-policy.md` の手順で通知する。
 
-通知後は `a agent status set wait "review of <repo-name> PR draft"` を実行して turn を止める (`<repo-name>` は `repo.name`)。`sleep` ツールやコマンドで turn 内に留まって待たない。委任元の返答は新しい turn として届く。返答で再開するまで待ち、再開後も承認なしに Step 5 へ進まない。
+通知後は `a agent status set wait "<repo-name> の PR draft をレビュー"` を実行して turn を止める (`<repo-name>` は `repo.name`)。`sleep` ツールやコマンドで turn 内に留まって待たない。委任元の返答は新しい turn として届く。返答で再開するまで待ち、再開後も承認なしに Step 5 へ進まない。
 
 `vibe_mode` でない通常フローでは、次の `a ai pr-draft review` 手順で editor を開く。
 
@@ -234,7 +234,7 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 
 `~/.agents/skills/create-pr/scripts/notify-vibe pr-ready <PR_URL>` を実行する。script が PR URL、HEAD SHA、チェックリスト項目 ID、委任元の session ID を取得・組み立てて既定の形式で通知する。チェックリスト項目 ID が無い場合は `none` を使う。親 session を解決できない場合や通知に失敗した場合は、script が非 0 で終了する。宛先を推測せずユーザーに報告する。
 
-通知後は `a agent status set wait "merge of <repo-name> PR <number>"` を実行 (`<repo-name>`=`repo.name`、`<number>`=PR URL 末尾の番号) して turn を止める。draft ready のときと同じく turn 内に留まって待たない。turn が続いている session は merge 後に `a agent close` で閉じられない。
+通知後は `a agent status set wait "<repo-name> PR <number> をマージ"` を実行 (`<repo-name>`=`repo.name`、`<number>`=PR URL 末尾の番号) して turn を止める。draft ready のときと同じく turn 内に留まって待たない。turn が続いている session は merge 後に `a agent close` で閉じられない。
 
 差し戻しを反映して再 submit した場合も、同じ条件で同じ形式で再報告する。
 

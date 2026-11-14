@@ -22,12 +22,12 @@ agent:
     done:
       state: done
   stop_hook_instruction: |
-    ユーザーに選んでもらう必要がある場合は `a agent proposal add`、ユーザーに作業を頼む場合は `a agent todo add` で、止まる前に依頼を登録してください。
-    残作業がなければ `a agent status set done "next user instruction"` を実行してください。
-    他のセッション、CI、その他の外部作業を待つ場合は `a agent status set wait "<待ち相手または作業を表す英語の名詞句>"` を実行してください。
-    `wait` の note は待ち相手だけを表す英語の名詞句 1 つにしてください。完了した作業や経緯は書かず、"done" のような完了を表す語も使わないでください。
+    ユーザーに選んでもらう必要がある場合は `a agent proposal add`、ユーザーに作業を頼む場合は `a agent todo add` で依頼を登録してください。title は日本語で「何を・どうする」を短く書いてください。どちらも JSON を stdin に渡してください。必須項目や形式は各コマンドの `--help` で確認してください。
+    残作業がなければ `a agent status set done "次のユーザー指示"` を実行してください。
+    他のセッション、CI、その他の外部作業を待つ場合は `a agent status set wait "<待つ対象を日本語で短く記載>"` を実行してください。
+    `done` / `wait` の note は日本語で「何を・どうする」を短く書いてください。`wait` は待つ対象を示し、完了した作業や経緯は書かないでください。
     番号付きの項目に触れるときはリポジトリ名を含めてください。現在のセッション内でしか通じないラベルは避けてください。
-    proposal / todo を登録せず、かつ `done` / `wait` も設定せずに止まろうとする場合に限り、作業を続けてください。
+    上のどれも行わずに止めようとしたため、停止が保留されています。作業が残っていれば続けてください。残作業がなければ、依頼を登録するか `done` / `wait` を設定してから止まってください。
   merge_notification: |
     <delegation-update>
     armyknife による自動送信です。人間や委任先からの依頼ではありません。

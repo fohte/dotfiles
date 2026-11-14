@@ -68,7 +68,7 @@ bare な `crit story`、`crit story --no-spend`、`crit`、`crit review` はこ�
     </crit-design-review-request>
     ```
 
-4. `a agent status set wait "design review of <repo.name> diff"` を実行してターンを終える。`sleep` などで turn 内に留まらない。完了通知 `<crit-design-review-done>` が新しい turn として届くまで、次に進まない
+4. `a agent status set wait "<repo.name> の差分を設計レビュー"` を実行してターンを終える。`sleep` などで turn 内に留まらない。完了通知 `<crit-design-review-done>` が新しい turn として届くまで、次に進まない
 5. 通知の指摘が 0 件なら「3. レビュー loop を回す」に進む。1 件以上なら、「4. 指摘に対応する」と同じ要領で修正して返信し (コミットも push もしない)、手順 3 から繰り返す (手順 2 のコメントは残したままにし、書き直さない)。指摘 0 件で完了するまで人間のレビューを始めない
 
 `notify` が `ended` エラーで失敗したら委任元が失われている。設計レビューを飛ばし、手順 2 のコメントを `--reply-to <comment-id> --resolve` で閉じ (id は `crit comments --session <id> --json` で探す)、story を `--refresh --story-file <path> [--base-branch <base_ref>] --no-open` で作り直して overview の冒頭に「設計レビューなし: 委任元が終了している」と書き、「3. レビュー loop を回す」に進む。

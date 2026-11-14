@@ -70,6 +70,6 @@ Resolve these yourself and keep the loop running; do not ask the user unless a `
 - A file or command required for draft review is unavailable.
 - The PR title marks a breaking change. Do not attempt the merge; ask the user to merge the PR.
 
-When stopping because a required file or command is unavailable, report the reason and register the required user action with `a agent todo add` (provide its title and detail as JSON on stdin). When the PR title marks a breaking change, report that the user must merge it and register that work with `a agent todo add`. Leave vibe mode on and wait for the user's direction. Do not continue merging or dispatching work while waiting.
+When stopping because a required file or command is unavailable, report the reason and register the required user action with `a agent todo add` using JSON on stdin. Write the todo title in Japanese as a short description of what to do. When the PR title marks a breaking change, report that the user must merge it and register a todo titled `<repo-name> の PR <number> をマージする`. Leave vibe mode on and wait for the user's direction. Do not continue merging or dispatching work while waiting.
 
 When every leaf is checked, report completion to the user. Leave vibe mode on; the user may still give follow-up work in this session. Run `a agent vibe off` only when the user asks for it.
