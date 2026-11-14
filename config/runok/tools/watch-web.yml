@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - deny: 'curl|wget|http|https|xh|xhs * *:4317*|-*:4317*|*.ts.net*|-*.ts.net* *'
+    message: "watch-web (port 4317 or any Tailscale *.ts.net host) treats requests as the user's own actions, so agents must not call it. Verify watch-web changes with tests, or ask the user to check it in the browser."
+    tests:
+      - deny: 'curl http://127.0.0.1:4317/api/x'
+      - deny: 'curl -s -X POST http://localhost:4317/api/x -H "Origin: http://localhost:4317"'
+      - deny: 'curl -sS http://localhost:4317'
+      - deny: 'curl --url=http://127.0.0.1:4317/x'
+      - deny: 'curl --connect-to ::127.0.0.1:4317 http://example.com/'
+      - deny: 'curl https://device.example.ts.net/api/x'
+      - deny: 'curl -d "url=http://localhost:4317" https://api.example.com'
+      - deny: 'curl http://127.0.0.1:43170/'
+      - deny: 'wget -qO- http://127.0.0.1:4317/'
+      - deny: 'xh POST localhost:4317/api/x'
+      - deny: 'xhs POST localhost:4317/api/x'
+      - deny: 'http :4317/api/x'
+      - deny: 'https https://device.example.ts.net/api/x'
+      - deny: 'sh -c "curl http://127.0.0.1:4317/"'
+      - allow: 'curl https://example.com'
+      - allow: 'curl -s -X POST http://localhost:3001/api/tasks -d "{}"'
+      - allow: 'curl http://localhost:4318/api/x'
