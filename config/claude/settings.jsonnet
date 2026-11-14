@@ -288,6 +288,13 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
         ],
       },
     ],
+    PermissionDenied: [
+      {
+        hooks: [
+          { type: 'command', command: 'a agent hook permission-denied' },
+        ],
+      },
+    ],
     Stop: [
       {
         hooks: [
