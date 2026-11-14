@@ -110,7 +110,7 @@ description: Design (設計専用モード)
 ```sh
 cat <<'EOF' | a agent proposal add
 {
-  "title": "Choose an implementation approach",
+  "title": "実装方針を選ぶ",
   "summary": "Context for comparing the approaches",
   "options": [
     {

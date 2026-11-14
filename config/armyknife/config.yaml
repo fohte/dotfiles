@@ -17,32 +17,17 @@ agent:
       # Bare `crit` waits for review and cannot be matched more narrowly.
       - crit
   statuses:
-    you:
-      state: user
-    question:
-      state: user
-      watch_web_kind: question
-    review:
-      state: user
-      watch_web_kind: review
     wait:
       state: waiting
     done:
       state: done
-  # These criteria are shared by Claude Code and Codex status inference.
-  status_inference_prompt: |
-    直前のやりとりから、次に誰が何をするべきかを判定し、status を選んでください。
-    vibe coding 中に `<vibe-draft-ready>` か `<vibe-pr-ready>` を送って委任元の返答・レビュー・merge を待つ場合は `wait` を使ってください。この待ちについてはこの規則を優先します。
-    ユーザーに質問への回答や選択肢からの選択を求める場合は `question` を使ってください。
-    diff・設計・PR body などのレビューや PR の merge の判断を求める場合は `review` を使ってください。
-    手作業、コマンド実行、実機での確認など、それ以外の作業をユーザーに求める場合は `you` を使ってください。
-    他のセッション、CI、その他の外部作業を待つ場合は `wait` を使ってください。
-    残作業がなければ `done` を使ってください。
-    `you` と `wait` の note は、ユーザーの次の行動か待ち相手だけを表す英語の名詞句 1 つにしてください。`done` の note は `next user instruction` にしてください。
-    note には完了した作業や経緯を書かず、"done" のような完了を表す語も使わないでください。
+  stop_hook_instruction: |
+    ユーザーに選んでもらう必要がある場合は `a agent proposal add`、ユーザーに作業を頼む場合は `a agent todo add` で依頼を登録してください。title は日本語で「何を・どうする」を短く書いてください。どちらも JSON を stdin に渡してください。必須項目や形式は各コマンドの `--help` で確認してください。
+    残作業がなければ `a agent status set done "ユーザーの次の指示を待つ"` を実行してください。
+    他のセッション、CI、その他の外部作業を待つ場合は `a agent status set wait "<待つ対象を日本語で短く記載>"` を実行してください。
+    `done` / `wait` の note は日本語で「何を・どうする」を短く書いてください。`wait` は待つ対象を示し、完了した作業や経緯は書かないでください。
     番号付きの項目に触れるときはリポジトリ名を含めてください。現在のセッション内でしか通じないラベルは避けてください。
-    note の例: "alert method selection (A: webhook addition / B: reminder adjustment)", "secret store registration for a generated token", "merge of sample-repo PR 42", "next user instruction"
-    タスクを続けず、status だけを答えてください。
+    上のどれも行わずに止めようとしたため、停止が保留されています。作業が残っていれば続けてください。残作業がなければ、依頼を登録するか `done` / `wait` を設定してから止まってください。
   merge_notification: |
     <delegation-update>
     armyknife による自動送信です。人間や委任先からの依頼ではありません。
@@ -54,15 +39,6 @@ agent:
 
     delegate skill の「委任先の PR が merge された場合」に従ってください。
     </delegation-update>
-  codex_status_inference:
-    enabled: true
-    shadow_mode: false
-    failure_status:
-      kind: you
-      note: status inference failure investigation
-    background_status:
-      kind: wait
-      note: background task completion
   # quota has headroom; losing conversation context hurts more than it saves
   auto_compact:
     enabled: false
