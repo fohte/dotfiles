@@ -171,6 +171,8 @@ chart の場合も同様に、確認した values.yaml/template の具体的な�
 
 `crit-triage` は報告の表示だけでなく、`verdict` が `merge` の PR をユーザーが承認した時点で、approve コメントの投稿と auto-merge の armed まで行う。ユーザーが crit 上で見た内容がそのまま実行されるよう、表示と実行は同じプロセスの同じ値から行われる。
 
+各 round では [`../crit-approval-review/references/todo-lifecycle.md`](../crit-approval-review/references/todo-lifecycle.md) の手順を使う。タイトルは「Renovate 更新 PR のマージ方針を確認」のようにする。`crit-triage` が state を返したら、その内容を処理する前に todo を取り下げる。state が返らず再起動する場合は、pending の todo を再利用する。
+
 Write ツールで JSON を書き、次を **`run_in_background: true`** で実行する (crit はユーザーが approve するまで終了しない)。起動ログに出た URL の文字列をそのままユーザーに案内する。
 
 ```bash

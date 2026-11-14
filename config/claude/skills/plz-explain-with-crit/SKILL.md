@@ -53,6 +53,8 @@ Approve は、ユーザーがその時点の内容を読み、一旦次へ進ん
 - Claude Code: 必ず `run_in_background: true` で実行すること
 - Codex: `a agent bg run -- crit ...` で起動し、すぐに制御が返る (crit を直接実行すると runok が拒否する)
 
+各 round では [`../crit-approval-review/references/todo-lifecycle.md`](../crit-approval-review/references/todo-lifecycle.md) の手順を使う。todo は正常なユーザー応答を含む round 結果が返ったときに取り下げる。結果が返らず再開する場合や、「履歴を消して一から開き直す」場合は、pending の todo を再利用する。
+
 ### ブラウザは自動起動させる
 
 ユーザーがブラウザで確認する依頼では、起動コマンドに `--no-open` を付けない。
