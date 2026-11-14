@@ -53,6 +53,15 @@ Approve は、ユーザーがその時点の内容を読み、一旦次へ進ん
 - Claude Code: 必ず `run_in_background: true` で実行すること
 - Codex: `a agent bg run -- crit ...` で起動し、すぐに制御が返る (crit を直接実行すると runok が拒否する)
 
+各 round を起動する直前に、対象だけを示す todo を登録する。タイトルは「検索画面の設計資料を確認」のように対象に合わせ、「crit で」など表示場所や手段は含めない。
+
+```bash
+todo_title="検索画面の設計資料を確認"
+jq -n --arg title "$todo_title" '{title: $title}' | a agent todo add
+```
+
+出力された sequence number を控える。完了通知の stdout にユーザーの応答を含む正常な round 結果がある場合は、内容を調べたり質問への対応に進んだりする前に `a agent todo withdraw <SEQ>` で取り下げる。コマンドが失敗した場合や正常な round 結果がない場合は、ユーザーの応答を受け取っていないため todo を残す。質問への返信後に次の round を起動するときは、新しい todo を登録して同じ手順を繰り返す。
+
 ### ブラウザは自動起動させる
 
 ユーザーがブラウザで確認する依頼では、起動コマンドに `--no-open` を付けない。
