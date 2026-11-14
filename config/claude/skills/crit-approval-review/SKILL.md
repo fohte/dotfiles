@@ -77,14 +77,14 @@ bare な `crit story`、`crit story --no-spend`、`crit`、`crit review` はこ�
 
 `crit:crit` skill でレビュー loop を回し、承認を待つ。委任先の無人セッションでも待つ。
 
-人間のレビュー round を開始する直前に、レビュー対象だけを示す todo を登録する。タイトルは対象に合わせて「検索画面の設計資料をレビュー」のようにし、「crit で」など表示場所や手段は含めない。`crit-design-review` の委任元待ちでは登録しない。
+人間のレビュー round を開始する直前に、レビュー対象だけを示す todo を登録する。タイトルは対象に合わせて「通知設定の変更をレビュー」のようにし、「crit で」など表示場所や手段は含めない。`crit-design-review` の委任元待ちでは登録しない。同じ round の再開時に前回の todo が pending なら、その todo を使い、新しい todo は登録しない。
 
 ```bash
-todo_title="検索画面の設計資料をレビュー"
+todo_title="通知設定の変更をレビュー"
 jq -n --arg title "$todo_title" '{title: $title}' | a agent todo add
 ```
 
-出力された sequence number を控える。ユーザーの応答を受けた round の結果が返ったら、内容を調べたり次の手順へ進んだりする前に、その todo を `a agent todo withdraw <SEQ>` で取り下げる。指摘対応後に次の round を開始するときは、新しい todo を登録して sequence number を控え、同じ手順を繰り返す。
+出力された sequence number を控える。todo の Mark done / Reject 通知が crit の待ち中に届いても、crit の round が終わるまでは待ち続ける。Reject にコメントがあればその指示に従う。todo の処理結果を crit の承認結果として扱わない。ユーザーの応答を受けた round の結果が返ったら、内容を調べたり次の手順へ進んだりする前に、その todo を `a agent todo withdraw <SEQ>` で取り下げる。すでに Mark done / Reject で処理済みの場合に `todo is already resolved or does not exist` が返ったら無視する。round の結果が返らず todo が pending のままなら、同じ round を再開するときにその todo を使う。指摘対応後に次の round を開始するときは、新しい todo を登録して sequence number を控え、同じ手順を繰り返す。
 
 ingest で daemon が最初のタブを開いた場合、レビュー loop はその daemon に接続する。
 `crit:crit` の Step 1-2 に従い、初回は `crit-approval` をバックグラウンドで 1 回だけ実行する。
