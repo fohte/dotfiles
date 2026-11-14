@@ -53,14 +53,7 @@ Approve は、ユーザーがその時点の内容を読み、一旦次へ進ん
 - Claude Code: 必ず `run_in_background: true` で実行すること
 - Codex: `a agent bg run -- crit ...` で起動し、すぐに制御が返る (crit を直接実行すると runok が拒否する)
 
-各 round を起動する直前に、対象だけを示す todo を登録する。タイトルは対象に合わせ、「crit で」など表示場所や手段は含めない。同じ round を再開するときや「履歴を消して一から開き直す」ときに、その round の todo が pending なら再利用し、新しい todo は登録しない。
-
-```bash
-todo_title="検索画面の設計資料を確認"
-jq -n --arg title "$todo_title" '{title: $title}' | a agent todo add
-```
-
-出力された sequence number を控える。todo の Mark done / Reject 通知が crit の待ち中に届いても、crit の round が終わるまでは待ち続ける。Reject にコメントがあればその指示に従う。todo の処理結果を crit の round 結果として扱わない。完了通知の stdout にユーザーの応答を含む正常な round 結果がある場合は、内容を調べたり質問への対応に進んだりする前に `a agent todo withdraw <SEQ>` で取り下げる。すでに Mark done / Reject で処理済みの場合に `todo is already resolved or does not exist` が返ったら無視する。コマンドが失敗した場合や正常な round 結果がない場合は、ユーザーの応答を受け取っていないため todo を残し、同じ round を再開するときはその todo を再利用する。質問への返信後に次の round を起動するときは、新しい todo を登録して同じ手順を繰り返す。
+各 round では [`../crit-approval-review/references/todo-lifecycle.md`](../crit-approval-review/references/todo-lifecycle.md) の手順を使う。todo は正常なユーザー応答を含む round 結果が返ったときに取り下げる。結果が返らず再開する場合や、「履歴を消して一から開き直す」場合は、pending の todo を再利用する。
 
 ### ブラウザは自動起動させる
 

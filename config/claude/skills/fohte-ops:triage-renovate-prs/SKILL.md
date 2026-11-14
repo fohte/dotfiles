@@ -171,14 +171,7 @@ chart の場合も同様に、確認した values.yaml/template の具体的な�
 
 `crit-triage` は報告の表示だけでなく、`verdict` が `merge` の PR をユーザーが承認した時点で、approve コメントの投稿と auto-merge の armed まで行う。ユーザーが crit 上で見た内容がそのまま実行されるよう、表示と実行は同じプロセスの同じ値から行われる。
 
-各 round の起動直前に、対象だけを示す todo を登録する。タイトルは「Renovate 更新 PR のマージ方針を確認」のようにし、「crit で」など表示場所や手段は含めない。前回の起動で state が返らず todo が pending のままなら、その todo を再利用し、新しい todo は登録しない。
-
-```bash
-todo_title="Renovate 更新 PR のマージ方針を確認"
-jq -n --arg title "$todo_title" '{title: $title}' | a agent todo add
-```
-
-出力された sequence number を控える。todo の Mark done / Reject 通知が crit の待ち中に届いても、crit の round が終わるまでは待ち続ける。Reject にコメントがあればその指示に従う。todo の処理結果を `crit-triage` の state として扱わない。`crit-triage` が state を返したら、その内容を処理する前に `a agent todo withdraw <SEQ>` で取り下げる。すでに Mark done / Reject で処理済みの場合に `todo is already resolved or does not exist` が返ったら無視する。deny の調査後に次の round を開くときは、新しい todo を登録して同じ手順を繰り返す。レビューが完了する前に crit が終了して state が返らなかった場合は、ユーザーの返事を受け取っていないため todo を残し、報告を再開するときにその todo を再利用する。
+各 round では [`../crit-approval-review/references/todo-lifecycle.md`](../crit-approval-review/references/todo-lifecycle.md) の手順を使う。タイトルは「Renovate 更新 PR のマージ方針を確認」のようにする。`crit-triage` が state を返したら、その内容を処理する前に todo を取り下げる。state が返らず再起動する場合は、pending の todo を再利用する。
 
 Write ツールで JSON を書き、次を **`run_in_background: true`** で実行する (crit はユーザーが approve するまで終了しない)。起動ログに出た URL の文字列をそのままユーザーに案内する。
 
