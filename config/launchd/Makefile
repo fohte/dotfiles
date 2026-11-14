@@ -1,7 +1,7 @@
 .PHONY: all clean
 
-BASE_PLISTS := com.fohte.codex-app-server.plist com.fohte.codex-app-server-reloader.plist com.fohte.skk-watcher.plist com.fohte.disk-sweep.plist
-PRIVATE_PLISTS := com.fohte.claude-rate-limits.plist com.fohte.agent-watch-web.plist
+BASE_PLISTS := com.fohte.codex-app-server.plist com.fohte.codex-app-server-reloader.plist com.fohte.skk-watcher.plist com.fohte.disk-sweep.plist com.fohte.agent-watch-web.plist
+PRIVATE_PLISTS := com.fohte.claude-rate-limits.plist
 MACHINE_ROLE := $(shell ../bin/dot-role get name)
 
 PLISTS := $(BASE_PLISTS)
@@ -41,6 +41,9 @@ com.fohte.skk-watcher.plist: com.fohte.skk-watcher.plist.in
 com.fohte.disk-sweep.plist: com.fohte.disk-sweep.plist.in
 	@sed -e 's|__HOME__|$(HOME)|g' -e 's|__LAUNCHD_DIR__|$(CURDIR)|g' $< > $@.tmp && mv $@.tmp $@
 
+com.fohte.agent-watch-web.plist: com.fohte.agent-watch-web.plist.in
+	@sed -e 's|__HOME__|$(HOME)|g' -e 's|__LAUNCHD_DIR__|$(CURDIR)|g' $< > $@.tmp && mv $@.tmp $@
+
 ifeq ($(MACHINE_ROLE),private)
 com.fohte.claude-rate-limits.plist: com.fohte.claude-rate-limits.plist.in
 	@bun=$$(command -v bun) && test -n "$$bun" || { echo "bun not found in PATH" >&2; exit 1; }; \
@@ -48,10 +51,6 @@ com.fohte.claude-rate-limits.plist: com.fohte.claude-rate-limits.plist.in
 	    -e "s|__BUN__|$$bun|g" \
 	    -e 's|__LAUNCHD_DIR__|$(CURDIR)|g' \
 	    $< > $@.tmp && mv $@.tmp $@
-
-com.fohte.agent-watch-web.plist: com.fohte.agent-watch-web.plist.in
-	@sed -e 's|__HOME__|$(HOME)|g' -e 's|__LAUNCHD_DIR__|$(CURDIR)|g' $< > $@.tmp && mv $@.tmp $@
-
 endif
 
 clean:

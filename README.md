@@ -170,21 +170,20 @@ The `dot deploy` command reads the [`symlinks`](./symlinks) file and supports va
     dot deploy --debug
     ```
 
-### Agent watch web on private macOS
+### Agent watch web on macOS
 
-On a private macOS machine, deploy the launchd configuration from the main
-dotfiles checkout. Stop any manually started `a agent watch-web` process first
-because it already uses port 4317:
+On macOS, deploy the launchd configuration from the main dotfiles checkout.
+Watch-web runs under launchd on every macOS role. Stop any manually started
+`a agent watch-web` process first because it already uses port 4317:
 
 ```bash
 # Press Ctrl-C in the tmux pane running watch-web, then:
 dot deploy -t launchd
 ```
 
-The deployment starts watch-web at login, restarts it if it exits, and configures
-Tailscale Serve to route the default HTTPS endpoint to `127.0.0.1:4317` and
-HTTPS port 8443 to `127.0.0.1:4318`. Switching to the work role removes these
-routes. See the [Tailscale Serve documentation](https://tailscale.com/docs/features/tailscale-serve)
+On the private role, the deployment also configures Tailscale Serve to route the
+default HTTPS endpoint to `127.0.0.1:4317` and HTTPS port 8443 to
+`127.0.0.1:4318`. See the [Tailscale Serve documentation](https://tailscale.com/docs/features/tailscale-serve)
 for details. Open the machine's MagicDNS name from a tailnet device:
 
 ```bash
