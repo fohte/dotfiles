@@ -44,8 +44,7 @@ Install [mise](https://mise.jdx.dev/installing-mise.html) first, then clone the 
 git clone https://github.com/fohte/dotfiles ~/ghq/github.com/fohte/dotfiles
 cd ~/ghq/github.com/fohte/dotfiles
 git submodule update --init
-# Optional: clone this private repository to use private role overlays.
-ghq get -u fohte/dotfiles-private
+# Private overlays are optional: ghq get -u <owner>/<name>, then dot role set private repo=<owner>/<name>
 config/bin/dot role set private   # or: dot role set work repo=<owner>/<name>
 config/bin/dot deploy -t bin,mise
 scripts/bootstrap
@@ -95,10 +94,10 @@ dot role get repo     # print the selected role repository
 dot role overlay config/zsh/.zshrc   # print the overlay path for a given file
 ```
 
-Private overlays default to `fohte/dotfiles-private`. If that repository is
-not cloned, `dot role overlay` and `dot deploy` report that role overlays are
-unavailable, and tools use their base and local configuration without cloning
-the repository.
+Private overlays come from the repository selected with `repo=`. If it is not
+selected or not cloned, `dot role overlay` and `dot deploy` report that role
+overlays are unavailable, and tools use their base and local configuration
+without cloning the repository.
 Place personal executable scripts in the selected role repository's
 `config-overlays/bin/`. `dot deploy -t zsh` links that directory to
 `~/.local/share/dotfiles/role-bin`, which is added to `PATH` after the public
