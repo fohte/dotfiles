@@ -19,6 +19,12 @@ agent:
   statuses:
     you:
       state: user
+    question:
+      state: user
+      watch_web_kind: question
+    review:
+      state: user
+      watch_web_kind: review
     wait:
       state: waiting
     done:
@@ -27,7 +33,9 @@ agent:
   status_inference_prompt: |
     直前のやりとりから、次に誰が何をするべきかを判定し、status を選んでください。
     vibe coding 中に `<vibe-draft-ready>` か `<vibe-pr-ready>` を送って委任元の返答・レビュー・merge を待つ場合は `wait` を使ってください。この待ちについてはこの規則を優先します。
-    次の一手がユーザーにある場合 (判断、手作業、回答、diff や設計のレビュー、PR の merge など) は `you` を使ってください。
+    ユーザーに質問への回答や選択肢からの選択を求める場合は `question` を使ってください。
+    diff・設計・PR body などのレビューや PR の merge の判断を求める場合は `review` を使ってください。
+    手作業、コマンド実行、実機での確認など、それ以外の作業をユーザーに求める場合は `you` を使ってください。
     他のセッション、CI、その他の外部作業を待つ場合は `wait` を使ってください。
     残作業がなければ `done` を使ってください。
     `you` と `wait` の note は、ユーザーの次の行動か待ち相手だけを表す英語の名詞句 1 つにしてください。`done` の note は `next user instruction` にしてください。

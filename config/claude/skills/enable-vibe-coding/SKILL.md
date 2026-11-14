@@ -70,6 +70,6 @@ Resolve these yourself and keep the loop running; do not ask the user unless a `
 - A file or command required for draft review is unavailable.
 - The PR title marks a breaking change. Do not attempt the merge; ask the user to merge the PR.
 
-When stopping, report the reason and the next decision needed to the user, then run `a agent status set you "<the decision needed, as a noun phrase>"`. Leave vibe mode on and wait for the user's direction. Do not continue merging or dispatching work while waiting.
+When stopping because a required file or command is unavailable, report the reason and required user action, then run `a agent status set you "<the required action, as a noun phrase>"`. When the PR title marks a breaking change, report that the user must merge it, then run `a agent status set review "merge of <repo-name> PR <number>"`. Leave vibe mode on and wait for the user's direction. Do not continue merging or dispatching work while waiting.
 
 When every leaf is checked, report completion to the user. Leave vibe mode on; the user may still give follow-up work in this session. Run `a agent vibe off` only when the user asks for it.
