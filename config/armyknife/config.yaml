@@ -17,32 +17,17 @@ agent:
       # Bare `crit` waits for review and cannot be matched more narrowly.
       - crit
   statuses:
-    you:
-      state: user
-    question:
-      state: user
-      watch_web_kind: question
-    review:
-      state: user
-      watch_web_kind: review
     wait:
       state: waiting
     done:
       state: done
-  # These criteria are shared by Claude Code and Codex status inference.
-  status_inference_prompt: |
-    直前のやりとりから、次に誰が何をするべきかを判定し、status を選んでください。
-    vibe coding 中に `<vibe-draft-ready>` か `<vibe-pr-ready>` を送って委任元の返答・レビュー・merge を待つ場合は `wait` を使ってください。この待ちについてはこの規則を優先します。
-    ユーザーに質問への回答や選択肢からの選択を求める場合は `question` を使ってください。
-    diff・設計・PR body などのレビューや PR の merge の判断を求める場合は `review` を使ってください。
-    手作業、コマンド実行、実機での確認など、それ以外の作業をユーザーに求める場合は `you` を使ってください。
-    他のセッション、CI、その他の外部作業を待つ場合は `wait` を使ってください。
-    残作業がなければ `done` を使ってください。
-    `you` と `wait` の note は、ユーザーの次の行動か待ち相手だけを表す英語の名詞句 1 つにしてください。`done` の note は `next user instruction` にしてください。
-    note には完了した作業や経緯を書かず、"done" のような完了を表す語も使わないでください。
+  stop_hook_instruction: |
+    ユーザーに選んでもらう必要がある場合は `a agent proposal add`、ユーザーに作業を頼む場合は `a agent todo add` で、止まる前に依頼を登録してください。
+    残作業がなければ `a agent status set done "next user instruction"` を実行してください。
+    他のセッション、CI、その他の外部作業を待つ場合は `a agent status set wait "<待ち相手または作業を表す英語の名詞句>"` を実行してください。
+    `wait` の note は待ち相手だけを表す英語の名詞句 1 つにしてください。完了した作業や経緯は書かず、"done" のような完了を表す語も使わないでください。
     番号付きの項目に触れるときはリポジトリ名を含めてください。現在のセッション内でしか通じないラベルは避けてください。
-    note の例: "alert method selection (A: webhook addition / B: reminder adjustment)", "secret store registration for a generated token", "merge of sample-repo PR 42", "next user instruction"
-    タスクを続けず、status だけを答えてください。
+    依頼を登録せず、または `done` / `wait` を設定せずに止まろうとする場合は、作業を続けてください。
   merge_notification: |
     <delegation-update>
     armyknife による自動送信です。人間や委任先からの依頼ではありません。
@@ -54,15 +39,6 @@ agent:
 
     delegate skill の「委任先の PR が merge された場合」に従ってください。
     </delegation-update>
-  codex_status_inference:
-    enabled: true
-    shadow_mode: false
-    failure_status:
-      kind: you
-      note: status inference failure investigation
-    background_status:
-      kind: wait
-      note: background task completion
   # quota has headroom; losing conversation context hurts more than it saves
   auto_compact:
     enabled: false
