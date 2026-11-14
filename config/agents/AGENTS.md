@@ -24,6 +24,7 @@
 - **ユーザーへの依頼は watch-web に登録する**: チャットの文面だけでは流れて見失うため、カードとして登録する
     - ユーザーに選択肢から選んでもらうときは `a agent proposal add`
     - ユーザーに作業を頼むとき (実機での確認、merge の判断、コマンドの実行など) は `a agent todo add`
+    - 不要になった proposal / todo は、登録した自分のセッションから `a agent proposal withdraw <seq> [--comment <reason>]` / `a agent todo withdraw <seq> [--comment <reason>]` で取り下げる。カードは取り下げ済みとして会話に残り、ユーザーが回答できなくなる
     - どちらも JSON を stdin で渡す。形式は `--help` で確認する
 - **ファイルをユーザーに見せるときは watch-web に送る**: 画像、スクリーンショット、生成物などは `a agent file send <PATHS>...` で会話に送る
 - **作業を止めない**: コミット、push、次のステップへの進行など、明らかに続行すべき作業でユーザーに確認を求めて止まらないこと。ユーザーが指示した一連の作業フローは、判断に迷う場面以外は止めずに最後まで実行する
