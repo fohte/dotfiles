@@ -76,7 +76,7 @@ SKILL.md と同じディレクトリに置けるサブディレクトリ。役�
 
 ## repo 依存の分岐
 
-repo や machine で手順が変わる skill は、SKILL.md を静的に保ち、分岐をエージェントに選ばせる。`!` + `` `cmd` `` は Codex で動かないので使わない。誤読を避けるため、以下の形にそろえる (実例は `create-pr`)。
+repo や machine で手順が変わる skill は、SKILL.md を静的に保ち、分岐をエージェントに選ばせる。`!` + `` `cmd` `` は Codex で動かないので使わない。誤読を避けるため、以下の形にそろえる。
 
 - **条件は SessionStart context `repo-facts` の値をキー名そのままで使う** (`repo.owner`, `repo.visibility`, `is_master_push_repo` など)。別名を付けない。context が無い、または使う値が `unset` のときは `gen-claude-template context repo-facts` で出力し直し、それでも `unset` ならユーザーに聞く (黙って通常フローに進むと、no-op すべき repo で動いてしまう)
 - **複合条件は冒頭の `Conditions` 節で 1 度だけ定義する**。名前は生のキーと紛れないものにする (`repo.visibility: PUBLIC` と紛れる `public` は避け、`english_output` とする)。条件分岐が不要な skill に表を置かない
