@@ -101,7 +101,7 @@ launcher は `task.yaml` の入力を検証し、`render-task` が失敗した�
 - `DELEGATE_DIRECT_COMMIT`: launcher が repo policy と vibe に基づいて設定し、prompt の完了条件を PR または push に合わせる
 - `DELEGATE_TASK_PURPOSE` / `DELEGATE_TQ_TASK_ID` / `DELEGATE_TQ_CHECKLIST_ITEM_ID`: launcher が worktree 作成時だけ環境に設定する。hook が branch config に記録し、`create-pr` skill が使う
 
-launcher は `--type delegate`、`--child-launch deny`、`--kind development` を固定する。`repo.direct_commit` が `true` で通常 delegate の場合は worktree を使わず、prompt を direct-commit 用に描画する。vibe delegate は `repo.direct_commit` に関わらず worktree と PR を使い、Armyknife の `--vibe` guard を通す。engine、model、reasoning effort はユーザーが明示した場合だけ launcher flag で渡す。Armyknife の `--agent`、`--child-launch`、`--worktree` は直接指定しない。
+launcher は `--type delegate`、`--child-launch deny`、`--kind development` を固定する。`repo.direct_commit` が `true` で通常 delegate の場合は、main checkout が空いていれば direct commit、使用中なら worktree と PR に切り替える。vibe delegate は `repo.direct_commit` に関わらず worktree と PR を使い、Armyknife の `--vibe` guard を通す。engine、model、reasoning effort はユーザーが明示した場合だけ launcher flag で渡す。Armyknife の `--agent`、`--child-launch`、`--worktree` は直接指定しない。
 
 呼び出し元の実効 vibe が起動時に有効なら、起動した子の継承資格は自動記録される。`--vibe` は継承を指定する flag ではない。継承の条件と既存セッションへの grant ルールは、`project-manager` skill の「vibe coding の開始を頼まれたら」を参照する。
 
