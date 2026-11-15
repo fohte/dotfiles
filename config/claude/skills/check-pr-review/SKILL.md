@@ -63,7 +63,7 @@ This pulls all review threads (and review bodies like "LGTM!") to a local Markdo
 9. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below). In `vibe_mode` with a parent session, draft these replies and resolutions in `threads.md` for the delegator; do not open the editor or publish them.
 10. Re-run from step 1 to verify all comments have been addressed (step 1's wait covers the post-push reviewer round-trip as well)
 
-    In `vibe_mode` with a parent session, repeat step 2 without `--force` after a code push; `reply pull` carries drafts and resolution checkboxes forward by thread ID. If the pull reports drafts it cannot carry forward, confirm those threads are resolved remotely before retrying with `--force`.
+    In `vibe_mode` with a parent session, repeat step 2 without `--force` after a code push; `reply pull` carries drafts and resolution checkboxes forward by thread ID. If the pull stops because a thread cannot be carried forward, confirm that thread was resolved or deleted remotely before retrying with `--force`. If reading or parsing `threads.md` fails, do not use `--force`; fix the file and retry.
 
 ## Reply and Resolve Threads
 
