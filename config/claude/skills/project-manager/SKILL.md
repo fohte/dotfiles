@@ -38,7 +38,7 @@ description: Run the current session as a project manager (PM) that never does h
 ユーザー向けの画面や見た目のデザインが必要な task は、対象 repo を担当する designs の designer セッションにも依頼する。技術設計を行う `--kind design` の handoff セッションとは別の役割であり、両方を並行して進めてよい。
 
 1. 対象を `designer <owner>/<repo>` として定め、`a agent peer list` から `work_type` が `designer` で `label` が完全一致するセッションを探す。designs の designer は repo ごとに独立したセッションで管理する。
-2. 見つかった場合は `a agent peer me | jq -r '.[0].session_id'` で依頼元 PM の session ID を取得し、`a agent peer notify --message "<依頼内容>" <session_id>` で依頼する。メッセージには tq task の番号と title、決めたいデザインの内容、依頼元 PM の session ID を含める。
+2. 見つかった designer の `session_id` を通知先に使う。`a agent peer me | jq -r '.[0].session_id'` で取得した依頼元 PM の session ID はメッセージ内に記載し、`a agent peer notify --message "<依頼内容>" <designer_session_id>` で依頼する。メッセージには tq task の番号と title、決めたいデザインの内容、依頼元 PM の session ID を含める。
 3. 見つからない場合は `a agent todo add` でユーザー向け todo を作る。detail に次の起動コマンドを `! ` 付きの code block で含め、owner と repo を対象に置き換える。
 
     ````bash
