@@ -293,6 +293,28 @@ rules:
       - allow: 'curl -s https://example.com'
       - allow: 'curl -s -X GET https://example.com'
 
+  # Calling the GitHub API without gh skips every `gh api` rule.
+  - deny: 'curl *'
+    when: "args.exists(a, a.matches('(?i)^(https?://)?([^/@]*@)?api[.]github[.]com[.]?([:/?]|$)')) || flags.exists(k, flags[k] != null && string(flags[k]).matches('(?i)^(https?://)?([^/@]*@)?api[.]github[.]com[.]?([:/?]|$)'))"
+    message: 'Use `gh api` for the GitHub API so its rules apply. Create or edit PRs with /create-pr skill.'
+    fix_suggestion: 'gh api -X GET repos/<owner>/<repo>/...'
+    tests:
+      - deny: 'curl https://api.github.com/repos/sample-org/sample-repo'
+      - deny: 'curl -s -d {} https://api.github.com/repos/sample-org/sample-repo/pulls'
+      - deny: 'curl -H "Authorization: Bearer $GITHUB_TOKEN" -d {} https://api.github.com/repos/sample-org/sample-repo/pulls'
+      - deny: 'curl --json {} https://api.github.com/repos/sample-org/sample-repo/pulls'
+      - deny: 'curl --request PATCH https://api.github.com/repos/sample-org/sample-repo/pulls/123 -d {}'
+      - deny: 'curl -X POST https://api.github.com/graphql -d {}'
+      - deny: 'curl HTTPS://API.GITHUB.COM/repos/sample-org/sample-repo'
+      - deny: 'curl api.github.com/repos/sample-org/sample-repo'
+      - deny: 'curl https://api.github.com:443/repos/sample-org/sample-repo'
+      - deny: 'curl --url https://api.github.com/repos/sample-org/sample-repo'
+      - deny: 'curl --url=https://api.github.com/repos/sample-org/sample-repo'
+      - deny: 'curl https://user@api.github.com/repos/sample-org/sample-repo'
+      - deny: 'curl https://api.github.com./repos/sample-org/sample-repo'
+      - allow: 'curl https://example.com/api.github.com'
+      - allow: 'curl https://raw.githubusercontent.com/sample-org/sample-repo/main/README.md'
+
   # Writes to a local dev server are safe regardless of HTTP method — data
   # only lands in whatever the user is running on localhost. curl treats any
   # bare (non-flag-value) argument as an additional request target, matched
