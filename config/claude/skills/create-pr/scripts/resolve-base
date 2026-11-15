@@ -93,24 +93,23 @@ elif [[ -n "$parent_branch" ]]; then
     fail "could not list open pull requests for parent branch $parent_branch"
   fi
   check_pr_list "$parent_prs"
-  parent_pr_count=$(jq 'length' <<< "$parent_prs")
+  matching_parent_prs=$(jq -c --arg branch "$parent_branch" --arg repository "$repository" '
+    [
+      .[]
+      | select(
+          (.number | type == "number")
+          and (.headRefName == $branch)
+          and (.headRepository.nameWithOwner == $repository)
+          and (.isCrossRepository == false)
+        )
+    ]
+  ' <<< "$parent_prs")
+  parent_pr_count=$(jq 'length' <<< "$matching_parent_prs")
   if ((parent_pr_count != 1)); then
     fail "expected exactly one open pull request for parent branch $parent_branch; found $parent_pr_count"
   fi
-  if ! parent_data=$(jq -cer --arg branch "$parent_branch" --arg repository "$repository" '
-    .[0]
-    | select(
-        (.number | type == "number")
-        and (.headRefName == $branch)
-        and (.headRepository.nameWithOwner == $repository)
-        and (.isCrossRepository == false)
-      )
-    | [.headRefName, (.number | tostring)]
-  ' <<< "$parent_prs"); then
-    fail "open pull request for parent branch $parent_branch is not from the current repository"
-  fi
-  stack_parent_branch=$(jq -r '.[0]' <<< "$parent_data")
-  stack_parent_pr_number=$(jq -r '.[1]' <<< "$parent_data")
+  stack_parent_branch=$(jq -r '.[0].headRefName' <<< "$matching_parent_prs")
+  stack_parent_pr_number=$(jq -r '.[0].number' <<< "$matching_parent_prs")
   base_branch=$stack_parent_branch
 else
   if ! git fetch origin; then
@@ -136,6 +135,12 @@ else
   if ! git check-ref-format --branch "$default_branch" > /dev/null; then
     fail "git main returned an invalid branch name: $default_branch"
   fi
+  if ! is_shallow_repository=$(git rev-parse --is-shallow-repository); then
+    fail 'could not determine whether the repository history is shallow'
+  fi
+  if [[ "$is_shallow_repository" != true && "$is_shallow_repository" != false ]]; then
+    fail 'git returned an invalid shallow-repository status'
+  fi
   default_ref="refs/remotes/origin/$default_branch"
   if ! git rev-parse --verify --quiet "$default_ref" > /dev/null; then
     fail "default branch ref origin/$default_branch is unavailable after fetch"
@@ -146,6 +151,9 @@ else
   candidate_commits=()
   pull_request_count=$(jq 'length' <<< "$pull_requests")
   for ((i = 0; i < pull_request_count; i++)); do
+    if [[ "$is_shallow_repository" == true ]]; then
+      continue
+    fi
     if ! head_branch=$(jq -er --argjson index "$i" '
       .[$index]
       | select(
