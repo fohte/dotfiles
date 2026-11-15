@@ -55,7 +55,7 @@ upstream がない場合、別の branch、または別 remote を指す場合�
 
 ## Base branch の解決
 
-`~/.agents/skills/create-pr/scripts/resolve-base` を実行し、必要な場合だけ `--parent-branch <branch>` を渡す。下段 PR の branch はユーザーまたは委任元が指定した場合だけ渡す。
+下段 PR の branch はユーザーまたは委任元が指定した場合だけ、`~/.agents/skills/create-pr/scripts/resolve-base --parent-branch <branch>` に渡す。それ以外は option なしで script を実行する。
 
 成功時は stdout の JSON から次の値を使う。判定を git / gh コマンドで組み直さない。
 
@@ -63,7 +63,7 @@ upstream がない場合、別の branch、または別 remote を指す場合�
 - `base_ref`: diff と crit review で使う `origin/<base_branch>`
 - `stack_parent_branch` / `stack_parent_pr_number`: 新しい PR を open PR に積む場合の branch と PR 番号。stack しない場合は両方 `null`
 
-script が非 0 で終了したら作業を止め、stderr の理由を報告する。`vibe_mode` では前提の誤りとして委任元に報告する。
+script が非 0 で終了したら作業を止め、stderr の理由を報告する。
 
 各 step では次の値を使う。
 

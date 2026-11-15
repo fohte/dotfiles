@@ -278,8 +278,10 @@ else
 fi
 
 base_ref="refs/remotes/origin/$base_branch"
-if ! git fetch origin "+refs/heads/$base_branch:$base_ref"; then
-  fail "could not fetch origin/$base_branch"
+if ! git rev-parse --verify --quiet "$base_ref" > /dev/null; then
+  if ! git fetch origin "+refs/heads/$base_branch:$base_ref"; then
+    fail "could not fetch origin/$base_branch"
+  fi
 fi
 if ! git rev-parse --verify --quiet "$base_ref" > /dev/null; then
   fail "origin/$base_branch is unavailable after fetch"
