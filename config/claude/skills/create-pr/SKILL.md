@@ -29,7 +29,6 @@ Apply every row below whose condition holds. The rows are independent of each ot
 | `vibe_mode` is true                              | Skip crit review, notify the delegator with the draft and wait for explicit approval before submitting with `--no-review`; report PR ready after CI passes or only `vrt` fails (Step 7). Keep self-review and CI monitoring. Even when `is_master_push_repo` is true, create a PR from the current branch and never push to the default branch. |
 | `english_output` is true                         | Translation to English is required. The reference covers it in Step 4; Step 5 requires a Japanese-free title and body.                                                                                                                                                                                                                          |
 | `english_output` is false                        | No translation happens.                                                                                                                                                                                                                                                                                                                         |
-| `repo.owner` is `fohte`                          | Skip Step 8.                                                                                                                                                                                                                                                                                                                                    |
 | `has_release_please` is `true`                   | Rule 1 uses Conventional Commits; otherwise `<scope>: <description>`. `scripts/render-rules` already applies it when it prints the rules.                                                                                                                                                                                                       |
 | `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.                                                                                                                                                                                                           |
 | ... and the template contains `Design decisions` | The rules include Rule 9; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                                                                                                                                                                                              |
@@ -239,8 +238,6 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 差し戻しを反映して再 submit した場合も、同じ条件で同じ形式で再報告する。
 
 ## 8. レビューコメントを確認して対応する
-
-`repo.owner` が `fohte` のときはこの Step を実行しない。
 
 **CI や bot のチェックが `pass` でもレビューコメントは付く。CI pass = レビュー指摘なし ではない。** submit 後は必ず `/check-pr-review` skill を実行し、CodeRabbit / Devin 等の自動レビューと人間のコメントを確認して対応する。
 

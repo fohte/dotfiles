@@ -14,13 +14,9 @@ Resolve these before anything else. Values come from the `## Repository facts` l
 Derived value:
 
 - `english_output`: true when `repo.visibility` is `PUBLIC` **and** `repo.language` is not `ja`, otherwise false. `repo.visibility: PUBLIC` alone does not make it true.
+- `vibe_mode`: resolve with `~/.agents/skills/delegate/references/vibe-policy.md`.
 
-Find the first row that matches and follow its action:
-
-| Condition               | Action                                                                                                                                                          |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `repo.owner` is `fohte` | **No-op.** fohte 個人リポジトリには自動レビュー bot も人間レビューも存在しない。以降は読まず、手順は一切実行せず、ユーザーに no-op である旨だけ伝えて終了する。 |
-| (otherwise)             | Continue below.                                                                                                                                                 |
+Use `vibe_mode` to select the review and reply procedure below. Resolve it independently of the repository owner because automated review availability can vary by repository.
 
 ## Usage
 
@@ -40,17 +36,17 @@ This pulls all review threads (and review bodies like "LGTM!") to a local Markdo
 ## Workflow
 
 1. **Wait for bot reviewers to finish before pulling**: Right after creating or pushing to a PR, automated reviewers (CodeRabbit, Devin, etc.) have not yet posted comments. Pulling immediately will return zero threads and miss feedback. Run `a ai review wait <pr>` in the background (`run_in_background: true`) and wait for the `<task-notification>` completion event before proceeding. Do NOT poll the output file or sleep — only the completion notification is allowed. Skip this wait only when the user is asking to re-check a PR that has been idle for some time (i.e., bot reviews already finished in a previous turn).
-    - **Immediate failure means no review was requested**: `a ai review wait` only waits for a review that has already started — it never triggers one (some bots need an explicit manual request and may be a paid/opt-in feature not worth invoking for a low-stakes PR). `"Review has not started yet"` is always an immediate failure (checked once, before any timeout-governed polling begins), so seeing it means no review was ever requested — retrying with a longer timeout will not change the outcome. Treat this as "no bot review is coming" and move straight to step 2, which will simply return 0 threads. A separate message, `"Timeout waiting for review after N seconds"`, means a review did start but never completed — only that one is worth a single retry with a longer timeout.
+    - `a ai review wait` waits for a review on the current PR head; it does not request one. It waits up to 30 seconds for a start signal before returning `Review has not started yet`. This means no start signal appeared during that window, not that the command failed immediately or that an earlier review does not exist. Retry once after this result. If it still has not started, continue to step 2 and pull existing threads; Devin may not review a later head. If a review started but did not finish and the command returns `Timeout waiting for review after N seconds`, retry once with a longer timeout. After the retry, continue to step 2 even if no review completed.
 2. Run `a gh pr-review reply pull <pr>` (use `--force` when overwriting prior local edits) and Read the resulting file
 3. **Evaluate each comment** with a **fix-by-default** mindset:
     - **Default action is to fix**: Assume review feedback is valid and should be addressed unless there is clear evidence otherwise
     - **"Won't fix" only for obvious false positives**: Only skip fixing when the reviewer's claim is factually incorrect (e.g., claims a version/API doesn't exist when it does, hallucinates non-existent issues, misreads the code logic)
-    - **When unsure, ask the user**: If you're uncertain whether a comment is valid or how to address it, ask the user rather than deciding "won't fix" on your own
+    - **When unsure, ask the user in the regular flow**: If you're uncertain whether a comment is valid or how to address it, ask the user rather than deciding "won't fix" on your own. In `vibe_mode`, draft the concern and evidence in `threads.md` for the delegator to review instead.
     - **Do NOT dismiss comments just because you disagree**: Reviewer suggestions about code style, safety, readability, or best practices should generally be followed even if the current code technically works
-    - **NEVER autonomously decide "won't fix"**: Even if you believe a comment is a false positive, you MUST ask the user first. Do not skip this step under any circumstances. This is the most common mistake — always err on the side of asking
+    - In the regular flow, never decide "won't fix" without the user's approval. In `vibe_mode`, do not ask the user; draft the reason and supporting evidence in `threads.md` for the delegator.
 4. **Bug reports require test-first fixing**: When a review comment points out a bug (incorrect behavior, edge case failure, race condition, etc.), you MUST first write a test that reproduces the bug before fixing it. This ensures the bug is real and the fix is correct. Only after the test fails as expected, apply the code fix and confirm the test passes
 5. Make necessary code changes based on the feedback
-6. **User confirmation for "won't fix"**: Before treating any comment as "won't fix", you MUST ask the user for confirmation. The user can only make a real decision when they can see the same evidence you used, so the explanation goes in the assistant message **before** the AskUserQuestion call — not crammed into option labels. Never autonomously decide "won't fix" without user approval.
+6. **Regular-flow confirmation for "won't fix"**: Before treating any comment as "won't fix", ask the user for confirmation. The user can only make a real decision when they can see the same evidence you used, so put the explanation in the assistant message **before** the AskUserQuestion call — not crammed into option labels. In `vibe_mode`, do not ask the user; put the rationale in `threads.md` for the delegator's review.
 
     For each "won't fix" candidate, write out these three elements as separate, labeled bullets in the message text:
     - **What the reviewer flagged**: the substance of the comment in plain language — what behavior, file, or line is being criticized, and what change the reviewer proposes
@@ -61,7 +57,7 @@ This pulls all review threads (and review bodies like "LGTM!") to a local Markdo
 
 7. For confirmed "won't fix" comments (approved by the user in step 6), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`)
 8. If code changes were made (steps 4-7), commit and push using the `/commit` skill, then `git push`
-9. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below)
+9. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below). In `vibe_mode`, draft these replies and resolutions in `threads.md` for the delegator; do not open the editor or publish them.
 10. Re-run from step 1 to verify all comments have been addressed (step 1's wait covers the post-push reviewer round-trip as well)
 
 ## Reply and Resolve Threads
@@ -109,15 +105,17 @@ Fixed in abc1234. Switched to using X as suggested.
 
 ### Step 2: Review the edited file
 
-Run `a gh pr-review reply review <pr-number>` **in background** (`run_in_background: true`) to open the threads file in terminal + Neovim for user review. This command blocks until the user closes the editor, so it will complete when the user finishes reviewing.
+In the regular flow, run `a gh pr-review reply review <pr-number>` **in background** (`run_in_background: true`) to open the threads file in terminal + Neovim for user review. This command blocks until the user closes the editor, so it will complete when the user finishes reviewing. In `vibe_mode`, skip the editor; the delegator reviews these drafts with the PR diff after receiving the PR-ready report.
 
-**STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved the draft, exit code 1 means not approved (user closed without approving), exit code 2 means the editor is already open, exit code 3 means the terminal emulator failed to launch within 10s (likely macOS is asleep). If not approved, ask the user what to change. If already open (exit code 2), inform the user that the editor is already open and they can reload the file in their editor (e.g., `:e` in Neovim). Do NOT retry the command. If the terminal failed to launch (exit code 3), no lock file is left behind — tell the user the terminal could not start (likely macOS asleep) and ask them to retry once it is available. Do NOT auto-retry; the same condition will fail again until the user resolves it. Exit code 4 means the review pane disappeared before the user finished (e.g. its process was killed externally); the user has not reviewed anything, so re-run `reply review` in background once, and if it exits with 4 again, report to the user instead of retrying.
+**In the regular flow, STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved the draft, exit code 1 means not approved (user closed without approving), exit code 2 means the editor is already open, exit code 3 means the terminal emulator failed to launch within 10s (likely macOS is asleep). If not approved, ask the user what to change. If already open (exit code 2), inform the user that the editor is already open and they can reload the file in their editor (e.g., `:e` in Neovim). Do NOT retry the command. If the terminal failed to launch (exit code 3), no lock file is left behind — tell the user the terminal could not start (likely macOS asleep) and ask them to retry once it is available. Do NOT auto-retry; the same condition will fail again until the user resolves it. Exit code 4 means the review pane disappeared before the user finished (e.g. its process was killed externally); the user has not reviewed anything, so re-run `reply review` in background once, and if it exits with 4 again, report to the user instead of retrying.
 
 **On exit, the command writes a unified diff of any user edits to stdout.** Read that diff directly to see what the user changed — do NOT re-Read the threads file to find the changes.
 
 **NEVER edit the `submit:` frontmatter field yourself.** The `submit: true` flag represents the human reviewer's approval of the drafted replies. It MUST only be set by the user via the `reply review` workflow (Step 2). Do not flip `submit: false` to `submit: true` to bypass the editor step, even if `push` fails with "File has been modified after approval". If approval is invalidated, re-run `reply review` and let the user re-approve — never edit the frontmatter to shortcut the flow.
 
 ### Step 3: Push replies and resolutions to GitHub
+
+In the regular flow, use the editor-approved drafts below. In `vibe_mode`, do not push replies here; keep fixed and "won't fix" replies in `threads.md` for the delegator to review and publish after the PR-ready report.
 
 ```bash
 a gh pr-review reply push <pr-number> [--dry-run] [--force]
