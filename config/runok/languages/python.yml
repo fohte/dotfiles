@@ -17,7 +17,7 @@ rules:
       - ask: 'python3 ~/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/nested/scripts/evil.py'
 
   - allow: 'python3|python <var:claude-skill-scripts>'
-    when: >-
+    when: &trusted_claude_skill_script >-
       size(args) > 0 &&
       !args[0].contains('..') &&
       !args[0].contains('//') &&
@@ -36,20 +36,7 @@ rules:
       - allow: 'python ~/.agents/skills/example-skill/bin/check.py'
 
   - allow: 'python3|python <var:claude-skill-scripts> *'
-    when: >-
-      size(args) > 0 &&
-      !args[0].contains('..') &&
-      !args[0].contains('//') &&
-      !args[0].matches('^~/.*/[.]/') &&
-      !args[0].matches('^/.*/[.]/') &&
-      (
-        (args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') &&
-          !args[0].matches('^~/[.]agents/skills/synced/')) ||
-        args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
-        (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
-          args[0].startsWith(env.HOME + '/.claude/plugins/cache/') &&
-          args[0].matches('^' + env.HOME + '/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/'))
-      )
+    when: *trusted_claude_skill_script
     tests:
       - allow: 'python3 ~/.agents/skills/example-skill/scripts/check.py run --stdin'
       - pass: 'python3 ~/.claude/skills/example-skill/scripts/check.py verify --final final.md'
@@ -58,8 +45,8 @@ rules:
       - allow: 'python3 ~/.claude/plugins/cache/example-marketplace/example-plugin/1.0.0/skills/example-skill/scripts/check.py run --stdin'
       - pass: 'python3 ~/.claude/skills/example-skill/scripts/check.py run --stdin --no-record'
 
-  # Rule matches do not take priority by order, so readonly steps aside for
-  # paths handled by the interpreter-specific skill-script rules above.
+  # Skip every path in the broader sandboxed set so this fallback cannot
+  # change the allow, ask, or pass outcome of the rules above.
   - allow: 'python3|python *'
     when: >-
       !(size(args) > 0 &&
