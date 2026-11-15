@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}"
+if [[ "$state_dir" != /* ]]; then
+  state_dir="$HOME/.local/state"
+fi
+
+state_dir="$state_dir/terminal-browser"
+mkdir -p "$state_dir"
+printf 'no\n' > "$state_dir/skills-choice"

@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fohte/runok/main/schema/runok.schema.json
+
+rules:
+  - deny: 'terminal-browser *'
+    message: "terminal-browser controls the user's browser and terminal. Agents must not invoke it; ask the user to open it through a human shortcut or `a agent crit open`."
+    tests:
+      - deny: 'terminal-browser'
+      - deny: 'terminal-browser open https://example.com'
+      - deny: 'terminal-browser ls'
+      - deny: 'sh -c "terminal-browser open https://example.com"'
+      - pass: 'a agent crit open'

@@ -28,6 +28,7 @@ extends:
   - './tools/pdf.yml'
   - './tools/srt.yml'
   - './tools/terraform.yml'
+  - './tools/terminal-browser.yml'
   - './tools/tq.yml'
   - './tools/watch-web.yml'
   - './tools/wrangler.yml'
