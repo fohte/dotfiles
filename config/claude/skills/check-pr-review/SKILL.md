@@ -18,6 +18,8 @@ Derived value:
 
 Use `vibe_mode` to select the review and reply procedure below. Resolve it independently of the repository owner because automated review availability can vary by repository.
 
+When `vibe_mode` is true, resolve the parent session ID with `a agent peer parent | jq -r '.[0].session_id // empty'`. Use the delegator-draft procedure only when this returns a session ID. If it is empty or the command fails, use the regular user-confirmation and editor procedure so drafted replies have an owner.
+
 ## Usage
 
 ```bash
@@ -39,7 +41,7 @@ This pulls all review threads (and review bodies like "LGTM!") to a local Markdo
     - `a ai review wait` waits for a review on the current PR head; it does not request one. It waits up to 30 seconds for a start signal before returning `Review has not started yet`. This means no start signal appeared during that window, not that the command failed immediately or that an earlier review does not exist. Retry once after this result. If it still has not started, continue to step 2 and pull existing threads; Devin may not review a later head. If a review started but did not finish and the command returns `Timeout waiting for review after N seconds`, retry once with a longer timeout. After the retry, continue to step 2 even if no review completed.
 2. Run `a gh pr-review reply pull <pr>` (use `--force` when overwriting prior local edits) and Read the resulting file
 3. **Evaluate each comment** with a **fix-by-default** mindset:
-    - In `vibe_mode`, skip the user-confirmation rules in steps 3 and 6 and draft the concern, evidence, and any "won't fix" rationale in `threads.md` for the delegator to review.
+    - In `vibe_mode` with a parent session, skip the user-confirmation rules in steps 3 and 6 and draft the concern, evidence, and any "won't fix" rationale in `threads.md` for the delegator to review.
     - **Default action is to fix**: Assume review feedback is valid and should be addressed unless there is clear evidence otherwise
     - **"Won't fix" only for obvious false positives**: Only skip fixing when the reviewer's claim is factually incorrect (e.g., claims a version/API doesn't exist when it does, hallucinates non-existent issues, misreads the code logic)
     - **When unsure, ask the user**: If you're uncertain whether a comment is valid or how to address it, ask the user rather than deciding "won't fix" on your own
@@ -56,10 +58,12 @@ This pulls all review threads (and review bodies like "LGTM!") to a local Markdo
 
     AskUserQuestion then offers the decision (fix / won't fix / something else). Option `description` fields stay short — they are not a substitute for the three-element explanation above. A one-line summary like "両方とも boilerplate-managed" is not enough; if the user has to ask "what was the comment about?" the message is too thin.
 
-7. For confirmed "won't fix" comments (approved by the user in step 6), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`). In `vibe_mode`, add the code comment alongside the thread draft and include both for the delegator to review.
+7. For confirmed "won't fix" comments (approved by the user in step 6), add a code comment near the relevant code explaining why the concern does not apply (e.g., `// executor_cmd is from the user's config file, not external input, so command injection is not a threat`). In `vibe_mode` with a parent session, add the code comment alongside the thread draft and include both for the delegator to review.
 8. If code changes were made (steps 4-7), commit and push using the `/commit` skill, then `git push`
-9. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below). In `vibe_mode`, draft these replies and resolutions in `threads.md` for the delegator; do not open the editor or publish them.
+9. **Reply to "won't fix" threads and resolve addressed threads** using `a gh pr-review reply` (see Reply and Resolve Threads below). In `vibe_mode` with a parent session, draft these replies and resolutions in `threads.md` for the delegator; do not open the editor or publish them.
 10. Re-run from step 1 to verify all comments have been addressed (step 1's wait covers the post-push reviewer round-trip as well)
+
+    In `vibe_mode` with a parent session, copy `threads.md` to a file created with `mktemp "$AGENT_TMPDIR/pr-review-threads.XXXXXX"` before repeating this step after a code push. Pull the latest threads with `--force`, then restore each saved reply and resolution checkbox to its matching unresolved thread ID before handling new comments. Discard a saved draft only if the refreshed thread is already resolved remotely.
 
 ## Reply and Resolve Threads
 
@@ -106,7 +110,7 @@ Fixed in abc1234. Switched to using X as suggested.
 
 ### Step 2: Review the edited file
 
-In the regular flow, run `a gh pr-review reply review <pr-number>` **in background** (`run_in_background: true`) to open the threads file in terminal + Neovim for user review. This command blocks until the user closes the editor, so it will complete when the user finishes reviewing. In `vibe_mode`, skip the editor; the delegator reviews these drafts with the PR diff after receiving the PR-ready report.
+In the regular flow, run `a gh pr-review reply review <pr-number>` **in background** (`run_in_background: true`) to open the threads file in terminal + Neovim for user review. This command blocks until the user closes the editor, so it will complete when the user finishes reviewing. In `vibe_mode` with a parent session, skip the editor; the delegator reviews these drafts with the PR diff after receiving the PR-ready report.
 
 **In the regular flow, STOP and wait for the background command to complete.** Do NOT proceed to push until the command finishes. When it completes, check the exit code: exit code 0 means the user approved the draft, exit code 1 means not approved (user closed without approving), exit code 2 means the editor is already open, exit code 3 means the terminal emulator failed to launch within 10s (likely macOS is asleep). If not approved, ask the user what to change. If already open (exit code 2), inform the user that the editor is already open and they can reload the file in their editor (e.g., `:e` in Neovim). Do NOT retry the command. If the terminal failed to launch (exit code 3), no lock file is left behind — tell the user the terminal could not start (likely macOS asleep) and ask them to retry once it is available. Do NOT auto-retry; the same condition will fail again until the user resolves it. Exit code 4 means the review pane disappeared before the user finished (e.g. its process was killed externally); the user has not reviewed anything, so re-run `reply review` in background once, and if it exits with 4 again, report to the user instead of retrying.
 
@@ -116,7 +120,7 @@ In the regular flow, run `a gh pr-review reply review <pr-number>` **in backgrou
 
 ### Step 3: Push replies and resolutions to GitHub
 
-In the regular flow, use the editor-approved drafts below. In `vibe_mode`, do not push replies here; keep fixed and "won't fix" replies in `threads.md` for the delegator to review and publish after the PR-ready report.
+In the regular flow, use the editor-approved drafts below. In `vibe_mode` with a parent session, do not push replies here; keep fixed and "won't fix" replies in `threads.md` for the delegator to review and publish after the PR-ready report.
 
 ```bash
 a gh pr-review reply push <pr-number> [--dry-run] [--force]
