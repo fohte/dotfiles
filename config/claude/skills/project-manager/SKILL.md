@@ -39,13 +39,13 @@ description: Run the current session as a project manager (PM) that never does h
 
 1. 対象を `designer <owner>/<repo>` として定め、`a agent peer list` から `work_type` が `designer` で `label` が完全一致するセッションを探す。designs の designer は repo ごとに独立したセッションで管理する。
 2. 見つかった designer の `session_id` を通知先に使う。`a agent peer me | jq -r '.[0].session_id'` で取得した依頼元 PM の session ID はメッセージ内に記載し、`a agent peer notify --message "<依頼内容>" <designer_session_id>` で依頼する。メッセージには tq task の番号と title、決めたいデザインの内容、依頼元 PM の session ID を含める。
-3. 見つからない場合は `a agent todo add` でユーザー向け todo を作る。detail に次の起動コマンドを `! ` 付きの code block で含め、owner と repo を対象に置き換える。
+3. 見つからない場合は `a agent todo add` でユーザー向け todo を作る。detail に次の起動コマンドを code block で含め、実行するコマンド行だけに `! ` を付けて owner と repo を対象に置き換える。
 
     ````bash
     cat <<'EOF' | a agent todo add
     {
       "title": "designer <owner>/<repo> を起動する",
-      "detail": "担当 designer セッションがありません。次を実行してください:\n\n! ```bash\n! cd ~/ghq/github.com/fohte/designs && claude \"/designer <owner>/<repo>\"\n! ```"
+      "detail": "担当 designer セッションがありません。次を実行してください:\n\n```bash\n! cd ~/ghq/github.com/fohte/designs && claude \"/designer <owner>/<repo>\"\n```"
     }
     EOF
     ````
