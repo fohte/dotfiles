@@ -52,6 +52,7 @@ seen_tq_checklist=false
 seen_engine=false
 seen_model=false
 seen_reasoning_effort=false
+original_args=("$@")
 
 while (($#)); do
   case "$1" in
@@ -159,6 +160,9 @@ fi
 if ! target_repo=$(cd "$target_repo" && git root -r); then
   fail "Could not resolve the target repository root."
 fi
+if ! target_repo=$(cd "$target_repo" && pwd -P); then
+  fail "Could not canonicalize the target repository root."
+fi
 
 direct_commit=false
 if configured_direct_commit=$(cd "$target_repo" && a config get repo.direct_commit); then
@@ -172,6 +176,106 @@ esac
 
 if [[ $direct_commit == true && ($seen_branch == true || $seen_from == true) ]]; then
   fail "--branch and --from require worktree mode, but repo.direct_commit is true."
+fi
+
+route_reason=
+lock_state=${DELEGATE_LAUNCH_LOCK_STATE:-}
+unset DELEGATE_LAUNCH_LOCK_STATE
+lock_held=false
+if [[ $direct_commit == true ]]; then
+  case "$lock_state" in
+    held)
+      if [[ -e /dev/fd/9 ]]; then
+        lock_held=true
+      else
+        direct_commit=false
+        route_reason='repository lock is unavailable'
+      fi
+      ;;
+    busy)
+      direct_commit=false
+      route_reason='another launcher holds the repository lock'
+      ;;
+    unavailable)
+      direct_commit=false
+      route_reason='repository lock is unavailable'
+      ;;
+    *)
+      state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/armyknife/delegate-direct-commit"
+      umask 077
+      if command -v perl > /dev/null 2>&1 && mkdir -p "$state_dir"; then
+        script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/$(basename "${BASH_SOURCE[0]}")"
+        exec perl -MDigest::SHA=sha256_hex -MFcntl=LOCK_EX,LOCK_NB,F_SETFD -MPOSIX=dup2 -e '
+          my ($state_dir, $repo, $script, @args) = @ARGV;
+          my $lock_path = "$state_dir/" . sha256_hex($repo) . ".lock";
+          my $state = "unavailable";
+
+          if (open(my $guard, ">>", $lock_path)) {
+            if (flock($guard, LOCK_EX | LOCK_NB)) {
+              my $fd = fileno($guard);
+              if (($fd == 9 || dup2($fd, 9) == 9) && defined(fcntl(9, F_SETFD, 0))) {
+                close($guard) if $fd != 9;
+                $state = "held";
+              }
+            } else {
+              $state = "busy";
+            }
+          }
+
+          $ENV{DELEGATE_LAUNCH_LOCK_STATE} = $state;
+          exec { $script } $script, @args or die "unable to restart delegate launcher: $!";
+        ' "$state_dir" "$target_repo" "$script_path" "${original_args[@]}"
+      fi
+
+      direct_commit=false
+      route_reason='repository lock is unavailable'
+      ;;
+  esac
+
+  if [[ $direct_commit == true ]]; then
+    if ! main_status=$(git -C "$target_repo" status --porcelain 9>&-); then
+      direct_commit=false
+      route_reason='main checkout status could not be checked'
+    elif [[ -n $main_status ]]; then
+      direct_commit=false
+      route_reason='main checkout has uncommitted changes'
+    elif ! peer_json=$(a agent peer list 9>&-); then
+      direct_commit=false
+      route_reason='active sessions could not be checked'
+    elif ! jq -e 'type == "array"' <<< "$peer_json" > /dev/null; then
+      direct_commit=false
+      route_reason='active sessions could not be checked'
+    elif jq -e --arg main "$target_repo" --arg caller "${ARMYKNIFE_SESSION_ID:-}" '
+          any(.[];
+        .cwd == $main and
+        .session_id != $caller and
+        (.work_type == "development" or .work_type == "dev" or .work_type == "debug-flow") and
+        .agent_status.kind != "done")
+    ' <<< "$peer_json" > /dev/null; then
+      direct_commit=false
+      route_reason='an active development session uses the main checkout'
+    else
+      route_reason='main checkout is free'
+      baseline_session_ids=$(jq -c '[.[] | .session_id // empty]' <<< "$peer_json")
+    fi
+  fi
+fi
+
+if [[ $dry_run == true ]]; then
+  if [[ $direct_commit == true ]]; then
+    printf 'Delegate route: direct commit (reason: %s).\n' "$route_reason" >&2
+  else
+    if [[ -z $route_reason ]]; then
+      if [[ $vibe == true ]]; then
+        route_reason='--vibe requires worktree mode'
+      else
+        route_reason='repo.direct_commit is false'
+      fi
+    fi
+    printf 'Delegate route: worktree (reason: %s).\n' "$route_reason" >&2
+  fi
+elif [[ -n $route_reason && $direct_commit == false && $vibe == false && $configured_direct_commit == true ]]; then
+  printf 'Main checkout is in use (%s); switching delegation to a worktree.\n' "$route_reason" >&2
 fi
 
 if [[ $direct_commit == false && $seen_branch == true ]] && ! git -C "$target_repo" check-ref-format --branch "$branch" > /dev/null 2>&1; then
@@ -210,6 +314,35 @@ if [[ $direct_commit == false ]]; then
   if [[ $seen_tq_checklist == true ]]; then
     export DELEGATE_TQ_CHECKLIST_ITEM_ID=$tq_checklist_item_id
   fi
+fi
+
+if [[ $direct_commit == true && $lock_held == true && $dry_run == false ]]; then
+  if a "${cmd[@]}" 9>&-; then
+    # Claude registers its session from a startup hook after the launcher returns.
+    for ((attempt = 0; attempt < 60; attempt++)); do
+      if peers_after_launch=$(a agent peer list 9>&-); then
+        if jq -e --arg main "$target_repo" --arg label "$label" --argjson existing "$baseline_session_ids" '
+          any(.[];
+            .session_id as $id |
+            .cwd == $main and
+            .label == $label and
+            .work_type == "development" and
+            (($existing | index($id)) == null))
+        ' <<< "$peers_after_launch" > /dev/null; then
+          exit 0
+        fi
+      fi
+      sleep 1
+    done
+    printf 'Timed out waiting for the launched session to appear; releasing the main-checkout lock.\n' >&2
+    exit 0
+  else
+    exit "$?"
+  fi
+fi
+
+if [[ $lock_held == true ]]; then
+  exec a "${cmd[@]}" 9>&-
 fi
 
 exec a "${cmd[@]}"

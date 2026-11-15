@@ -189,6 +189,13 @@ rules:
     message: 'This repo is pushed to directly on the default branch. Confirm before pushing.'
     tests:
       - allow: 'git -C /tmp push origin main'
+  # Delegated worktrees must publish through a PR, so prevent explicit
+  # refspecs and --all from updating the repo's default branch directly.
+  # Inline tests cannot set cwd; verify this path-specific rule from a worktree.
+  - deny: 'git [-C *] push *'
+    when: "(args.exists(a, a.matches('(^|:)(refs/heads/)?(main|master)$')) || has(flags.all)) && ((has(flags.C) && paths['master-push-repos'].exists(p, flags.C.startsWith(p + '/.worktrees/'))) || (!has(flags.C) && paths['master-push-repos'].exists(p, env.PWD.startsWith(p + '/.worktrees/'))))"
+    message: 'Blocked because delegated worktrees must not push directly to the default branch.'
+    fix_suggestion: 'Push the work branch and create a pull request.'
   # Same inline-test gap as the rule above. `env.PWD` is checked even when
   # `-C` is present because `commit -C <ref>` (reuse message) is also
   # captured as `flags.C`; this over-denies `git -C <elsewhere> ...` run from

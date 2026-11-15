@@ -13,13 +13,15 @@ Resolve the repository-fact values before anything else. Values come from the `#
 
 Resolve `vibe_mode` with `~/.agents/skills/delegate/references/vibe-policy.md` before selecting a row. Session status alone does not select the vibe commit procedure.
 
+For the master-push repo rows, resolve the current branch with `git branch --show-current` and `origin/HEAD` with `git symbolic-ref --quiet --short refs/remotes/origin/HEAD`. Treat the branch as the default branch when `origin/HEAD` cannot be resolved or points to `origin/<current branch>`.
+
 Find the first row that matches, read only the file it names, and follow it for the commit procedure and the review steps. Never read the other file: the two differ in when `self-review` runs and how many commits it produces.
 
-| Condition                       | Action                                     |
-| ------------------------------- | ------------------------------------------ |
-| `vibe_mode` is `true`           | Read `references/non-master-push-repo.md`. |
-| `is_master_push_repo` is `true` | Read `references/master-push-repo.md`.     |
-| (otherwise)                     | Read `references/non-master-push-repo.md`. |
+| Condition                                                                                             | Action                                     |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `vibe_mode` is `true`                                                                                 | Read `references/non-master-push-repo.md`. |
+| `is_master_push_repo` is `true` and the current branch is the default branch (or `origin/HEAD` fails) | Read `references/master-push-repo.md`.     |
+| (otherwise)                                                                                           | Read `references/non-master-push-repo.md`. |
 
 ## 絶対禁止事項
 
