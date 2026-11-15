@@ -1,0 +1,300 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat << 'EOF'
+Usage: resolve-base [--parent-branch <branch>]
+
+Resolve the base branch for the current pull request. Set --parent-branch only
+when the user or delegator explicitly names the lower pull request branch.
+Prints one JSON object on success.
+EOF
+}
+
+fail() {
+  printf 'Error: %s\n' "$1" >&2
+  exit 1
+}
+
+parent_branch=
+while (($#)); do
+  case "$1" in
+    --parent-branch)
+      if (($# < 2)) || [[ -z "$2" ]]; then
+        printf 'Error: --parent-branch requires a branch name\n' >&2
+        usage >&2
+        exit 2
+      fi
+      if [[ -n "$parent_branch" ]]; then
+        printf 'Error: --parent-branch may be specified only once\n' >&2
+        usage >&2
+        exit 2
+      fi
+      if ! git check-ref-format --branch "$2" > /dev/null; then
+        printf 'Error: invalid branch name: %s\n' "$2" >&2
+        exit 2
+      fi
+      parent_branch=$2
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Error: unknown argument: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+if ! current_branch=$(git branch --show-current); then
+  fail 'could not determine the current branch'
+fi
+if [[ -z "$current_branch" ]]; then
+  fail 'HEAD is detached; check out a branch before resolving the base'
+fi
+
+check_pr_list() {
+  if ! jq -e 'type == "array"' > /dev/null <<< "$1"; then
+    fail 'gh returned an invalid pull request list'
+  fi
+}
+
+current_prs=
+if ! current_prs=$(gh pr list --state open --head "$current_branch" --json number,baseRefName); then
+  fail "could not list open pull requests for branch $current_branch"
+fi
+check_pr_list "$current_prs"
+current_pr_count=$(jq 'length' <<< "$current_prs")
+
+base_branch=
+stack_parent_branch=
+stack_parent_pr_number=
+
+if ((current_pr_count > 1)); then
+  fail "multiple open pull requests found for branch $current_branch"
+elif ((current_pr_count == 1)); then
+  if ! base_branch=$(jq -er '.[0] | select((.number | type == "number") and (.baseRefName | type == "string" and length > 0)) | .baseRefName' <<< "$current_prs"); then
+    fail "open pull request for branch $current_branch has incomplete data"
+  fi
+  if ! git check-ref-format --branch "$base_branch" > /dev/null; then
+    fail "open pull request has an invalid base branch: $base_branch"
+  fi
+elif [[ -n "$parent_branch" ]]; then
+  if ! repository=$(gh repo view --json nameWithOwner --jq .nameWithOwner); then
+    fail 'could not determine the current repository'
+  fi
+  if [[ -z "$repository" ]]; then
+    fail 'gh returned an empty repository name'
+  fi
+  if ! parent_prs=$(gh pr list --state open --head "$parent_branch" --json number,headRefName,headRepository,isCrossRepository); then
+    fail "could not list open pull requests for parent branch $parent_branch"
+  fi
+  check_pr_list "$parent_prs"
+  matching_parent_prs=$(jq -c --arg branch "$parent_branch" --arg repository "$repository" '
+    [
+      .[]
+      | select(
+          (.number | type == "number")
+          and (.headRefName == $branch)
+          and (.headRepository.nameWithOwner == $repository)
+          and (.isCrossRepository == false)
+        )
+    ]
+  ' <<< "$parent_prs")
+  parent_pr_count=$(jq 'length' <<< "$matching_parent_prs")
+  if ((parent_pr_count != 1)); then
+    fail "expected exactly one open pull request for parent branch $parent_branch; found $parent_pr_count"
+  fi
+  stack_parent_branch=$(jq -r '.[0].headRefName' <<< "$matching_parent_prs")
+  stack_parent_pr_number=$(jq -r '.[0].number' <<< "$matching_parent_prs")
+  base_branch=$stack_parent_branch
+else
+  if ! git fetch origin; then
+    fail 'git fetch origin failed; cannot resolve the base branch safely'
+  fi
+  if ! repository=$(gh repo view --json nameWithOwner --jq .nameWithOwner); then
+    fail 'could not determine the current repository'
+  fi
+  if [[ -z "$repository" ]]; then
+    fail 'gh returned an empty repository name'
+  fi
+  if ! pull_requests=$(gh pr list --state open --limit 1000 --json number,headRefName,headRefOid,headRepository,isCrossRepository); then
+    fail 'could not list open pull requests; cannot resolve the base branch safely'
+  fi
+  check_pr_list "$pull_requests"
+
+  if ! default_branch=$(git main); then
+    fail 'could not determine the default branch with git main'
+  fi
+  if [[ -z "$default_branch" || "$default_branch" == *$'\n'* ]]; then
+    fail 'git main did not return exactly one default branch'
+  fi
+  if ! git check-ref-format --branch "$default_branch" > /dev/null; then
+    fail "git main returned an invalid branch name: $default_branch"
+  fi
+  if ! is_shallow_repository=$(git rev-parse --is-shallow-repository); then
+    fail 'could not determine whether the repository history is shallow'
+  fi
+  if [[ "$is_shallow_repository" != true && "$is_shallow_repository" != false ]]; then
+    fail 'git returned an invalid shallow-repository status'
+  fi
+  default_ref="refs/remotes/origin/$default_branch"
+  if ! git rev-parse --verify --quiet "$default_ref" > /dev/null; then
+    fail "default branch ref origin/$default_branch is unavailable after fetch"
+  fi
+
+  candidate_branches=()
+  candidate_numbers=()
+  candidate_commits=()
+  pull_request_count=$(jq 'length' <<< "$pull_requests")
+  for ((i = 0; i < pull_request_count; i++)); do
+    if [[ "$is_shallow_repository" == true ]]; then
+      continue
+    fi
+    if ! head_branch=$(jq -er --argjson index "$i" '
+      .[$index]
+      | select(
+          (.headRefName | type == "string" and length > 0)
+          and (.headRefOid | type == "string" and length > 0)
+          and (.number | type == "number")
+          and (.headRepository.nameWithOwner | type == "string")
+          and (.isCrossRepository | type == "boolean")
+        )
+      | .headRefName
+    ' <<< "$pull_requests"); then
+      continue
+    fi
+    if ! is_same_repository=$(jq -er --argjson index "$i" --arg repository "$repository" '
+      .[$index]
+      | (.headRepository.nameWithOwner == $repository) and (.isCrossRepository == false)
+    ' <<< "$pull_requests"); then
+      continue
+    fi
+    if [[ "$is_same_repository" != true ]]; then
+      continue
+    fi
+    if ! git check-ref-format --branch "$head_branch" > /dev/null; then
+      continue
+    fi
+    if ! head_sha=$(jq -er --argjson index "$i" '.[$index].headRefOid' <<< "$pull_requests"); then
+      continue
+    fi
+    if ! head_ref=$(git rev-parse --verify --quiet "refs/remotes/origin/$head_branch"); then
+      continue
+    fi
+    if [[ "$head_ref" != "$head_sha" ]]; then
+      continue
+    fi
+    if ! shared_commit=$(git merge-base HEAD "$head_ref"); then
+      continue
+    fi
+    if [[ -z "$shared_commit" ]]; then
+      continue
+    fi
+    if git merge-base --is-ancestor "$shared_commit" "$default_ref"; then
+      continue
+    else
+      ancestor_status=$?
+      if ((ancestor_status != 1)); then
+        continue
+      fi
+    fi
+
+    candidate_branches+=("$head_branch")
+    candidate_numbers+=("$(jq -r --argjson index "$i" '.[$index].number' <<< "$pull_requests")")
+    candidate_commits+=("$shared_commit")
+  done
+
+  candidate_count=${#candidate_branches[@]}
+  if ((candidate_count == 1)); then
+    winner=0
+  elif ((candidate_count == 0)); then
+    base_branch=$default_branch
+    winner=-1
+  else
+    winner=0
+    for ((i = 1; i < candidate_count; i++)); do
+      if git merge-base --is-ancestor "${candidate_commits[winner]}" "${candidate_commits[i]}"; then
+        winner=$i
+      else
+        ancestor_status=$?
+        if ((ancestor_status != 1)); then
+          fail 'could not compare shared commits for open pull requests'
+        fi
+        if git merge-base --is-ancestor "${candidate_commits[i]}" "${candidate_commits[winner]}"; then
+          :
+        else
+          ancestor_status=$?
+          if ((ancestor_status != 1)); then
+            fail 'could not compare shared commits for open pull requests'
+          fi
+          winner=$i
+        fi
+      fi
+    done
+
+    winner_count=0
+    winner_commit=${candidate_commits[winner]}
+    for ((i = 0; i < candidate_count; i++)); do
+      if [[ "${candidate_commits[i]}" == "$winner_commit" ]]; then
+        ((winner_count += 1))
+        continue
+      fi
+      if git merge-base --is-ancestor "${candidate_commits[i]}" "$winner_commit"; then
+        continue
+      else
+        ancestor_status=$?
+        if ((ancestor_status != 1)); then
+          fail 'could not compare shared commits for open pull requests'
+        fi
+        printf 'Error: open pull requests contain multiple unrelated stack candidates:\n' >&2
+        for ((j = 0; j < candidate_count; j++)); do
+          printf '  %s (PR %s)\n' "${candidate_branches[j]}" "${candidate_numbers[j]}" >&2
+        done
+        printf 'Specify --parent-branch with the intended lower branch.\n' >&2
+        exit 1
+      fi
+    done
+    if ((winner_count != 1)); then
+      printf 'Error: multiple pull requests share the newest stack commit:\n' >&2
+      for ((i = 0; i < candidate_count; i++)); do
+        if [[ "${candidate_commits[i]}" == "$winner_commit" ]]; then
+          printf '  %s (PR %s)\n' "${candidate_branches[i]}" "${candidate_numbers[i]}" >&2
+        fi
+      done
+      printf 'Specify --parent-branch with the intended lower branch.\n' >&2
+      exit 1
+    fi
+  fi
+
+  if ((winner >= 0)); then
+    base_branch=${candidate_branches[winner]}
+    stack_parent_branch=$base_branch
+    stack_parent_pr_number=${candidate_numbers[winner]}
+  fi
+fi
+
+base_ref="refs/remotes/origin/$base_branch"
+if ! git rev-parse --verify --quiet "$base_ref" > /dev/null; then
+  if ! git fetch origin "+refs/heads/$base_branch:$base_ref"; then
+    fail "could not fetch origin/$base_branch"
+  fi
+fi
+if ! git rev-parse --verify --quiet "$base_ref" > /dev/null; then
+  fail "origin/$base_branch is unavailable after fetch"
+fi
+
+jq -cn \
+  --arg base_branch "$base_branch" \
+  --arg base_ref "origin/$base_branch" \
+  --arg stack_parent_branch "$stack_parent_branch" \
+  --arg stack_parent_pr_number "$stack_parent_pr_number" \
+  '{
+    base_branch: $base_branch,
+    base_ref: $base_ref,
+    stack_parent_branch: (if $stack_parent_branch == "" then null else $stack_parent_branch end),
+    stack_parent_pr_number: (if $stack_parent_pr_number == "" then null else ($stack_parent_pr_number | tonumber) end)
+  }'
