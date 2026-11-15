@@ -30,7 +30,11 @@ case "$tool_name" in
     ;;
   EnterWorktree)
     # EnterWorktree is "Permission Required: No" so permissions.deny does not
-    # apply. Worktree creation must go through the /delegate skill.
+    # apply. Other sessions must use the /delegate skill.
+    agent_id=$(echo "$input" | jq -r '.agent_id // empty')
+    if [ "$ARMYKNIFE_SESSION_WORK_TYPE" = "designer" ] && [ -z "$agent_id" ]; then
+      exit 0
+    fi
     jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "EnterWorktree is disabled. Use the delegate skill to spawn work in a worktree."}}'
     exit 0
     ;;
