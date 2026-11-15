@@ -456,70 +456,60 @@ rules:
     tests:
       - allow: 'na dedupe'
 
-  # Skill-bundled tools (e.g. archify) stage output through mkdtemp in $TMPDIR,
-  # which `readonly` below rejects. A local server still cannot bind, so
-  # `archify preview` fails here. If the user asks to see the output, use
-  # `crit preview <file>`.
-  # The glob spans `/`, so absolute paths need one skill level under a safe HOME root.
-  - allow: 'node <var:sandboxed-skill-scripts> *'
-    when: >-
+  # Keep interpreter-launched skill scripts within the same trust boundaries as
+  # direct and bash execution.
+  - ask: 'node <var:untrusted-claude-skill-scripts> *'
+    tests:
+      - ask: 'node ~/.agents/skills/x/../../tmp/scripts/evil.js in.md'
+      - ask: 'node ~/.agents/skills/self-review/./scripts/evil.js'
+      - ask: 'node ~/.agents/skills/self-review//scripts/evil.js'
+      - ask: 'node ~/.claude/plugins/cache/market/plugin/1.0.0/skills/sample/nested/scripts/evil.js'
+
+  - allow: 'node <var:claude-skill-scripts>'
+    when: &trusted_claude_skill_script >-
       size(args) > 0 &&
       !args[0].contains('..') &&
+      !args[0].contains('//') &&
+      !args[0].matches('^~/.*/[.]/') &&
+      !args[0].matches('^/.*/[.]/') &&
       (
-        args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') ||
-        args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') ||
+        (args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') &&
+          !args[0].matches('^~/[.]agents/skills/synced/')) ||
         args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
-        (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
-          args[0].startsWith(env.HOME + '/.agents/skills/') &&
-          args[0].matches('^' + env.HOME + '/[.]agents/skills/[^/]+/(scripts|bin)/')) ||
-        (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
-          args[0].startsWith(env.HOME + '/.claude/skills/') &&
-          args[0].matches('^' + env.HOME + '/[.]claude/skills/[^/]+/(scripts|bin)/')) ||
         (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
           args[0].startsWith(env.HOME + '/.claude/plugins/cache/') &&
           args[0].matches('^' + env.HOME + '/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/'))
       )
-    sandbox: write-tmp-cwd
+    tests:
+      - allow: 'node ~/.agents/skills/example-skill/scripts/check.mjs'
+      - allow: 'node ~/.claude/plugins/cache/example-marketplace/example-plugin/1.0.0/skills/example-skill/scripts/check.cjs'
+
+  - allow: 'node <var:claude-skill-scripts> *'
+    when: *trusted_claude_skill_script
     tests:
       - allow: 'node ~/.agents/skills/archify/bin/archify.mjs validate architecture /tmp/spec.json --json'
-      - allow: 'node ~/.claude/skills/example-skill/scripts/build.cjs in.md out.md'
-      - allow: 'node ~/.claude/skills/example-skill/bin/check.mjs --help'
+      - pass: 'node ~/.claude/skills/example-skill/scripts/build.cjs in.md out.md'
+      - pass: 'node ~/.claude/skills/example-skill/bin/check.mjs inspect sample'
       - allow: 'node ~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/build.cjs in.md out.md'
-      - allow: 'node ~/.claude/skills/example-skill/scripts/check.js --stdin'
       - allow: 'node ~/.agents/skills/example-skill/scripts/check.mjs --help'
 
-  # Rule matches do not take priority by order, so readonly steps aside only
-  # for direct skill-script paths accepted by the sandboxed variable.
+  # Skip every path in the broader sandboxed set so this fallback cannot
+  # change the allow, ask, or pass outcome of the rules above.
   - allow: 'node *'
     when: >-
       !(size(args) > 0 &&
-        definitions.vars["sandboxed-skill-scripts"].exists(p, glob_matches(p, args[0])) &&
-        !args[0].contains('..') &&
-        (
-          args[0].matches('^~/[.]agents/skills/[^/]+/(scripts|bin)/') ||
-          args[0].matches('^~/[.]claude/skills/[^/]+/(scripts|bin)/') ||
-          args[0].matches('^~/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/') ||
-          (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
-            args[0].startsWith(env.HOME + '/.agents/skills/') &&
-            args[0].matches('^' + env.HOME + '/[.]agents/skills/[^/]+/(scripts|bin)/')) ||
-          (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
-            args[0].startsWith(env.HOME + '/.claude/skills/') &&
-            args[0].matches('^' + env.HOME + '/[.]claude/skills/[^/]+/(scripts|bin)/')) ||
-          (env.HOME.matches('^/[A-Za-z0-9._ /-]+$') &&
-            args[0].startsWith(env.HOME + '/.claude/plugins/cache/') &&
-            args[0].matches('^' + env.HOME + '/[.]claude/plugins/cache/[^/]+/[^/]+/[^/]+/skills/[^/]+/(scripts|bin)/'))
-        ))
+        definitions.vars["sandboxed-skill-scripts"].exists(p, glob_matches(p, args[0])))
     sandbox: readonly
     tests:
       - allow: 'node -e "console.log(1)"'
       - allow: 'node lint.mjs ~/.agents/skills/archify/SKILL.md'
-      - allow: 'node /Users/foo/repo/.claude/skills/example-skill/scripts/build.cjs in.md out.md'
-      - allow: 'node ~/.claude/skills/synced/b/s/scripts/build.cjs in.md out.md'
-      - allow: 'node ~/.claude/skills/./synced/b/scripts/build.cjs in.md out.md'
-      - allow: 'node ~/.claude/skills//synced/scripts/build.cjs in.md out.md'
-      - allow: 'node ~/.agents/skills/x/../../../tmp/scripts/evil.js in.md out.md'
-      - allow: 'node ~/.agents/skills/../scripts/evil.js'
-      - allow: 'node ~/.claude/skills/../bin/evil.js'
+      - pass: 'node /Users/example/repo/.claude/skills/example-skill/scripts/build.cjs in.md out.md'
+      - pass: 'node ~/.claude/skills/synced/b/s/scripts/build.cjs in.md out.md'
+      - pass: 'node ~/.claude/skills/./synced/b/scripts/build.cjs in.md out.md'
+      - pass: 'node ~/.claude/skills//synced/scripts/build.cjs in.md out.md'
+      - ask: 'node ~/.agents/skills/x/../../../tmp/scripts/evil.js in.md out.md'
+      - ask: 'node ~/.agents/skills/../scripts/evil.js'
+      - pass: 'node ~/.claude/skills/../bin/evil.js'
       - pass: 'node --check ~/.agents/skills/example-skill/scripts/check.js'
       - pass: 'node --test ~/.claude/skills/example-skill/scripts/check.js'
 
