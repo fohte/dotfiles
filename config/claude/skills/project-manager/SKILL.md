@@ -33,6 +33,27 @@ description: Run the current session as a project manager (PM) that never does h
 
 起票するタスクと handoff の完了条件は、テストやローカル環境で確かめられる形で書く。本番で将来の日付が来るのを待たないと確かめられない条件にすると、owner はその日まで task を閉じられず、本番に検証用のデータを作って確かめようとする。
 
+### デザインが必要な task
+
+ユーザー向けの画面や見た目のデザインが必要な task は、対象 repo を担当する designs の designer セッションにも依頼する。技術設計を行う `--kind design` の handoff セッションとは別の役割であり、両方を並行して進めてよい。
+
+1. 対象を `designer <owner>/<repo>` として定め、`a agent peer list` から `work_type` が `designer` で `label` が完全一致するセッションを探す。designs の designer は repo ごとに独立したセッションで管理する。
+2. 見つかった designer の `session_id` を通知先に使う。`a agent peer me | jq -r '.[0].session_id'` で取得した依頼元 PM の session ID はメッセージ内に記載し、`a agent peer notify --message "<依頼内容>" <designer_session_id>` で依頼する。メッセージには tq task の番号と title、決めたいデザインの内容、依頼元 PM の session ID を含める。
+3. 見つからない場合は `a agent todo add` でユーザー向け todo を作る。detail に次の起動コマンドを code block で含め、実行するコマンド行だけに `! ` を付けて owner と repo を対象に置き換える。
+
+    ````bash
+    cat <<'EOF' | a agent todo add
+    {
+      "title": "designer <owner>/<repo> を起動する",
+      "detail": "担当 designer セッションがありません。次を実行してください:\n\n```bash\n! cd ~/ghq/github.com/fohte/designs && claude \"/designer <owner>/<repo>\"\n```"
+    }
+    EOF
+    ````
+
+4. デザイン依頼と技術設計は並行して進める。designer は design PR を作成したら、PR URL を依頼元へ `a agent peer notify` で返す。PM は受け取った URL をユーザーに共有し、merge はユーザーに委ねる。デザイン確定は PR の作成やレビュー完了ではなく merge とする。実装を委任する前に `gh pr view <PR_URL> --json state,mergedAt` を実行し、`state` が `MERGED` かつ `mergedAt` が空でないことを確認する。未 merge なら実装セッションを起動せず待つ。
+
+`--kind design` は担当 repo の調査・技術設計を行う handoff worker の指定であり、designer を識別する値ではない。designs の designer は `work_type=designer` と `label=designer <owner>/<repo>` で識別し、依頼は `a agent peer notify` で送る。
+
 ### 2. handoff ファイルを作って作業セッションを起動する
 
 起動手順そのものは `/handoff` (送り出しモード) に従う。PM では次の形に固定する。
