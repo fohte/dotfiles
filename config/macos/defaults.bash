@@ -128,6 +128,11 @@ apply com.apple.finder FXRemoveOldTrashItems -bool true
 # Dark mode
 apply NSGlobalDomain AppleInterfaceStyle -string Dark
 
+# -- Menu Bar --
+
+# Hide the Spotlight icon (Spotlight stores its menu bar state under com.apple.campo, not com.apple.Spotlight)
+apply com.apple.campo "NSStatusItem VisibleCC Item-0" -bool false
+
 # -- Restart changed apps --
 
 if [[ ${#changed_apps[@]} -gt 0 ]]; then
