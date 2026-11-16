@@ -39,13 +39,13 @@ description: Run the current session as a project manager (PM) that never does h
 
 1. 対象を `designer <owner>/<repo>` として定め、`a agent peer list` から `work_type` が `designer` で `label` が完全一致するセッションを探す。designs の designer は repo ごとに独立したセッションで管理する。
 2. 見つかった designer の `session_id` を通知先に使う。`a agent peer me | jq -r '.[0].session_id'` で取得した依頼元 PM の session ID はメッセージ内に記載し、`a agent peer notify --message "<依頼内容>" <designer_session_id>` で依頼する。メッセージには tq task の番号と title、決めたいデザインの内容、依頼元 PM の session ID を含める。
-3. 見つからない場合は `a agent todo add` でユーザー向け todo を作る。detail に次の起動コマンドを code block で含め、実行するコマンド行だけに `! ` を付けて owner、repo、task の番号と title、デザイン依頼を対象に置き換える。新しい designer が PM に直接通知できるよう、PM の session ID を `--parent-session-id` に渡し、task 情報と PM の session ID を初回 prompt に含める。
+3. 見つからない場合は `a agent todo add` でユーザー向け todo を作る。detail に次の起動コマンドを code block で含め、実行するコマンド行だけに `! ` を付けて owner と repo を対象に置き換える。
 
     ````bash
     cat <<'EOF' | a agent todo add
     {
       "title": "designer <owner>/<repo> を起動する",
-      "detail": "担当 designer セッションがありません。次を実行してください:\n\n```bash\n! pm_session_id=$(a agent peer me | jq -r '.[0].session_id') && a agent new --repo ~/ghq/github.com/fohte/designs --kind designer --label \"designer <owner>/<repo>\" --parent-session-id \"$pm_session_id\" --prompt \"/designer <owner>/<repo>. tq task <task number>: <title>. Design request: <design request>. Requesting PM session ID: $pm_session_id. Notify this PM when the design PR is created and again after it is merged.\"\n```"
+      "detail": "担当 designer セッションがありません。次を実行してください:\n\n```bash\n! cd ~/ghq/github.com/fohte/designs && claude \"/designer <owner>/<repo>\"\n```"
     }
     EOF
     ````
