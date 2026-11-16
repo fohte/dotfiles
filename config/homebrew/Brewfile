@@ -158,7 +158,8 @@ cask 'slack'
 # Tool for powerful automation of macOS
 cask 'hammerspoon'
 # Powerful menu bar manager
-cask 'thaw'
+# Stable thaw lacks macOS 27 support; revert to cask 'thaw' once a stable release supports it
+cask 'thaw@beta'
 # System monitor for the menu bar
 cask 'stats'
 # Spotify and iTunes in the menu bar

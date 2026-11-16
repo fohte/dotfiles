@@ -194,7 +194,7 @@ definitions:
 rules:
   # Direct command paths aren't available in `when`, so malformed spellings
   # need a more-specific decision than the broad allow patterns. Keep an
-  # explicit ask for bash too: a false `when` cannot preserve delegate asks.
+  # explicit ask for bash too: a false `when` only makes the bash allow pass.
   - ask: '<var:untrusted-claude-skill-scripts> *'
     tests:
       - ask: '~/.agents/skills/x/../../tmp/scripts/evil.sh'
@@ -257,6 +257,7 @@ rules:
     tests:
       - allow: 'bash ~/.agents/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
       - allow: 'bash ~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
+      - allow: 'bash ~/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
       - pass: 'bash /tmp/.claude/plugins/cache/mk/pl/1.0.0/skills/sk/scripts/e.sh arg'
       - pass: 'bash ~/.claude/skills/delegate/scripts/launch --task task.yaml --label example'
       - pass: 'bash ~/.claude/skills/synced/example-skill/scripts/check.cjs'
@@ -279,27 +280,10 @@ rules:
     tests:
       - allow: '~/.agents/skills/self-review/scripts/run-external-reviewers /tmp/manifest.json'
       - allow: '~/.claude/plugins/cache/some-marketplace/some-plugin/1.0.0/skills/some-skill/scripts/check.cjs out.md'
+      - allow: '~/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
       - pass: '~/.claude/skills/delegate/scripts/launch --task task.yaml --label example'
       - pass: '~/.claude/skills/synced/example-skill/scripts/check.cjs'
       - pass: '$HOME/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
-
-  - ask: '~/.agents/skills/delegate/scripts/launch *'
-    when: '!has(flags.vibe) && !("dry-run" in flags) && !has(flags.help) && !has(flags.h)'
-    tests:
-      - ask: '~/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
-      - allow: '~/.agents/skills/delegate/scripts/launch --vibe --task task.yaml --label example'
-      - allow: '~/.agents/skills/delegate/scripts/launch --task task.yaml --label example --dry-run'
-      - allow: '~/.agents/skills/delegate/scripts/launch --help'
-      - allow: '~/.agents/skills/delegate/scripts/launch -h'
-
-  - ask: 'bash ~/.agents/skills/delegate/scripts/launch *'
-    when: '!has(flags.vibe) && !("dry-run" in flags) && !has(flags.help) && !has(flags.h)'
-    tests:
-      - ask: 'bash ~/.agents/skills/delegate/scripts/launch --task task.yaml --label example'
-      - allow: 'bash ~/.agents/skills/delegate/scripts/launch --vibe --task task.yaml --label example'
-      - allow: 'bash ~/.agents/skills/delegate/scripts/launch --task task.yaml --label example --dry-run'
-      - allow: 'bash ~/.agents/skills/delegate/scripts/launch --help'
-      - allow: 'bash ~/.agents/skills/delegate/scripts/launch -h'
 
   - allow: '~/.agents/skills/handoff/scripts/launch *'
     tests:

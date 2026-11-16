@@ -4,7 +4,7 @@
 
 ## コミット手順
 
-このリポジトリは default branch に直接 push する運用であり (`master-push-repos`)、コミットが squash merge で畳まれることがない。
+このリポジトリは default branch に直接 push する運用であり、コミットが squash merge で畳まれることがない。
 実装完了後すぐにコミットすると、self-review 対応が別コミットとして分かれてしまう。
 そのため、実装から self-review 対応までを 1 コミットにまとめる。
 コミットは手順の最後に 1 回だけ行い、レビューはその前 (ステージング後、コミット前) に実行する。
@@ -110,7 +110,7 @@ git diff origin/master..HEAD
 **この時点ではまだコミットしない**。
 全ての 🔴 Critical / 🟡 Warning への対応が完了したら、まとめて 1 コミットを作成してから push に進む (指摘が 1 件もなければコミットを作らずそのまま push する)。
 
-このリポジトリは default branch に直接 push する運用であり (`master-push-repos`)、PR の squash merge によって履歴が畳まれることがない。
+このリポジトリは default branch に直接 push する運用であり、PR の squash merge によって履歴が畳まれることがない。
 指摘のたびに修正コミットを追加すると、self-review 起因の細かい修正コミットがそのまま直線的な履歴に残り続けてしまう。
 そのため、1 回の push 前レビューで見つかった全指摘への対応は、指摘同士が独立した変更に見える場合であっても 1 コミットにまとめる。
 

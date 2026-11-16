@@ -50,6 +50,9 @@ agent:
     design:
       icon: "\uEA91" # nf-cod-symbol_structure
       color: [215, 175, 255] # purple (#D7AFFF)
+    designer:
+      icon: "\U000F03D8" # nf-md-palette
+      color: [255, 175, 95] # orange (#FFAF5F)
     research:
       icon: "\uEA6D" # nf-cod-search
       color: [95, 175, 215] # blue (#5FAFD7)

@@ -3,11 +3,11 @@
 #
 # .role file format (single line, at the repository root):
 #   private
-#   private repo=fohte/dotfiles-private
+#   private repo=fohte/example-private-settings
 #   work repo=fohte/example-work-settings
 #
 # Overlay resolution:
-#   private  -> ~/ghq/github.com/<repo>/config-overlays/<tool>/<file>
+#   private  -> ~/ghq/github.com/<repo>/config-overlays/<tool>/<file> (none without repo=)
 #   work     -> ~/ghq/github.com/<repo>/config-overlays/<tool>/<file>
 
 set -euo pipefail
@@ -25,7 +25,6 @@ DOTFILES_DIR="$(cd -P "$_bin_dir/../.." && pwd)"
 unset _src _dir _bin_dir
 
 ROLE_FILE="$DOTFILES_DIR/.role"
-DEFAULT_PRIVATE_ROLE_REPO="fohte/dotfiles-private"
 
 usage() {
   cat << EOS
@@ -38,7 +37,7 @@ Subcommands:
 
 Examples:
     dot role set private
-    dot role set private repo=fohte/dotfiles-private
+    dot role set private repo=fohte/example-private-settings
     dot role set work repo=fohte/example-work-settings
     dot role get
     dot role get repo
@@ -76,9 +75,7 @@ load_role() {
   done
 
   case "$ROLE_NAME" in
-    private)
-      ROLE_REPO="${ROLE_REPO:-$DEFAULT_PRIVATE_ROLE_REPO}"
-      ;;
+    private) ;;
     work)
       if [ -z "$ROLE_REPO" ]; then
         echo "error: 'work' role requires repo=<owner>/<name>" >&2
@@ -138,14 +135,13 @@ cmd_set() {
 
   case "$name" in
     private)
-      local private_repo="${repo:-$DEFAULT_PRIVATE_ROLE_REPO}"
       if [ -n "$repo" ]; then
         echo "private repo=$repo" > "$ROLE_FILE"
+        if [ ! -d "$HOME/ghq/github.com/$repo" ]; then
+          echo "warning: private role repository is unavailable at $HOME/ghq/github.com/$repo; using base and local configuration only" >&2
+        fi
       else
         echo "private" > "$ROLE_FILE"
-      fi
-      if [ ! -d "$HOME/ghq/github.com/$private_repo" ]; then
-        echo "warning: private role repository is unavailable at $HOME/ghq/github.com/$private_repo; using base and local configuration only" >&2
       fi
       ;;
     work)
@@ -190,6 +186,11 @@ cmd_overlay() {
   local overlay
   case "$ROLE_NAME" in
     private)
+      # Without this check an empty repo resolves to ~/ghq/github.com/, which always exists.
+      if [ -z "$ROLE_REPO" ]; then
+        echo "warning: private role has no repository (set one with: dot role set private repo=<owner>/<name>); using base and local configuration only" >&2
+        return 1
+      fi
       local role_repo_dir="$HOME/ghq/github.com/$ROLE_REPO"
       if [ ! -d "$role_repo_dir" ]; then
         echo "warning: private role repository is unavailable at $role_repo_dir; using base and local configuration only" >&2

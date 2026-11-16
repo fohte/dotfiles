@@ -9,5 +9,7 @@ _agent_session_id=${CODEX_THREAD_ID:-$CLAUDE_CODE_SESSION_ID}
 if [[ -n $_agent_session_id ]]; then
   export AGENT_TMPDIR=/tmp/agent-$_agent_session_id
   [[ -d $AGENT_TMPDIR ]] || mkdir -p -m 700 "$AGENT_TMPDIR"
+  # Check records contain full text copies, so keep them outside the repository.
+  export YOMIYASU_STATE_DIR=$AGENT_TMPDIR/yomiyasu
 fi
 unset _agent_session_id

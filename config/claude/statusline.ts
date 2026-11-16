@@ -180,6 +180,19 @@ function formatRateLimit(
   return `${label}: ${color}${pct}%\x1b[0m${remaining}${pace}`
 }
 
+function recordUsage(input: string): void {
+  try {
+    const subprocess = Bun.spawn(['a', 'agent', 'usage', 'record'], {
+      stdin: new Blob([input]),
+      stdout: 'ignore',
+      stderr: 'ignore',
+    })
+    subprocess.unref()
+  } catch {
+    // Keep status-line output independent of `a` availability.
+  }
+}
+
 async function main() {
   const input = await Bun.stdin.text()
   const data: SessionData = JSON.parse(input)
@@ -244,6 +257,7 @@ async function main() {
   }
 
   process.stdout.write(parts.join(' | '))
+  recordUsage(input)
 
   if (role === 'private' && data.session_id && data.rate_limits) {
     const stateDir = getRateLimitStateDir()

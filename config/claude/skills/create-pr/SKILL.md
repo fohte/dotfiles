@@ -24,15 +24,14 @@ Read `references/draft-manual.md` before starting Step 1. It covers Steps 1, 2 a
 
 Apply every row below whose condition holds. The rows are independent of each other.
 
-| Condition                                        | Effect                                                                                                                                                                                                                                                                                                                                          |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vibe_mode` is true                              | Skip crit review, notify the delegator with the draft and wait for explicit approval before submitting with `--no-review`; report PR ready after CI passes or only `vrt` fails (Step 7). Keep self-review and CI monitoring. Even when `is_master_push_repo` is true, create a PR from the current branch and never push to the default branch. |
-| `english_output` is true                         | Translation to English is required. The reference covers it in Step 4; Step 5 requires a Japanese-free title and body.                                                                                                                                                                                                                          |
-| `english_output` is false                        | No translation happens.                                                                                                                                                                                                                                                                                                                         |
-| `repo.owner` is `fohte`                          | Skip Step 8.                                                                                                                                                                                                                                                                                                                                    |
-| `has_release_please` is `true`                   | Rule 1 uses Conventional Commits; otherwise `<scope>: <description>`. `scripts/render-rules` already applies it when it prints the rules.                                                                                                                                                                                                       |
-| `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.                                                                                                                                                                                                           |
-| ... and the template contains `Design decisions` | The rules include Rule 9; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                                                                                                                                                                                              |
+| Condition                                        | Effect                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vibe_mode` is true                              | Skip crit review, notify the delegator with the draft and wait for explicit approval before submitting with `--no-review`; report PR ready after Step 8 has checked feedback and drafted replies and CI passes or only `vrt` fails (Step 7). Keep self-review and CI monitoring. Even when `is_master_push_repo` is true, create a PR from the current branch and never push to the default branch. |
+| `english_output` is true                         | Translation to English is required. The reference covers it in Step 4; Step 5 requires a Japanese-free title and body.                                                                                                                                                                                                                                                                              |
+| `english_output` is false                        | No translation happens.                                                                                                                                                                                                                                                                                                                                                                             |
+| `has_release_please` is `true`                   | Rule 1 uses Conventional Commits; otherwise `<scope>: <description>`. `scripts/render-rules` already applies it when it prints the rules.                                                                                                                                                                                                                                                           |
+| `scripts/find-pr-template` prints a template     | The rules embed it as the PR structure; otherwise they use the default Why/What structure. `scripts/render-rules` already applies it.                                                                                                                                                                                                                                                               |
+| ... and the template contains `Design decisions` | The rules include Rule 9; otherwise there is no Rule 9. `scripts/render-rules` already applies it.                                                                                                                                                                                                                                                                                                  |
 
 ## Step 0 より前の upstream 同期
 
@@ -55,18 +54,15 @@ upstream がない場合、別の branch、または別 remote を指す場合�
 
 ## Base branch の解決
 
-`base_branch` は diff、crit review、`review-draft`、submit で使う PR の base。`stack_parent_branch` と `stack_parent_pr_number` は、新しい PR を open PR に積む場合だけ設定する。
+下段 PR の branch はユーザーまたは委任元が指定した場合だけ、`~/.agents/skills/create-pr/scripts/resolve-base --parent-branch <branch>` に渡す。それ以外は option なしで script を実行する。
 
-1. 現在の branch に open PR があれば、`gh pr list --state open --head "$(git branch --show-current)" --json number,baseRefName` で確認した `baseRefName` を `base_branch` に使う。既存 PR の更新では base を変更せず、`stack_parent_branch` / `stack_parent_pr_number` は設定しない。該当 PR が複数ある場合は曖昧さを報告して止める。
-2. 現在の branch に open PR がなく、ユーザーまたは委任元が下段 PR の branch を指定していれば、その branch を使う。`gh pr list --state open --head "<指定 branch>" --json number,headRefName,headRepository,isCrossRepository` で完全一致する open PR を確認し、その PR が同じ repository に 1 件だけある場合は `headRefName` を `base_branch` / `stack_parent_branch` に、`number` を `stack_parent_pr_number` に設定する。該当 PR がない、複数ある、または別 repository の場合は前提の誤りとして報告して止める。
-3. 明示指定がなければ `git fetch origin` を 1 回実行してから、自動判定する。`gh repo view --json nameWithOwner --jq .nameWithOwner` で現在の repository を確認し、`gh pr list --state open --limit 1000 --json number,headRefName,headRefOid,headRepository,isCrossRepository` で open PR を取得する。全体 fetch または一覧取得に失敗した場合は作業を止めて報告する。個別 PR の参照を確認できない場合は、その PR だけを候補から外す。
-    - `headRepository.nameWithOwner` が現在の repository と一致し、`isCrossRepository` が `false` の PR だけを見る。PR の情報が欠けている場合、`origin/<headRefName>` がない場合、`git rev-parse origin/<headRefName>` と `headRefOid` が異なる場合、または shallow clone などで履歴を判定できない場合は、その PR だけを候補から外す。
-    - `shared_commit=$(git merge-base HEAD "origin/<headRefName>")` を求める。値があり、`shared_commit` が `origin/$(git main)` の祖先でなければ候補にする。下段 PR に後から commit が追加されても、現在の branch と共有する PR 固有 commit が候補判定に使われる。
-    - 候補が 1 件なら選ぶ。複数ある場合は、共有 commit がほかの全候補の共有 commit の子孫である候補が一意ならそれを選ぶ。それ以外は曖昧さを報告して止める。`vibe_mode` では前提の誤りとして委任元に報告する。
-    - 選んだ PR の `headRefName` を `base_branch` / `stack_parent_branch` に、`number` を `stack_parent_pr_number` に設定する。
-4. 候補がなければ `base_branch` に default branch (`git main`) を設定し、stack 用変数は設定しない。fork から新しい PR を作る場合も default branch を使う。stack は同じ repository の branch 間だけで作成できる。
+成功時は stdout の JSON から次の値を使う。判定を git / gh コマンドで組み直さない。
 
-`base_ref` には `origin/<base_branch>` を使う。必要な remote ref がなければ `origin` から取得する。
+- `base_branch`: diff、crit review、`review-draft`、submit で使う PR の base branch
+- `base_ref`: diff と crit review で使う `origin/<base_branch>`
+- `stack_parent_branch` / `stack_parent_pr_number`: 新しい PR を open PR に積む場合の branch と PR 番号。stack しない場合は両方 `null`
+
+script が非 0 で終了したら作業を止め、stderr の理由を報告する。
 
 各 step では次の値を使う。
 
@@ -228,7 +224,7 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 ## 7. CI 実行を監視
 
 `gh pr checks --watch` で CI を監視。失敗したら調査・修正して再 push。
-`vibe_mode` では CI が green になり、該当時は Step 8 も済ませた後、共通 policy を再確認する。初回判定時から許可が続いている場合だけ委任元へ報告する。許可がなくなっていた場合は vibe 報告を送らず、通常の人間レビューに委ねる。
+`vibe_mode` では CI が green になり、Step 8 も済ませた後、共通 policy を再確認する。初回判定時から許可が続いている場合だけ委任元へ報告する。許可がなくなっていた場合は vibe 報告を送らず、通常の人間レビューに委ねる。
 
 `vrt` commit status 以外がすべて green で、`vrt` だけが失敗しているときも報告する。GitHub Actions の check 結果をすべて確認し、残る pending status がマージをブロックしない外部 commit status (例: informational な Codecov status) だけなら、`gh pr checks --watch` を止めて報告する。failed required check はブロックとして扱う。VRT 差分の確認と承認ラベルの付与は委任元が担うため、委任先はユーザーに VRT レビューを頼まず、`vrt-approved` を待たず、自分でも付けない。リポジトリの規約が「VRT 差分はユーザーにレビューを頼む」としていても、vibe ではこの報告がその依頼の代わりになる。
 
@@ -239,8 +235,6 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 差し戻しを反映して再 submit した場合も、同じ条件で同じ形式で再報告する。
 
 ## 8. レビューコメントを確認して対応する
-
-`repo.owner` が `fohte` のときはこの Step を実行しない。
 
 **CI や bot のチェックが `pass` でもレビューコメントは付く。CI pass = レビュー指摘なし ではない。** submit 後は必ず `/check-pr-review` skill を実行し、CodeRabbit / Devin 等の自動レビューと人間のコメントを確認して対応する。
 
