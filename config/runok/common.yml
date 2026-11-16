@@ -446,33 +446,34 @@ rules:
       - allow: 'a agent new --help'
       - allow: 'a cc new --agent --help'
 
-  # Closing an agent can terminate its session and remove a linked worktree.
+  # --force and --skip-hooks bypass armyknife's checks for running sessions,
+  # unmerged branches, uncommitted changes, and cleanup hooks.
   - ask: 'a ag|cc|agent close|c *'
-    when: '!has(flags.help) && (!has(flags.child) || has(flags.force))'
+    when: "!has(flags.help) && (has(flags.force) || 'skip-hooks' in flags)"
     tests:
       - allow: 'a agent close --help'
-      - ask: 'a cc close'
-      - ask: 'a cc close example-session'
       - ask: 'a cc close --child --force example-session'
-      - ask: 'a agent close'
-      - ask: 'a agent close example-session'
       - ask: 'a agent close --force example-session'
+      - ask: 'a agent close --skip-hooks .worktrees/foo'
       - ask: 'a agent close --child --force example-session'
       - ask: 'a agent close example-session --child --force'
-      - ask: 'a ag c'
-      - ask: 'a ag c example-session'
       - ask: 'a ag c --child --force example-session'
-      - ask: 'a ag close example-session'
       - ask: 'a ag close --child --force example-session'
-      - ask: 'a agent c example-session'
       - ask: 'a agent c --child --force example-session'
-      - ask: 'a cc c example-session'
       - ask: 'a cc c --child --force example-session'
 
-  # Armyknife verifies the target is a direct child before closing it.
+  # Without --force, armyknife refuses to close busy sessions, keeps worktrees
+  # that have local changes or host other processes, and asks on the terminal
+  # before removing unmerged ones (piped input is rejected).
   - allow: 'a ag|cc|agent close|c *'
-    when: 'has(flags.child) && !has(flags.force) && !has(flags.help)'
+    when: "!has(flags.force) && !('skip-hooks' in flags) && !has(flags.help)"
     tests:
+      - allow: 'a cc close'
+      - allow: 'a agent close example-session'
+      - allow: 'a agent close .worktrees/foo'
+      - allow: 'a ag c'
+      - allow: 'a ag close example-session'
+      - allow: 'a cc c example-session'
       - allow: 'a agent close --child example-session'
       - allow: 'a agent close example-session --child'
       - allow: 'a ag close --child example-session'
