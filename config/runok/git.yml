@@ -5,10 +5,6 @@
 
 definitions:
   paths:
-    # Repos pushed to directly on the default branch (no PR workflow), where
-    # an accidental push has no review safety net. Add more repos here as needed.
-    master-push-repos:
-      - '~/ghq/github.com/fohte/dotfiles'
     # Forks of third-party repos: every commit ends up in an upstream PR under
     # the user's name, so the user reviews each commit message and push.
     fork-repos:
@@ -110,9 +106,6 @@ rules:
       - deny: 'git push origin +HEAD:refs/heads/foo'
       - deny: 'git push origin main +feature/foo'
       - deny: 'git -C /tmp push origin +main'
-      # -C /tmp keeps these deterministic regardless of invocation cwd -- a
-      # bare `git push origin main` would ask instead of allow when this
-      # rule's own tests run from inside a master-push-repos entry.
       - allow: 'git -C /tmp push origin main'
       - allow: 'git -C /tmp push'
   - deny: 'git [-C *] push --mirror *'
@@ -171,29 +164,9 @@ rules:
       - ask: 'git push origin :feature/foo'
       - allow: 'git -C /tmp push origin main:main'
       - allow: 'git -C /tmp push origin HEAD:refs/heads/foo'
-  # `-C <dir>` changes the directory git actually operates on, so when it's
-  # present only `flags.C` is checked -- not `env.PWD` (the shell's cwd) --
-  # otherwise running `git -C /unrelated/dir push` from inside a
-  # master-push-repo would wrongly ask about a push that doesn't target this
-  # repo at all. `paths[]` entries are canonicalized to absolute paths at
-  # load time, but `flags.C` is compared as the raw, unexpanded token, so a
-  # literal `~`-prefixed `-C` argument (e.g. `-C ~/repo`) won't match -- same
-  # gap every other `-C` check in this file has (they're all tested with
-  # absolute paths only). Neither branch's ask case can be covered by an
-  # inline test: `InlineTestEntry` has no cwd override, and a `-C` test would
-  # have to spell out this machine's home directory, which `master-push-repos`
-  # resolves differently per machine. Verify manually with
-  # `runok check --verbose` from inside the repo if this changes.
-  - ask: 'git [-C *] push *'
-    when: "(has(flags.C) && paths['master-push-repos'].exists(p, flags.C == p || flags.C.startsWith(p + '/'))) || (!has(flags.C) && paths['master-push-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')))"
-    message: 'This repo is pushed to directly on the default branch. Confirm before pushing.'
-    tests:
-      - allow: 'git -C /tmp push origin main'
-  # Same inline-test gap as the rule above. `env.PWD` is checked even when
-  # `-C` is present because `commit -C <ref>` (reuse message) is also
-  # captured as `flags.C`; this over-denies `git -C <elsewhere> ...` run from
-  # inside a fork, which is the safe direction. `.worktrees/<name>`
-  # checkouts sit under the repo path, so delegated sessions are covered.
+  # `commit -C <ref>` reuses the message, so `flags.C` is not always a repo
+  # path. Check `env.PWD` as well to cover fork worktrees; this can also deny
+  # `git -C <elsewhere> ...` from a fork checkout. Inline tests cannot set cwd.
   - deny: 'git [-C *] commit|push *'
     when: "(has(flags.C) && paths['fork-repos'].exists(p, flags.C == p || flags.C.startsWith(p + '/'))) || paths['fork-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/'))"
     message: 'This repo is a fork contributed upstream: the user runs every commit and push. Read the oss-contribution skill.'
