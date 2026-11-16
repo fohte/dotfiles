@@ -371,6 +371,13 @@ merge 後も委任先が `a agent peer children` に残っていれば (`a gh pr
     3. 原因を特定し (flaky なら `gh run rerun --failed` して 1 からやり直す)、修正をこの skill で委任する。2-2 のタスク ID を launcher の `--tq-task-id` に渡すと、修正 PR がそのタスクにリンクされる。同じ原因で落ちた他の run のタスクは `tq --author <model> task complete <id> --reason duplicate --duplicate-of <渡したタスク>` で閉じる。2-2 でタスクが見つからなければ、通常どおり track-in-tq skill で用意する
     4. 修正 PR の merge 通知が来たら、この手順を最初から実行する
 3. 通ったら、これまでの 2-2 で控えたタスクのうち未完了のものに原因と対応 (直した PR、または flaky と判断した根拠) をコメントして close する。2-1 で merge 保留を送ったセッションがあれば全員に解除を通知する。その後、この merge を待って止まっていた作業があれば続ける
+4. default-branch CI が通ったら、repository の main checkout を default branch に追いつかせる:
+    1. `git symbolic-ref --quiet --short refs/remotes/origin/HEAD` で default branch 名を取得し、`git worktree list --porcelain` の最初の `worktree` entry から main checkout の path を特定する。どちらかを特定できない場合は推測せず、理由をユーザーに伝えてここで止める
+    2. main checkout の Git directory に `delegate-main-refresh.lock` directory を作る (`git -C <main-checkout> rev-parse --absolute-git-dir` で path を得て `mkdir` する)。同じ repository の merge handler と pull・差分確認・deploy が重なると、生成物の書き込みが競合するため、この directory を lock として全手順の間保持する。作成に失敗した場合は lock を消さず、別 handler が処理中としてユーザーに伝えて止める。自分で作った lock は完了または停止時に `rmdir` で解除する
+    3. main checkout の branch が default branch と一致し、`git -C <main-checkout> rev-parse --abbrev-ref --symbolic-full-name @{upstream}` が `origin/<default-branch>` と一致することを確認する。どちらかが異なるか確認できない場合は、理由をユーザーに伝えて lock を解除し、deploy せずに止める
+    4. 更新前の `HEAD` を記録して `git -C <main-checkout> pull --ff-only --no-autostash` を実行する。`--ff-only` は fast-forward できない更新を拒否し、`--no-autostash` は作業中の変更を退避・復元しない。pull が失敗した場合は出力を添えてユーザーに伝え、作業中の変更に触れず、deploy せずに lock を解除する。stash、reset、checkout、autostash、手動 merge / rebase で回避しない
+    5. pull が成功したら、記録した `HEAD` から更新後の `HEAD` までの変更を確認する。dotfiles では `CLAUDE.md` の「設定の反映」に従って deploy の要否と tag を決め、触れた tool の tag だけを選び、main checkout で `dot deploy -t <tag>` を実行する。deploy が失敗した場合は出力を添えてユーザーに伝え、lock を解除する
+    6. deploy が不要な場合も lock を解除する
 
 merge 保留のメッセージには、委任元からの連絡であること、どの PR の merge 後に default branch の CI が落ちているか、解除の通知が来るまで merge しないこと、merge 以外の作業は続けてよいこと、自分の PR の CI が同じ原因で落ちていても直さないことを書く。解除のメッセージには、どの修正で直ったか、merge してよいことを書く。
 
