@@ -50,7 +50,7 @@ description: Run the current session as a project manager (PM) that never does h
     EOF
     ````
 
-4. デザイン依頼と技術設計は並行して進める。designer は design PR を作成したら、PR URL を依頼元へ `a agent peer notify` で返す。PM は受け取った URL をユーザーに共有し、merge はユーザーに委ねる。デザイン確定は PR の作成やレビュー完了ではなく merge とする。実装を委任する前に `gh pr view <PR_URL> --json state,mergedAt` を実行し、`state` が `MERGED` かつ `mergedAt` が空でないことを確認する。未 merge なら実装セッションを起動せず待つ。
+4. デザイン依頼と技術設計は並行して進める。案の選択、canvas の確認、design PR の merge 依頼は designer が自身のセッションでユーザーと行い、merge 依頼が必要なら designer が自身のセッションで `a agent todo add` する。PM はデザイン案の選択や canvas の確認をユーザーに尋ねず、design PR の URL を共有せず、merge を依頼する proposal / todo も作らない。designer は design PR を作成したら PR URL を依頼元へ `a agent peer notify` で知らせ、merge されたらその旨をもう一度知らせる。デザイン確定は PR の作成やレビュー完了ではなく merge とする。designer から merge の通知を受けたら `gh pr view <PR_URL> --json state,mergedAt` を実行し、`state` が `MERGED` かつ `mergedAt` が空でないことを確認してから実装を委任する。コマンドが失敗した場合は原因を解消して再確認し、成功応答で未 merge と確認した場合は実装セッションを起動せず designer から merge の通知を待つ。
 
 `--kind design` は担当 repo の調査・技術設計を行う handoff worker の指定であり、designer を識別する値ではない。designs の designer は `work_type=designer` と `label=designer <owner>/<repo>` で識別し、依頼は `a agent peer notify` で送る。
 
