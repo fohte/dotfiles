@@ -5,6 +5,9 @@
 
 definitions:
   paths:
+    # The primary checkout can commit directly; delegated worktrees must use a PR.
+    master-push-repos:
+      - '~/ghq/github.com/fohte/dotfiles'
     # Forks of third-party repos: every commit ends up in an upstream PR under
     # the user's name, so the user reviews each commit message and push.
     fork-repos:
@@ -164,29 +167,15 @@ rules:
       - ask: 'git push origin :feature/foo'
       - allow: 'git -C /tmp push origin main:main'
       - allow: 'git -C /tmp push origin HEAD:refs/heads/foo'
-  # `-C <dir>` changes the directory git actually operates on, so when it's
-  # present only `flags.C` is checked -- not `env.PWD` (the shell's cwd) --
-  # otherwise running `git -C /unrelated/dir push` from inside a
-  # master-push-repo would wrongly ask about a push that doesn't target this
-  # repo at all. `paths[]` entries are canonicalized to absolute paths at
-  # load time, but `flags.C` is compared as the raw, unexpanded token, so a
-  # literal `~`-prefixed `-C` argument (e.g. `-C ~/repo`) won't match -- same
-  # gap every other `-C` check in this file has (they're all tested with
-  # absolute paths only). Neither branch's ask case can be covered by an
-  # inline test: `InlineTestEntry` has no cwd override, and a `-C` test would
-  # have to spell out this machine's home directory, which `master-push-repos`
-  # resolves differently per machine. Verify manually with
-  # `runok check --verbose` from inside the repo if this changes.
+  # Delegated worktrees publish feature branches for review.
   - ask: 'git [-C *] push *'
-    when: "(has(flags.C) && paths['master-push-repos'].exists(p, flags.C == p || flags.C.startsWith(p + '/'))) || (!has(flags.C) && paths['master-push-repos'].exists(p, env.PWD == p || env.PWD.startsWith(p + '/')))"
-    message: 'This repo is pushed to directly on the default branch. Confirm before pushing.'
-    tests:
-      - allow: 'git -C /tmp push origin main'
+    when: "(has(flags.C) && paths['master-push-repos'].exists(p, flags.C.startsWith(p + '/.worktrees/') || flags.C.startsWith(p + '/.claude/worktrees/'))) || (!has(flags.C) && paths['master-push-repos'].exists(p, env.PWD.startsWith(p + '/.worktrees/') || env.PWD.startsWith(p + '/.claude/worktrees/')))"
+    message: 'Confirm pushes from delegated worktrees.'
   # Armyknife and Claude worktrees must publish through a PR, so prevent
   # explicit refspecs and --all from updating the repo's default branch.
   # Inline tests cannot set cwd; verify this path-specific rule from a worktree.
   - deny: 'git [-C *] push *'
-    when: "(args.exists(a, a.matches('(^|:)(refs/heads/)?(main|master)$')) || has(flags.all)) && ((has(flags.C) && paths['master-push-repos'].exists(p, flags.C.startsWith(p + '/.worktrees/') || flags.C.startsWith(p + '/.claude/worktrees/'))) || (!has(flags.C) && paths['master-push-repos'].exists(p, env.PWD.startsWith(p + '/.worktrees/') || env.PWD.startsWith(p + '/.claude/worktrees/'))))"
+    when: "(args.exists(a, a.matches('(^|:)[+]?((refs/heads/)?(main|master)):?$')) || has(flags.all)) && ((has(flags.C) && paths['master-push-repos'].exists(p, flags.C.startsWith(p + '/.worktrees/') || flags.C.startsWith(p + '/.claude/worktrees/'))) || (!has(flags.C) && paths['master-push-repos'].exists(p, env.PWD.startsWith(p + '/.worktrees/') || env.PWD.startsWith(p + '/.claude/worktrees/'))))"
     message: 'Blocked because delegated worktrees must not push directly to the default branch.'
     fix_suggestion: 'Push the work branch and create a pull request.'
   # `commit -C <ref>` reuses the message, so `flags.C` is not always a repo

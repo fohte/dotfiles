@@ -25,15 +25,7 @@ fail() {
   exit 2
 }
 
-pending_file=
-pending_reservation_created=false
-pending_reservation_keep=false
-cleanup_pending_reservation() {
-  if [[ $pending_reservation_created == true && $pending_reservation_keep == false ]]; then
-    rm "$pending_file" 2> /dev/null || true
-  fi
-}
-trap cleanup_pending_reservation EXIT
+pending_reservation_ttl_seconds=300
 
 main_checkout_peer_root() {
   local peer_cwd="$1" peer_root
@@ -47,22 +39,36 @@ main_checkout_peer_root() {
 }
 
 has_registered_main_session() {
-  local peers_json="$1" reservation_file="$2" peer_cwd
+  local peers_json="$1" label="$2" baseline_session_ids="$3" peer_cwd
   while IFS= read -r peer_cwd; do
     [[ -n $peer_cwd ]] || continue
     if main_checkout_peer_root "$peer_cwd"; then
       return 0
     fi
-  done < <(jq -r --slurpfile reservation "$reservation_file" '
+  done < <(jq -r --arg label "$label" --argjson baseline "$baseline_session_ids" '
     .[] | select(.session_id | type == "string") as $peer |
     select(
       $peer.work_type == "development" and
-      $peer.label == $reservation[0].label and
-      (($reservation[0].baseline_session_ids | index($peer.session_id)) == null)
+      $peer.label == $label and
+      (($baseline | index($peer.session_id)) == null)
     ) |
     $peer.cwd // empty
   ' <<< "$peers_json")
   return 1
+}
+
+write_pending_reservation() {
+  local label="$1" baseline_session_ids="$2" now expires_at pending_temp
+  if ! now=$(date +%s); then
+    return 1
+  fi
+  expires_at=$((now + pending_reservation_ttl_seconds))
+  pending_temp="$pending_file.$$"
+  if ! jq -cn --arg label "$label" --argjson baseline "$baseline_session_ids" --argjson expires_at "$expires_at" \
+    '{label:$label,baseline_session_ids:$baseline,expires_at:$expires_at}' > "$pending_temp" || ! mv "$pending_temp" "$pending_file"; then
+    rm "$pending_temp" 2> /dev/null || true
+    return 1
+  fi
 }
 
 if [[ $# -eq 1 && ($1 == --help || $1 == -h) ]]; then
@@ -293,21 +299,42 @@ if [[ $direct_commit == true ]]; then
       route_reason='active sessions could not be checked'
     else
       if [[ -e $pending_file ]]; then
-        if ! jq -e '
-          type == "object" and
-          (.label | type == "string") and
-          (.baseline_session_ids | type == "array" and all(.[]; type == "string"))
-        ' "$pending_file" > /dev/null; then
-          direct_commit=false
-          route_reason='a previous main-checkout launch reservation cannot be verified'
-        elif has_registered_main_session "$peer_json" "$pending_file"; then
-          if ! rm "$pending_file"; then
+        if ! pending_record=$(jq -ce '
+          select(
+            type == "object" and
+            (.label | type == "string") and
+            (.baseline_session_ids | type == "array" and all(.[]; type == "string")) and
+            (.expires_at | type == "number" and floor == .)
+          )
+        ' "$pending_file"); then
+          if rm "$pending_file"; then
             direct_commit=false
-            route_reason='a previous main-checkout launch reservation could not be cleared'
+            route_reason='a previous main-checkout reservation could not be verified'
+          else
+            direct_commit=false
+            route_reason='a previous main-checkout reservation could not be cleared'
           fi
-        else
+        elif ! now=$(date +%s); then
           direct_commit=false
-          route_reason='a previous main-checkout session has not registered yet'
+          route_reason='a previous main-checkout reservation expiry could not be checked'
+        else
+          pending_expires_at=$(jq -r '.expires_at' <<< "$pending_record")
+          pending_label=$(jq -r '.label' <<< "$pending_record")
+          pending_baseline_session_ids=$(jq -c '.baseline_session_ids' <<< "$pending_record")
+          if ((pending_expires_at <= now)); then
+            if ! rm "$pending_file"; then
+              direct_commit=false
+              route_reason='an expired main-checkout reservation could not be cleared'
+            fi
+          elif has_registered_main_session "$peer_json" "$pending_label" "$pending_baseline_session_ids"; then
+            if ! rm "$pending_file"; then
+              direct_commit=false
+              route_reason='a registered main-checkout reservation could not be cleared'
+            fi
+          else
+            direct_commit=false
+            route_reason='a previous main-checkout session has not registered yet'
+          fi
         fi
       fi
 
@@ -345,18 +372,6 @@ if [[ $direct_commit == true ]]; then
         fi
       fi
     fi
-  fi
-fi
-
-if [[ $direct_commit == true && $dry_run == false ]]; then
-  pending_temp="$pending_file.$$"
-  if ! jq -cn --arg label "$label" --argjson baseline "$baseline_session_ids" \
-    '{label:$label,baseline_session_ids:$baseline}' > "$pending_temp" || ! mv "$pending_temp" "$pending_file"; then
-    rm "$pending_temp" 2> /dev/null || true
-    direct_commit=false
-    route_reason='main-checkout launch reservation could not be recorded'
-  else
-    pending_reservation_created=true
   fi
 fi
 
@@ -416,27 +431,25 @@ if [[ $direct_commit == false ]]; then
 fi
 
 if [[ $direct_commit == true && $lock_held == true && $dry_run == false ]]; then
-  # A missing peer record does not prove that the launched session has stopped.
-  pending_reservation_keep=true
   if a "${cmd[@]}" 9>&-; then
     # Claude registers its session from a startup hook after the launcher returns.
     for ((attempt = 0; attempt < 60; attempt++)); do
       if peers_after_launch=$(a agent peer list 9>&-); then
         if jq -e 'type == "array"' <<< "$peers_after_launch" > /dev/null &&
-          has_registered_main_session "$peers_after_launch" "$pending_file"; then
-          rm "$pending_file" 2> /dev/null || true
-          pending_reservation_created=false
+          has_registered_main_session "$peers_after_launch" "$label" "$baseline_session_ids"; then
           exit 0
         fi
       fi
       sleep 1
     done
-    printf 'Timed out waiting for the launched session to appear; keeping a pending main-checkout reservation.\n' >&2
+    if write_pending_reservation "$label" "$baseline_session_ids"; then
+      printf 'Timed out waiting for the launched session to appear; keeping a five-minute worktree reservation and releasing the main-checkout lock.\n' >&2
+    else
+      printf 'Timed out waiting for the launched session to appear; the temporary worktree reservation could not be saved.\n' >&2
+    fi
     exit 0
   else
     launch_status=$?
-    rm "$pending_file" 2> /dev/null || true
-    pending_reservation_created=false
     exit "$launch_status"
   fi
 fi

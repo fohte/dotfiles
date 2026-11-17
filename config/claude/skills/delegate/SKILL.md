@@ -180,8 +180,9 @@ dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
 
 ### 起動方式の判定
 
-- launcher が main checkout を使用中と判定した場合は、自動で worktree に切り替える。判定対象は未 commit の変更、呼び出し元以外の開発セッション、または取得できない起動ロック
-- そのため、起動前に作業ツリーの clean を確認したり、同じ repo の委任を直列化したりする必要はない。worktree に切り替わった場合、委任元は main checkout の変更を引き続き行える
+- launcher が main checkout を使用中と判定した場合は、自動で worktree に切り替える。判定対象は未 commit の変更、呼び出し元以外の開発セッション、取得できない起動ロック、または前回起動したセッションの登録待ち予約
+- direct commit の起動後、launcher は新しいセッションが peer list に現れるまで flock を最大 60 秒保持する。登録されないまま上限に達した場合は、後続の起動を worktree に回す予約を 5 分間残して flock を解放する。予約はセッション登録時または期限切れ時に解除される。セッションが登録されない状態が 5 分を超えると、後続の起動が main checkout を空きと判定する可能性がある
+- 通常は、起動前に作業ツリーの clean を確認したり、同じ repo の委任を直列化したりする必要はない。worktree に切り替わった場合、委任元は main checkout の変更を引き続き行える
 
 ### PR が出ないことの影響
 
