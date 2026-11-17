@@ -174,15 +174,16 @@ dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
 
 ## direct-commit モード
 
-`repo.direct_commit` が `true` で `--vibe` を付けない場合、launcher は main checkout の使用状況を判定する。空いていれば main checkout で起動し、commit と push を行う。未 commit の変更、呼び出し元以外の開発セッション、または launcher のロックがあれば worktree で起動し、PR を作成する。`--vibe` では常に worktree と PR を使う。
+`repo.direct_commit` が `true` で `--vibe` を付けない場合、launcher は main checkout の使用状況を判定する。空いていれば main checkout で起動し、commit と push を行う。未 commit の変更、呼び出し元以外の開発セッション、repo ごとの flock を取得できない場合、前回起動の登録待ち予約を確認できない場合は worktree で起動し、PR を作成する。状態の確認に失敗した場合も、main checkout が空いていると確認できない場合の衝突を避けるため、worktree に切り替える。`--vibe` では常に worktree と PR を使う。
 
-`repo.direct_commit` が `true` の repo では、launcher が worktree に切り替える場合も `--branch` と `--from` は指定できない。worktree 起動では `DELEGATE_TASK_PURPOSE`、指定があれば TQ task metadata も渡される。
+`repo.direct_commit` による通常 delegate では、launcher が worktree に切り替える場合も `--branch` と `--from` は指定できない。`--vibe` は worktree 経路を使うため、この制限の対象外。worktree 起動では `DELEGATE_TASK_PURPOSE`、指定があれば TQ task metadata も渡される。
 
 ### 起動方式の判定
 
-- launcher が main checkout を使用中と判定した場合は、自動で worktree に切り替える。判定対象は未 commit の変更、呼び出し元以外の開発セッション、取得できない起動ロック、または前回起動したセッションの登録待ち予約
-- direct commit の起動後、launcher は新しいセッションが peer list に現れるまで flock を最大 60 秒保持する。登録されないまま上限に達した場合は、後続の起動を worktree に回す予約を 5 分間残して flock を解放する。予約はセッション登録時または期限切れ時に解除される。セッションが登録されない状態が 5 分を超えると、後続の起動が main checkout を空きと判定する可能性がある
-- 通常は、起動前に作業ツリーの clean を確認したり、同じ repo の委任を直列化したりする必要はない。worktree に切り替わった場合、委任元は main checkout の変更を引き続き行える
+- direct commit で起動するとき、launcher は repo ごとの flock を取得し、起動前に有効期限 1 時間のセッション登録待ち予約を記録する。起動後は `a agent peer list` で新しいセッションを確認し、見つかるまで最大 60 秒 flock を保持する。登録を確認したら予約を解除する
+- 60 秒以内に登録されなければ、後続の起動を worktree に回す予約を 5 分間残して flock を解放する。後続の launcher は peer list でセッション登録を確認するか、予約の期限が切れたときに予約を解除する。セッションが登録されない状態が 5 分を超えると、後続の起動が main checkout を空きと判定する可能性がある。5 分予約への更新に失敗した場合は、起動前に作成した 1 時間有効の予約が期限まで残る
+- `--dry-run` は選択した経路と理由を表示するが、セッション登録待ち予約は作成しない
+- 起動前に作業ツリーの clean を確認したり、同じ repo の委任を手動で直列化したりする必要はない。direct commit では委任先と委任元が main checkout を共有するため、委任先の作業中は委任元もその checkout を編集しない。worktree に切り替わった場合は、委任元が main checkout の変更を続けられる
 
 ### PR が出ないことの影響
 
