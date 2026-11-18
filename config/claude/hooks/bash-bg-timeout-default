@@ -4,6 +4,8 @@
 # kills servers waiting on human review (e.g. `crit`) long before the review
 # is done. 2147483647 ms is the largest value Claude Code accepts, and only
 # takes effect because settings.jsonnet raises BASH_MAX_TIMEOUT_MS to match.
+# Cap foreground timeouts at 10 min so Claude Code can move long commands to
+# the background automatically.
 #
 # Usage: bash-bg-timeout-default <upstream-hook-output> < <hook-input>
 # Rewrites the upstream PreToolUse output (empty when it made no decision)
@@ -11,7 +13,7 @@
 input=$(cat)
 upstream=$1
 
-jq -c --arg upstream "$upstream" '
+jq -c --arg upstream "$upstream" --argjson maxTimeout 2147483647 --argjson foregroundTimeoutCap 600000 '
   ($upstream | if . == "" then {} else fromjson end) as $out
   # Merge rather than replace: an upstream updatedInput may carry only the
   # fields it rewrote (e.g. `command`).
@@ -19,7 +21,13 @@ jq -c --arg upstream "$upstream" '
   | if $tool_input.run_in_background == true and $tool_input.timeout == null then
       $out
       | .hookSpecificOutput.hookEventName = "PreToolUse"
-      | .hookSpecificOutput.updatedInput = ($tool_input + {timeout: 2147483647})
+      | .hookSpecificOutput.updatedInput = ($tool_input + {timeout: $maxTimeout})
+    elif $tool_input.run_in_background != true
+      and ($tool_input.timeout | type == "number")
+      and $tool_input.timeout > $foregroundTimeoutCap then
+      $out
+      | .hookSpecificOutput.hookEventName = "PreToolUse"
+      | .hookSpecificOutput.updatedInput = ($tool_input + {timeout: $foregroundTimeoutCap})
     elif $upstream == "" then
       empty
     else
