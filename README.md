@@ -179,16 +179,3 @@ Watch-web runs under launchd on every macOS role. Stop any manually started
 # Press Ctrl-C in the tmux pane running watch-web, then:
 dot deploy -t launchd
 ```
-
-On the private role, the deployment also configures Tailscale Serve to route the
-default HTTPS endpoint to `127.0.0.1:4317` and HTTPS port 8443 to
-`127.0.0.1:4318`. See the [Tailscale Serve documentation](https://tailscale.com/docs/features/tailscale-serve)
-for details. Open the machine's MagicDNS name from a tailnet device:
-
-```bash
-tailscale status --json | jq -r '.Self.DNSName'
-```
-
-Use `https://<MagicDNS-name>/` for watch-web. The `https://<MagicDNS-name>:8443/`
-address serves the watch-web crit relay when its listener is available. These
-Serve routes are private to the tailnet; do not enable Funnel.

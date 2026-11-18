@@ -260,15 +260,37 @@ if match_tag launchd && is_macos; then
     fi
   }
 
+  launchd_register_job() {
+    local launchd_name="$1"
+    local source_plist="$2"
+    local launchd_plist="$HOME/Library/LaunchAgents/$launchd_name.plist"
+    local launchd_state="$HOME/.local/state/${launchd_name#com.fohte.}/loaded.plist"
+    local launchd_loaded=false
+
+    log-exec mkdir -p "${launchd_state%/*}"
+    sym "$source_plist" "$launchd_plist"
+
+    launchctl print "$launchd_domain/$launchd_name" > /dev/null 2>&1 && launchd_loaded=true
+    if $launchd_loaded && ! is_force && cmp -s "$launchd_plist" "$launchd_state"; then
+      return 0
+    fi
+
+    # launchd keeps using the loaded definition when its plist changes on disk.
+    if $launchd_loaded; then
+      log-exec launchctl bootout "$launchd_domain" "$launchd_plist" || true
+    fi
+    log-exec launchctl bootstrap "$launchd_domain" "$launchd_plist" ||
+      {
+        echo "bootstrap failed for $launchd_name.plist" >&2
+        exit 1
+      }
+    log-exec cp "$launchd_plist" "$launchd_state.tmp"
+    log-exec mv -f "$launchd_state.tmp" "$launchd_state"
+  }
+
   if match_role private; then
     launchd_names+=(com.fohte.claude-rate-limits)
     log-exec mkdir -m 700 -p "$HOME/.local/state/claude-rate-limits"
-    if command -v tailscale > /dev/null 2>&1; then
-      log-exec tailscale serve --bg 4317
-      log-exec tailscale serve --bg --https=8443 http://127.0.0.1:4318
-    else
-      echo "tailscale not found; skipping Serve configuration" >&2
-    fi
   fi
 
   # Removing the reloader from launchd_names alone leaves previously deployed jobs loaded.
@@ -284,28 +306,7 @@ if match_tag launchd && is_macos; then
   fi
 
   for launchd_name in "${launchd_names[@]}"; do
-    launchd_plist="$HOME/Library/LaunchAgents/$launchd_name.plist"
-    launchd_state="$HOME/.local/state/${launchd_name#com.fohte.}/loaded.plist"
-    log-exec mkdir -p "${launchd_state%/*}"
-    sym "config/launchd/$launchd_name.plist" "$launchd_plist"
-
-    launchd_loaded=false
-    launchctl print "$launchd_domain/$launchd_name" > /dev/null 2>&1 && launchd_loaded=true
-    if $launchd_loaded && ! is_force && cmp -s "$launchd_plist" "$launchd_state"; then
-      continue
-    fi
-
-    # launchd keeps using the loaded definition when its plist changes on disk.
-    if $launchd_loaded; then
-      log-exec launchctl bootout "$launchd_domain" "$launchd_plist" || true
-    fi
-    log-exec launchctl bootstrap "$launchd_domain" "$launchd_plist" ||
-      {
-        echo "bootstrap failed for $launchd_name.plist" >&2
-        exit 1
-      }
-    log-exec cp "$launchd_plist" "$launchd_state.tmp"
-    log-exec mv -f "$launchd_state.tmp" "$launchd_state"
+    launchd_register_job "$launchd_name" "config/launchd/$launchd_name.plist"
   done
 fi
 
