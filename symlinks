@@ -260,6 +260,7 @@ if match_tag launchd && is_macos; then
     fi
   }
 
+  # Role symlinks must call this under the launchd tag on macOS and pass an absolute plist path.
   launchd_register_job() {
     local launchd_name="$1"
     local source_plist="$2"
