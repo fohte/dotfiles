@@ -12,8 +12,10 @@ import { readFileSync, realpathSync, type Dirent } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 
-const OTLP_METRICS_URL =
-  'https://alloy-otlp-home-k8s.tail8f0aa.ts.net/v1/metrics'
+const OTLP_METRICS_URL_PATH = join(
+  homedir(),
+  '.config/claude-rate-limits/otlp-metrics-url',
+)
 const SESSION_ID_PATTERN = /^[A-Za-z0-9_-]+$/
 const TEMPORARY_FILE_PATTERN = /\.json\.\d+\.[0-9a-f-]+\.tmp$/
 const TEMPORARY_FILE_MAX_AGE_SECONDS = 600
@@ -320,7 +322,18 @@ export async function exportRateLimitMetrics(
   const samples = selectRateLimitSamples(sessions, now)
   if (Object.keys(samples).length === 0) return
 
-  const response = await send(OTLP_METRICS_URL, {
+  let metricsUrl: string
+  try {
+    metricsUrl = (await readFile(OTLP_METRICS_URL_PATH, 'utf8')).trim()
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      return
+    }
+    throw error
+  }
+  if (!metricsUrl) return
+
+  const response = await send(metricsUrl, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(buildOtlpRequest(samples, now)),
