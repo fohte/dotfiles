@@ -272,12 +272,12 @@ if [[ $direct_commit == true ]]; then
             my ($state_dir, $repo, $script, @args) = @ARGV;
             my $lock_path = "$state_dir/" . sha256_hex($repo) . ".lock";
             my $state = "unavailable";
+            # Keep the lock handle alive for exec; Perl fcntl cannot use a raw descriptor number.
+            my $fd9;
 
             if (open(my $guard, ">>", $lock_path)) {
               if (flock($guard, LOCK_EX | LOCK_NB)) {
                 my $fd = fileno($guard);
-                my $fd9;
-                # Perl fcntl requires an open Perl handle, not just a raw descriptor number.
                 if (
                   ($fd == 9 || dup2($fd, 9) == 9) &&
                   open($fd9, "<&=9") &&
