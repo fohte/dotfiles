@@ -49,9 +49,9 @@ linked worktree (`.worktrees/<name>` など) からの `dot deploy` / `dot refre
 
 ### Vendored yomiyasu skill
 
-`config/claude/skills/yomiyasu/` は [nanaism/yomiyasu](https://github.com/nanaism/yomiyasu) の `skills/yomiyasu/` を tag ごとに同期したコピーとして扱う。コピー内のファイルを直接編集しない。
+`config/claude/skills/yomiyasu/` は [nanaism/yomiyasu](https://github.com/nanaism/yomiyasu) の `skills/yomiyasu/` を tag ごとに同期したコピーとして扱う。`SKILL.md` の 12 行目は、保存先の指定がない場合に最終稿を `$AGENT_TMPDIR` に保存するよう変更している。
 
-更新時は `opensrc path nanaism/yomiyasu@<tag>` で upstream を取得し、取得した `skills/yomiyasu/` の内容をコピー先へ同期する。`.prettierignore` の除外を維持し、`diff -r` で upstream の `skills/yomiyasu/` と差分がないことを確認する。
+更新時は `opensrc path nanaism/yomiyasu@<tag>` で upstream を取得し、`skills/yomiyasu/` をコピー先へ同期してから、`SKILL.md` の 12 行目に同じ変更を手で入れ直す。`.prettierignore` の除外を維持し、`diff -r` で他の差分がないことを確認する。
 
 ## ツールバージョン管理
 
