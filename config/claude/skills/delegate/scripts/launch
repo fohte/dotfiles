@@ -276,7 +276,13 @@ if [[ $direct_commit == true ]]; then
             if (open(my $guard, ">>", $lock_path)) {
               if (flock($guard, LOCK_EX | LOCK_NB)) {
                 my $fd = fileno($guard);
-                if (($fd == 9 || dup2($fd, 9) == 9) && defined(fcntl(9, F_SETFD, 0))) {
+                my $fd9;
+                # Perl fcntl requires an open Perl handle, not just a raw descriptor number.
+                if (
+                  ($fd == 9 || dup2($fd, 9) == 9) &&
+                  open($fd9, "<&=9") &&
+                  defined(fcntl($fd9, F_SETFD, 0))
+                ) {
                   close($guard) if $fd != 9;
                   $state = "held";
                 }
