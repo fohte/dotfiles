@@ -373,7 +373,7 @@ rules:
       - allow: 'git -C /tmp push origin HEAD:refs/heads/foo'
   - deny: 'git [-C *] worktree remove *'
     message: 'Blocked because git worktree remove skips armyknife cleanup (sessions, tmux panes, branch, deletion hooks).'
-    fix_suggestion: 'Run `a agent close <worktree path>` from outside the worktree, without --force. Do not ask the user to remove it.'
+    fix_suggestion: 'Run `a agent close <worktree path>` from outside the worktree. If it stops at the unmerged-branch confirmation, inspect the branch and retry with `--force` only if its commits can be discarded. Force skips session, changes, and process checks; report blockers such as uncommitted changes or running processes without forcing. Do not ask the user to remove it.'
     tests:
       - deny: 'git worktree remove .worktrees/foo'
       - deny: 'git worktree remove .worktrees/foo --force'
