@@ -14,19 +14,49 @@
 # below. See `default-branch-edit-guard`.
 input=$(cat)
 
-# Run side-effect hook (ignore stdout, let stderr pass through)
-echo "$input" | a agent hook pre-tool-use > /dev/null
+# Keep the one-time retry approval for arbitration with this tool's guards.
+armyknife_output=$(echo "$input" | a agent hook pre-tool-use)
+armyknife_status=$?
+armyknife_allowed=false
+if [ "$armyknife_status" -eq 0 ] && jq -es '
+  length == 1
+  and (.[0] | type == "object")
+  and (.[0].hookSpecificOutput | type == "object")
+  and .[0].hookSpecificOutput.hookEventName == "PreToolUse"
+  and .[0].hookSpecificOutput.permissionDecision == "allow"
+' <<< "$armyknife_output" > /dev/null 2>&1; then
+  armyknife_allowed=true
+fi
+
+run_guard() {
+  local guard_output guard_status
+
+  if [ "$armyknife_allowed" != true ]; then
+    "$@" <<< "$input"
+    return $?
+  fi
+
+  guard_output=$("$@" <<< "$input")
+  guard_status=$?
+  printf '%s' "$guard_output" | ~/.claude/hooks/pre-tool-use-retry-approval "$armyknife_output" "$guard_status"
+}
 
 tool_name=$(echo "$input" | jq -r .tool_name)
 
 case "$tool_name" in
   Edit | Write | MultiEdit)
     deny=$(~/.claude/hooks/ponytail-comment-guard <<< "$input")
+    deny_status=$?
     if [ -n "$deny" ]; then
-      echo "$deny"
+      if [ "$armyknife_allowed" = true ]; then
+        printf '%s' "$deny" | ~/.claude/hooks/pre-tool-use-retry-approval "$armyknife_output" "$deny_status"
+      else
+        echo "$deny"
+      fi
       exit 0
     fi
-    exec ~/.claude/hooks/default-branch-edit-guard <<< "$input"
+    run_guard ~/.claude/hooks/default-branch-edit-guard
+    exit $?
     ;;
   EnterWorktree)
     # EnterWorktree is "Permission Required: No" so permissions.deny does not
@@ -38,38 +68,54 @@ case "$tool_name" in
         peers_json=$(a agent peer list) || peers_json=
         if [ -n "$peers_json" ] && echo "$peers_json" | jq -e --arg session_id "$session_id" \
           'any(.[]; .session_id == $session_id and .work_type == "designer")' > /dev/null; then
+          if [ "$armyknife_allowed" = true ]; then
+            printf '' | ~/.claude/hooks/pre-tool-use-retry-approval "$armyknife_output" 0
+          fi
           exit 0
         fi
       fi
     fi
-    jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "EnterWorktree is disabled. Use the delegate skill to spawn work in a worktree."}}'
+    guard_output=$(jq -nc '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "EnterWorktree is disabled. Use the delegate skill to spawn work in a worktree."}}')
+    if [ "$armyknife_allowed" = true ]; then
+      printf '%s' "$guard_output" | ~/.claude/hooks/pre-tool-use-retry-approval "$armyknife_output" 0
+    else
+      printf '%s\n' "$guard_output"
+    fi
     exit 0
     ;;
   TaskStop)
-    exec ~/.claude/hooks/task-stop-guard <<< "$input"
+    run_guard ~/.claude/hooks/task-stop-guard
+    exit $?
     ;;
   Agent)
-    exec ~/.claude/hooks/agent-guard <<< "$input"
+    run_guard ~/.claude/hooks/agent-guard
+    exit $?
     ;;
   AskUserQuestion)
-    exec ~/.claude/hooks/ask-user-question-guard <<< "$input"
+    run_guard ~/.claude/hooks/ask-user-question-guard
+    exit $?
     ;;
   # The generic executor bypasses catalog permissions; keep Seer's deny here
   # and let auto mode classify all other calls.
   mcp__sentry__execute_sentry_tool)
-    exec ~/.claude/hooks/sentry-seer-guard <<< "$input"
+    run_guard ~/.claude/hooks/sentry-seer-guard
+    exit $?
     ;;
   Skill)
     # Only subagent-invoked calls need the guard; main-thread Skill calls
     # fall through to the no-op exit below without spawning it.
     agent_id=$(echo "$input" | jq -r '.agent_id // empty')
     if [ -n "$agent_id" ]; then
-      exec ~/.claude/hooks/skill-subagent-guard <<< "$input"
+      run_guard ~/.claude/hooks/skill-subagent-guard
+      exit $?
     fi
     ;;
 esac
 
 if [ "$tool_name" != "Bash" ]; then
+  if [ "$armyknife_allowed" = true ]; then
+    printf '' | ~/.claude/hooks/pre-tool-use-retry-approval "$armyknife_output" 0
+  fi
   exit 0
 fi
 
@@ -134,6 +180,10 @@ bash_permission() {
 
 output=$(bash_permission)
 output=$(~/.claude/hooks/bash-bg-timeout-default "$output" <<< "$input")
+
+if [ "$armyknife_allowed" = true ]; then
+  output=$(printf '%s' "$output" | ~/.claude/hooks/pre-tool-use-retry-approval "$armyknife_output" 0)
+fi
 
 if [ -n "$output" ] && [ "$output" != "null" ]; then
   printf '%s\n' "$output"
