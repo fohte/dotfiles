@@ -1,0 +1,42 @@
+#!/bin/bash
+# Combine a one-time retry approval with one guard's PreToolUse output.
+# Usage: pre-tool-use-retry-approval <armyknife-output> <guard-exit-code> < <guard-output>
+armyknife_output=$1
+guard_status=${2:-0}
+guard_output=$(cat)
+
+emit_guard_output() {
+  if [ -n "$guard_output" ]; then
+    printf '%s\n' "$guard_output"
+  fi
+}
+
+if [ "$guard_status" != 0 ] || ! jq -es '
+  length == 1
+  and (.[0] | type == "object")
+  and (.[0].hookSpecificOutput | type == "object")
+  and .[0].hookSpecificOutput.hookEventName == "PreToolUse"
+  and .[0].hookSpecificOutput.permissionDecision == "allow"
+' <<< "$armyknife_output" > /dev/null 2>&1; then
+  emit_guard_output
+  exit 0
+fi
+
+if [ -z "$guard_output" ]; then
+  jq -c . <<< "$armyknife_output"
+  exit 0
+fi
+
+if ! jq -es 'length == 1 and (.[0] | type == "object") and (.[0].hookSpecificOutput | type == "object")' \
+  <<< "$guard_output" > /dev/null 2>&1; then
+  emit_guard_output
+  exit 0
+fi
+
+if [ "$(jq -r '.hookSpecificOutput.permissionDecision // empty' <<< "$guard_output")" = "deny" ]; then
+  emit_guard_output
+  exit 0
+fi
+
+jq -c '.hookSpecificOutput.hookEventName = "PreToolUse" | .hookSpecificOutput.permissionDecision = "allow"' \
+  <<< "$guard_output"
