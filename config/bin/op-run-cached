@@ -26,6 +26,14 @@ readonly KEYCHAIN_PREFIX='op-run-cached'
 # that would abort resolve() mid-way, after the secret has already been read.
 readonly KEYCHAIN_ACCOUNT="${USER:-$(id -un)}"
 
+# Serialize `security` calls: a concurrent burst can crash securityd, which
+# re-locks the login keychain. A lock timeout fails like any `security` error.
+keychain() {
+  # -k: without it lockf deletes the file on exit, and waiters would then lock
+  # a different inode.
+  lockf -k -t 5 "$HOME/Library/Caches/op-run-cached.lock" security "$@"
+}
+
 resolve() {
   local ref="$1"
   local service="${KEYCHAIN_PREFIX}:${ref}"
@@ -52,7 +60,7 @@ resolve() {
   fi
 
   if [[ -z "${OP_RUN_CACHED_REFRESH:-}" ]] &&
-    value=$(security find-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$service" -w 2> /dev/null) &&
+    value=$(keychain find-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$service" -w 2> /dev/null) &&
     [[ -n $value ]]; then
     printf '%s' "$value"
     return 0
@@ -66,7 +74,7 @@ resolve() {
 
   # A failed cache write only costs the next run a slow path, so warn instead of
   # aborting a command whose secret already resolved.
-  if ! security add-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$service" -w "$value" -U 2> /dev/null; then
+  if ! keychain add-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$service" -w "$value" -U 2> /dev/null; then
     echo "op-run-cached: failed to cache $ref in Keychain" >&2
   fi
 
