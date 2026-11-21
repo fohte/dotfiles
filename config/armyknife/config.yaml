@@ -41,6 +41,18 @@ agent:
 
     delegate skill の「委任先の PR が merge された場合」に従ってください。
     </delegation-update>
+  unreported_stop_notification: |
+    <delegation-update>
+    armyknife による自動送信です。人間や委任先からの依頼ではありません。
+
+    委任先が報告せずに停止しました。
+
+    - Session ID: {session_id}
+    - 最後のメッセージ:
+    {last_message}
+
+    delegate skill の「委任先が報告せずに停止した場合」に従ってください。
+    </delegation-update>
   # quota has headroom; losing conversation context hurts more than it saves
   auto_compact:
     enabled: false
