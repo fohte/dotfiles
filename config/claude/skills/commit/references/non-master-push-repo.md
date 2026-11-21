@@ -1,6 +1,6 @@
-# `is_master_push_repo` が `false` のときの手順
+# non-master push の手順
 
-`SKILL.md` の `Conditions` で `is_master_push_repo` が `false` になったときだけ読む。`true` のときは `master-push-repo.md` を読み、このファイルは読まない。
+`SKILL.md` の `Conditions` で `references/non-master-push-repo.md` を選んだときに読む。
 
 ## コミット手順
 

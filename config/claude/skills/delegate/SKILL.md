@@ -19,7 +19,7 @@ description: Delegate tasks to a separate Claude Code or Codex instance, either 
 
 - **ユーザーが決めたことを委任時に変えない**: 委任先リポジトリ、PR の分割、各 PR のスコープなど、ユーザーが指定・承認した内容を自分の判断で変えてはならない。ユーザーはどのリポジトリで修正すべきか、どこで PR を切るべきかを把握している。「こっちのリポジトリの方が適切では」「まとめた方が綺麗では」と思ったら、launcher を実行する前に提案して判断を仰ぐ。起動してから事後報告するのは、ユーザーが反対する機会を奪ったことになる
 - **自分で実装作業をしない**: このスキルが発動したら、ファイル編集・コード変更を自分で行ってはならない。仕事は委任内容を確定させることと、launcher に渡す prompt を構成して実行すること。読み取りのみの調査 (設計・原因の確定) はこの禁止に含まれない
-- **委任前にファイルを編集しない**: 「先に少し直してから委任しよう」は禁止。未コミットの変更がある状態で worktree を作ると、委任先にその変更が反映されない。作業ツリーを共有する direct-commit モード (後述) では逆に、その変更が委任先のコミットに巻き込まれる
+- **委任対象の変更を先に main checkout へ書かない**: 「先に少し直してから委任しよう」は禁止。worktree で起動した場合、main checkout の未コミット変更は委任先へ引き継がれない。main checkout で direct commit する場合は作業ツリーを共有するため、委任中の編集が委任先の commit に含まれることがある
 - **`a agent peer notify` を進捗確認や催促に使わない**: 委任先は別プロセスだが同じマシン上の Claude Code セッションなので、`a agent peer notify` でメッセージが届く。届くからといって、状況を尋ねる、急かす、作業中に細かく口を出すといった用途に使ってはならない。委任先は対話しながら進める相手ではない。送ってよいのは次の 3 つだけで、いずれも手順は後述の「委任元から委任先に連絡する場合」に従う。vibe 中は、これらに加えて draft review の差し戻し、コード修正の依頼、レビュー承認、`vibe_mode` の判定し直しの依頼を通知してよい
 
     - 委任元が渡した前提が誤っていた場合の訂正
@@ -101,7 +101,7 @@ launcher は `task.yaml` の入力を検証し、`render-task` が失敗した�
 - `DELEGATE_DIRECT_COMMIT`: launcher が repo policy と vibe に基づいて設定し、prompt の完了条件を PR または push に合わせる
 - `DELEGATE_TASK_PURPOSE` / `DELEGATE_TQ_TASK_ID` / `DELEGATE_TQ_CHECKLIST_ITEM_ID`: launcher が worktree 作成時だけ環境に設定する。hook が branch config に記録し、`create-pr` skill が使う
 
-launcher は `--type delegate`、`--child-launch deny`、`--kind development` を固定する。`repo.direct_commit` が `true` で通常 delegate の場合は worktree を使わず、prompt を direct-commit 用に描画する。vibe delegate は `repo.direct_commit` に関わらず worktree と PR を使い、Armyknife の `--vibe` guard を通す。engine、model、reasoning effort はユーザーが明示した場合だけ launcher flag で渡す。Armyknife の `--agent`、`--child-launch`、`--worktree` は直接指定しない。
+launcher は `--type delegate`、`--child-launch deny`、`--kind development` を固定する。`repo.direct_commit` が `true` で通常 delegate の場合は、main checkout が空いていれば direct commit、使用中なら worktree と PR に切り替える。vibe delegate は `repo.direct_commit` に関わらず worktree と PR を使い、Armyknife の `--vibe` guard を通す。engine、model、reasoning effort はユーザーが明示した場合だけ launcher flag で渡す。Armyknife の `--agent`、`--child-launch`、`--worktree` は直接指定しない。
 
 呼び出し元の実効 vibe が起動時に有効なら、起動した子の継承資格は自動記録される。`--vibe` は継承を指定する flag ではない。継承の条件と既存セッションへの grant ルールは、`project-manager` skill の「vibe coding の開始を頼まれたら」を参照する。
 
@@ -174,26 +174,27 @@ dir=$(mktemp -d "$AGENT_TMPDIR/delegate.XXXXXX")
 
 ## direct-commit モード
 
-`repo.direct_commit` が `true` の場合は、通常 delegate launcher が worktree を作らず、prompt を commit と push 用に描画する。vibe delegate では worktree と PR を使う。
+`repo.direct_commit` が `true` で `--vibe` を付けない場合、launcher は main checkout の使用状況を判定する。空いていれば main checkout で起動し、commit と push を行う。未 commit の変更、呼び出し元以外の開発セッション、repo ごとの flock を取得できない場合、前回起動の登録待ち予約を確認できない場合は worktree で起動し、PR を作成する。状態の確認に失敗した場合も、main checkout が空いていると確認できない場合の衝突を避けるため、worktree に切り替える。`--vibe` では常に worktree と PR を使う。
 
-direct-commit では branch と base ref を指定しない。worktree hook 用の TQ metadata も記録されない。
+`repo.direct_commit` による通常 delegate では、launcher が worktree に切り替える場合も `--branch` と `--from` は指定できない。`--vibe` は worktree 経路を使うため、この制限の対象外。worktree 起動では `DELEGATE_TASK_PURPOSE`、指定があれば TQ task metadata も渡される。
 
-### 委任前に確認すること
+### 起動方式の判定
 
-- **対象リポジトリの作業ツリーが clean であること**: `git -C "$repo" status --porcelain` が空であることを確認する。作業ツリーが分離されないため、未コミットの変更は委任先から見え、委任先のコミットに巻き込まれる。dirty なら委任元が先にコミットしてから委任する。stash で隠すのは委任先が作業している間に戻せないので不可
-- **同じリポジトリへの direct-commit 委任を並行させない**: 作業ツリーが 1 つしかないので、2 つのセッションが同じファイルを同時に編集することになる。次の委任は前の委任が push を終えてから出す
-- **委任元もその作業ツリーを触らない**: 委任中に委任元がファイルを編集すれば同じ衝突が起きる
+- direct commit で起動するとき、launcher は repo ごとの flock を取得し、起動前に有効期限 1 時間のセッション登録待ち予約を記録する。起動後は `a agent peer list` で新しいセッションを確認し、見つかるまで最大 60 秒 flock を保持する。登録を確認したら予約を解除する
+- 60 秒以内に登録されなければ、後続の起動を worktree に回す予約を 5 分間残して flock を解放する。後続の launcher は peer list でセッション登録を確認するか、予約の期限が切れたときに予約を解除する。セッションが登録されない状態が 5 分を超えると、後続の起動が main checkout を空きと判定する可能性がある。5 分予約への更新に失敗した場合は、起動前に作成した 1 時間有効の予約が期限まで残る
+- `--dry-run` は選択した経路と理由を表示するが、セッション登録待ち予約は作成しない
+- 起動前に作業ツリーの clean を確認したり、同じ repo の委任を手動で直列化したりする必要はない。direct commit では委任先と委任元が main checkout を共有するため、委任先の作業中は委任元もその checkout を編集しない。worktree に切り替わった場合は、委任元が main checkout の変更を続けられる
 
 ### PR が出ないことの影響
 
-- 成果物は push 済みのコミットで、PR は出ない。ユーザーによる diff レビューは `/commit` skill の手順で self-review の後に `crit-approval-review` skill として挟まり、委任先はコミット前に承認を待つ
-- 委任元が tq タスクを持っていても、PR 経由でタスクにリンクされない。成果をタスクに残すのは委任元の役目になるが、そのために完了を確認しに行かない (「委任後に完了をポーリングしない」)。委任先から完了報告が届いたときや、ユーザーから完了を聞いたときなど、次に tq を触る節目でコミットを記録する
+- main checkout が空いている場合は、成果物は push 済みのコミットで PR は出ない。ユーザーによる diff レビューは `/commit` skill の手順で self-review の後に `crit-approval-review` skill として挟まり、委任先はコミット前に承認を待つ
+- この場合、委任元が tq タスクを持っていても PR 経由でタスクにリンクされない。成果をタスクに残すのは委任元の役目になるが、そのために完了を確認しに行かない (「委任後に完了をポーリングしない」)。委任先から完了報告が届いたときや、ユーザーから完了を聞いたときなど、次に tq を触る節目でコミットを記録する
 
 ## 委任時の注意事項
 
 - **既存ブランチで作業する場合**: 既存のリモートブランチ (例: follow-up PR のブランチ) にそのまま commit したい場合は、launcher の `--branch` にそのブランチ名を渡す
 - **ブランチ名**: 新規ブランチを作る場合、ブランチ名に `/` を含めないこと。代わりにハイフンを使う (例: `fix/login-bug` ではなく `fix-login-bug`)。ブランチには `fohte/` がプレフィックスとして付くため、`fix/...` だと `fohte/fix/...` になり冗長
-- 新しいインスタンスは独立した worktree で作業するため、現在の作業と競合しない。作業ツリーを共有する direct-commit モードには当てはまらず、前掲の「委任前に確認すること」に従う
+- 新しいインスタンスは独立した worktree で作業するため、現在の作業と競合しない。main checkout が使用中なら direct-commit 設定の repo でも launcher が worktree を選ぶ
 - **fork リポジトリへの委任**: 委任先の対象 repo root (`--repo` 省略時は現在の repo root) で origin が fork (`gh repo view "$(git remote get-url origin)" --json isFork -q .isFork` が `true`) で、かつ同じ repo root で `a config get repo.standalone_fork` が `true` を返さない場合 (コマンド失敗時を含む) は、`additionalContext` に「oss-contribution skill を読み、commit と push はその手順に従うこと」と書く。OSS contribution 対象の fork では commit も push もユーザーが行うので、`render-task` が付ける締めくくりの commit / PR 作成はこの skill の手順で置き換わる。後述の「commit/PR 作成の完了条件は task.yaml に書かない」の例外はこれだけ
 
 ### `--from` の判断ルール (重要)

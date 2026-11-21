@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+timeout_seconds="${1:?Usage: peer-list-with-timeout <seconds> <command> [args...]}"
+shift
+
+exec perl -MPOSIX=setpgid -e '
+  my $timeout = shift @ARGV;
+  my $pid = fork();
+  defined($pid) or die "fork failed: $!";
+
+  if ($pid == 0) {
+    setpgid(0, 0) == 0 or die "setpgid failed: $!";
+    exec { $ARGV[0] } @ARGV or die "exec failed: $!";
+  }
+
+  setpgid($pid, $pid);
+  my $stop_group = sub {
+    return unless kill 0, -$pid;
+    kill "TERM", -$pid;
+    select undef, undef, undef, 0.05;
+    kill "KILL", -$pid;
+  };
+  $SIG{ALRM} = sub {
+    $stop_group->();
+    waitpid($pid, 0);
+    exit 124;
+  };
+
+  alarm $timeout;
+  waitpid($pid, 0);
+  my $status = $?;
+  alarm 0;
+  $stop_group->();
+  exit($status & 127 ? 128 + ($status & 127) : $status >> 8);
+' "$timeout_seconds" "$@"

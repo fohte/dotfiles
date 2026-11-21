@@ -25,6 +25,64 @@ fail() {
   exit 2
 }
 
+pending_reservation_ttl_seconds=300
+pending_start_reservation_ttl_seconds=3600
+peer_list_timeout_seconds=5
+main_registration_timeout_seconds=60
+pending_file=
+pending_reservation_created=false
+pending_reservation_keep=false
+
+cleanup_pending_reservation() {
+  [[ $pending_reservation_created == true && $pending_reservation_keep == false ]] && rm "$pending_file" 2> /dev/null || true
+}
+trap cleanup_pending_reservation EXIT
+
+main_checkout_peer_root() {
+  local peer_root
+  peer_root=$(git -C "$1" rev-parse --show-toplevel 2> /dev/null) || return 2
+  peer_root=$(cd "$peer_root" && pwd -P) || return 2
+  [[ $peer_root == "$target_repo" ]]
+}
+
+has_registered_main_session() {
+  local peers_json="$1" label="$2" baseline_session_ids="$3" peer_cwd
+  while IFS= read -r peer_cwd; do
+    [[ -n $peer_cwd ]] || continue
+    if main_checkout_peer_root "$peer_cwd"; then
+      return 0
+    fi
+  done < <(jq -r --arg label "$label" --argjson baseline "$baseline_session_ids" '
+    .[] | select(.session_id | type == "string") as $peer |
+    select(
+      $peer.work_type == "development" and
+      $peer.label == $label and
+      (($baseline | index($peer.session_id)) == null)
+    ) |
+    $peer.cwd // empty
+  ' <<< "$peers_json")
+  return 1
+}
+
+peer_list_with_timeout() {
+  local timeout_seconds="$1"
+  "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/peer-list-with-timeout" "$timeout_seconds" a agent peer list 9>&-
+}
+
+write_pending_reservation() {
+  local label="$1" baseline_session_ids="$2" ttl_seconds="${3:-$pending_reservation_ttl_seconds}" now expires_at pending_temp
+  if ! now=$(date +%s); then
+    return 1
+  fi
+  expires_at=$((now + ttl_seconds))
+  pending_temp="$pending_file.$$"
+  if ! jq -cn --arg label "$label" --argjson baseline "$baseline_session_ids" --argjson expires_at "$expires_at" \
+    '{label:$label,baseline_session_ids:$baseline,expires_at:$expires_at}' > "$pending_temp" || ! mv "$pending_temp" "$pending_file"; then
+    rm "$pending_temp" 2> /dev/null || true
+    return 1
+  fi
+}
+
 if [[ $# -eq 1 && ($1 == --help || $1 == -h) ]]; then
   usage
   exit 0
@@ -52,6 +110,7 @@ seen_tq_checklist=false
 seen_engine=false
 seen_model=false
 seen_reasoning_effort=false
+original_args=("$@")
 
 while (($#)); do
   case "$1" in
@@ -159,6 +218,9 @@ fi
 if ! target_repo=$(cd "$target_repo" && git root -r); then
   fail "Could not resolve the target repository root."
 fi
+if ! target_repo=$(cd "$target_repo" && pwd -P); then
+  fail "Could not canonicalize the target repository root."
+fi
 
 direct_commit=false
 if configured_direct_commit=$(cd "$target_repo" && a config get repo.direct_commit); then
@@ -172,6 +234,187 @@ esac
 
 if [[ $direct_commit == true && ($seen_branch == true || $seen_from == true) ]]; then
   fail "--branch and --from require worktree mode, but repo.direct_commit is true."
+fi
+
+route_reason=
+lock_state=${DELEGATE_LAUNCH_LOCK_STATE:-}
+unset DELEGATE_LAUNCH_LOCK_STATE
+lock_held=false
+if [[ $direct_commit == true ]]; then
+  state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/armyknife/delegate-direct-commit"
+  if ! lock_key=$(printf '%s' "$target_repo" | shasum -a 256 | cut -d ' ' -f1) || [[ -z $lock_key ]]; then
+    direct_commit=false
+    route_reason='repository lock is unavailable'
+  else
+    pending_file="$state_dir/$lock_key.pending"
+    case "$lock_state" in
+      held)
+        if [[ -e /dev/fd/9 ]]; then
+          lock_held=true
+        else
+          direct_commit=false
+          route_reason='repository lock is unavailable'
+        fi
+        ;;
+      busy)
+        direct_commit=false
+        route_reason='another launcher holds the repository lock'
+        ;;
+      unavailable)
+        direct_commit=false
+        route_reason='repository lock is unavailable'
+        ;;
+      *)
+        umask 077
+        if command -v perl > /dev/null 2>&1 && mkdir -p "$state_dir"; then
+          script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/$(basename "${BASH_SOURCE[0]}")"
+          exec perl -MDigest::SHA=sha256_hex -MFcntl=LOCK_EX,LOCK_NB,F_SETFD -MPOSIX=dup2 -e '
+            my ($state_dir, $repo, $script, @args) = @ARGV;
+            my $lock_path = "$state_dir/" . sha256_hex($repo) . ".lock";
+            my $state = "unavailable";
+            # Keep the lock handle alive for exec; Perl fcntl cannot use a raw descriptor number.
+            my $fd9;
+
+            if (open(my $guard, ">>", $lock_path)) {
+              if (flock($guard, LOCK_EX | LOCK_NB)) {
+                my $fd = fileno($guard);
+                if (
+                  ($fd == 9 || dup2($fd, 9) == 9) &&
+                  open($fd9, "<&=9") &&
+                  defined(fcntl($fd9, F_SETFD, 0))
+                ) {
+                  close($guard) if $fd != 9;
+                  $state = "held";
+                }
+              } else {
+                $state = "busy";
+              }
+            }
+
+            $ENV{DELEGATE_LAUNCH_LOCK_STATE} = $state;
+            exec { $script } $script, @args or die "unable to restart delegate launcher: $!";
+          ' "$state_dir" "$target_repo" "$script_path" "${original_args[@]}"
+        fi
+
+        direct_commit=false
+        route_reason='repository lock is unavailable'
+        ;;
+    esac
+  fi
+
+  if [[ $direct_commit == true ]]; then
+    if ! main_status=$(git -C "$target_repo" status --porcelain 9>&-); then
+      direct_commit=false
+      route_reason='main checkout status could not be checked'
+    elif [[ -n $main_status ]]; then
+      direct_commit=false
+      route_reason='main checkout has uncommitted changes'
+    elif ! peer_json=$(peer_list_with_timeout "$peer_list_timeout_seconds"); then
+      direct_commit=false
+      route_reason='active sessions could not be checked'
+    elif ! jq -e 'type == "array"' <<< "$peer_json" > /dev/null; then
+      direct_commit=false
+      route_reason='active sessions could not be checked'
+    else
+      if [[ -e $pending_file ]]; then
+        if ! pending_record=$(jq -ce '
+          select(
+            type == "object" and
+            (.label | type == "string") and
+            (.baseline_session_ids | type == "array" and all(.[]; type == "string")) and
+            (.expires_at | type == "number" and floor == .)
+          )
+        ' "$pending_file"); then
+          if rm "$pending_file"; then
+            direct_commit=false
+            route_reason='a previous main-checkout reservation could not be verified'
+          else
+            direct_commit=false
+            route_reason='a previous main-checkout reservation could not be cleared'
+          fi
+        elif ! now=$(date +%s); then
+          direct_commit=false
+          route_reason='a previous main-checkout reservation expiry could not be checked'
+        else
+          pending_expires_at=$(jq -r '.expires_at' <<< "$pending_record")
+          pending_label=$(jq -r '.label' <<< "$pending_record")
+          pending_baseline_session_ids=$(jq -c '.baseline_session_ids' <<< "$pending_record")
+          if ((pending_expires_at <= now)); then
+            if ! rm "$pending_file"; then
+              direct_commit=false
+              route_reason='an expired main-checkout reservation could not be cleared'
+            fi
+          elif has_registered_main_session "$peer_json" "$pending_label" "$pending_baseline_session_ids"; then
+            if ! rm "$pending_file"; then
+              direct_commit=false
+              route_reason='a registered main-checkout reservation could not be cleared'
+            fi
+          else
+            direct_commit=false
+            route_reason='a previous main-checkout session has not registered yet'
+          fi
+        fi
+      fi
+
+      if [[ $direct_commit == true ]]; then
+        main_session_active=false
+        while IFS= read -r peer_cwd; do
+          [[ -n $peer_cwd ]] || continue
+          if main_checkout_peer_root "$peer_cwd"; then
+            main_session_active=true
+            break
+          else
+            peer_root_status=$?
+            if [[ $peer_root_status -eq 2 && ($peer_cwd == "$target_repo" || $peer_cwd == "$target_repo/"*) ]]; then
+              main_session_active=true
+              break
+            fi
+          fi
+        done < <(jq -r --arg caller "${ARMYKNIFE_SESSION_ID:-}" '
+          .[] |
+          select(
+            .session_id != $caller and
+            (.work_type == "development" or .work_type == "dev" or .work_type == "debug-flow") and
+            .agent_status.kind != "done" and
+            (.cwd | type == "string")
+          ) |
+          .cwd
+        ' <<< "$peer_json")
+
+        if [[ $main_session_active == true ]]; then
+          direct_commit=false
+          route_reason='an active development session uses the main checkout'
+        else
+          route_reason='main checkout is free'
+          baseline_session_ids=$(jq -c '[.[] | .session_id // empty]' <<< "$peer_json")
+        fi
+      fi
+    fi
+  fi
+fi
+
+if [[ $dry_run == true ]]; then
+  if [[ $direct_commit == true ]]; then
+    printf 'Delegate route: direct commit (reason: %s).\n' "$route_reason" >&2
+  else
+    if [[ -z $route_reason ]]; then
+      route_reason='repo.direct_commit is false'
+      if [[ $vibe == true ]]; then route_reason='--vibe requires worktree mode'; fi
+    fi
+    printf 'Delegate route: worktree (reason: %s).\n' "$route_reason" >&2
+  fi
+elif [[ -n $route_reason && $direct_commit == false && $vibe == false && $configured_direct_commit == true ]]; then
+  printf 'Main checkout is in use (%s); switching delegation to a worktree.\n' "$route_reason" >&2
+fi
+
+if [[ $direct_commit == true && $lock_held == true && $dry_run == false ]]; then
+  if write_pending_reservation "$label" "$baseline_session_ids" "$pending_start_reservation_ttl_seconds"; then
+    pending_reservation_created=true
+  else
+    direct_commit=false
+    route_reason='main-checkout reservation could not be recorded'
+    printf 'Main checkout is in use (%s); switching delegation to a worktree.\n' "$route_reason" >&2
+  fi
 fi
 
 if [[ $direct_commit == false && $seen_branch == true ]] && ! git -C "$target_repo" check-ref-format --branch "$branch" > /dev/null 2>&1; then
@@ -210,6 +453,51 @@ if [[ $direct_commit == false ]]; then
   if [[ $seen_tq_checklist == true ]]; then
     export DELEGATE_TQ_CHECKLIST_ITEM_ID=$tq_checklist_item_id
   fi
+fi
+
+if [[ $direct_commit == true && $lock_held == true && $dry_run == false ]]; then
+  if a "${cmd[@]}" 9>&-; then
+    # Claude registers its session from a startup hook after the launcher returns.
+    registration_deadline=$((SECONDS + main_registration_timeout_seconds - 1))
+    while ((SECONDS < registration_deadline)); do
+      remaining_seconds=$((registration_deadline - SECONDS - 1))
+      ((remaining_seconds > 0)) || break
+      peer_timeout_seconds=$remaining_seconds
+      if ((peer_timeout_seconds > peer_list_timeout_seconds)); then
+        peer_timeout_seconds=$peer_list_timeout_seconds
+      fi
+      if peers_after_launch=$(peer_list_with_timeout "$peer_timeout_seconds"); then
+        if jq -e 'type == "array"' <<< "$peers_after_launch" > /dev/null &&
+          has_registered_main_session "$peers_after_launch" "$label" "$baseline_session_ids"; then
+          if rm "$pending_file"; then
+            pending_reservation_created=false
+          else
+            pending_reservation_keep=true
+          fi
+          exit 0
+        fi
+      fi
+      remaining_seconds=$((registration_deadline - SECONDS - 1))
+      ((remaining_seconds > 0)) || break
+      sleep 1
+    done
+    if write_pending_reservation "$label" "$baseline_session_ids"; then
+      pending_reservation_keep=true
+      pending_reservation_created=false
+      printf 'Timed out waiting for the launched session to appear; keeping a five-minute worktree reservation and releasing the main-checkout lock.\n' >&2
+    else
+      pending_reservation_keep=true
+      printf 'Timed out waiting for the launched session to appear; the pre-launch worktree reservation remains in place for up to one hour.\n' >&2
+    fi
+    exit 0
+  else
+    launch_status=$?
+    exit "$launch_status"
+  fi
+fi
+
+if [[ $lock_held == true ]]; then
+  exec a "${cmd[@]}" 9>&-
 fi
 
 exec a "${cmd[@]}"
