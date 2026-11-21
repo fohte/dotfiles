@@ -172,6 +172,8 @@ This message was sent automatically by an armyknife hook. It was not requested b
 Branch: $branch_name
 Base: $base_ref
 
+While the default branch CI is failing, do not merge any PR except one that fixes that CI. Resume merges only after confirming that the default branch CI is passing.
+
 The branch conflicts with the base. Run the sync-base-branch skill to resolve the conflict.
 </armyknife-post-worktree-delete>"
     if ! a agent peer notify --message "$message" "$session_id"; then
