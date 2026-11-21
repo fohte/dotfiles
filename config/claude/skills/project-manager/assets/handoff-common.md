@@ -2,7 +2,7 @@
 
 1. **track-in-tq skill を使う。** 上記の tq タスクを `tq link <id>` でこのセッションに紐付ける。新しいタスクは作らない (既に存在する)
 2. **調査する。** 原因が未特定なら root cause を特定するまで、現状の実装がどうなっているかを自分で調べる。ここは自己完結してよい
-3. **設計の判断を仕分ける。** ゴールが明確なら、仕様の詳細 (UI の見た目や操作、最初にどこまで作るか、処理の共通化など) は自分で決め、理由を PR 本文の Design decisions に残す。人間の承認を待つと、そのぶん作業が止まり、読み直しのトークンも増えるため。次のどれかに当たる論点だけを、plz-explain-with-crit skill でユーザーに出す。資料の作り方と crit の往復はその skill に従い、approve されるまで往復する
+3. **設計の判断を仕分ける。** ゴールが明確なら、仕様の詳細 (UI の見た目や操作、最初にどこまで作るか、処理の共通化など) は自分で決め、理由を PR 本文の Design decisions に残す。人間の承認を待つと、そのぶん作業が止まり、読み直しのトークンも増えるため。次のどれかに当たる論点だけを、watch-web のカードでユーザーに出す。選んでもらう論点は `a agent proposal add` で出し、判断材料はカードの説明と pros / cons に収める。手で確かめてもらう論点は `a agent todo add` で出す。crit や HTML の資料は、最後の `repo.vibe` の項目を除き、ユーザーが見たいと言ったときだけ plz-explain-with-crit skill で作る。判断 1 つのために資料を読ませると、答えるまでの手間が増えるため。ユーザーの回答や approve を待って止まるときは `a agent status set wait "<repo.name> tq #<n> の <論点> への回答を待つ"` を設定する。PM はこの `agent_status` で判断待ちを知る
     - 権限やセキュリティの範囲を変える
     - お金や個人アカウントが絡む (有料サービスの契約、アカウントやトークンの扱い)
     - ユーザーが過去に下した決定を覆す
@@ -10,12 +10,12 @@
     - ユーザーが手で確かめないと決まらない (実機での操作感など)
     - handoff やタスクに、ユーザーが決めると書いてある
     - 実装先リポジトリで `a config get repo.vibe` が `true` を返さない。この場合は今までどおり、設計全体と、手順 4 で PR 分割をする場合はその分割案を、crit で approve してもらってから実装に入る
-4. **PR 分割と記録。** 実装先リポジトリの `repo.direct_commit` が `true` でないなら、split-into-prs skill で PR 分割を決め、handoff の「担当タスク」に記載した ID の「実装」チェックリストへ記録する。手順 3 で crit に出す論点が無ければ、分割は承認を待たずに記録する。読者向け資料が必要なら、track-in-tq skill の「何をどこに書くか」に従って tq page にまとめる。task description には書かない
-5. **実装が必要なら delegate skill で委任する。** 自分で実装しない。委任してよいのは原因が特定でき、手順 3 で crit に出した論点が approve されてからである。1 委任 = 1 PR。PR 分割に従い、最初の 1 PR だけ委任して、残りは前の PR が merge されてから改めて委任する
+4. **PR 分割と記録。** 実装先リポジトリの `repo.direct_commit` が `true` でないなら、split-into-prs skill で PR 分割を決め、handoff の「担当タスク」に記載した ID の「実装」チェックリストへ記録する。手順 3 でユーザーに出す論点が無ければ、分割は承認を待たずに記録する。読者向け資料が必要なら、track-in-tq skill の「何をどこに書くか」に従って tq page にまとめる。task description には書かない
+5. **実装が必要なら delegate skill で委任する。** 自分で実装しない。委任してよいのは原因が特定でき、手順 3 でユーザーに出した論点が決まってからである。1 委任 = 1 PR。PR 分割に従い、最初の 1 PR だけ委任して、残りは前の PR が merge されてから改めて委任する
     - 委任先の engine、model、reasoning effort は通常は選択中 profile の `delegate` type 設定を使う。ユーザーがいずれかを明示した場合だけ、対応する launcher flag で値を渡す。1 回の起動のために profile の全体選択を書き換えない
     - **delegate launcher に `--tq-task-id` で上記タスクの ID を必ず渡す。** 渡さないと委任先の PR がどのタスクにも載らない
     - PR 分割の実装チェックリストがある場合は、委任する PR に対応する葉項目 ID を delegate launcher の `--tq-checklist-item-id` に渡す。Batch 親の ID は使わない
-6. **ユーザーが見ていない節目だけ引き継ぎ元 (PM セッション) に報告する。** 報告するのは、PR が merge されたとき、範囲が変わったとき、止まったとき、終わったとき。手順 3 で自分で決めた判断も、PR 本文に残るので報告しない。設計の approve 待ちになった、crit を開き直した、approve された、のようにユーザーが自分の画面で見ている出来事は報告しない。PM がそれをユーザーに中継し、同じ通知が二重に届いてトークンと費用の無駄になるため。`a agent peer parent | jq -r '.[0].session_id // empty'` で ID を取り、`a agent peer notify --message "<要約 + 成果物のパスや PR URL>" <session_id>` で送る。全文は貼らない
+6. **ユーザーが見ていない節目だけ引き継ぎ元 (PM セッション) に報告する。** 報告するのは、PR が merge されたとき、範囲が変わったとき、止まったとき、終わったとき。手順 3 で自分で決めた判断も、PR 本文に残るので報告しない。判断待ちになった、回答をもらった、crit を開き直した、approve された、のようにユーザーが watch-web やセッションの画面で見ている出来事は報告しない。PM がそれをユーザーに中継し、同じ通知が二重に届いてトークンと費用の無駄になるため。判断待ちは手順 3 の `agent_status` で PM に伝わる。`a agent peer parent | jq -r '.[0].session_id // empty'` で ID を取り、`a agent peer notify --message "<要約 + 成果物のパスや PR URL>" <session_id>` で送る。全文は貼らない
 
 ## 検証
 
