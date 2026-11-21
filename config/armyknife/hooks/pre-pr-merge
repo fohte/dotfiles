@@ -23,6 +23,8 @@ if [[ -n "${ARMYKNIFE_SESSION_ID:-}" || -n "${CODEX_SESSION_ID:-}" ]]; then
 fi
 
 if ((is_agent_session)); then
+  printf 'pre-pr-merge: 既定ブランチの CI が失敗している間は、その CI を修正する PR 以外を merge しないでください。merge を再開する前に、既定ブランチの CI が成功していることを確認してください。\n'
+
   if ! pr_title="$(gh pr view "$ARMYKNIFE_PR_URL" --json title --jq .title 2>&1)"; then
     printf 'pre-pr-merge: unable to read the title for %s: %s\n' "$ARMYKNIFE_PR_URL" "$pr_title" >&2
     exit 1
