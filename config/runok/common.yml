@@ -273,6 +273,12 @@ rules:
     tests:
       - deny: 'stat -c %s file.txt'
       - allow: 'gstat -c %s file.txt'
+  # Name-based kills also hit other sessions' processes, and BSD pkill treats
+  # options after the pattern as extra patterns, so `pkill -f foo -P 1`
+  # signals every process whose command line contains "1".
+  - deny: 'pkill|killall *'
+    message: 'pkill/killall match by name or pattern and can signal processes owned by other sessions or the desktop (on macOS, pkill options after the pattern become extra patterns).'
+    fix_suggestion: 'List targets with `pgrep -fl <pattern>`, then `kill <PID>` only the processes you started.'
 
   # GNU coreutils on macOS (Homebrew installs them with a `g` prefix).
   # Only readonly commands are listed; gsed/gdate/gstat are handled above.
