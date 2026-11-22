@@ -59,11 +59,21 @@ resolve() {
     return 0
   fi
 
-  if [[ -z "${OP_RUN_CACHED_REFRESH:-}" ]] &&
-    value=$(keychain find-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$service" -w 2> /dev/null) &&
-    [[ -n $value ]]; then
-    printf '%s' "$value"
-    return 0
+  if [[ -z "${OP_RUN_CACHED_REFRESH:-}" ]]; then
+    local rc=0
+    value=$(keychain find-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$service" -w 2> /dev/null) || rc=$?
+    if ((rc == 0)) && [[ -n $value ]]; then
+      printf '%s' "$value"
+      return 0
+    fi
+    # Besides an empty hit, only a genuine miss (44, errSecItemNotFound) may
+    # fall through to `op read`: treating a lock timeout as a miss re-reads an
+    # already cached secret from 1Password, popping a Touch ID prompt for every
+    # concurrent caller.
+    if ((rc != 0 && rc != 44)); then
+      echo "op-run-cached: Keychain lookup for $ref failed (exit $rc)" >&2
+      return 1
+    fi
   fi
 
   value=$(op read "$ref") || return 1
