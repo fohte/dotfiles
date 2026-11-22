@@ -370,6 +370,7 @@ local obsidianVaultPath = env('OBSIDIAN_VAULT_PATH');
   tui: 'fullscreen',
   promptSuggestionEnabled: false,
   agentPushNotifEnabled: false,
+  preferredNotifChannel: 'notifications_disabled',
   editorMode: 'vim',
 
   // use skills and CLAUDE.md instead of memory
