@@ -6,15 +6,18 @@ designer がいる repo では、画面に出るものを変える実装を、�
 
 designs の `origin/HEAD` に repo のディレクトリが 1 つ以上ある場合、その repo には designer がいる。checkout の作業ツリーではなく fetch 後の `origin/HEAD` を使う。
 
+まず designs の clone が存在するか確認する。clone が無ければ通常どおり委任し、以下のコマンドは実行しない。
+
 ```bash
 designs=~/ghq/github.com/fohte/designs
 git -C "$designs" fetch --quiet origin || true
 git -C "$designs" ls-tree -d --name-only origin/HEAD "<repo>/"
 ```
 
-- designs の clone が無い、またはコマンドの出力が空なら designer を使わない repo として通常どおり委任し、この reference の残りは適用しない
+- designs の clone が無い場合は designer を使わない repo として通常どおり委任し、この reference の残りは適用しない
 - fetch が失敗しても、既存の `origin/HEAD` を読めるならその内容で判定を続ける
-- `origin/HEAD` が無く判定できない場合も designer を使わない repo として扱う
+- clone があるのに `origin/HEAD` を解決できない場合や `ls-tree` が失敗した場合は判定不能として扱い、理由を報告して dispatch を保留する
+- `ls-tree` が成功し、出力が空なら designer を使わない repo として通常どおり委任し、この reference の残りは適用しない
 
 ## 画面に出るものの判定
 
