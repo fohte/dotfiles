@@ -175,7 +175,7 @@ crit を開かず、調査結果から次の処理を行う。`merge` は全 gat
 
 判断時に PR の head SHA と `gh pr diff` の追加・削除行を記録する。todo にした PR はこの差分を処理済みの基準として保持し、通常は変更行が変わるまで再トリアージしない。順序依存の PR は先行 PR が merge された場合、または merge せずに close された場合も、後続 PR の head SHA と diff が同じまま再トリアージして依存関係を評価し直す。todo はユーザーが判断・作業するまで保留するが、他の PR の処理は続ける。
 
-vibe の todo card は対象 PR と card の seq の対応を記録する。PR ごとに card を分けることを基本とする。todo PR を再トリアージする前に、記録した seq の古い card を `a agent todo withdraw <seq>` で撤回する。複数 PR をまとめた card の一部だけを再トリアージする場合は、同じ card に残る未解決 PR の todo を別 card に再登録して新しい seq を記録してから、対象 PR の古い card を撤回する。次に対象 PR を再トリアージし、引き続き todo が必要なら新しい card を作って seq を記録する。todo が不要になった PR は再登録しない。
+vibe の todo card は対象 PR と card の seq の対応を記録し、PR ごとに分けることを基本とする。todo PR の再トリアージ中は古い card を pending のまま残す。再トリアージまたは選んだ処理が失敗した場合は card を残して停止し、内容と seq を報告する。処理結果が確定したら、todo が引き続き必要な PR は先に新しい card を登録して seq を記録する。複数 PR を含む card の一部だけを処理する場合は、他の未解決 PR も新しい card に移して seq を記録する。必要な処理と代替 card の登録を終えてから、古い card を `a agent todo withdraw <seq>` で撤回する。撤回時に `todo is already resolved or does not exist` が返った場合は無視する。それ以外の失敗では処理を停止して報告する。todo が不要になった PR は再登録しない。
 
 安全と判定した `merge` PR は、head SHA を `head_sha` に含めた同じ JSON を `~/.agents/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage --vibe-approve <data.json>` に渡して approve review を投稿し、その後 `a gh pr-merge <pr>` でマージする。approve body には `CLAUDECODE` または `CODEX_THREAD_ID` に応じた AI footer を付ける。approve option は自身でも `vibe_mode` と PR の head SHA を検証し、不一致なら投稿を拒否する。vibe 専用操作の直前に `vibe-policy.md` の条件を再確認する。再確認が false なら既存の crit 承認フローに切り替え、判定エラーが再試行後も続く場合は policy に従って報告・停止する。この option は false または判定エラーで必ず拒否する。マージ直前に head SHA を再取得する。head が変わっていたら `gh pr diff` の追加・削除行を記録済みのものと比較する。変更行が同じなら内容の再調査はせず、新しい head SHA を `head_sha` に入れて approve review を再投稿してから続行する。変更行が異なればその PR の調査と approve review をやり直す。`a gh pr-merge` 以外でマージしない。
 
@@ -340,7 +340,7 @@ release-please 側の `changelog-sections` / `release-as` を直すべきケー�
 
 Renovate PR を default branch にマージした後は、delegate skill の手順に従って default branch の CI が green になるまで待つ。CI が失敗または状態不明ならそれ以上のマージを止め、原因と確認済みの内容を含む todo を登録する。stacked fix PR を Renovate branch にマージした後は、default branch CI ではなく、その Renovate PR の CI を確認する。
 
-先行 PR 待ちを除き、処理できる PR がなくなったら、進行中の fix delegate がマージまたは停止を報告するまで待つ。todo PR の再トリアージでは、Step 5 に従って古い card を `a agent todo withdraw <seq>` で撤回してから処理する。全 delegate が完了したら `renovate-trigger run` を 1 回実行し、Renovate が完了してから PR 一覧を取り直す。GitHub App mode は Dependency Dashboard の checkbox が外れるまで待つ。Actions mode は dispatch だけでなく、Renovate を実行する workflow が実際に開始・完了したことを確認する。確認できなければ停止してユーザーに報告する。新しい PR がなければ loop を終了する。
+先行 PR 待ちを除き、処理できる PR がなくなったら、進行中の fix delegate がマージまたは停止を報告するまで待つ。todo PR の再トリアージでは、Step 5 に従って必要な代替 card を登録し、古い card を `a agent todo withdraw <seq>` で撤回する。全 delegate が完了したら `renovate-trigger run` を 1 回実行し、Renovate が完了してから PR 一覧を取り直す。GitHub App mode は Dependency Dashboard の checkbox が外れるまで待つ。Actions mode は dispatch だけでなく、Renovate を実行する workflow が実際に開始・完了したことを確認する。確認できなければ停止してユーザーに報告する。新しい PR がなければ loop を終了する。
 
 delegate report の受付、todo/proposal 後の再一覧、head SHA の再確認を含め、結果が出るたびに一覧へ戻る。todo PR の再処理は Step 5 の処理済み基準に従う。
 
