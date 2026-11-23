@@ -369,7 +369,7 @@ armyknife から、最後のメッセージを含む `<delegation-update>` が�
 
 armyknife から `<delegation-update>` で merge 通知が来たら、default branch の CI が通るまで見届ける。merge 後の default branch が壊れていると、並行する PR も merge 後に同じ失敗を踏む。
 
-vibe 中に自分で merge した PR について後から届く `<delegation-update>` は処理済みとして扱い、この手順を繰り返さない。
+vibe 中に自分で merge した PR について後から届く `<delegation-update>` では、run の監視や merge 保留の手順を繰り返しません。通知に CI タスクのトリアージ指示が含まれる場合は、未処理のタスクをその指示に従って処理してください。
 
 merge 後も委任先が `a agent peer children` に残っていれば (`a gh pr-merge` の自動 close が失敗した場合など)、`label` と `cwd` で merge された PR の委任先を特定し、`a agent close --child <session_id>` で閉じる。`--child` は直接の子でないセッションを閉じる前に拒否する。拒否されたら `--force` を使わず、理由をユーザーに伝える。
 
