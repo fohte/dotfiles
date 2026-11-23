@@ -1,44 +1,124 @@
 #!/usr/bin/env python3
-"""Render a triage report, collect its crit decision, and act on approvals.
+"""Render a triage report as HTML, open it in crit, and act on the approve/deny result.
 
 Usage: crit-triage <data.json> [crit args...]
        crit-triage --vibe-approve <data.json>
        crit-triage --selftest
 
-The caller writes the JSON data. HTML, state, and completion files are written
-next to it. The normal command opens the report in crit and acts on its approved
-merge verdicts. `--vibe-approve` validates vibe mode, posts approve reviews for
-merge verdicts, and never merges.
+The caller (usually Claude) writes only the data JSON; the page chrome lives here.
+Output goes next to the input: <data>.html, <data>.state.json and <data>.done.json.
+
+`--vibe-approve` checks the session and repository vibe gates, then posts the
+generated approve reviews for `merge` PRs without merging them.
+
+Approving a `merge` PR here -- and then the crit review itself -- is what carries
+out its plan: this same process posts the generated review comment as an approving
+review and arms auto-merge on it -- or merges it outright, when GitHub refuses to
+arm a PR that is already mergeable. Nothing is written to disk between the report
+the human read and the calls that act on it, so what was reviewed is what happens.
+
+A PR card answers two questions: is it safe to merge right now (the "gates" line:
+CI / release / merge order), and does this update break the repo (the "changes"
+table: what happened upstream, whether it hits this repo, and what to do about it
+if it does). The one-line verdict at the top of the card is never written by hand --
+it is derived from gates + changes, so it can never say something the data
+underneath contradicts. The review comment posted to GitHub is generated from the
+same changes table, so the report and the comment show the same facts.
+
+For `--vibe-approve`, each PR in a `merge` group must include `head_sha`, the SHA
+reviewed during triage. Approval is refused if the PR head no longer matches it.
 
 Data format:
 
-- Top level: `title`, `repo`, `public`, `groups`, optional `proposals`.
-- `public` is true for public non-Japanese repos and requires `text_en` on every
-  change and impact.
-- Each group has `verdict` (`merge`, `auto`, `delegate`, or `hold`), `title`, and
-  `prs`.
-- Each PR has `number`, `title`, optional `url`, `scope`, `versions`, and
-  `head_sha`; optional `gates` (`ci`, `release`, `order`) with `level` and
-  `text`; and `changes`. `--vibe-approve` requires `head_sha`.
-- Each change has `text`, optional `text_en`, optional `breaking`, and `impact`.
-  Impact has `level`, `text`, optional `text_en`, and `action` when `level` is
-  `warn`.
-- Each proposal has `title`, `target` (`repo`, `shared`, `why`), `diff`, at least
-  one `risks` entry (`level`, `text`, optional `evidence`), and `on_approve`.
+    {
+      "title": "Renovate PR triage",
+      "repo": "acme/web",
+      "public": false,               // true => public repo, comment cells go in English
+      "groups": [
+        {
+          "verdict": "merge",        // merge | auto | delegate | hold
+          "title": "直接マージ",
+          "note": "承認後このセッションで squash merge する",
+          "prs": [
+            {
+              "number": 119,
+              "scope": "api",        // omit if the repo only has one component
+              "title": "chore(deps): update foo-lib to v5",
+              "url": "...",         // optional, defaults to the repo's PR URL
+              "versions": "foo-lib 4.2.0 → 5.0.0",
 
-Validation rules:
+              // Procedural line (is it OK to merge right now?). Omit a key if it
+              // doesn't apply to this PR (e.g. no "order" if nothing depends on it).
+              "gates": {
+                "ci":      {"level": "ok",   "text": "全 check green"},
+                "release": {"level": "ok",   "text": "api が patch bump (意図通り)"},
+                "order":   {"level": "warn", "text": "#118 のマージ待ち"}
+              },
 
-- Gate text is at most 60 characters; impact text is at most 120 characters.
-- A warning impact requires an action. Every `merge` PR must derive to an
-  unblocked verdict.
-- Data-derived approve review text cannot contain upstream issue/PR references or
-  URLs. The generated agent footer is appended separately.
-- A proposal requires `target.why` and at least one risk.
-- Markdown-lite is supported in `text` / `text_en`: inline code and links. Other
-  values are escaped.
+              // What changed upstream, and whether it hits this repo. Only
+              // upstream changes go here -- no grep commands, no release-note
+              // URLs. The reason IS the evidence: "`foo()` is unused here" is
+              // the reason, a URL to the release notes is not.
+              "changes": [
+                {
+                  "text": "createClient() の第 2 引数が options オブジェクトに変更",
+                  "text_en": "createClient() now takes an options object as its 2nd arg",
+                  "breaking": true,
+                  "impact": {
+                    "level": "warn",       // ok (影響なし) | warn (要対応)
+                    "text": "src/api/client.ts:12 が旧シグネチャ",
+                    "text_en": "src/api/client.ts:12 still uses the old signature",
+                    "action": "createClient(url, 5000) を createClient(url, { timeoutMs: 5000 }) に書き換える"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+
+      // Renovate config changes (automerge expansion, commit-prefix rules, ...).
+      // A different decision than merging a PR, so it gets its own approve
+      // toggle (`prop-<n>`) and crit-triage never acts on it -- an approved
+      // proposal is only returned in the result for Claude to carry out.
+      "proposals": [
+        {
+          "title": "actions/** の major も automerge 対象にする",
+          "target": {
+            "repo": "acme/renovate-config",
+            "shared": true,          // false => this repo's own renovate.json5
+            "why": "判断の根拠がこのリポジトリの使い方ではなくエコシステム全般の性質だから"
+          },
+          "diff": "// base.json5\\n-   matchUpdateTypes: ['minor', 'patch'],\\n+   matchUpdateTypes: ['minor', 'patch', 'major'],",
+          "risks": [
+            {"level": "warn", "text": "runner の最低バージョンが上がると self-hosted runner のリポジトリが no-look で壊れる"},
+            {"level": "ok", "text": "対象リポジトリは全て GitHub-hosted", "evidence": "$ rg runs-on -r ..."}
+          ],
+          "on_approve": "delegate skill で acme/renovate-config に委任し、PR を立てるところまで"
+        }
+      ]
+    }
+
+Rules enforced at render time (a violation raises SystemExit rather than being
+silently dropped from the report):
+
+- gates.*.text <= 60 chars, impact.text <= 120 chars -- what doesn't fit belongs
+  in a proposal, not squeezed into the card
+- impact.level == "warn" requires impact.action
+- when "public" is true, every change and its impact needs a *_en counterpart
+- a PR in a "merge" group must derive to an unblocked verdict (no warn gates or
+  impacts) -- a PR that isn't safe to merge yet doesn't belong in that group
+- the generated review comment may not contain an `owner/repo#123` reference or
+  an upstream URL (those show up as cross-references on a third-party repo)
+- a proposal needs target.why and at least one risk
+
+Every `text` / `text_en` field takes markdown-lite: `code` and [label](url).
+Everything else is escaped.
 """
-import json
 import sys
+sys.dont_write_bytecode = True
+
+import json
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -64,11 +144,9 @@ def main():
         raise SystemExit("Usage: crit-triage --vibe-approve <data.json>")
 
     data_path = Path(sys.argv[2] if vibe_approve else sys.argv[1])
-    if vibe_approve:
-        require_vibe_mode()
-
     data = json.loads(data_path.read_text())
     if vibe_approve:
+        require_vibe_mode(data["repo"])
         render(data, "")
         if not post_approve_reviews(data, data_path.with_suffix(".done.json")):
             raise SystemExit(1)
@@ -83,10 +161,12 @@ def main():
     rc, approved = run_crit(sys.argv[2:], html_path)
     if rc != 0:
         raise SystemExit(f"crit exited with {rc}; no triage result collected")
+    # An abandoned crit leaves the state file untouched and must not count as a denial.
     if approved is None:
         raise SystemExit("crit ended before the review was finished; no result collected, nothing posted")
 
     state = json.loads(state_path.read_text()) if state_path.exists() else {}
+    # Untouched PRs and proposals default to deny; missing state must never imply approval.
     result = {
         f"pr-{pr['number']}": state.get(f"pr-{pr['number']}", "deny")
         for group in data["groups"]
@@ -102,6 +182,7 @@ def main():
     print(json.dumps(result, ensure_ascii=False))
 
     print("--- done ---")
+    # Changes requested revokes every per-PR approval, even when a toggle was approved.
     if approved:
         act_on_approvals(data, result, data_path.with_suffix(".done.json"))
     else:

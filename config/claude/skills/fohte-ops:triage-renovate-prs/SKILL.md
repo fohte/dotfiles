@@ -171,9 +171,9 @@ chart の場合も同様に、確認した values.yaml/template の具体的な�
 
 ### `vibe_mode` が true の場合
 
-crit を開かず、調査結果から次の処理を行う。`merge` は全 gate が `ok` で、全変更の影響が `ok` と確認できた PR に限る。判断がつかない、breaking change、CI の失敗、順序依存、その他安全性を示せない PR はマージせず、ユーザー向け todo にする。todo は `a agent todo add` に JSON を stdin で渡して登録する。`auto` など Renovate 設定変更を伴う提案は適用せず、2 つ以上の選択肢を持つ proposal card にする。proposal は `a agent proposal add` に JSON を stdin で渡して登録し、PR の処理と独立して記録する。
+crit を開かず、調査結果から次の処理を行う。`merge` は全 gate が `ok` で、全変更の影響が `ok` と確認できた PR に限る。コードや CI の修正が必要なら stacked PR を作る delegate に回す。安全と言い切れないまま調査が終わった PR と、breaking change の title を持つ PR だけをユーザー向け todo にする。todo は `a agent todo add` に JSON を stdin で渡して登録する。順序依存の PR は todo にせず、`gates.order` に先行 PR の merge 待ちを記録して、先行 PR の merge 後に再トリアージする。`auto` など Renovate 設定変更を伴う提案は適用せず、2 つ以上の選択肢を持つ proposal card にする。proposal は `a agent proposal add` に JSON を stdin で渡して登録し、PR の処理と独立して記録する。
 
-判断時に PR の head SHA と `gh pr diff` の追加・削除行を記録する。ユーザーに todo を渡した PR はこの差分を処理済みの基準として保持し、変更行が変わるまで再トリアージしない。todo はユーザーが判断・作業するまで保留するが、他の PR の処理は続ける。
+判断時に PR の head SHA と `gh pr diff` の追加・削除行を記録する。todo にした PR はこの差分を処理済みの基準として保持し、変更行が変わるまで再トリアージしない。todo はユーザーが判断・作業するまで保留するが、他の PR の処理は続ける。
 
 安全と判定した `merge` PR は、head SHA を `head_sha` に含めた同じ JSON を `~/.agents/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage --vibe-approve <data.json>` に渡して approve review を投稿し、その後 `a gh pr-merge <pr>` でマージする。approve body には `CLAUDECODE` または `CODEX_THREAD_ID` に応じた AI footer を付ける。approve option は自身でも `vibe_mode` と PR の head SHA を検証し、不一致なら投稿を拒否する。vibe 専用操作の直前に `vibe-policy.md` の条件を再確認する。再確認が false なら既存の crit 承認フローに切り替え、判定エラーが再試行後も続く場合は policy に従って報告・停止する。この option は false または判定エラーで必ず拒否する。マージ直前に head SHA を再取得する。head が変わっていたら `gh pr diff` の追加・削除行を記録済みのものと比較し、変更行が同じなら rebase のみとして続行し、異なればその PR の調査と approve review をやり直す。`a gh pr-merge` 以外でマージしない。
 
@@ -186,7 +186,7 @@ crit を開かず、調査結果から次の処理を行う。`merge` は全 gat
 
 Renovate branch に foreign commit が入ると Renovate はその branch を更新しなくなるため ([Renovate docs](https://docs.renovatebot.com/updating-rebasing/))、rebase は要求しない。stacked PR に CI が付かない場合は、fix merge 後の Renovate PR の CI で確認する。
 
-各 PR の処理 (merge、delegate、todo、proposal) が終わるたびに PR 一覧へ戻り、新規・未処理の PR を続ける。`vibe_mode` が false の場合、以下の既存 crit 手順を変更せず実行する。
+各 PR の処理 (merge、delegate、todo、proposal) が終わるたびに PR 一覧へ戻り、新規・未処理の PR を続ける。`vibe_mode` が false の場合は、以下の crit 承認手順を使う。
 
 ### `vibe_mode` が false の場合
 
@@ -204,6 +204,8 @@ Write ツールで JSON を書き、次を **`run_in_background: true`** で実�
 ```
 
 **JSON を書く前にスクリプト冒頭の docstring を読む。** スキーマと各フィールドの意味はそこにある。
+
+### 両 mode 共通の判定・報告ルール
 
 PR は判定 (`verdict`) ごとにグルーピングする。ユーザーは「委任するもの一覧」「automerge に回すもの一覧」という単位で見る:
 
@@ -253,7 +255,7 @@ JSON トップレベルの `public` には `english_output` の値を入れる�
 GitHub 上でクロスリファレンスとして解釈され、無関係な第三者リポジトリの issue/PR タイムラインに残ってしまうため、生成後のコメントにそれらが残っているとスクリプトが拒否する。
 upstream の変更点は番号やリンクを付けず説明のみ書く。
 
-### 承認結果の読み方
+### `vibe_mode` が false の場合: crit の承認結果
 
 ユーザーが各 PR / proposal を approve / deny (既定は deny) して crit を approve するとコマンドが終了し、stdout の末尾に state と実行結果が出る:
 
@@ -272,7 +274,7 @@ ok #812 merge
 - `deny` の理由は crit のコメントに書かれている。調査して crit に返信し、crit を再開して届ける (このループの作法は `plz-explain-with-crit` skill と同じ)。同じ JSON パスで再実行すれば、前ラウンドで処理済みの PR は `skip` される
 - 未操作の PR / proposal も `deny` として出る。**欠損や deny を approve と読み替えない**
 
-### automerge 化 / Renovate 設定変更の検討
+### automerge 化 / Renovate 設定変更の検討 (両 mode 共通)
 
 今回の判断を都度の手作業で終わらせず、同種の更新を今後 no-look で自動化できないかを評価する。automerge 化は以後の同種 PR を無条件でマージする設定なので、**可否の判断にはリスク評価を必須とする**。「過去に無事故だった」という実績だけで済ませず、何が起きればこの automerge が事故になるかを具体的に検討すること。
 
@@ -283,7 +285,7 @@ ok #812 merge
 - **出力先**: 検討結果は Step 5 の報告の **`proposals[]` に 1 エントリとして追加する** (PR の行には書かない)。`target.why` (なぜその変更先か) と `risks` (最低 1 件、「これが事故になるとしたら何が起きるか」) は必須。`diff` に `packageRules` (`matchPackageNames` / `matchUpdateTypes` / `automerge` など) の具体的な差分案を書く。各 proposal は PR の判定とは独立した approve/deny toggle を持つので、マージ判定と混同しない
 - **今回の対象 PR への反映**: 今回提案したルールの対象に、今トリアージしている PR 自体が含まれる場合、その PR の対応方針は「automerge に委ねる」とし、このセッションで手動マージしない
 
-### release-please bump の判定
+### release-please bump の判定 (両 mode 共通)
 
 リポジトリが release-please を使っている場合のみ実施する。使っていなければこの項目はスキップしてよい。
 
@@ -321,14 +323,14 @@ release-please 側の `changelog-sections` / `release-as` を直すべきケー�
 
 対応方針の判断基準:
 
-- **直接マージ**: breaking changes がない (または影響がないことが確認済み) **かつ** CI が green で想定外の結果が含まれていない
+- **直接マージ**: breaking changes がない (または影響がないことが確認済み) **かつ** CI が green で想定外の結果が含まれていない。実行方法は `vibe_mode` に応じて前述の手順に従う
 - **委任**: breaking changes によるコード修正が必要、CI fail の原因解消が必要、または複数 PR を統合する必要がある
-- **保留**: 調査で判断がつかない、またはユーザーの判断が必要
+- **保留 / todo**: 調査で判断がつかない、またはユーザーの判断が必要。`vibe_mode` が true なら todo にし、false なら `hold` に分類する
 - **automerge に委ねる**: 上の「automerge 化 / Renovate 設定変更の検討」で今回この PR を対象に automerge ルールを新設・拡張した場合。config の変更が反映され次第 Renovate 自身がマージするので、このセッションで手動マージしない
 
 影響範囲が明確で確認項目が少ない PR は、`delegate` skill で委任するほどではないことが多い。`merge` に分類してレポートに載せる。
 
-**マージ判定を自分で最終決定しない。** `merge` に分類することは提案であって決定ではなく、実際にマージが動くのはユーザーが crit 上でその PR を approve したときだけ。
+`merge` に分類した後の操作は mode ごとに異なる。`vibe_mode` が true なら前述の approve review と `a gh pr-merge` を実行し、false ならユーザーが crit で approve した後に操作する。
 
 ## Step 6: 着地の確認
 
@@ -340,9 +342,11 @@ Renovate PR を default branch にマージした後は、delegate skill の手�
 
 delegate report の受付、todo/proposal 後の再一覧、head SHA の再確認を含め、結果が出るたびに一覧へ戻る。todo にした PR は記録済みの追加・削除行が変わった場合だけ再トリアージする。
 
-### `vibe_mode` が false の場合
+### `vibe_mode` が false の場合: crit 承認後の着地
 
-### 直接マージの場合
+Step 5 の crit でユーザーが承認した PR を確認する。以下の直接マージ、Renovate の再実行、委任の手順はこの mode に適用する。
+
+#### 直接マージの場合
 
 **マージ操作は残っていない。** Step 5 で auto-merge が armed 済みで、必要な checks が満たされた瞬間に GitHub がマージする。承認時点で既に全 checks が green だった PR は、GitHub が auto-merge の armed を拒否するため Step 5 でそのままマージされている。`gh pr merge` を自分で叩かない (runok が deny する)。
 
@@ -364,7 +368,7 @@ gh pr view <number> --json state,mergedAt,mergeable,mergeStateStatus
 - `git rebase` してローカルから force push する (Renovate との関連が壊れる)
 - `--admin` フラグでマージを強行する
 
-### Renovate を能動的に動かす
+#### Renovate を能動的に動かす
 
 待っても Renovate が動かないとき (self-hosted はスケジュール実行なので次回まで何も起きない、config を変更した直後など) だけ使う:
 
@@ -377,13 +381,13 @@ GitHub App 版と GitHub Actions 版のどちらかは自動判定されるの�
 `rebase` と GitHub App 版の `run` は、Renovate が要求を拾う (チェックボックスが外れる) まで待つ。
 GitHub Actions 版の `run` は workflow を dispatch した時点で終了する。
 
-### 委任の場合 (コード修正が必要 / 複数 PR の統合)
+#### 委任の場合 (コード修正が必要 / 複数 PR の統合)
 
 `delegate` スキルで委任する。Renovate のブランチ名をそのまま使う。
 
 複数 PR を統合する場合は、メインとなる PR のブランチで作業し、他の PR の変更も取り込む。統合された側の PR を閉じるのはユーザーの判断なので、**自分で close せず**、どの PR をどこに統合したかをユーザーに報告して委ねる。
 
-### 注意事項
+#### 注意事項
 
 - **Renovate ブランチで直接作業する**: 新しいブランチを作ると Renovate PR との関連が切れる
 - **CI 確認を必ず行う**: push 後に CI が通ることを確認する

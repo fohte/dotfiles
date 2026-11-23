@@ -17,19 +17,20 @@ def gh_pr(repo, num, argv, stdin=None):
 
 
 def post_review(repo, num, body, done, done_path, key, expected_head=None):
+    # A new head needs a fresh approval even if an earlier head was already reviewed.
     if expected_head:
         head = gh_pr(repo, num, ["view", "--json", "headRefOid", "--jq", ".headRefOid"])
         if head.returncode != 0:
             detail = (head.stderr or "").strip() or "could not read the current PR head"
             print(f"FAILED #{num} review: {detail}")
             return False
-    if key in done:
-        print(f"skip #{num} review: already done")
-        return True
         if head.stdout.strip() != expected_head:
             detail = f"head changed from {expected_head} to {head.stdout.strip()}"
             print(f"FAILED #{num} review: {detail}")
             return False
+    if key in done:
+        print(f"skip #{num} review: already done")
+        return True
     run = gh_pr(repo, num, ["review", "--approve", "--body-file", "-"], body)
     ok = run.returncode == 0
     print(f"{'ok' if ok else 'FAILED'} #{num} review" + ("" if ok else f": {(run.stderr or '').strip()}"))
@@ -52,6 +53,7 @@ def act_on_approvals(data, result, done_path):
             if group["verdict"] != "merge" or result[pr_key(num)] != "approve":
                 continue
             if pr.get("review_body"):
+                # Branch protection requires the approval review before merge can proceed.
                 if not post_review(
                     data["repo"], num, pr["review_body"], done, done_path, f"{num}:review"
                 ):
