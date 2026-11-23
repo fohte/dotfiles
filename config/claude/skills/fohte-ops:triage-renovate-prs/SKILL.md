@@ -26,14 +26,16 @@ Find the first row that matches and follow its action:
 
 ## 全体フロー
 
+開始時に `~/.agents/skills/delegate/references/vibe-policy.md` の条件で `vibe_mode` を判定する。session vibe が有効で、対象 repo の `a config get repo.vibe` が boolean `true` の場合だけ vibe 手順を使う。判定コマンドのエラーは同じコマンドを 1 回再実行し、再度失敗したら policy の手順に従って報告して停止する。`vibe_mode` が false の場合は、既存の crit 承認フローを使う。
+
 1. **PR 一覧の取得と概要把握**
 2. **各 PR の CI 状態の確認**
 3. **各 PR の breaking changes 調査** (最重要・**sub-agent 並列実行必須**)
 4. **PR 間の依存関係分析とグルーピング**
-5. **ユーザーへの報告と承認** (承認された PR への approve コメント投稿と auto-merge の armed までを含む)
-6. **着地の確認** (マージの完了確認 or 委任)
+5. **判断の実行** (`vibe_mode` では安全な PR を直接承認・マージし、それ以外ではユーザーの crit 承認を待つ)
+6. **着地の確認** (default branch CI、委任、次の PR の処理)
 
-`gh pr review` / `gh pr merge` / `gh pr close` を自分で叩いてはならない (runok が deny する)。GitHub への書き込みは Step 5 の `crit-triage` だけが行う。
+`gh pr review` / `gh pr merge` / `gh pr close` を自分で叩いてはならない (runok が deny する)。通常 mode の GitHub 書き込みは Step 5 の `crit-triage` が行う。`vibe_mode` では approve review を `crit-triage`、merge を `a gh pr-merge` が行う。
 
 ## Step 1: PR 一覧の取得
 
@@ -165,7 +167,28 @@ chart の場合も同様に、確認した values.yaml/template の具体的な�
 
 この判定結果は Step 5 で後続 PR の `gates.order` に反映する。
 
-## Step 5: マージ判定とユーザー報告
+## Step 5: マージ判定と実行
+
+### `vibe_mode` が true の場合
+
+crit を開かず、調査結果から次の処理を行う。`merge` は全 gate が `ok` で、全変更の影響が `ok` と確認できた PR に限る。判断がつかない、breaking change、CI の失敗、順序依存、その他安全性を示せない PR はマージせず、ユーザー向け todo にする。todo は `a agent todo add` に JSON を stdin で渡して登録する。`auto` など Renovate 設定変更を伴う提案は適用せず、2 つ以上の選択肢を持つ proposal card にする。proposal は `a agent proposal add` に JSON を stdin で渡して登録し、PR の処理と独立して記録する。
+
+判断時に PR の head SHA と `gh pr diff` の追加・削除行を記録する。ユーザーに todo を渡した PR はこの差分を処理済みの基準として保持し、変更行が変わるまで再トリアージしない。todo はユーザーが判断・作業するまで保留するが、他の PR の処理は続ける。
+
+安全と判定した `merge` PR は、同じ JSON を `~/.agents/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage --vibe-approve <data.json>` に渡して approve review を投稿し、その後 `a gh pr-merge <pr>` でマージする。approve body には `CLAUDECODE` または `CODEX_THREAD_ID` に応じた AI footer を付ける。approve option は自身でも `vibe_mode` を検証し、false または判定エラーなら投稿を拒否する。マージ直前に head SHA を再取得する。head が変わっていたら `gh pr diff` の追加・削除行を記録済みのものと比較し、変更行が同じなら rebase のみとして続行し、異なればその PR の調査と approve review をやり直す。`a gh pr-merge` 以外でマージしない。
+
+コード修正が必要な PR は次の手順で扱う:
+
+1. Renovate の branch を下段にした stack 用の新しい branch (名前に `/` を含めない) を作り、`delegate` skill の launcher を `--vibe --from origin/<renovate-branch>` で起動する。依頼には triage findings を含め、Renovate branch が stack の下段であることを伝える。
+2. delegate の `<vibe-draft-ready>` / `<vibe-pr-ready>` を `enable-vibe-coding` skill の Renovate fix 手順に従ってレビューする。checklist item ID は `none` とし、triage findings を review context に使う。
+3. delegate の stacked PR を `a gh pr-merge` で Renovate branch にマージする。Renovate PR の CI を確認し、失敗なら再度修正 delegate を起動する。foreign commit が入った Renovate branch には Renovate の rebase を要求しない。
+4. Renovate PR を新しい head と diff で再トリアージし、変更内容に対する approve review を投稿してからマージする。
+
+Renovate branch に foreign commit が入ると Renovate はその branch を更新しなくなるため ([Renovate docs](https://docs.renovatebot.com/updating-rebasing/))、rebase は要求しない。stacked PR に CI が付かない場合は、fix merge 後の Renovate PR の CI で確認する。
+
+各 PR の処理 (merge、delegate、todo、proposal) が終わるたびに PR 一覧へ戻り、新規・未処理の PR を続ける。`vibe_mode` が false の場合、以下の既存 crit 手順を変更せず実行する。
+
+### `vibe_mode` が false の場合
 
 報告は `crit-triage` で HTML にして crit で開く。**チャットにテーブルを書かない。** 項目数が多く、ターミナルのテーブルでは読めない。
 
@@ -308,6 +331,16 @@ release-please 側の `changelog-sections` / `release-as` を直すべきケー�
 **マージ判定を自分で最終決定しない。** `merge` に分類することは提案であって決定ではなく、実際にマージが動くのはユーザーが crit 上でその PR を approve したときだけ。
 
 ## Step 6: 着地の確認
+
+### `vibe_mode` の loop
+
+Renovate PR を default branch にマージした後は、delegate skill の手順に従って default branch の CI が green になるまで待つ。CI が失敗または状態不明ならそれ以上のマージを止め、原因と確認済みの内容を含む todo を登録する。stacked fix PR を Renovate branch にマージした後は、default branch CI ではなく、その Renovate PR の CI を確認する。
+
+未処理の PR がなくなったら、進行中の fix delegate がマージまたは停止を報告するまで待つ。全 delegate が完了したら `renovate-trigger run` を 1 回実行し、Renovate が完了してから PR 一覧を取り直す。GitHub App mode は Dependency Dashboard の checkbox が外れるまで待つ。Actions mode は dispatch だけでなく、Renovate を実行する workflow が実際に開始・完了したことを確認する。確認できなければ停止してユーザーに報告する。新しい PR がなければ loop を終了する。
+
+delegate report の受付、todo/proposal 後の再一覧、head SHA の再確認を含め、結果が出るたびに一覧へ戻る。todo にした PR は記録済みの追加・削除行が変わった場合だけ再トリアージする。
+
+### `vibe_mode` が false の場合
 
 ### 直接マージの場合
 
