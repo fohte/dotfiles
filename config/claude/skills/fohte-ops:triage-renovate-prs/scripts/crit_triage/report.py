@@ -350,9 +350,7 @@ def render(data, endpoint):
     total = sum(len(g["prs"]) for g in data["groups"]) + len(proposals)
     title = html.escape(data.get("title", "Triage"))
 
-    # Plain string, not str.format(): the JS below uses `${...}` template literals
-    # and object-literal braces, which would otherwise have to be doubled everywhere.
-    # Substitution is done with the __TOKEN__.replace() loop in render() instead.
+    # Literal replacement preserves the JavaScript template literals and object braces in TEMPLATE.
     out = TEMPLATE
     for token, value in {
         "__TITLE__": title,

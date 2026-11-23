@@ -1,5 +1,6 @@
 """Vibe authorization gate for actions that bypass crit approval."""
 import json
+import os
 import subprocess
 
 
@@ -54,8 +55,14 @@ def require_vibe_mode(expected_repo):
     if not check_vibe_mode():
         raise SystemExit("--vibe-approve requires vibe mode to be enabled for this session and repository")
 
+    # GH_REPO can redirect gh away from the checkout whose local policy was checked.
+    gh_env = os.environ.copy()
+    gh_env.pop("GH_REPO", None)
     result = subprocess.run(
-        ["gh", "repo", "view", "--json", "nameWithOwner"], text=True, capture_output=True
+        ["gh", "repo", "view", "--json", "nameWithOwner"],
+        text=True,
+        capture_output=True,
+        env=gh_env,
     )
     if result.returncode != 0:
         detail = _output(result) or str(result.returncode)
