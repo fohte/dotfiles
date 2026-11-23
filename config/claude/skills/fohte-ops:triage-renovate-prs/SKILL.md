@@ -163,7 +163,7 @@ chart の場合も同様に、確認した values.yaml/template の具体的な�
 - 片方を先に入れると壊れる可能性があるか
 - 一緒に入れないと意味がない (新機能を使うために両方必要) か
 
-**順序依存と判定した PR は、同じラウンドの `merge` にまとめて入れない。** crit mode では Step 5 で承認された `merge` PR が全て同時に auto-merge armed され、着地順は各 PR の CI 完了順に委ねられる。vibe mode でも先行 PR の着地を確認してから、後続 PR を次のラウンドで再トリアージする。vibe mode で先行 PR が todo になった、または fix delegate が停止した場合は、依存する後続 PR も同じ todo または別の todo に含める。後続 PR ごとの head SHA と diff を処理済みの基準として記録し、変更があるまで再トリアージしない。未解決の `gates.order` を残して loop の終了を妨げない。
+**順序依存と判定した PR は、同じラウンドの `merge` にまとめて入れない。** crit mode では Step 5 で承認された `merge` PR が全て同時に auto-merge armed され、着地順は各 PR の CI 完了順に委ねられる。vibe mode では先行 PR を `gates.order` に記録し、後続 PR の処理時期と todo の扱いは Step 5 に従う。
 
 この判定結果は Step 5 で後続 PR の `gates.order` に反映する。
 
@@ -171,9 +171,9 @@ chart の場合も同様に、確認した values.yaml/template の具体的な�
 
 ### `vibe_mode` が true の場合
 
-crit を開かず、調査結果から次の処理を行う。`merge` は全 gate が `ok` で、全変更の影響が `ok` と確認できた PR に限る。コードや CI の修正が必要なら stacked PR を作る delegate に回す。安全と言い切れないまま調査が終わった PR と、breaking change の title を持つ PR はユーザー向け todo にする。todo は `a agent todo add` に JSON を stdin で渡して登録する。先行 PR を今回マージする順序依存 PR は、後続 PR の `gates.order` に先行 PR の merge 待ちを記録し、先行 PR の merge 後に後続 PR を再トリアージする。先行 PR が todo になった、または fix delegate が停止した場合は、該当 PR と依存する後続 PR を同じ todo または別の todo に含める。各 PR の head SHA と diff を下記の処理済み基準として記録し、変更があるまで再トリアージしない。vibe では `auto` group を使わない。automerge 設定案は今後のルール変更を提案する proposal card に記録するが、その案の対象に現在の PR が含まれていても、PR 自体は通常の `merge` / delegate / todo 判定に従う。安全なら通常の approve review と `a gh pr-merge` で処理する。proposal は `a agent proposal add` に JSON を stdin で渡して登録し、PR の処理と独立して記録する。
+crit を開かず、調査結果から次の処理を行う。`merge` は全 gate が `ok` で、全変更の影響が `ok` と確認できた PR に限る。コードや CI の修正が必要なら stacked PR を作る delegate に回す。安全と言い切れないまま調査が終わった PR と、breaking change の title を持つ PR はユーザー向け todo にする。todo は `a agent todo add` に JSON を stdin で渡して登録する。順序依存の後続 PR は先行 PR の結果待ちとして未処理に残し、すべての先行 PR が merge されたら後続 PR 自身の head SHA や diff が同じでも再トリアージする。先行 PR が todo になった、または fix delegate が停止した場合は、先行 PR と依存する後続 PR を同じ todo または別の todo に含める。後続 PR も処理済みとして head SHA と diff を記録する。vibe では `auto` group を使わない。automerge 設定案は今後のルール変更を提案する proposal card に記録するが、その案の対象に現在の PR が含まれていても、PR 自体は通常の `merge` / delegate / todo 判定に従う。安全なら通常の approve review と `a gh pr-merge` で処理する。proposal は `a agent proposal add` に JSON を stdin で渡して登録し、PR の処理と独立して記録する。
 
-判断時に PR の head SHA と `gh pr diff` の追加・削除行を記録する。todo にした PR はこの差分を処理済みの基準として保持し、変更行が変わるまで再トリアージしない。todo はユーザーが判断・作業するまで保留するが、他の PR の処理は続ける。
+判断時に PR の head SHA と `gh pr diff` の追加・削除行を記録する。todo にした PR はこの差分を処理済みの基準として保持し、通常は変更行が変わるまで再トリアージしない。順序依存の PR は先行 PR がすべて merge された場合にも再トリアージする。todo はユーザーが判断・作業するまで保留するが、他の PR の処理は続ける。
 
 安全と判定した `merge` PR は、head SHA を `head_sha` に含めた同じ JSON を `~/.agents/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage --vibe-approve <data.json>` に渡して approve review を投稿し、その後 `a gh pr-merge <pr>` でマージする。approve body には `CLAUDECODE` または `CODEX_THREAD_ID` に応じた AI footer を付ける。approve option は自身でも `vibe_mode` と PR の head SHA を検証し、不一致なら投稿を拒否する。vibe 専用操作の直前に `vibe-policy.md` の条件を再確認する。再確認が false なら既存の crit 承認フローに切り替え、判定エラーが再試行後も続く場合は policy に従って報告・停止する。この option は false または判定エラーで必ず拒否する。マージ直前に head SHA を再取得する。head が変わっていたら `gh pr diff` の追加・削除行を記録済みのものと比較する。変更行が同じなら内容の再調査はせず、新しい head SHA を `head_sha` に入れて approve review を再投稿してから続行する。変更行が異なればその PR の調査と approve review をやり直す。`a gh pr-merge` 以外でマージしない。
 
@@ -340,7 +340,7 @@ Renovate PR を default branch にマージした後は、delegate skill の手�
 
 未処理の PR がなくなったら、進行中の fix delegate がマージまたは停止を報告するまで待つ。全 delegate が完了したら `renovate-trigger run` を 1 回実行し、Renovate が完了してから PR 一覧を取り直す。GitHub App mode は Dependency Dashboard の checkbox が外れるまで待つ。Actions mode は dispatch だけでなく、Renovate を実行する workflow が実際に開始・完了したことを確認する。確認できなければ停止してユーザーに報告する。新しい PR がなければ loop を終了する。
 
-delegate report の受付、todo/proposal 後の再一覧、head SHA の再確認を含め、結果が出るたびに一覧へ戻る。todo にした PR は記録済みの追加・削除行が変わった場合だけ再トリアージする。
+delegate report の受付、todo/proposal 後の再一覧、head SHA の再確認を含め、結果が出るたびに一覧へ戻る。todo PR の再処理は Step 5 の処理済み基準に従う。
 
 ### `vibe_mode` が false の場合: crit 承認後の着地
 

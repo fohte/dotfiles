@@ -53,7 +53,7 @@ def act_on_approvals(data, result, done_path):
             if group["verdict"] != "merge" or result[pr_key(num)] != "approve":
                 continue
             if pr.get("review_body"):
-                # Branch protection would block the merge anyway.
+                # When approval is required, branch protection would block the merge without this review.
                 if not post_review(
                     data["repo"], num, pr["review_body"], done, done_path, f"{num}:review"
                 ):
