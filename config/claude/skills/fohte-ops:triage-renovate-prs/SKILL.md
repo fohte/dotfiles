@@ -163,7 +163,7 @@ chart の場合も同様に、確認した values.yaml/template の具体的な�
 - 片方を先に入れると壊れる可能性があるか
 - 一緒に入れないと意味がない (新機能を使うために両方必要) か
 
-**順序依存と判定した PR は、同じラウンドの `merge` にまとめて入れない。** Step 5 で承認された `merge` PR は全て同時に auto-merge が armed され、着地順は各 PR の CI 完了順に委ねられる。先行 PR が Step 6 で `MERGED` になったのを確認してから、後続 PR を次のラウンドで triage する。
+**順序依存と判定した PR は、同じラウンドの `merge` にまとめて入れない。** crit mode では Step 5 で承認された `merge` PR が全て同時に auto-merge armed され、着地順は各 PR の CI 完了順に委ねられる。vibe mode でも先行 PR の着地を確認してから、後続 PR を次のラウンドで再トリアージする。vibe mode で先行 PR が todo になった、または fix delegate が停止した場合は、依存する後続 PR も同じ todo または別の todo に含める。後続 PR ごとの head SHA と diff を処理済みの基準として記録し、変更があるまで再トリアージしない。未解決の `gates.order` を残して loop の終了を妨げない。
 
 この判定結果は Step 5 で後続 PR の `gates.order` に反映する。
 
@@ -171,7 +171,7 @@ chart の場合も同様に、確認した values.yaml/template の具体的な�
 
 ### `vibe_mode` が true の場合
 
-crit を開かず、調査結果から次の処理を行う。`merge` は全 gate が `ok` で、全変更の影響が `ok` と確認できた PR に限る。コードや CI の修正が必要なら stacked PR を作る delegate に回す。安全と言い切れないまま調査が終わった PR と、breaking change の title を持つ PR だけをユーザー向け todo にする。todo は `a agent todo add` に JSON を stdin で渡して登録する。順序依存の PR は todo にせず、`gates.order` に先行 PR の merge 待ちを記録して、先行 PR の merge 後に再トリアージする。`auto` など Renovate 設定変更を伴う提案は適用せず、2 つ以上の選択肢を持つ proposal card にする。proposal は `a agent proposal add` に JSON を stdin で渡して登録し、PR の処理と独立して記録する。
+crit を開かず、調査結果から次の処理を行う。`merge` は全 gate が `ok` で、全変更の影響が `ok` と確認できた PR に限る。コードや CI の修正が必要なら stacked PR を作る delegate に回す。安全と言い切れないまま調査が終わった PR と、breaking change の title を持つ PR はユーザー向け todo にする。todo は `a agent todo add` に JSON を stdin で渡して登録する。先行 PR を今回マージする順序依存 PR は、後続 PR の `gates.order` に先行 PR の merge 待ちを記録し、先行 PR の merge 後に後続 PR を再トリアージする。先行 PR が todo になった、または fix delegate が停止した場合は、該当 PR と依存する後続 PR を同じ todo または別の todo に含める。各 PR の head SHA と diff を下記の処理済み基準として記録し、変更があるまで再トリアージしない。vibe では `auto` group を使わない。automerge 設定案は今後のルール変更を提案する proposal card に記録するが、その案の対象に現在の PR が含まれていても、PR 自体は通常の `merge` / delegate / todo 判定に従う。安全なら通常の approve review と `a gh pr-merge` で処理する。proposal は `a agent proposal add` に JSON を stdin で渡して登録し、PR の処理と独立して記録する。
 
 判断時に PR の head SHA と `gh pr diff` の追加・削除行を記録する。todo にした PR はこの差分を処理済みの基準として保持し、変更行が変わるまで再トリアージしない。todo はユーザーが判断・作業するまで保留するが、他の PR の処理は続ける。
 
@@ -203,20 +203,20 @@ Write ツールで JSON を書き、次を **`run_in_background: true`** で実�
 ~/.agents/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage <data.json>
 ```
 
-**JSON を書く前にスクリプト冒頭の docstring を読む。** スキーマと各フィールドの意味はそこにある。
-
 ### 両 mode 共通の判定・報告ルール
 
-PR は判定 (`verdict`) ごとにグルーピングする。ユーザーは「委任するもの一覧」「automerge に回すもの一覧」という単位で見る:
+**両 mode とも、JSON を書く前にスクリプト冒頭の docstring を読む。** スキーマと各フィールドの意味はそこにある。
 
-| verdict    | 意味                                            |
-| ---------- | ----------------------------------------------- |
-| `merge`    | 直接マージ                                      |
-| `auto`     | automerge に委ねる (今回ルールを新設・拡張する) |
-| `delegate` | 委任                                            |
-| `hold`     | 保留                                            |
+crit mode では PR を判定 (`verdict`) ごとにグルーピングし、ユーザーは「委任するもの一覧」「automerge に回すもの一覧」という単位で見る。vibe mode では `auto` group を使わず、Step 5 の通常の merge / delegate / todo 処理を使う:
 
-### 各 PR に書く項目
+| verdict    | 意味                                                            |
+| ---------- | --------------------------------------------------------------- |
+| `merge`    | 直接マージ                                                      |
+| `auto`     | crit mode のみ: automerge に委ねる (今回ルールを新設・拡張する) |
+| `delegate` | 委任                                                            |
+| `hold`     | 保留                                                            |
+
+#### 各 PR に書く項目
 
 各 PR カードの一行 verdict (「そのままマージしてよい」/「今はマージできない — ...」) は手で書かない。
 `gates` と `changes` から `crit-triage` が導出する。
@@ -237,7 +237,7 @@ PR は判定 (`verdict`) ごとにグルーピングする。ユーザーは「�
 | `scope`         | このリポジトリに明確に別コンポーネントがある場合のみ設定する (release-please の `packages`、monorepo workspace 設定、PR が触るファイルなどから判定)。1 件も設定しなければ scope 列自体が出ない。単一コンポーネントのリポジトリで無理に付けない                                                 |
 | `versions`      | 短いプレーンテキスト (例: `"foo-lib 4.2.0 → 5.0.0"`)                                                                                                                                                                                                                                           |
 
-### 投稿されるレビューコメント (`review_body`)
+#### 投稿されるレビューコメント (`review_body`)
 
 approve コメント本文は手動で記述しない。
 **`merge` group の PR について、`changes` から `crit-triage` が自動生成する。**
@@ -282,8 +282,8 @@ ok #812 merge
 - **変更先の判断**: renovate.json5 (または `.github/renovate.json5` 等) の `extends` を確認し、共有設定リポジトリ (renovate-config など) に依存しているか確認する
     - **このリポジトリ固有の事情** (独自の digest pin、特殊な使い方) による判断 → `proposals[].target.shared` を `false` にし、このリポジトリの renovate.json5 への変更として提示する
     - **他リポジトリでも共通して安全と言える性質** → `proposals[].target.shared` を `true` にし、共有設定リポジトリへの変更として提示する。全リポジトリに影響するため、この場では変更に着手しない。承認後に `delegate` skill で委任する (このセッション内で直接 config repo を編集しない)
-- **出力先**: 検討結果は Step 5 の報告の **`proposals[]` に 1 エントリとして追加する** (PR の行には書かない)。`target.why` (なぜその変更先か) と `risks` (最低 1 件、「これが事故になるとしたら何が起きるか」) は必須。`diff` に `packageRules` (`matchPackageNames` / `matchUpdateTypes` / `automerge` など) の具体的な差分案を書く。各 proposal は PR の判定とは独立した approve/deny toggle を持つので、マージ判定と混同しない
-- **今回の対象 PR への反映**: 今回提案したルールの対象に、今トリアージしている PR 自体が含まれる場合、その PR の対応方針は「automerge に委ねる」とし、このセッションで手動マージしない
+- **出力先**: crit mode では検討結果を Step 5 の報告の **`proposals[]` に 1 エントリとして追加する** (PR の行には書かない)。vibe mode では `a agent proposal add` で今後のルール変更案を proposal card にする。`target.why` (なぜその変更先か) と `risks` (最低 1 件、「これが事故になるとしたら何が起きるか」) は必須。`diff` に `packageRules` (`matchPackageNames` / `matchUpdateTypes` / `automerge` など) の具体的な差分案を書く。各 proposal は PR の判定とは独立した approve/deny toggle を持つので、マージ判定と混同しない
+- **今回の対象 PR への反映**: crit mode では、今回提案したルールの対象に今トリアージしている PR 自体が含まれる場合、その PR の対応方針は「automerge に委ねる」とし、このセッションで手動マージしない。vibe mode は Step 5 の手順に従い、proposal は今後のルール案として扱う。現在の PR は通常の `merge` / delegate / todo 判定に従い、安全ならマージする
 
 ### release-please bump の判定 (両 mode 共通)
 
@@ -325,8 +325,8 @@ release-please 側の `changelog-sections` / `release-as` を直すべきケー�
 
 - **直接マージ**: breaking changes がない (または影響がないことが確認済み) **かつ** CI が green で想定外の結果が含まれていない。実行方法は `vibe_mode` に応じて前述の手順に従う
 - **委任**: breaking changes によるコード修正が必要、CI fail の原因解消が必要、または複数 PR を統合する必要がある
-- **保留 / todo**: 調査で判断がつかない、またはユーザーの判断が必要。`vibe_mode` が true なら todo にし、false なら `hold` に分類する
-- **automerge に委ねる**: 上の「automerge 化 / Renovate 設定変更の検討」で今回この PR を対象に automerge ルールを新設・拡張した場合。config の変更が反映され次第 Renovate 自身がマージするので、このセッションで手動マージしない
+- **保留 / todo**: 調査で判断がつかない、またはユーザーの判断が必要。`vibe_mode` が false なら `hold` に分類する。true のときに todo にする条件は Step 5 の「`vibe_mode` が true の場合」に従う
+- **automerge に委ねる**: crit mode のみ。上の「automerge 化 / Renovate 設定変更の検討」で今回この PR を対象に automerge ルールを新設・拡張した場合。config の変更が反映され次第 Renovate 自身がマージするので、このセッションで手動マージしない。vibe mode ではこの verdict を使わず、安全な PR は通常の approve/merge 経路で処理する
 
 影響範囲が明確で確認項目が少ない PR は、`delegate` skill で委任するほどではないことが多い。`merge` に分類してレポートに載せる。
 
