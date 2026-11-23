@@ -22,40 +22,137 @@
 set -euo pipefail
 
 contexts_dir="${HOME}/.claude/contexts"
+work_dir=$(mktemp -d)
+trap 'rm -r "$work_dir" || true' EXIT
 
-render_template() {
-  local template_dir="$1"
-  local config="${template_dir}/config.yaml"
+commands=()
+command_count=0
+context_dirs=()
+context_count=0
+context_config_files=()
+context_templates=()
+command_pids=()
+render_pids=()
+
+add_context() {
+  local context_dir="$1"
+  local config="${context_dir}/config.yaml"
 
   if [[ ! -f "$config" ]]; then
     echo "Error: config not found: $config" >&2
     return 1
   fi
 
-  # Evaluate each variable command and build a JSON document
-  local vars_json="{}"
-  while IFS= read -r key; do
-    cmd=$(yq -r ".variables.\"$key\"" "$config")
-    value=$(eval "$cmd" 2> /dev/null || true)
-    # Parse JSON objects/arrays as structured data; keep everything else as strings.
-    # The leading character alone isn't reliable (Obsidian's `[[wikilink]]` starts
-    # with `[` but isn't JSON), so validity is also checked with jq. This still
-    # misclassifies a value that is *only* a numeric/bool/null wikilink (e.g. a
-    # note body consisting solely of `[[2026]]`), since that happens to be valid
-    # JSON on its own.
-    if [[ "$value" =~ ^[\{\[] ]] && jq -e . > /dev/null 2>&1 <<< "$value"; then
-      vars_json=$(jq --arg k "$key" --argjson v "$value" '.[$k] = $v' <<< "$vars_json")
+  context_dirs+=("$context_dir")
+  context_count=$((context_count + 1))
+  context_config_files+=("$config")
+}
+
+collect_variables() {
+  local configs_json_file="${work_dir}/configs.json"
+  local entries_file="${work_dir}/entries"
+  local context_index template variable_count key cmd saved_cmd command_index found
+  local variable_index
+
+  if [[ "$context_count" -eq 0 ]]; then
+    return 0
+  fi
+
+  yq -o=json '.' "${context_config_files[@]}" > "$configs_json_file"
+  jq -s -j 'to_entries[] | (.key | tostring), "\u0000", .value.template, "\u0000", ((.value.variables // {}) | length | tostring), "\u0000", (.value.variables // {} | to_entries[] | .key, "\u0000", .value, "\u0000")' "$configs_json_file" > "$entries_file"
+
+  for ((context_index = 0; context_index < context_count; context_index++)); do
+    : > "${work_dir}/context-${context_index}.map"
+  done
+
+  exec 3< "$entries_file"
+  while IFS= read -r -d '' context_index && IFS= read -r -d '' template && IFS= read -r -d '' variable_count; do
+    context_templates[context_index]="$template"
+    for ((variable_index = 0; variable_index < variable_count; variable_index++)); do
+      IFS= read -r -d '' key <&3
+      IFS= read -r -d '' cmd <&3
+      command_index=0
+      found=false
+      if [[ "$command_count" -gt 0 ]]; then
+        for saved_cmd in "${commands[@]}"; do
+          if [[ "$saved_cmd" == "$cmd" ]]; then
+            found=true
+            break
+          fi
+          command_index=$((command_index + 1))
+        done
+      fi
+      if [[ "$found" == false ]]; then
+        commands+=("$cmd")
+        command_index="$command_count"
+        command_count=$((command_count + 1))
+      fi
+      printf '%s\t%s\n' "$key" "$command_index" >> "${work_dir}/context-${context_index}.map"
+    done
+  done <&3
+  exec 3<&-
+}
+
+render_context() {
+  local context_index="$1"
+  local context_dir="${context_dirs[$context_index]}"
+  local template="${context_templates[context_index]}"
+  local map_file="${work_dir}/context-${context_index}.map"
+  local vars_json_file="${work_dir}/context-${context_index}.vars.json"
+  local key command_index value_file
+  local variable_index=0
+  local jq_filter='{}'
+  local jq_args=()
+
+  # Check JSON validity because Obsidian's `[[wikilink]]` starts with `[` but is not JSON.
+  # A note body consisting only of a numeric, boolean, or null wikilink (e.g.
+  # `[[12345]]`) is itself valid JSON and is still parsed as structured data.
+  while IFS=$'\t' read -r key command_index; do
+    value_file="${work_dir}/value-${command_index}"
+    jq_args+=(--arg "k${variable_index}" "$key")
+    jq_args+=(--rawfile "v${variable_index}" "$value_file")
+    jq_filter="${jq_filter} | .[\$k${variable_index}] = (if (\$v${variable_index} | (startswith(\"{\") or startswith(\"[\"))) then try (\$v${variable_index} | fromjson) catch \$v${variable_index} else \$v${variable_index} end)"
+    variable_index=$((variable_index + 1))
+  done < "$map_file"
+
+  if [[ "$variable_index" -gt 0 ]]; then
+    jq -n "${jq_args[@]}" "$jq_filter" > "$vars_json_file"
+  else
+    jq -n "$jq_filter" > "$vars_json_file"
+  fi
+  gomplate -d "vars=stdin:///vars.json" -f "${context_dir}/${template}" < "$vars_json_file"
+}
+
+render_selected_contexts() {
+  local wait_status=0
+  local index
+  local pid
+
+  if [[ "$context_count" -eq 0 ]]; then
+    return 0
+  fi
+  for ((index = 0; index < context_count; index++)); do
+    (render_context "$index") > "${work_dir}/render-${index}" &
+    render_pids+=("$!")
+  done
+
+  for pid in "${render_pids[@]}"; do
+    if wait "$pid"; then
+      :
     else
-      vars_json=$(jq --arg k "$key" --arg v "$value" '.[$k] = $v' <<< "$vars_json")
+      wait_status=1
     fi
-  done < <(yq -r '.variables | keys[]' "$config")
+  done
+  if [[ "$wait_status" -ne 0 ]]; then
+    return 1
+  fi
 
-  local template
-  template=$(yq -r '.template' "$config")
-
-  echo "$vars_json" | gomplate \
-    -d "vars=stdin:///vars.json" \
-    -f "${template_dir}/${template}"
+  for ((index = 0; index < context_count; index++)); do
+    if [[ "$index" -ne 0 ]]; then
+      printf '\n'
+    fi
+    cat "${work_dir}/render-${index}"
+  done
 }
 
 type="${1:?Usage: gen-claude-template context [<name>]}"
@@ -63,19 +160,32 @@ type="${1:?Usage: gen-claude-template context [<name>]}"
 case "$type" in
   context)
     if [[ -n "${2:-}" ]]; then
-      render_template "${contexts_dir}/${2}"
+      add_context "${contexts_dir}/${2}"
     else
-      first=true
       for dir in "${contexts_dir}"/*/; do
         [[ -d "$dir" ]] || continue
-        if [[ "$first" == true ]]; then
-          first=false
-        else
-          echo
-        fi
-        render_template "$dir"
+        add_context "$dir"
       done
     fi
+
+    collect_variables
+    for ((index = 0; index < command_count; index++)); do
+      (
+        eval "${commands[$index]}" < /dev/null > "${work_dir}/value-${index}.raw" 2> /dev/null || true
+      ) &
+      command_pids+=("$!")
+    done
+    if [[ "$command_count" -gt 0 ]]; then
+      for pid in "${command_pids[@]}"; do
+        wait "$pid" || true
+      done
+    fi
+    for ((index = 0; index < command_count; index++)); do
+      value=$(< "${work_dir}/value-${index}.raw")
+      printf '%s' "$value" > "${work_dir}/value-${index}"
+    done
+
+    render_selected_contexts
     ;;
   *)
     echo "Error: unknown type '${type}'. Use 'context'." >&2
