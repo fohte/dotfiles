@@ -37,20 +37,7 @@ description: Run the current session as a project manager (PM) that never does h
 
 ユーザー向けの画面や見た目のデザインが必要な task は、対象 repo を担当する designs の designer セッションにも依頼する。技術設計を行う `--kind design` の handoff セッションとは別の役割であり、両方を並行して進めてよい。
 
-1. 対象を `designer <owner>/<repo>` として定め、`a agent peer list` から `work_type` が `designer` で `label` が完全一致するセッションを探す。designs の designer は repo ごとに独立したセッションで管理する。
-2. 見つかった designer の `session_id` を通知先に使う。`a agent peer me | jq -r '.[0].session_id'` で取得した依頼元 PM の session ID はメッセージ内に記載し、`a agent peer notify --message "<依頼内容>" <designer_session_id>` で依頼する。メッセージには tq task の番号と title、決めたいデザインの内容、依頼元 PM の session ID を含める。
-3. 見つからない場合は `a agent todo add` でユーザー向け todo を作る。detail に次の起動コマンドを code block で含め、実行するコマンド行だけに `! ` を付けて owner と repo を対象に置き換える。
-
-    ````bash
-    cat <<'EOF' | a agent todo add
-    {
-      "title": "designer <owner>/<repo> を起動する",
-      "detail": "担当 designer セッションがありません。次を実行してください:\n\n```bash\n! cd ~/ghq/github.com/fohte/designs && claude \"/designer <owner>/<repo>\"\n```"
-    }
-    EOF
-    ````
-
-4. デザイン依頼と技術設計は並行して進める。案の選択、canvas の確認、design PR の merge 依頼は designer が自身のセッションでユーザーと行い、merge 依頼が必要なら designer が自身のセッションで `a agent todo add` する。PM はデザイン案の選択や canvas の確認をユーザーに尋ねず、design PR の URL を共有せず、merge を依頼する proposal / todo も作らない。designer は design PR を作成したら PR URL を依頼元へ `a agent peer notify` で知らせ、merge されたらその旨をもう一度知らせる。デザイン確定は PR の作成やレビュー完了ではなく merge とする。designer から merge の通知を受けたら `gh pr view <PR_URL> --json state,mergedAt` を実行し、`state` が `MERGED` かつ `mergedAt` が空でないことを確認してから実装を委任する。コマンドが失敗した場合は原因を解消して再確認し、成功応答で未 merge と確認した場合は実装セッションを起動せず designer から merge の通知を待つ。
+依頼手順は [`~/.agents/skills/delegate/references/designer.md`](~/.agents/skills/delegate/references/designer.md) に従う。デザイン依頼と技術設計は並行して進める。PM はデザイン案の選択や canvas の確認をユーザーに尋ねず、design PR の URL を共有せず、merge を依頼する proposal / todo も作らない。案の選択、canvas の確認、design PR の merge 依頼は designer が自身のセッションでユーザーと行う。
 
 `--kind design` は担当 repo の調査・技術設計を行う handoff worker の指定であり、designer を識別する値ではない。designs の designer は `work_type=designer` と `label=designer <owner>/<repo>` で識別し、依頼は `a agent peer notify` で送る。
 

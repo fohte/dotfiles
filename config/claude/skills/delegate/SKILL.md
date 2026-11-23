@@ -40,6 +40,7 @@ description: Delegate tasks to a separate Claude Code or Codex instance, either 
 - **設計判断**: どの仕組みで実現するか。未決なら design-flow skill で案を出し、ユーザーが選んだ案を確定案とする (design-flow skill は決定を下さず選択を求めて終わる)
 - **バグの原因**: どこが原因でどう直すか。未特定なら debug-flow skill で root cause を特定する。特定できた時点で委任に戻り、修正フェーズには進ませない (debug-flow は原因特定後に自動で修正へ移行し、main で直接作業するリポジトリでは委任せず実装してしまう)
 - **方針を決めるための調査**: 選択肢の比較や実現可能性の確認。research skill で調べる
+- **画面に出るものの変更**: 対象 repo に designer がいるか、画面の変更をどう判定するか、デザイン案の merge を待つ必要があるかを `references/designer.md` に従って確認する。designer を使う repo では、画面に出るものが変わる実装をデザイン案の merge 前に委任しない。designer を使わない repo ではこの確認を省く
 - **tq タスク**: この委任作業を載せるタスク。まだ無いなら track-in-tq skill を呼んで作る (既存タスクを探す手順もその skill が持つ)。委任先は自分のタスクを作らないので、タスクが無いまま委任すると成果がどこにも記録されない
 - **PR 分割**: 委任先リポジトリの `repo.direct_commit` (判定方法は後述の「使い方」) が `true` でなければ、ユーザーに言われなくても split-into-prs skill で分割し、承認された PR を委任する。分割せずに委任すると、レビューしにくい大きな PR がそのまま出る。split-into-prs は承認された案を tq タスクのチェックリストに記録するので、tq タスクを用意してから分割する。ユーザーが分割を指定・承認済みなら改めて分割しない。分割しても 1 PR に収まるなら、承認を待たずに委任へ進む
 
