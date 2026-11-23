@@ -39,7 +39,7 @@ agent:
 
     既定ブランチの CI が失敗している間は、その CI を修正する PR 以外を merge しないでください。merge を再開する前に、既定ブランチの CI が成功していることを確認してください。
 
-    merge 後に既定ブランチの CI が失敗したら、失敗した run の URL で `tq --author <model> task search "<run URL>" --status todo` を実行し、自動作成された `alert/ci` タスクを探してください。原因、対応した PR (flaky や一時障害ならその根拠)、その後に成功した run をタスクにコメントし、完了条件にチェックを付けて `tq task complete <id> --reason completed` で閉じてください。同じ原因のタスクは `tq task complete <id> --reason duplicate --duplicate-of <対応済みタスクID>` で閉じてください。
+    merge 後に既定ブランチの CI が失敗したら、失敗した run の URL で `tq --author <model> task search "<run URL>" --status todo` を実行し、自動作成された `alert/ci` タスクを探してください。見つからなければ 1 分ほど空けて再検索してください。原因、対応した PR (flaky や一時障害ならその根拠)、その後に成功した run をタスクにコメントし、完了条件にチェックを付けて `tq --author <model> task complete <id> --reason completed` で閉じてください。同じ原因のタスクは `tq --author <model> task complete <id> --reason duplicate --duplicate-of <対応済みタスクID>` で閉じてください。
 
     delegate skill の「委任先の PR が merge された場合」に従ってください。
     </delegation-update>

@@ -174,7 +174,7 @@ Base: $base_ref
 
 While the default branch CI is failing, do not merge any PR except one that fixes that CI. Resume merges only after confirming that the default branch CI is passing.
 
-If the default branch CI fails after a merge, find its automatically created alert/ci task by searching the failed run URL with tq --author <model> task search \"<run URL>\" --status todo. Comment with the cause, the fixing PR (or evidence for a flaky or transient failure), and a later successful run. Check the task's completion condition and close it with tq task complete <id> --reason completed. Close tasks for the same cause with tq task complete <id> --reason duplicate --duplicate-of <resolved-task-id>.
+If the default branch CI fails after a merge, the session handling the merge should find its automatically created alert/ci task by searching the failed run URL with tq --author <model> task search \"<run URL>\" --status todo. If the task has not appeared yet, search again after about a minute. Comment with the cause, the fixing PR (or evidence for a flaky or transient failure), and a later successful run. Check the task's completion condition and close it with tq --author <model> task complete <id> --reason completed. Close tasks for the same cause with tq --author <model> task complete <id> --reason duplicate --duplicate-of <resolved-task-id>. Other recipients should leave task comments and closure to the session handling the merge.
 
 The branch conflicts with the base. Run the sync-base-branch skill to resolve the conflict.
 </armyknife-post-worktree-delete>"
