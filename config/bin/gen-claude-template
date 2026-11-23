@@ -104,6 +104,9 @@ render_context() {
   local jq_filter='{}'
   local jq_args=()
 
+  # Check JSON validity because Obsidian's `[[wikilink]]` starts with `[` but is not JSON.
+  # A note body consisting only of a numeric, boolean, or null wikilink (e.g.
+  # `[[12345]]`) is itself valid JSON and is still parsed as structured data.
   while IFS=$'\t' read -r key command_index; do
     value_file="${work_dir}/value-${command_index}"
     jq_args+=(--arg "k${variable_index}" "$key")
