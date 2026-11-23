@@ -2,6 +2,7 @@
 import html
 import io
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -9,7 +10,6 @@ from pathlib import Path
 
 from .actions import act_on_approvals
 from .report import (
-    ai_footer,
     check_no_upstream_refs,
     derive_verdict,
     gen_review_body,
@@ -87,7 +87,13 @@ def selftest():
     text, _ = derive_verdict({"ci": {"level": "warn", "text": "x"}}, [])
     assert text == "今はマージできない — CI 調査中", text
 
-    footer = f"\n\n{ai_footer()}" if ai_footer() else ""
+    if os.environ.get("CLAUDECODE"):
+        expected_footer = "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+    elif os.environ.get("CODEX_THREAD_ID"):
+        expected_footer = "🤖 Generated with [Codex](https://openai.com/codex)"
+    else:
+        expected_footer = ""
+    footer = f"\n\n{expected_footer}" if expected_footer else ""
     assert gen_review_body([], public=False) == "📝\n\n破壊的変更なし。" + footer
     assert gen_review_body([], public=True) == "📝\n\nNo breaking changes." + footer
     body = gen_review_body([ok_change, warn_change], public=False)

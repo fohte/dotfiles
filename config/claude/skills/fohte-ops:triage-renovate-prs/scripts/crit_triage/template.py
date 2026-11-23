@@ -1,5 +1,6 @@
 """HTML template used by the triage report renderer."""
 
+# Literal replacement keeps JavaScript template literals and object braces intact.
 TEMPLATE = """<!doctype html>
 <html lang="ja">
 <head>

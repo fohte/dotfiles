@@ -17,8 +17,9 @@ Data format:
   change and impact.
 - Each group has `verdict` (`merge`, `auto`, `delegate`, or `hold`), `title`, and
   `prs`.
-- Each PR has `number`, `title`, optional `url`, `scope`, and `versions`; optional
-  `gates` (`ci`, `release`, `order`) with `level` and `text`; and `changes`.
+- Each PR has `number`, `title`, optional `url`, `scope`, `versions`, and
+  `head_sha`; optional `gates` (`ci`, `release`, `order`) with `level` and
+  `text`; and `changes`. `--vibe-approve` requires `head_sha`.
 - Each change has `text`, optional `text_en`, optional `breaking`, and `impact`.
   Impact has `level`, `text`, optional `text_en`, and `action` when `level` is
   `warn`.
@@ -30,7 +31,8 @@ Validation rules:
 - Gate text is at most 60 characters; impact text is at most 120 characters.
 - A warning impact requires an action. Every `merge` PR must derive to an
   unblocked verdict.
-- Generated approve reviews cannot contain upstream issue/PR references or URLs.
+- Data-derived approve review text cannot contain upstream issue/PR references or
+  URLs. The generated agent footer is appended separately.
 - A proposal requires `target.why` and at least one risk.
 - Markdown-lite is supported in `text` / `text_en`: inline code and links. Other
   values are escaped.

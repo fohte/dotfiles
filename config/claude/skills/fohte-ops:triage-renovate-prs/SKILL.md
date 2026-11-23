@@ -175,7 +175,7 @@ crit を開かず、調査結果から次の処理を行う。`merge` は全 gat
 
 判断時に PR の head SHA と `gh pr diff` の追加・削除行を記録する。ユーザーに todo を渡した PR はこの差分を処理済みの基準として保持し、変更行が変わるまで再トリアージしない。todo はユーザーが判断・作業するまで保留するが、他の PR の処理は続ける。
 
-安全と判定した `merge` PR は、同じ JSON を `~/.agents/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage --vibe-approve <data.json>` に渡して approve review を投稿し、その後 `a gh pr-merge <pr>` でマージする。approve body には `CLAUDECODE` または `CODEX_THREAD_ID` に応じた AI footer を付ける。approve option は自身でも `vibe_mode` を検証し、false または判定エラーなら投稿を拒否する。マージ直前に head SHA を再取得する。head が変わっていたら `gh pr diff` の追加・削除行を記録済みのものと比較し、変更行が同じなら rebase のみとして続行し、異なればその PR の調査と approve review をやり直す。`a gh pr-merge` 以外でマージしない。
+安全と判定した `merge` PR は、head SHA を `head_sha` に含めた同じ JSON を `~/.agents/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage --vibe-approve <data.json>` に渡して approve review を投稿し、その後 `a gh pr-merge <pr>` でマージする。approve body には `CLAUDECODE` または `CODEX_THREAD_ID` に応じた AI footer を付ける。approve option は自身でも `vibe_mode` と PR の head SHA を検証し、不一致なら投稿を拒否する。vibe 専用操作の直前に `vibe-policy.md` の条件を再確認する。再確認が false なら既存の crit 承認フローに切り替え、判定エラーが再試行後も続く場合は policy に従って報告・停止する。この option は false または判定エラーで必ず拒否する。マージ直前に head SHA を再取得する。head が変わっていたら `gh pr diff` の追加・削除行を記録済みのものと比較し、変更行が同じなら rebase のみとして続行し、異なればその PR の調査と approve review をやり直す。`a gh pr-merge` 以外でマージしない。
 
 コード修正が必要な PR は次の手順で扱う:
 

@@ -165,9 +165,11 @@ def ai_footer():
     return ""
 
 
-def gen_review_body(changes, public):
+def gen_review_body(changes, public, pr_num=None):
     """Generate the approve-review body, including its agent footer when available."""
     body = base_review_body(changes, public)
+    if pr_num is not None:
+        check_no_upstream_refs(body, pr_num)
     footer = ai_footer()
     return f"{body}\n\n{footer}" if footer else body
 
@@ -195,10 +197,7 @@ def render_pr(pr, repo, public, has_scope, group_verdict):
 
     review_body = None
     if group_verdict == "merge":
-        review_body_base = base_review_body(changes, public)
-        check_no_upstream_refs(review_body_base, num)
-        footer = ai_footer()
-        review_body = f"{review_body_base}\n\n{footer}" if footer else review_body_base
+        review_body = gen_review_body(changes, public, pr_num=num)
         pr["review_body"] = review_body
     # Outside `merge` the toggle means "go ahead and delegate/hold/automerge this
     # PR", so it must never carry an approving review.
@@ -362,8 +361,3 @@ def render(data, endpoint):
     }.items():
         out = out.replace(token, value)
     return out
-
-
-# Plain string, not str.format(): the JS below uses `${...}` template literals
-# and object-literal braces, which would otherwise have to be doubled everywhere.
-# Substitution is done with the __TOKEN__.replace() loop in render() instead.

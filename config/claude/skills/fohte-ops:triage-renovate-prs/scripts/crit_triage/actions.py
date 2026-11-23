@@ -1,9 +1,10 @@
-"""GitHub review and merge actions for the human-reviewed report."""
+"""GitHub review and merge actions for triage reports."""
 import json
 import subprocess
 from pathlib import Path
 
 from .report import pr_key
+
 
 def gh_pr(repo, num, argv, stdin=None):
     """Run one `gh pr <verb>` against a PR."""
@@ -13,6 +14,29 @@ def gh_pr(repo, num, argv, stdin=None):
         text=True,
         capture_output=True,
     )
+
+
+def post_review(repo, num, body, done, done_path, key, expected_head=None):
+    if expected_head:
+        head = gh_pr(repo, num, ["view", "--json", "headRefOid", "--jq", ".headRefOid"])
+        if head.returncode != 0:
+            detail = (head.stderr or "").strip() or "could not read the current PR head"
+            print(f"FAILED #{num} review: {detail}")
+            return False
+    if key in done:
+        print(f"skip #{num} review: already done")
+        return True
+        if head.stdout.strip() != expected_head:
+            detail = f"head changed from {expected_head} to {head.stdout.strip()}"
+            print(f"FAILED #{num} review: {detail}")
+            return False
+    run = gh_pr(repo, num, ["review", "--approve", "--body-file", "-"], body)
+    ok = run.returncode == 0
+    print(f"{'ok' if ok else 'FAILED'} #{num} review" + ("" if ok else f": {(run.stderr or '').strip()}"))
+    if ok:
+        done.add(key)
+        done_path.write_text(json.dumps(sorted(done)))
+    return ok
 
 
 def act_on_approvals(data, result, done_path):
@@ -27,33 +51,25 @@ def act_on_approvals(data, result, done_path):
             num = pr["number"]
             if group["verdict"] != "merge" or result[pr_key(num)] != "approve":
                 continue
-            steps = []
             if pr.get("review_body"):
-                steps.append((["review", "--approve", "--body-file", "-"], pr["review_body"]))
+                if not post_review(
+                    data["repo"], num, pr["review_body"], done, done_path, f"{num}:review"
+                ):
+                    continue
             # `--auto` hands the CI gate to GitHub, which merges once the required
             # checks pass -- including after a Renovate rebase, since only a push
             # from someone without write access disarms it.
-            steps.append((["merge", "--squash", "--auto"], None))
-            for argv, stdin in steps:
-                # The deny loop re-runs this script against the same data file,
-                # and one step can fail after an earlier one landed, so each is
-                # recorded on its own rather than per PR.
-                key = f"{num}:{argv[0]}"
-                if key in done:
-                    print(f"skip #{num} {argv[0]}: already done")
-                    continue
-                run = gh_pr(data["repo"], num, argv, stdin)
-                # GitHub refuses to arm auto-merge on an already mergeable PR.
-                if run.returncode != 0 and "--auto" in argv and "clean status" in (run.stderr or ""):
-                    run = gh_pr(data["repo"], num, [a for a in argv if a != "--auto"], stdin)
-                ok = run.returncode == 0
-                # One line per step, printed only once the step is settled:
-                # readers take `FAILED` to mean the operation did not happen.
-                print(f"{'ok' if ok else 'FAILED'} #{num} {argv[0]}" + ("" if ok else f": {(run.stderr or '').strip()}"))
-                if not ok:
-                    # Never arm a merge on a PR whose approving review failed to
-                    # post; branch protection would block it anyway.
-                    break
+            key = f"{num}:merge"
+            if key in done:
+                print(f"skip #{num} merge: already done")
+                continue
+            run = gh_pr(data["repo"], num, ["merge", "--squash", "--auto"])
+            # GitHub refuses to arm auto-merge on an already mergeable PR.
+            if run.returncode != 0 and "clean status" in (run.stderr or ""):
+                run = gh_pr(data["repo"], num, ["merge", "--squash"])
+            ok = run.returncode == 0
+            print(f"{'ok' if ok else 'FAILED'} #{num} merge" + ("" if ok else f": {(run.stderr or '').strip()}"))
+            if ok:
                 done.add(key)
                 done_path.write_text(json.dumps(sorted(done)))
 
@@ -69,16 +85,13 @@ def post_approve_reviews(data, done_path):
             num = pr["number"]
             if not pr.get("review_body"):
                 raise SystemExit(f"#{num}: approve review body was not generated")
-            key = f"{num}:review"
-            if key in done:
-                print(f"skip #{num} review: already done")
-                continue
-            run = gh_pr(data["repo"], num, ["review", "--approve", "--body-file", "-"], pr["review_body"])
-            ok = run.returncode == 0
-            print(f"{'ok' if ok else 'FAILED'} #{num} review" + ("" if ok else f": {(run.stderr or '').strip()}"))
-            if not ok:
+            head_sha = pr.get("head_sha")
+            if not head_sha:
+                raise SystemExit(f"#{num}: head_sha is required for a vibe approve review")
+            key = f"{num}:{head_sha}:review"
+            posted = post_review(
+                data["repo"], num, pr["review_body"], done, done_path, key, expected_head=head_sha
+            )
+            if not posted:
                 failed = True
-                continue
-            done.add(key)
-            done_path.write_text(json.dumps(sorted(done)))
     return not failed
