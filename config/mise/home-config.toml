@@ -25,7 +25,7 @@
 "aqua:x-motemen/ghq" = "1.10.1"
 "aqua:junegunn/fzf" = "0.75.0"
 "aqua:dandavison/delta" = "0.20.1"
-"aqua:mikefarah/yq" = "4.53.6"
+"aqua:mikefarah/yq" = "4.54.3"
 "vfox:mise-plugins/vfox-neovim" = "0.12.1"
 "asdf:mise-plugins/mise-eza" = "0.23.4"
 "aqua:starship/starship" = "1.26.0"
