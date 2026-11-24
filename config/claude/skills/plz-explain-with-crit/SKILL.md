@@ -53,7 +53,9 @@ Approve は、ユーザーがその時点の内容を読み、一旦次へ進ん
 - Claude Code: 必ず `run_in_background: true` で実行すること
 - Codex: `a agent bg run -- crit ...` で起動し、すぐに制御が返る (crit を直接実行すると runok が拒否する)
 
-各 round では [`../crit-approval-review/references/todo-lifecycle.md`](../crit-approval-review/references/todo-lifecycle.md) の手順を使う。todo は正常なユーザー応答を含む round 結果が返ったときに取り下げる。結果が返らず再開する場合や、「履歴を消して一から開き直す」場合は、pending の todo を再利用する。
+`--no-open` で起動した場合は、起動ログの URL を `a agent crit add "<URL>"` で現在の agent session に登録する。`--no-open` では `crit-open` が呼ばれず、URL が未登録だと watch-web が Crit 待ちとして識別できないため、wait の理由が Inbox に表示されない。通常起動では `crit-open` が URL を登録するため、手動登録は不要。
+
+各 round を起動または再開する直前に `a agent status set wait "<対象>"` を実行し、ユーザーに見てほしい説明対象を wait の理由に書く。to-do は登録しない。
 
 ### ブラウザは自動起動させる
 
