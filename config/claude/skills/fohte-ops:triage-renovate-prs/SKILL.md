@@ -183,10 +183,10 @@ approve review を投稿する前に `gh pr view <pr> --json author --jq '.autho
 
 コード修正が必要な Renovate PR は次の手順で扱う:
 
-1. `delegate` skill の launcher を `--vibe --from origin/<renovate-branch>` で起動し、triage findings と create-pr の base 解決で `resolve-base --no-stack` を使う指示を依頼に含める。Renovate の変更を含む branch から修正 branch を作り、修正 PR は default branch を base にする。Renovate branch を `--parent-branch` に指定しない。
+1. 対象 Renovate PR の head SHA と `gh pr diff <pr>` の内容を triage findings に記録する。`delegate` skill の launcher を `--vibe --from origin/<renovate-branch>` で起動し、triage findings と create-pr の base 解決で `resolve-base --no-stack` を使う指示を依頼に含める。Renovate の変更を含む branch から修正 branch を作り、修正 PR は default branch を base にする。Renovate branch を `--parent-branch` に指定しない。
 2. delegate の `<vibe-draft-ready>` / `<vibe-pr-ready>` を `enable-vibe-coding` skill の Renovate fix 手順に従ってレビューする。checklist item ID は `none` とし、triage findings を review context に使う。修正 PR は default branch 向けなので、合わせた内容の required CI が通ることを確認する。
 3. 修正 PR を `a gh pr-merge` で default branch にマージする。修正 PR の CI が失敗した場合は修正 delegate を再度起動する。マージ後は delegate skill に従って default branch の CI が green になることを確認する。
-4. Renovate PR の状態を確認する。変更が default branch に取り込まれた時点で処理済みとし、後続 PR の順序依存 gate から除外する。Renovate が PR を自動 close していれば完了とする。開いたままなら自分で close せず、取り込み済みの事実と未 close の状態を記載した cleanup todo を登録する。PR の close はユーザー判断とし、この todo で後続 PR を止めない。
+4. Renovate PR の現在の head SHA と default branch に対する diff を再取得し、修正 PR に含めた triage 時点の内容と比較する。新しい変更が残っていれば最新 diff を再トリアージし、含めるまで Renovate PR を未処理のままにして順序依存 gate を維持する。未取り込み変更がなくなった時点で処理済みとして後続 PR の gate を解除する。Renovate PR がまだ open なら自分で close せず、取り込み済みの事実と未 close の状態を記載した cleanup todo を登録する。PR の close はユーザー判断とし、この todo で後続 PR を止めない。
 
 各 PR の処理 (merge、delegate、todo、proposal) が終わるたびに PR 一覧へ戻り、新規・未処理の PR を続ける。`vibe_mode` が false の場合は、以下の crit 承認手順を使う。
 
@@ -342,7 +342,7 @@ Renovate PR の merge round ごとに、delegate skill の手順に従って def
 
 mise 設定が更新されたかは、pull 前後に対象リポジトリのルートで実行した `mise config ls --no-truncate` の出力に示される設定ファイルと、`git diff --name-only <pull 前の HEAD> HEAD` を照合して判定する。各設定パスの symlink を解決して対象リポジトリからの相対パスに揃えてから比較する。差分に mise 設定ファイルが含まれる場合は、lock を保持したまま対象リポジトリのルートで引数なしの `mise install` を実行する。runok hook は `mise install <tool>` のように tool を指定した実行を拒否し、リポジトリルートからの実行で repo-local の mise 設定も読み込むため、引数を付けない。pull が失敗した場合は delegate skill の手順に従い、出力を添えて報告し、作業ツリーを変更せず deploy せずに lock を解除する。mise install が失敗した場合は出力と理由を報告して loop を停止し、pull による更新は維持して rollback せずに lock を解除する。pull、差分確認、必要な deploy、および mise install をすべて終えた後に lock を解除する。ローカル checkout の同期が確認できるまで次の PR を処理しない。修正 PR を default branch にマージした後は、Renovate PR ではなく default branch の CI を確認し、Renovate PR が残っていれば Step 5 の手順に従ってユーザー向け todo を登録する。
 
-Renovate PR が default branch に取り込み済みとして cleanup todo に記録されている場合は、PR 一覧を更新するたびにその状態も確認する。Renovate が自動 close していれば対応する cleanup todo を withdraw し、その PR は後続 PR の blocker に戻さない。
+Renovate PR が default branch に取り込み済みとして cleanup todo に記録されている場合は、PR 一覧を更新するたびにその状態も確認する。PR が close されていれば、close した主体にかかわらず対応する cleanup todo を withdraw し、その PR は後続 PR の blocker に戻さない。
 
 先行 PR 待ちを除き、処理できる PR がなくなったら、進行中の fix delegate がマージまたは停止を報告するまで待つ。todo PR の再トリアージでは、Step 5 に従って必要な代替 card を登録し、古い card を `a agent todo withdraw <seq>` で撤回する。全 delegate が完了したら `renovate-trigger run` を 1 回実行し、Renovate が完了してから PR 一覧を取り直す。GitHub App mode は Dependency Dashboard の checkbox が外れるまで待つ。Actions mode は dispatch だけでなく、Renovate を実行する workflow が実際に開始・完了したことを確認する。確認できなければ停止してユーザーに報告する。新しい PR がなければ loop を終了する。
 
