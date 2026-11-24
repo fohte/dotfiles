@@ -187,7 +187,7 @@ approve review を投稿する前に `gh pr view <pr> --json author --jq '.autho
 2. delegate の `<vibe-draft-ready>` / `<vibe-pr-ready>` を `enable-vibe-coding` skill の Renovate fix 手順に従ってレビューする。checklist item ID は `none` とし、triage findings を review context に使う。
 3. delegate の fix PR は `a gh pr-merge --unstack <fix-pr>` で Renovate branch にだけマージし、Renovate PR は trunk に入れない。
     - `--unstack` は stack 内の未 merge PR をすべて stack から外すため、fix PR にだけ指定する。
-    - hook や required checks が失敗した場合、stack は解除されたまま fix PR はマージされない。原因を直して同じコマンドを再実行する。
+    - hook や required checks が失敗した場合、stack は解除されたまま fix PR はマージされない。原因を直して同じコマンドを再実行する。コード変更で原因を直した場合は、再実行前に delegate の新しい `<vibe-pr-ready>` を受け取り、Step 2 に従って差分、head SHA、required checks を確認する。
     - Renovate PR の CI を確認し、失敗なら再度修正 delegate を起動する。foreign commit が入った Renovate branch には Renovate の rebase を要求しない。
 4. Renovate PR を新しい head と diff で再トリアージし、変更内容に対する approve review を投稿してからマージする。
 
