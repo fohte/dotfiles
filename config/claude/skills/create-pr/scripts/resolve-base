@@ -78,6 +78,22 @@ check_pr_list() {
   fi
 }
 
+resolve_default_branch() {
+  if ! git fetch origin; then
+    fail 'git fetch origin failed; cannot resolve the base branch safely'
+  fi
+  if ! default_branch=$(git main); then
+    fail 'could not determine the default branch with git main'
+  fi
+  if [[ -z "$default_branch" || "$default_branch" == *$'\n'* ]]; then
+    fail 'git main did not return exactly one default branch'
+  fi
+  if ! git check-ref-format --branch "$default_branch" > /dev/null; then
+    fail "git main returned an invalid default branch: $default_branch"
+  fi
+  printf '%s\n' "$default_branch"
+}
+
 current_prs=
 if ! current_prs=$(gh pr list --state open --head "$current_branch" --json number,baseRefName); then
   fail "could not list open pull requests for branch $current_branch"
@@ -128,22 +144,9 @@ elif [[ -n "$parent_branch" ]]; then
   stack_parent_pr_number=$(jq -r '.[0].number' <<< "$matching_parent_prs")
   base_branch=$stack_parent_branch
 elif [[ "$no_stack" == true ]]; then
-  if ! git fetch origin; then
-    fail 'git fetch origin failed; cannot resolve the base branch safely'
-  fi
-  if ! base_branch=$(git main); then
-    fail 'could not determine the default branch with git main'
-  fi
-  if [[ -z "$base_branch" || "$base_branch" == *$'\n'* ]]; then
-    fail 'git main did not return exactly one default branch'
-  fi
-  if ! git check-ref-format --branch "$base_branch" > /dev/null; then
-    fail "git main returned an invalid branch name: $base_branch"
-  fi
+  base_branch=$(resolve_default_branch)
 else
-  if ! git fetch origin; then
-    fail 'git fetch origin failed; cannot resolve the base branch safely'
-  fi
+  default_branch=$(resolve_default_branch)
   if ! repository=$(gh repo view --json nameWithOwner --jq .nameWithOwner); then
     fail 'could not determine the current repository'
   fi
@@ -155,15 +158,6 @@ else
   fi
   check_pr_list "$pull_requests"
 
-  if ! default_branch=$(git main); then
-    fail 'could not determine the default branch with git main'
-  fi
-  if [[ -z "$default_branch" || "$default_branch" == *$'\n'* ]]; then
-    fail 'git main did not return exactly one default branch'
-  fi
-  if ! git check-ref-format --branch "$default_branch" > /dev/null; then
-    fail "git main returned an invalid branch name: $default_branch"
-  fi
   if ! is_shallow_repository=$(git rev-parse --is-shallow-repository); then
     fail 'could not determine whether the repository history is shallow'
   fi
