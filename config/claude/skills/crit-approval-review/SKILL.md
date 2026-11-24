@@ -77,7 +77,7 @@ bare な `crit story`、`crit story --no-spend`、`crit`、`crit review` はこ�
 
 `crit:crit` skill でレビュー loop を回し、承認を待つ。委任先の無人セッションでも待つ。
 
-人間の review round は [`references/todo-lifecycle.md`](references/todo-lifecycle.md) の手順で todo を登録・取り下げる。タイトルは対象に合わせて「通知設定の変更をレビュー」のようにする。`crit-design-review` の委任元待ちでは todo を登録しない。`crit-approval` が round の正常なユーザー応答を返さない場合は、その todo を残して再利用する。
+各人間の review round の直前に `a agent status set wait "<レビュー対象>"` を実行し、レビュー対象を wait の理由に設定する。たとえば通知設定の変更なら `a agent status set wait "通知設定の変更をレビュー"` とする。
 
 ingest で daemon が最初のタブを開いた場合、レビュー loop はその daemon に接続する。
 `crit:crit` の Step 1-2 に従い、初回は `crit-approval` をバックグラウンドで 1 回だけ実行する。
