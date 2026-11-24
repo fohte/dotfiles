@@ -47,7 +47,7 @@
 "npm:@mermaid-js/mermaid-cli" = "latest"
 "github:ast-grep/ast-grep" = "0.51.3"
 "github:rtk-ai/rtk" = "1.2.0"
-"aqua:suzuki-shunsuke/pinact" = "3.10.1"
+"aqua:suzuki-shunsuke/pinact" = "5.0.2"
 "aqua:tree-sitter/tree-sitter" = "0.27.2"
 "aqua:hashicorp/terraform" = "1.17.2"
 "github:DeusData/codebase-memory-mcp" = "0.12.1"
