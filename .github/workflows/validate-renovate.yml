@@ -15,5 +15,5 @@ jobs:
       # engines field. Without this, npm silently falls back to v37.
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
-          node-version: '24.18.0'
+          node-version: '24.22.3'
       - run: npx --package renovate -c 'renovate-config-validator renovate.json5'
