@@ -43,7 +43,7 @@
 "npm:opensrc" = "0.7.3"
 "aqua:charmbracelet/glow" = "2.1.2"
 "aqua:hairyhenderson/gomplate" = "5.3.1"
-"aqua:mozilla/sccache" = "0.16.0"
+"aqua:mozilla/sccache" = "0.19.0"
 "npm:@mermaid-js/mermaid-cli" = "latest"
 "github:ast-grep/ast-grep" = "0.44.1"
 "github:rtk-ai/rtk" = "1.1.0"
