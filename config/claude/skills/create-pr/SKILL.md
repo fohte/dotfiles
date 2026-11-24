@@ -224,7 +224,8 @@ task ID の branch config が無いときは、このセッション (`$TQ_SESSI
 ## 7. CI 実行を監視
 
 `gh pr checks --watch` で CI を監視。失敗したら調査・修正して再 push。
-`vibe_mode` では CI が green になり、Step 8 も済ませた後、共通 policy を再確認する。初回判定時から許可が続いている場合だけ委任元へ報告する。許可がなくなっていた場合は vibe 報告を送らず、通常の人間レビューに委ねる。
+Renovate fix の stacked PR で、呼び出し元が下段の Renovate PR を CI の検証先に指定している場合は、先に `gh pr checks <pr>` で stacked PR の check 有無を確認する。check が 1 件もなく、workflow の trigger から default branch 向け PR だけが実行対象だと確認できた場合は、stacked PR の CI を green と扱わず、そこでの watch を省略して Step 8 と `vibe-pr-ready` に進む。merge 後に下段の Renovate PR の CI を確認することを呼び出し元へ伝える。stacked PR に適用される check がある場合は通常どおり全て完了するまで watch し、failure や不明 status が残るときは報告を止める。
+`vibe_mode` では CI が green になるか、前述の stacked PR 例外に従って下段 PR へ検証を引き継げる状態になり、Step 8 も済ませた後に共通 policy を再確認する。初回判定時から許可が続いている場合だけ委任元へ報告する。許可がなくなっていた場合は vibe 報告を送らず、通常の人間レビューに委ねる。
 
 `vrt` commit status 以外がすべて green で、`vrt` だけが失敗しているときも報告する。GitHub Actions の check 結果をすべて確認し、残る pending status がマージをブロックしない外部 commit status (例: informational な Codecov status) だけなら、`gh pr checks --watch` を止めて報告する。failed required check はブロックとして扱う。VRT 差分の確認と承認ラベルの付与は委任元が担うため、委任先はユーザーに VRT レビューを頼まず、`vrt-approved` を待たず、自分でも付けない。リポジトリの規約が「VRT 差分はユーザーにレビューを頼む」としていても、vibe ではこの報告がその依頼の代わりになる。
 
