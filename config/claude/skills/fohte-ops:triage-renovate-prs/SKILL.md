@@ -183,7 +183,7 @@ approve review を投稿する前に `gh pr view <pr> --json author --jq '.autho
 
 コード修正が必要な Renovate PR は次の手順で扱う:
 
-1. `delegate` skill の launcher を `--vibe --from origin/<renovate-branch>` で起動し、triage findings を依頼に含める。Renovate の変更を含む branch から修正 branch を作るが、修正 PR の base は default branch とする。Renovate branch を PR の parent/base として指定しない。
+1. `delegate` skill の launcher を `--vibe --from origin/<renovate-branch>` で起動し、triage findings と create-pr の base 解決で `resolve-base --no-stack` を使う指示を依頼に含める。Renovate の変更を含む branch から修正 branch を作り、修正 PR は default branch を base にする。Renovate branch を `--parent-branch` に指定しない。
 2. delegate の `<vibe-draft-ready>` / `<vibe-pr-ready>` を `enable-vibe-coding` skill の Renovate fix 手順に従ってレビューする。checklist item ID は `none` とし、triage findings を review context に使う。修正 PR は default branch 向けなので、合わせた内容の required CI が通ることを確認する。
 3. 修正 PR を `a gh pr-merge` で default branch にマージする。修正 PR の CI が失敗した場合は修正 delegate を再度起動する。マージ後は delegate skill に従って default branch の CI が green になることを確認する。
 4. Renovate PR の状態を確認する。default branch に更新が入ったことで Renovate が PR を自動 close していれば完了とする。開いたままなら自分で close せず、PR が修正 PR で default branch に取り込まれたことと Renovate PR が未 close であることを記載したユーザー向け todo を登録する。PR の close はユーザーの判断とする。
