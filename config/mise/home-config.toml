@@ -53,7 +53,7 @@
 "github:DeusData/codebase-memory-mcp" = "0.12.1"
 "aqua:google/go-jsonnet" = "0.22.0"
 "github:mizchi/similarity" = "0.5.0"
-"core:python" = ["3.14.7", "3.13.13"]
+"core:python" = ["3.15.2", "3.13.13"]
 "github:aquaproj/aqua" = "2.66.1"
 "github:tomasz-tomczyk/crit" = "0.23.0"
 # mise extracts the tarball's AppleDouble xattr entries as ._* files inside the
