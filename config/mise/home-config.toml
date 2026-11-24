@@ -22,7 +22,7 @@
 # CLI tools
 "aqua:cli/cli" = "2.104.0"
 "aqua:sharkdp/bat" = "0.26.1"
-"aqua:x-motemen/ghq" = "1.10.1"
+"aqua:x-motemen/ghq" = "1.12.0"
 "aqua:junegunn/fzf" = "0.75.0"
 "aqua:dandavison/delta" = "0.20.1"
 "aqua:mikefarah/yq" = "4.54.3"
