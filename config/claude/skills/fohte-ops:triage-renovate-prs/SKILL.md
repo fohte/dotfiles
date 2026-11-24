@@ -185,7 +185,7 @@ approve review を投稿する前に `gh pr view <pr> --json author --jq '.autho
 
 1. Renovate の branch を下段にした stack 用の新しい branch (名前に `/` を含めない) を作り、`delegate` skill の launcher を `--vibe --from origin/<renovate-branch>` で起動する。依頼には triage findings を含め、Renovate branch が stack の下段であることを伝える。
 2. delegate の `<vibe-draft-ready>` / `<vibe-pr-ready>` を `enable-vibe-coding` skill の Renovate fix 手順に従ってレビューする。checklist item ID は `none` とし、triage findings を review context に使う。
-3. delegate の stacked PR を `a gh pr-merge` で Renovate branch にマージする。Renovate PR の CI を確認し、失敗なら再度修正 delegate を起動する。foreign commit が入った Renovate branch には Renovate の rebase を要求しない。
+3. delegate の stacked fix PR は `a gh pr-merge --unstack <fix-pr>` で Renovate branch にマージする。`--unstack` は stack 内の未 merge PR をすべて stack から外すため、fix PR 以外も stack 解除される。これは fix PR にだけ指定し、Renovate PR のマージには指定しない。fix PR は元の base である Renovate branch にのみマージされる。Renovate PR の CI を確認し、失敗なら再度修正 delegate を起動する。foreign commit が入った Renovate branch には Renovate の rebase を要求しない。
 4. Renovate PR を新しい head と diff で再トリアージし、変更内容に対する approve review を投稿してからマージする。
 
 Renovate branch に foreign commit が入ると Renovate はその branch を更新しなくなるため ([Renovate docs](https://docs.renovatebot.com/updating-rebasing/))、rebase は要求しない。stacked PR に CI が付かない場合は、fix merge 後の Renovate PR の CI で確認する。
