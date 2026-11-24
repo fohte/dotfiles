@@ -185,28 +185,11 @@ rules:
       - ask: 'git push origin :feature/foo'
       - allow: 'git -C /tmp push origin main:main'
       - allow: 'git -C /tmp push origin HEAD:refs/heads/foo'
-  # `flags.C` is raw: check absolute targets directly, but resolve relative targets against fs.cwd and require a worktree `.git` file.
-  # A quoted tilde path needs suffix matching because runok receives it before shell expansion.
-  # Inline tests cannot set cwd, so check the worktree route with `runok check` from a worktree.
-  - ask: 'git [-C *] push *'
-    when: >-
-      (has(flags.C) && paths['master-push-repos'].exists(p,
-        flags.C.startsWith(p + '/.worktrees/') ||
-        flags.C.startsWith(p + '/.claude/worktrees/') ||
-        (flags.C.startsWith('~') && definitions.vars['master-push-worktree-paths'].exists(pattern, glob_matches(pattern, flags.C))) ||
-        (!flags.C.startsWith('/') && (
-          (((fs.cwd + '/' + flags.C).startsWith(p + '/.worktrees/') || (fs.cwd + '/' + flags.C).startsWith(p + '/.claude/worktrees/')) && fs.is_file(fs.cwd + '/' + flags.C + '/.git')) ||
-          ((fs.cwd == p || fs.cwd.startsWith(p + '/')) && definitions.vars['master-push-worktree-paths'].exists(pattern, glob_matches(pattern, flags.C)) && fs.is_file(fs.cwd + '/' + flags.C + '/.git'))
-        ))
-      )) ||
-      (!has(flags.C) && paths['master-push-repos'].exists(p,
-        fs.cwd.startsWith(p + '/.worktrees/') || fs.cwd.startsWith(p + '/.claude/worktrees/')
-      ))
-    message: 'Confirm pushes from delegated worktrees.'
-    tests:
-      - allow: 'git -C /tmp push origin main'
   # Armyknife and Claude worktrees must publish through a PR, so prevent
   # explicit refspecs and --all from updating the repo's default branch.
+  # `flags.C` is raw: check absolute targets directly, but resolve relative targets against fs.cwd and require a worktree `.git` file.
+  # A quoted tilde path needs suffix matching because runok receives it before shell expansion.
+  # Inline tests cannot set cwd, so check the bare `git push` route with `runok check` from a worktree.
   - deny: 'git [-C *] push *'
     when: >-
       (args.exists(a, a.matches('(^|:)[+]?((refs/heads/)?(main|master)):?$')) || has(flags.all)) && (
@@ -227,6 +210,12 @@ rules:
     fix_suggestion: 'Push the work branch and create a pull request.'
     tests:
       - allow: 'git -C /tmp push origin main'
+      - allow: 'git -C ~/ghq/github.com/fohte/dotfiles/.worktrees/x push'
+      - allow: 'git -C ~/ghq/github.com/fohte/dotfiles/.worktrees/x push -u origin HEAD'
+      - deny: 'git -C ~/ghq/github.com/fohte/dotfiles/.worktrees/x push origin HEAD:master'
+      - deny: 'git -C ~/ghq/github.com/fohte/dotfiles/.worktrees/x push --all'
+      - deny: 'git -C ~/ghq/github.com/fohte/dotfiles/.worktrees/x push --force origin HEAD'
+      - ask: 'git -C ~/ghq/github.com/fohte/dotfiles/.worktrees/x push origin --delete foo'
   # `commit -C <ref>` reuses the message, so `flags.C` is not always a repo
   # path. Check `env.PWD` as well to cover fork worktrees; this can also deny
   # `git -C <elsewhere> ...` from a fork checkout. Inline tests cannot set cwd.
