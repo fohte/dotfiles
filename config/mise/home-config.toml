@@ -31,7 +31,7 @@
 "aqua:starship/starship" = "1.26.0"
 "aqua:BurntSushi/ripgrep" = "15.2.0"
 "vfox:mise-plugins/vfox-1password" = "2.30.0"
-"aqua:Wilfred/difftastic" = "0.69.0"
+"aqua:Wilfred/difftastic" = "0.72.0"
 "aqua:astral-sh/uv" = "0.13.8"
 "aqua:jqlang/jq" = "1.8.1"
 "aqua:evilmartians/lefthook" = "2.2.2"
