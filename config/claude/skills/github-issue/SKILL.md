@@ -104,6 +104,8 @@ a gh issue-agent review <file-path>
 
 Opens a file in an editor (via tmux) for user review. The user must set `submit: true` in the frontmatter to approve. For files without YAML frontmatter (e.g., comment files with HTML comment metadata), a temporary `submit: false` frontmatter is prepended and stripped after review.
 
+Before every `review` run, rewrite Japanese text in the file with `/yomiyasu` (Codex: `$yomiyasu`), passing `<file-path>` as its input. yomiyasu saves its final draft under `$AGENT_TMPDIR` and leaves the input untouched, so apply the draft back to `<file-path>` with Edit, keeping the frontmatter and metadata comments. When re-running after exit code 1, rewrite only the text you added or changed and keep the user's wording as is.
+
 Run this in the background:
 
 - Claude Code: `run_in_background: true`. Wait for the `<task-notification>`; do not poll.
@@ -300,7 +302,7 @@ Before writing anything, complete all necessary research. The goal is to write a
     - If no templates or user prefers blank: `a gh issue-agent init issue --no-template`
     - **IMPORTANT**: Never assume `--no-template` without checking templates first
 3. Edit the file at `~/.cache/gh-issue-agent/<owner>/<repo>/new/issue.md`
-4. Run `a gh issue-agent review <file-path>` in the background (see [Review](#review-approve-before-push) for how each agent waits for it) to open in terminal + Neovim for user review. This command blocks until the user closes the editor, so it will complete when the user finishes reviewing.
+4. Rewrite Japanese text with `/yomiyasu` per [Review](#review-approve-before-push), then run `a gh issue-agent review <file-path>` in the background (see [Review](#review-approve-before-push) for how each agent waits for it) to open in terminal + Neovim for user review. This command blocks until the user closes the editor, so it will complete when the user finishes reviewing.
 5. **STOP and wait for the background command to complete**, then dispatch on the exit code per [Review exit codes](#review-exit-codes).
 6. Create the issue: `a gh issue-agent push ~/.cache/gh-issue-agent/<owner>/<repo>/new` (the push command verifies `.approve` files exist for all changed files)
     - On success, the directory is renamed to `<issue-number>/`
@@ -309,7 +311,7 @@ Before writing anything, complete all necessary research. The goal is to write a
 
 1. Pull the issue: `a gh issue-agent pull <issue-number>`
 2. Edit `issue.md` or `metadata.json` in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/`
-3. Run `a gh issue-agent review <file-path>` in the background (see [Review](#review-approve-before-push) for how each agent waits for it) to open the edited file in terminal + Neovim for user review. This command blocks until the user closes the editor.
+3. Rewrite Japanese text with `/yomiyasu` per [Review](#review-approve-before-push), then run `a gh issue-agent review <file-path>` in the background (see [Review](#review-approve-before-push) for how each agent waits for it) to open the edited file in terminal + Neovim for user review. This command blocks until the user closes the editor.
 4. **STOP and wait for the background command to complete**, then dispatch on the exit code per [Review exit codes](#review-exit-codes).
 5. Apply changes: `a gh issue-agent push <issue-number>` (the push command verifies `.approve` files exist for all changed files)
 
@@ -321,7 +323,7 @@ Use this when the content should be added to or modified in an existing comment,
 2. List comments: `ls ~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/comments/`
 3. Read the target comment file (identified from Step 1 analysis)
 4. Edit the comment file directly
-5. Run `a gh issue-agent review <file-path>` in the background (see [Review](#review-approve-before-push) for how each agent waits for it) for user review. This command blocks until the user closes the editor.
+5. Rewrite Japanese text with `/yomiyasu` per [Review](#review-approve-before-push), then run `a gh issue-agent review <file-path>` in the background (see [Review](#review-approve-before-push) for how each agent waits for it) for user review. This command blocks until the user closes the editor.
 6. **STOP and wait for the background command to complete**, then dispatch on the exit code per [Review exit codes](#review-exit-codes).
 7. Push changes: `a gh issue-agent push <issue-number>` (the push command verifies `.approve` files exist)
 
@@ -338,7 +340,7 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 1. Pull the issue first (if not already): `a gh issue-agent pull <issue-number>`
 2. Generate comment boilerplate: `a gh issue-agent init comment <issue-number>`
 3. Edit the generated file in `~/.cache/gh-issue-agent/<owner>/<repo>/<issue-number>/comments/`
-4. Run `a gh issue-agent review <file-path>` in the background (see [Review](#review-approve-before-push) for how each agent waits for it) for user review. This command blocks until the user closes the editor.
+4. Rewrite Japanese text with `/yomiyasu` per [Review](#review-approve-before-push), then run `a gh issue-agent review <file-path>` in the background (see [Review](#review-approve-before-push) for how each agent waits for it) for user review. This command blocks until the user closes the editor.
 5. **STOP and wait for the background command to complete**, then dispatch on the exit code per [Review exit codes](#review-exit-codes).
 6. Push changes: `a gh issue-agent push <issue-number>` (the push command verifies `.approve` files exist)
 
@@ -365,7 +367,7 @@ Use this ONLY when a completely new, separate comment is needed. Do NOT use this
 
 **まず ~/.agents/skills/github-issue/writing-guide.md を読み込むこと。** Issue 本文とコメントの書き方ルールが定義されている。
 
-日本語の文体・表現については `yomiyasu` skill の規範にも従う (非生物主語の解体、比喩動詞の具体化など)。
+日本語の本文・コメントは、[Review](#review-approve-before-push) の手順どおり `review` に出す前に毎回 `/yomiyasu` で書き直す。規範を意識して書くだけでは skill の実行が漏れ、AI っぽい表現が残ったままユーザーに届く。
 
 ## Notes
 
