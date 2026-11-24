@@ -179,7 +179,7 @@ vibe の todo card は対象 PR と card の seq の対応を記録し、PR ご�
 
 approve review を投稿する前に `gh pr view <pr> --json author --jq '.author.login | ascii_downcase'` と `gh api user --jq '.login | ascii_downcase'` で PR author と認証 user を大文字小文字を無視して比較する。同じ user の場合、またはどちらかの取得に失敗した場合は GitHub が approve review を拒否する可能性があるため、approve も merge も試さず理由を記録した todo にする。`--vibe-approve` が自己 approve の拒否を返した場合も同じ扱いにする。
 
-安全と判定した `merge` PR は、head SHA を `head_sha` に含めた同じ JSON を `~/.agents/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage --vibe-approve <data.json>` に渡して approve review を投稿し、その後 `a gh pr-merge <pr>` でマージする。approve body には `CLAUDECODE` または `CODEX_THREAD_ID` に応じた AI footer を付ける。approve option は自身でも `vibe_mode` と PR の head SHA を検証し、不一致なら投稿を拒否する。vibe 専用操作の直前に `vibe-policy.md` の条件を再確認する。再確認が false なら既存の crit 承認フローに切り替え、判定エラーが再試行後も続く場合は policy に従って報告・停止する。この option は false または判定エラーで必ず拒否する。マージ直前に head SHA を再取得する。head が変わっていたら `gh pr diff` の追加・削除行を記録済みのものと比較する。変更行が同じなら内容の再調査はせず、Step 2 の全 check gate を新しい head に対して再評価する。optional check も含め、pending は完了を待ち、failure または解決できない status があれば merge を止めて todo にする。全 gate が引き続き `ok` なら、新しい head SHA を `head_sha` に入れて approve review を再投稿してから続行する。変更行が異なればその PR の調査と approve review をやり直す。`a gh pr-merge` 以外でマージしない。
+安全と判定した `merge` PR は、head SHA を `head_sha` に含めた同じ JSON を `~/.agents/skills/fohte-ops:triage-renovate-prs/scripts/crit-triage --vibe-approve <data.json>` に渡して approve review を投稿する。出力に対象 PR の `ok #<pr> review` があることを確認してから `a gh pr-merge <pr>` でマージする。それ以外の出力や結果ならその PR はマージせず、失敗時と同様に理由を含む todo を登録する。approve body には `CLAUDECODE` または `CODEX_THREAD_ID` に応じた AI footer を付ける。approve option は自身でも `vibe_mode` と PR の head SHA を検証し、不一致なら投稿を拒否する。vibe 専用操作の直前に `vibe-policy.md` の条件を再確認する。再確認が false なら既存の crit 承認フローに切り替え、判定エラーが再試行後も続く場合は policy に従って報告・停止する。この option は false または判定エラーで必ず拒否する。マージ直前に head SHA を再取得する。head が変わっていたら `gh pr diff` の追加・削除行を記録済みのものと比較する。変更行が同じなら内容の再調査はせず、Step 2 の全 check gate を新しい head に対して再評価する。optional check も含め、pending は完了を待ち、failure または解決できない status があれば merge を止めて todo にする。全 gate が引き続き `ok` なら、新しい head SHA を `head_sha` に入れて approve review を再投稿してから続行する。変更行が異なればその PR の調査と approve review をやり直す。`a gh pr-merge` 以外でマージしない。
 
 コード修正が必要な PR は次の手順で扱う:
 
@@ -340,7 +340,7 @@ release-please 側の `changelog-sections` / `release-as` を直すべきケー�
 
 ### `vibe_mode` の loop
 
-Renovate PR を default branch にマージした後は、delegate skill の手順に従って default branch の CI が green になるまで待つ。CI が失敗または状態不明ならそれ以上のマージを止め、原因と確認済みの内容を含む todo を登録する。stacked fix PR を Renovate branch にマージした後は、default branch CI ではなく、その Renovate PR の CI を確認する。
+Renovate PR の merge round ごとに、delegate skill の手順に従って default branch の CI が green になるまで待つ。CI が失敗または状態不明ならそれ以上のマージを止め、原因と確認済みの内容を含む todo を登録する。CI の確認後、対象リポジトリの main checkout で `git pull --ff-only --no-autostash` を実行し、GitHub 上の merge をローカルにも反映する。pull で mise 設定が更新された場合は、対象リポジトリのルートで引数なしの `mise install` を実行する。stacked fix PR を Renovate branch にマージした後は、default branch CI ではなく、その Renovate PR の CI を確認する。
 
 先行 PR 待ちを除き、処理できる PR がなくなったら、進行中の fix delegate がマージまたは停止を報告するまで待つ。todo PR の再トリアージでは、Step 5 に従って必要な代替 card を登録し、古い card を `a agent todo withdraw <seq>` で撤回する。全 delegate が完了したら `renovate-trigger run` を 1 回実行し、Renovate が完了してから PR 一覧を取り直す。GitHub App mode は Dependency Dashboard の checkbox が外れるまで待つ。Actions mode は dispatch だけでなく、Renovate を実行する workflow が実際に開始・完了したことを確認する。確認できなければ停止してユーザーに報告する。新しい PR がなければ loop を終了する。
 
