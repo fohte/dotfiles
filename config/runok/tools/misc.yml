@@ -230,6 +230,13 @@ rules:
       - allow: 'renovate-dryrun'
       - allow: 'renovate-dryrun --branch feature/x'
       - allow: 'renovate-dryrun --raw'
+  # Only asks Renovate to run again; a `pass` here sends a chained
+  # `a gh pr-merge` to the auto mode classifier.
+  - allow: 'renovate-trigger run'
+    tests:
+      - allow: 'renovate-trigger run'
+      - pass: 'renovate-trigger rebase 123'
+      - allow: 'a gh pr-merge 123 && renovate-trigger run'
   - allow: 'renovate-config-validator *'
     tests:
       - allow: 'renovate-config-validator renovate.json5'
