@@ -41,7 +41,7 @@
 "npm:@antfu/ni" = "30.6.0"
 "npm:pnpm" = "11.28.12"
 "npm:opensrc" = "0.7.3"
-"aqua:charmbracelet/glow" = "2.1.2"
+"aqua:charmbracelet/glow" = "3.0.0"
 "aqua:hairyhenderson/gomplate" = "5.3.1"
 "aqua:mozilla/sccache" = "0.19.0"
 "npm:@mermaid-js/mermaid-cli" = "latest"
