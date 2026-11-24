@@ -56,6 +56,8 @@ upstream がない場合、別の branch、または別 remote を指す場合�
 
 下段 PR の branch はユーザーまたは委任元が指定した場合だけ、`~/.agents/skills/create-pr/scripts/resolve-base --parent-branch <branch>` に渡す。それ以外は option なしで script を実行する。
 
+Renovate fix のように open PR branch から修正 branch を作り、default branch 向けに新しい PR を作成する場合は、ancestry による stack 自動検出を避けるため `~/.agents/skills/create-pr/scripts/resolve-base --no-stack` を使う。`--no-stack` は default branch を選び、`stack_parent_branch` と `stack_parent_pr_number` を `null` にする。`--parent-branch` と同時には指定しない。
+
 成功時は stdout の JSON から次の値を使う。判定を git / gh コマンドで組み直さない。
 
 - `base_branch`: diff、crit review、`review-draft`、submit で使う PR の base branch

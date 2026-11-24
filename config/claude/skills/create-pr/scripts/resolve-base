@@ -3,10 +3,11 @@ set -euo pipefail
 
 usage() {
   cat << 'EOF'
-Usage: resolve-base [--parent-branch <branch>]
+Usage: resolve-base [--parent-branch <branch> | --no-stack]
 
 Resolve the base branch for the current pull request. Set --parent-branch only
-when the user or delegator explicitly names the lower pull request branch.
+when the user or delegator explicitly names the lower pull request branch. Use
+--no-stack to target the default branch without automatic stack detection.
 Prints one JSON object on success.
 EOF
 }
@@ -17,11 +18,17 @@ fail() {
 }
 
 parent_branch=
+no_stack=false
 while (($#)); do
   case "$1" in
     --parent-branch)
       if (($# < 2)) || [[ -z "$2" ]]; then
         printf 'Error: --parent-branch requires a branch name\n' >&2
+        usage >&2
+        exit 2
+      fi
+      if [[ "$no_stack" == true ]]; then
+        printf 'Error: --parent-branch cannot be combined with --no-stack\n' >&2
         usage >&2
         exit 2
       fi
@@ -36,6 +43,15 @@ while (($#)); do
       fi
       parent_branch=$2
       shift 2
+      ;;
+    --no-stack)
+      if [[ -n "$parent_branch" ]]; then
+        printf 'Error: --no-stack cannot be combined with --parent-branch\n' >&2
+        usage >&2
+        exit 2
+      fi
+      no_stack=true
+      shift
       ;;
     -h | --help)
       usage
@@ -111,6 +127,19 @@ elif [[ -n "$parent_branch" ]]; then
   stack_parent_branch=$(jq -r '.[0].headRefName' <<< "$matching_parent_prs")
   stack_parent_pr_number=$(jq -r '.[0].number' <<< "$matching_parent_prs")
   base_branch=$stack_parent_branch
+elif [[ "$no_stack" == true ]]; then
+  if ! git fetch origin; then
+    fail 'git fetch origin failed; cannot resolve the base branch safely'
+  fi
+  if ! base_branch=$(git main); then
+    fail 'could not determine the default branch with git main'
+  fi
+  if [[ -z "$base_branch" || "$base_branch" == *$'\n'* ]]; then
+    fail 'git main did not return exactly one default branch'
+  fi
+  if ! git check-ref-format --branch "$base_branch" > /dev/null; then
+    fail "git main returned an invalid branch name: $base_branch"
+  fi
 else
   if ! git fetch origin; then
     fail 'git fetch origin failed; cannot resolve the base branch safely'
