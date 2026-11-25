@@ -131,6 +131,10 @@ before="$(git rev-parse HEAD)"
 git pull --autostash
 after="$(git rev-parse HEAD)"
 
+# config/bin/tq runs the CLI on the Node pinned in this repo, and a pull can
+# change that pin.
+mise install node
+
 pnpm_home="${PNPM_HOME:-}"
 if [ -z "$pnpm_home" ]; then
   case "$(uname -s)" in
