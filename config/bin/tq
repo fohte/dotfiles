@@ -61,17 +61,21 @@ export TQ_HEADERS_JSON="$headers_json"
 # directly to talk to a non-production API; it needs no token.
 export TQ_API_URL='https://tq.fohte.net'
 
-# The CLI imports the tq repo's `.ts` sources, which only the Node pinned by
-# that repo can load. The shim runs whatever `node` PATH resolves, and mise
-# picks that from the caller's cwd, so callers inside repos pinning Node 18/20
-# crash with ERR_UNKNOWN_FILE_EXTENSION.
-# The version is read from the TOML directly because `mise where` / `mise ls`
-# also evaluate the repo's [env] `exec()` entries on every call. `cd /` keeps
-# mise from evaluating the caller's cwd config as well.
-# shortcut: assumes `tools.node` is a plain version string, switch to
-# `mise ls --json` if the tq repo ever pins it as a table.
+# The CLI loads the tq repo's `.ts` sources, which only the Node pinned by that
+# repo can run, while the pnpm shim uses whichever `node` PATH resolves.
 tq_repo=$(ghq list -e -p fohte/tq)
+if [[ -z "$tq_repo" ]]; then
+  echo 'tq: fohte/tq is not cloned; the CLI needs its sources.' >&2
+  echo "Run 'ghq get fohte/tq'." >&2
+  exit 1
+fi
+
+# `mise ls` / `mise where` also run the repo's [env] `exec()` entries.
+# shortcut: assumes `tools.node` is a plain version string, revisit if the tq
+# repo pins it as a table.
 node_version=$(mise config get -f "$tq_repo/.mise.toml" tools.node)
+
+# `cd /` keeps mise from reading the caller's cwd config.
 PATH="$(cd / && mise where "node@$node_version")/bin:$PATH"
 
 exec "$real_tq" "$@"
