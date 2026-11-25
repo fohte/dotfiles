@@ -119,8 +119,7 @@ if [ "$tool_name" != "Bash" ]; then
   exit 0
 fi
 
-# Runs in a command substitution below, so each `exit` only ends the branch and
-# its output still flows to bash-bg-timeout-default.
+# Runs in a command substitution below, so each `exit` only ends the branch.
 bash_permission() {
   # runok hook emits a hookSpecificOutput JSON with permissionDecision
   # (allow|ask|deny) for a matched rule, and may also include updatedInput
@@ -179,7 +178,6 @@ bash_permission() {
 }
 
 output=$(bash_permission)
-output=$(~/.claude/hooks/bash-bg-timeout-default "$output" <<< "$input")
 
 if [ "$armyknife_allowed" = true ]; then
   output=$(printf '%s' "$output" | ~/.claude/hooks/pre-tool-use-retry-approval "$armyknife_output" 0)
