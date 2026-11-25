@@ -24,7 +24,8 @@ GitHub native の stacked PR の仕組み。merge 順や手順を書く前に、
 ## base の取り込み
 
 - merge するには stack 全体が linear history である必要がある。下段 branch への push や trunk の前進で崩れる ([ref])
-- 取り込みは cascading rebase で行う。website の merge box にある **Rebase stack** (server 側で実行) か、`gh stack rebase` の後に `gh stack push` (`--force-with-lease` で push する) を使う ([ref], [cli])。`git merge` で trunk を取り込まない
+- 取り込みは cascading rebase で行う。website の merge box にある **Rebase stack** (server 側で実行) か、`gh stack rebase` の後に `gh stack push` を使う ([ref], [cli])。`git merge` で trunk を取り込まない
+- `gh stack push` は merge 済みと queue 内を除く全 branch を `--force-with-lease` で push する ([cli]) ので、ユーザーの明示依頼があるときだけ使う。それ以外は Rebase stack を押すようユーザーに依頼する
 - rebase で作られる commit は署名付きになる。diff が変わらなければ、stale approval を dismiss する設定があっても approval は残る ([ref])
 - 下段 PR の merge 後は、GitHub が残りの PR を自動で rebase し、次の PR の base を trunk に付け替える。手動で base を付け替える手順は要らない ([merging])
 
