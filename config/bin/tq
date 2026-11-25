@@ -61,6 +61,7 @@ export TQ_HEADERS_JSON="$headers_json"
 # directly to talk to a non-production API; it needs no token.
 export TQ_API_URL='https://tq.fohte.net'
 
+export PATH="${MISE_DATA_DIR:-$HOME/.local/share/mise}/shims:$HOME/.local/bin:$PATH"
 node_path="$(mise -C "$HOME" which node)"
 node_bin_dir="$(dirname "$node_path")"
 export PATH="$node_bin_dir:$PATH"
