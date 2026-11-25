@@ -11,9 +11,8 @@ input=$(cat)
 printf '%s\n' \
   "tq: \`task complete <id> --reason <reason>\` は状態とは別の終了理由を選びます: \`completed\` (作業完了), \`not_planned\` (誤起票・実施しない), \`duplicate\` (別タスクで管理)。\`not_planned\` は番号・page・comment を保持します。物理削除には \`--confirm-delete <id>\` が必要です。不明な構文は推測前に \`--help\` を確認してください。"
 
-# A failing tq must not fail the hook, or Claude Code would surface an error on
-# every session. Claude Code keeps the stderr of a hook that exits 0 in the
-# session transcript, so tq's own stderr plus the line below say what failed.
+# A non-zero exit would show an error at the start of every session, so tq
+# failures are only reported on stderr.
 tq hook SessionStart "$@" <<< "$input" || {
   echo "tq-session-start: tq hook SessionStart failed (exit $?)" >&2
   exit 0
