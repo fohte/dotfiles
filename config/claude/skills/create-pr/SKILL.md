@@ -19,7 +19,7 @@ Derived value:
 
 - `english_output`: true when `repo.visibility` is `PUBLIC` **and** `repo.language` is not `ja`, otherwise false. `repo.visibility: PUBLIC` alone does not make it true.
 - `vibe_mode`: resolve with `~/.agents/skills/delegate/references/vibe-policy.md`. Before each vibe-only report or submit, repeat both checks and continue only if the initial `vibe_mode` is still permitted.
-- `body_only_update`: true when a PR for the branch already exists (`gh pr view --json url` succeeds) and Step 0 finds no commit to push. If a later step creates a commit (for example a code fix requested during the editor review), set it back to false and return to Step 0, because that diff has not been reviewed.
+- `body_only_update`: true when a PR for the branch already exists (`gh pr view --json url` succeeds) and Step 0 finds no commit to push. If a later step creates a commit (for example a code fix requested during the editor review), set it back to false and return to Step 0, because that diff has not been reviewed. Commits pushed earlier are deliberately not checked for approval, so a body fix after review-fix commits does not ask for approval again.
 
 Read `references/draft-manual.md` before starting Step 1. It covers Steps 1, 2 and 4.
 
