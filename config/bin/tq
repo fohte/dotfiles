@@ -70,12 +70,13 @@ if [[ -z "$tq_repo" ]]; then
   exit 1
 fi
 
-# `mise ls` / `mise where` also run the repo's [env] `exec()` entries.
-# shortcut: assumes `tools.node` is a plain version string, revisit if the tq
-# repo pins it as a table.
-node_version=$(mise config get -f "$tq_repo/.mise.toml" tools.node)
-
-# `cd /` keeps mise from reading the caller's cwd config.
-PATH="$(cd / && mise where "node@$node_version")/bin:$PATH"
+# MISE_NO_CONFIG keeps mise from loading the cwd's config, whose [env] `exec()`
+# entries would run on every call (the tq repo has them). `-f` still reads the
+# named file. It is set per command, not exported, so the CLI's own mise calls
+# are unaffected.
+# `tools.node` is read as a plain version string, so a table form such as
+# `{ version = "24" }` in the tq repo would break this.
+node_version=$(MISE_NO_CONFIG=1 mise config get -f "$tq_repo/.mise.toml" tools.node)
+PATH="$(MISE_NO_CONFIG=1 mise where "node@$node_version")/bin:$PATH"
 
 exec "$real_tq" "$@"
