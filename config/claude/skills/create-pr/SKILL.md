@@ -89,7 +89,7 @@ base_branch=$(gh pr view "$target_branch" --json baseRefName --jq .baseRefName)
 
 | Step | target branch を指定する方法                                                                                                                                                    |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0    | `crit-approval-review` の `crit story` と `crit-approval` に `--pr "$pr_url"` を渡す。PR のファイルを forge API から読むため `--remote` も渡す。push する commit はない         |
+| 0    | push する commit がなく、既存 PR の metadata 更新だけなので crit review は行わない                                                                                              |
 | 1    | `render-rules --branch "$target_branch"` の出力に従って `a ai pr-draft new --branch "$target_branch"` で作成し、`draft-path --branch "$target_branch"` で draft path を取得する |
 | 2    | `lint-draft.ts "$draft_path"` と `review-draft --branch "$target_branch" "$base_branch"` を実行する                                                                             |
 | 3    | `a ai pr-draft review "$draft_path"` で editor review を行う                                                                                                                    |
@@ -99,19 +99,17 @@ base_branch=$(gh pr view "$target_branch" --json baseRefName --jq .baseRefName)
 | 7    | `gh pr checks "$target_branch" --watch` で CI を監視する                                                                                                                        |
 | 8    | 通常の条件に従う                                                                                                                                                                |
 
-Step 0 の PR review は `crit-approval-review` の PR 手順に従う。`crit-approval` は PR / range 指定の承認で default branch の commit 許可を記録しない。
-
 ## 開始時の宣言 (必須・最初の応答で実行)
 
 create-pr skill を起動したら、**最初の応答で**適用される必須ステップを列挙し、これから実行する旨を宣言すること。宣言なしに Step 1 以降に進むのは禁止。
 
-- Step 0: 未 push コミットの push (`commit` skill の push 手順に従う) と、branch の diff の crit レビュー (`crit-approval-review` skill)。`vibe_mode` では push のみ実施し、crit レビューを省く
+- Step 0: 未 push コミットの push (`commit` skill の push 手順に従う)。新規 PR または push するコミットがある既存 PR では branch の diff を crit review (`crit-approval-review` skill) し、既存 PR の metadata 更新だけで push するコミットがない場合は crit review を行わない。`vibe_mode` では push のみ実施し、crit review を省く
 - Step 2: `lint-draft.ts` による機械的な検査と、文脈を持たないレビュアーによる PR body のレビュー
 - Step 3-4: editor によるレビューと指示への対応。通常フローで実施し、`vibe_mode` では draft を添えて委任元へ通知し、明示的な承認を受けるまで submit しない
 
-「小さい PR だから」「変更が単純だから」「明らかに問題ないから」「効率を優先したい」を理由としたスキップは禁止。これらは典型的な自己判断スキップシグナルで、検出したら必ず実行する。skill のテキストに「必須」「スキップ禁止」と書かれているステップを Claude 側の判断で省略しない。スキップしてよいのはユーザーが該当ステップを名指しで明示的に skip 指示した場合のみ。
+「小さい PR だから」「変更が単純だから」「明らかに問題ないから」「効率を優先したい」を理由としたスキップは禁止。これらは典型的な自己判断スキップシグナルで、検出したら必ず実行する。skill のテキストに「必須」「スキップ禁止」と書かれているステップを Claude 側の判断で省略しない。Step 0 は、既存 PR があり、未 push コミットがない場合に限って crit review を行わない。これ以外の条件で必須ステップを省くのは、ユーザーがそのステップを名指しで skip 指示した場合のみ。
 
-## 0. push と diff の crit レビュー (必須)
+## 0. push と diff の crit レビュー
 
 必須 reviewer が同じ engine で 1 回 retry した後も未評価、または結果が `invalid` / `partial` / `empty` の場合は、`push` / draft 作成 / `submit` のいずれにも進まない。
 
@@ -128,7 +126,7 @@ git log "origin/$base_branch..HEAD" --oneline
 
 未 push のコミットがなければ push は不要。
 
-`vibe_mode` でない場合は、push の要否にかかわらず `crit-approval-review` skill で base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。base ref は「Base branch の解決」の crit review の指定に従う。
+対象 branch に既存 PR があり、上の `git log` で未 push コミットがない場合は、PR の state にかかわらず crit review を行わず Step 1 に進む。この条件を満たさない新規 PR または既存 PR の更新では、`vibe_mode` でない場合に `crit-approval-review` skill で base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。base ref は「Base branch の解決」の crit review の指定に従う。
 
 通常フローでは承認後に `commit` skill の push 手順に従って loop 中の修正をまとめてコミット・push し、Step 1 に進む。`vibe_mode` では crit 承認を待たずに Step 1 に進む。
 
