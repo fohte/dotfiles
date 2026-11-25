@@ -155,7 +155,7 @@ jobs:
         continue-on-error: true
         uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
-          version: 2026.11.9
+          version: 2026.11.10
 
       - name: Sync pnpm lockfiles
         if: steps.can-sync-lockfiles.outputs.value == 'true' && hashFiles('**/pnpm-lock.yaml') != ''
