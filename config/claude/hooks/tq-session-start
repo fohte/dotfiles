@@ -12,9 +12,8 @@ session_id=$(jq -r '.session_id' <<< "$input")
 
 log_file="${XDG_STATE_HOME:-$HOME/.local/state}/tq-session-start/failures.log"
 
-# Runs "$@" with stdout passed through. On failure, appends the session, stage,
-# exit status and stderr to $log_file instead of surfacing them, since a
-# SessionStart hook must not show errors on every session.
+# Passes stdout through and never shows stderr; on failure, appends the stage,
+# exit status and captured stderr to $log_file.
 run_logged() {
   local stage=$1 err status
   shift
