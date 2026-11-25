@@ -7,16 +7,34 @@
 set -uo pipefail
 
 input=$(cat)
+cwd=$(jq -r '.cwd' <<< "$input")
+session_id=$(jq -r '.session_id' <<< "$input")
+
+log_file="${XDG_STATE_HOME:-$HOME/.local/state}/tq-session-start/failures.log"
+
+# Runs "$@" with stdout passed through. On failure, appends the session, stage,
+# exit status and stderr to $log_file instead of surfacing them, since a
+# SessionStart hook must not show errors on every session.
+run_logged() {
+  local stage=$1 err status
+  shift
+  { err=$("$@" 2>&1 >&3 3>&-); } 3>&1
+  status=$?
+  if ((status != 0)); then
+    mkdir -p "${log_file%/*}" 2> /dev/null &&
+      printf '%s session=%s cwd=%s stage=%s exit=%d\n%s\n' \
+        "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$session_id" "$cwd" "$stage" "$status" "$err" \
+        >> "$log_file" 2> /dev/null
+  fi
+  return "$status"
+}
 
 printf '%s\n' \
   "tq: \`task complete <id> --reason <reason>\` は状態とは別の終了理由を選びます: \`completed\` (作業完了), \`not_planned\` (誤起票・実施しない), \`duplicate\` (別タスクで管理)。\`not_planned\` は番号・page・comment を保持します。物理削除には \`--confirm-delete <id>\` が必要です。不明な構文は推測前に \`--help\` を確認してください。"
 
 # config/bin/tq exits non-zero when the 1Password vault is locked or the
 # network is down; a SessionStart hook must not surface that on every session.
-tq hook SessionStart "$@" <<< "$input" || exit 0
-
-cwd=$(jq -r '.cwd' <<< "$input")
-session_id=$(jq -r '.session_id' <<< "$input")
+run_logged 'hook SessionStart' tq hook SessionStart "$@" <<< "$input" || exit 0
 
 # Written by config/armyknife/hooks/post-worktree-create from the delegator's
 # DELEGATE_TQ_TASK_ID.
@@ -26,7 +44,7 @@ task_id=$(git -C "$cwd" config --get "branch.$branch.x-tq-task-id") || exit 0
 # `tq link` picks the session from these env vars, which in a hook still hold
 # whatever the launching shell exported (e.g. the delegator's session).
 if [[ " $* " == *' --provider codex '* ]]; then
-  CODEX_SESSION_ID=$session_id tq --author tq-session-start link "$task_id" > /dev/null || true
+  CODEX_SESSION_ID=$session_id run_logged link tq --author tq-session-start link "$task_id" > /dev/null || true
 else
-  CODEX_SESSION_ID='' TQ_SESSION_ID=$session_id tq --author tq-session-start link "$task_id" > /dev/null || true
+  CODEX_SESSION_ID='' TQ_SESSION_ID=$session_id run_logged link tq --author tq-session-start link "$task_id" > /dev/null || true
 fi
