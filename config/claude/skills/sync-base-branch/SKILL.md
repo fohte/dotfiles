@@ -12,7 +12,7 @@ description: Sync a PR's base branch when explicitly requested or when a conflic
 - **merge のみを使う。rebase はしない。** rebase は force-push を要求するが、force-push は共有履歴や他者の作業を壊しうる破壊的操作であり、このスキルでは行わない。merge なら通常の push で完結する
 - conflict の解消と CI 失敗の修正はユーザーに確認せず自律的に進める。判断根拠は最後の報告にまとめ、ユーザーが後から検証できるようにする
 - 途中で「force-push が要る」状況に行き着いた場合は前提が崩れているサインなので、押し切らずユーザーに報告する
-- PR が GitHub の stack に属する場合 (判定方法は github skill の `references/stacked-prs.md`) は、このスキルで merge も rebase もせずユーザーに報告する。stack は linear history でないと merge できず、取り込みには cascading rebase が要るため
+- PR が GitHub の stack に属する場合 (判定方法は github skill の `references/stacked-prs.md`) は、base を取り込まず、取り込まなかったことを報告する。stack は linear history でないと merge できず、GitHub の取り込み手段は禁止されている rebase だけのため
 
 ## merge する条件
 
