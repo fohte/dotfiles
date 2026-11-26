@@ -244,6 +244,22 @@ rules:
     tests:
       - deny: 'git rebase origin/main'
       - deny: 'git rebase origin/master'
+  # These gh stack subcommands run git rebase internally, which the git rebase
+  # denies above never see.
+  - deny: 'gh stack rebase|sync|modify *'
+    message: 'Blocked because gh stack rebases branches internally, bypassing the git rebase deny.'
+    fix_suggestion: 'Leave the stack as is: GitHub rebases the remaining PRs after the bottom PR merges.'
+    tests:
+      - deny: 'gh stack rebase'
+      - deny: 'gh stack rebase --upstack'
+      - deny: 'gh stack sync --prune'
+      - deny: 'gh stack modify'
+  - deny: 'gh stack push *'
+    message: 'Blocked because gh stack push pushes every branch with --force-with-lease, bypassing the git force-push deny.'
+    fix_suggestion: 'Push the branch with plain `git push`.'
+    tests:
+      - deny: 'gh stack push'
+      - deny: 'gh stack push --no-atomic'
   - deny: 'git [-C *] pull --no-rebase *'
     message: 'Blocked: explicit `--no-rebase` is denied to prevent merge commits. Plain `git pull` is not blocked by this rule, but may fail depending on Git configuration and worktree state.'
     fix_suggestion: 'git pull --rebase'
@@ -853,6 +869,12 @@ rules:
     tests:
       - deny: 'gh pr create --title "foo" --body "bar"'
       - deny: 'gh -R fohte/runok pr create --title "foo"'
+  # gh stack submit and link create PRs and the stack themselves.
+  - deny: 'gh stack submit|link *'
+    message: 'Use /create-pr skill to create PRs.'
+    tests:
+      - deny: 'gh stack submit'
+      - deny: 'gh stack link 10 20'
   - deny: 'gh [-R *] api * -X|--method POST * *repos/*/pulls|*repos/*/pulls?*|*repos/*/stacks* *'
     message: 'Use /create-pr skill to create PRs.'
     fix_suggestion: 'To read, pass `-X GET`. If `a ai pr-draft submit` printed this command to recover a stack, show it to the user instead of running it.'
@@ -926,11 +948,18 @@ rules:
       - deny: 'gh pr merge 481 --squash --auto'
       - deny: 'gh -R fohte/tq pr close 481'
       - allow: 'gh pr view 481'
-  - deny: 'gh [-R *] api * -X|--method PUT * repos/*/pulls/*/merge *'
+  - deny: 'gh stack merge *'
+    message: "Merging a PR is the user's decision, not something the agent judges on its own."
+    fix_suggestion: 'Report the PR and the reason to the user and let them run it.'
+    tests:
+      - deny: 'gh stack merge'
+      - deny: 'gh stack merge 12 --squash --yes'
+  - deny: 'gh [-R *] api * -X|--method PUT * repos/*/pulls/*/merge|repos/*/pulls/*/merge-async *'
     message: "Merging a PR is the user's decision, not something the agent judges on its own."
     fix_suggestion: 'Report the PR and the reason to the user and let them run it.'
     tests:
       - deny: 'gh api -X PUT repos/fohte/tq/pulls/481/merge'
+      - deny: 'gh api -X PUT repos/sample-org/sample-repo/pulls/12/merge-async'
 
   # Only the add path is denied -- removing vrt-approved, and adding/removing
   # any other label, stays allowed via the rule below.
