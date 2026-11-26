@@ -61,4 +61,19 @@ export TQ_HEADERS_JSON="$headers_json"
 # directly to talk to a non-production API; it needs no token.
 export TQ_API_URL='https://tq.fohte.net'
 
+# The CLI loads the tq repo's `.ts` sources, which only the Node pinned by that
+# repo can run, while the pnpm shim uses whichever `node` PATH resolves.
+tq_repo=$(ghq list -e -p fohte/tq)
+if [[ -z "$tq_repo" ]]; then
+  echo 'tq: fohte/tq is not cloned; the CLI needs its sources.' >&2
+  echo "Run 'ghq get fohte/tq'." >&2
+  exit 1
+fi
+
+# MISE_NO_CONFIG skips the cwd's config, whose [env] `exec()` entries (the tq
+# repo has some) would otherwise run on every call. `-f` still reads the file.
+# Assumes `tools.node` is a plain version string, not a table.
+node_version=$(MISE_NO_CONFIG=1 mise config get -f "$tq_repo/.mise.toml" tools.node)
+PATH="$(MISE_NO_CONFIG=1 mise where "node@$node_version")/bin:$PATH"
+
 exec "$real_tq" "$@"
