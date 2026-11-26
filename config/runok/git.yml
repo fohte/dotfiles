@@ -244,8 +244,6 @@ rules:
     tests:
       - deny: 'git rebase origin/main'
       - deny: 'git rebase origin/master'
-  # These gh stack subcommands run git rebase internally, which the git rebase
-  # denies above never see.
   - deny: 'gh stack rebase|sync|modify *'
     message: 'Blocked because gh stack rebases branches internally, bypassing the git rebase deny.'
     fix_suggestion: 'Leave the stack as is: GitHub rebases the remaining PRs after the bottom PR merges.'
