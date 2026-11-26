@@ -19,6 +19,7 @@ Derived value:
 
 - `english_output`: true when `repo.visibility` is `PUBLIC` **and** `repo.language` is not `ja`, otherwise false. `repo.visibility: PUBLIC` alone does not make it true.
 - `vibe_mode`: resolve with `~/.agents/skills/delegate/references/vibe-policy.md`. Before each vibe-only report or submit, repeat both checks and continue only if the initial `vibe_mode` is still permitted.
+- `body_only_update`: true when `gh pr list --head <branch> --state all --json url` finds a PR for the target branch, regardless of its state, and the `git log` result captured before push in Step 0 is empty. If a later step creates a commit (for example a code fix requested during the editor review), set it back to false and return to Step 0, because that diff has not been reviewed. Do not recalculate this value from the post-push log. Commits pushed earlier are deliberately not checked for approval, so a body fix after review-fix commits does not ask for approval again.
 
 Read `references/draft-manual.md` before starting Step 1. It covers Steps 1, 2 and 4.
 
@@ -27,6 +28,7 @@ Apply every row below whose condition holds. The rows are independent of each ot
 | Condition                                        | Effect                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `vibe_mode` is true                              | Skip crit review, notify the delegator with the draft and wait for explicit approval before submitting with `--no-review`; report PR ready after Step 8 has checked feedback and drafted replies and the Step 7 CI condition is met (CI passes or only `vrt` fails). Keep self-review and CI monitoring. Even when `is_master_push_repo` is true, create a PR from the current branch and never push to the default branch. |
+| `body_only_update` is true                       | Skip the diff crit review in Step 0: the PR already carries this diff, so there is nothing new to approve. The editor review in Step 3 still applies.                                                                                                                                                                                                                                                                       |
 | `english_output` is true                         | Translation to English is required. The reference covers it in Step 4; Step 5 requires a Japanese-free title and body.                                                                                                                                                                                                                                                                                                      |
 | `english_output` is false                        | No translation happens.                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `has_release_please` is `true`                   | Rule 1 uses Conventional Commits; otherwise `<scope>: <description>`. `scripts/render-rules` already applies it when it prints the rules.                                                                                                                                                                                                                                                                                   |
@@ -89,7 +91,7 @@ base_branch=$(gh pr view "$target_branch" --json baseRefName --jq .baseRefName)
 
 | Step | target branch を指定する方法                                                                                                                                                    |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0    | push する commit がなく、既存 PR の metadata 更新だけなので crit review は行わない                                                                                              |
+| 0    | 実施しない (`body_only_update` は常に true)。push する commit もない                                                                                                            |
 | 1    | `render-rules --branch "$target_branch"` の出力に従って `a ai pr-draft new --branch "$target_branch"` で作成し、`draft-path --branch "$target_branch"` で draft path を取得する |
 | 2    | `lint-draft.ts "$draft_path"` と `review-draft --branch "$target_branch" "$base_branch"` を実行する                                                                             |
 | 3    | `a ai pr-draft review "$draft_path"` で editor review を行う                                                                                                                    |
@@ -103,11 +105,11 @@ base_branch=$(gh pr view "$target_branch" --json baseRefName --jq .baseRefName)
 
 create-pr skill を起動したら、**最初の応答で**適用される必須ステップを列挙し、これから実行する旨を宣言すること。宣言なしに Step 1 以降に進むのは禁止。
 
-- Step 0: 未 push コミットの push (`commit` skill の push 手順に従う)。新規 PR または push するコミットがある既存 PR では branch の diff を crit review (`crit-approval-review` skill) し、既存 PR の metadata 更新だけで push するコミットがない場合は crit review を行わない。`vibe_mode` では push のみ実施し、crit review を省く
+- Step 0: 未 push コミットの push (`commit` skill の push 手順に従う) と、branch の diff の crit レビュー (`crit-approval-review` skill)。`vibe_mode` と `body_only_update` では crit レビューを省く (`vibe_mode` では push のみ実施)
 - Step 2: `lint-draft.ts` による機械的な検査と、文脈を持たないレビュアーによる PR body のレビュー
 - Step 3-4: editor によるレビューと指示への対応。通常フローで実施し、`vibe_mode` では draft を添えて委任元へ通知し、明示的な承認を受けるまで submit しない
 
-「小さい PR だから」「変更が単純だから」「明らかに問題ないから」「効率を優先したい」を理由としたスキップは禁止。これらは典型的な自己判断スキップシグナルで、検出したら必ず実行する。skill のテキストに「必須」「スキップ禁止」と書かれているステップを Claude 側の判断で省略しない。Step 0 は、既存 PR があり、未 push コミットがない場合に限って crit review を行わない。これ以外の条件で必須ステップを省くのは、ユーザーがそのステップを名指しで skip 指示した場合のみ。
+「小さい PR だから」「変更が単純だから」「明らかに問題ないから」「効率を優先したい」を理由としたスキップは禁止。これらは典型的な自己判断スキップシグナルで、検出したら必ず実行する。skill のテキストに「必須」「スキップ禁止」と書かれているステップを Claude 側の判断で省略しない。スキップしてよいのはユーザーが該当ステップを名指しで明示的に skip 指示した場合と、Conditions の表が省略を定めている場合 (`vibe_mode`、`body_only_update`) のみ。
 
 ## 0. push と diff の crit レビュー
 
@@ -126,11 +128,11 @@ git log "origin/$base_branch..HEAD" --oneline
 
 未 push のコミットがなければ push は不要。
 
-上の `git log` に未 push のコミットがあれば、`commit` skill の push 手順 (`self-review` skill でのレビュー → 🔴/🟡 対応 → `git push`) に従って push する。crit review の要否は push 前の結果で決め、push 後に確認し直したログで判定を変えない。
+上の `git log` に未 push のコミットがあれば `commit` skill の push 手順 (`self-review` skill でのレビュー → 🔴/🟡 対応 → `git push`) に従って push する。`body_only_update` は push 前の結果で判定し、push 後に確認し直したログで値を変えない。
 
-対象 branch に既存 PR があり、push 前の `git log` で未 push コミットがない場合は、PR の state にかかわらず crit review を行わず Step 1 に進む。この条件を満たさない新規 PR または既存 PR の更新では、`vibe_mode` でない場合に `crit-approval-review` skill で base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。base ref は「Base branch の解決」の crit review の指定に従う。
+`vibe_mode` でも `body_only_update` でもない場合は、push の要否にかかわらず `crit-approval-review` skill で base branch との diff をユーザーにレビューしてもらい、承認されるまで Step 1 に進まない。base ref は「Base branch の解決」の crit review の指定に従う。
 
-通常フローでは承認後に `commit` skill の push 手順に従って loop 中の修正をまとめてコミット・push し、Step 1 に進む。`vibe_mode` では crit 承認を待たずに Step 1 に進む。
+通常フローでは承認後に `commit` skill の push 手順に従って loop 中の修正をまとめてコミット・push し、Step 1 に進む。`vibe_mode` と `body_only_update` では crit 承認を待たずに Step 1 に進む。
 
 ## 1. PR body のドラフトを作成する
 
