@@ -49,9 +49,10 @@ merge 後に worktree が片付けられると armyknife が委任元に自動�
 ## 委任元への連絡
 {{ if eq (getenv "DELEGATE_VIBE" "false") "true" }}
 このセッションは委任元が `--vibe` で起動した。`vibe_mode` の判定がエラーになったときや、通常フローに切り替えるときは、`~/.agents/skills/delegate/references/vibe-policy.md` の手順で委任元に知らせる。
-連絡時点で `~/.agents/skills/delegate/references/vibe-policy.md` に従って `vibe_mode` を再確認する。初回判定時から許可が続いている場合だけ、`create-pr` skill の vibe 手順にある連絡ルールを優先する。不許可または判定エラーの場合は通常フローとして以下の制限を適用する。
+連絡時点で `~/.agents/skills/delegate/references/vibe-policy.md` に従って `vibe_mode` を再確認する。初回判定時から許可が続いている場合だけ、`create-pr` skill の vibe 手順にある連絡ルールを優先する。再確認で不許可になった場合は vibe 報告を行わず通常フローに切り替える。判定エラーの場合は `vibe-policy.md` の報告・停止手順に従う。
 {{- else }}
-このセッションは委任元が `--vibe` なしで起動した。委任元や祖先から vibe の資格を継承していても、この委任では `vibe_mode=false` として扱う。`create-pr` skill の vibe 用手順や `notify-vibe` は使わず、通常フローで進める。
+委任起動モード: `--vibe` なし
+委任元や祖先から vibe の資格を継承していても、この委任では `vibe_mode=false` として扱う。`create-pr` skill の vibe 用手順や `notify-vibe` は使わず、通常フローで進める。
 この指定はこの委任に限る。`handoff` や `project-manager` の vibe 継承は変更しない。
 {{ end }}
 
