@@ -84,8 +84,21 @@ for arg in "$@"; do
   esac
 done
 
+# Reads the client's stderr to EOF: tee dies on SIGPIPE if this exits early.
+notify_client_started() {
+  local line re='^(Connected to|Started) crit daemon at ([^[:space:]]+)' notified=false
+  while IFS= read -r line; do
+    if [[ "$notified" == false && "$line" =~ $re ]]; then
+      notified=true
+      # $$ is this script, which outlives the crit client. Best-effort: output and failure (e.g. an old `a` without the subcommand) are discarded.
+      a agent crit client-started --url "${BASH_REMATCH[2]}" --pid "$$" > /dev/null 2>&1 &
+    fi
+  done
+}
+
 set +e
-crit "$@" > >(tee "$tmp_stdout") 2> >(tee "$tmp_stderr" >&2)
+# stderr must come first: a process substitution inherits the pipe of every earlier one, so a slow `a` started by the notifier would otherwise keep the stdout tee open and block callers that capture stdout.
+crit "$@" 2> >(tee >(notify_client_started) "$tmp_stderr" >&2) > >(tee "$tmp_stdout")
 crit_status=$?
 wait
 set -e
