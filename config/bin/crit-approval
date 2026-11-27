@@ -97,10 +97,15 @@ notify_client_started() {
 }
 
 set +e
-# stderr must come first: a process substitution inherits the pipe of every earlier one, so a slow `a` started by the notifier would otherwise keep the stdout tee open and block callers that capture stdout.
-crit "$@" 2> >(tee >(notify_client_started) "$tmp_stderr" >&2) > >(tee "$tmp_stdout")
-crit_status=$?
-wait
+# stdout is a pipeline stage, not a process substitution: a process substitution inherits the pipe of every earlier one, so a slow `a` started by the notifier would keep the stdout tee open and block callers that capture stdout.
+{
+  crit "$@" 2> >(tee >(notify_client_started) "$tmp_stderr" >&2)
+  crit_status=$?
+  # A bare `wait` covers only the last process substitution; the approval check below needs this tee to have finished.
+  wait
+  exit "$crit_status"
+} | tee "$tmp_stdout"
+crit_status="${PIPESTATUS[0]}"
 set -e
 
 if [[ "$record_approval_allowed" == true ]] &&
