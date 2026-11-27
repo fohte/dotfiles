@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ "$(uname -s)" != "Darwin" ]; then
+  echo "macOS not detected, skipping Agent Watch desktop app install"
+  exit 0
+fi
+
+armyknife_dir="$(ghq list -e -p fohte/armyknife)"
+if [ -z "$armyknife_dir" ]; then
+  echo "fohte/armyknife not cloned, skipping Agent Watch desktop app install"
+  exit 0
+fi
+
+git -C "$armyknife_dir" fetch --no-tags origin +refs/heads/master:refs/remotes/origin/master
+revision="$(git -C "$armyknife_dir" rev-parse refs/remotes/origin/master)"
+# Track the package tree so unrelated armyknife changes do not trigger a rebuild.
+package_revision="$(git -C "$armyknife_dir" rev-parse "$revision:agent-watch-desktop")"
+
+app_path="/Applications/Agent Watch.app"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/agent-watch-desktop"
+installed_revision_file="$state_dir/installed-revision"
+installed_revision=""
+if [ -f "$installed_revision_file" ]; then
+  installed_revision="$(cat "$installed_revision_file")"
+fi
+
+if [ -d "$app_path" ] && [ "$package_revision" = "$installed_revision" ]; then
+  echo "Agent Watch desktop app is up to date, skipping install"
+  exit 0
+fi
+
+temporary_dir="$(mktemp -d "${TMPDIR:-/tmp}/agent-watch-desktop.XXXXXX")"
+worktree="$temporary_dir/armyknife"
+
+cleanup() {
+  local exit_status=$?
+  trap - EXIT
+
+  if [ -d "$worktree" ]; then
+    cd "$armyknife_dir" || exit_status=1
+    if ! git -C "$armyknife_dir" worktree remove --force "$worktree"; then
+      echo "Unable to remove temporary armyknife worktree: $worktree" >&2
+      exit_status=1
+    fi
+  fi
+
+  if [ ! -e "$worktree" ]; then
+    rm -rf "$temporary_dir"
+  fi
+
+  exit "$exit_status"
+}
+trap cleanup EXIT
+
+git -C "$armyknife_dir" worktree add --detach "$worktree" "$revision"
+cd "$worktree/agent-watch-desktop"
+pnpm install --frozen-lockfile
+./scripts/install
+
+mkdir -p "$state_dir"
+revision_tmp="$(mktemp "$state_dir/installed-revision.XXXXXX")"
+printf '%s\n' "$package_revision" > "$revision_tmp"
+mv "$revision_tmp" "$installed_revision_file"
