@@ -36,8 +36,10 @@ rules:
       - allow: 'kubectl -n default --context foo describe pod bar'
   # Kubernetes resource names are case-insensitive, so match Secret tokens
   # with CEL instead of enumerating their capitalization variants.
+  # Flags are removed from `args`, but `--raw=...` can carry the API path as
+  # a flag value.
   - deny: 'kubectl *'
-    when: "args.exists(a, a.matches('(?i)^secret.*') || a.matches('(?i)^.*,secret.*') || a.matches('^.*/secrets.*'))"
+    when: "args.exists(a, a.matches('(?i)^secret.*') || a.matches('(?i)^.*,secret.*') || a.matches('^.*/secrets.*')) || flags.exists(k, flags[k] != null && string(flags[k]).matches('^.*/secrets.*'))"
     message: 'Blocked because Secret contents must be read from the git-managed manifest, not from the cluster.'
     fix_suggestion: 'Read the Secret manifest (or its ExternalSecret) in the git repo.'
     tests:
@@ -58,6 +60,7 @@ rules:
       - deny: 'kubectl edit secret foo'
       - deny: 'kubectl apply view-last-applied secret/foo'
       - deny: 'kubectl get --raw /api/v1/namespaces/default/secrets/foo'
+      - deny: 'kubectl get --raw=/api/v1/namespaces/demo/secrets/foo'
       - allow: 'kubectl get pods -o yaml'
       - allow: 'kubectl describe pod foo'
 
