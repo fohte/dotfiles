@@ -1,15 +1,15 @@
 ---
 name: github
-description: Up-to-date knowledge of GitHub features that may postdate the model's training data, such as stacked pull requests and how they merge, plus which dedicated skill to use instead of running `gh` directly. Use this skill whenever writing or reviewing a merge order or release plan that spans multiple PRs, planning PRs that depend on each other, or merging, rebasing, syncing the base of, or reviewing a PR that belongs to a stack — even when no PR is being created. Also use it before running `gh issue` or `gh pr` commands that view, create, edit, or comment on issues and PRs.
+description: Up-to-date knowledge of GitHub features that may postdate the model's training data, such as stacked pull requests and how they merge, plus which dedicated skill to use instead of running `gh` directly. Use this skill whenever writing or reviewing a merge order or release plan that spans multiple PRs, planning PRs that depend on each other, or merging, rebasing, syncing the base of, restructuring, or reviewing a PR that belongs to a stack (including inserting a PR into a stack) — even when no PR is being created. Also use it before running `gh issue` or `gh pr` commands that view, create, edit, or comment on issues and PRs.
 ---
 
 # GitHub
 
 knowledge cutoff より後に追加・変更された GitHub の仕様を references で補う。扱う対象に合う reference だけを読む。
 
-| 対象                                                      | 読む reference              |
-| --------------------------------------------------------- | --------------------------- |
-| stacked PR (作成、base の取り込み、merge、merge 順の計画) | `references/stacked-prs.md` |
+| 対象                                                                  | 読む reference              |
+| --------------------------------------------------------------------- | --------------------------- |
+| stacked PR (作成、base の取り込み、構成の変更、merge、merge 順の計画) | `references/stacked-prs.md` |
 
 ## `gh` で直接操作しない
 

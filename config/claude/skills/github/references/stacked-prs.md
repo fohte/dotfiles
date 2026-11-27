@@ -21,12 +21,29 @@ GitHub native の stacked PR の仕組み。merge 順や手順を書く前に、
 - PR の作成は create-pr skill に従う
 - 依存される側を下段に置く。ある層のコードが別の層に依存するなら、依存先は同じ branch か下の branch に入れる ([about])
 
+## 履歴を書き換えない
+
+- force push や rebase を前提にした案を出さない。ツールの前提条件が履歴の書き換えを要求しても、先にツールのソースやドキュメントで merge と通常の push だけで済む経路を探す
+- conflict や前提条件の不一致を理由に、PR を最終的に stack から外す案も出さない
+
 ## base の取り込み
 
 - merge するには stack 全体が linear history である必要がある。下段 branch への push や trunk の前進で崩れる ([ref])
-- GitHub が用意する取り込み手段は cascading rebase (merge box の **Rebase stack**、または `gh stack rebase` と `gh stack push`) だけで、merge で取り込む方法はない ([ref], [gh-stack#553](https://github.com/github/gh-stack/issues/553))
-- agent は stack の PR に base を取り込まない。rebase は禁止されていて (`gh stack` の rebase / sync / modify も内部で rebase するため runok が拒否する)、merge で取り込むと stack が linear でなくなる。人に rebase を頼んで代わりにやってもらうこともしない
+- GitHub が用意する取り込み手段は cascading rebase (merge box の **Rebase stack**、または `gh stack rebase` と `gh stack push`) だけで、merge で取り込む方式は要望の段階にある ([ref], [gh-stack#553](https://github.com/github/gh-stack/issues/553))。merge commit を含む branch を GitHub が linear とみなすかは未検証
+- agent は trunk の前進を stack の PR に取り込まない。rebase は禁止されていて (`gh stack` の rebase / sync / modify も内部で rebase するため runok が拒否する)、merge で取り込んだ stack を merge できるかは確かめられていない。人に rebase を頼んで代わりにやってもらうこともしない
 - 下段 PR の merge 後は、GitHub が残りの PR を自動で rebase し、次の PR の base を trunk に付け替える。手動で base を付け替える手順は要らない ([merging])
+
+## stack の構成を変える
+
+- PR の追加・挿入・revert の追加・順序の変更をしたら、PR 一覧を本文に持つ全 PR の body を create-pr skill で更新する
+- `gh stack link` は既存 stack の上に PR を積むだけで、途中には挿入できない ([cmd/link.go#L897-L904](https://github.com/github/gh-stack/blob/80b6d6e910cc1b7eaa26b961d7721ade21084fed/cmd/link.go#L897-L904))
+- `gh stack modify` は各 branch が 1 つ下の branch を含み、merge commit を持たないことを要求する ([internal/modify/preconditions.go#L186-L208](https://github.com/github/gh-stack/blob/80b6d6e910cc1b7eaa26b961d7721ade21084fed/internal/modify/preconditions.go#L186-L208))。構成の変更は cascading rebase で行い ([internal/modify/apply.go#L324](https://github.com/github/gh-stack/blob/80b6d6e910cc1b7eaa26b961d7721ade21084fed/internal/modify/apply.go#L324))、書き換えた branch は `gh stack submit` / `push` の `--force-with-lease` でしか送れない ([internal/git/gitops.go#L258-L275](https://github.com/github/gh-stack/blob/80b6d6e910cc1b7eaa26b961d7721ade21084fed/internal/git/gitops.go#L258-L275))
+- 履歴を書き換えずに途中へ PR を挿入するには、次の順に進める
+    1. 挿入する branch を 1 つ下の branch から作る。挿入した branch をその上の branch へ、その branch をさらに上の branch へと順に merge し、通常の push をする
+    2. `gh stack unstack` で GitHub 上の stack だけを解除する。branch と PR は残り、merge 済みや queue 内の PR は stack から外れない ([cli])
+    3. `gh stack link <下から上の全 PR>` で stack を作り直す。link の push は force を使わず ([cmd/link.go#L474](https://github.com/github/gh-stack/blob/80b6d6e910cc1b7eaa26b961d7721ade21084fed/cmd/link.go#L474))、base がずれた PR は base を付け替える ([cmd/link.go#L763](https://github.com/github/gh-stack/blob/80b6d6e910cc1b7eaa26b961d7721ade21084fed/cmd/link.go#L763))
+- merge commit を含む branch で GitHub が stack の作成や merge を受け付けるかは未検証
+- `gh stack link` は runok が拒否するので、agent は手順 2 と 3 のコマンドを組み立て、ユーザーに続けて実行してもらう。手順 2 だけを先に実行すると stack が解除されたまま残る
 
 ## merge のふるまい
 
