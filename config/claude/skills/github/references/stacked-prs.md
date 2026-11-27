@@ -29,8 +29,8 @@ GitHub native の stacked PR の仕組み。merge 順や手順を書く前に、
 ## base の取り込み
 
 - merge するには stack 全体が linear history である必要がある。下段 branch への push や trunk の前進で崩れる ([ref])
-- GitHub が用意する取り込み手段は cascading rebase (merge box の **Rebase stack**、または `gh stack rebase` と `gh stack push`) だけで、merge で取り込む方式は要望の段階にある ([ref], [gh-stack#553](https://github.com/github/gh-stack/issues/553))。merge commit を含む branch を GitHub が linear とみなすかは未検証
-- agent は trunk の前進を stack の PR に取り込まない。rebase は禁止されていて (`gh stack` の rebase / sync / modify も内部で rebase するため runok が拒否する)、merge で取り込んだ stack を merge できるかは確かめられていない。人に rebase を頼んで代わりにやってもらうこともしない
+- GitHub が用意する取り込み手段は cascading rebase (merge box の **Rebase stack**、または `gh stack rebase` と `gh stack push`) だけで、merge で取り込む方式は要望の段階にある ([ref], [gh-stack#553](https://github.com/github/gh-stack/issues/553))。merge commit を含む branch で GitHub が stack の作成や merge を受け付けるかは未検証
+- agent は trunk の前進を stack の PR に取り込まない。rebase は禁止されていて (`gh stack` の rebase / sync / modify も内部で rebase するため runok が拒否する)、merge での取り込みは上の未検証事項に当たる。人に rebase を頼んで代わりにやってもらうこともしない
 - 下段 PR の merge 後は、GitHub が残りの PR を自動で rebase し、次の PR の base を trunk に付け替える。手動で base を付け替える手順は要らない ([merging])
 
 ## stack の構成を変える
@@ -41,8 +41,8 @@ GitHub native の stacked PR の仕組み。merge 順や手順を書く前に、
 - 履歴を書き換えずに途中へ PR を挿入するには、次の順に進める
     1. 挿入する branch を 1 つ下の branch から作る。挿入した branch をその上の branch へ、その branch をさらに上の branch へと順に merge し、通常の push をする
     2. `gh stack unstack` で GitHub 上の stack だけを解除する。branch と PR は残り、merge 済みや queue 内の PR は stack から外れない ([cli])
-    3. `gh stack link <下から上の全 PR>` で stack を作り直す。link の push は force を使わず ([cmd/link.go#L474](https://github.com/github/gh-stack/blob/80b6d6e910cc1b7eaa26b961d7721ade21084fed/cmd/link.go#L474))、base がずれた PR は base を付け替える ([cmd/link.go#L763](https://github.com/github/gh-stack/blob/80b6d6e910cc1b7eaa26b961d7721ade21084fed/cmd/link.go#L763))
-- merge commit を含む branch で GitHub が stack の作成や merge を受け付けるかは未検証
+    3. `gh stack link <下から上の全 PR>` で stack を作り直す。link は force を使わずに push し ([cmd/link.go#L474](https://github.com/github/gh-stack/blob/80b6d6e910cc1b7eaa26b961d7721ade21084fed/cmd/link.go#L474))、base がずれた PR の base を付け替える ([cmd/link.go#L763](https://github.com/github/gh-stack/blob/80b6d6e910cc1b7eaa26b961d7721ade21084fed/cmd/link.go#L763))
+- 手順 1 で入る merge commit は「base の取り込み」の未検証事項に当たるため、手順 3 は失敗しうる。失敗した場合、agent は別の構成変更を提案せず、stack が解除されたまま branch と PR が残っている状態を報告して止まる
 - `gh stack link` は runok が拒否するので、agent は手順 2 と 3 のコマンドを組み立て、ユーザーに続けて実行してもらう。手順 2 だけを先に実行すると stack が解除されたまま残る
 
 ## merge のふるまい
