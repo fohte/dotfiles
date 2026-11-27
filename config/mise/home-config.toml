@@ -55,7 +55,7 @@
 "github:mizchi/similarity" = "0.5.0"
 "core:python" = ["3.15.2", "3.13.13"]
 "github:aquaproj/aqua" = "2.66.1"
-"github:tomasz-tomczyk/crit" = "0.23.0"
+"github:tomasz-tomczyk/crit" = "0.24.0"
 # mise extracts the tarball's AppleDouble xattr entries as ._* files inside the
 # signed .app, which breaks its code signature and makes Gatekeeper report the
 # app as damaged.
