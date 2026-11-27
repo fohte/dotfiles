@@ -101,7 +101,7 @@ set +e
 {
   crit "$@" 2> >(tee >(notify_client_started) "$tmp_stderr" >&2)
   crit_status=$?
-  # A bare `wait` covers only the last process substitution; the approval check below needs this tee to have finished.
+  # Wait here, in the subshell that owns the stderr tee, so $tmp_stderr is complete before the approval check.
   wait
   exit "$crit_status"
 } | tee "$tmp_stdout"
