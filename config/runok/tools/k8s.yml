@@ -58,6 +58,29 @@ rules:
       - allow: 'kubectl get pods -o yaml'
       - allow: 'kubectl describe pod foo'
 
+  # File-based reads can resolve Secrets without naming the resource in the command.
+  - deny: 'kubectl get|describe|edit * -f*|--filename*|-k*|--kustomize* *'
+    message: 'Blocked because file-based kubectl reads can target Secret contents.'
+    fix_suggestion: 'Read Secret manifests from git, and specify non-Secret resources directly.'
+    tests:
+      - deny: 'kubectl get -f manifest.yaml -o yaml'
+      - deny: 'kubectl get -f=manifest.yaml -o yaml'
+      - deny: 'kubectl get --filename manifest.yaml -o yaml'
+      - deny: 'kubectl get --filename=manifest.yaml -o yaml'
+      - deny: 'kubectl get -k manifests -o yaml'
+      - deny: 'kubectl get --kustomize manifests -o yaml'
+      - deny: 'kubectl get --kustomize=manifests -o yaml'
+      - deny: 'kubectl describe -f manifest.yaml'
+      - deny: 'kubectl edit -f manifest.yaml'
+      - allow: 'kubectl diff -f manifest.yaml'
+
+  - deny: 'kubectl apply view-last-applied * -f*|--filename* *'
+    message: 'Blocked because file-based kubectl reads can target Secret contents.'
+    fix_suggestion: 'Read Secret manifests from git, and specify non-Secret resources directly.'
+    tests:
+      - deny: 'kubectl apply view-last-applied -f manifest.yaml'
+      - deny: 'kubectl apply view-last-applied --filename manifest.yaml'
+
   # Read-only info subcommands (no cluster mutation, no secret leakage).
   # `cluster-info dump` is excluded because it aggregates pod logs / ConfigMaps
   # that may contain secrets.
