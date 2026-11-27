@@ -34,25 +34,59 @@ rules:
       - allow: 'kubectl --context=foo get pods'
       - allow: 'kubectl --kubeconfig ~/.kube/work --context prod get pods -A'
       - allow: 'kubectl -n default --context foo describe pod bar'
-  # `get secret` with no output flag prints only the NAME/TYPE/DATA/AGE table
-  # (no values), so the broad `get` allow rule above covers it. `-o`/`--output`
-  # dumps the base64 `data`; route those to ask wherever the flag sits relative
-  # to the resource. Fused short flags parse to a flag name like `oyaml` (not
-  # `o`), so the `when` clause matches the flag by key prefix to also catch
-  # `-oyaml`/`-ojson`. kubectl spells the resource `secret`, `secrets`, or
-  # `secret(s).v1[.]`, so glob every form.
-  - ask: 'kubectl get * secret* *'
-    when: "flags.exists(k, k.startsWith('o'))"
+  # Kubernetes resource names are case-insensitive, so match Secret tokens
+  # with CEL instead of enumerating their capitalization variants.
+  # Flags are removed from `args`, but `--raw=...` can carry the API path as
+  # a flag value.
+  - deny: 'kubectl *'
+    when: "args.exists(a, a.matches('(?i)^secret.*') || a.matches('(?i)^.*,secret.*') || a.matches('^.*/secrets.*')) || flags.exists(k, k == 'raw' && flags[k] != null && string(flags[k]).matches('^.*/secrets.*'))"
+    message: 'Blocked because Secret contents must be read from the git-managed manifest, not from the cluster.'
+    fix_suggestion: 'Read the Secret manifest (or its ExternalSecret) in the git repo.'
     tests:
-      - allow: 'kubectl get secret'
-      - allow: 'kubectl get secret foo'
-      - allow: 'kubectl --context prod -n default get secrets'
+      - deny: 'kubectl get secret'
+      - deny: 'kubectl --context prod -n default get secrets'
+      - deny: 'kubectl get secret foo -o yaml'
+      - deny: 'kubectl get Secret foo -o yaml'
+      - deny: 'kubectl get SECRET foo -o yaml'
+      - deny: 'kubectl get Secrets.v1. foo -o yaml'
+      - deny: 'kubectl get SeCrEt/foo -o yaml'
+      - deny: 'kubectl get secret foo -oyaml'
+      - deny: 'kubectl get -o yaml secret foo'
+      - deny: 'kubectl get secret/foo -o yaml'
+      - deny: 'kubectl get secrets.v1. foo -o yaml'
+      - deny: 'kubectl get cm,secret -o yaml'
+      - deny: 'kubectl get cm,SECRETS -o yaml'
+      - deny: 'kubectl describe secret foo'
+      - deny: 'kubectl edit secret foo'
+      - deny: 'kubectl apply view-last-applied secret/foo'
+      - deny: 'kubectl get --raw /api/v1/namespaces/default/secrets/foo'
+      - deny: 'kubectl get --raw=/api/v1/namespaces/demo/secrets/foo'
       - allow: 'kubectl get pods -o yaml'
-      - ask: 'kubectl get secret foo -o yaml'
-      - ask: 'kubectl get secret foo -oyaml'
-      - ask: 'kubectl get -o yaml secret foo'
-      - ask: 'kubectl get --output json secret foo'
-      - ask: 'kubectl -n databases get secret cnpg-main-backup-b2 -o jsonpath={.data.ACCESS_KEY_ID}'
+      - allow: 'kubectl --kubeconfig /tmp/demo/secrets/config get pods'
+      - allow: 'kubectl describe pod foo'
+
+  # File-based reads can resolve Secrets without naming the resource in the command.
+  - deny: 'kubectl get|describe|edit * -f*|--filename*|-k*|--kustomize* *'
+    message: 'Blocked because file-based kubectl reads can target Secret contents.'
+    fix_suggestion: 'Read Secret manifests from git, and specify non-Secret resources directly.'
+    tests:
+      - deny: 'kubectl get -f manifest.yaml -o yaml'
+      - deny: 'kubectl get -f=manifest.yaml -o yaml'
+      - deny: 'kubectl get --filename manifest.yaml -o yaml'
+      - deny: 'kubectl get --filename=manifest.yaml -o yaml'
+      - deny: 'kubectl get -k manifests -o yaml'
+      - deny: 'kubectl get --kustomize manifests -o yaml'
+      - deny: 'kubectl get --kustomize=manifests -o yaml'
+      - deny: 'kubectl describe -f manifest.yaml'
+      - deny: 'kubectl edit -f manifest.yaml'
+      - allow: 'kubectl diff -f manifest.yaml'
+
+  - deny: 'kubectl apply view-last-applied * -f*|--filename* *'
+    message: 'Blocked because file-based kubectl reads can target Secret contents.'
+    fix_suggestion: 'Read Secret manifests from git, and specify non-Secret resources directly.'
+    tests:
+      - deny: 'kubectl apply view-last-applied -f manifest.yaml'
+      - deny: 'kubectl apply view-last-applied --filename manifest.yaml'
 
   # Read-only info subcommands (no cluster mutation, no secret leakage).
   # `cluster-info dump` is excluded because it aggregates pod logs / ConfigMaps
