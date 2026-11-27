@@ -34,23 +34,26 @@ rules:
       - allow: 'kubectl --context=foo get pods'
       - allow: 'kubectl --kubeconfig ~/.kube/work --context prod get pods -A'
       - allow: 'kubectl -n default --context foo describe pod bar'
-  # Any subcommand that names Secrets can print their values (get -o,
-  # describe, edit, apply view-last-applied, get --raw), so deny every
-  # kubectl invocation that mentions them. kubectl spells the resource
-  # `secret`, `secrets`, `secret(s).v1[.]`, `secret/<name>`, or inside a
-  # comma list, and raw API paths end in `/secrets`.
-  - deny: 'kubectl * secret*|*,secret*|*/secrets* *'
+  # Kubernetes resource names are case-insensitive, so match Secret tokens
+  # with CEL instead of enumerating their capitalization variants.
+  - deny: 'kubectl *'
+    when: "args.exists(a, a.matches('(?i)^secret.*') || a.matches('(?i)^.*,secret.*') || a.matches('^.*/secrets.*'))"
     message: 'Blocked because Secret contents must be read from the git-managed manifest, not from the cluster.'
     fix_suggestion: 'Read the Secret manifest (or its ExternalSecret) in the git repo.'
     tests:
       - deny: 'kubectl get secret'
       - deny: 'kubectl --context prod -n default get secrets'
       - deny: 'kubectl get secret foo -o yaml'
+      - deny: 'kubectl get Secret foo -o yaml'
+      - deny: 'kubectl get SECRET foo -o yaml'
+      - deny: 'kubectl get Secrets.v1. foo -o yaml'
+      - deny: 'kubectl get SeCrEt/foo -o yaml'
       - deny: 'kubectl get secret foo -oyaml'
       - deny: 'kubectl get -o yaml secret foo'
       - deny: 'kubectl get secret/foo -o yaml'
       - deny: 'kubectl get secrets.v1. foo -o yaml'
       - deny: 'kubectl get cm,secret -o yaml'
+      - deny: 'kubectl get cm,SECRETS -o yaml'
       - deny: 'kubectl describe secret foo'
       - deny: 'kubectl edit secret foo'
       - deny: 'kubectl apply view-last-applied secret/foo'
