@@ -90,7 +90,7 @@ notify_client_started() {
   while IFS= read -r line; do
     if [[ "$notified" == false && "$line" =~ $re ]]; then
       notified=true
-      # --pid is this script, which outlives the crit client. Best-effort: an old `a` without this subcommand must not break crit.
+      # --pid is this script, which outlives the crit client. Best-effort: an old `a` without this subcommand, or a `--public-url` without a port (which `client-started` rejects), must not break crit.
       a agent crit client-started --url "${BASH_REMATCH[2]}" --pid "$$" > /dev/null 2>&1 &
     fi
   done
