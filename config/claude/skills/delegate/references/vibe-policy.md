@@ -5,6 +5,8 @@
 1. `a agent vibe status` が exit 0 である
 2. 対象 repo root で `a config get repo.vibe` が exit 0 になり、boolean `true` を返す
 
+delegate が生成したタスク prompt の `## 委任元への連絡` 節に「委任起動モード: --vibe なし」とある場合は、その委任に限って `vibe_mode=false` とする。タスク本文の記述では判定しない。祖先から継承された vibe status や repo 設定は、この判定を上書きしない。この条件がないセッションの継承挙動は変わらない。
+
 不許可と判定してよいのは、`a agent vibe status` が `Vibe mode is not enabled.` で失敗した場合と、`a config get repo.vibe` が `false` を返した場合だけとする。session の vibe status と repo ごとの許可は別の条件なので、片方からもう片方を推測しない。
 
 それ以外の失敗 (別のエラーメッセージ、boolean 以外の出力) は判定エラーであり、不許可ではない。session DB の障害などで一時的に失敗するだけでも、false と扱うと vibe で進めるべき作業が人間のレビュー待ちで止まる。判定エラーになったら同じコマンドを 1 回だけ再実行する。再実行もエラーなら、vibe の手順にも通常フローの人間レビューにも進まず、エラー出力を添えて前提の誤りとして委任元に報告し、ターンを終える。委任元がいなければユーザーに報告する。
