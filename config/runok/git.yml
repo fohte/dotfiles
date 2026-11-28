@@ -74,12 +74,15 @@ rules:
     when: >-
       has(flags.global) && (
         flags.exists(k, k == 'add' || k == 'unset' || k == 'unset-all' || k == 'replace-all' || k == 'remove-section' || k == 'rename-section' || k == 'edit' || k == 'e') ||
-        args.exists(a, a == 'set' || a == 'unset') ||
-        (args.size() > 2 && !args.exists(a, a == 'get' || a == 'get-all' || a == 'get-regexp' || a == 'list'))
+        (args.size() > 1 && args[1] in ['set', 'unset', 'remove-section', 'rename-section', 'edit']) ||
+        (args.size() > 2 &&
+          !flags.exists(k, k in ['get', 'get-all', 'get-regexp', 'get-urlmatch', 'get-color', 'get-colorbool', 'list']) &&
+          !(args.size() > 1 && args[1] in ['get', 'get-all', 'get-regexp', 'get-urlmatch', 'get-color', 'get-colorbool', 'list']))
       )
     message: 'Blocked because global Git config is symlinked into this dotfiles repository; writing it would modify tracked dotfiles. Ask the user to update the dotfiles config.'
     tests:
       - deny: 'git config --global user.name test'
+      - deny: 'git config --global core.pager list'
       - deny: 'git config --global commit.gpgsign false'
       - deny: 'git config --global --edit'
       - deny: 'git config --global --add credential.helper store'
