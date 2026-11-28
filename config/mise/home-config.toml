@@ -8,7 +8,7 @@
 #
 # Language versions
 "core:node" = "26.3.0"
-"core:ruby" = "4.0.7"
+"core:ruby" = "4.0.10"
 "core:go" = "1.26.5"
 "core:bun" = "1.3.14"
 # The Claude and Codex skill sync hook uses Perl's core Fcntl module for locking.
@@ -17,7 +17,7 @@
 
 # packages
 "pipx:neovim-remote" = "latest"
-"gem:rubocop" = "1.92.2"
+"gem:rubocop" = "1.92.3"
 
 # CLI tools
 "aqua:cli/cli" = "2.104.0"
@@ -32,7 +32,7 @@
 "aqua:BurntSushi/ripgrep" = "15.2.0"
 "vfox:mise-plugins/vfox-1password" = "2.30.0"
 "aqua:Wilfred/difftastic" = "0.72.0"
-"aqua:astral-sh/uv" = "0.13.8"
+"aqua:astral-sh/uv" = "0.13.9"
 "aqua:jqlang/jq" = "1.8.1"
 "aqua:evilmartians/lefthook" = "2.2.2"
 "aqua:mvdan/sh" = "3.14.1"
@@ -46,7 +46,7 @@
 "aqua:mozilla/sccache" = "0.19.0"
 "npm:@mermaid-js/mermaid-cli" = "latest"
 "github:ast-grep/ast-grep" = "0.51.3"
-"github:rtk-ai/rtk" = "1.2.0"
+"github:rtk-ai/rtk" = "1.2.1"
 "aqua:suzuki-shunsuke/pinact" = "5.0.2"
 "aqua:tree-sitter/tree-sitter" = "0.27.2"
 "aqua:hashicorp/terraform" = "1.17.2"
@@ -59,8 +59,8 @@
 # mise extracts the tarball's AppleDouble xattr entries as ._* files inside the
 # signed .app, which breaks its code signature and makes Gatekeeper report the
 # app as damaged.
-"github:zenbu-labs/terminal-browser" = { version = "0.15.5", postinstall = "find \"$MISE_TOOL_INSTALL_PATH\" -name '._*' -delete && \"$(dot path)/config/mise/scripts/terminal-browser-pin-profile\" \"$MISE_TOOL_INSTALL_PATH\" && \"$(dot path)/config/mise/scripts/terminal-browser-decline-skills\"" }
-"github:shell-pool/shpool" = "0.11.5"
+"github:zenbu-labs/terminal-browser" = { version = "0.15.9", postinstall = "find \"$MISE_TOOL_INSTALL_PATH\" -name '._*' -delete && \"$(dot path)/config/mise/scripts/terminal-browser-pin-profile\" \"$MISE_TOOL_INSTALL_PATH\" && \"$(dot path)/config/mise/scripts/terminal-browser-decline-skills\"" }
+"github:shell-pool/shpool" = "0.11.7"
 "github:Morantron/tmux-fingers" = "2.7.1"
 # config/claude/skills/gws-* are copied from this version's repo; re-run
 # `nlx skills add googleworkspace/cli -a claude-code -g -y --copy -s <skills>` when bumping.
