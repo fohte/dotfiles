@@ -10,7 +10,7 @@
 "core:node" = "26.3.0"
 "core:ruby" = "4.0.10"
 "core:go" = "1.26.5"
-"core:bun" = "1.3.14"
+"core:bun" = "1.4.5"
 # The Claude and Codex skill sync hook uses Perl's core Fcntl module for locking.
 "aqua:skaji/relocatable-perl" = "5.44.0"
 "vfox:mise-plugins/vfox-lua" = "5.4.8"
