@@ -69,6 +69,32 @@ rules:
       - deny: 'git revert --no-gpg-sign abc123'
       - deny: 'git am --no-gpg-sign /tmp/x.patch'
       - deny: 'git pull --no-gpg-sign'
+  # Global Git config points to this dotfiles checkout, so writes would modify tracked files.
+  - deny: 'git [-C *] config * --global *'
+    when: >-
+      has(flags.global) && (
+        flags.exists(k, k == 'add' || k == 'unset' || k == 'unset-all' || k == 'replace-all' || k == 'remove-section' || k == 'rename-section' || k == 'edit' || k == 'e') ||
+        args.exists(a, a == 'set' || a == 'unset') ||
+        (args.size() > 2 && !args.exists(a, a == 'get' || a == 'get-all' || a == 'get-regexp' || a == 'list'))
+      )
+    message: 'Blocked because global Git config is symlinked into this dotfiles repository; writing it would modify tracked dotfiles. Ask the user to update the dotfiles config.'
+    tests:
+      - deny: 'git config --global user.name test'
+      - deny: 'git config --global commit.gpgsign false'
+      - deny: 'git config --global --edit'
+      - deny: 'git config --global --add credential.helper store'
+      - deny: 'git config --global --unset credential.helper'
+      - deny: 'git config --global --unset-all credential.helper'
+      - deny: 'git config --global --replace-all credential.helper store'
+      - deny: 'git config --global --remove-section credential'
+      - deny: 'git config --global --rename-section old new'
+      - deny: 'git config set --global credential.helper store'
+      - deny: 'git config unset --global credential.helper'
+      - deny: 'git -C /tmp config --global credential.helper store'
+      - pass: 'git config get --global user.name'
+      - allow: 'git config --global --get user.name'
+      - allow: 'git config --global --list'
+      - allow: 'git config --global --includes --list --show-origin'
   # Setting/unsetting commit.gpgsign (or dropping the `commit` section)
   # disables signing for every later plain `git commit`, which other rules
   # allow. Reads of the key are denied too; use `git config --list` instead.
@@ -733,6 +759,11 @@ rules:
       - allow: 'git -C /tmp cherry-pick --continue'
 
   # gh
+  - deny: 'gh auth setup-git *'
+    message: 'Blocked because `gh auth setup-git` writes the global Git config, which is symlinked into this dotfiles repository. Ask the user to update the dotfiles config.'
+    tests:
+      - deny: 'gh auth setup-git'
+      - deny: 'gh auth setup-git --hostname github.com'
   - deny: 'gh [-R *] api * --paginate *'
     message: 'Blocked to prevent excessive API rate limit consumption'
     tests:
