@@ -106,6 +106,8 @@ hs.hotkey.bind({ 'alt' }, '4', launchFocusOrCycle('/Applications/tq.app'))
 
 hs.hotkey.bind({ 'alt' }, '5', launchFocusOrCycle('/Applications/ChatGPT.app'))
 
+hs.hotkey.bind({ 'alt' }, 'a', launchFocusOrCycle('/Applications/Agent Watch.app'))
+
 hs.hotkey.bind({ 'alt' }, 'o', launchFocusOrCycle('/Applications/Obsidian.app'))
 
 hs.hotkey.bind({ 'alt' }, '9', launchFocusOrCycle('/Applications/Fantastical.app'))
